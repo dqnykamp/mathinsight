@@ -1,0 +1,12 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "equilibria" "discrete dynamical systems" %}
+{% index_entry "discrete dynamical systems" "equilibria"  %}
+{% title "Equilibria in discrete dynamical systems" %}
+{% description "An introduction to the concept of equilibria in discrete dynamical systems and how to calculate them." %}
+
+{% boxedvideo equilibria_discrete_dynamical_systems %}
+
+{% boxedvideo equilibria_discrete_dynamical_systems_graphical_approach %}
+
+
+{% endblock %}

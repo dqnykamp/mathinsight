@@ -1,0 +1,33 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "small world network"  %}
+{% index_entry "network" "small world"  %}
+{% title "Small world networks" %}
+{% description "Small world networks are those that have a relative small mean path length but high transitivity." %}
+
+<p>Two properties of many real world networks are that the distance between any pairs of nodes is relatively small while at the same time the level of {% intlink evidence_additional_structure_real_networks%}transitivity{%endintlink%}, or clustering is relatively high.</p>
+
+<p>{% intlink simplest_type_of_network %}Erdös-Rényi random networks{% endintlink%} (ER random networks) do have a low {% intlink network_mean_path_length_definition%}average path length{%endintlink%}, meaning that there tends to be a path between a pair of nodes that involves only a few edges.  This property is shared by many real world networks, and is often called the <em>small world property</em>.  This notion has been popularized by terms like the &ldquo;six degrees of separation&ldquo; between any two people, meaning they are typically connected by a chain of six or fewer edges in a social network graph where people are viewed as nodes and acquaintances are linked by an edge in the graph.</p>
+
+<p>However, one property of real world graphs, such as social networks, that is absent from ER random graphs is {% intlink evidence_additional_structure_real_networks transitivity %}presence of a large degree of transitivity{%endintlink%}.  Since your friends are likely to be friends, the social network describing these friendship is likely to have many more triangles than predicted by the ER random network model.</p>
+
+{% image network_triangle 200 %}
+
+<p>One way to increase transitivity is to arrange all the nodes in a lattice.  The simplest example is to arrange the nodes in a long row, even connecting the ends to form a circle so that one doesn't have to worry about boundaries.  Then, if one connects each node just to the nodes that are nearby, transitivity in the resulting network  naturally arises.  Since a pair of nodes that are connected to a third node will tend to be close to each in the lattice, it is likely they are also connected.  The number of triangles in the graph will be relatively high, resulting in high transitivity or clustering.</p>
+
+<p>However, such a lattice model will not have the small world property.  Since all connections are two nearby nodes, it will take a long chain of connections to reach a node that is large distance away on the lattice.  If the nodes are arranged on a circle, then the shortest path between nodes at opposites of the circle will be quite large.</p>
+
+<p>Watt and Strogatz developed a model that combines the transitivity of the lattice model with the low path length of the random network model, creating a model known as the <em>small world network</em>.{% citation watts_strogatz_n_1998 %}  They start with the lattice model that has high clustering and high mean path length.  Then, the add to the model a probability $p$ that an edge is <em>rewired</em>, meaning that the edge is disconnected from one of its nodes and then randomly connected to another node anywhere in the network.  Each edge is chosen to be rewired independent with probability $p$.</p>
+
+<p>When the probability $p$ is low, then most connections are still the original local connections that they connect nodes that are nearby in the lattice.  For this reason, the transitivity is still high.   However, some of the edges that have been rewired might turn into long distance connections that connect nodes that are far away from each other in the lattice.  These long distance connections, or <em>shortcuts</em>, immediately create a short distance between the nodes around either end of the shortcut.  Implicit in this conclusion is the fact that path length counts each edge as length one, so the shortcut connections add only one to the path length even though we frequently draw them as long connections.</p>
+
+<p>The below applet illustrates the properties of the small world network.  As you change the rewiring probability $p$, a sample network is shown as well as the {% intlink network_mean_path_length_definition%}mean path length{%endintlink%} $\ell$ and the {% intlink clustering_coefficient_definition%}clustering coefficient{%endintlink%} $C$.</p>
+
+
+{% boxedapplet small_world_network %}
+
+<p>When the rewiring probability $p$ becomes large, the network becomes similar to the ER random network model and the transitivity becomes low.  But, there is a large range of $p$ where the clustering coefficient $C$ is large and the average path length $\ell$ is small.  For this range of the parameter $p$, the network is considered a small world network.</p>
+
+
+
+
+{% endblock%}

@@ -1,0 +1,65 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% index_entry "Taylor polynomial" "problems" %}
+{% title "Linear and quadratic Taylor polynomial problems" %}
+{% description "Sample problems involving first and second order Taylor polynomials." %}
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $f(x)$ be a function where $f(3)=1$, $f'(3)=5$, and $f''(3)=-4$.</p>
+<ol><li>Calculate a linear approximation (i.e., tangent-line approximation) to $f(x)$ around the point $x=3$.</li>
+<li>Calculate a quadratic approximation to $f(x)$ around the point $x=3$.</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $m(q)$ be a function where $m(-2)=-4$, $m'(-2)=0$, $m''(-2)=1$, and $m'''(-2)=5$.</p>
+<ol><li>Calculate a linear approximation (i.e., tangent-line approximation) to $m(q)$ around the value $q=-2$.</li>
+<li>Calculate a quadratic approximation to $m(q)$ around the value $q=-2$.</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>For $g(z)=e^{2-3z}$, calculate a second order Taylor polynomial around the point $z=1$.</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>For $k(t)=t^4-t^2+t$, calculate a second order Taylor polynomial around $t=-2$.</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>In year 3012, the temperature on planet Cook is 15 degrees Celsius and increasing at a rate of 2 degrees Celsius per year. </p>
+
+<ol><li>Define a function that gives the temperature of Cook in years after 3012.  Be sure to define your notation, including the
+  meaning of any variable for time.  Write the above information as
+  conditions on the value and derivative of your function.</li>
+  <li>Given the above information, write a linear approximation (tangent
+  line approximation) for your function and use it to predict the temperature of Cook in years 3062 and 3112 (i.e., in 50 and 100 years).</li>
+  <li>Faced with this prospect of much higher temperatures, the population of Cook has decided to begin stringent new measures designed to slow or even reverse the increase in temperature.  The claim is that the measures will cause the growth rate
+  to decrease by 0.03 degrees Celsius/year each year.  If the new measures are employed, what is the resulting condition on the second derivative of
+  your above function?</li>
+  <li>Given the information of the original rate of temperature increase plus
+  the new information about the results of the new measures, write a quadratic taylor
+  polynomial approximation for your function.  Use it to predict the temperature of Cook in years 3062 and 3112 (i.e., in 50 and 100 years).</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Ten kilometers east of a city, a river is 50 meters wide and increasing at a rate of 1 meter per kilometer as one moves further east.  This rate of increase is itself increasing at a rate of 0.1 meters per kilometer every kilometer as one moves further east.  Define a function that gives the width of the river as a function of distance east of the city.   Be sure to define your notation.  Write the above information as conditions on the value and derivatives of your function.  Write a quadratic Taylor polynomial approximation for your function and use it to estimate the width of the river predict the width of the river 15 kilometers east of the city.</p>
+<p>One you have worked on a few problems, you can compare your solutions to the {% intlink linear_quadratic_taylor_polynomial_problem_solutions %}ones we came up with{%endintlink%}.</p>
+
+
+{% endblock %}

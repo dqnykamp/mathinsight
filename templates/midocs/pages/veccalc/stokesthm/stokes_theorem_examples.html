@@ -1,0 +1,253 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Stokes' theorem" "examples"%}
+{% title "Stokes' theorem examples" "Examples" %}
+{% description "Examples illustrating how to use Stokes' theorem." %}
+
+
+<p>{% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} relates a {% intlink surface_integral_vector_field_introduction %}surface integral{%endintlink%} of a the {% intlink curl_idea %}curl{%endintlink%} of the {% intlink vector_field_overview %}vector field{%endintlink%} to a {% intlink line_integral_vector_field_introduction %}line integral{%endintlink%} of the vector field around the boundary of the surface.  After reviewing the {% intlink stokes_theorem_idea %}basic idea of Stokes' theorem{%endintlink%} and how to make sure you have the {% intlink stokes_theorem_orientation %}orientations of the surface and its boundary matched{%endintlink%}, try your hand at these examples to see Stokes' theorem in action.</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $\dlc$ be the closed curve illustrated below.</p>
+<p class="centeredImage">{%image quarter_circle_3d%}</p>
+
+<p>For $\dlvf(x,y,z) = (y,z,x)$, compute
+\begin{align*}
+  \dlint
+\end{align*}
+using Stokes' Theorem.</p>
+
+<p><b>Solution</b>:
+Since we are given a line integral and told to use Stokes' theorem, we need to compute a surface integral
+\begin{align*}
+  \sint{\dls}{\curl \dlvf},
+\end{align*}
+where $\dls$ is a surface with boundary $\dlc$.  We have freedom to choose
+any surface $\dls$, as long as we orient it so that $\dlc$ is a {%intlink positively_oriented_boundary_definition %}positively
+oriented boundary{%endintlink%}.</p>
+
+<p>In this case, the simplest choice for $\dls$ is clear. 
+Let $\dls$ be the quarter disk in the $yz$-plane.</p>
+
+<p>Given the orientation of the curve $\dlc$, we need to choose the surface
+normal vector $\vc{n}$ to point in which direction?  By the
+{%intlink stokes_theorem_orientation%}right hand rule criterion{%endintlink%}, the normal vector
+should point toward the negative side of the $x$-axis.</p>
+
+<p>We need to calculate the curl of $\dlvf$. We can calculate the curl as
+{%intlink divergence_curl_notation %}using the notation{%endintlink%}
+\begin{align*}
+  \curl(\dlvf) &amp;= 
+  \nabla \times \dlvf = \nabla \times (y,z,x)\\
+  &amp; = \left|
+    \begin{array}{ccc}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      \displaystyle \pdiff{}{x} &amp;
+      \displaystyle \pdiff{}{y} &amp;
+      \displaystyle \pdiff{}{z}\\
+      y &amp; z &amp; x
+    \end{array}
+  \right|\\
+  &amp;= \vc{i} \left(\pdiff{}{y} x - \pdiff{}{z} z\right)
+  -\vc{j} \left(\pdiff{}{x} x - \pdiff{}{z}y\right)\\
+  &amp;\quad+\vc{k} \left(\pdiff{}{x} z - \pdiff{}{y}y\right)\\
+  &amp;= \vc{i} (-1) - \vc{j} (1) + \vc{k} (-1)\\
+  &amp;= (-1, -1, -1)
+\end{align*}</p>
+
+<p>Next, parameterize the surface (the quarter disk) by
+\begin{align*}
+  \dlsp(r,\theta) = (0, r\cos\theta, r\sin\theta)
+\end{align*}
+for $0 \le r \le 1$ and $0 \le \theta \le \pi/2$.</p>
+
+<p>Calculate the normal vector (we don't need to normalize it to the unit
+normal vector $\vc{n}$):
+\begin{align*}
+  \pdiff{\dlsp}{r} &amp;= (0, \cos\theta, \sin\theta)\\
+  \pdiff{\dlsp}{\theta} &amp;= (0, -r\sin\theta, r\cos\theta)\\
+  \pdiff{\dlsp}{r} \times \pdiff{\dlsp}{\theta} &amp;=
+  \vc{i} (r \cos^2\theta + r \sin^2\theta) = r \vc{i}
+\end{align*}</p>
+
+<p>Is the surface oriented properly?  The normal vector points in the
+positive x-direction.  But we need it to  point it negative
+x-direction.  Therefore, the surface is not oriented properly if we
+were to choose this normal vector.</p>
+
+<p>To orient the surface properly, we must instead use the normal vector $\displaystyle\pdiff{\dlsp}{\theta} \times \pdiff{\dlsp}{r} = -r \vc{i}$.</p>
+
+
+<p>At this point, we can already see that the integral
+$\sint{\dls}{\curl \dlvf}$ should be positive.  The vector
+field $\curl \dlvf = (-1,-1,-1)$ and the normal vector $(-r,0,0)$ are
+pointing in a similar direction.</p>
+
+<p>Now, we have all pieces together to compute the integral.
+\begin{align*}
+  \dlint
+  &amp;=\sint{\dls}{\curl \dlvf}\\
+  &amp;= \psintrnro{0}{1}{0}{\pi/2}{\curl \dlvf}{\dlsp}{r}{\theta}\\
+  &amp;=\int_0^1 \int_0^{\pi/2}
+  (-1,-1,-1) \cdot (-r, 0, 0)  d\theta\, dr\\
+  &amp;=\int_0^1 \int_0^{\pi/2} r d\theta\,dr = \frac{\pi}{4}
+\end{align*}</p>
+
+{% navigation_tag "example1check" "Examples" "Double-check example 1" %}
+<h4>Double-check example 1</h4>
+
+<p>Just for verification, we can compute the line $\dlint$ directly.</p>
+
+<p>We need to parametrize $\dlc$.  We'll do it by dividing $\dlc$ into
+three parts.
+<p class="centeredImage">{%image quarter_circle_parts_3d%}</p>
+<p>We'll use the fact that
+\begin{align*}
+  \dlint =\lint{\dlc_1}{\dlvf} +
+  \lint{\dlc_2}{\dlvf} + \lint{\dlc_3}{\dlvf}
+\end{align*}
+</p>
+
+<p>Recall $\dlvf(x,y,z) = (y,z,x)$</p>
+
+<p>First we'll compute the integral over $\dlc_1$.  Parameterize it by
+\begin{align*}
+  \dllp(t) &amp;= (0,0,t),  \qquad 0 \le t \le 1.
+\end{align*}
+Since $\dllp'(t)=(0,0,1)$, we compute that 
+\begin{align*}
+  \dlvf(\dllp(t)) \cdot \dllp'(t) &amp;= \dlvf(0,0,t) \cdot (0,0,1)\\
+  &amp;= (0,t,0) \cdot (0,0,1)\\
+  &amp;=0
+\end{align*}
+Therefore,
+\begin{align*}
+  \lint{\dlc_1}{\dlvf} &amp;= \plint{0}{1}{\dlvf}{\dllp} =0.
+\end{align*}
+</p>
+
+<p>The integral for $\dlc_3$ is similar.
+\begin{align*}
+  \lint{\dlc_3}{\dlvf} = 0
+\end{align*}
+</p>
+
+<p>Last, we'll compute the integral over $\dlc_2$.  Parameterize $\dlc_2$ as
+\begin{align*}
+  \dllp(t) &amp;= (0,\sin t,\cos t), \qquad 0 \le t \le
+  \pi/2,
+\end{align*}
+so that $\dllp'(t) = (0, \cos t, -\sin t)$.  We then compute
+\begin{align*}
+  &amp;\lint{\dlc_2}{\dlvf} =
+  \plint{0}{\pi/2}{\dlvf}{\dllp}
+  \\
+  &amp;=\int_0^{\pi/2}\dlvf(0,\sin t,\cos t) \cdot (0,
+  \cos t,-\sin t)dt\\
+  &amp;=\int_0^{\pi/2} (\sin t, \cos t,0) \cdot (0,
+  \cos t,-\sin t)dt\\
+  &amp;=\int_0^{\pi/2} \cos^2t \, dt\\
+  &amp;=\int_0^{\pi/2} \frac{1+\cos 2t}{2} dt\\
+  &amp;= \frac{t}{2} + \left.\left.\frac{\sin 2t}{4} \right|_0^{\pi/2}\right.
+  = \frac{\pi}{4}.
+\end{align*}
+</p>
+
+<p>Therfore,
+\begin{align*}
+  \dlint = \frac{\pi}{4}
+\end{align*}
+in agreement with our Stokes' theorem answer.</p>
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>We often present Stoke's theorem problems as we did above.  We give a
+curve $\dlc$ and expect you to compute the surface integral over some
+surface $\dls$ with boundary $\dlc$.  In general, one can pick many
+surfaces.  (See {% appletlink stokes_theorem_choose_surface %}this applet{%endappletlink%}.) But, sometimes,  there is a surface that is &ldquo;obviously&rdquo; the
+best one. </p>
+
+<p>One special case where this is relatively easy is when $\dlc$ lies in a
+plane.  This is especially easy when that plane is parallel to a
+coordinate plane, as in the following example.  (We won't work out
+this example, but just discuss how to choose $\dls$).</p>
+
+<p>Let's say you want to use Stokes' theorem to compute $\dlint$ where $\dlc$ is polygon path connecting the following
+points: (1,1,0), (3,1,4), (1,1,5), (-1,1,1)</p>
+
+<p>Does this curve lie in a plane?  Yes, in the plane $y=1$.  The figure
+below is just the plane $y=1$.</p>
+
+<p class="centeredImage">{%image rectangle_y_1%}</p>
+
+<p>If one coordinate is constant, then curve is parallel to a coordinate
+plane.  (The $xz$-plane for above example). For Stokes' theorem, use
+the surface in that plane.  For our example, the natural choice for
+$\dls$ is the surface whose $x$ and $z$ components are inside the above
+rectangle and whose $y$ component is 1.</p>
+
+
+{% navigation_tag "example3" "Examples" "Example 3" %}
+<h4>Example 3</h4>
+
+<p>In other cases, a surface is given explicitly in the problem.</p>
+
+<p>Compute $\dlint$, where $\dlc$ is the curve in
+which the cone $z^2=x^2+y^2$ intersects the plane $z=1$. (Oriented
+counter clockwise viewed from positive $z$-axis).</p>
+
+<p class="centeredImage">{%image curve_intersection_cone_plane %}</p>
+
+<p>\begin{align*}
+  \dlint = \sint{\dls}{\curl \dlvf}
+\end{align*}
+for what surface $\dls$?</p>
+
+<p>In this case, there are two natural choices for the surface.  You
+could use the portion of the plane or the portion of the cone
+illustrated below.</p>
+
+<p class="centeredImage">{%image stokes_surface_option_cone %}
+{%image stokes_surface_option_plane %}</p>
+
+<p>Let $P$ be the portion of the plane $z=1$ with $x^2+y^2 < 1$ with
+upward pointing normal.  Let $Q$ be the portion of the cone
+$z^2=x^2+y^2$ with $0 < z < 1$ with upward angling normal.</p>
+
+<p>How do  $\sint{P}{\curl \dlvf}$ and $\sint{Q}{\curl \dlvf}$ compare?
+They are the same.  (For both surfaces, $\dlc$ is a positive oriented boundary.)</p>
+
+<p>Continue example:  Let
+\begin{align*}
+  \dlvf(x,y,z) = \left(\sin x - \frac{y^3}{3},
+    \cos y + \frac{x^3}{3}, xyz \right)
+\end{align*}
+Compute $\dlint$.</p>
+
+<p>One can show that $\curl(\dlvf) = (xz,-yz,x^2+y^2)$.</p>
+
+<p>Use surface $P$, parameterized by
+\begin{align*}
+  \dlsp(r,\theta) = (r \cos\theta, r\sin\theta, 1) 
+\end{align*}
+for $0 \le r \le 1, 0 \le \theta \le 2\pi$.  Then normal vector is
+\begin{align*}
+  \pdiff{\dlsp}{r} \times \pdiff{\dlsp}{\theta} = (0,0,r),
+\end{align*}
+which points in the correct direction, as mentioned above.
+\begin{align*}
+  \sint{P}{\curl \dlvf}
+  &amp;=\int_0^1 \int_0^{2\pi} \curl(\dlvf(r\cos\theta,r\sin\theta,1))
+  \cdot (0,0,r) d\theta dr \\
+  &amp;=\int_0^1 \int_0^{2\pi} (r\cos\theta, -r\sin\theta, r^2)
+  \cdot (0,0,r) d\theta\, dr \\ 
+  &amp;= \int_0^1 \int_0^{2\pi} r^3 d\theta\, dr\\
+  &amp;= \int_0^1 2\pi r^3 dr = \frac{\pi}{2}
+\end{align*}
+</p>
+
+{%endblock%}
+

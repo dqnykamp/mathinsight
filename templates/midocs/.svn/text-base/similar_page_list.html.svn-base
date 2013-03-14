@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load mi_tags %}
+
+{% block title %}Pages similar to: {{ thepage.title }}{% endblock %}
+{% block extrastyle %}
+<meta name="description" content="A list of Math Insight pages that are similar to the page: {{ thepage.title }}"/>
+{% endblock %}
+{% block nolinksection %}{% endblock %}
+{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
+
+{% block content %}
+
+<h3>Pages similar to: {% intlink thepage "" "normaltext" %}{{ thepage.title }}{%endintlink%}</h3>
+
+<ul class="linklist">
+  {% for simpage in thepage.similar.all %}
+  <li>{% intlink simpage.similar %}{{simpage.similar.title}}{% endintlink %}<br/>
+    {{ simpage.similar.description }}</li>
+  {% empty %}
+  <p>No results found.</p>
+  {% endfor %}
+</ul>
+
+{% endblock %}
+
+
+{% block rightcolumn %}
+
+<p>Back to: {% intlink thepage %}{{ thepage.title }}{%endintlink%}</p>
+
+{% endblock %}

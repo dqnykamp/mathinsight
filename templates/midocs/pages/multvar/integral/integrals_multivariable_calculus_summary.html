@@ -1,0 +1,373 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integral" "multivariable"%}
+{% title "The integrals of multivariable calculus" "Introduction"%}
+{% description "A summary of the integrals of multivariable calculus, including calculation methods and their relationship to the fundamental theorems of vector calculus." %}
+
+<p>Multivariable calculus includes six different generalizations 
+of the familiar one-variable integral of a scalar-valued function
+over an interval.  
+One can integrate functions over one-dimensional curves, two dimensional
+planar regions and surfaces, as well as three-dimensional volumes. 
+When integrating over curves and surfaces, one can integral vector fields,
+where the one integrates either the tangential (for curves) or the
+normal (for surfaces) component of the vector field.</p>
+
+<p>In this page, we outline the various integrals, methods you can use to solve
+them, and their relationship to the {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}.</p>
+
+<p class="pre_list">The integrals covered in this page are:</p>
+  <ul>
+    <li><a href="#lineintscalar">the line integral of scalar-valued function</a>,</li>
+    <li><a href="#lineintvector">the line integral of vector fields</a>,</li>
+    <li><a href="#surfintscalar">the surface integral of scalar-valued function</a>,</li>
+    <li><a href="#surfintvector">the surface integral of vector fields</a>,</li>
+    <li><a href="#doubleint">double integrals</a>, and</li>
+    <li><a href="#tripleint">triple integrals</a>.</li>
+</ul>
+
+
+{% navigation_tag "lineintscalar" "The integrals" "Scalar line integral"%}
+<h4>Line integral of scalar-valued function</h4>
+
+<p>The {%intlink line_integral_scalar_function_introduction%}line integral 
+of a scalar-valued function{%endintlink%} $\dlsi(\vc{x})$ over a curve $\dlc$ 
+is written as 
+\begin{align*}
+  \dslint.
+\end{align*}
+One physical interpretation of this line integral is that it gives the 
+mass of a wire from its density $\dlsi$.</p>
+
+<p>The only way we've encountered to evaluate this integral is the direct
+method.  We must parametrize $\dlc$ by some function $\dllp(t)$, for $a
+\le t \le b$.  Then, we can calculate the line integral by turning it
+into a regular one-variable integral of the form
+\begin{align*}
+   \dslint = \dpslint.
+\end{align*}
+</p>
+
+<p>Note that the &ldquo;length&rdquo; $d\als$ became $\| \dllp'(t)\|dt$.  
+This quantity $\| \dllp'(t)\|$  measures how
+$\dllp(t)$ stretches or shrinks the interval $[a,b]$ as it maps it
+onto $\dlc$.</p>
+
+{% navigation_tag "lineintvector" "The integrals" "Vector line integral"%}
+<h4>Line integral of a vector field</h4>
+
+<p>The {%intlink line_integral_vector_field_introduction%}line integral
+ of a vector field{%endintlink%} $\dlvf(\vc{x})$
+over a curve $\dlc$ is written as
+\begin{align*}
+  \dlint.
+\end{align*}
+One physical interpretation of this line integral is the calculation 
+of work when a particle moves along a path.
+If $\dlvf$ were a force acting on a particle moving
+along $\dlc$, then the integral would be the total work performed by the
+force on the particle.</p>
+
+<p>This integral is one of the most important of multivariable calculus.  
+We have
+four alternatives to evaluate the integral, although most of the
+alternatives work only in special cases.</p>
+
+<ol>
+<li><p> We can compute the integral directly.  We parametrize $\dlc$ by
+  some function $\dllp(t)$, for $a \le t \le b$.  Then
+  \begin{align*}
+    \dlint = \dplint
+  \end{align*}
+  </p>
+
+  <p>This method always applies.  Sometimes, though, the integral will be
+  difficult or we won't even be able to evaluate it.  Our lives can be
+  made easier by using one of the 
+    {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}
+  to convert the line integral into something else.</p>
+  
+  <p>Since this integral is really a
+   <a href="#lineintscalar">line integral of the scalar-valued function</a> $\dlsi =
+  \dlvf \cdot \vc{T}$ where $\vc{T}$ is the unit tangent vector
+  \begin{align*}
+    \vc{T} = \frac{ \dllp'(t)}{\| \dllp'(t)\|},
+  \end{align*}
+  the formula for the direct method is the same as the formula for the
+  scalar-valued path integral with $\dlsi =   \dlvf \cdot \vc{T}$.</p>
+  </li>
+
+<li><p>If the vector field $\dlvf$ {% intlink conservative_vector_field_determine%}happens to be conservative{%endintlink%},
+    then we could use the {% intlink gradient_theorem_line_integrals%}gradient theorem for line integrals{%endintlink%}.
+    We reduce the problem from an integral over the
+    curve $\dlc$ to something just depending on the &ldquo;boundary&rdquo; of $\dlc$,  i.e., its endpoints.  </p>
+    
+  <p>We need to {% intlink conservative_vector_field_find_potential %}find a potential function{%endintlink%} $f$ so
+  that $\nabla f = \dlvf$.  Then,
+  \begin{align*}
+    \dlint  = f(\vc{q}) - f(\vc{p}),
+  \end{align*}
+  where $\vc{p}$ and $\vc{q}$ are the endpoints of $\dlc$.</p>
+  
+  <p>If $\dlc$ also happens to be a closed curve, then the integral of
+    a conservative vector field $\dlvf$ will be zero.  
+    Also, that if you know $\dlvf$ is conservative, another thing you can do is just change the curve
+  $\dlc$ to another curve that has the same endpoints as $\dlc$.  In this
+  case, the line integral of $\dlvf$ over $\dlc$ is the same as the line
+  integral of $\dlvf$ over any other curve with the same endpoints.</p>
+</li>
+  
+<li><p>If the vector field $\dlvf$ and the curve $\dlc$ happen to be in
+    two dimensions and if $\dlc$ happens to be a 
+    {%intlink simple_curve_definition %}simple{%endintlink%}
+    {%intlink closed_curve_definition %}closed{%endintlink%}
+    curve, then we
+    can use {%intlink greens_theorem_idea %}Green's theorem{%endintlink%}.
+    Green's theorem converts the line integral over $\dlc$ to a double
+    integral over the interior of $\dlc$, which we call $\dlr$,
+    \begin{align*}
+    \dlint  = \iint_\dlr \left(\pdiff{\dlvfc_2}{x} -
+    \pdiff{\dlvfc_1}{y} \right) \, dA.
+    \end{align*}
+    Note that $\dlvf$ must be continuously differentiable everywhere in $\dlr$ for this to work.
+    Sometimes we write $\dlc= \partial \dlr$ to denote that $\dlc$ is the
+    boundary of $\dlr$.  $\dlc$ must be oriented in a counterclockwise
+    fashion, otherwise, we'll be off by a minus sign.</p>
+  </li>
+
+<li><p> If the vector field $\dlvf$ and the curve $\dlc$ happen to be in
+  three dimensions and if $\dlc$ happens to be a    
+    {%intlink simple_curve_definition %}simple{%endintlink%}
+    {%intlink closed_curve_definition %}closed{%endintlink%}
+    curve, then we
+  can use {%intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%}.
+  Stokes' theorem converts the line integral over $\dlc$ to a surface
+  integral over any surface $\dls$ for which $\dlc$ is a boundary,
+  \begin{align*}
+    \dlint  = \sint{\dls}{\curl \dlvf},
+  \end{align*}
+  and is valid for any surface over which $\dlvf$ is continuously differentiable.
+  Sometimes we write $\dlc= \partial \dls$ to denote that $\dlc$ is the
+  boundary of $\dls$.  $\dlc$ must be a {% intlink positively_oriented_boundary_definition%}positively oriented boundary{%endintlink%} of $\dls$, otherwise, we'll be off by a minus sign.</p>
+</li>
+</ol>
+
+{% navigation_tag "surfintscalar" "The integrals" "Scalar surface integral"%}
+<h4>Surface integral of a scalar-valued function</h4>
+
+<p>The {%intlink surface_integral_scalar_function_introduction%}surface integral of a scalar-valued function{%endintlink%}
+$\dlsi(\vc{x})$ over a surface $\dls$  is written as 
+\begin{align*}
+  \dssint
+\end{align*}
+One physical interpretation of the integral is the mass of a sheet with density given by $\dlsi$.</p>
+
+<p>The only way we've encountered to evalute this integral is the direct
+method.  We must parametrize $\dls$ by some function $\dlsp(\spfv,\spsv)$, for $(\spfv,\spsv) \in \dlr$.  Then,
+\begin{align*}
+   \dssint = \dpssint
+\end{align*}</p>
+
+<p>Note that the &ldquo;area&rdquo; $d\sas$ became $\left\| \pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}\right\| \,d\spfv\,d\spsv$.  
+The quantity $d\sas$ became $\left\| \pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}\right\|$  measures how
+$\dlsp(\spfv,\spsv)$ stretches or shrinks the region $\dlr$ as it maps it
+onto $\dls$.</p>
+
+{% navigation_tag "surfintvector" "The integrals" "Vector surface integral"%}
+<h4>Surface integral of a vector field</h4>
+
+<p>The surface integral over surface $\dls$ of a vector field $\dlvf(\vc{x})$
+is written as 
+\begin{align*}
+  \dsint.
+\end{align*}
+A physical interpretation is the flux of a fluid through $\dls$ whose
+velocity is given by $\dlvf$.
+For this reason, we sometimes
+refer to the integral as a &ldquo;flux integral.&rdquo;</p>
+
+<p>Like the <a href="#lineintvector">line integral of a vector field</a>,
+this integral plays a big role in this course.  We have three
+alternatives to evaluate the integral, although most of the
+alternatives work only in special cases.</p>
+
+<ol>
+<li><p>We can compute the integral directly.  We parametrize $\dls$ by
+    some function $\dlsp(\spfv,\spsv)$, for $(\spfv,\spsv) \in \dlr$.  Then,
+    \begin{align*}
+    \dsint = \dpsint.
+    \end{align*}
+  </p>
+
+  <p>This method always applies.  Sometimes, though, the integral will be
+    difficult or we won't even be able to evaluate it.  Our lives can be
+  made easier by using one of the
+    {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}
+  to convert the surface integral into something else.</p>
+  
+  <p>Since this integral is really a <a href="#surfintscalar">surface
+    integral of the scalar-valued function</a> $\dlsi = \dlvf \cdot
+  \vc{n}$ where $\vc{n}$ is the unit normal vector
+  \begin{align*}
+    \vc{n} = \frac{\displaystyle\pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}}
+    {\displaystyle\left\|\pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}\right\|},
+  \end{align*}
+  the formula for the direct method is the same as the formula for the
+  scalar-valued surface integral with $\dlsi = \dlvf \cdot
+  \vc{n}$.</p></li>
+  
+<li><p>If the vector field $\dlvf$ happens to be the curl of another
+  vector field $\vc{G}$, i.e., $\dlvf = \curl \vc{G}$, then we can
+  apply {% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} to convert the surface
+  integral of $\curl \vc{G}$ into the line integral of $\vc{G}$ around
+  the {%intlink positively_oriented_boundary_definition%}positively oriented boundary{%endintlink%} of $\dls$, which we
+  denote $\partial \dls$,
+  \begin{align*}
+    \dsint = \sint{\dls}{\curl \vc{G}}
+    =\lint{\dlc}{\vc{G}}
+  \end{align*}
+  </p>
+  
+  <p>Multivariable calculus student's don't typically learn methods to find $\vc{G}$ from
+  $\dlvf$.  We can use Stokes' theorem to convert a surface integral
+  into a line integral only if we are told outright that $\dlvf =
+  \curl \vc{G}$ and are given what $\vc{G}$ is.  But, if given the
+  surface integral that looks like $\sint{\dls}{\curl \vc{G}}$, we can
+  immediately recognize that Stokes' theorem is an option.</p>
+  
+  <p>Stokes' theorem allows us to do one more thing to the
+  integral $\sint{\dls}{\curl \vc{G}}$.  We can
+  switch the surface $\dls$ to any other surface $\dls'$ as long as the
+  boundaries of $\dls$ and $\dls'$ are the same, i.e., $\partial \dls =
+  \partial \dls'$ (assuming both boundaries are {%intlink positively_oriented_boundary_definition%}positively oriented{%endintlink%}).  If $\dls$ is a complicated surface, we could feasibly save
+  ourselves some work by integrating over another surface $\dls'$ if that
+  surface is simpler than $\dls$.</p></li>
+
+<li><p>If the surface $\dls$ happens to be a closed surface so that it
+  is the boundary of some solid $\dlv$, i.e., $\dls = \partial \dlv$,
+  then we can use the {%intlink divergence_theorem_idea %}divergence theorem{%endintlink%} 
+  to convert the surface integral into the triple
+  integral of $\div \dlvf$ over $\dlv$,
+  \begin{align*}
+    \dsint = \iiint_\dlv \div
+    \dlvf \, dV,
+  \end{align*}
+  where we orient $\dls$ so that it has an outward pointing normal
+  vector.  This works only if $\dlvf$ is continuously differentiable
+  everywhere in the solid $\dlv$.</p></li>
+</ol>
+
+{% navigation_tag "doubleint" "The integrals" "Double integral"%}
+<h4>Double integrals</h4>
+
+<p>The {%intlink double_integral_introduction %}double integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
+two-dimensional region $\dlr$ is written as
+\begin{align*}
+  \iint_\dlr \dlsi \, dA.
+\end{align*}
+One physical interpretation is the mass of a region with density \dlsi$.</p>
+
+<p>We have encountered three alternatives to evaluate the integral.
+<ol>
+  <li><p>We can compute the integral directly in terms of the original
+  variables $x$ and $y$.  In this case, $dA = dx\,dy$.</p></li>
+
+  <li><p>We can compute the integral by {% intlink double_integral_change_variables_introduction%}changing to the variables{%endintlink%} $\cvarfv$ and
+  $\cvarsv$ by finding a function $(x,y) = \vc{T}(\cvarfv,\cvarsv)$.  Then the integral
+  is
+  \begin{align*}
+    \iint_\dlr \dlsi\, dA = \left.\iint_{\dlr^{\textstyle *}}\right. \dlsi(\vc{T}(\cvarfv,\cvarsv))
+    \left| \det \jacm{\vc{T}}(\cvarfv,\cvarsv) \right| d\cvarfv\,d\cvarsv,
+  \end{align*}
+  where $\dlr$ is parametrized by $(x,y)=\vc{T}(\cvarfv,\cvarsv)$ for $(\cvarfv,\cvarsv)$ in
+  $\dlr^{\textstyle *}$.  We sometimes write the determinant of the matrix of
+  partial derivatives 
+  of $\vc{T}(\cvarfv,\cvarsv)$ as $\displaystyle \det \jacm{\vc{T}}(\cvarfv,\cvarsv) =
+  \pdiff{(x,y)}{(\cvarfv,\cvarsv)}$.</p></li>
+
+<li><p> If $f$ happens to be equal to $\pdiff{\dlvfc_2}{x} -
+  \pdiff{\dlvfc_1}{y}$ for some vector field $\dlvf$, then we could use
+  {%intlink greens_theorem_idea %}Green's theorem{%endintlink%}
+  to convert the double integral
+  into the integral of $\dlvf$ around the boundary of $\dlr$, which we
+  denote $\partial \dlr$,
+  \begin{align*}
+    \iint_\dlr f \, dA = \iint_\dlr \left(\pdiff{\dlvfc_2}{x} -
+  \pdiff{\dlvfc_1}{y}\right) dA = \lint{\partial \dlr}{\dlvf}.
+  \end{align*}
+  To orient the boundary properly, outside boundaries must be
+  counterclockwise and inner boundaries must be clockwise.</p>
+  
+  <p>We usually think of Green's theorem going the other way, i.e.,
+  converting a line integral into a double integral.  One reason for
+  this is that multivariable calculus students don't usually learn methods to find $\dlvf$ from $f$.
+  We can use Green's theorem to convert a double integral into a line
+  integral only if we are told outright that $f =\pdiff{\dlvfc_2}{x} -
+  \pdiff{\dlvfc_1}{y}$ and are given what $\dlvf$ is.  But, if given the
+  double integral that looks like $\iint_\dlr \left(\pdiff{\dlvfc_2}{x} -
+  \pdiff{\dlvfc_1}{y}\right) dA$, we can immediately recognize that Green's
+  theorem is an option.</p>
+
+  <p>As a special case, if we are given an
+  integral $\iint_\dlr dA$ (i.e., {%intlink greens_theorem_find_area %}finding the area{%endintlink%}), we can let
+  $\dlvf(x,y) = (-y,x)/2$ so that $\pdiff{\dlvfc_2}{x} -
+  \pdiff{\dlvfc_1}{y} =1$ and $\iint_\dlr dA = \lint{\partial \dlr}{\dlvf}$.</p>
+</li>
+</ol>
+
+{% navigation_tag "tripleint" "The integrals" "Triple integral"%}
+<h4>Triple integrals</h4>
+
+<p>The {%intlink triple_integral_introduction %}triple integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
+three-dimensional solid $\dlv$ is written as
+\begin{align*}
+  \iiint_\dlv \dlsi \, dV.
+\end{align*}
+One physical interpretation is the mass of a solid with density given by $\dlsi$.</p>
+
+<p>We have encountered three alternatives to evaluate the integral.</p>
+
+<ol>
+<li><p>We can compute the integral directly in terms of the original
+    variables $x$, $y$, and $z$.  In this case, $dV = dx\,dy\,dz$.</p></li>
+  
+<li><p>We can compute the integral by {%intlink triple_integral_change_variables_story%}changing to the variables{%endintlink%} $\cvarfv$,
+  $\cvarsv$, and $\cvartv$ by finding a function $(x,y,z) = \vc{T}(\cvarfv,\cvarsv,\cvartv)$.  Then
+  the integral is
+  \begin{align*}
+    \iiint_\dlv \dlsi\, dV = \left.\iiint_{\dlv^{\textstyle *}}\right. \dlsi(\vc{T}(\cvarfv,\cvarsv,\cvartv))
+    \left| \det \jacm{\vc{T}}(\cvarfv,\cvarsv,\cvartv) \right| d\cvarfv\,d\cvarsv\,d\cvartv,
+  \end{align*}
+  where $\dlv$ is parametrized by $(x,y,z)=\vc{T}(\cvarfv,\cvarsv,\cvartv)$ for $(\cvarfv,\cvarsv,\cvartv)$
+  in $\dlv^{\textstyle *}$.  We sometimes write the determinant of the matrix
+  of partial derivatives of $\vc{T}(\cvarfv,\cvarsv,\cvartv)$ as $\displaystyle \det
+  \jacm{\vc{T}}(\cvarfv,\cvarsv,\cvartv) = \pdiff{(x,y,z)}{(\cvarfv,\cvarsv,\cvartv)}$.</p></li>
+
+<li><p>If $\dlsi$ happens to be equal to $\div \dlvf$ for some vector
+  field $\dlvf$, then we could use the
+  {%intlink divergence_theorem_idea%}divergence theorem{%endintlink%}
+  to convert the triple integral into the surface
+  integral of $\dlvf$ around the boundary of $\dlv$, which we denote
+  $\partial \dlv$,
+  \begin{align*}
+     \iiint_\dlv \dlsi\, dV =  \iiint_\dlv \div \dlvf\, dV 
+     = \sint{\partial \dlv}{\dlvf}.
+  \end{align*}
+  </p>
+  
+  <p>We usually think of the divergence theorem going the other way,
+  i.e., converting a surface integral into a triple integral.  One
+  reason for this is that multivariable calculus student don't typically learn  methods to find $\dlvf$
+  from $f$.  We can use the divergence theorem to convert a triple
+  integral into a surface integral only if we are told outright that
+  $\dlsi = \div \dlvf$ and are given what $\dlvf$ is.  But, if given a
+  triple integral that looks like $\iiint_\dlv \div\dlvf \, dV$,
+  we can immediately recognize that the divergence theorem is an
+  option.</p></li>
+</ol>
+
+
+{%endblock%}

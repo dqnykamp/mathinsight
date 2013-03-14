@@ -1,0 +1,15 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "cobwebbing"  %}
+{% index_entry "discrete dynamical system" "cobwebbing" %}
+{% title "Using cobwebbing as a graphical solution technique for discrete dynamical systems" %}
+{% description "How to use cobwebbing to approximate the solution of discrete dynamical systems." %}
+
+{% boxedvideo cobwebbing_graphical_solution %}
+x
+{% boxedapplet function_iteration %}
+
+{% boxedapplet function_iteration_cobweb %}
+
+{% boxedapplet function_iteration_cobweb_combined %}
+
+{% endblock %}

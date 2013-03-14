@@ -1,0 +1,180 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "divergence" "subtleties"  %}
+{% title "Subtleties about divergence" %}
+{% description "Counterexamples illustrating how the divergence of a vector field may differ from the intuitive appearance of the expansion of a vector field." %}
+
+{% navigation_tag "picture" "Picture" %}
+<h4>Picture of divergence as expansion</h4>
+
+<p>We have shown that {% intlink divergence_idea %}the divergence measures
+  expansion or compression of a vector field{%endintlink%}.  We immersed a sphere
+into a vector field that had positive divergence everywhere, as shown
+below.  No matter where one moves the sphere (using the sliders), more
+fluid flows out of the sphere than into the sphere, indicating the
+fluid is expanding.</p>
+
+{% boxedapplet divergent_vector_field_movable_sphere %}
+
+<p>The vector field pictured is
+\begin{align*}
+  \dlvf(x,y,z) = (x,y,z).
+  \label{vecfield1}
+\end{align*}
+Its
+divergence is
+\begin{align*}
+  \div \dlvf(x,y,z) = \pdiff{}{x}x + \pdiff{}{y}y + \pdiff{}{z}z = 1+1+1=3,
+\end{align*}
+which is a positive constant independent of the point $(x,y,z)$.  The
+picture of the vector field looks like fluid exploding outward, so it
+makes sense that the fluid is expanding.</p>
+
+
+{% navigation_tag "misleading" "Misleading picture" %}
+<h4>Can a picture be misleading?</h4>
+
+<p>As one becomes more sophisticated in mathematical thinking, one
+discovers that pictures can sometimes be misleading.  (One reason
+mathematicians demand mathematical proof is to ensure they aren't
+fooling themselves into jumping to conclusions based on incomplete
+information, such as the information gained solely by exploring
+pictures.)  With regard to divergence, one might wonder if an outward
+flow, such as pictured above, always means that the divergence of the
+vector field is positive?</p>
+
+<p>Here's a picture of a different vector field showing fluid flowing
+outward from the origin.  However, it differs from the above vector
+field in that the arrows get shorter the further they are from the
+origin.  Is the divergence of this vector field positive?  In other
+words, is the fluid expanding as it may look like from the picture?</p>
+
+{% boxedapplet outward_flowing_nondivergent_vector_field %}
+
+<p>To answer this question, we have to compute the divergence.  This
+vector field is 
+\begin{align*}
+  \dlvf(x,y,z) = \frac{(x,y,z)}{(x^2+y^2+z^2)^{3/2}},
+  \label{vecfield2}
+\end{align*}
+for $(x,y,z) \ne (0,0,0)$.  (It is not defined at the origin.)  This
+new vector field is the same as the first vector field above except that we have divided it by its magnitude
+raised to the third power. (We could write this vector field as
+$\dlvf(\vc{x}) = \frac{\vc{x}}{\norm{\vc{x}}^3}$, where
+$\vc{x}=(x,y,z)$.)  In this way, the vector field gets smaller as one
+moves away from the origin.</p>
+
+<p>We {%intlink divergence_curl_notation %}calculate the divergence{%endintlink%} of $\dlvf$:
+\begin{align*}
+  \div \dlvf(x,y,z) &amp;= \pdiff{}{x}\frac{x}{(x^2+y^2+z^2)^{3/2}}
+  + \pdiff{}{y}\frac{y}{(x^2+y^2+z^2)^{3/2}} + 
+  \pdiff{}{z}\frac{z}{(x^2+y^2+z^2)^{3/2}} 
+  \\
+  &amp;= \frac{(x^2+y^2+z^2) - 3x^2}
+  {(x^2+y^2+z^2)^{5/2}}
+  +
+  \frac{(x^2+y^2+z^2) - 3y^2}
+  {(x^2+y^2+z^2)^{5/2}}
+  +
+  \frac{(x^2+y^2+z^2) - 3z^2}
+  {(x^2+y^2+z^2)^{5/2}}\\
+  &amp;=
+  \frac{3(x^2+y^2+z^2) - 3(x^2+y^2+z^2)}
+  {(x^2+y^2+z^2)^{5/2}}
+  =0
+\end{align*}
+</p>
+
+<p>Hence, as long as we are not at the origin, the divergence is zero and
+the flow is neither expanding nor contracting.</p>
+
+<p>How can we reconcile this fact with the picture?  If the sphere is at the
+origin, clearly the flow is out of the sphere.  But the divergence is
+not defined at the origin, so we have to ignore that point.  If you
+move the sphere away from the origin, it is not clear if there is more
+fluid flowing into the sphere or more fluid flowing out.  On one hand,
+the flow out of the sphere is slower than the flow into the sphere, as
+the arrows are getting shorter.  On the other hand, because the flow
+is radiating outward, the fluid is flowing out of the sphere across
+more than half of its surface.  For this particular vector field, I
+balanced those two effects (by carefully choosing how quickly the
+vector field shrinks as one moves away from the origin) so that the
+net flow into the sphere is exactly equal to the net flow out of the
+sphere.  If we stay away from the origin, the fluid is neither
+expanding nor compressing and the divergence is zero.</p>
+
+{% navigation_tag "dimension" "Dimension" %}
+<h4>Dependence on dimension</h4>
+
+<p>Here's one more subtlety just for fun.  To make the divergence zero in
+the above example, I balanced the outward flow of the vector field
+by shrinking the vector field as one moves away from the origin.
+The flow out of the sphere was equal to the flow into the
+sphere and there was no expansion or compression.</p>
+
+<p>What happens if I take the two-dimensional version of the previous vector field?  The 2D vector field is
+\begin{align*}
+  \dlvf(x,y) = \frac{(x,y)}{(x^2+y^2)^{3/2}},
+\end{align*}
+for $(x,y) \ne (0,0)$.  (It is not defined at the origin.)  This
+vector field is shown below along with a circle that you can move by
+dragging its top red point with your mouse.  Move the circle so that
+it is away from the origin.  In this case, is the divergence positive,
+negative, or zero?</p>
+
+{% boxedapplet outward_flowing_negative_divergent_vector_field_2D %}
+
+<p>We calculate the divergence of $\dlvf$:
+\begin{align*}
+  \div \dlvf(x,y) &amp;= \pdiff{}{x}\frac{x}{(x^2+y^2)^{3/2}}
+  + \pdiff{}{y}\frac{y}{(x^2+y^2)^{3/2}}
+  \\
+  &amp;= \frac{(x^2+y^2) - 3x^2}
+  {(x^2+y^2)^{5/2}}
+  +
+  \frac{(x^2+y^2) - 3y^2}
+  {(x^2+y^2)^{5/2}}
+  \\
+  &amp;=
+  \frac{2(x^2+y^2) - 3(x^2+y^2)}
+  {(x^2+y^2)^{5/2}}
+  =
+  \frac{-1}
+  {(x^2+y^2)^{3/2}}
+  <0
+\end{align*}
+</p>
+
+<p>In this case, away from the origin, the divergence is negative.  The
+fluid is compressing even though it is flowing outward.</p>
+
+<p>Why did the dimension make a difference?  One can see the difference
+from the calculations, but what is the difference in the geometric
+picture?  As in the three-dimensional case, the fluid flows into the
+circle faster than it flows out of the circle, as the arrows are
+getting shorter.  And, as in the three-dimensional case, because the
+flow is radiating outward, the fluid is flowing out of the circle over
+more than half the boundary of the circle.  But, because we are only
+in two dimensions, the effect from the boundary is smaller.  I chose
+the vector field to balance the two effects and make the divergence
+zero in three dimensions.  But, this makes the divergence of the
+two-dimensional analogue be negative.</p>
+
+<p>You can check that the divergence of the vector field
+\begin{align*}
+  \dlvf(x,y) = \frac{(x,y)}{x^2+y^2}
+\end{align*}
+is zero but that the divergence of the three-dimensional analogue 
+\begin{align*}
+  \dlvf(x,y,z) = \frac{(x,y,z)}{x^2+y^2+z^2}
+\end{align*}
+is positive.  In general, for a number $p$, the divergence of the
+vector field
+\begin{align*}
+  \dlvf(\vc{x}) = \frac{\vc{x}}{\norm{\vc{x}}^p}
+\end{align*}
+is $\div \dlvf(\vc{x}) = (3-p)/\norm{\vc{x}}^p$ in three dimensions
+and is $\div \dlvf(\vc{x}) = (2-p)/\norm{\vc{x}}^p$ in two dimensions.
+So you need $p=3$ to have zero divergence in three dimensions and
+$p=2$ to have zero divergence in two dimensions.</p>
+
+{% endblock %}

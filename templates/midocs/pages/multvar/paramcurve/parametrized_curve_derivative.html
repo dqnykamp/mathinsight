@@ -1,0 +1,92 @@
+{% extends "midocs/page_base.html" %}
+
+{% load mi_tags %}
+
+{% block content %}
+{% index_entry "parametrization" "curve"%}
+{% index_entry "parametrized curve" "derivative"%}
+{% index_entry "derivative" "parametrized curve"%}
+{% index_entry "parametrized curve" "tangent vector"%}
+{% index_entry "tangent vector" "parametrized curve" %}
+{% title "Derivatives of parameterized curves" %}
+{% description "The derivative of the vector-valued function parameterizing a curve is shown to be a vector tangent to the curve." %}
+
+<p>The derivative of a vector-valued function is the
+{% intlink derivative_matrix %}matrix of partial derivatives{%endintlink%}.
+For vector-valued functions of a single variable,
+$\dllp: \R \to \R^n$ {% confusedlink function_notation %}, this matrix is an $n \times 1$
+column matrix, which each component is the derivative 
+of a component of $\dllp$ with respect to that single variable.
+Since the matrix has only one column, we could view it as a vector.
+For example, if $\dllp(t)$ had three components, we could write the 
+derivative as
+\begin{align*}
+  D\dllp(t) = 
+  \left[
+  \begin{array}{c}
+  \diff{\dllpc_1}{t}(t)\\
+  \diff{\dllpc_2}{t}(t)\\
+  \diff{\dllpc_3}{t}(t)
+  \end{array}
+  \right]
+  = (\dllpc_1'(t),\dllpc_2'(t),\dllpc_3'(t))
+  =\dllp'(t).
+\end{align*}
+</p>
+
+<p>We could also have equivalently defined the derivative 
+using the limit definition that we use in one-variable.
+This definition will be useful for obtaining a 
+geometric interpretation of the derivative 
+as a derivative of the curve parametrized by the vector-valued function.</p>
+
+<p>The limit definition of the derivative is
+<a id="limit_definition"></a>
+\begin{align*}
+  \dllp'(t) = \lim_{h \rightarrow 0}
+  \frac{\dllp(t+h) - \dllp(t)}{h}.
+\end{align*}
+In one-variable calculus, the derivative was the slope of the graph.
+Is this true for parametrized curves?  In this case, the
+derivative is a vector, so it can't just be the slope (which is a
+scalar).  Instead, the derivative $\dllp'(t)$ is the tangent vector
+of the curve traced by $\dllp(t)$.  In this way, the direction of the
+derivative $\dllp'(t)$ specifies the slope of the curve traced by
+$\dllp(t)$.  The length (or magnitude) of the derivative
+$\|\dllp'(t)\|$ specifies how fast $\dllp(t)$ traces out the curve as
+you change $t$.
+</p>
+
+<p>The below applet illustrates why the derivative defined by the limit defintion
+is tangent to the curve.
+We could denote the estimate of the derivative shown by the red arrow as
+\begin{align*}
+  \vc{g}_h(t) =   \frac{\dllp(t+h) - \dllp(t)}{h}.
+\end{align*}
+Note that $\vc{g}_h(t)$ is defined so that 
+\begin{align*}
+  \lim_{h \to 0} \  \vc{g}_h(t) = \dllp'(t).  
+\end{align*}
+</p>
+
+{% boxedapplet derivative_parametrized_curve %}
+
+<p>
+For any value of $t$, you can see that when $h=1$, then $\vc{g}_h(t) =
+\dllp(t+h) - \dllp(t)$ (since the red vector joins the heads of
+the blue and green vectors).  
+As you move $h$ toward zero, the red vector approaches the tangent of
+the ellipse.  When $h$ is zero, the blue and green vectors are
+identical.  In this limit, the red vector is the derivative
+$\dllp'(t)$ and is tangent to the ellipse.
+</p>
+
+<p>
+We can use the fact that $\dllp'(t)$ is tangent to the curve
+$\dllp(t)$ to calculate the equation for
+{% intlink parametrized_curve_tangent_line %}the tangent line to a
+curve{%endintlink%}.</p>
+
+
+
+{%endblock%}

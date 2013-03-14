@@ -1,0 +1,51 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% load url from future %}{% block content %}
+{% title "Study guide for Math 1241 discrete dynamical system module exam 1" %}
+{% description "List of topics that could be on the discrete dynamical system module exam 1." %}
+
+
+<p>The discrete dynamical systems 1 module exam for Math 1241 is based on part 2 from the <a href="{% url 'mithreads-thread' 'math1241' %}">Math 1241 thread</a>, with the knowledge from part 1 also assumed.  The following highlights what is and what is not good potential material for this exam.</p>
+
+
+
+<ol><li>
+<p>Functions, variables, and parameters (<a href="{% url 'mithreads-thread' 'math1241' %}#functions">Functions from Math 1241 thread</a>).</p>
+
+<ol>
+<li>Be comfortable with variables, parameters, and functions. Manipulating them is a key basic skill for this course.</li>
+<li>Of particular importance is being able to work with parameters that don't have a specific numerical value.</li>
+<li>Exam problems are likely to be more involved than a simple calculation from this section, but the ability to do such calculations is assumed.</li>
+</ol>
+</li>
+
+<li>
+<p>Exponentials and logarithms (<a href="{% url 'mithreads-thread' 'math1241' %}#explog">Exponentials and logarithms from Math 1241 thread</a>).</p>
+
+<p>You should be able to manipulate exponential functions and logarithms.</p>
+</li>
+
+<li>
+<p>Discrete-time dynamical systems (<a href="{% url 'mithreads-thread' 'math1241' %}#discrete_1">Discrete dynamical system 1 from Math 1241 thread</a>).</p>
+
+<p>Discrete-time dynamical systems will be the core this exam. </p>
+
+<p>Key points include:</p>
+<ol><li>{% intlink discrete_dynamical_system_introduction %}Calculating the first few points of  a trajectory from an initial condition{% endintlink %}.</li>
+<li>Solving the system if it is linear without a constant term.    In this case, one obtains {% intlink exponential_growth_decay_discrete %}exponential growth or decay{%endintlink%}.</li>
+<li> Estimating a solution with {% intlink cobwebbing_graphical_solution %}cobwebbing using the graph of the updating function{%endintlink%}.</li>
+<li>{% intlink equilibria_discrete_dynamical_systems %}Finding equilibria{% endintlink %} analytically and graphically.</li>
+<li>{% intlink equilibria_discrete_dynamical_systems_stability_idea %}Determining the stability of an equilibrium{% endintlink %} via cobwebbing or by observing trajectories near the equilibrium.</li>
+<li>Determining the {% intlink doubling_time_half_life_discrete %}doubling time or the half-life{% endintlink %} of a linear  dynamical system.</li>
+<li>Analyzing the influence of parameters on the behavior of the system.</li>
+<li>Setting up a dynamical system from a verbal description of a system.  This process includes
+<ol>
+<li>carefully defining the notation used.</li>
+<li>possibly introducing parameters to describe quantities whose numerical value is unknown or whose value may change between experiments.</li>
+<li>possibly estimating parameters of the system from data.</li>
+</ol>
+
+ The dynamical systems you would be asked to set up will be linear (possibly with a constant term) unless any nonlinear component is clearly specified.  They would be along the lines of the {% intlink bacteria_growth_initial_model %}bacteria growth{% endintlink%}, {% intlink penicillin_clearance_model %}penicillin clearance{% endintlink%}, or {% intlink chemical_pollution_lake_model %}chemical pollution{%endintlink%} examples.  (Sorry, no {% intlink controlling_rabbit_population %}rabbit control challenges{%endintlink%} on the exam.)</li>
+</ol>
+</li>
+</ol>
+
+{% endblock %}

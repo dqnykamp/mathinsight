@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% load mi_tags comments %}{%load url from future %}
+{% block title %}Math Insight contributers{% endblock %}
+{% block nolinksection %}{% endblock %}
+
+{% block pagenav %}
+  <li><a href="#sitenav">Top</a></li>
+  <li><a href="#core_contributors">Core contributors</a>
+  <ul>
+    {% for author in author_list %}{% if author.core_contributor %}
+    <li><a href="#{{author.code}}">{{author.full_name}}</a></li>
+    {%endif%}{%endfor%}
+  </ul></li>
+  <li><a href="#other_contributors">Other contributors</a>
+  <ul>
+    {% for author in author_list %}{% if not author.core_contributor %}
+    <li><a href="#{{author.code}}">{{author.full_name}}</a></li>
+    {%endif%}{%endfor%}
+  </ul></li>
+{% endblock %}
+
+{% block content %}
+<h3>Math Insight Contributors</h3>
+<p>Here are the people behind Math Insight.</p>  
+
+<a id="core_contributors" class="anchor"></a>
+<h4>Core Math Insight contributors</h4>
+
+<p>Core Math Insight contributors are responsible for overall site design as well as authoring mathematical content.</p>
+
+{% for author in author_list %}{% if author.core_contributor %}
+<a id="{{author.code}}" class="anchor"></a>
+<p><a href="{% url 'mi-authordetail' author.code  %}" class="normaltext">{{author.full_name}}</a><br/>
+{{ author.title }}<br/>
+{{ author.institution }}<br/>
+{% if author.display_email %}E-mail: <a href="mailto:{{ author.email_address }}" class="email">{{ author.email_address }}</a><br/>{% endif %}
+{% if author.web_address %}Web site: <a href="{{ author.web_address }}" class="external">{{ author.web_address }}</a><br/>{%endif%}
+<a href="{% url 'mi-authordetail' author.code  %}">List of contributions by {{ author.full_name}}</a></p>
+{% endif %}{% endfor %}
+
+
+<a id="other_contributors" class="anchor"></a>
+<h4>Other Math Insight contributors</h4>
+
+<p>The following people have contributed material to Math Insight.</p>
+
+{% for author in author_list %}{% if not author.core_contributor %}
+<a id="{{author.code}}" class="anchor"></a>
+<p><a href="{% url 'mi-authordetail' author.code  %}" class="normaltext">{{author.full_name}}</a><br/>
+{{ author.title }}<br/>
+{{ author.institution }}<br/>
+{% if author.display_email %}E-mail: <a href="mailto:{{ author.email_address }}" class="email">{{ author.email_address }}</a><br/>{% endif %}
+{% if author.web_address %}Web site: <a href="{{ author.web_address }}" class="external">{{ author.web_address }}</a><br/>{%endif%}
+<a href="{% url 'mi-authordetail' author.code  %}">List of contributions by {{ author.full_name}}</a></p>
+{% endif %}{% endfor %}
+
+{% endblock %}
+

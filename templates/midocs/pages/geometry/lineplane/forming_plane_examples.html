@@ -1,0 +1,119 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "plane" "examples"%}
+{% title "Forming plane examples" "Examples" %}
+{% description "Examples showing how to determine the equation of a plane." %}
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Find the equation for the plane through the point $(0,1,-7)$
+perpendicular to the vector $(4, -1, 6)$.</p>
+
+<p><b>Solution:</b> Let $\vc{a} = (0,1,-7)$.  Let $\vc{n} = (4,-1,6)$.  Then, for
+$\vc{x} = (x,y,z)$, the equation for the plane is
+\begin{align*}
+  \vc{n} \cdot (\vc{x}-\vc{a})=0.
+\end{align*}
+This becomes
+\begin{align*}
+  (4,-1,6) \cdot (x-0, y-1, z+7) = 0
+\end{align*}
+or
+\begin{align*}
+  4x -(y-1) + 6(z+7) = 0.
+\end{align*}
+Often, we prefer to write this as
+\begin{align*}
+  4x -y +6z +43 =0.
+\end{align*}
+(Note that you can read the normal vector $\vc{n} = (4,-1,6)$ right
+from the equation for the plane; the components of $\vc{n}$ are simply
+the coefficients of $x$, $y$, and $z$.)
+</p>
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Find the equation for the plane through the points $(0,1,-7)$,
+$(3,1,-9)$, and $(0, -5, -8)$.  </p>
+
+<p><b>Solution:</b> Let $\vc{b} = (0, 1, -7) - (3,1,-9) = (-3, 0, 2)$.  Let
+$\vc{c} = (0, 1, -7) - (0 -5, -8) = (0, 6, 1)$.  Then, we can find a
+normal vector by taking their {%intlink cross_product %}cross product{%endintlink%}
+\begin{align*}
+  \vc{n} &amp;= \vc{b} \times \vc{c}\\
+  &amp;= 
+  \left|
+    \begin{array}{rrr}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      -3 &amp; 0 &amp; 2\\
+      0 &amp; 6 &amp; 1
+    \end{array}
+  \right|
+  \\
+  &amp;= \vc{i} (0 -12) - \vc{j} (-3 -0) + \vc{k}(-18 -0)\\
+  &amp;= (-12, 3, -18).
+\end{align*}
+We'll pick the first point and let $\vc{a} = (0, 1, -7)$.  The
+equation for the plane becomes
+\begin{align*}
+  (-12, 3, -18) \cdot (x-0, y-1, z+7) = 0
+\end{align*}
+which we rewrite as
+\begin{align*}
+  -12x +3(y-1) -18(z+7) = 0
+\end{align*}
+or
+\begin{align*}
+  -12x +3y -18z - 129 = 0.
+\end{align*}
+</p>
+
+<p>The planes from both examples went through the
+same point $(0, 1, -7)$.  Did you also notice that their normal
+vectors are parallel to each other?  If you multiply the $\vc{n}$ from
+Example 1 by $-3$, you obtain the $\vc{n}$ from Example 2:
+\begin{align*}
+  -3(4, -1, 6) = (-12, 3, -18).
+\end{align*}
+</p>
+
+<p>What does that mean about the relationship between the two planes?
+The two planes must be equal.
+(See the {%intlink forming_planes%}page on forming planes{%endintlink%} for a discussion of this fact.)
+In fact, if you divide both sides of the equation of the second plane
+by $-3$, you get the equation of the first plane.
+</p>
+
+{% navigation_tag "example3" "Examples" "Example 3" %}
+<h4>Example 3</h4>
+
+<p>Find the equation for the plane through the points $(1,2,3)$,
+$(2,4,6)$, and $(-3,-6,-9)$.</p>
+
+<p><b>Solution:</b> Let $\vc{b} = (2,4,6) - (1,2,3) = (1,2,3)$ and let $\vc{c} =
+(1,2,3) - (-3,-6,-9) = (4, 8, 12)$.  Then, we attempt to find a normal
+vector as their cross product:
+\begin{align*}
+  \vc{n} &amp;= \vc{b} \times \vc{c}\\
+  &amp;= 
+  \left|
+    \begin{array}{rrr}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      1 &amp; 2 &amp; 3\\
+      4 &amp; 8 &amp; 12
+    \end{array}
+  \right|
+  \\
+  &amp;= \vc{i} (24 -24) - \vc{j} (12 -12) + \vc{k}(8 -8)\\
+  &amp;= (0, 0, 0).
+\end{align*}
+</p>
+
+<p>
+Something clearly went wrong, as we weren't able to find a normal
+direction.  Do the three points actually determine a plane?  If you
+are still puzzled, check the page on {%intlink forming_planes plane_three_points %}forming planes{%endintlink%} for any conditions on the ability of three points to determine a plane.
+</p>
+
+{%endblock%}

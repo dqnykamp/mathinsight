@@ -1,0 +1,228 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "matrix" "multiplication"%}
+{% index_entry "vector" "multiplication"%}
+{% title "Multiplying matrices and vectors" %}
+{% description "How to multiply matrices with vectors and other matrices." %}
+
+{% navigation_tag "matrixvector" "Matrix-vector" %}
+<h4>Matrix-vector product</h4>
+
+<p>To define multiplication between a matrix $A$ and a vector $\vc{x}$
+(i.e., the matrix-vector product), we need to view the vector
+as a {%intlink matrix_introduction vectors_as_matrices %}column matrix{%endintlink%}.
+We define the matrix-vector product only for the case when the number of
+columns in $A$ equals the number of rows in $\vc{x}$.  So, if $A$ is
+an $m \times n$ matrix (i.e., with $n$ columns), then the product $A
+\vc{x}$ is defined for $n \times 1$ column vectors $\vc{x}$.  If we
+let $A \vc{x} = \vc{b}$, then $\vc{b}$ is an $m \times 1$ column
+vector.  In other words, the number of rows in $A$ (which can be
+anything) determines the number of rows in the product $\vc{b}$.
+</p>
+
+<p>
+The general formula for a matrix-vector product is
+\begin{align*}
+  A\vc{x}=
+  \left[
+    \begin{array}{cccc}
+      a_{11} &amp; a_{12} &amp; \ldots &amp; a_{1n}\\
+      a_{21} &amp; a_{22} &amp; \ldots &amp; a_{2n}\\
+      \vdots &amp; \vdots &amp; \vdots &amp; \vdots\\
+      a_{m1} &amp; a_{m2} &amp; \ldots &amp; a_{mn}
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{c}
+      x_1\\
+      x_2\\
+      \vdots\\
+      x_n
+    \end{array}
+  \right]
+  =
+  \left[
+    \begin{array}{c}
+      a_{11}x_1+a_{12}x_2 + \cdots + a_{1n} x_n\\
+      a_{21}x_1+a_{22}x_2 + \cdots + a_{2n} x_n\\
+      \vdots\\
+      a_{m1}x_1+a_{m2}x_2 + \cdots + a_{mn} x_n\\
+    \end{array}
+  \right].
+\end{align*}
+Although it may look confusing at first, the process of matrix-vector
+multiplication is actually quite simple.  One takes the dot product of
+$\vc{x}$ with each of the rows of $A$.  (This is why the number of
+columns in $A$ has to equal the number of components in $\vc{x}$.) The
+first component of the matrix-vector product is the dot product of
+$\vc{x}$ with the first row of $A$, etc.  In fact, if $A$ has only one
+row, the matrix-vector product is really a {% intlink dot_product_matrix_notation %}dot product in disguise{%endintlink%}.
+</p>
+
+<p>For example, if
+\begin{align*}
+  A = \left[
+      \begin{array}{rrr}
+        1 &amp; -1 &amp; 2\\
+        0  &amp; -3 &amp; 1
+      \end{array}
+    \right]
+\end{align*}
+and $\vc{x} = (2,1,0)$, then
+\begin{align*}
+  A \vc{x} &amp;= \left[
+    \begin{array}{rrr}
+      1 &amp; -1 &amp; 2\\
+      0  &amp; -3 &amp; 1
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{l}
+      2\\1\\0
+    \end{array}
+  \right]\\
+  &amp;=
+  \left[
+    \begin{array}{r}
+      2 \cdot 1 - 1\cdot 1 + 0 \cdot 2\\
+      2 \cdot 0 - 1 \cdot 3 +0 \cdot 1
+    \end{array}
+  \right]
+  \\
+  &amp;=
+  \left[
+    \begin{array}{r}
+      1\\
+      -3
+    \end{array}
+  \right].
+\end{align*}
+</p>
+
+{% navigation_tag "matrixmatrix" "Matrix-matrix" %}
+<h4>Matrix-matrix product</h4>
+
+<p>Since we view vectors as column matrices, the matrix-vector product is
+simply a special case of the matrix-matrix product (i.e., a product
+between two matrices).  Just like for the matrix-vector product, the
+product $AB$ between matrices $A$ and $B$ is defined only if the
+number of <i>columns</i> in $A$ equals the number of <i>rows</i>
+in $B$.  In math terms, we say we can multiply an $m \times n$ matrix
+$A$ by an $n \times p$ matrix $B$.  (If $p$ happened to be 1, then $B$
+would be an $n\times 1$ column vector and we'd be back to the
+matrix-vector product.)</p>
+
+<p>The product $AB$ is an $m \times p$ matrix which we'll call $C$, i.e.,
+$AB=C$.  To calculate the product $B$, we view $B$ as a bunch of $n
+\times 1$ column vectors lined up next to each other:
+\begin{align*}
+    \left[
+    \begin{array}{cccc}
+      b_{11} &amp; b_{12} &amp; \ldots &amp; b_{1p}\\
+      b_{21} &amp; b_{22} &amp; \ldots &amp; b_{2p}\\
+      \vdots &amp; \vdots &amp; \vdots &amp; \vdots\\
+      b_{n1} &amp; b_{n2} &amp; \ldots &amp; b_{np}
+    \end{array}
+  \right]
+  =
+    \left[
+    \left[
+    \begin{array}{c}
+      b_{11}\\
+      b_{21}\\
+      \vdots\\
+      b_{n1}\\
+    \end{array}
+    \right]
+    \left[
+    \begin{array}{c}
+      b_{12}\\
+      b_{22}\\
+      \vdots\\
+      b_{n2}\\
+    \end{array}
+    \right]
+    \cdots
+    \left[
+    \begin{array}{c}
+      b_{1p}\\
+      b_{2p}\\
+      \vdots\\
+      b_{np}\\
+    \end{array}
+    \right]
+  \right]
+\end{align*}
+Then each column of $C$ is the matrix-vector product of $A$ with
+the respective column of $B$.  In other words, the component in the $i$th
+row and $j$th column of $C$ is the dot product between the $i$th row
+of $A$ and the $j$th column of $B$.  In math, we write this component
+of $C$ as $c_{ij} = a_{i1}b_{1j} + a_{i2}b_{2j} + \cdots +
+a_{in}b_{nj}$.</p>
+
+<p>
+An example help makes the process clear.  Let $A$ be the $2 \times 3$
+matrix
+\begin{align*}
+ A=\left[
+    \begin{array}{rrr}
+      0 &amp; 4 &amp; -2\\
+      -4 &amp; -3 &amp; 0
+    \end{array}
+  \right] 
+\end{align*}
+and $B$ be the $3 \times 2$ matrix
+\begin{align*}
+   B=  \left[
+      \begin{array}{rr}
+        0 &amp;1\\
+        1 &amp; -1\\
+        2 &amp; 3
+      \end{array}
+    \right].
+\end{align*}
+Then, 
+\begin{align*}
+  AB &amp;=\left[
+      \begin{array}{rrr}
+        0 &amp; 4 &amp; -2\\
+        -4 &amp; -3 &amp; 0
+      \end{array}
+    \right] 
+    \left[
+      \begin{array}{rr}
+        0 &amp;1\\
+        1 &amp; -1\\
+        2 &amp; 3
+      \end{array}
+    \right]
+    \\
+    &amp;=
+    \left[
+    \begin{array}{rrr}
+      0 \cdot 0+4 \cdot 1-2\cdot 2 &amp;&amp; 0 \cdot 1 +4 \cdot (-1) -2\cdot 3\\
+      -4 \cdot 0-3\cdot 1 + 0 \cdot 2 &amp;&amp; -4 \cdot 1 -3 \cdot (-1) + 0\cdot 3
+    \end{array}
+    \right]
+    \\
+    &amp;=
+    \left[
+    \begin{array}{rrr}
+      0+4-4 &amp;&amp; 0 -4 -6\\
+      0-3+0 &amp;&amp; -4 +3 +0
+    \end{array}
+    \right]
+    \\
+    &amp;=
+    \left[
+      \begin{array}{rr}
+        0 &amp; -10\\
+        -3 &amp; -1
+      \end{array}
+    \right].
+  \end{align*}
+</p>
+
+<p>
+Want {% intlink matrix_vector_multiplication_examples %}more examples{%endintlink%}?</p>
+
+{%endblock%}

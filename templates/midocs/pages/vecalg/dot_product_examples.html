@@ -1,0 +1,52 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "dot product" %}
+{% title "Dot product examples" "Examples" %}
+{% description "Examples of calculating the dot product of two- and three-dimensional vectors." %}
+
+<p>Given the {% intlink dot_product %}geometric definition of the dot product{%endintlink%} along with the {% intlink dot_product_formula_components%}dot product formula{%endintlink%} in terms of components, we are ready to calculate the dot product of any pair of two- or three-dimensional vectors.</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Calculate the dot product of $\vc{a}=(1,2,3)$ and $\vc{b}=(4,-5,6)$. 
+Do the vectors form an acute angle, right angle, or obtuse angle?</p>
+
+<p><b>Solution</b>: Using the {%intlinkeq dot_product_formula_components  dot_product_formula_3d -1%}component formula{%endintlinkeq%} for the dot product of three-dimensional vectors,
+\begin{gather*}
+  \vc{a} \cdot \vc{b} = a_1b_1+a_2b_2+a_3b_3,
+\end{gather*}
+we calculate the dot product to be
+$$\vc{a} \cdot \vc{b} = 1(4)+2(-5)+3(6) = 4-10+18=12.$$
+</p>
+
+<p>Since $\vc{a} \cdot \vc{b}$ is positive, we can infer from the  {% intlink dot_product %}geometric definition{%endintlink%}, that the vectors form an acute angle.</p>
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Calculate the dot product of $\vc{c}=(-4,-9)$ and $\vc{d}=(-1,2)$. 
+Do the vectors form an acute angle, right angle, or obtuse angle?</p>
+
+<p><b>Solution</b>: Using the {%intlinkeq dot_product_formula_components  dot_product_formula_2d -1%}component formula{%endintlinkeq%} for the dot product of two-dimensional vectors,
+\begin{gather*}
+  \vc{a} \cdot \vc{b} = a_1b_1+a_2b_2,
+\end{gather*}
+we calculate the dot product to be
+$$\vc{c}\cdot \vc{d} = -4(-1)-9(2) = 4-18=-14.$$
+</p>
+
+<p>Since $\vc{c} \cdot \vc{d}$ is negative, we can infer from the  {% intlink dot_product %}geometric definition{%endintlink%}, that the vectors form an obtuse angle.</p>
+
+{% navigation_tag "example3" "Examples" "Example 3" %}
+<h4>Example 3</h4>
+
+<p>If $\vc{a}=(6,-1,3)$, for what value of $c$ is the vector $\vc{b}=(4,c,-2)$ perpendicular to $\vc{a}$?</p>
+
+<p><b>Solution</b>: For $\vc{a}$ and $\vc{b}$ to be perpendicular, we need their dot product to be zero.  Since
+$$\vc{a}\cdot\vc{b} = 6(4)-1(c)+3(-2) = 24-c-6=18-c,$$
+the number $c$ must satisfy $18-c=0$, or $c=18$.</p>
+
+<p>You can double-check that the vector $\vc{b}=(4,18,-2)$ is indeed perpendicular to $\vc{a}$ by verifying that $\vc{a}\cdot\vc{b} = (6,-1,3)\cdot(4,18,-2) =0$.</p>
+
+{%endblock%}

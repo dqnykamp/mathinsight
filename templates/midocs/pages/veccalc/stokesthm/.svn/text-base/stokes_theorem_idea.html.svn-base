@@ -1,0 +1,137 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Stokes' theorem" %}
+{% index_entry "Stokes' theorem" "idea"%}
+{% index_entry "circulation" "microscopic"%}
+{% index_entry "circulation" "macroscopic"%}
+{% index_entry "fundamental theorems of vector calculus" "Stokes' theorem" %}
+{% title "The idea behind Stokes' theorem" %}
+{% description "Introduction to Stokes' theorem, based on the intuition of microscopic and macroscopic circulation of a vector field and illustrated by interactive graphics." %}
+
+<p>Stokes' theorem is a generalization of 
+{%intlink greens_theorem_idea %}Green's theorem{%endintlink%}
+from circulation in a planar region to circulation 
+along a {%intlink parametrized_surface_introduction%}surface{%endintlink%}.
+
+<p>Green's theorem states that, given a continuously differentiable two-dimensional
+vector field $\dlvf$, the integral of the &ldquo;microscopic circulation&rdquo;
+of $\dlvf$ over the region $\dlr$ inside a {%intlink simple_curve_definition%}simple{%endintlink%} {%intlink closed_curve_definition %}closed{%endintlink%} curve $\dlc$ is equal to
+the {%intlink line_integral_circulation%}total circulation{%endintlink%} of $\dlvf$ around $\dlc$, as suggested by the equation
+\begin{align*}
+  \dlint = \iint_\dlr \text{&ldquo;microscopic
+  circulation of $\dlvf$&rdquo; } dA.
+\end{align*}
+We often write that $\dlc = \partial \dlr$ as fancy notation meaning simply that $\dlc$ is the boundary of $\dlr$.  Green's theorem requires that $\dlc = \partial \dlr$.</p>
+
+<p>The &ldquo;microscopic circulation&rdquo; in Green's theorem
+is captured by the {%intlink curl_idea%}curl{%endintlink%} of the vector field
+and is illustrated by the green circles in the below figure.</p>
+
+<p class="centeredImage">{% image macroscopic_microscopic_circulation %}</p>
+
+<p>Green's theorem applies only to two-dimensional vector fields
+and to regions in the two-dimensional plane.   
+Stokes' theorem generalizes Green's theorem to three dimensions.  For
+starters, let's take our above picture and simply embed it in three
+dimensions.  Then, our curve $\dlc$ becomes a curve in the $xy$-plane,
+and our region $\dlr$ becomes a surface $\dls$ in the $xy$-plane whose
+boundary is the curve $\dlc$.  Even though $\dls$ is now a surface, we still use the same notation as $\partial$ for the boundary.  The boundary $\partial \dls$ of the surface $\dls$ is a closed curve,  and we require that $\partial \dls = \dlc$.
+</p>
+
+<p class="centeredImage">{% image circulation_planar_region_three_dimensions %}</p>
+
+
+<p>The next question is what the microscopic circulation along a surface
+should be. For Green's theorem, we found that 
+\begin{align*}
+  \text{&ldquo;microscopic circulation&rdquo;} = (\curl \dlvf) \cdot \vc{k},
+\end{align*}
+(where $\vc{k}$ is the unit-vector in the $z$-direction).  We wanted
+the {% intlink curl_components %}component of the curl{%endintlink%}
+in the $\vc{k}$ direction because this corresponded to microscopic
+circulation in the $xy$-plane.  Similarly, for a surface, we will want
+the microscopic circulation along the surace.  This corresponds to the
+component of the curl that is <i>perpendicular</i> to the surface,
+i.e, 
+\begin{align*}
+  \text{&ldquo;microscopic circulation&rdquo;} = (\curl \dlvf) \cdot \vc{n},
+\end{align*}
+where $\vc{n}$ is a {% intlink parametrized_surface_normal_vector%}unit normal vector{%endintlink%} to the surface.
+You can see this using the right-hand rule.  If you point the thumb of
+your right hand perpendicular to a surface, your fingers will curl in
+a direction corresponding to circulation parallel to the surface.</p>
+
+<p>In summary, to go from Green's theorem to Stoke's theorem, we've made two
+changes.  First, we've changed the line integral living in two
+dimensions (Green's theorem) to a line integral living in three
+dimensions (Stokes' theorem).  Second, we changed the double integral
+of $\curl \dlvf \cdot \vc{k}$ over a region $\dlr$ in the plane
+(Green's theorem) to a surface integral of $\curl \dlvf \cdot \vc{n}$
+over a surface floating in space (Stokes' theorem).  The required
+relationship between the curve $\dlc$ and the surface $\dls$ (Stokes'
+theorem) is identical to the relationship between the curve $C$ and
+the region $\dlr$ (Green's theorem): the curve $\dlc$ must be the boundary $\partial \dlr$ of the region  or the boundary $\partial \dls$ of the surface.</p>
+
+<p>We write Stokes' theorem as:
+\begin{align*}
+  \dlint = \ssint{\dls}{\curl \dlvf \cdot \vc{n}} = \sint{\dls}{\curl \dlvf}
+\end{align*}
+(Recall that a {% intlink surface_integral_vector_field_introduction %}surface integral{%endintlink%} of a vector field is the integral
+of the component of the vector field perpendicular to the surface.)
+We see that the integral on the right is the surface integral of the vector
+field $\curl \dlvf$.  Stokes theorem says the surface integral of $\curl
+\dlvf$ over a surface $\dls$ (i.e.,
+$\sint{\dls}{\curl \dlvf}$) is the circulation of $\dlvf$ around the
+boundary of the surface (i.e., $\dlint$ where $\dlc = \partial \dls$ ).</p>
+
+<p>Once we have Stokes' theorem, we can see that the surface integral of
+$\curl \dlvf$ is a special integral.  The integral cannot
+change if we can change the surface $\dls$ to any surface as long as
+the boundary of $\dls$ is still the curve $\dlc$.  It cannot change
+because it still must be equal to $\dlint$, which doesn't change if we
+don't change $\dlc$.  (In analogy of how the gradient $\nabla f$ is a {% intlink conservative_vector_field_introduction%}path-independent vector field{%endintlink%}, you could say that $\curl \dlvf$ is
+&ldquo;surface independent&rdquo; vector field, but we don't usually use that term.)</p>
+
+<p>For example, staring with a planar surface such as sketched above, we
+see that the surface $\dls$ doesn't have to be the flat surface inside
+$\dlc$.  We can bend and stretch $\dls$, and the above formula is
+still true.  In the below applet, you can move the
+blue point on the slider to change the surface $\dls$.  For any of
+those surfaces, the integral of the &ldquo;microscopic circulation&rdquo; $\curl \dlvf$ over that surface will
+be the total circulation $\dlint$ of $\dlvf$ around the curve $\dlc$ (shown in
+red).  The important restriction is that the boundary of the surface $\dls$
+is still the curve $\dlc$.</p>
+
+{%boxedapplet macroscopic_microscopic_circulation_three_dimensions %}
+
+<p>Stokes' theorem allows us to do even more.  We don't have to leave the
+curve $\dlc$ sitting in the $xy$-plane.  We can twist and turn $\dlc$ as
+well.  If $\dls$ is a surface whose boundary is $\dlc$ (i.e., if $\dlc = \partial \dls$), it is still true that
+\begin{align*}
+  \dlint = \sint{\dls}{\curl \dlvf}.
+\end{align*}
+For example, in the below applet, you can move the
+blue point on the slider to change the surface $\dls$, as before.  But,
+you can also move the green point on the slider to change the curve
+$\dlc$.  The surface $\dls$ also changes as you change $\dlc$, since its
+boundary has to be $\dlc$.  (Although the applet doesn't show the green circles 
+representing the &ldquo;microscopic circulation,&rdquo; you can imagine what they
+would look like.)</p>
+
+{% boxedapplet changing_surfaces_stokes_theorem %}
+
+<p>Note that moving the blue dot on the slider does not change the value
+of either integral in the above formulas.  Since the curve $\dlc$ does
+not change, the left line integral doesn't change, which means the
+value of the right surface integral cannot change.  On the other hand,
+moving the green dot on the slider does change the values of the
+integrals since the curve $\dlc$ changes.  The important point is that,
+even in this case, the left line integral and the right surface
+integral are always equal.</p>
+
+<p>There is one more subtlety that you have to get correct, or else you'll may
+be off by a sign.  You need to {%intlink stokes_theorem_orientation%}orient the 
+surface and boundary properly{%endintlink%}.</p>
+
+<p>You can read some examples {%intlink stokes_theorem_examples %}here{%endintlink%}.</p>
+
+{% endblock%}

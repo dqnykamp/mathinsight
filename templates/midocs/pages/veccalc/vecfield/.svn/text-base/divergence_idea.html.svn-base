@@ -1,0 +1,100 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "divergence"  %}
+{% index_entry "divergence" "introduction"  %}
+{% index_entry "vector field" "divergence"  %}
+{% title "The idea of the divergence of a vector field" "The idea" %}
+{% description "Intuitive introduction to the divergence of a vector field. Interactive graphics illustrate basic concepts." %}
+
+<p>Both the divergence and {% intlink curl_idea %}curl{%endintlink%} are vector operators whose properties are revealed by viewing a vector field as the flow of a fluid or gas.  
+Here we focus on the geometric properties of the divergence; you can read a similar discussion of the curl on  {% intlink curl_idea %}another page{%endintlink%}.</p>
+
+<p>The divergence of a vector field is relatively easy to
+understand intuitively.  Imagine that the vector field $\dlvf$
+pictured below gives the {%intlink vector_field_fluid_flow%}velocity of some
+  fluid flow{%endintlink%}. 
+It appears that the fluid is exploding outward from the origin.</p>
+
+
+
+<p class="centeredImage">{%image vector_field_explosion%}</p>
+
+<p>This expansion of fluid flowing with velocity field $\dlvf$ is
+captured by the divergence of $\dlvf$,  which we denote $\div \dlvf$.  The divergence of the above vector field is positive since
+the flow is expanding.</p>
+
+<p>In contrast, the below vector field represents fluid flowing so that it
+compresses as it moves toward the origin.  Since this compression of
+fluid is the opposite of expansion, the divergence of this vector
+field is negative.</p>
+
+<p class="centeredImage">{%image vector_field_implosion%}</p>
+
+
+<p>The divergence is defined for both two-dimensional vector fields
+$\dlvf(x,y)$ and three-dimensional vector fields
+$\dlvf(x,y,z)$.  A three-dimensional vector field
+$\dlvf$ showing expansion of fluid flow is shown in
+the below applet.  Again, because of
+the expansion, we can conclude that $\div \dlvf(x,y)>0$.</p>
+
+{%boxedapplet divergent_vector_field %}
+
+<p>Now, imagine that one placed a sphere $\dls$ in the
+fluid flow centered at the origin.  It is clear that the fluid is
+flowing out of the sphere.</p>
+
+{%boxedapplet divergent_vector_field_sphere %}
+
+<p>When you learn about the
+{%intlink divergence_theorem_idea%}divergence theorem{%endintlink%},
+you will discover that the divergence of a vector
+field and the flow out of spheres are closely related.  For a basic
+understanding of divergence, it's
+enough to see that if a fluid is expanding (i.e., the flow has
+positive divergence everywhere inside the sphere), the net flow out of
+a sphere will be positive.</p>
+
+<p>Since the above vector field has positive divergence everywhere,
+the flow out of the sphere will be positive even if we move the sphere
+away from the origin.  Can you see why flow out is still positive even
+when you move the sphere around using the sliders?</p>
+
+{%boxedapplet divergent_vector_field_movable_sphere %}
+
+<p>Notice that the arrows continue to get longer as one moves away from
+the origin so that the fluid is flowing faster when it exits the
+sphere than went it enters.  Moreover, since the arrows are radiating
+outward, the fluid is always entering the sphere over less than half
+its surface and is exiting the sphere over greater than half its
+surface.  Hence, the flow out of the sphere is always greater than the
+flow into the sphere.</p>
+
+<p>The divergence of a vector field simply measures how much the flow is
+expanding at a given point.  It does not indicate in which direction
+the expansion is occuring.  Hence (in contrast to the
+{%intlink curl_idea %}curl of a vector field{%endintlink%}), the divergence is a
+scalar. Once you know the 
+{%intlink Divergence_curl_notation %}formula for the divergence{%endintlink%},
+it's quite simple to calculate the divergence of a
+vector, such as in {%intlink divergence_curl_examples%}this example{%endintlink%}.</p>
+
+{% navigation_tag "pictures" "Picture warning" %}
+<div class="lookdeep">
+
+  <h4>Observing divergence from pictures?</h4>
+
+  <p><b>Warning:</b> these simple examples of visualizing divergence
+  might be misleading.  Estimating divergence from a picture is not so simple as it might
+  seem from the above discussion, which was intentionally
+  oversimplified to illustrate the concept of divergence.  Detecting expansion of a fluid flow
+  is not simply a matter of looking for flow that is radiating
+  outward.  In fact, one could have flow that radiates outward even as
+  a fluid is compressing (which could occur if the flow is slowing
+  down as it moves outward).  To protect yourself from being mislead
+  by pictures of vector fields, check out some
+  {%intlink divergence_subtleties %}examples illustrating subtleties of the
+  divergence{%endintlink%}.</p>
+
+</div>
+
+{% endblock %}

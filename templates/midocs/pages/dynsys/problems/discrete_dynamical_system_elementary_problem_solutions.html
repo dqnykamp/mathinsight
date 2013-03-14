@@ -1,0 +1,332 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% title "Solutions to elementary discrete dynamical systems problems" %}
+{% description "Solutions to sample problems illustrating discrete dynamical systems." %}
+
+<p>The following is a set of solutions to the {% intlink discrete_dynamical_system_elementary_problems %}elementary discrete dynamical systems problems{%endintlink%}.  <a href="#sendmessage">Let us know</a> if you have a better solution.</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+<li>The equilibria are indicated by the three open red circles in the below graph.  The equilibria are $E=0$, $E=1$, and $E=3$.  In each case, if $x_n=E$, then, $x_{n+1}=E$.</li>
+<li>According the below cobwebbing, trajectories move away from the equilibrium $E=0$, so this equilibrium is unstable.  Trajectories move toward the equilibrium $E=1$, so this equilibrium is stable.  Trajectories move away from the equilibrium $E=3$, so this equilibrium is unstable.</li>
+</ol>
+
+{% image discrete_dynamical_system_example_function_1_cobweb %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+<li>The equilibria are the three open red circles in the below graph.  They are $E=1$, $E=3$, and $E=5$.</li>
+<li>According the below cobwebbing, trajectories move toward the equilibrium $E=1$, so this equilibrium is stable.  Trajectories move away from the equilibrium $E=3$, so this equilibrium is unstable.  Trajectories move toward the equilibrium $E=5$, so this equilibrium is stable.</li>
+</ol>
+{% image discrete_dynamical_system_example_function_2_cobweb %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $E$ denote an equilibrium.  To find the equilibria, we plug in $q_{t+1}=E$ and $q_t=E$.  Then we solve for $E$.
+  \begin{align*}
+  E - E &= \frac{a E +b}{c}\\
+  0 &= \frac{a E +b}{c}\\
+  0 &= a E +b
+  \end{align*}
+  </p>
+<p>If $a \ne 0$, then we can divide by $a$ to determine that the unique equilibrium is
+  \begin{align*}
+  E= -\frac{b}{a}
+  \end{align*}
+  </p>
+<p>If, on the other hand $a=0$, then we cannot divide by $a$.  To determine the equilibria when $a=0$, we have to break the result up into cases depending on the value of $b$.  If $b \ne 0$, then the equation $-aE = b$ can never be satisfied, since the left hand side is zero and then right hand side is non-zero, no matter the value of the equilibrium $E$.  In this case, there are no equilibria.  If $b=0$ along with $a=0$, then both sides of the equation $-a E = b$ are zero, no matter the value of $E$.  In this case, any value of $E$ satisfies the equation and is an equilibrium.  We conclude that if $a=0$, there are either no equilibria (if $b \ne 0$) or an infinite number of equilibria (if $b=0$).
+</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $E$ denote an equilibrium. To find the equilibria, we plug in $m_{n+1}=E$ and $m_n=E$.  Then we solve for $E$.
+  \begin{align*}
+  E - E &= \frac{b E +c}{d}\\
+  0 &= \frac{b E +c}{d}\\
+  0 &= b E +c\\
+  \end{align*}
+</p>
+<p>If $b \ne 0$, then we can divide by $b$ to determine that the unique equilibrium is
+  \begin{align*}
+  E= -\frac{c}{b}
+  \end{align*}
+  </p>
+<p>If, on the other hand $b=0$, then we cannot divide by $b$.  To determine the equilibria when $b=0$, we have to break the result up into cases depending on the value of $c$.  If $c \ne 0$, then the equation $-bE = c$ can never be satisfied, since the left hand side is zero and then right hand side is non-zero, no matter the value of the equilibrium $E$.  In this case, there are no equilibria.  If $c=0$ along with $b=0$, then both sides of the equation $-b E = c$ are zero, no matter the value of $E$.  In this case, any value of $E$ satisfies the equation and is an equilibrium.  We conclude that if $b=0$, there are either no equilibria (if $c \ne 0$) or an infinite number of equilibria (if $c=0$).
+</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $E$ denote an equilibrium. To find the equilibria, we plug in $r_{t+1}=E$ and $r_t=E$.  Then we solve for $E$.
+  \begin{align*}
+  E &= \frac{a E+b}{c}\\
+  cE &= aE +b\\
+  (c-a)E &=b
+  \end{align*}
+  </p>
+
+<p>
+  If $c \ne a$, then $c-a \ne 0$ and we can divide by $c-a$ to determine that the unique equilibrium is
+  \begin{align*}
+  E= \frac{b}{c-a}
+  \end{align*}
+  </p>
+
+<p>If, on the other hand $c=a$, then we cannot divide by $c-a=0$.  To determine the equilibria when $c=a$, we have to break the result up into cases depending on the value of $b$.  If $b \ne 0$, then the equation $(c-a)E = b$ can never be satisfied, since the left hand side is zero and then right hand side is non-zero, no matter the value of the equilibrium $E$.  In this case, there are no equilibria.  If $b=0$ along with $c=a$, then both sides of the equation $(c-a) E = b$ are zero, no matter the value of $E$.  In this case, any value of $E$ satisfies the equation and is an equilibrium.  We conclude that if $c=a$, there are either no equilibria (if $b \ne 0$) or an infinite number of equilibria (if $b=0$).
+</p>
+
+  
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $E$ denote an equilibrium. To find the equilibria, we plug in $c_{t+1}=E$ and $c_t=E$.  Then we solve for $E$.
+  \begin{align*}
+  E - E &= \frac{(E-a)(E-b)}{d}\\
+  0 &= (E-a)(E-b)\\
+  E &= a \quad \text{or} \quad E=b
+  \end{align*}
+</p>
+  
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $E$ denote an equilibrium. To find the equilibria, we plug in $b_{n+1}=E$ and $b_n=E$.  Then we solve for $E$.
+  \begin{align*}
+  E - E &=  \frac{(E -\alpha)(E-\beta)(E-\gamma)}{\delta}\\
+  0 &= (E -\alpha)(E-\beta)(E-\gamma)\\
+  E &= \alpha, \quad E=\beta, \quad \text{or} \quad E=\gamma
+  \end{align*}
+</p>
+
+ 
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+  <li>If one doubles the parameter $a$ and doubles the parameter
+      $b$, the expression $\frac{a}{b}$ is unchanged.  Since $a$ and $b$ appear in the dynamical system only in the combination, $\frac{a}{b}$, the dynamical system is unchanged.</li>
+
+  <li>Since $a$ and $b$ appear in the dynamical system only in the combination of $\lambda$, the evolution of the dynamical system is determined once the value of the $\lambda$ is given.  Given $\lambda$, the individual values of $a$ and $b$ don't matter.</li>
+
+  <li>In terms of just $\lambda$ and $c$, the dynamical system is
+      \begin{align*}
+      m_{t+1} - m_t = -\lambda m_t + \lambda c, \quad \text{for $t=0,1,2,3,
+  \ldots$ }
+  \end{align*}
+  where $\lambda$ and $c$ are parameters.</li>
+</ol>
+
+ 
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+  <li>The parameters $a$, $b$, and $c$ appear in the dynamical system only through the combination $\frac{ab}{c}$, so if that combination is fixed, the dynamical system is unchanged.  Since the combination doesn't change when doubling both $a$ and $c$, the dynamical system is unchanged.</li>
+  
+  <li>Since the critical combination of parameters $\frac{ab}{c}$ doesn't change when doubling both $b$ and $c$, the dynamical system is unchanged.</li>
+
+  <li>Since the critical combination of parameters $\frac{ab}{c}$ doesn't change when doubling $a$ and halving $b$, the dynamical system is unchanged.</li>
+
+  <li>Since the  parameters $a$, $b$, and $c$ appear in the dynamical system only through the combination $\gamma = \frac{ab}{c}$, the evolution of the dynamical system is determined once the value of the $\gamma$ is given.  Given $\gamma$, the individual values of $a$, $b$, and $c$ don't matter.</li>
+ 
+ <li>In terms of just $\gamma$, the dynamical system is
+   \begin{align*}
+      l_{n+1} = \gamma l_n e^{-l_n\gamma}, \quad \text{for $n=0,1,2,3,
+  \ldots$ }
+  \end{align*}
+  where $\gamma$ is a parameter.</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>An equilibrium of a dynamical system is a value of the state variables where the state variables do not change. This means if the systems starts at an equilibrium, the state will remain at the equilibrium forever.</p>
+
+<p>An equilibrium is stable if solutions that begin near the
+equilibrium stay near, or approach, the equilibrium.  An equilibrium is unstable if some solutions that begin near the
+equilibrium move away from the equilibrium.</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+
+<ol>
+<li>Let $E$ denote an equilibrium.  Setting $h_{t+1}=E$ and $h_t=E$, we solve for  $E$:
+\begin{align*}
+  E - E &= \frac{E(E -1)}{2}\\
+  0 &= E(E-1)\\
+  E &= 0 \quad \text{or} \quad E=1
+\end{align*}</li>
+
+<li><ol>
+<li>If $h_0 = -0.1$, then 
+\begin{align*}
+  h_1 &= -0.1-0.1(-0.1-1)/2=-0.045\\
+  h_2 &= -0.045-0.045(-0.045-1)/2 \approx -0.02149\\
+  h_3 &\approx -0.02149-0.02149(-0.02149-1)/2 \approx -0.01051\\
+  h_4 &\approx -0.01051-0.01051(-0.01051-1)/2 \approx -0.005201
+\end{align*}
+</li>
+<li>If $h_0 = 0.1$, then 
+\begin{align*}
+  h_1 &=  0.055\\
+  h_2 &\approx 0.02901\\
+  h_3 &\approx 0.01493\\
+  h_4 &\approx 0.007575
+\end{align*}
+</li>
+<li>Both the solution (or trajectory) that started just above the equilibrium $E=0$ and the one that started just below are getting close to the equilibrium.  Therefore, the equilibrium appears to be stable.
+</li>
+</ol></li>
+<li><ol>
+<li>If $h_0 = 0.99$
+\begin{align*}
+  h_1 &\approx 0.9851\\
+  h_2 &\approx 0.9777\\
+  h_3 &\approx 0.9668\\
+  h_4 &\approx 0.9507
+\end{align*}
+</li>
+<li>If $h_0 = 1.01$
+\begin{align*}
+  h_1 &\approx 1.0151\\
+  h_2 &\approx 1.0227\\
+  h_3 &\approx 1.0343\\
+  h_4 &\approx 1.0520
+\end{align*}
+</li>
+<li>The solutions (or trajectories) started near the equilibrium $E=1$ but are moving away from the equilibrium.  Therefore, the equilibrium appears to be unstable.</li>
+</ol></li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+<ol>
+<li>Let $E$ denote an equilibrium.  Setting $S_{t+1}=E$ and $S_t=E$, we solve for  $E$:
+\begin{align*}
+  E - E &= \frac{E(1 -E)}{2}\\
+  0 &= E(1-E)\\
+  E &= 0 \quad \text{or} \quad E=1
+\end{align*}</li>
+<li><ol>
+<li>If $S_0 = -0.01$,
+\begin{align*}
+  S_1 &= -0.01-0.01(1+0.01)/2 = -0.155\\
+  S_2 &= -0.155 -0.155(1+ 0.155) \approx -0.2445\\
+  S_3 &\approx -0.2445-0.2445(1+0.2445)\approx -0.3967\\
+  S_4 &\approx -0.3967-0.3967(1+0.3967)\approx -0.6737
+\end{align*}</li>
+<li>If $S_0= 0.01$, 
+\begin{align*}
+  S_1 &=0.145\\
+  S_2 &\approx 0.2070\\
+  S_3 &\approx 0.2891\\
+  S_4 &\approx 0.3918
+\end{align*}</li>
+<li>The solutions (or trajectories) started near the equilibrium $E=0$ but are moving away from the equilibrium.  Therefore, the equilibrium appears to be unstable.</li>
+</ol></li>
+<li><ol>
+<li>If $S_0 = 0.9$,
+\begin{align*}
+  S_1 &= 0.945 \\
+  S_2 &\approx 0.9710 \\
+  S_3 &\approx 0.9851\\
+  S_4 &\approx 0.9924
+\end{align*}</li>
+<li>If $S_0= 1.1$, 
+\begin{align*}
+  S_1 &=1.045 \\
+  S_2 &\approx 1.0215\\
+  S_3 &\approx 1.0105\\
+  S_4 &\approx 1.0052
+\end{align*}</li>
+<li>Both the solution (or trajectory) that started just above the equilibrium $E=1$ and the one that started just below are getting close to the equilibrium.  Therefore, the equilibrium appears to be stable.</li>
+</ol></li>
+</ol>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+<li><p>We can rewrite the systems, adding $q_n$ to both sides and combining the two $q_n$ terms on the right hand side.  The new form is
+\begin{align*}
+  q_{n+1} &= (1+a) q_n \quad \text{for $n=0,1,2,3, \ldots$ }
+\end{align*}
+Now it's is easy to see that in each step, we multiply by $1+a$.  The solution is
+\begin{align*}
+  q_n &= (1+a)^n q_0.
+\end{align*}
+This expression is written just in terms of the initial condition $q_0$, the parameter $a$, and the number $n$, as required, so we call this the solution of the dynamical system.</p></li>
+<li><p>Let $E$ denote an equilibrium.  Using the original form of the equation, we calculate that $E$ must satisfy
+\begin{align*}
+  E-E=aE
+\end{align*}
+or
+\begin{align*}
+ 0=aE.
+\end{align*}
+This equation is satisfied if either $a=0$ or $E=0$. Therefore, if $a=0$, any value of $q_n$ is an equilibrium.  But, if $a \ne 0$, then the only equilibrium is $E=0$.</p></li>
+<li><p>In the case where $a=0$, the value of $q_n$ never changes.  A solution that starts near an equilibrium does stay near the equilibrium (it doesn't move), so by our definition, we'd have to say all the equilibria are stable when $a=0$.  </p>
+
+<p>If $-1 \le a < 0$, then $(1+a)^n$ gets smaller as $n$ increases, so the solution approach the equilibrium $E=0$.  The equilibrium is stable.</p>
+
+<p>If $a > 0$, then $(1+a)^n$ increases and $n$ increases, so the solution moves away from the equilibrium as long as the initial condition $q_0$ is not zero.  The equilibrium is unstable.</p>
+
+<p>If $-2 < a < -1$, then $-1 < 1+a < 0$.  The value of $(1+a)^n$ gets smaller in absolute value as $n$ increases.  The quantity $(1+a)^n$ does switch sign each time $n$ increases by 1, but $|(1+a)^n|$ goes steadily to zero.  The equilibrium is stable.</p>
+
+<p>If $a < -2$, then $1+a<-1$.  The value of $(1+a)^n$ gets larger in absolute value as $n$ incresaes.  The quantity $(1+a)^n$ does switch sign each time $n$ increases by 1, but $|(1+a)^n|$ gets steadily larger.  The equilibrium is unstable.</p>
+</li>
+</ol>
+
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink discrete_dynamical_system_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+<li><p>In each step, we multiply by the number $b$.  The solution of the dynamical system is
+\begin{align*}
+  p_n = b^np_0.
+\end{align*}
+This expression is written just in terms of the initial condition $p_0$, the parameter $b$, and the number $n$, as required, so we call this the solution of the dynamical system.</p></li>
+<li><p>Let $E$ denote an equilibrium. $E$ must satisfy
+\begin{align*}
+  E=bE
+\end{align*}
+or, subtracting $E$ from both sides and factoring, the condition is
+\begin{align*}
+ 0=(b-1)E.
+\end{align*}
+This equation is satisfied if either $b=1$ or $E=0$. Therefore, if $b=1$, any value of $p_n$ is an equilibrium.  But, if $b \ne 1$, then the only equilibrium is $E=0$.</p></li>
+<li><p>In the case where $b=1$, the value of $p_n$ never changes.  A solution that starts near an equilibrium does stay near the equilibrium (it doesn't move), so by our definition, we'd have to say all the equilibria are stable when $b=1$.  </p>
+
+<p>If $0 \le a < 1$, then $b^n$ gets smaller as $n$ increases, so the solution approach the equilibrium $E=0$.  The equilibrium is stable.</p>
+
+<p>If $b > 1$, then $b^n$ increases and $n$ increases, so the solution moves away from the equilibrium as long as the initial condition $p_0$ is not zero.  The equilibrium is unstable.</p>
+
+<p>If $-1 < b < 0$, the value of $b^n$ gets smaller in absolute value as $n$ increases.  The quantity $b^n$ does switch sign each time $n$ increases by 1, but $|b^n|$ goes steadily to zero.  The equilibrium is stable.</p>
+
+<p>If $b<-1$, the value of $b^n$ gets larger in absolute value as $n$ incresaes.  The quantity $b^n$ does switch sign each time $n$ increases by 1, but $|b^n|$ gets steadily larger.  The equilibrium is unstable.</p>
+</li>
+</ol>
+
+
+{% endblock %}

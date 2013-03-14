@@ -1,0 +1,36 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "limits" "elementary"%}
+{% title "Elementary limits" %}
+{% description "The simplest way to find a limit that works in the easiest cases." %}
+
+<p>The idea of <b>limit</b> is intended to be merely a slight extension of
+our <i>intuition</i>. The so-called $\varepsilon,\delta$-definition was
+invented after people had been doing calculus for hundreds of years,
+in response to certain relatively pathological technical
+difficulties. For quite a while, we will be entirely concerned with
+situations in which we can either &lsquo;directly&rsquo; see the value of a limit
+<i>by plugging the limit value in</i>, or where we <i>transform</i> the
+expression into one where we <i>can</i> just plug in.</p>
+
+<p>So long as we are dealing with functions no more complicated
+than polynomials, most <i>limits</i> are easy to understand: for
+example,
+$$\lim_{x\rightarrow 3} 4x^2+3x-7= 4\cdot (3)^2+3\cdot(3)-7=38$$
+$$\lim_{x\rightarrow 3} {4x^2+3x-7\over 2-x^2}= 
+{4\cdot (3)^2+3\cdot(3)-7\over 2-(3)^2}={38\over -7}$$.</p>
+
+<p>The point is that we just substituted the &lsquo;$3$&rsquo; in and <i>nothing
+bad happened</i>. This is the way people evaluated easy limits for
+hundreds of years, and should always be the first thing a person does,
+just to see what happens. </p>
+
+<h4>Exercises</h4>
+
+<ol class="padded">
+<li>Find $\lim _{x\rightarrow 5} 2x^2-3x+4$.</li>
+<li>Find $\lim _{x\rightarrow 2} { x+1 \over x^2+3 }$.</li>
+<li>Find $\lim _{x\rightarrow 1} \sqrt{x+1}$.</li>
+</ol>
+
+
+{%endblock%}

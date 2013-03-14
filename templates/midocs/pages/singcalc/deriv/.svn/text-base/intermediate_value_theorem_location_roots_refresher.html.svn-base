@@ -1,0 +1,86 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "intermediate value theorem" %}
+{% title "Intermediate Value Theorem, location of roots" %}
+{% description "Using the Intermediate Value Theorem to find small intervals where a function must have a root." %}
+
+<p>The assertion of the Intermediate Value Theorem is something which is
+probably &lsquo;intuitively obvious&rsquo;, and is also <i>provably true</i>: if a
+function $f$ is <i>continuous</i> on an interval $[a,b]$ and if
+$f(a) < 0$ and $f(b) > 0$ (or vice-versa), then there is some third point
+$c$ with $a < c < b$ so that $f(c)=0$.
+This result has many relatively &lsquo;theoretical&rsquo; uses, but for our
+purposes can be used to give a crude but simple way to locate the
+roots of functions. There is a lot of guessing, or trial-and-error,
+involved here, but that is fair. Again, in this situation, it is to
+our advantage if we are reasonably proficient in using a calculator to
+do simple tasks like evaluating polynomials!
+If this approach to estimating roots is taken to its logical
+conclusion, it is called the method of <i>interval bisection</i>, for a
+reason we'll see below. We will not pursue this method very far,
+because there are <i>better</i> methods to use once we have invoked
+<i>this</i> just to get going.</p>
+
+
+<h4>Example 1</h4>
+
+<p>For example, we probably don't know a formula to solve the cubic
+equation
+$$x^3-x+1=0$$
+But the function $f(x)=x^3-x+1$ is certainly continuous, so we can
+invoke the Intermediate Value Theorem as much as we'd like. For
+example, $f(2)=7 > 0$ and $f(-2)=-5 < 0$, so we know that there is a root
+in the interval $[-2,2]$. We'd like to cut down the size of the
+interval, so we look at what happens at the <i>midpoint</i>, bisecting
+the interval $[-2,2]$: we have $f(0)=1 > 0$. Therefore, since
+$f(-2)=-5 < 0$, we can conclude that there is a root in
+$[-2,0]$. Since both $f(0) > 0$ and $f(2) > 0$, we can't say anything at
+this point about whether or not there are roots in $[0,2]$. Again <i>bisecting</i> the interval $[-2,0]$ where we know there is a root, we
+compute $f(-1)=1 > 0$. Thus, since $f(-2) < 0$, we know that there is a
+root in $[-2,-1]$ (and have no information about $[-1,0]$).</p>
+
+<p>If we continue with this method, we can obtain as good an
+approximation as we want! But there are faster ways to get a really
+good approximation, as we'll see.</p>
+
+<p>Unless a person has an amazing intuition for polynomials (or
+whatever), there is really no way to anticipate what guess is better
+than any other in getting started.</p>
+
+<h4>Example 2</h4>
+
+<p>Invoke the Intermediate Value Theorem to find an
+interval of length $1$ or less in which there is a root of $x^3+x+3
+=0$: Let $f(x)=x^3+x+3$. Just, guessing, we compute
+$f(0)=3 > 0$. Realizing that the $x^3$ term probably &lsquo;dominates&rsquo; $f$
+when $x$ is large positive or large negative, and since we want to
+find a point where $f$ is negative, our next guess will be a &lsquo;large&rsquo;
+negative number: how about $-1$? Well, $f(-1)=1 > 0$, so evidently $-1$
+is not negative enough. How about $-2$? Well, $f(-2)=-7 < 0$, so we have
+succeeded. Further, the failed guess $-1$ actually was worthwhile,
+since now we know that $f(-2) < 0$ and $f(-1) > 0$. Then, invoking the
+Intermediate Value Theorem, there is a root in the interval $[-2,-1]$.</p>
+
+<p>Of course, typically polynomials have several roots, but <i>the number of roots of a polynomial is never more than its degree</i>. We
+can use the Intermediate Value Theorem to get an idea where <i>all</i>
+of them are.</p>
+
+<h4>Example 3</h4>
+
+<p>Invoke the Intermediate Value Theorem to find <i>three
+different intervals</i> of length $1$ or less in each of which there is a
+root of $x^3-4x+1=0$: first, just starting anywhere, $f(0)=1 > 0$. Next,
+$f(1)=-2 < 0$. So, since $f(0) > 0$ and $f(1) < 0$, there is at least one
+root in $[0,1]$, by the Intermediate Value Theorem. Next,
+$f(2)=1 > 0$. So, with some luck here, since $f(1) < 0$ and $f(2) > 0$, by
+the Intermediate Value Theorem there is a root in $[1,2]$. Now if we
+somehow imagine that there is a <i>negative root</i> as well, then we
+try $-1$: $f(-1)=4 > 0$. So we know <i>nothing</i> about roots in
+$[-1,0]$. But continue: $f(-2)=1 > 0$, and still no new
+conclusion. Continue: $f(-3)=-14 < 0$. Aha! So since $f(-3) < 0$ and
+$f(2) > 0$, by the Intermediate Value Theorem there is a <i>third</i>
+root in the interval $[-3,-2]$.</p>
+
+<p>Notice how even the &lsquo;bad&rsquo; guesses were not entirely wasted.</p>
+
+
+{%endblock%}

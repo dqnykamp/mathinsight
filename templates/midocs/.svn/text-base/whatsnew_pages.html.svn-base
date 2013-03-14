@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load mi_tags comments %}
+{% load url from future %}
+
+{% block title %}Math Insight: newest pages{% endblock %}
+{% block nolinksection %}{% endblock %}
+{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
+
+<meta name="description" content="{{newsitem.description}}"/>
+
+{% block content %}
+<h3>Newest pages on Math Insight</h3>
+
+<ul class="linklist">
+  {% for page in page_list %}
+  <li>{% intlink page %}{{ page.title }}{%endintlink%}<br/>
+    {{ page.description }}<br/>
+    Added {% if page.author_list_full %}by {{page.author_list_full_link|safe }}{%endif%} on {{page.publish_date }}</li>
+  {% endfor %}
+</ul>
+{% if is_paginated %}
+<div>
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
+  | Page {{ page_obj.number }} of {{ paginator.num_pages }} |
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+</div>
+{% endif %}
+
+
+
+{%endblock %}
+
+
+{% block rightcolumn %}
+<ul class="linklist">
+<li><a href="{% url 'mi-allpages' %}">List of all pages</a></li>
+<li><a href="{% url 'mi-newapplets'%}">New applets</a></li>
+<li><a href="{% url 'mi-newvideos'%}">New videos</a></li>
+<li><a href="{% url 'mi-newimages' %}">New images</a></li>
+</ul>
+
+<h3>RSS feeds</h3>
+<ul class="linklist">
+  <li><a href="{% url 'mi-newsfeed' %}">Recent news</a></li>
+  <li><a href="{% url 'mi-newpagefeed' %}">New pages</a></li>
+  <li><a href="{% url 'mi-newappletfeed' %}">New applets</a></li>
+  <li><a href="{% url 'mi-newvideofeed' %}">New videos</a></li>
+  <li><a href="{% url 'mi-newimagefeed' %}">New images</a></li>
+</ul>
+
+
+{%endblock %}

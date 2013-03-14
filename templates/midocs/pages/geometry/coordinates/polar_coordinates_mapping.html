@@ -1,0 +1,41 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "coordinates" "polar"%}
+{% index_entry "polar coordinates" "mapping"%}
+{% title "Polar coordinates mapping" %}
+{% description "How polar coordinates can be viewed as mapping from the polar plane onto the Cartesian plane." %}
+
+<p>{%intlink polar_coordinates %}Polar coordinates{%endintlink%} can be viewed as a way to determine the location of a point on the plane via the coordinates $(r,\theta)$, as described on {% intlink polar_coordinates %}another page{%endintlink%} and illustrated with the following applet.</p>
+
+{% boxedapplet polar_coordinates %}
+
+<p>In the above applet, the polar coordinates $r$ and $\theta$ were viewed as two separate numbers, which you could change using two points on separate one-dimensional lines (the sliders).  We can change our perspective slightly by representing the polar coordinates as single point on a two-dimensional polar $(r,\theta)$ plane.  After all, polar coordinates $(r,\theta)$ are just an ordered pair of numbers, like {% intlink cartesian_coordinates %}Cartesian coordinates{%endintlink%}, so we can define an $r$-axis and a $\theta$-axis in direct analogy to the typical $x$-axis and $y$-axis.</p>
+
+<p>With this perspective, polar coordinates is a mapping from a point $(r,\theta)$ in the polar coordinate plane to the correspoing point $(x,y)$ in the Carteisan coordinate plane.  The following applet is virtually identical to the above applet, but it illustrates this new perspective by allowing you to specify the polar coordinates using a single point in the $(r,\theta)$ plane.</p>
+
+{% boxedapplet polar_coordinates_polar_axes %}
+
+<p>This new perspective allows us to explore the features of this mapping.  Using the {% intlink polar_coordinates conversion_formulas %}conversion formulas{%endintlink%} for polar coordinates,
+\begin{align*}
+  x &amp;= r\cos\theta\notag\\
+  y &amp;= r\sin\theta,
+\end{align*}
+we can write the mapping as the transformation $\vc{T}$ defined by $(x,y)=\cvarf(r,\theta) = (r\cos\theta,r\sin\theta)$.  In the above applet, we mapped the point $(r,\theta)$ into the point $(x,y)=\vc{T}(r,\theta)$.  We can gain additional intuition into the behavior of the polar coordinates mapping $\vc{T}$ by looking at how it transforms sets of points. </p>
+
+<p>For example, we can explore how polar coordinates maps a rectangle in the $(r,\theta)$ plane.  If a rectangle $\dlr^*$ is determined by $a \le r \le b$ and $c \le \theta \le d$, it is mapped into what kind of object $\dlr$ in the Cartesian plane? {% intlink polar_coordinates conversion_formulas %}Given that{%endintlink%}
+$$x^2 +y^2 = r^2,$$
+the constraint $a \le r \le b$ means that $a^2 \le x^2+y^2 \le b^2$, i.e., that the points $(x,y)$ must lie in an annulus with inner radius $a$ and outer radius $b$.  The constraint $c \le \theta \le d$ means that the points $(x,y)$ must lie in a sector of the $xy$ plane spanning the angle  $c \le \theta \le d$ with the positive $x$-axis.  You can explore the nature of the resulting region $\dlr$ using the following applet.  If you use the full range $0 \le \theta \le 2\pi$ and a range $0 \le r \le b$, then you will see that the rectangle $\dlr^*$ is mapped into the disk $\dlr$ of radius $b$. </p>
+
+{% boxedapplet polar_coordinates_map_rectangle %}
+
+<p>This perspective of polar coordinates as a mapping allows us to do even more: we can look at how $\vc{T}(r,\theta)$ changes the area of regions as it maps from the $(r,\theta)$ plane to the $(x,y)$ plane.  The following applets illustrates how the stretching or shrinking of $\vc{T}$ depends on the location $(r,\theta)$.  You can observe how it stretches more as $r$ increases, shrinking area substantially for very small $r$.</p>
+
+{% boxedapplet polar_coordinates_map_rectangle_area_transformation %}
+
+<div class="lookdeep">
+<h4>Keeping track of changes in area</h4>
+<p>It turns out that the stretching or shrinking of area by mappings like polar coordinates {% intlink length_area_volume_factors %}plays a big role{%endintlink%} in multivariable calculus.  For {% intlink linear_transformation_definition_euclidean %}linear transformations{%endintlink%}, this stretching or shrinking is particularly {% intlink determinant_linear_transformation %}easy to visualize{%endintlink%} as it always stretches or shrinks by the same amount.  For nonlinear transformations like polar coordinates, we saw that the stretching or shrinking can change depending on location.  A method for capturing how the stretching or shrinking changes is a central component of {% intlink double_integral_change_variables_introduction%}changing variables{%endintlink%} in {% intlink double_integral_introduction %}double integrals{%endintlink%}.
+</p>
+</div>
+
+
+{%endblock%}

@@ -1,0 +1,74 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Bacteria and equilibria worksheet" %}
+{% description "Worksheet on a bacteria growth discrete dynamical system and equilibria of discrete dynamical systems." %}
+
+{% navigation_tag "bacteria"  "Bacteria growth" %}
+<h4>Bacteria growth</h4>
+
+<p>Suppose a population of bacteria increases by 20% every hour.  Let $P_t$ represent the number of bacteria at $t$ hours.  If we write a dynamical system representing this bacteria growth in difference form,
+\begin{equation*}
+   \left \{ 
+  \begin{array}{r c l}
+    P_{t+1} -P_t& = & a P_t \\
+    P_0 & = & P_0,
+  \end{array} \right.
+\end{equation*}
+what is the value of the parameter $a$? $a=$ <span class="questionblank">&nbsp;</span></p>
+
+<p>If instead the dynamical system is in function iteration form,
+\begin{equation*}
+   \left \{ 
+  \begin{array}{r c l}
+    P_{t+1} & = & b P_t \\
+    P_0 & = & P_0,
+  \end{array} \right.
+\end{equation*}
+what is the value of the parameter $b$?  $b=$ <span class="questionblank">&nbsp;</span></p>
+
+<p class="smallspacebelow">In general what is the relationship between $a$ and $b$?</p>
+
+
+<p>Now calculate the first 4 terms of the solution.</br>
+$P_1=$ <span class="questionblank">&nbsp;</span>
+<span style="padding-left: 20px">$P_2=$ <span class="questionblank">&nbsp;</span></br>
+$P_3=$ <span class="questionblank">&nbsp;</span>
+<span style="padding-left: 20px">$P_4=$ <span class="questionblank">&nbsp;</span></p>
+
+<p class="question smallspacebelow">Without calculating $P_5$ through $P_7$, can you estimate the value of $P_8$?  How did you get this approximation?</p>
+
+
+{% navigation_tag "equilibria"  "Equilibria" %}
+<div style="page-break-inside: avoid"><h4>Equilibria</h4>
+
+<p>Recall that the equilibrium point of a discrete dynamical system is a constant solution to a dynamical system.  In other words, an equilibrium solution is a numerical value which when entered 
+as an initial condition creates a trajectory in which every entry is identical to the initial condition, i.e. the solution will be
+\[
+ \{x_0, x_0, x_0, \ldots \}.
+\]
+Since all points will be the same, to find these values we set $x_n=x_{n+1}=E$ in the system and solve for $E$.</p></div>
+
+<p>Calculate the equilibrium point(s) for each of the following:</p>
+<ol>
+  <li class="smallspacebelow">$x_{n+1} -x_n = \frac{1}{2}x_n$</li>
+  <li class="smallspacebelow">$x_{n+1} = \frac{1}{2}x_n$</li>
+  <li class="smallspacebelow">$x_{n+1} = 2 x_n -10$</li>
+  <li class="smallspacebelow">$x_{n+1} -x_n = 2x_n(1-x_n)$</li>
+  <li class="smallspacebelow">$x_{n+1} = 2x_n(1-x_n)$</li>
+</ol>
+
+<p class="question medspacebelow">Suppose you have a dynamical system with two parameters $c$ and $d$ of the form
+\begin{equation*}
+   \left\{ 
+  \begin{array}{r c l}
+    x_{t+1} & = & cx_t + d \\
+    x_0 & = & x_0 \\
+  \end{array} \right.
+\end{equation*}
+where $c>0$.  First, find the equilibrium point in terms of $c$ and $d$.</p>
+
+<p class="question medspacebelow">Determine conditions on $c$ and $d$ so that the equilibrium point is positive.  The conditions will be two sets of two inequalities which make the equilibrium positive.  
+Hint: a fraction is positive if both the numerator and denominator are positive or if both the numerator and denominator are negative.</p>
+
+<p class="question smallspacebelow">If $c$ determines growth or decay can you interpret these two sets of inequalities?</p>
+
+{% endblock %}

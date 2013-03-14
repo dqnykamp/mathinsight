@@ -1,0 +1,86 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parametrization" "line" %}
+{% index_entry "line" "parametrization" %}
+{% title "Parametrization of a line" %}
+{% description "Introduction to how one can parametrize a line. Interactive graphics illustrate basic concepts." %}
+
+<p>A line is determined by two points $\color{red} P$ and
+$\color{green} Q$. The following applet illustrates this simple idea.
+You can change the position of the line by moving the red or the green
+point with the mouse.  Dragging with the mouse elsewhere rotates the
+picture.</p>
+
+{% boxedapplet line_two_points %}
+  
+<p>We want to write an equation for the line.  However, since we are
+in three dimensions, we can't write a single equation like $y=2x-3$ to
+describe the line.  (If you don't believe this statement, check out
+{%intlink line_plane_point %}this page{%endintlink%}.)  Instead, we'll write a
+<i>parametrization</i> for the line.</p>
+
+<p>Before we continue, let's to change our perspective about the line.
+First, rather than thinking of a line being determined by two points,
+we'll think of it as being determined by a point $\color{red} P$ and
+a vector  $\color{green}{\vc{v}}$  <b>parallel</b> to the line.  (The
+vector $\color{green}{\vc{v}}$ could simply be the vector from the
+point $\color{red} P$ to the point $\color{green} Q$.) </p>
+
+<p>Second, we'll think of the point $\color{red} P$ as the endpoint of
+a vector $\color{red}{\vc{a}}$ with tail at the origin.  We could
+visualize the new perspective with the following applet.  It's
+essentially identical to the above applet, except that I've drawn in
+the vectors mentioned above.  You can drag the tips of the vectors to change the line.
+ </p>
+
+{%boxedapplet line_two_vectors_arrows%}
+
+
+<p>
+Unfortunately, the  arrowheads of vectors don't always stay visible.
+We obtain a most consistent view by drawing vectors with dots for arrowheads. </p>
+
+{%boxedapplet line_two_vectors%}
+
+<p>Now we are ready to derive a condition for a point
+$\color{blue}{\vc{x}}$ being on the line determined by
+$\color{red}{\vc{a}}$ and $\color{green}{\vc{v}}$.  We represent a
+point $\color{blue}{\vc{x}}$ on the line by the vector
+$\color{blue}{\vc{x}}$ pictured in blue in the below applet. (We will
+refer to the point $\color{blue}{\vc{x}}$ as being the endpoint of the
+vector $\color{blue}{\vc{x}}$ when its tail is fixed at the origin.)
+By the definition of our line, the point $\color{blue}{\vc{x}}$ is on
+the line if the vector from $\color{red}{\vc{a}}$ to
+$\color{blue}{\vc{x}}$ (i.e, $\color{cyan}{\vc{x}-\vc{a}}$, pictured
+in cyan below) is parallel to $\color{green}{\vc{v}}$ (in green).</p>
+
+
+{% boxedapplet point_on_line_two_vectors %}
+
+
+<p> What does it mean for two vectors to be parallel?  (Note that we
+use the term &ldquo;parallel&rdquo; to include what you might think of
+as anti-parallel, meaning pointing in opposite directions.)  Two
+vectors are parallel if one vector can be expressed as a
+<i>scalar multiple</i> of the other.  So, $\color{cyan}{\vc{x}-\vc{a}}$ is
+parallel to $\color{green}{\vc{v}}$ if and only if $\color{cyan}{\vc{x}-\vc{a}} = t \color{green}{\vc{v}}$ for
+some $t \in \vc{R}$.  We usually write this condition for $\vc{x}$
+being on the line as $$\vc{x} = t \vc{v} +
+\vc{a}.$$
+This equation is called the parametrization of the line, where $t$ is a
+free parameter that is allowed to be any real number.
+</p>
+
+<p>The idea of the parametrization is that as the parameter $t$ sweeps
+through all real numbers, $\vc{x}$ sweeps out the line.  In the last
+applet on this page, we've changed the perspective so that now you
+control $t$ by moving the point on the slider.  To make visualization
+a little easier, we show only the endpoints of the vectors $\vc{a}$
+and $\vc{x}$. </p>
+
+{% boxedapplet line_parametrization %}
+
+<p>If you want to read something more concrete about line
+parametrization, you can see {%intlink line_parametrization_examples%}examples{%endintlink%} of finding the parametrization of
+a line.</p>  
+
+{%endblock%}

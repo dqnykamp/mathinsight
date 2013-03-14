@@ -1,0 +1,115 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integration" "by partial fractions" %}
+{% index_entry "integration" "rational functions" %}
+{% index_entry "partial fractions" %}
+{% title "Partial fractions" %}
+{% description "Using algebra to simplify the integral of rational functions." %}
+
+<p>Now we return to a more special but still important technique of doing
+indefinite integrals. This depends on a good trick from algebra to
+transform complicated <i>rational functions</i> into simpler
+ones. Rather than try to formally describe the general fact, we'll do
+the two simplest families of examples.</p>
+
+<p>Consider the integral
+$$\int {1\over x(x-1)}\; dx$$
+As it stands, we do not recognize this as the derivative of
+anything. However, we have
+$${1\over x-1}-{1\over x}={x-(x-1)\over x(x-1)}={1\over x(x-1)}$$
+Therefore,
+$$\int {1\over x(x-1)}\; dx=\int
+{1\over x-1}-{1\over x}\;dx=\ln(x-1)-\ln x + C$$
+That is, by separating the fraction $1/x(x-1)$ into the &lsquo;partial&rsquo;
+fractions $1/x$ and $1/(x-1)$ we were able to do the integrals
+immediately by using the logarithm. How to see such identities?</p>
+
+<p>Well, let's look at a situation
+$${cx+d\over (x-a)(x-b)}={A\over x-a}+{B\over x-b}$$
+where $a,b$ are given numbers (not equal) and we are to <i>find</i>
+$A,B$ which make this true. If we can find the $A,B$ then we can
+integrate $(cx+d)/(x-a)(x-b)$ simply by using logarithms:
+$$\int {cx+d\over (x-a)(x-b)}\;dx=\int{A\over x-a}+{B\over x-b}\;dx=
+A\ln(x-a)+B\ln(x-b)+C$$
+To find the $A,B$, multiply through by $(x-a)(x-b)$ to get
+$$cx+d=A(x-b)+B(x-a)$$
+When $x=a$ the $x-a$ factor is $0$, so this equation becomes
+$$c\cdot a+d=A(a-b)$$
+Likewise, when $x=b$ the $x-b$ factor is $0$, so we also have
+$$c\cdot b+d=B(b-a)$$
+That is,
+$$A={c\cdot a+d\over a-b}\;\;\;\;\;B={c\cdot b+d\over b-a}$$
+So, yes, we can find the constants to break the fraction
+$(cx+d)/(x-a)(x-b)$ down into simpler &lsquo;partial&rsquo; fractions.</p>
+
+<p><i>Further</i>, if the numerator is of <i>bigger degree</i>
+than $1$, then before executing the previous algebra trick we must
+first <i>divide the numerator by the denominator to get a remainder
+of smaller degree</i>. A simple example is
+$${x^3+4x^2-x+1\over x(x-1)}=?$$ <i>We must recall how to divide
+polynomials by polynomials and get a remainder of lower degree than
+the divisor</i>. Here we would divide the $x^3+4x^2-x+1$ by
+$x(x-1)=x^2-x$ to get a remainder of degree less than $2$ (the degree
+of $x^2-x$). We would obtain
+$${x^3+4x^2-x+1\over x(x-1)}=x+5+{4x+1\over x(x-1)}$$ since the
+quotient is $x+5$ and the remainder is $4x+1$. Thus, in this situation
+$$\int {x^3+4x^2-x+1\over x(x-1)}\;dx=\int
+x+5+{4x+1\over x(x-1)}\;dx$$
+Now we are ready to continue with the <i>first</i> algebra trick.</p>
+
+<p>In this case, the first trick is applied to
+$${4x+1\over x(x-1)}$$
+We want constants $A,B$ so that
+$${4x+1\over x(x-1)}={A\over x}+{B\over x-1}$$
+As above, multiply through by $x(x-1)$ to get
+$$4x+1=A(x-1)+Bx$$
+and plug in the two values $0,1$ to get
+$$4\cdot 0+1=-A\;\;\;\;\;4\cdot 1+1=B$$
+That is, $A=-1$ and $B=5$.</p>
+
+<p>Putting this together, we have
+$${x^3+4x^2-x+1\over x(x-1)}=x+5+{-1\over x}+{5\over x-1}$$
+Thus,
+$$\int {x^3+4x^2-x+1\over x(x-1)}\;dx=\int
+x+5+{-1\over x}+{5\over x-1}\;dx$$
+$$={x^2\over 2}+5x-\ln x+5\ln(x-1)+C$$</p>
+
+<p>In a slightly different direction: we can do any
+integral of the form
+$$\int {ax+b\over 1+x^2}\;dx$$
+because we know two different sorts of integrals with that same
+denominator:
+$$\int{1\over 1+x^2}\;dx=\arctan x+C\;\;\;\;\;
+\int {2x\over 1+x^2}\;dx=\ln(1+x^2)+C$$
+where in the second one we use a substitution. Thus, we have to break
+the given integral into two parts to do it:
+$$\int {ax+b\over 1+x^2}\;dx={a\over 2}\int {2x\over 1+x^2}\;dx
++b\int{1\over 1+x^2}\;dx$$
+$$={a\over 2}\ln(1+x^2)+b\arctan x+C$$</p>
+
+<p>And, as in the first example, if we are given a numerator of
+degree $2$ or larger, then we <i>divide</i> first, to get a remainder
+of lower degree. For example, in the case of
+$$\int {x^4+2x^3+x^2+3x+1\over 1+x^2}\;dx$$
+we divide the numerator by the denominator, to allow us to write
+$${x^4+2x^3+x^2+3x+1\over 1+x^2}=x^2+2x+{x+1\over 1+x^2}$$
+since the quotient is $x^2+2x$ and the remainder is $x+1$. Then
+$$\int {x^4+2x^3+x^2+3x+1\over 1+x^2}\;dx=
+\int x^2+2x+{x+1\over 1+x^2}$$
+$$={x^3\over 3}+x^2+{1\over 2}\ln(1+x^2)+\arctan x+C$$</p>
+
+<p>These two examples are just the simplest, but illustrate the
+idea of using algebra to simplify rational functions.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>$\int { 1 \over x(x-1) }\,dx=?$ </li>
+<li>$\int { 1+x \over 1+x^2 }\,dx=?$</li>
+<li>$\int { 2x^3+4 \over x(x+1) }\,dx=?$ </li>
+<li>$\int { 2+2x+x^2 \over 1+x^2 }\,dx=?$</li>
+<li>$\int { 2x^3+4 \over x^2-1 }\,dx=?$ </li>
+<li>$\int { 2+3x \over 1+x^2 }\,dx=?$</li>
+<li>$\int { x^3+1 \over (x-1)(x-2) }\,dx=?$</li>
+<li>$\int { x^3+1 \over x^2+1 }\,dx=?$</li>
+</ol>
+
+{%endblock%}

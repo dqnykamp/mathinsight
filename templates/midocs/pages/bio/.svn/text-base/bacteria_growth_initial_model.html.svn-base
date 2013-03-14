@@ -1,0 +1,332 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "bacterial growth" "initial model" %}
+{% index_entry "discrete dynamical system" "example" %}
+{% title "Developing an initial model to describe bacteria growth" %}
+{% description "By analyzing some data and hypothesizing rules for cell division, we develop a discrete dynamical system for the growth of a population of bacteria." %}
+
+{% navigation_tag "why" "Why?" %}
+<h4>Why bacteria?</h4>
+
+<p>One important dynamical process in biology is the growth of organisms and populations of organisms.  In some species, individuals grow larger over time.  But in all species, reproduction is imperative for survival.  An important mark of a successful species is growth in its population size, meaning the number of individuals in the population.</p>
+
+<p>The population growth of bacteria is relatively simple, at least under carefully controlled  environments in the laboratory.  For example, bacterial populations increase rapidly when grown at low bacterial densities in abundant nutrient. The population increase is due to binary {% extlink "http://en.wikipedia.org/wiki/Fission_%28biology%29" %}fission{%endextlink%}, where single cells divide asexually into two cells, subsequently the two cells divide to form four cells, and so on. The time required for a cell to mature and divide is approximately the same for any two cells.</p>
+
+<p>For this reason, bacteria population growth can serve as a basis for a simple {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%} model that introduces some key components of modeling dynamical processes.  In developing a discrete dynamical system model for bacteria growth, we illustrate some of the steps in formulating a model and analyzing its properties, with the goal of using the model to deepen our insight into the underlying physical or biological process. </p>
+
+{% navigation_tag "developing" "Developing" %}
+<h4>Developing a model from experimental data</h4>
+
+{% boxedvideo developing_bacteria_growth_model_experimental_data %}
+
+<p>{% extlink "http://en.wikipedia.org/wiki/Vibrio_natriegens" %}<i>Vibrio natriegens</i>{%endextlink%}, or <i>V. natriegens</i> for short, is a marine bacterium commonly found in the mud around estuaries.   One can manipulate the growth rate of <i>V. natriegens</i> in a laboratory by using simple manipulations of the experimental conditions.  Our goal will be to build discrete dynamical system models describing its population growth under a few experimental conditions.</p>
+
+<p>Bacterial growth data from a <i>V. natriegens</i> experiment are shown
+in the following table.  The population was grown in a commonly used nutrient
+growth medium, but the pH of the medium was adjusted to be pH 6.25.{% footnote bacteriaexperiment "The experiment was a semester project of Deb Christensen in which several <i>V. natriegens</i> populations were grown in a range of pH values." %}</p>
+
+<table class="basic centered compact" style="width:50%">
+<caption>Measurements of bacterial density at pH 6.25.<br/>
+The units of &ldquo;Population Density&rdquo; are those of
+absorbance as measured by a spectrophotometer.</caption>
+<tr><th>Time (min)</th><th>Population Density</th></tr>
+<tr><td>0</td><td>0.022</td></tr>
+<tr><td>16</td><td>0.036</td></tr>
+<tr><td>32</td><td>0.060</td></tr>
+<tr><td>48</td><td>0.101</td></tr>
+<tr><td>64</td><td>0.169</td></tr>
+<tr><td>80</td><td>0.266</td></tr>
+</table> 
+
+<div class="thincenter"><aside class="sidenote">
+<h5>Counting bacteria?</h5>
+<p>How do you measure bacteria density?
+Ideally you would place, say 1 microliter, of growth medium
+under a microscope slide and count the bacteria in it.    This is difficult,
+so the procedure commonly used is to pass a beam of light
+through a sample of growth medium and measure the amount of light absorbed.
+The greater the bacterial density
+the more light that is absorbed and thus bacterial density is
+measured in terms of <em>{% extlink "http://en.wikipedia.org/wiki/Absorbance" %}absorbance{%endextlink%}</em> units.    The instrument used to do this
+is called a <em>{% extlink "http://en.wikipedia.org/wiki/Spectrophotometry"%}spectrophotometer{%endextlink%}</em>.</p>
+
+<p>The spectrophotometer gives you a measure of light absorbance
+which is directly proportional to the bacterial density
+(that is, light absorbance is a constant times bacterial density).
+Absorbance is actually defined by
+\begin{gather*}
+\mbox{Absorbance} \quad = \quad    - \log_{10} \frac{I_t}{I_0}
+\end{gather*}
+where
+$I_0$ is the light intensity passing through the medium with
+no bacteria present and $I_t$ is the light intensity passing
+through the medium with bacteria at time $t$.</p>
+</aside></div>
+
+{% navigation_tag "density_time" "Developing" "Density versus time" %}
+<h5>Visualizing population density versus time</h5>
+
+<p>The bacteria population size was recorded every 16 minutes, giving us precisely the snapshots we described in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical system introduction{%endintlink%}.  We'll let $t$ denote time rescaled so that the time between snapshots is one unit of time.  Then, the above snapshots occurred at times $t=0,1,2,3,4,5$.  Time $t=3$, for example, indicates the actual time of $3 \times 16 = 48$ minutes.</p>
+
+<p>The data consists of measurements of bacterial population density at each time point.  In our discrete dynamical system model, this population density will be the single {% intlink state_variable_definition%}state variable{%endintlink%} in our {% intlink state_space_definition%}state space{%endintlink%}, and we'll denote the bacterial density by $B$.  Then $B_t$ is the snapshot of bacterial density at time $t$.  With this notation $B_0 = 0.022$, $B_1 = 0.036$, $B_2 = 0.060$, etc.
+ </p>
+
+<p>With the state space and set of times determined, the remaining step in developing the dynamical system model is to determine the time evolution rule.  This step, of course, is the most difficult part, as it must capture the dynamics of the system.  Sometimes, one has a sufficiently explicit description of the dynamics so that one can immediately write down a reasonable evolution rule.  In most cases, developing an equation that captures key features of the underlying dynamics will require multiple iterations and an effort to look at both the experiment and the mathematical system from different angles.</p>
+
+{% image bacteria_density_versus_time %}
+
+<p>We begin by looking at the plot of bacteria density $B_t$ versus the rescaled time $t$, above.  It's immediately clear that the density is increasing faster and faster as time progresses.  Dynamics is all about the change in the state variables, so let's focus in on the change in $B_t$ at each time step.  The population change per unit time is simply $B_{t+1}-B_{t}$.  These changes are, for example, $B_1 - B_0 = 0.014$ and $B_2 - B_1 = 0.024$.  Calculating all these population changes, we add them to our table of results.  From now on, let's just use the rescaled time $t$.</p>
+
+<table class="basic centered compact" style="width:50%">
+<tr><th>Time<br/> $t$</th><th>Population Density<br/> $B_t$</th><th>Pop&nbsp;Change/<wbr>Unit&nbsp;Time<br/> $B_{t+1}\nobreak{-}B_t$</th></tr>
+<tr><td>0</td><td>0.022</td><td>0.014</td></tr>
+<tr><td>1</td><td>0.036</td><td>0.024</td></tr>
+<tr><td>2</td><td>0.060</td><td>0.041</td></tr>
+<tr><td>3</td><td>0.101</td><td>0.068</td></tr>
+<tr><td>4</td><td>0.169</td><td>0.097</td></tr>
+<tr><td>5</td><td>0.266</td></tr>
+</table> 
+
+
+{% navigation_tag "change_time" "Developing" "Change versus time" %}
+<h5>Visualizing population change versus time</h5>
+
+<p>We can visualize these dynamics by plotting the population change as a function of time, below.  As we observed from the original plot, the population change increases as a function of time.</p>
+
+{% image bacteria_density_change_versus_time %}
+
+<p>If we stare at the above plot, we can observe that the population change increases faster than linearly.  In other words, the above points don't increase as a straight line, but the trail of points tends to bend upward as time increases.  It doesn't look like we can make a good dynamical systems model by finding some slope $m$ and a constant $c$ and writing $B_{t+1}-B_{t}=mt+c$.  Lines are one of the simplest types of equations, so we often want to find a nice simple linear relationship among variables.  But, here, it looks like it won't be able to do that.</p>
+
+<p>If all we had were these points and we forgot the experimental system that they came from, we might start employing some more mathematical tricks to find a nice equation for these points.  We might think that, since it doesn't look like the points fall on a line, maybe they fall on a parabola.  In fact, we could find an equation for a parabola that gets fairly close to these points.</p>
+
+<p>But, before we start going down that road, we need to stop and remember the system we are trying to model.  Our purpose in modeling the data is not simply to find an equation that matches the data points.  Our goal is a model that captures the mechanism of the physical system we modeling.  To achieve a model that captures the key features of bacteria population growth, we need to go back and recall what we know about how bacteria reproduce.</p>
+
+<p>As <a href="#why">mentioned at the outset</a>, bacteria cells reproduce by dividing into two cells, and each cell takes about the same time to mature and divide.  If our snapshots occurred at the same interval as this dividing time, the population size would double at each time step, as it did in the {% intlink dynamical_system_idea bacteria_doubling %}example we used to illustrate dynamical systems{%endintlink%}, captured by the {% appletlink bacteria_doubling %}bacteria doubling applet{%endappletlink%}.</p>
+
+<p>Looking at the above data, it doesn't appear that the population is doubling at each time step.  If it doubled, we would have expected that the change $B_{t+1}-B_{t}$ would be equal to the previous population size $B_t$.  In all cases, the change $B_{t+1}-B_{t}$ is substantially less than $B_t$.</p>
+
+<p>What went wrong here?  Let's imagine the bacteria cells are indeed dividing in half after a certain period of time.  The above snapshots were taken every sixteen minutes.  If each bacterium took sixteen minutes to mature and divide, then we'd expect the population to double each time step of sixteen minutes.  Since the population growth seems to be slower, it's reasonable to assume each bacterium takes longer than sixteen minutes to mature and divide.</p>
+
+
+{% comment %}
+<a id="thoughtexperiment" class="anchor"></a>
+<div class="thincenter"><section class="thoughtexperiment">
+<h5>A thought experiment</h5>
+<p>Let's do a thought experiment to figure out what to do next. We'll use our rescaled time so that one unit of time is equal to the time between our snapshots. Suppose the time it takes for a cell to mature and divide is $\tau$ units of time.  Can you figure out what fraction of the cells should divide in each time step?  Here we imagine the cells are not synchronized so that they do not all divide together at the same time.  Instead, we imagine that at any point in time, the cells are at different points in their cycle of maturing and dividing; just a few would be in the process of dividing at any point in time.</p>
+
+<p>Once you figure out the answer, you can check your answer {% intlink bacteria_growth_initial_model_answers thoughtexperiment1 %}here{%endintlink%}.</p>
+</section></div>
+
+{% endcomment %}
+
+{% navigation_tag "linear_model" "Developing" "Linear model" %}
+<h5>Fitting a linear model to population change versus density</h5>
+
+
+<p>If cells are taking longer than a time step to mature and divide, a reasonable assumption is that a certain fraction of the cells divide each time step.  The population change, $B_{t+1}-B_{t}$, should reflect the number of cells that divided between the snapshot at time $t$ and the snapshot at time $t+1$.  Therefore, if cells are dividing at a constant rate, then we expect that the population change, $B_{t+1}-B_{t}$, should be some fixed fraction of the population $B_t$.  In other words, we expect that the model should be of the form
+\begin{gather}
+  B_{t+1}-B_{t} = c B_t {% equation_tag constant_rate 1 %}
+\end{gather}
+for some constant $c$.</p>
+
+<p>We can test this hypothesis by plotting the data a little differently.  Instead of plotting population change versus time, as we did above, we should  plot the population change, $B_{t+1}-B_{t}$, versus the population size $B_t$.  If equation \eqref{constant_rate} holds, then the resulting points should lie on a line that goes through the origin.  The slope of the line will give us the constant $c$, which is the fraction of the bacteria that divided in the time step.</p>
+
+
+{% image bacteria_density_change_versus_density %}
+
+<p>As shown in the above plot, the first four data points of population change versus density are pretty much aligned along a line through the origin.  The last point doesn't seem to be exactly in line with the first four, but is a little lower.  For now, let's not worry about the last point and focus on the initial growth represented by the first four points.  In the following applet, you can fit the points with a line by moving the red diamond.  Then, you can read off the slope, which is the constant $c$ in equation \eqref{constant_rate}.</p>
+
+{% boxedapplet bacteria_density_change_versus_density_line %}
+
+<p>From exploring the linear fit in the applet, you can observe that the first points lie along a line through the origin whose slope is approximately $2/3$.  For example, if you move the point $P$ to $(0.15,0.1)$ the line through $P$ is close to the first four points, and the slope is $0.1/0.15=2/3$ (though the applet may show it as a slightly different number due to rounding).  The line can
+be &ldquo;fit&rdquo; more quantitatively, but it is not necessary to do so at this stage.</p>
+
+<p>In the above applet, we forced the line to go through the origin.  Why did we insist the line that goes through the origin?  See {% intlink bacteria_growth_initial_model_exercises whyorigin %}exercise 3{%endintlink%}.</p>
+
+{% comment %}
+<a id="thoughtexperiment2" class="anchor"></a>
+<div class="thincenter"><section class="thoughtexperiment">
+<h5>Thought experiment followup</h5>
+<p>You can use the results of the <a href="#thoughtexperiment">thought experiment</a> combined with these results to estimate what's going on with individual bacteria cells. Suppose the line giving bacteria density change as function of density has a slope of 2/3.  Estimate the time required for a cell to mature and divide.</p>
+<p>Remember that the snapshots in the data occur at 16 minute intervals, you need to multiply the results you get from direct application of the thought experiment by 16 minutes.</p>
+<p>Once you figure out the answer, you can check your answer {% intlink bacteria_growth_initial_model_answers thoughtexperiment2 %}here{%endintlink%}.</p>
+</section></div>
+{% endcomment %}
+
+<p>Substituting $c=2/3$ into equation \eqref{constant_rate}, we arrive at the following evolution rule for our initial discrete dynamical system model describing bacterial population growth:
+\begin{gather}
+  B_{t+1}-B_{t} = \frac{2}{3} B_t. {% equation_tag initial_model 2 %}
+\end{gather}
+In words equation \eqref{initial_model} says that the growth during
+the $t$<sup>th</sup> time interval
+is $\frac{2}{3}$ times $B_t$, the bacteria present at the beginning of the period.    The number $\frac{2}{3}$ is called
+the <em>relative growth rate</em>, i.e., the growth per time interval is
+two-thirds of the current population size.
+More generally, one may say that a fixed fraction of cells divide
+every time period.    (In this instance, two-thirds of the cells divide every
+16 minutes.)</p>
+
+
+<div class="thincenter"><aside class="sidenote">
+<h5>What about that fifth point?</h5>
+<p>The fifth point in the data, which is $(B_4, B_5-B_4) = (0.169, 0.097)$ lies below the line we fit to the data.    Because the line is so close to the first four points, there is a suggestion that during the fourth time period, the growth, $B_5-B_4 = 0.97$, is below expectation, or perhaps, $B_5=0.266$ is a measurement error and should be larger.  If $B_5$ isn't a measurement error, what might explain why $B_5$ is smaller than expected?{%comment%}These bacteria were actually grown and measured for 160 minutes and we will find later that the measured value $B_5=0.266$ is consistent with the remaining data. The bacterial growth is slowing down after $t=4$, or after 64 minutes.{%endcomment%}</p>
+</aside></div>
+
+{% navigation_tag "solving" "Solving" %}
+<h4>Solving the model</h4>
+
+{% boxedvideo solving_bacteria_growth_model %}
+
+<p>The dynamical system of equation \eqref{initial_model} is simple enough that we can solve it to find an equation for $B_t$ in terms of $t$.  As a first step, we change equation \eqref{initial_model} into an <em>iterator equation</em>, meaning an equation of the form that we introduced in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical system introduction{%endintlink%}.  To do this, we just rewrite equation \eqref{initial_model} so that $B_{t+1}$ is alone on the left hand side:
+\begin{gather}
+  B_{t+1} = \frac{5}{3} B_t = f(B_t){% equation_tag model_iterator 3 %}
+\end{gather}
+where the function $f$ is defined by $f(x)=\frac{5}{3} x$.  As discussed in the 
+{% intlink discrete_dynamical_system_introduction %}introduction{%endintlink%}, evolving a discrete dynamical system can consist of iterating a function such as $f$.</p>
+
+<p>Iterating $f$, we can calculate the values of $B_t$ given the model of equation \eqref{model_iterator}.  The result will be in terms of the initial condition $B_0$.  Equation \eqref{model_iterator} is shorthand for at least five
+equations
+\begin{gather*}
+B_1 = \frac{5}{3} B_0, \quad
+B_2 = \frac{5}{3} B_1, \quad
+B_3 = \frac{5}{3} B_2, \quad
+B_4 = \frac{5}{3} B_3, \quad\text{and}\quad
+B_5 = \frac{5}{3} B_4. \quad
+\end{gather*}
+Beginning with $B_0 = 0.022$ we can compute
+\begin{align*}
+B_1 & = \frac{5}{3} B_0  =  \frac{5}{3} 0.022  \approx 0.037\\
+B_2 & = \frac{5}{3} B_1 = \frac{5}{3} 0.037  \approx 0.061
+\end{align*}
+By continuing to iterate $f$, we can compute $B_3$, $B_4$, and $B_5.$  You can do this by continuing to multiply by $5/3$ or use the {% appletlink function_iteration %}function iteration applet{%endappletlink%} so that you can visualize the results.  To use the applet, plug in $f(x)=5x/3$ and $x_0=0.022$.</p> 
+
+<p>We can also write out the solution without putting in the value for the initial condition and without multiplying out the solution.  In this case, the solutions look like
+\begin{align*}
+B_1 & = \frac{5}{3}  B_0\\
+B_2 & = \frac{5}{3} B_1 
+= \frac{5}{3} \times \left( \frac{5}{3}\, B_0 \right) = 
+\frac{5}{3} \times \frac{5}{3}  B_0    \\
+B_3 & = \frac{5}{3}  B_2 
+= \frac{5}{3} \times \left(\frac{5}{3} \times \frac{5}{3} B_0    \right)
+= \frac{5}{3} \times \frac{5}{3} \times \frac{5}{3}  B_0
+\end{align*}
+</p>
+
+<p>At time interval 5, we get
+\begin{align*}
+B_5 =    \frac{5}{3} \times \frac{5}{3} \times \frac{5}{3} \times
+\frac{5}{3} \times \frac{5}{3}    \times B_0
+\end{align*}
+which is cumbersome and is usually written
+\begin{align*}
+B_5 =    \left( \frac{5}{3} \right)^5 \times B_0.
+\end{align*}
+The general form is
+\begin{equation}    
+B_t = \left( \frac{5}{3} \right)^t B_0 = B_0 \left( \frac{5}{3} \right)^t
+{% equation_tag general_solution 4 %}
+\end{equation}
+which is the general solution to the discrete dynamical system \eqref{initial_model} for generic initial conditions $B_0$.</p>
+
+<p>For the data, we had the specific initial population density $B_0 = 0.022$.  For that situation, equation \eqref{general_solution} becomes
+\begin{equation} 
+ B_t = 0.022 \left( \frac{5}{3} \right)^t
+  {% equation_tag specific_solution 5 %}
+\end{equation}
+and is the <em>specific solution</em> to the discrete dynamical system of equation \eqref{initial_model} and the given initial condition, which we rewrite together as
+\begin{gather*}
+B_0 = 0.022, \qquad B_{t+1} - B_t = \frac{2}{3} B_t.
+\end{gather*}
+</p>
+
+<p>Equation \eqref{specific_solution} is written in terms
+of the time index, $t$.  We can also write the solution in terms of original experimental time.  Denoting this time in minutes by $T$, where $T=16 t$, we can write equation \eqref{specific_solution} as
+\begin{gather}
+\text{Bacteria at $T$ minutes} = 0.022 \left( \frac{5}{3} \right)^{T/16}\goodbreak \approx 0.022 \timesbadbreak 1.032^T.
+  {% equation_tag specific_solution_time_units 6 %}
+\end{gather}
+</p>
+
+
+<div class="thincenter"><aside class="sidenote">
+<h5>Exponential growth</h5>
+<p>Populations whose growth is described by an equation of the
+form
+\begin{gather*}
+P_t = P_0 R^t  \qquad \mbox{with} \qquad R > 1
+\end{gather*}
+are said to exhibit <em>{% intlink exponential_growth_decay_discrete %}exponential growth{% endintlink%}</em>.  Here $P_t$ is the population size at time $t$, analogous to our $B_t$ for bacteria.  For bacteria population in terms of the rescaled time $t$, we determined that $P_0=0.022$ and $R=\frac{5}{3}$.  You can {% intlink exponential_growth_decay_discrete %}read more{%endintlink%} about exponential growth in discrete dynamical systems.</p>
+</aside></div>
+
+{% navigation_tag "how_well" "How well?" %}
+<h4>How well did we do?</h4>
+
+<p>How well do the computed values of bacterial density, $B_t$, match the observed values?    The original and computed values are shown in the following table.</p>
+
+<table class="basic centered compact" style="width:50%">
+<caption>Comparison of actual bacterial densities (at pH 6.25) with bacterial densities computed from equation \eqref{specific_solution}.</caption>
+<tr><th>Time (min)</th><th>Time index</th><th>Population Density</th><th>Computed Density</th></tr>
+<tr><td> 0</td><td>0</td><td>0.022</td><td>0.022</td></tr>
+<tr><td>16</td><td>1</td><td>0.036</td><td>0.037</td></tr>
+<tr><td>32</td><td>2</td><td>0.060</td><td>0.061</td></tr>
+<tr><td>48</td><td>3</td><td>0.101</td><td>0.102</td></tr>
+<tr><td>64</td><td>4</td><td>0.169</td><td>0.170</td></tr>
+<tr><td>80</td><td>5</td><td>0.266</td><td>0.283</td></tr>
+</table> 
+
+<p>To visualize the comparison, we again use the {% appletlink function_iteration %}function iteration applet{%endappletlink%}, but this time we modify it by adding the experimental data as purple diamonds.  Since the function and initial conditions are already entered by default, you can simply iterate a few times to see the graphical comparison.</p>
+
+{% boxedapplet function_iteration_bacteria_growth_initial_model %}
+
+<p>The computed values match the observed values
+closely except for the last measurement where the observed value
+is less than the value predicted from the mathematical model.
+The effect of cell crowding or environmental contamination or age of
+cells is beginning to appear after an hour of the experiment and
+the model does not take this into account.
+We will return to this population with data for the next 80 minutes
+of growth later and will develop a new model
+that will account for decreasing rate of growth as the population
+size increases.</p>
+
+<aside class="sidenote">
+<h4>Concerning the validity of a model</h4>
+
+{% index_entry "model validity" "" "model_validity" %}
+<p>We have used the population model once and found that it matches
+the data rather well.  The validity of a model, however, is only
+established after
+multiple uses in many laboratories and critical examination of the
+forces and interactions that lead to the model equations.
+Models evolve as knowledge accumulates.
+Mankind's model of the universe has evolved from the belief
+that Earth is the center
+of the universe, to the Copernican model that the sun is the
+center of the universe, to the realization that the sun is
+but a single star among some 200 billion in a galaxy, to the surprisingly
+recent realization (Hubble, 1923) that our Milky Way
+galaxy is but a single galaxy among an enormous universe of
+galaxies.</p>
+
+<p>It is fortunate that our solution equation matched the data, but it
+must be acknowledged that two crucial parameters, $B_0=0.022$ and $R=\frac{5}{3}$, were computed from the data, so that a fit may not be a great surprise.
+Other equations also match the data.
+The parabola, $B_t=0.0236 + .000186t + 0.00893 t^2$, computed
+by least squares fit to the first five data points is shown by the red crosses
+below, and it matches the data (blue circles) as well
+as does $B_t = 0.022 (5/3)^t$ (as shown in the above applet).  We prefer  $B_t = 0.022 (5/3)^t$
+as an explanation of the data
+over the parabola obtained by the method of least squares
+because it is derived from an understanding of
+bacterial growth as described by the model whereas the parabolic
+equation is simply a match of equation to data.</p>
+
+{% image bacteria_density_versus_time_parabola %}
+
+</aside>
+
+
+<p>To learn how to build your own dynamical system models, try your hand at the {% intlink bacteria_growth_initial_model_exercises%}exercises{%endintlink%}.</p>
+
+
+
+{% endblock %}

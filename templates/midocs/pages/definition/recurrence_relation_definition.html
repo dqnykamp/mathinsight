@@ -1,0 +1,29 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "recurrence relation" "definition" %}
+{% title "Recurrence relation definition" %}
+{% description "A recurrence relation is an equation that defines a sequence based on a rule that gives the next term as a function of the previous term(s)." %}
+
+<p>A recurrence relation is an equation that defines a sequence based on a rule that gives the next term as a function of the previous term(s). </p>
+
+<p>The simplest form of a recurrence relation is the case where the next term depends only on the immediately previous term.  If we denote the $n$th term in the sequence by $x_n$, such a recurrence relation is of the form
+\begin{gather*}
+  x_{n+1}=f(x_n)
+\end{gather*}
+for some function $f$.  One such example is
+$x_{n+1}=2-x_n/2.$
+</p>
+
+<p>A recurrence relation can also be higher order, where the term $x_{n+1}$ could depend not only on the previous term $x_n$ but also on earlier terms such as $x_{n-1}$, $x_{n-2}$, etc.  A second order recurrence relation depends just on $x_n$ and $x_{n-1}$ and is of the form
+\begin{gather*}
+  x_{n+1}=f(x_n,x_{n-1})
+\end{gather*}
+for some function $f$ with two inputs.  For example, the recurrence relation
+$x_{n+1}=x_n + x_{n-1}$
+can generate the {% extlink "http://en.wikipedia.org/wiki/Fibonacci_number"%}Fibonacci numbers{%endextlink%}.</p>
+
+<p>To generate sequence basd on a recurrence relation, one must start with some initial values.  For a first order recursion $x_{n+1}=f(x_n)$, one just needs to start with an initial value $x_0$ and can generate all remaining terms using the recurrence relation.  For a second order recursion $x_{n+1}=f(x_n,x_{n-1})$, one needs to begin with two values $x_0$ and $x_1$.  Higher order recurrence relations require correspondingly more initial values.</p>
+
+<p>A recurrence relation can be viewed as determining a {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%}.</p>
+
+{% endblock%}
+

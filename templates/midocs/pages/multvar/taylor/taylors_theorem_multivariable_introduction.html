@@ -1,0 +1,99 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor's theorem" "multivariable"%}
+{% index_entry "Taylor polynomial" "multivariable"%}
+{% title "Introduction to Taylor's theorem for multivariable functions" %}
+{% description "Development of Taylor's polynomial for functions of many variables." %}
+
+<p>Remember one-variable calculus Taylor's theorem.  Given a one variable
+function $f(x)$, you can fit it with a polynomial around $x=a$.</p>
+
+<p>For example, the best linear approximation for $f(x)$ is
+\begin{align*}
+  f(x) \approx f(a) + f\,'(a)(x-a).
+\end{align*}
+This linear approximation fits $f(x)$ (shown in green below) with a
+line (shown in blue) through $x=a$ that
+matches the slope of $f$ at $a$.</p>
+
+<p class="centeredImage">{% image tangent_line_graph %}</p>
+
+<p>We can add additional, higher-order terms, to approximate $f(x)$ better
+near $a$.  The best quadratic approximation is
+\begin{align*}
+  f(x) \approx f(a) + f\,'(a)(x-a) + \frac{1}{2} f\,''(a)(x-a)^2
+\end{align*}
+We could add third-order or even higher-order terms:
+\begin{align*}
+  f(x) \approx f(a) + f\,'(a)(x-a) + \frac{1}{2} f\,''(a)(x-a)^2
+  + \frac{1}{6} f\,'''(a)(x-a)^3 + \cdots.
+\end{align*}
+The important point is that this <i>Taylor polynomial</i>
+approximates $f(x)$ well for $x$ near $a$.</p>
+
+<p>We want to generalize the Taylor polynomial to (scalar-valued)
+functions of multiple variables:
+\begin{align*}
+  f(\vc{x})= f(x_1,x_2, \ldots, x_n).
+\end{align*}
+</p>
+
+<p>We already know the best {% intlink linear_approximation_multivariable %}linear approximation{%endintlink%} to $f$.  It involves the derivative,
+\begin{align*}
+  f(\vc{x}) \approx f(\vc{a}) + Df(\vc{a}) (\vc{x}-\vc{a}).
+   \label{eq:firstorder}
+\end{align*}
+where $Df(\vc{a})$ is the {%intlink derivative_matrix %}matrix of partial derivatives{%endintlink%}.  The linear approximation is the first-order Taylor polynomial.</p>
+
+<p>What about the second-order Taylor polynomial?  To find a quadratic
+approximation, we need to add quadratic terms to our linear
+approximation.  For a function of one-variable $f(x)$, the quadratic
+term was
+\begin{align*}
+  \frac{1}{2} f\,''(a)(x-a)^2.
+\end{align*}
+For a function of multiple variables $f(\vc{x})$, what is analogous to
+the second derivative?</p>
+
+<p>Since $f(\vc{x})$ is scalar, the first derivative is $Df(\vc{x})$, a $1 \times n$ matrix,
+which we can view as an $n$-dimensional vector-valued function of the $n$-dimensional vector $\vc{x}$.  For the
+second derivative of $f(\vc{x})$, we can take the matrix of partial
+derivatives of the function $Df(\vc{x})$.  We could write
+it as $DDf(\vc{x})$ for the moment.  This second
+derivative matrix is an $n \times n$ matrix called the <b>Hessian matrix</b> of $f$.  We'll denote it by  $Hf(\vc{x})$,
+\begin{align*}
+  Hf(\vc{x}) = DDf(\vc{x}).
+\end{align*}
+</p>
+
+<p>When $f$ is a function of multiple variables, the second derivative
+term in the Taylor series will use the Hessian $Hf(\vc{a})$.  For the
+single-variable case, we could rewrite the quadratic expression
+as
+\begin{align*}
+   \frac{1}{2} (x-a)f\,''(a)(x-a).
+\end{align*}
+The analog of this expression for the multivariable case is
+\begin{align*}
+  \frac{1}{2} (\vc{x}-\vc{a})^T Hf(\vc{a}) (\vc{x}-\vc{a}).
+\end{align*}
+</p>
+
+<p>We can add the above
+expression to our first-order Taylor polynomial
+to obtain the second-order Taylor polynomial for functions of multiple
+variables:
+\begin{align*}
+   f(\vc{x}) \approx f(\vc{a}) + Df(\vc{a}) (\vc{x}-\vc{a})
+   +  \frac{1}{2} (\vc{x}-\vc{a})^T Hf(\vc{a}) (\vc{x}-\vc{a}).
+\end{align*}
+The second-order Taylor polynomial is a better approximation of
+$f(\vc{x})$ near $\vc{x}=\vc{a}$ than is the linear approximation
+(which is the same as the first-order Taylor polynomial).  We'll be
+able to use it for things such as finding a local minimum or local
+maximum of the function $f(\vc{x})$.</p>
+
+
+<p>You can read some examples
+{%intlink taylor_polynomial_multivariable_examples%}here{%endintlink%}.</p>
+
+{%endblock%}

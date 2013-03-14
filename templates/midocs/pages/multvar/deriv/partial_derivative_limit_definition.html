@@ -1,0 +1,108 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "partial derivative" "limit definition"%}
+{% index_entry "derivative" "partial" %}
+{% title "Partial derivative by limit definition" %}
+{% description "Description with example of how to calculate the partial derivative from its limit definition." %}
+
+{% navigation_tag "review_limit_definition" "Review limit definition"  %}
+<h4>Review limit definition</h4>
+
+<p>Recall that the {% intlink partial_derivative_introduction %}partial derivative{%endintlink%} of $f(x,y)$ with respect to $x$
+at the point $(a,b)$ is the same thing as the ordinary derivative of
+the function $g(x)=f(x,b)$:
+\begin{align*}
+  \pdiff{f}{x}(a,b) = g'(a).
+\end{align*}
+(Here we think of $b$ as just a constant.)
+We illustrate this graphically as follows.  </p>
+
+<p class="centeredImage">{% image partial_derivative_as_slope %}</p>
+
+<p>The green curve can be viewed as the function $g(x)$ and the black
+line is tangent to the green curve.</p>
+
+<p>You may recall from one-variable calculus how the ordinary derivative
+was defined.  It was with the nice formula
+\begin{align*}
+  g'(a) = \diff{g}{x}(a) = \lim_{h\to 0} \frac{g(a+h)-g(a)}{h}.
+  \label{eq:limitdef}
+\end{align*}
+You can use the the below applet to refresh your memory.  
+</p>
+
+{%boxedapplet ordinary_derivative_limit_definition %}
+
+
+<p>To understand the formula for the slope of the blue line through the red and black points, note that the height of the red point is $g(a+h)$ and the height of the black point is $g(a)$.  Therefore, the &ldquo;rise&rdquo; between those points is $g(a+h)-g(a)$. 
+The &ldquo;run&rdquo; between the points is $h$. 
+Rise over run is gives the slope of the line
+\begin{align*}
+  \frac{g(a+h)-g(a)}{h}
+\end{align*}
+As $h$ approaches zero, this expression approaches the
+above definition of the derivative $g'(a)$.  Hence, the
+slope of the blue line approaches the derivative $g'(a)$. 
+</p>
+
+<p>
+Since
+\begin{align*}
+  \pdiff{f}{x}(a,b) = g'(a)
+\end{align*}
+we can apply the limit defintion of $g'(a)$ to conclude that 
+\begin{align*}
+  \pdiff{f}{x}(a,b) = \lim_{h\rightarrow 0} \frac{f(a+h,b) -
+    f(a,b)}{h}.
+  \label{eq:limitdefx}
+\end{align*}
+In a similar manner, we define
+\begin{align*}
+  \pdiff{f}{y}(a,b) = \lim_{h\rightarrow 0} \frac{f(a,b+h) -
+    f(a,b)}{h}.
+  \label{eq:limitdefy}
+\end{align*}
+</p>
+
+{% navigation_tag "example" "Example"  %}
+<h4>Example with limit definition</h4>
+ 
+<p>Define $f(x,y)$ by
+\begin{align*}
+  f(x,y) =
+  \begin{cases}
+    \displaystyle \frac{x^3 +x^4-y^3}{x^2+y^2}
+    &amp; \text{if } (x,y) \ne (0,0)\\
+    0 &amp; \text{if } (x,y) = (0,0)
+  \end{cases}
+\end{align*}
+If we want to calculate the partial derivative of $f(x,y)$ at any
+point away from the origin $(0,0)$, we can use the usual formulas.
+However, if we want to calculate $\displaystyle \pdiff{f}{x}(0,0)$, we
+have to use the definition of the partial derivative.  (There are no
+formulas that apply at points around which a function definition is
+broken up in this way.)</p>
+
+<p>So, we plug in the above limit definition for $\pdiff{f}{x}$.  We use the fact
+that $f(0,0)=0$ and 
+\begin{align*}
+  f(h,0) =  \frac{h^3+h^4-0^3}{h^2+0^2} = \frac{h^3+h^4}{h^2} = h+h^2.
+\end{align*}
+Then,
+\begin{align*}
+  \pdiff{f}{x}(0,0) &amp;=
+  \lim_{h \rightarrow 0} \frac{f(0+h,0)-f(0,0)}{h}\\
+   &amp;=
+  \lim_{h \rightarrow 0} \frac{f(h,0)-f(0,0)}{h}\\
+  &amp;= \lim_{h \rightarrow 0} 
+  \frac{\displaystyle h+h^2-0}{h}\\
+  &amp;= \lim_{h \rightarrow 0}
+  1+h\\
+  &amp;=1.
+\end{align*}
+</p>
+
+<p>This partial derivative is illustrated by a tangent line of slope 1 in the below applet.</p>
+
+{% boxedapplet partial_derivative_limit_definition_example %}
+
+{%endblock%}

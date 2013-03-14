@@ -1,0 +1,114 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% index_entry "discrete dynamical system" "problems" %}
+{% title "Elementary discrete dynamical systems biology problems, part 2" %}
+{% description "More sample problems illustrating discrete dynamical systems in the context of biology." %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $x_n$ be the number of fish in generation $n$ in a lake.  We'll model the evolution of the fish using Ricker's model of the form
+\begin{align*}
+  x_{n+1} = 5x_n e^{-x_n},
+\end{align*}
+</p>
+
+<p>The equilibria of this model are $x_n=0$ and $x_n= \ln(5)$.  
+<ol>
+  <li>Calculate the stability of the equilibria using calculus.</li>
+  <li>Confirm the stability through cobwebbing the below graph.</li>
+  <li>For any positive initial fish population $x_0$, what will happen to the fish population $x_n$ as $n$ gets large?</li>
+</ol>
+
+{% image ricker_model_5 %}
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $x_n$ be the number of fish in generation $n$ in a lake.  We'll model the evolution of the fish using Ricker's model of the form
+\begin{align*}
+  x_{n+1} = 8x_n e^{-x_n},
+\end{align*}
+</p>
+
+<p>The equilibria of this model are $x_n=0$ and $x_n= \ln(8)$.  
+<ol>
+  <li>Calculate the stability of the equilibria using calculus.</li>
+  <li>Confirm the stability through cobwebbing the below graph.</li>
+  <li>If the initial fish population $x_0$ is close to (but not equal to) $\ln(8)$, what will happen to the fish population $x_n$ as $n$ increases?</li>
+</ol>
+
+{% image ricker_model_8 %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>A population of squirrels would be increasing at rate of 50% per year, except that due to a scarcity of acorns, there is only enough food to support 300 squirrels.  Therefore, if $s_t$ is the number of squirrels in year $t$, the population evolves according to the dynamical system
+\begin{align*}
+  s_{t+1} - s_{t} = 0.5 s_t\left(1 - \frac{s_t}{300}\right).
+\end{align*}
+</p>
+
+<p>Calculate the equilibria of the dynamical system and their stability.  If the initial population is $s_0=400$, what will happen to the population after a long time?</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>A population of squirrels would be increasing at rate of $r$ per year, except that due to a scarcity of acorns, there is only enough food to support $N$ squirrels.  Therefore, if $s_t$ is the number of squirrels in year $t$, the population evolves according to the dynamical system
+\begin{align*}
+  s_{t+1} - s_{t} = r s_t\left(1 - \frac{s_t}{N}\right).
+\end{align*}
+</p>
+
+<ol>
+  <li>Calculate the equilibria of the dynamical system.</li>
+  <li>If $r=1.5$, determine the stability of the equilibria.</li>
+  <li>If $r=1.5$, $N=500$, and the initial population is $s_0=400$, what will happen to the population after a long time?</li>
+  <li>If $r=3$, determine the stability of the equilibria.</li>
+  <li>For what range of $r$ is there a stable nonzero equilibrium?</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>A population of deer is growing exponentially so that in each year the population increases by 20%.  In order to keep the population from exploding, a number of deer is harvested annually that is proportional to the square of the population.  If $d_t$ is the number of deer in year $t$, the population follows the dynamical system
+\begin{align*}
+  d_{t+1}=1.2 d_t - c d_t^2
+\end{align*}
+where $c$ is a positive parameter that determines the amount of harvesting.</p>
+
+<ol>
+  <li>Find the equilibria of this system.</li>
+  <li>Calculate the stability of the equilibria.</li>
+  <li>How does the stability of the equilibria depend on the parameter $c$?</li>
+  <li>For what value of $c$ is there a stable equilibrium of 200 deer?</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>A population of locusts is growing out of control, so that the number of locusts is quadupling each year.  In attempt to limit the population, each year a number of locusts is killed that is proportional to the square of the population.  If $l_t$ is the number of locusts in year $t$, the population follows the dynamical system
+\begin{align*}
+  l_{t+1}=4 l_t - c l_t^2
+\end{align*}
+where $c$ is a positive parameter that determines the amount of harvesting.</p>
+
+<ol>
+  <li>Find the equilibria of this system.</li>
+  <li>Calculate the stability of the equilibria.</li>
+  <li>How does the stability of the equilibria depend on the parameter $c$?</li>
+  <li>Will this strategy succeed in bringing the number of locusts to a stable small population? </li>
+</ol>
+
+<p>One you have worked on a few problems, you can compare your solutions to the {% intlink  discrete_dynamical_system_elementary_biology_problem_solutions_2 %}ones we came up with{%endintlink%}.</p>
+
+{%endblock%}

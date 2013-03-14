@@ -1,0 +1,48 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor polynomial" "integrating"  %}
+{% index_entry "Taylor polynomial" "error"  %}
+{% title "Integrating the error term of a Taylor polynomial: example" %}
+{% description "An example showing how to integrate the error term of Taylor polynomial and interpret the result." %}
+
+<p>Being a little more careful than for the {%intlink integrating_taylor_polynomials_first_example_refresher%}previous example{%endintlink%}, let's keep track of the error
+term in the example we've been doing: we have
+$${1\over 1-x}=1+x+x^2+\ldots+x^n+
+{1\over (n+1)}{ 1 \over (1-c)^{n+1 }}x^{n+1}$$
+for some $c$ between $0$ and $x$, and also depending upon $x$ and
+$n$. One way to avoid having the ${ 1 \over (1-c)^{n+1 }}$ &lsquo;blow up&rsquo; on us,
+is to keep $x$ itself in the range $[0,1)$ so that $c$ is in the range
+$[0,x)$ which is inside $[0,1)$, keeping $c$ away from $1$. To do this
+we might demand that we integrate over the interval $[0,T]$ with $0\le T <1$.</p>
+
+<p>For simplicity, and to illustrate the point, let's just take $0\le
+T\le {1\over 2}$. Then in the <i>worst-case scenario</i>
+$$\left|{ 1 \over (1-c)^{n+1 }}\right|\le { 1 \over (1-{1\over 2 })^{n+1}}=
+2^{n+1}$$</p>
+
+<p>Thus, <i>integrating the error term,</i> we have
+\begin{align*}
+\left|\int_0^T{1\over n+1}{ 1 \over (1-c)^{n+1 }}x^{n+1}\;dx\right|&amp;\le 
+\int {1\over n+1}2^{n+1}x^{n+1}\;dx
+={ 2^{n+1} \over n+1}\int_0^Tx^{n+1 }\;dx\\
+&amp;=\frac{ 2^{n+1}}{n+1}\left[{x^{n+2} \over n+2}\right]_0^T
+={2^{n+1}T^{n+2} \over (n+1)(n+2) }
+\end{align*}
+Since we have cleverly required $0\le T\le {1\over 2}$, we actually
+have
+\begin{align*}
+\left|\int_0^T{1\over n+1}{ 1 \over (1-c)^{n+1 }}x^{n+1}\;dx\right|&amp;\le 
+{ 2^{n+1}T^{n+2} \over (n+1)(n+2) }\\
+&amp;\le 
+{ 2^{n+1}({1\over 2})^{n+2} \over (n+1)(n+2)}={1\over 2(n+1)(n+2) }
+\end{align*}</p>
+
+<p>That is, we have
+$$\left|-\log(1-T)-\left[T+{T^2\over 2}+\ldots+{T^n\over n}\right]\right|\le 
+{1\over 2(n+1)(n+2)}$$
+for all $T$ in the interval $[0,{1\over 2}]$. Actually, we had
+obtained
+$$\left|-\log(1-T)-\left[T+{T^2\over 2}+\ldots+{T^n\over n}\right]\right|\le 
+{ 2^{n+1}T^{n+2} \over 2(n+1)(n+2) }$$
+and the latter expression shrinks rapidly as $T$ approaches $0$.</p>
+
+{%endblock%}

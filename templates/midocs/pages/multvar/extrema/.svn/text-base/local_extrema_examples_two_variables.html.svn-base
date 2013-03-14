@@ -1,0 +1,188 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "local extrema" "multivariable"%}
+{% title "Two variable local extrema examples" %}
+{% description "Examples of calculating the critical points and local extrema of two variable functions." %}
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Find the local extrema of $f(x,y)=x^3+x^2y-y^2-4y$.</p>
+
+<p><b>Solution</b></p>
+
+<p><i>Step 1</i>: Find the critical points.  The
+derivative of $f$ is
+\begin{align*}
+  D f(x,y) = \left[3x^2+2xy \quad x^2-2y-4\right].
+\end{align*}
+$D f(x,y)=[0 \quad 0]$ means both components must be zero
+simultaneously.  We need
+\begin{align}
+  x(3x+2y) = 0
+  \label{cond1}
+\end{align}
+and
+\begin{align}
+  x^2-2y-4=0.
+  \label{cond2}
+\end{align}
+We need to solve two equations for the two unknowns $x$ and $y$.</p>
+
+<p>Equation \eqref{cond1} is satified if either $x=0$ or if $3x+2y=0$,
+i.e., if $x=0$ or if $y = -3x/2$.  We consider these two solutions as
+two separate cases.  For each case, we will find soultions for
+equation \eqref{cond2}.</p>
+
+<p>Case 1: Let $x=0$.  Then we know 
+equation \eqref{cond1} is satisfied.
+We plug $x=0$ into 
+equation \eqref{cond2}, which becomes $0-2y-4=0$,
+i.e., $y=-2$.  If $x=0$ and $y=-2$, then both 
+equation \eqref{cond1}
+and 
+equation \eqref{cond2}
+are satisfied.  Therefore the point $(0,-2)$ is a
+critical point.</p>
+
+<p>Case 2: Let $y=-3x/2$.  Then we know that
+equation \eqref{cond1}
+is satisfied.  We plug $y=-3x/2$ into
+equation \eqref{cond2}
+and simplify:
+\begin{align*}
+  x^2 - 2(-3x/2)-4&amp;=0\\
+  x^2+3x-4&amp;=0\\
+  (x-1)(x+4)&amp;=0\\
+  x=1 \text{ or } x&amp;=-4.
+\end{align*}
+So, we have two solutions of
+equation \eqref{cond2}
+for case 2.  The
+first solution is when $x=1$, which means $y=-3x/2=-3/2$.  If $x=1$
+and $y=-3/2$, then both 
+equation \eqref{cond1}
+and 
+equation \eqref{cond2}
+are satisfied.  Therefore the point $(1,-3/2)$ is a critical point.</p>
+
+<p>The second solution for case 2 is when $x=-4$, which means
+$y=-3x/2=6$.  Therefore, the point $(-4,6)$ is a critical point.</p>
+
+<p>To summarize the results from both case 1 and case 2, we conclude that
+$f(x,y)$ has three critical points: $(0,-2)$, $(1,-3/2)$, and
+$(-4,6)$.</p>
+
+<p>You should double check that $D f(x,y)=[0 \quad 0]$ at each of these points.</p>
+
+
+<p><i>Step 2</i>: Classify the critical points.</p>
+
+<p>The Hessian matrix is
+\begin{align*}
+  Hf(x,y) = 
+  \left[
+    \begin{array}{cc}
+      6x+2y &amp; 2x\\
+      2x &amp; -2
+    \end{array}
+  \right]
+\end{align*}
+We need to check the definiteness of the $Hf(x,y)$ at the critical
+points $(0,-2)$, $(1,-3/2)$, and $(-4,6)$.</p>
+
+<p>For the critical point $(0,-2)$,
+\begin{align*}
+  Hf(0,-2) = 
+  \left[
+    \begin{array}{rr}
+      -4 &amp; 0\\
+      0 &amp; -2
+    \end{array}
+  \right]
+\end{align*}
+$h_{11} = -4 < 0$ and $\det(Hf) =8 >0$.  This means $Hf(0,-2)$ is
+negative definite and $f$ has a local maximum at $(0,-2)$.</p>
+
+<p>For the critical point $(1,-3/2)$,
+\begin{align*}
+  Hf(1,-3/2) = 
+  \left[
+    \begin{array}{rr}
+      3 &amp; 2\\
+      2 &amp; -2
+    \end{array}
+  \right].
+\end{align*}
+$h_{11}=3>0$ and $\det(Hf) = -6-4=-10<0$.  This means $Hf(1,-3/2)$ is
+indefinite and $f$ has a saddle at $(1,-3/2)$.</p>
+
+<p>For the critical point $(-4,6)$,
+\begin{align*}
+  Hf(-4,6) = 
+  \left[
+    \begin{array}{rr}
+      -12 &amp; -8\\
+      -8 &amp; -2
+    \end{array}
+  \right].
+\end{align*}
+$h_{11}=-12 <0$ and $\det(Hf) = 24-64=-40<0$.  This means $Hf(-4,6)$
+is indefinite and $f$ has a saddle at $(-4,6)$.</p>
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Identify the local extrama of $f(x,y) = (x^2+y^2)e^{-y}$.</p>
+
+<p><b>Solution</b></p>
+
+<p><i>Step 1</i>: Find the critical points.</p>
+
+<p>The derivative of $f$ is
+\begin{align*}
+  D f(x,y) = \left[2xe^{-y} \quad  (2y-x^2-y^2)e^{-y}\right]
+\end{align*}
+$D f(x,y)=[0 \quad 0]$ means that $2x=0$ and $2y-x^2-y^2=0$, i.e., 
+$x=0$ and $y(2-y)=0$.</p>
+
+<p>The critical points are therefore $(0,0)$ and $(0,2)$.</p>
+
+
+<p><i>Step 2</i>: Classify the critical points.</p>
+
+<p>The Hessian matrix is
+\begin{align*}
+  Hf(x,y) = 
+  \left[
+    \begin{array}{cc}
+      2e^{-y} &amp; -2x e^{-y}\\
+      -2x e^{-y} &amp; (2-4y +y^2 +x^2) e^{-y}
+    \end{array}
+  \right]
+\end{align*}
+</p>
+
+<p>At the critical point $(0,0)$
+\begin{align*}
+  Hf(0,0) = \left[
+    \begin{array}{rr}
+      2 &amp; 0\\
+      0 &amp; 2
+    \end{array}
+  \right]
+\end{align*}
+$h_{11}=2>0$ and $\det(Hf) =4 >0$, so $(0,0)$ is a local mininum.</p>
+
+<p>At the critical point $(0,2)$
+\begin{align*}
+  Hf(0,2) = \left[
+    \begin{array}{rr}
+      e^{-2} &amp; 0\\
+      0 &amp; -2 e^{-2}
+    \end{array}
+  \right]
+\end{align*}
+$h_{11}=e^{-2}>0$ and $\det(Hf) = -2 e^{-4} <0$ so $(0,2)$ is a
+saddle point.</p>
+
+{%endblock%}

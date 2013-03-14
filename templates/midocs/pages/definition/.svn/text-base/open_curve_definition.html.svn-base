@@ -1,0 +1,11 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "open curve" "definition" %}
+{% title "Open curve definition" %}
+{% description "An open curve is a curve where the beginning and end points are different." %}
+
+<p>An open curve is a curve where the beginning and end points are different.</p>
+
+<p class="centeredImage">{% image open_curve %}</p>
+
+
+{%endblock%}

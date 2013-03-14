@@ -1,0 +1,41 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Discrete dynamical systems worksheet 1" %}
+{% description "A worksheet for one-dimensional discrete dynamical systems." %}
+
+<p>A one-dimensional {% intlink discrete_dynamical_system_introduction %}discrete dynamical system{% endintlink %} has a single {% intlink state_variable_definition %}state variable{% endintlink %} that evolves in discrete time steps.  If  use the variable $x$ for this state variable and the variable $n$ to index the time steps, then we write the value of the state variable at time step $n$ as $x_n$.</p>
+
+<p>Creating a discrete dynamical system takes four steps.</p>
+<ol>
+<li>Determine the state variable.</li>
+<li>Define the notation.  You need to specify the notation for
+<ol>
+  <li>the state variable, and</li>
+  <li>the variable for time.</li>
+</ol>
+<li>Specify the rule for going from one time step to the next.</li>
+<li>Specify the initial conditions.</li>
+</ol>
+
+<p>Let's practice with three examples.  Complete the above four steps for each of the following systems. </p>
+
+<ol>
+<li>The track for a railway is laid down at a rate of 10 meters per day.  There is no track before the first
+day of construction.</li>
+
+<li>A colony of bacteria doubles in population every hour.  The population initially contains $10^5$ bacteria.</li>
+
+<li>After an injection of penicillin, its concentration in your blood decreases by 20% every 5 minutes.  Immediately after the injection, the penicillin concentration is 200 μg/ml.</li>
+</ol>
+
+<p>Once you have set up the dynamical system, the next step is to compute the future values.  For each of the three systems you created, compute the value of the state variable for the next four time steps.  (The length of each time step, of course, is different for the different problems.  However, in your notation, you should still have numbered them 0, 1, 2, 3, etc.)</p>
+
+<p>Once you have computed these values, sketch a graph of state variable versus time.</p>
+
+
+<p>These solution trajectories can be easily computed by a computer. Try entering these dynamical systems into the following function iteration applet.</p>
+
+{% boxedapplet function_iteration %}
+
+
+
+{% endblock %}

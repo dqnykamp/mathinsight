@@ -1,0 +1,74 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative" %}
+{% index_entry "secant line" %}
+{% index_entry "tangent line" %}
+{% title "Approximating a nonlinear function by a linear function" %}
+{% description "The secant line and tangent line are two ways to approximate a nonlinear function by a linear one." %}
+
+{% boxedvideo approximating_nonlinear_function_by_linear %}
+
+<p>Linear functions are nice and easy to deal with.  But, in many cases and applications, one doesn't have a linear function to work with.  Instead, one has a nonlinear function.  One part of calculus can be viewed as approximating nonlinear functions by linear functions.</p>
+
+{% navigation_tag "secant" "The secant line" %}
+<h4>The secant line</h4>
+
+<p>How can we approximate nonlinear functions by linear functions?   One way is through the <em>secant line</em>, which is a line through two points on the graph of the function.</p>
+
+<p>Let's denote the function by $f$.  To form the secant line, pick two
+values of $x$, say $x=x_0$ and $x=x_1$.  Draw a line through $(x_0,f(x_0)$ and
+$(x_1,f(x_1))$.  This line is the secant line.</p>
+
+{% image secant_line %}
+
+<p>The secant line approximates the function near those two points. The
+slope of the secant line gives the <em>average rate of change</em>.
+The slope of the secant line is
+\begin{align*}
+  \text{average rate of change} = \frac{\Delta f}{\Delta x} = \frac{f(x_1)-f(x_0)}{x_1-x_0}.
+\end{align*}
+</p>
+
+<p>If $f$ were a linear function, its slope wouldn't depend on the choice of $x_0$ and $x_1$.  For nonlinear $f$, one will get different slope as
+change values of $x$.  In the below applet, you can change the values of $x_0$ and $x_1$ and see how the secant line changes.  In the applet, we've relabeled $x_1$ as $x_0+\Delta x$, and you change $x_1$ by changing the difference $\Delta x$ between $x_0$ and $x_1$.  In terms of $\Delta x$, the slope of the secant line is
+\begin{align*}
+  \text{average rate of change} = \frac{\Delta f}{\Delta x} = \frac{f(x_0+\Delta x)-f(x_0)}{\Delta x}.
+\end{align*}
+</p>
+
+{% boxedapplet secant_line_slope %}
+
+{% navigation_tag "tangent" "The tangent line" %}
+<h4>The tangent line</h4>
+
+<p>The secant line is a good approximation of the average rate that $f$ changes over the period between $x_0$ and $x_1$.  However, the secant line isn't a good approximation of $f$ when we zoom in on the point $(x_0,f(x_0))$.  As we zoom in, we see that the secant line and the graph of $f$ match at the point $(x_0,f(x_0))$ but then move in different directions.  The graph of $f$ and the secant line have different slopes.</p>
+
+<p>To make the secant line a better approximation for the zoomed-in view, we need to shrink the $\Delta x$ used to calculate the secant line.  If you make $\Delta x$ smaller and smaller in the above applet, the secant line becomes a better and better approximation for the function right near the value of $x_0$.</p>
+
+<p>What is if we want the best possible approximation of $f$ right near the point $x_0$?  Unfortunately, the solution cannot be as simple as setting $\Delta x$ equal to zero.  If you make $\Delta x$ zero, then the secant line does not exist. When $\Delta x=0$, the two points $(x_0,f(x_0))$ and $(x_0+\Delta x, f(x_0+\Delta x))$ are the same point and therefore do not determine a line.  The formula for the slope is also not defined.  If we plug in $\Delta x=0$, then the change in $f$, $\Delta f$ is also zero.  The slope of the secant line would be 
+$$\frac{\Delta f}{\Delta x}=\frac{0}{0}=\text{undefined}.$$</p>
+
+<p>To keep the slope and the secant line defined, we need to keep $\Delta x$ from being exactly zero.  On the other hand, we want to make $\Delta x$ very small, so that we can match the behavior of $f$ right near the point $x_0$.  The solution to this problem is to use a <em>limit</em>, one of the fundamental notions underlying calculus.</p>
+
+<p>Right now, we won't make the notion of a limit precise, but just give the general idea.  The idea is that, although we can't make $\Delta x$ exactly equal to zero, we can make it smaller and smaller.  As we make $\Delta x$ very close to zero, the secant line matches the graph of the function around the point $x_0$ very well.</p>
+
+<p>  The limit is the idea of making $\Delta x$ arbitrarily small. As you can explore with the applet, as you start to make $\Delta x$ very small, such as $\Delta x = 0.01$, $\Delta x = 0.001$, or $\Delta x = 0.0001$, the secant line and its slope $\frac{\Delta f}{\Delta x}$ change very little.  In fact, the slope is approaching a particular value, and the secant line is approaching a particular line, as $\Delta x$ gets close zero.</p>
+
+<p>The value that the slope $\frac{\Delta f}{\Delta x}$ is approaching as $\Delta x$ gets closer and closer to zero is called the limit of $\frac{\Delta f}{\Delta x}$ as $\Delta x$ approaches zero, which we write as
+\begin{align*}
+  \lim_{\Delta x \to 0} \frac{\Delta f}{\Delta x}
+  &= \lim_{\Delta x \to 0}\frac{f(x_0+\Delta x)-f(x_0)}{\Delta x}.
+\end{align*}
+We denotes this slope by $\frac{df}{dx}$ and refer to it as the <em>instantaneous rate of change</em> of the function at $x_0$ 
+\begin{align*}
+  \text{instantaneous rate of change} &= \frac{df}{dx} = \lim_{\Delta x \to 0} \frac{\Delta f}{\Delta x}\\
+  &= \lim_{\Delta x \to 0}\frac{f(x_0+\Delta x)-f(x_0)}{\Delta x}.
+\end{align*}
+</p>
+
+<p>The line through the point $(x_0,f(x_0))$ with slope $\frac{df}{dx}$ is called a <em>tangent line</em> to the graph of $f$.  The slope $\frac{df}{dx}$ is the <em>derivative</em> of $f$ at $x=x_0$.  To emphasize that this slope is computed at the point $x=x_0$, we often write the derivative as
+$$\frac{df}{dx}\bigg|_{x=x_0}.$$
+We also denote the derivative by $f'(x_0)$.  Both notations refer to the same thing. The derivative is the slope of the tangent line, but we also say that the slope of the function itself is the derivative.</p>
+
+<p>The derivative of $f$ depends on the point $x_0$ where it is evaluated.  A nonlinear function will have a different slope at different points.  To explore the derivative and tangent line of $f$ in the above applet, check the &ldquo;show limit for $\Delta x=0$&rdquo; checkbox.  Then, move the point around to see how the tangent line and its slope vary as you change $x_0$.</p>
+
+{% endblock %}

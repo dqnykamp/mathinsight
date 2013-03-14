@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load mi_tags %}
+
+{% block title %}Math Insight Index{% endblock %}
+{% block indexmenu %}class="active"{% endblock %}
+{% block nolinksection %}{% endblock %}
+
+
+{% block pagenav %}
+{% regroup index_entries by indexed_phrase_first_letter as letter_list %}
+  <li><a href="#sitenav">Top</a></li>
+  {% for letter in letter_list %}
+  <li><a href="#{{letter.grouper}}">{{letter.grouper}}</a></li>
+  {% endfor %}
+{% endblock %}
+
+{% block main_columns %}
+{% regroup index_entries by indexed_phrase_first_letter as letter_list %}
+
+<h3>{{index_type}}</h3>
+
+
+<p>Each <span class="indexlink">mi</span> links to a  page corresponding to the index entry.</p>
+
+<p>Jump to entries: {% for letter in letter_list %}<a href="#{{letter.grouper}}" class="normaltext">{{letter.grouper}}</a> {% endfor%}</p>
+
+<div class="ym-grid linearize-level-1">
+  <div class="ym-g50 ym-gl">
+    <div class="ym-gbox-left">
+{% for letter in letter_list %}{%if forloop.counter == 11 %}</div></div><div class="ym-g50 ym-gr"> <div class="ym-gbox-right">{%endif%}<a id="{{letter.grouper}}" class="anchor"></a><h4>{{letter.grouper}}</h4><ul class="indexlist1">{% regroup letter.list by indexed_phrase as phrase_list %}{% for phrase in phrase_list %}<li><span class="indexentry">{{ phrase.grouper }}</span>  {% regroup phrase.list by indexed_subphrase as subphrase_list %}{% for subphrase in subphrase_list %}{% if not subphrase.grouper %}{% for item in subphrase.list %}{% intlink item.page item.page_anchor "indexlink"%}mi{% endintlink%} {% endfor %}{% endif %}{% endfor%}<ul class="indexlist2">{% for subphrase in subphrase_list %}{% if subphrase.grouper %}<li>{{ subphrase.grouper }} {% for item in subphrase.list %}{% intlink item.page item.page_anchor "indexlink" %}mi{% endintlink%} {% endfor %}</li>{% endif %}{% endfor %} </ul></li>{% endfor%}</ul>{% endfor%}
+
+   </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+

@@ -1,0 +1,29 @@
+{% extends "mitesting/assessment_base.html" %}
+{% load mi_tags %}{% load url from future %}
+
+{% block title %}Question: {{ the_question }}, version {{ version }} - Math Insight{%endblock%}
+{% block content %}
+
+<h3>Question: {{ the_question }}</h3>
+
+<h4>Question text</h4>
+<ol>
+{{ question_text }}
+</ol>
+
+<h4>Solution text</h4>
+<ol>
+{{ solution_text }}
+</ol>
+
+
+{% endblock %}
+
+{% block rightcolumn %}
+{% if show_lists %}
+<ul class="linklist">
+<li><a href="{% url 'mit-questionlist' %}">List of all questions</a></li>
+<li><a href="{% url 'mit-assessmentlist' %}">List of all assessment</a></li>
+</ul>
+{% endif %}
+{%endblock%}

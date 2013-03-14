@@ -1,0 +1,254 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: { extensions: ["cancel.js"] }
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{% index_entry "exponents" "basic rules" %}
+{% index_entry "powers" "basic rules" %}
+{% title "Basic rules for exponentiation" %}
+{% description "A brief overview of the basic rules for exponents or powers." %}
+
+
+<p>If $n$ is a positive integer and $x$ is any real number, then $x^n$ corresponds to repeated multiplication 
+\begin{gather*}
+  x^n = \underbrace{x \times x \times \cdots \times x}_{n \text{ times}}.
+\end{gather*}
+We can call this &ldquo;$x$ raised to the power of $n$,&rdquo; &ldquo;$x$ to the power of $n$,&rdquo; or simply &ldquo;$x$ to the  $n$.&rdquo;   Here, $x$ is the <em>base</em> and $n$ is the <em>exponent</em> or the <em>power</em>.</p>
+
+<p>From this definition, we can deduce some basic <a href="#rules">rules</a> that exponentiation must follow as well as some hand <a href="#special_cases">special cases</a> that follow from the rules.  In the process, we'll define exponentials $x^a$ for exponents $a$ that aren't positive integers.</p>
+
+<p>The rules and special cases are summarized in the following table.  Below, we give details for each one.</p>
+
+<table class="basic compact">
+  <tr><th>Rule or special case</th><th>Formula</th><th>Example</th></tr>
+  <tr><td><a href="#product">Product</a></td><td>$x^ax^b = x^{a+b}$</td><td>$2^22^3 = 2^5=32$</td></tr>
+  <tr><td><a href="#quotient">Quotient</a></td><td>$\displaystyle \frac{x^a}{x^b} = x^{a-b}$</td><td>$\displaystyle \frac{2^3}{2^2} = 2^1 =2$</td></tr>
+  <tr><td><a href="#power_power">Power of power</a></td><td>$(x^a)^b = x^{ab}$</td><td>$(2^3)^2 = 2^6=64$</td></tr>
+  <tr><td><a href="#power_product">Power of a product</a></td><td>$(xy)^a = x^ay^a$</td><td>$36=6^2=(2\cdotbadbreak 3)^2 = 2^2\cdotbadbreak 3^2=4 \cdotbadbreak 9=36$</td></tr>
+  <tr><td><a href="#power_one">Power of one</a></td><td>$x^1=x$</td><td>$2^1=2$</td></tr>
+  <tr><td><a href="#power_zero">Power of zero</a></td><td>$x^0=1$</td><td>$2^0=1$</td></tr>
+  <tr><td><a href="#power_negative_one">Power of negative one</a></td><td>$\displaystyle x^{-1}=\frac{1}{x}$</td><td>$\displaystyle 2^{-1}=\frac{1}{2}$</td></tr>
+  <tr><td><a href="#change_sign">Change sign of exponents</a></td><td>$\displaystyle x^{-a} = \frac{1}{x^a}$</td><td>$\displaystyle 2^{-3} = \frac{1}{2^3} = \frac{1}{8}$</td></tr>
+  <tr><td><a href="#fractional_exponents">Fractional exponents</a></td><td>$x^{m/n} = \sqrt[n]{x^m} = (\sqrt[n]{x})^m$</td><td>$4^{3/2} = (\sqrt{4})^3=2^3=8$</td></td>
+</table>
+
+
+{% navigation_tag "rules" "Rules"  %}
+<h4>The rules</h4>
+
+{% navigation_tag "product" "Rules" "Product of exponentials" %}
+<h5>Product of exponentials with same base</h5>
+
+<p>If we take the product of two exponentials with the same base, we simply add the exponents:
+\begin{gather}
+x^ax^b = x^{a+b}.
+  \label{product}
+\end{gather}
+</p>
+
+<p>To see this rule, we just expand out what the exponents mean.  Let's start out with a couple simple examples.
+\begin{align*}
+  3^4 3^2 &= (3 \times 3 \times 3 \times 3) \times (3 \times 3)\\
+  &= 3 \times 3 \times 3 \times 3 \times 3 \times 3\\
+  &= 3^6
+\end{align*}
+\begin{align*}
+  y^2 y^3 &= (y \times y) \times (y \times y \times y)\\
+  &= y \times y \times y \times y \times y\\
+  & = y^5
+\end{align*}
+</p>
+
+<p>The general case works the same way.  We just need to keep track of the number of factors we have.
+\begin{align*}
+x^ax^b &= \underbrace{x \times \cdots \times x}_{a \text{ times}} \times
+  \underbrace{x \times \cdots \times x}_{b \text{ times}}\\[0.2cm]
+  &= \underbrace{x \times \cdots \times x}_{a+b \text{ times}}\\[0.2cm]
+  &=x^{a+b}
+\end{align*}
+</p>
+
+{% navigation_tag "quotient" "Rules" "Quotient of exponentials" %}
+<h5>Quotient of exponentials with same base</h5>
+
+<p>If we take the quotient of two exponentials with the same base, we simply subtract the exponents:
+\begin{gather}
+\frac{x^a}{x^b} = x^{a-b}
+  \label{quotient}
+\end{gather}
+</p>
+<div style="visibility:hidden; position:absolute; top:0, height:0">$\cancel{}$</div>
+
+<p>This rule results from canceling common factors in the numerator and denominator.  For example:
+\begin{align*}
+  \frac{y^5}{y^3} &= \frac{y \times y \times y \times y \times y}{y \times y \times y}\\
+  &= \frac{(y \times y) \times \cancel{(y \times y \times y)}}{\cancel{y \times y \times y}}\\
+  &= y \times y = y^2.
+\end{align*}
+<p>To show this in general, we look at two different cases.  If we imagine that $a > b$, then this rule follows from canceling the common $b$ factors of $x$ that occur in both the numerator and denominator.  We are left with just $b-a$ factors of $x$ in the numerator.
+\begin{align*}
+\frac{x^a}{x^b} &= \frac{\quad \overbrace{x \times \cdots \times x}^{a \text{ times}}\quad}{\underbrace{x \times \cdots \times x}_{b \text{ times}}}\\[0.2cm]
+   &= \frac{\quad \overbrace{x \times \cdots \times x}^{a-b \text{ times}}\times\overbrace{\cancel{x \times \cdots \times x}}^{b \text{ times}}\quad}{\underbrace{\cancel{x \times \cdots \times x}}_{b \text{ times}}}\\[0.2cm]
+  &= \underbrace{x \times \cdots \times x}_{a-b \text{ times}}\\[0.2cm]
+  &=x^{a-b}
+\end{align*}
+</p>
+
+<p>If $a < b$, then what happens?  We cancel all the $x$'s from the numerator and are left with $b-a$ of them in the denominator.  
+\begin{align*}
+\frac{x^a}{x^b} &= \frac{\quad \overbrace{x \times \cdots \times x}^{a \text{ times}}\quad}{\underbrace{x \times \cdots \times x}_{b \text{ times}}}\\[0.2cm]
+   &= \frac{\quad \overbrace{\cancel{x \times \cdots \times x}}^{a \text{ times}}\quad}{\underbrace{x \times \cdots \times x}_{b-a \text{ times}}\times \underbrace{\cancel{x \times \cdots \times x}}_{a \text{ times}}}\\[0.2cm]
+  &= \frac{1}{\underbrace{x \times \cdots \times x}_{b-a \text{ times}}}\\[0.2cm]
+\end{align*}
+To make the above rule work for this case, we must define a negative exponent to mean a power in the denominator.  If $n$ is a positive integer, we define
+\begin{gather}
+  x^{-n} = \frac{1}{\underbrace{x \times x \times \cdots \times x}_{n \text{ times}}}.
+\end{gather}
+Then the rule for the quotient of exponentials works even if $a< b$:
+\begin{align*}
+\frac{x^a}{x^b} &= \frac{\quad \underbrace{x \times \cdots \times x}_{a \text{ times}}\quad}{\underbrace{x \times \cdots \times x}_{b \text{ times}}}\\[0.2cm]
+  &= \frac{1}{\underbrace{x \times \cdots \times x}_{b-a \text{ times}}}\\[0.2cm]
+  &=x^{a-b}.
+\end{align*}
+When $b>a$, the exponent $a-b$ is a negative number.  Since formula \eqref{quotient} is the same no matter the relationship between $a$ and $b$, we don't need to worry about it and can just subtract the exponents.
+</p>
+
+{% navigation_tag "power_power" "Rules" "Power of a power" %}
+<h5>Power of a power</h5>
+
+<p>We can raise exponential to another power, or take a power of a power.  The result is a single exponential where the power is the product of the original exponents:
+\begin{gather}
+(x^a)^b = x^{ab}.
+  \label{power_power}
+\end{gather}
+</p>
+<p>We can see this result by writing it as a product where the $x^a$ is repeated $b$ times:
+\begin{gather*}
+(x^a)^b = \underbrace{x^a \times x^a \times \cdots \times x^a}_{b\text{ times}}.
+\end{gather*}
+Next we apply rule \eqref{product} for the product of exponentials with the same base.  We use this rule $b$ times to conclude that
+\begin{align*}
+(x^a)^b &= \underbrace{x^a \times x^a \times \cdots \times x^a}_{b\text{ times}}\\[0.2cm]
+  &= x^{\overbrace{a + a + \cdots + a}^{b\text{ times}}}\\[0.2cm]
+  &= x^{ab}.
+\end{align*}
+In the last step, we had to remember that multiplication can be defined as repeated addition.
+</p>
+
+
+{% navigation_tag "power_product" "Rules" "Power of a product" %}
+<h5>Power of a product</h5>
+
+<p>If we take the power of a product, we can distribute the exponent over the different factors:
+\begin{gather}
+  (xy)^a = x^ay^a.
+  \label{power_product}
+\end{gather}
+</p>
+
+<p>We can show this rule in the same way as we show that you can distribute multiplication over addition.  One way to show this distributive law for multiplication is is to remember that multiplication is defined as repeated addition:
+\begin{align*}
+  (x+y)a &= \underbrace{(x + y) + (x+y) + \cdots + (x+y)}_{a\text{ times}}\\[0.2cm]
+  &= \underbrace{x + x + \cdots + x}_{a\text{ times}}+\underbrace{y+ y + \cdots + y}_{a\text{ times}}\\[0.2cm]\\
+  &= xa +ya.
+\end{align*}
+In the same way, we can show the distributive law for exponentiation:
+\begin{align*}
+  (xy)^a &= \underbrace{(xy) \times (xy) \times \cdots \times (xy)}_{a\text{ times}}\\[0.2cm]
+  &= \underbrace{x \times x \times \cdots \times x}_{a\text{ times}}\times\underbrace{y \times y \times \cdots \times y}_{a\text{ times}}\\[0.2cm]\\
+  &= x^a  y^a.
+\end{align*}
+</p>
+
+<p>This rule also works for quotients
+\begin{gather*}
+  \left(\frac{x}{y}\right)^a = \frac{x^a}{y^a},
+\end{gather*}
+but it does NOT work for sums.  For example, 
+\begin{align*}
+  (3+5)^2 = 8^2 = 64,
+\end{align*}
+but this is NOT equal to 
+\begin{align*}
+  3^2+5^2 = 9 + 25 =34.
+\end{align*}
+</p>
+
+
+{% navigation_tag "special_cases" "Special cases"  %}
+<h4>Special cases</h4>
+
+<p>The following are special cases that follow from the rules.</p>
+
+{% navigation_tag "power_one" "Special cases" "The power of one" %}
+<h5>The power of one</h5>
+
+<p>The simplest special case is that raising any number to the power of 1 doesn't do anything:
+\begin{gather}
+x^1=x.\label{power_one}
+\end{gather}</p>
+
+{% navigation_tag "power_zero" "Special cases" "The power of zero" %}
+<h5>The power of zero</h5>
+
+<p>As long as $x$ isn't zero, raising it to the power of zero must be 1:
+$$x^0=1.$$
+We can see this, for example, from the quotient rule, as
+$$1 = \frac{x^a}{x^a} = x^{a-a}=x^0.$$
+</p>
+
+<p>The expression $0^0$ is indeterminate.  You can see that it must be indeterminate, because you can come up with good reasons for it to be two different values.</p>
+
+<p>First, from above, if $x \ne 0$, then $x^0=1$, no matter how small $x$ is.  If we just let $x$ go all the way to zero (take the limit as $x$ goes to zero), then it seems that $0^0$ should be 1.</p>
+
+<p>On the other hand, $0^a=0$ as long as $a \ne 0$.  Repeated multiplication of $0$ still gives zero, and we can use the above rules to show $0^a$ still is zero, no matter how small $a$ is, as long as it is nonzero.  If just let $a$ go all the way to zero (take the limit as $a$ goes to zero), then it seems like $0^0$ should be 0.</p>
+
+<p>In other words, if we start with $x^a$ for non-zero $x$ and non-zero $a$, we'll get a different answer for $0^0$ depending on whether we let $x$ go to zero first or $a$ go to zero first.  There really is no way for deciding on a value for $0^0$, so we are forced to leave it indeterminate.  You can {% appletlink zero_to_power_of_zero_undefined %}check out this applet{%endappletlink%} to visualize this argument.</p>
+
+
+{% navigation_tag "power_negative_one" "Special cases" "The power of negative one" %}
+<h5>The power of negative one</h5>
+
+<p>Negative one is a special value for an exponent, because taking a number to the power of negative one gives its reciprocal:
+$$x^{-1} = \frac{1}{x}.$$
+</p>
+
+{% navigation_tag "change_sign" "Special cases" "Changing sign of exponent" %}
+<h5>The changing sign of exponent</h5>
+
+<p>In a similar vein, changing the sign of a exponent gives the reciprocal, so
+$$x^{-a} = \frac{1}{x^a}.$$</p>
+
+{% navigation_tag "fractional_exponents" "Special cases" "Fractional exponents" %}
+<h5>Fractional exponents</h5>
+
+<p>The power of power rule \eqref{power_power} allows us to define fractional exponents.  For example, rule \eqref{power_power} tells us that
+\begin{gather*}
+  9^{1/2}=(3^2)^{1/2} = 3^{2 \cdot 1/2} = 3^1 = 3.
+\end{gather*}
+Taking a number to the power of $\frac{1}{2}$ undoes taking a number to the power of 2 (or squaring it).  In other words, taking a number to the power of $\frac{1}{2}$ is the same thing as taking a square root:
+\begin{gather*}
+  x^{1/2} = \sqrt{x}.
+\end{gather*}
+</p>
+
+<p>Since $(x^n)^{1/n} = x^1 = x$, we can generalize the result so that taking a number to the power of $1/n$ is the same thing as taking the $n$th root:
+\begin{gather}
+  x^{1/n} = \sqrt[n]{x}.
+\end{gather}
+</p>
+
+<p>If $a$ is any rational number, then it can be written as $a=m/n$.  We can define taking a number to the $a$th power as taking that number to the $m$th power and the $n$th root.  We'll assume the base $x$ is non-negative so that we don't have to worry about doing things like taking the square root of a negative number.  Then, the order doesn't matter and
+\begin{gather*}
+  x^{m/n} = \sqrt[n]{x^m} = (\sqrt[n]{x})^m.
+\end{gather*}
+If $a$ is an irrational number, like $a=\pi$, then this process doesn't exactly work.  But, since you can find a rational number as close as you want to any irrational number, you can approximate $x^a$ as well as you like.   (To be precise, you could define $x^a$ in terms of a limit of $x^b$, where $b$ are rational numbers approaching $a$.)</p>
+
+
+
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "related rates" %}
+{% title "Related rates" %}
+{% description "Calculating one derivative in terms of another derivative." %}
+
+<p>In this section, most functions will be functions of a parameter $t$
+which we will think of as <i>time</i>. There is a convention coming
+from physics to write the derivative of any function $y$
+of $t$ as $\dot{y}=dy/dt$, that is, with just a <i>dot</i> over the
+functions, rather than a <i>prime</i>.</p>
+
+<p>The issues here are variants and continuations of the previous
+section's idea about <i>{% intlink implicit_differentiation_refresher %}implicit differentiation{%endintlink%}</i>. Traditionally,
+there are other (non-calculus!) issues introduced at this point,
+involving both story-problem stuff as well as requirement to be able
+to deal with <i>similar triangles</i>, the <i>Pythagorean Theorem</i>,
+and to recall formulas for <i>volumes</i> of cones and such.</p>
+
+<p>Continuing with the idea of describing a function by a relation, we
+could have <i>two</i> unknown functions $x$ and $y$ of $t$, <i>related</i> by some formula such as 
+$$x^2+y^2=25$$ 
+A typical question of this genre is &lsquo;What is $\dot{y}$ when $x=4$ and
+$\dot{x}=6$?&rsquo; </p>
+
+<p>The fundamental rule of thumb in this kind of situation is <i>differentiate the relation with respect to $t$</i>: so we differentiate
+the relation $x^2+y^2=25$ with respect to $t$, even though we don't
+know any details about those two function $x$ and $y$ of $t$:
+$$2x\dot{x}+2y\dot{y}=0$$
+using the {% intlink chain_rule_refresher%}chain rule{%endintlink%}. We can solve this for $\dot{y}$:
+$$\dot{y}=-{x\dot{x} \over y}$$
+So <i>at any particular moment</i>, if we knew the values of
+$x,\dot{x},y$ then we could find $\dot{y}$ <i>at that moment</i>.</p>
+
+<p>Here it's easy to solve the original relation to find $y$ when $x=4$:
+we get $y=\pm 3$. Substituting, we get $$\dot{y}=-{4\cdot 6\over \pm
+3}=\pm 8$$ (The $\pm$ notation means that we take $+$ chosen if we
+take $y=-3$ and $-$ if we take $y=+3$).</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Suppose that $x,y$ are both functions of $t$, and that
+$x^2+y^2=25$. Express ${ dx \over dt }$ in terms of $x,y,$ and
+${ dy \over dt }$. When $x=3$ and $y=4$ and ${ dy \over dt }=6$, what
+is${ dx \over dt }$? </li>
+<li>A 2-foot tall dog is walking away from a
+streetlight which is on a 10-foot pole. At a certain moment, the
+tip of the dog's shadow is moving away from the streetlight at
+5 feet per second. How fast is the dog walking at that moment?</li>
+<li>A ladder $13$ feet long leans against a house, but is
+sliding down. How fast is the top of the ladder moving at a
+moment when the base of the ladder is $12$ feet from the house and
+moving outward at $10$ feet per second? </li>
+</ol>
+
+{%endblock%}

@@ -1,0 +1,9 @@
+*.swp
+*.pyc
+*.sql
+settings.py
+urls.py
+*.bak
+*~
+templates/analytics.html
+apache/django.wsgi

@@ -1,0 +1,73 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "numerical_integration " %}
+{% index_entry "midpoint rule "%}
+{% index_entry "trapezoid rule" %}
+{% index_entry "Simpson's rule" %}
+{% title "Numerical integration" %}
+{% description "Methods to approximate the value of definite integrals and estimate the error in the approximations." %}
+
+<p>As we start to see that integration &lsquo;by formulas&rsquo; is a much more
+difficult thing than differentiation, and sometimes is impossible to
+do in elementary terms, it becomes reasonable to ask for <i>numerical approximations to definite integrals</i>. Since a <i>definite</i> integral is just a <i>number</i>, this is possible. By
+contrast, <i>indefinite</i> integrals, being <i>functions</i> rather
+than just numbers, are not easily described by &lsquo;numerical
+approximations&rsquo;.</p>
+
+<p>There are several related approaches, all of which use the idea that
+a definite integral is related to <i>area</i>. Thus, each of these
+approaches is really essentially a way of approximating area under a
+curve. Of course, this isn't exactly right, because integrals are not
+exactly areas, but thinking of area is a reasonable heuristic.</p>
+
+<p>Of course, an approximation is not very valuable unless there is an
+<i>estimate for the error</i>, in other words, an idea of the <i>tolerance</i>. </p>
+
+<p>Each of the approaches starts the same way: To approximate
+$\int_a^bf(x)\;dx$, break the interval $[a,b]$ into smaller subintervals
+$$[x_0,x_1],\;\;[x_1,x_2],\;\;\ldots,[x_{n-2},x_{n-1}],\;\;[x_{n-1},x_n]$$
+each of the same length
+$$ \Delta x={b-a\over n}$$ 
+and where $x_0=a$ and $x_n=b$. </p>
+
+<p><b>Trapezoidal rule</b>: This rule says that
+$$\int_a^bf(x)\;dx \approx {\Delta x\over 2}
+[f(x_0)+2f(x_1)+2f(x_2)+\ldots+2f(x_{n-2})+2f(x_{n-1})+f(x_n)]$$ Yes,
+all the values have a factor of &lsquo;2&rsquo; except the first and the
+last. (This method approximates the area under the curve by <i>trapezoids</i> inscribed under the curve in each subinterval).</p>
+
+<p><b>Midpoint rule</b>: Let
+$\overline{x}_i={1\over 2}(x_i-x_{i-1})$ be the midpoint of the
+subinterval $[x_{i-1},x_i]$. Then the <b>midpoint rule</b> says that
+$$\int_a^b f(x)\;dx \approx \Delta
+x[f(\overline{x}_1)+\ldots+f(\overline{x}_n)]$$
+(This method approximates the area under the curve by rectangles whose
+height is the midpoint of each subinterval).</p>
+
+<p><b>Simpson's rule</b>: This rule says that
+$$\int_a^bf(x)\;dx \approx $$
+$$\approx {\Delta x\over 3}
+[f(x_0)+4f(x_1)+2f(x_2)+4f(x_3)+\ldots+2f(x_{n-2})+4f(x_{n-1})+f(x_n)]$$
+Yes, the first and last coefficients are &lsquo;1&rsquo;, while the &lsquo;inner&rsquo;
+coefficients alternate &lsquo;4&rsquo; and &lsquo;2&rsquo;. And $n$ has to be an <i>even</i>
+integer for this to make sense. (This method approximates the curve by
+pieces of parabolas). </p>
+
+<p>In general, the smaller the $\Delta x$ is, the better these
+approximations are. We can be more precise: the error estimates for
+the trapezoidal and midpoint rules depend upon the <i>second
+derivative</i>: suppose that $|f''(x)|\le
+M$ for some constant $M$, for all $a\le x\le b$. Then
+$$\hbox{ error in trapezoidal rule }\le {M(b-a)^3\over 12n^2}$$
+$$\hbox{ error in midpoint rule }\le {M(b-a)^3\over 24n^2}$$
+ The error estimate for Simpson's rule depends on the <i>fourth</i>
+derivative: suppose that $|f^{(4)}(x)|\le
+N$ for some constant $N$, for all $a\le x\le b$. Then
+$$\hbox{ error in Simpson's rule }\le {N(b-a)^5\over 180n^4}$$</p>
+
+<p>From these formulas estimating the error, it looks like the
+midpoint rule is always better than the trapezoidal rule. And for high
+accuracy, using a large number $n$ of subintervals, it looks like
+Simpson's rule is the best.</p>
+
+
+{%endblock%}

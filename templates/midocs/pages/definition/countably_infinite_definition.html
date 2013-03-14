@@ -1,0 +1,17 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "infinite" "countably" %}
+{% index_entry "countably infinite" "definition" %}
+{% index_entry "countable" "definition" %}
+{% title "Countably infinite definition" %}
+{% description "A set is countably infinite if its elements can be put in one-to-one correspondence with the set of natural numbers.  In other words, one can count off all elements in the set in such a way that, even though the counting will take forever, you will get to any particular element in a finite amount of time." %}
+
+<p>A set is countably infinite if its elements can be put in one-to-one correspondence with the set of natural numbers.  In other words, one can count off all elements in the set in such a way that, even though the counting will take forever, you will get to any particular element in a finite amount of time.</p>
+
+<p>For example, the set of integers $\{0, 1, -1, 2,-2, 3, -3, \ldots \}$ is clearly infinite.  However, as suggested by the above arrangement, we can count off all the integers.  Counting off every integer will take forever.  But, if you specify any integer, say $-10,234,872,306$, we will get to this integer in the counting process in a finite amount of time.</p>
+
+<p>Sometimes, we can just use the term &ldquo;countable&rdquo; to mean countably infinite.  But to stress that we are excluding finite sets, we usually use the term countably infinite.</p>
+
+<p>Countably infinite is in contrast to {% intlink uncountable_definition%}uncountable{%endintlink%}, which describes a set that is so large, it cannot be counted even if we kept counting forever.</p>
+
+
+{% endblock %}

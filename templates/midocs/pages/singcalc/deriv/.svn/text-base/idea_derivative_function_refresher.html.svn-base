@@ -1,0 +1,32 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative"%}
+{% index_entry "derivative" "single variable"%}
+{% title "The idea of the derivative of a function" %}
+{% description "The derivative of a function as the slope of the tangent line." %}
+
+
+<p>First we can tell what the <i>idea</i> of a derivative is. But the
+issue of <i>computing</i> derivatives is another thing entirely: a
+person can understand the <i>idea</i> without being able to effectively
+<i>compute</i>, and vice-versa.</p>
+
+<p>Suppose that $f$ is a function of interest for some reason. We can
+give $f$ some sort of &lsquo;geometric life&rsquo; by thinking about <i>the set
+of points $(x,y)$ so that</i>
+$$f(x)=y$$
+We would say that this describes a <i>curve</i> in the $(x,y)$-plane.
+(And sometimes we think of $x$ as &lsquo;moving&rsquo; from left to right,
+imparting further intuitive or physical content to the story).</p>
+
+<p>For some particular number $x_o$, let $y_o$ be the value
+$f(x_o)$ obtained as output by plugging $x_o$ into $f$ as input. Then
+the point $(x_o,y_o)$ is a point on our curve. The <b>tangent line</b>
+to the curve <b>at</b> the point $(x_o,y_o)$ is a line passing through
+$(x_o,y_o)$ and &lsquo;flat against&rsquo; the curve. (As opposed to <i>crossing
+it at some definite angle</i>).</p>
+
+<p>The <i>idea</i> of the derivative $f'(x_o)$ is that it is <i>the slope of the tangent line</i> at $x_o$ to the curve. But this isn't
+the way to <i>compute</i> these things...</p>
+
+
+{%endblock%}

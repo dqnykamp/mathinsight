@@ -1,0 +1,38 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor polynomial" "integrating"  %}
+{% title "Integrating Taylor polynomials: first example" %}
+{% description "An example showing how to integrate a Taylor polynomial and interpret the result." %}
+
+<p>Thinking simultaneously about the difficulty (or impossibility) of
+&lsquo;direct&rsquo; symbolic integration of complicated expressions, by contrast to
+the ease of integration of <i>polynomials</i>, we might hope to get
+some mileage out of <i>integrating Taylor polynomials</i>.</p>
+
+<p>As a promising example: on one hand, it's not too hard to
+compute that
+$$\int_0^{T} {dx\over 1-x}\;dx=[-\log (1-x)]_0^T=-\log(1-T)$$
+On the other hand, if we write out
+$${1\over 1-x}=1+x+x^2+x^3+x^4+\ldots$$
+then we could obtain
+$$\int_0^{T}
+(1+x+x^2+x^3+x^4+\ldots)\;dx=[x+{x^2\over 2}+{x^3\over 3}+\ldots]_0^T=$$
+$$ = T+{T^2\over 2}+{T^3\over 3}+{T^4\over 4}+\ldots$$
+Putting these two together (and changing the variable back to &lsquo;$x$&rsquo;) gives
+$$-\log(1-x)= x+{x^2\over 2}+{x^3\over 3}+{x^4\over 4}+\ldots$$</p>
+
+<p>(For the moment let's not worry about what happens to the
+error term for the Taylor polynomial).</p>
+
+<p>This little computation has several useful
+interpretations. First, we obtained a Taylor polynomial for
+$-\log(1-T)$ from that of a geometric series, without going to the
+trouble of recomputing derivatives. Second, from a different
+perspective, we have an expression for the integral
+$$\int_0^{T} {dx\over 1-x}\;dx$$
+without necessarily mentioning the logarithm: that is, with some
+suitable interpretation of the trailing dots,
+$$\int_0^{T} {dx\over 1-x}\;dx= 
+T+{T^2\over 2}+{T^3\over 3}+{T^4\over 4}+\ldots$$</p>
+
+
+{%endblock%}

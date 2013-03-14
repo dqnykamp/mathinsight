@@ -1,0 +1,58 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "curl" "example"  %}
+{% index_entry "divergence" "example"  %}
+{% title "Divergence and curl example" %}
+{% description "An example problem of calculating the divergence and curl of a vector field." %}
+
+{% navigation_tag "formulas" "The formulas" %}
+<h4>Formulas for divergence and curl</h4>
+<p>For $\dlvf: \R^3 \to \R^3$ {% confusedlink function_notation %}, the formulas for the {%intlink divergence_idea %}divergence{%endintlink%} and {%intlink curl_idea %}curl{%endintlink%}
+of a {%intlink vector_field_overview %}vector field{%endintlink%} are
+\begin{align*}
+  \div \dlvf &amp;= \pdiff{\dlvfc_1}{x} + \pdiff{\dlvfc_2}{y} + \pdiff{\dlvfc_3}{z}\\
+  \curl \dlvf &amp;= \left(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}{z} -
+  \pdiff{\dlvfc_3}{x}, \pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y} \right).
+\end{align*}
+(The formula for curl was somewhat motivated in
+{%intlink curl_components curlformula %}another page{%endintlink%}.)
+An {%intlink divergence_curl_notation%}alternative notation for
+divergence and curl{%endintlink%} may be easier to memorize than these
+formulas by themselves.</p>
+
+<p>Given these formulas, there isn't a whole lot to computing the
+divergence and curl.  Just &ldquo;plug and chug,&rdquo; as they say.</p>
+
+{% navigation_tag "example" "The example" %}
+<h4>Example</h4>
+
+<p>Calculate the divergence and curl of $\dlvf = (-y, xy,z)$.</p>
+
+<p>
+<b>Solution</b>:
+Since
+\begin{align*}
+  \pdiff{\dlvfc_1}{x} = 0, \qquad \pdiff{\dlvfc_2}{y}=x, \qquad \pdiff{\dlvfc_3}{z}=1
+\end{align*}
+we calculate that
+\begin{align*}
+  \div\vc{F} = 0 + x + 1 = x+1.    
+\end{align*}
+Since
+\begin{align*}
+  \pdiff{\dlvfc_1}{y} = -1,  \pdiff{\dlvfc_2}{x}=y,\\
+  \pdiff{\dlvfc_1}{z} =\pdiff{\dlvfc_2}{z} = 
+  \pdiff{\dlvfc_3}{x}=\pdiff{\dlvfc_3}{y}=0,
+\end{align*}
+we calculate that
+\begin{align*}
+  \curl\dlvf = (0-0, 0-0, y+1) = (0,0,y+1).
+\end{align*}
+</p>
+
+<p>Good things we can do this with math.  If you can figure out the
+divergence or curl from the picture of the vector field (below), you
+doing better than I can.</p>
+
+{% boxedapplet example_3D_vector_field %}
+
+{% endblock %}

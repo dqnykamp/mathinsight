@@ -1,0 +1,60 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "plane" "or line"%}
+{% index_entry "line" "or plane"%}
+{% title "A line or a plane or a point?" %}
+{% description "Examples showing how the graph of an equation depends on the underlying dimension, becoming a line or a point or a plane." %}
+
+
+{% navigation_tag "example1" "Example 1" %}
+<h4>Example 1: $y=3x-2$</h4>
+
+<p>Is the graph of $y=3x-2$ the graph of a line or a plane or a point?
+You might recognize this as a familiar form of the equation of a line
+with slope 3 and $y$-intercept $-2$, as in the following graph.</p>
+
+<p class="centeredImage">{% image line_in_2D %}</p>
+
+<p>However, if we think $y=3x-2$ is a line, we have implicitly assumed
+that the equation $y=3x-2$ is an equation in two dimensions, i.e., in
+the two variables $x$ and $y$.  It could actually be an equation in
+three dimensions, say with the variables $x$, $y$, and $z$.  Although
+the $z$ doesn't appear in the equation, we could think of the equation
+as having a $z$ with a coefficient of zero.  We could write the
+equation as $y=3x+0z-2$.  Here's what plotting the equation $y=3x-2$
+in a three-dimensional coordinate system looks like.</p>
+
+{% boxedapplet angled_line_or_plane %}
+
+<p>Before rotating, the graph looks like the previous one, as the $z$
+dimension is hidden.  The fact that the graph is a plane doesn't become
+obvious until you rotate the axis.</p>
+
+<p>We conclude that we don't know what the graph of $y=3x-2$ is unless we
+specify the number of dimensions.  If we want to specify a line, one
+way is to use a {%intlink line_parametrization %}parametrization of a line{%endintlink%}.  The parametrization of a line has
+the advantage that it gives you a line no matter how many dimensions
+you are working in.</p>
+
+
+{% navigation_tag "example2" "Example 2" %}
+<h4>Example 2: $x=3$</h4>
+
+<p>Is the graph of $x=3$ the graph of a line or a plane or a point?  Just
+like above, the answer will depend on the dimensions we are working
+in.  In one dimension, $x=3$ is just a point, as in a point on the
+number line.</p>
+
+<p class="centeredImage">{% image point_in_1D %}</p>
+
+
+<p>In two dimensions, the graph is a line, as you can see by rotating the
+below graph.</p>
+
+{%boxedapplet point_or_line %}
+
+
+<p>And, in three dimensions, the graph of $x=3$ is a plane.</p>
+
+{%boxedapplet vertical_line_or_plane %}
+
+{% endblock %}

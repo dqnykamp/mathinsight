@@ -1,0 +1,368 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "chain rule" "multivariable"%}
+{% title "Multivariable chain rule examples" %}
+{% description "Examples demonstrating the chain rule for multivariable functions." %}
+
+<p>The following are examples of using the {% intlink chain_rule_multivariable_introduction%}multivariable chain rule{%endintlink%}.  For examples involving the one-variable chain rule, see {% intlink chain_rule_simple_examples %}simple examples of using the chain rule{%endintlink%} or  the {% intlink chain_rule_refresher %}chain rule from the Calculus Refresher{%endintlink%}.</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $\vc{g}: \R \rightarrow \R^2$ and $f:
+\R^2 \rightarrow \R$ {% confusedlink function_notation %} be defined by 
+\begin{align*}
+  \vc{g}(t) &amp;= (t^3, t^4)\\
+  f(x,y) &amp;= x^2y.
+\end{align*}
+(You can think of this as the 
+{%intlink chain_rule_multivariable_introduction mountclimb2D%}mountain 
+climbing example{%endintlink%} where $f(x,y)$ is
+height of mountain at point $(x,y)$ and the path $\vc{g}(t)$ gives
+your position at time $t$.)
+Let $h(t)$ be the composition of $f$ with $\vc{g}$ (which would give
+your height at time $t$):
+\begin{align*}
+    h(t) = (f \circ \vc{g}) (t) = f(\vc{g}(t)).
+\end{align*}
+Calculate the derivative $\displaystyle h'(t) = \diff{h}{t}(t)$ (i.e.,
+the change in height) via the chain rule.
+</p>
+
+<p><b>Solution A</b>:  We'll use the
+{%intlinkeq chain_rule_multivariable_introduction chainrule2D -1%}formula{%endintlinkeq%} using
+matrices of partial derivatives:
+\begin{align*}
+  D{h}(t) = Df(\vc{g}(t)) D{\vc{g}}(t).
+\end{align*}
+</p>
+
+<p>
+We calculate the matrices of partial derivatives of $f$ and $\vc{g}$.
+\begin{align*}
+  Df(x,y) &amp;=
+  \left[
+    \pdiff{f}{x}(x,y) \quad \pdiff{f}{y}(x,y)
+  \right]\\
+  &amp;=\left[
+    \begin{array}{cc}
+      2xy &amp; x^2
+    \end{array}
+  \right]\\
+  D\vc{g}(t) &amp;= 
+  \left[
+    \begin{array}{c}
+      g_1'(t) \\g_2'(t)
+    \end{array}
+  \right]
+  =
+  \left[
+    \begin{array}{c}
+      3t^2\\4t^3
+    \end{array}
+  \right]
+\end{align*}
+We need to evaluate $Df$ at the point $\vc{g}(t)$:
+\begin{align*}
+  Df(\vc{g}(t)) =Df(t^3, t^4)=
+  \left[
+    \begin{array}{cc}
+      2(t^3)(t^4) &amp; (t^3)^2
+    \end{array}
+  \right]
+  =
+  \left[
+    \begin{array}{cc}
+      2t^7 &amp; t^6
+    \end{array}
+  \right]
+\end{align*}
+The derivative of $h$ is
+\begin{align*}
+  h'(t)=\diff{h}{t}(t) = Dh(t) &amp;= Df(\vc{g}(t)) D\vc{g}(t)\\
+  &amp;=
+  \left[
+    \begin{array}{cc}
+      2t^7 &amp; t^6
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{c}
+      3t^2\\4t^3
+    \end{array}
+  \right]\\
+  &amp;= (2t^7)(3t^2) + (t^6)(4t^3)=
+  6 t^9 + 4 t^9\\
+  &amp;= 10 t^9
+\end{align*}
+</p>
+
+
+<p><b>Solution B</b>: We'll start immediately with the
+{%intlinkeq chain_rule_multivariable_introduction chainrule2Dcomp -1%}formula
+in component form{%endintlinkeq%}:
+\begin{align*}
+  \diff{h}{t}(t) = \pdiff{f}{x}(\vc{g}(t)) \diff{g_1}{t} (t) + 
+  \pdiff{f}{y}(\vc{g}(t))\diff{g_2}{t} (t).
+\end{align*}
+We calculate
+\begin{align*}
+  \pdiff{f}{x}(x,y) &amp;= 2xy\\
+  \pdiff{f}{y}(x,y) &amp;= x^2\\
+  \pdiff{f}{x}(\vc{g}(t)) &amp;= \pdiff{f}{x}(t^3,t^4) = 2(t^3)(t^4) = 2t^7\\
+  \pdiff{f}{y}(\vc{g}(t)) &amp;= \pdiff{f}{y}(t^3,t^4) = (t^3)^2 = t^6\\
+  \diff{g_1}{t}(t) &amp;= 3t^2\\
+  \diff{g_2}{t}(t) &amp;= 4t^3.
+\end{align*}
+Therefore,
+\begin{align*}
+  \diff{h}{t}(t) =  (2t^7)(3t^2) + (t^6)(4t^3)
+  =6 t^9 + 4 t^9
+  = 10 t^9.
+\end{align*}
+</p>
+
+
+{% navigation_tag "example1p" "Examples" "Example 1'" %}
+<h4>Example 1'</h4>
+
+<p>Verify the chain rule for example 1 by calculating an expression for
+$h(t)$ and then differentiating it to obtain
+$\displaystyle \diff{h}{t}(t)$.</p>
+
+<p><b>Solution</b>:  $h(t) = f(\vc{g}(t)) = f(t^3,t^4) = (t^3)^2(t^4) =
+t^{10}$.
+\begin{align*}
+  h'(t) = \diff{h}{t}(t) = 10t^9,
+\end{align*}
+which matches the solution to Example 1, verifying that the chain rule
+got the correct answer.</p>
+
+<p>For this simple example, doing it without the chain rule was a lot
+easier.  However, that is not always the case.  And, in the next
+example, the only way to obtain the answer is to use the chain rule.</p>
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>We continue the mountain climbing example of Example 1.  But now,
+let's say we don't know the terrain ahead of time.  This means we do
+not yet know the height $f(x,y)$ at the position $(x,y)$.  We do,
+however, know our path through mountain; as before, it is given by 
+$\vc{g}(t) = (t^3, t^4).$</p>
+
+<p>Calculate the change in height that you'll experience along the path,
+i.e., calculate the derivative of $h(t) = f(\vc{g}(t))$.  In this
+case, since we don't know $f$, the answer will be given in terms of
+the function $f(x,y)$.</p>
+
+<p><b>Solution</b>: We'll just copy solution A, above.  This time,
+though, we must leave the matrix of partial derivatives of $f$ as
+\begin{align*}
+  Df(x,y)=
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}(x,y) &amp; 
+      \displaystyle
+      \pdiff{f}{y}(x,y)
+    \end{array}
+  \right]
+\end{align*}
+since we don't know what $f(x,y)$ is.  We can substitute in the values
+along the path $\vc{g}(t)$:
+\begin{align*}
+  Df(\vc{g}(t)) = Df(t^3,t^4)=
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}(t^3,t^4) &amp; 
+      \displaystyle
+      \pdiff{f}{y}(t^3,t^4)
+    \end{array}
+  \right].
+\end{align*}
+Since $D\vc{g}(t)$ is the same as in solution A, above, we calculate
+the derivative of $h$ as
+\begin{align*}
+  h'(t) = Dh(t) &amp;= Df(\vc{g}(t)) D\vc{g}(t)\\
+  &amp;=   \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}(t^3,t^4) &amp; 
+      \displaystyle
+      \pdiff{f}{y}(t^3,t^4)
+    \end{array}
+  \right]
+    \left[
+    \begin{array}{c}
+      3t^2\\4t^3
+    \end{array}
+  \right]\\
+  &amp;=3t^2\pdiff{f}{x}(t^3,t^4)
+  +4t^3\pdiff{f}{y}(t^3,t^4).
+\end{align*}
+We leave the answer in this form.  Of course, as soon as we know what
+$f(x,y)$ is, we can simply compute its partial derivatives and plug the
+result into this formula.
+</p>
+
+{% navigation_tag "example3" "Examples" "Example 3" %}
+<h4>Example 3</h4>
+
+<p>We continue using the same function $f(x,y) = x^2y$ to describe the
+height of the mountain at position $(x,y)$.  We embellish the above
+examples by letting $g: \R^2 \to \R^2$ be defined by $\vc{g}(s,t) =
+(t-s^2,ts^2)$. (We could think of having many paths through the
+mountain that depend on a skill level $s$.  Then, $(x,y)=\vc{g}(s,t)$
+could be the position of a person at time $t$ with skill level $s$.)</p>
+
+<p>Compute $\pdiff{}{s} (f \circ \vc{g})(s,t)$ and $\pdiff{}{t} (f \circ
+\vc{g})(s,t)$, i.e., the partial derivatives with respect to $s$ and $t$ of
+the height of a person in the mountains whose position is given by
+$\vc{g}(s,t)$.</p>
+
+<p><b>Solution</b>: Let $h(s,t) = (f \circ \vc{g})(s,t) =
+f(\vc{g}(s,t))$.  We need to calculate $\displaystyle
+\pdiff{h}{s}(s,t)$ and $\displaystyle \pdiff{h}{t}(s,t)$.  The chain
+rule says that
+\begin{align*}
+  Dh(s,t) = D(f\circ \vc{g})(s,t) = Df(\vc{g}(s,t)) D\vc{g}(s,t).
+\end{align*}
+Since
+\begin{align*}
+  Dh(s,t) = \left[ \pdiff{h}{s}(s,t) \quad \pdiff{h}{t}(s,t)\right],
+\end{align*}
+the answers we want are just the two components of $Dh(s,t)$.  We just
+need to calculate the matrices $Df(\vc{g}(s,t))$ and $D\vc{g}(s,t)$,
+then multiply them together.</p>
+
+<p>To make it easier in case you have to do such a problem again, we'll
+perform the matrix multiplication before writing in the specific
+values for $f(x,y)$ and $\vc{g}(s,t)$.  Then, we'll end up with the
+chain rule written in component form, which may be easier to use.</p>
+
+<p>The function $f(x,y)$ hasn't changed, so its matrix of partial
+derivatives is
+\begin{align*}
+  Df(x,y)=
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}(x,y) &amp; 
+      \displaystyle
+      \pdiff{f}{y}(x,y)
+    \end{array}
+  \right].
+\end{align*}
+For the chain rule, we need this evaluated at $(x,y)=\vc{g}(s,t)$
+\begin{align*}
+  Df(\vc{g}(s,t))=
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}(\vc{g}(s,t)) &amp; 
+      \displaystyle
+      \pdiff{f}{y}(\vc{g}(s,t))
+    \end{array}
+  \right].
+\end{align*}
+Since $\vc{g}: \R^2 \to \R^2$, its matrix of partial derivatives is a
+$2 \times 2$ matrix.  If we denote its components as $\vc{g}(s,t) =
+(g_1(s,t), g_2(s,t))$, its matrix of partial derivatives is
+\begin{align*}
+  D\vc{g}(s,t)=
+  \left[
+    \begin{array}{cc}
+      \displaystyle\pdiff{g_1}{s}(s,t)&amp;
+      \displaystyle\pdiff{g_1}{t}(s,t)\\
+      \displaystyle\pdiff{g_2}{s}(s,t)&amp;
+      \displaystyle\pdiff{g_2}{t}(s,t)
+    \end{array}
+  \right].
+\end{align*}
+The chain rule  $Dh(s,t) =  Df(\vc{g}(s,t)) D\vc{g}(s,t)$ becomes
+\begin{align*}
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{h}{s}(s,t) &amp;
+      \displaystyle
+      \pdiff{h}{t} (s,t)
+    \end{array}
+  \right]
+  =
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{f}{x}\bigl(\vc{g}(s,t)\bigr) &amp;
+      \displaystyle
+      \pdiff{f}{y}\bigl(\vc{g}(s,t)\bigr) 
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{cc}
+      \displaystyle
+      \pdiff{g_1}{s}(s,t) &amp;
+      \displaystyle
+      \pdiff{g_1}{t}(s,t) \\
+      \displaystyle
+      \pdiff{g_2}{s}(s,t) &amp;
+      \displaystyle
+      \pdiff{g_2}{t}(s,t)
+    \end{array}
+  \right]
+\end{align*}
+We can compute the matrix product on the right-hand side; the result
+is a $1 \times 2$ matrix (i.e., the same size of $Dh(s,t)$).  We
+obtain one equation by matching the first component of $Dh(s,t)$ with
+the first component of this multiplied-out matrix.  We obtain a second
+equation by matching the second component of $Dh(s,t)$ with the second
+component of this multiplied-out matrix.  The resulting two equations
+are
+\begin{align*}
+  \pdiff{h}{s}(s,t) &amp;=
+  \pdiff{f}{x}(\vc{g}(s,t))\pdiff{g_1}{s}(s,t)
+  + \pdiff{f}{y}(\vc{g}(s,t))\pdiff{g_2}{s}(s,t)\\
+  \pdiff{h}{t}(s,t)  &amp;=
+  \pdiff{f}{x}(\vc{g}(s,t))\pdiff{g_1}{t}(s,t)
+  + \pdiff{f}{y}(\vc{g}(s,t))\pdiff{g_2}{t}(s,t).
+\end{align*}
+This is the chain rule written out in component form for $h : \R^2 \to
+\R$, $f : \R^2 \to \R$, and $\vc{g} : \R^2 \to \R^2$.
+It is {% intlinkeq chain_rule_multivariable_special_cases chainrule22 %}from the special case page{%endintlinkeq%}.
+</p>
+
+<p>
+Now, we compute the answer to our specific problem by substituting in
+for $f(x,y) = x^2y$ and $\vc{g}(s,t) = (t-s^2, ts^2)$.
+\begin{align*}
+  \pdiff{f}{x}(x,y) &amp;= 2xy 
+  &amp;\pdiff{f}{x}(\vc{g}(s,t)) &amp;= 2ts^2(t-s^2)\\
+  \pdiff{f}{y}(x,y) &amp;= x^2 &amp;
+  \pdiff{f}{y}(\vc{g}(s,t)) &amp;= (t-s^2)^2\\
+  \pdiff{g_1}{s}(s,t) &amp;= -2s
+  &amp;\pdiff{g_2}{s}(s,t) &amp;= 2st\\
+  \pdiff{g_1}{t}(s,t) &amp;= 1 
+  &amp;\pdiff{g_2}{t}(s,t) &amp;= s^2
+\end{align*}
+Finally, we get our answers.
+\begin{align*}
+  \pdiff{}{s} (f \circ \vc{g})(s,t) = \pdiff{h}{s}(s,t) &amp;=
+  \pdiff{f}{x}(\vc{g}(s,t))\pdiff{g_1}{s}(s,t) +
+  \pdiff{f}{y}(\vc{g}(s,t))\pdiff{g_2}{s}(s,t)\\
+  &amp;= 2ts^2(t-s^2)(-2s) + (t-s^2)^2(2st)\\
+  &amp;= -4ts^3(t-s^2) + 2st(t^2-2ts^2+s^4)\\
+  &amp;= -4s^3t^2 + 4s^5t +2st^3 -4s^3t^2 + 2s^5t\\
+  &amp;= -8s^3t^2+ 6s^5t+2st^3
+\end{align*}
+\begin{align*}
+  \pdiff{}{t} (f \circ \vc{g})(s,t) = \pdiff{h}{t}(s,t) &amp;=
+  \pdiff{f}{x}(\vc{g}(s,t))\pdiff{g_1}{t}(s,t) +
+  \pdiff{f}{y}(\vc{g}(s,t))\pdiff{g_2}{t}(s,t)\\
+  &amp;= 2ts^2(t-s^2)(1) + (t-s^2)^2(s^2)\\
+  &amp;= 2s^2t^2 - 2s^4t + s^2t^2 -2s^4t + s^6\\
+  &amp;= 3s^2t^2- 4s^4t+ s^6
+\end{align*}
+</p>
+
+{%endblock%}

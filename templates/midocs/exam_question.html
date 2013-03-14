@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load mi_tags %}{% load url from future %}
+
+{% block content %}
+
+<h3>Exam question: {{ the_question }}</h3>
+
+<h4>Question text</h4>
+{{ question_text }}
+
+
+<h4>Solution text</h4>
+{{ solution_text }}
+
+
+
+{% endblock %}
+
+{% block rightcolumn %}
+<ul class="linklist">
+<li><a href="{% url 'mi-examquestionlist' %}">List of all exam questions</a></li>
+<li><a href="{% url 'mi-examlist' %}">List of all exams</a></li>
+</ul>
+{%endblock%}

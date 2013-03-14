@@ -1,0 +1,44 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor polynomial" "examples" %}
+{% title "Classic examples of Taylor polynomials" %}
+{% description "Some of the most famous (and important) examples of Taylor expansions." %}
+
+<p>Some of the most famous (and
+important) examples are the expansions of ${1\over 1-x}$, $e^x$,
+$\cos x$, $\sin x$, and $\log(1+x)$ at $0$: right from the formula,
+although simplifying a little, we get
+\begin{align*}
+{1\over 1-x}&amp;=1+x+x^2+x^3+x^4+x^5+x^6+\ldots\\
+e^x&amp;=1+{x\over 1!}+{x^2\over 2!}+{x^3\over 3!}+{x^4\over 4!}+\ldots\\
+\cos x&amp;=1-{x^2\over 2!}+{x^4\over 4!}-{x^6\over 6!}+{x^8\over 8!}\ldots\\
+\sin x&amp;={x\over 1!}-{x^3\over 3!}+{x^5\over 5!}-{x^7\over 7!}+\ldots\\
+\log(1+x)&amp;=x-{x^2\over 2}+{x^3\over 3}-{x^4\over 4}+{x^5\over 5}-
+{x^6\over 6}+\ldots
+\end{align*}
+where here the <i>dots</i> mean to <i>continue to whatever term you want,
+then stop, and stick on the appropriate remainder term.</i></p>
+
+<p>It is entirely reasonable if you can't really see that these
+are what you'd get, but in any case you should do the computations to
+verify that these are right. It's not so hard.</p>
+
+<p>Note that the expansion for cosine has no <i>odd</i> powers of
+$x$ (meaning that the coefficients are <i>zero</i>), while the
+expansion for sine has no <i>even</i> powers of $x$ (meaning that the
+coefficients are <i>zero</i>). </p>
+
+<p>At this point it is worth repeating that we are <i>not</i>
+talking about <i>infinite</i> sums (series) at all here, although we do
+allow arbitrarily large <i>finite</i> sums. Rather than worry over an
+infinite sum that we can never truly evaluate, we use the <i>error</i>
+or <i>remainder</i> term instead. Thus, while in other contexts the
+dots <i>would</i> mean &lsquo;infinite sum&rsquo;, that's not our concern here.</p>
+
+<p>The first of these formulas you might recognize as being a
+<i>geometric series</i>, or at least a part of one. The other three
+patterns might be new to you. A person would want to be learn to
+recognize these on sight, as if by reflex!</p>
+
+
+
+{%endblock%}

@@ -1,0 +1,147 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "double integral" "as volume"%}
+{% index_entry "volume" "from double integral" %}
+{% title "Double integrals as volume" %}
+{% description "Explanation of how double integrals could be used to represent volume." %}
+
+{% navigation_tag "volume" "Volume under surface" %}
+<p>You are probably familiar that in one-variable calculus, the integral $\int_a^b
+f(x)dx$ for positive $f(x)$ can be interpreted as the area under the
+curve $f(x)$ over the interval $[a,b]$.
+</p>
+
+<p class="centeredImage">{% image integral_area_under_curve %}</p>
+
+<p>The integral is the area between the curve $f(x)$ and the $x$-axis.</p>
+
+
+<p>In the same way, the double integral $\iint_\dlr f(x,y)\,dA$ of
+positive $f(x,y)$ can be interpreted as the volume under the surface
+$z=f(x,y)$ over the region $\dlr$.  Imagine that the blue object
+below is the surface $z=f(x,y)$ floating above the $xy$-plane.  The
+double integral $\iint_\dlr f(x,y)\,dA$ can be interpreted as the
+volume between the surface $z=f(x,y)$ and the $xy$-plane, i.e, the
+&ldquo;cylinder&rdquo; above the region $\dlr$.
+</p>
+
+<p class="centeredImage">{% image double_integral_volume_under_surface %}</p>
+
+<p>You can also see this from the Riemann sum approximating the integral
+\begin{align*}
+  \sum_{i,j} f(x_{ij}, y_{ij}) \Delta x \Delta y
+\end{align*}
+Each term in the Riemann sum is the volume of a thin box with base
+$\Delta x \times \Delta y$ and height $f(x_{ij},y_{ij})$.
+</p>
+
+<p class="centeredImage">{% image double_integral_volume_under_surface_box %}</p>
+
+<p>Hence, the total Riemann sum approximates the volume under the surface
+by the volume of a bunch of these thin boxes.  In the limit as $\Delta
+x, \Delta y \to 0$, we obtain the total volume under the surface over
+the region $\dlr$, i.e., $\iint_\dlr f(x,y)\, dA$.</p>
+
+<p>The below applet illustrates how the volume of the boxes approaches the area under the surface as $\Delta x$ and $\Delta y$ decrease to zero.</p>
+
+{%boxedapplet double_integral_riemann_sum %}
+
+<p>If $f(x,y) > g(x,y)$ can you see how the double integral
+\begin{align*}
+  \iint_\dlr (f(x,y)-g(x,y))\,dA
+\end{align*}
+is the volume between the surface $z=f(x,y)$ and the surface $z=g(x,y)$?
+</p>
+
+<p>The below examples assume you know how to write {% intlink double_integral_iterated%}double integrals as interated integrals{%endintlink%}.</p>
+
+
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Calculate the volume under the surface $z=3+x^2-2y$ over the region $\dlr$
+defined by $0 \le x \le 1$ and $-x \le y \le x$.</p>
+
+<p><b>Solution</b>: The volume $V$ is the double integral of $3+x^2-2y$ over $\dlr$.
+\begin{align*}
+  V &amp;= \iint_{\dlr} (3+x^2-2y)dx\,dy\\
+  &amp;= \int_0^1 \int_{-x}^x (3+x^2-2y) dy\, dx\\
+  &amp;= \int_0^1 \left(3y+x^2y-y^2\Big|_{y=-x}^{y=x}\right) dx\\
+  &amp;= \int_0^1 (6x+2x^3) dx\\
+  &amp;= 3x^2 +\frac{1}{2}x^4 \Big|_0^1 = 3\frac{1}{2}
+\end{align*}
+</p>
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Calculate the volume between the surfaces $z=f(x,y)=3-x^2-y^2$
+and the surface $z=g(x,y)=2x^2+2y^2$.</p>
+
+<p><b>Solution</b>: At the origin, $f$ is above $g$, since $f(0,0)=3$ and 
+$g(0,0)=0$.  
+As one moves away from the origin, $f$ gets large and negative,
+while $g$ gets large and positive. 
+Therefore, $f$ and $g$ must cross somewhere, 
+and the finite volume between $f$ and $g$ is the 
+integral of $f-g$ over the region where $f > g$.</p>
+
+<p>We can calculate where the surfaces cross by setting $f=g$. 
+This occurs when
+\begin{align*}
+  f(x,y) &amp;= g(x,y)\\
+  3-x^2-y^2 &amp;= 2x^2+2y^2\\
+  3 &amp;= 3x^2+3y^2\\
+  1 &amp;= x^2+y^2.
+\end{align*}
+The curve where the surfaces cross is the unit circle, 
+and the region $\dlr$ over which we must
+integrate $f-g$ is the unit disk $x^2+y^2 \le 1$.</p>
+
+<p>The volume $V$ is
+\begin{align*}
+  V &amp;=\iint_{\dlr} (f(x,y)-g(x,y)) dx\,dy
+  =  \iint_{\dlr} (3 - 3x^2-3y^2)dx \, dy.
+\end{align*}
+</p>
+
+<p>This integral is very simple to calculate if you know how
+to {% intlink double_integral_change_variables_introduction %}change variables{%endintlink%}
+to {% intlink polar_coordinates%}polar coordinates{%endintlink%}.  
+(If you don't yet know how to do this, you can still calculate the integral if you are good at doing integrals, but it gets pretty ugly. We'll show the procedure below.)
+</p>
+
+<p>In polar coordinates, the unit disk is the region $0 \le r \le 1$, 
+$0 \le \theta \le 2\pi$.  Including the extra factor of $r$ from the change
+of variables, the integral becomes
+\begin{align*}
+  V &amp;= \iint_{\dlr} (3 - 3x^2-3y^2)dx \, dy\\
+  &amp;= \int_0^{2\pi} \int_0^1 (3 - 3r^2)r\,dr\,d\theta\\
+  &amp;= \int_0^{2\pi} \left(\frac{3}{2}r^2 - \frac{3}{4}r^4 \Big|_{r=0}^{r=1}\right)d\theta\\
+  &amp;= \int_0^{2\pi} \frac{3}{4} d\theta = \frac{3\pi}{2}.
+\end{align*}
+</p>
+
+<p>If you don't know how to change variables to polar coordinates, you can do the integration over disk by writing it as
+$-1 \le x \le 1$, $-\sqrt{1-x^2} \le y \le \sqrt{1-x^2}$.
+As you can see below, you'll have to do a trigonometric substitution $x=\sin\theta$ as well as other trigonometric identities to evaluate the integral.  
+With this trigonometric substitution, the range of $\theta$ is $-\pi/2 \le \le \pi/2$ so that $x=\sin\theta$ ranges from $-1 \le x \le 1$. 
+Rather than explain every step, we'll just show some of the intermediate calculations.  You won't want to try to follow this anyway unless you are already skilled as integration.</p>
+
+<p>Here's the calculation:
+\begin{align*}
+  V &amp;= \iint_{\dlr} (3 - 3x^2-3y^2)dx \, dy\\
+  &amp;= \int_{-1}^1\int_{-\sqrt{1-x^2}}^{\sqrt{1-x^2}}(3 - 3x^2-3y^2)dy\,dx\\
+  &amp;= \int_{-1}^1(3y - 3x^2y-y^3)\Big|_{y=-\sqrt{1-x^2}}^{y=\sqrt{1-x^2}} dx\\
+  &amp;=\int_{-1}^1(6\sqrt{1-x^2}-6x^2\sqrt{1-x^2}-2(1-x^2)^{3/2})dx\\
+  &amp;=\int_{-\pi/2}^{\pi/2}(6\sqrt{1-\sin^2\theta}-6\sin^2\theta\sqrt{1-\sin^2\theta}-2(1-\sin^2\theta)^{3/2})\cos \theta d\theta\\
+  &amp;=\int_{-\pi/2}^{\pi/2}(6\cos\theta-6\sin^2\theta\cos\theta-2\cos^3\theta)\cos \theta d\theta\\
+  &amp;=\int_{-\pi/2}^{\pi/2}4\cos^4\theta d\theta\\
+  &amp;=\int_{-\pi/2}^{\pi/2}\left(\frac{3}{2}+2\cos 2\theta+\frac{1}{2}\cos 4\theta\right)d\theta\\
+  &amp;=\left[\frac{3}{2}\theta+\sin 2\theta+\frac{1}{8}\sin 4\theta\right]_{-\pi/2}^{\pi/2} =\frac{3\pi}{2}.
+\end{align*}
+</p>
+
+
+{%endblock%}

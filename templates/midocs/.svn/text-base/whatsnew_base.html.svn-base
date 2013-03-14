@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load mi_tags comments %}
+{% load url from future %}
+
+{% block nolinksection %}{% endblock %}
+
+
+{% block rightcolumn %}
+<h3>Recent News</h3>
+<ul class="linklist">
+  {% for other_news in news_list %}
+  <li><p><a href="{% url 'mi-news' other_news.code %}">{{other_news}}</a><br/>
+      {% if other_news.author_list_full%}by {{ other_news.author_list_full }} on{%endif%}  {{ other_news.publish_date }}</p>
+    <p><a href="{% url 'mi-news' other_news.code %}" class="normaltext">{{other_news.description }}</a></p>
+</li>
+  {% endfor %}
+
+</ul>
+
+<h2>RSS feeds</h2>
+<ul class="linklist">
+  <li><a href="{% url 'mi-newsfeed' %}">News</a></li>
+  <li><a href="{% url 'mi-newpagefeed' %}">New pages</a></li>
+  <li><a href="{% url 'mi-newappletfeed' %}">New applets</a></li>
+  <li><a href="{% url 'mi-newimagefeed' %}">New images</a></li>
+</ul>
+{%endblock %}

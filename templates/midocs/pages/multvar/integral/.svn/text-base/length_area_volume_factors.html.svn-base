@@ -1,0 +1,304 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integral" "multivariable"%}
+{% title "Length, area, and volume factors" "Introduction"%}
+{% description "A summary of the expansion factors that arise from mappings in integrals of multivariable calculus." %}
+
+<p>Many of the {% intlink integrals_multivariable_calculus_summary%}integrals
+of multivariable calculus{%endintlink%} are integrals over mappings 
+from a domain onto another set (the image). 
+In line integrals over parametrized curves, for example, one integrates 
+over a curve that is the image of an interval; a vector-valued function
+maps the interval onto the image curve.
+The functions that perform the mappings stretch or shrink parts of
+the domain as they transform the domain onto the image.  
+Hence, one part of calculating these integrals is accounting for
+the expansions or contraction of these maps.</p>
+
+<p>In what follows, we outline the different types of &ldquo;expansion factors&rdquo; 
+that appears in the {% intlink integrals_multivariable_calculus_summary%}integrals{%endintlink%}.
+There are three types of expansion factors, depending on the dimension of the
+underlying integral.</p>
+
+<p class="pre_list">The types of expansions factors are:</p>
+<ol><li><a href="#length">length expansion factors</a> (for one-dimensional integrals)</li>
+<li><a href="#area">area expansion factors</a> (for two-dimensional integrals), and</li>
+<li><a href="#volume">volume expansion factors</a> (for three-dimensional integrals).</li>
+</ol>
+
+
+{%comment%}
+
+
+<li><a href="#hmm3D">Three-dimensional integrals</a> (triple integrals under a change of variables)
+involve volume-changing maps of a three dimensional region onto another
+three-dimensional region.</li>
+</ol>
+
+
+transforming length along each
+
+the length of
+each subinterval of the domain interval
+
+the length of the 
+domain into
+
+Along with the \intlink[doc=review1]{multitude of integrals}
+came a
+bunch of factors for length, area, and volume.  In many cases, these
+factors adjusted for the expansion or compression by functions that
+transform between different integrals.  I hope you will see the
+similarity among these factors.
+
+{%endcomment%}
+
+{% navigation_tag "length" "Length" %}
+<h4>Length expansion factors</h4>
+
+<p>One dimensional integrals are based on the familiar one-variable integral
+of a function $\dlsi(t)$ from $t=a$ to $t=b$,
+\begin{align*}
+  \int_a^b \dlsi(t) dt.
+\end{align*}
+In the one-variable integral, we can think of $dt$ as being a length
+measurement.  Other one-dimensional integrals will include an
+&ldquo;length expansion factor&rdquo; that multiplies $dt$ in order to 
+accurately account for length.</p>
+
+<p>The one-dimensional integral of multivariable calculus is the 
+line integral.  However, before dicussing line integrals, we examine
+changing variables in one-dimensional integrals to show that the
+&ldquo;$u$-substitution&rdquo; of one-variable calculus contains another
+example of a length expansion factor.  
+Both one-variable integrals under a change of variables and
+line integrals are based on length-changing maps that transform
+an interval to another interval or a curve.
+</p>
+
+{% navigation_tag "lengthonevar" "Length" "One-variable integrals" %}
+<h5>Length when change variables in one-variable integrals</h5>
+
+<p>The following is an attempt to tie one-variable change of variables to
+multivariable change of variables.  If it is too confusing, just skip
+it and move on.</p>
+
+<p>When you perform a &ldquo;$u$-substitution&rdquo; in one-variable calculus, you are
+changing variables.  To help you link one-variable $u$-substitution to
+multivariable change of variables, we can write a $u$-substitution in
+the same language as multivariable calculus.</p>
+
+<p>Let's say you are given some integral $\int_a^b \dlsi(x) dx$ 
+which you want to compute with a &ldquo;$u$-substitution.&rdquo;
+In a $u$-substitution, you write $u$ as a function of $x$, but to make the
+notation match that of a 
+{%intlink double_integral_change_variables_introduction%}multivariable change
+of variables{%endintlink%}, let's do the reverse and write  $x = T(u)$,
+where $T$ is an invertible &ldquo;change of variables&rdquo; function.  
+Then the $u$-substitution
+is $u = T^{-1}(x)$, where $T^{-1}(x)$ is the inverse of $T(u)$.</p>
+
+<p>
+To perform the $u$-substitution, you replace $x$ with $T(u)$,
+integrate from $T^{-1}(a)$ to $T^{-1}(b)$, and replace $dx$ with
+$T'(u)du$.  In this notation, a $u$-substitution looks like:
+\begin{align*}
+  \int_a^b \dlsi(x) dx = \int_{T^{-1}(a)}^{T^{-1}(b)} \dlsi(T(u)) T'(u) du.
+\end{align*}
+</p>
+
+<p>
+We could go a little further and make this formula even closer to what
+we write in multivariable calculus.  We could write the interval
+$[a,b]$ as $I$.  The original integral $\int_a^b f(x)dx$ is over the interval $I=[a,b]$, so we
+could write the integral as 
+\begin{align*}
+\int_I \dlsi(x) dx.  
+\end{align*}
+</p>
+
+<p>If $x=T(u)$ is our change of variables, then $T$ maps an interval
+$I^{*}$ in &ldquo;$u$-space&rdquo; to the interval $I$ in &ldquo;$x$-space.&rdquo;  If
+$T^{-1}(b)$ is greater than $T^{-1}(a)$, then $I^*$ is the
+interval $[T^{-1}(a), T^{-1}(b)]$.  Otherwise, $I^*$ is the
+interval $[T^{-1}(b), T^{-1}(a)]$.  Our change of variables
+formula is then
+\begin{align*}
+  \int_I \dlsi(x) dx = \int_{I^{ *}} \dlsi(T(u))|T'(u)|du.
+\end{align*}
+</p>
+
+<p>Note that in this case, the change of variables &ldquo;length expansion
+factor&rdquo; is $| T'(u)|$.  We need the absolute value because of how we
+defined $I^*$.  The case when $T'(u) <0$ corresponds to  $T^{-1}(b)< T^{-1}(a)$,
+i.e., the case where we flipped the order of the endpoints in our definition of $I^*= [T^{-1}(b), T^{-1}(a)]$.
+This flipping changes the sign of the integral; adding the absolute
+value $|T'(u)|$ changes the sign back to the correct sign.</p>
+
+<p>The length expansion factor $|T'(u)|$ indicates how much $T$ expands or contracts
+$I^*$ when it maps $I^*$ onto $I$.</p>
+
+{% navigation_tag "lengthline" "Length" "Line integrals" %}
+<h5>Length in line integrals</h5>
+
+<p>In {%intlink line_integral_scalar_function_introduction%}line integrals{%endintlink%}, a curve
+$\dlc$ is parametrized by a function $\dllp(t)$, 
+which maps on interval $t \in [a,b]$ onto the curve.
+In this case, the
+length measure on the curve is $d\als = \|\dllp\,'(t)\|dt$.  The length expansion factor
+$\|\dllp\,'(t)\|$ accounts for expansion or contraction by $\dllp$
+when it maps the interval $I=[a,b]$ onto $\dlc$.  Hence, the integral
+of a scalar-valued function $\dlsi(\vc{x})$ is
+\begin{align*}
+  \dslint = \dpslint.
+\end{align*}
+</p>
+
+<p>For {%intlink line_integral_vector_field_introduction%}line integrals of vector fields{%endintlink%},
+we integrate
+$\dlsi = \dlvf \cdot \vc{T}$, where $\vc{T}$ is the unit tangent
+vector of the curve:
+\begin{align*}
+  \vc{T} = \frac{\dllp'(t)}{\|\dllp'(t)\|}.
+\end{align*}
+In this case, the denominator cancels the $\|\dllp\,'(t)\|$ factor, 
+\begin{align*}
+  \dlint = \slint{\dlc}{\dlvf \cdot \vc{T}} =
+  \dplint,
+\end{align*}
+but the expansion or contraction of $\dllp(t)$ is still included in the
+$\dllp'(t)$ factor.</p>
+
+{% navigation_tag "area" "Area" %}
+<h4>Area expansion factors</h4>
+
+<p>Two-dimensional integrals are based on the {%intlink double_integral_introduction%}double integral{%endintlink%}
+of a function $\dlsi(x,y)$ over a planar region $\dlr$,
+\begin{align*}
+  \iint_\dlr \dlsi\, dA = \iint_\dlr \dlsi(x,y) \, dx\,dy.
+\end{align*}
+In the double integral, we can think of $dA=dx\,dy$ as being an area
+measurement.  Other two-dimensional integrals will include an
+&ldquo;area expansion factor&rdquo; that multiplies $dx\,dy$ in order to 
+accurately account for area.</p>
+
+<p>Both double integrals under a change of variables and surface integrals
+involve area-changing maps of a planar region onto another
+planar region or surface.  To correctly compute these integrals,
+one must account for how the maps change area.</p>
+
+{% navigation_tag "areadouble" "Area" "Double integrals" %}
+<h5>Area when changing variables in double integrals</h5>
+
+<p>To {%intlink double_integral_change_variables_introduction%}change variables in a double integral{%endintlink%}, we find a function $(x,y) =
+\cvarf(\cvarfv,\cvarsv)$ that maps some new region $\dlr^*$ in $(\cvarfv,\cvarsv)$-space to the
+original region $\dlr$ in $(x,y)$-space.  We then need a factor that
+accounts for the expansion or contraction of $\cvarf$ as it maps $\dlr^*$
+onto $\dlr$.  The area expansion factor is the absolute value of the determinant of the
+{%intlink derivative_matrix %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
+\begin{align*}
+   \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv) \right|.
+\end{align*}
+We sometimes write this is
+\begin{align*}
+   \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv) \right| = \left|
+   \pdiff{(x,y)}{(\cvarfv,\cvarsv)} \right|.
+\end{align*}
+</p>
+
+<p>
+With the proper area expansion factor, the formula for changing variables in double integrals is
+\begin{align*}
+  \iint_\dlr \dlsi\, dA = \iint_{\dlr^{\textstyle *}} \dlsi(\cvarf(\cvarfv,\cvarsv))
+  \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv) \right| d\cvarfv\,d\cvarsv.
+\end{align*}
+</p>
+
+{% navigation_tag "areasurface" "Area" "Surface integrals" %}
+<h5>Area in surface integrals</h5>
+
+<p>In {%intlink surface_integral_scalar_function_introduction%}surface integrals{%endintlink%},
+a surface $\dls$ is
+parametrized by a function $\dlsp(\spfv,\spsv)$ for $(\spfv,\spsv) \in \dlr$,
+where $\dlr$ is a planar region.  In this case, the
+area measure on the surface is 
+\begin{align*}
+  d\sas = \left\| \pdiff{\dlsp}{\spfv} \times
+    \pdiff{\dlsp}{\spsv}\right\| \,d\spfv\,d\spsv.
+\end{align*}
+The area expansion factor
+$\left\| \pdiff{\dlsp}{\spfv} \times
+    \pdiff{\dlsp}{\spsv}\right\|$
+accounts for expansion or contraction by $\dlsp$
+when it maps $\dlr$ onto $\dls$.  Hence, the integral of
+a scalar-valued function $\dlsi(\vc{x})$ is
+\begin{align*}
+  \dssint  = \dpssint.
+\end{align*}
+</p>
+
+<p>For  {%intlink surface_integral_vector_field_introduction%}surface integrals of vector fields{%endintlink%}, we integrate
+$\dlsi = \dlvf \cdot \vc{n}$, where $\vc{n}$ is the unit normal
+vector of the surface:
+  \begin{align*}
+    \vc{n} = \frac{\pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}}
+    {\left\|\pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}\right\|}.
+  \end{align*}
+  In this case, the denominator cancels the
+  $\left\|\pdiff{\dlsp}{\spfv} \times
+    \pdiff{\dlsp}{\spsv}\right\|$ factor, so the integral becomes
+\begin{align*}
+  \dsint = \dpsint.
+\end{align*}
+The expansion or contraction of $\dlsp(\spfv,\spsv)$ is still included in the
+$\left(\pdiff{\dlsp}{\spfv}
+  \times \pdiff{\dlsp}{\spsv}\right)$ factor.</p>
+
+
+{% navigation_tag "volume" "Volume" %}
+<h4>Volume expansion factors</h4>
+
+<p>Three-dimensional integrals are based on the {%intlink triple_integral_introduction%}triple integral{%endintlink%}
+of a function $\dlsi(x,y,z)$ over a three-dimensional region $\dlv$,
+\begin{align*}
+  \iiint_\dlv \dlsi\, dV = \iiint_\dlv \dlsi(x,y,z) \, dx\,dy\,dz.
+\end{align*}
+In the triple integral, we can think of $dV=dx\,dy\,dz$ as being a volume
+measurement.</p>
+
+<p>Triple integrals under a change of variables 
+involve volume-changing maps of one three-dimensional region onto another.  To correctly compute triple integrals,
+one must account for how the maps change volume.
+The integrals will include an
+&ldquo;volume expansion factor&rdquo; that multiplies $dx\,dy\,dz$ in order to 
+accurately account for volume.
+</p>
+
+{% navigation_tag "volumetriple" "Volume" "Triple integrals"%}
+<h5>Volume when change variables in triple integrals</h5>
+
+<p>To {% intlink triple_integral_change_variables_story %}change variables in a triple integral{%endintlink%}, we find a function $(x,y,z) =
+\cvarf(\cvarfv,\cvarsv,\cvartv)$ that maps some new solid $\dlv^*$ in $(\cvarfv,\cvarsv,\cvartv)$-space to the
+original solid $\dlv$ in $(x,y,z)$-space.  We then need a factor that
+accounts for the expansion or contraction of $\cvarf$ as it maps $\dlv^*$
+onto $\dlv$.  The volumne expansion factor is the absolute value of the determinant of the
+{%intlink derivative_matrix %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
+\begin{align*}
+   \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv) \right|.
+\end{align*}
+We sometimes write this is
+\begin{align*}
+   \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv) \right| = \left|
+   \pdiff{(x,y,z)}{(\cvarfv,\cvarsv,\cvartv)} \right|.
+\end{align*}
+</p>
+
+<p>With the proper volume expansion factor, the formula for changing variables in triple integrals is 
+\begin{align*}
+  \iiint_\dlv \dlsi\, dV = \iiint_{\dlv^{\textstyle *}} \dlsi(\cvarf(\cvarfv,\cvarsv,\cvartv))
+  \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv) \right| d\cvarfv\,d\cvarsv\,d\cvartv.
+\end{align*}
+</p>
+
+{%endblock%}

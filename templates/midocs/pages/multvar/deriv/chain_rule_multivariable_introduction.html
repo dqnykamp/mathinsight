@@ -1,0 +1,252 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "chain rule" "multivariable"%}
+{% index_entry "derivative" "chain rule"%}
+{% title "Introduction to the multivariable chain rule" %}
+{% description "Introduction to the multivariable chain rule. The basic concepts are illustrated through a simple example." %}
+
+{% navigation_tag "example1d" "1D example" %}
+<h4>One-variable example</h4>
+
+<p>Imagine that the function $f(x)$ gives the height through a mountain
+range at position $x$.  Since this is a one-dimensional example, we
+are thinking of some cross section through the mountain, as
+illustrated by this graph of $f(x)$.
+</p>
+
+<p class="centeredImage">{% image mountain_height_1d%}</p>
+
+
+<p>Now imagine that you are crossing the mountain range so that your
+$x$-position at time $t$ is given by $x=g(t)$.</p>
+
+<p>First of all, what is your height at time $t$?  It is simply the
+height of the mountain at the position $x=g(t)$, i.e., $f(x)$
+evaluated at $g(t)$, which is $f(g(t))$.  We define a function $h(t)$
+to give your height at time $t$.  It is
+\begin{align*}
+  h(t) = f(g(t)).
+\end{align*}
+</p>
+
+{% index_entry "function" "composition" "composition" %}
+{% index_entry  "composition" "of functions" "composition1" %}
+<p>
+The function $h(t)$ is an example of a <i>{%intlink composition_definition%}composition{%endintlink%}</i> of
+functions, meaning it is the result of using function $g$ and then
+using the function $f$.  We often write $h = f \circ g$ or $h(t) = (f
+\circ g)(t)$.</p>
+
+<p>The {% intlink chain_rule_refresher %}chain rule{%endintlink%} is the rule we use if we want to take the derivative of
+a composition of functions.  In this example, how fast is your height
+changing as you walk along the path given by $g(t)$?  It is simply the
+derivative of $h$ with respect to $t$: $\displaystyle
+\diff{h}{t}(t)$.
+The chain rule gives the derivative of $h$ in terms of the derivatives
+of $g$ and $f$.  You may remember from one-variable calculus that
+\begin{align}
+  \diff{h}{t}(t)
+  = \diff{f}{x}(g(t))\diff{g}{t}(t).
+  {% equation_tag chainrule1D 1 %}
+\end{align}
+The one-variable chain rule states that the derivative of $h$ is the
+product of the derivative of $f$ and the derivative of $g$.  The only
+trick to remember is that the derivative of $f$ is evaluated at $g(t)$
+(<b>not</b> at $t$).  This makes sense since $f$ is a function of
+position $x$ and $x=g(t)$.</p>
+
+<p>The chain rule makes it a lot easier to compute derivatives.  For
+example, if $g(t)=t^2$ and $f(x)=\sin x$, then $h(t) = \sin (t^2)$.
+We can easily calculate that
+\begin{align*}
+  \diff{g}{t}(t) &amp;= g'(t) = 2t,\\
+  \diff{f}{x}(x) &amp;= f\,'(x)=\cos x,\\
+\end{align*}
+so that
+\begin{align*}
+  \diff{f}{x}(g(t)) &amp;= f\,'(g(t)) = \cos (t^2).
+\end{align*}
+ Using the chain rule of
+equation \eqref{chainrule1D},
+we compute that the derivative of $h(t)$ is
+\begin{align*}
+ \diff{h}{t}(t) = h'(t) = \cos (t^2) (2t).
+\end{align*}
+ We don't have to separately learn a rule
+for the derivative of $\sin(t^2)$; we just need to know the
+derivatives of $\sin x$ and $t^2$.
+</p>
+
+<p>For more information on the one-variable chain rule, see {% intlink chain_rule_idea %}the idea of the chain rule{%endintlink%}, the {% intlink chain_rule_refresher %}chain rule from the Calculus Refresher{%endintlink%}, or {% intlink chain_rule_simple_examples %}simple examples of using the chain rule{%endintlink%}.</p>
+
+{% navigation_tag "generalform" "General form" %}
+<h4>The general form of the chain rule</h4>
+
+
+<p>Even though $f$, $g$, and $h$ are one-variable functions, we could use
+the notation for the 
+{% intlink differentiability_multivariable_introduction %}derivative 
+of multivariable functions{%endintlink%}.  Remember that the
+derivative of a multivariable function is its 
+{% intlink derivative_matrix %}matrix of partial
+derivatives{%endintlink%}. 
+We can view the derivatives of $f$, $g$, and $h$
+as $1 \times 1$  matrices,
+\begin{align*}
+  Df(x) &amp;= \left[\diff{f}{x}(x)\right]\\
+  Dg(t) &amp;= \left[\diff{g}{t}(t)\right]\\
+  Dh(t) &amp;= \left[\diff{h}{t}(t)\right]
+\end{align*}
+Using the notation of matrices of partial derivatives, we can rewrite
+the one-variable chain rule of 
+equation \eqref{chainrule1D} as
+\begin{align}
+  Dh(t) = Df(g(t)) Dg(t).
+  {% equation_tag chainrule1Dgen 2 %}
+\end{align}
+Since matrix multiplication of $1 \times 1$ matrices is the same as
+scalar multiplication, this new equation is just
+equation \eqref{chainrule1D}
+in disguised form. 
+Equation \eqref{chainrule1Dgen}
+is written exactly as the chain rule for
+higher dimensions.  So if you understand what 
+equation \eqref{chainrule1Dgen}
+means when we use functions $\vc{f}$, $\vc{g}$, and $\vc{h}$ of the form 
+\begin{align*}
+  \vc{f} &amp;: \R^n \to \R^p\\
+  \vc{g} &amp;: \R^m \to \R^n\notag\\
+  \vc{h} &amp;: \R^m \to \R^p,\notag
+\end{align*}
+(remember {% intlink function_notation %}function notation{%endintlink%}) where $\vc{h} = \vc{f} \circ \vc{g}$, then you don't need to read on.
+</p>
+
+{% navigation_tag "mountclimb2D" "2D" %}
+<h4>The chain rule in two dimensions</h4>
+
+<p>Let's redefine our mountain range function to be a more realistic,
+two-variable function.  Define $f(x,y)$ to be the height of a mountain
+range at the point $(x,y)$, such as in the graph below.  As before,
+you cross through the mountain range.  This time, to specify how you
+cross the mountain range, you need to specify a path, such as
+illustrated by the thick blue curve through the mountains below.</p>
+
+{%boxedapplet crossing_mountain_range %}
+
+<p>Of course, when you walk through the mountains, you start at one end
+of the path and, as time progresses, you walk along the path to the
+other end.  You could describe your position during this walk by
+giving your $x$-position and your $y$-position as functions of time,
+say $x=g_1(t)$ and $y=g_2(t)$.  We could write your position more
+succinctly if we let $\vc{x}=(x,y)$ and $\vc{g}(t) = (g_1(t),g_2(t))$.
+Then, your position at time $t$ would be $\vc{x} = \vc{g}(t)$.  If you
+left a trail of (blue) bread crumbs as you walked along the path,
+the trail would look like the below graph (which, if
+plotted on top of the mountain, would look like the above blue curve
+on the mountain).</p>
+
+
+<p class="centeredImage">{% image path_through_mountain %}</p>
+
+
+<p>As before, we are interested in your height as a function of time.
+(After all, you want to know how much you'll have to climb.)  We know
+that the height of the mountain at position $\vc{x}$ is $f(\vc{x}) =
+f(x,y)$.  We define a function $h(t)$ to give your height at time $t$
+as the composition of $f$ and $\vc{g}$: $h(t) = f(\vc{g}(t))$, which
+we can also write as $h(t) = (f \circ \vc{g})(t)$.  
+</p>
+
+<p>
+How fast is your height changing as you walk along the path given by
+the function $\vc{g}(t)$?  It is, of course, the derivative of $h(t)$:
+$\displaystyle \diff{h}{t}$.  Since $h$ is a composition of functions,
+we can use the chain rule to compute its derivative.</p>
+
+<p>Just as in the one-variable case
+(equation \eqref{chainrule1Dgen})
+the chain rule is
+\begin{align}
+    D{h}(t) = Df(\vc{g}(t)) D{\vc{g}}(t).
+  {% equation_tag chainrule2D 3 %}
+\end{align}
+Again, one important point to remember is that the matrix of partial
+derivatives of $f$ is evaluated at the point $\vc{x}=\vc{g}(t)$.
+</p>
+
+<p>
+We can also write this in terms of components.  The matrices of
+partial derivatives
+are
+\begin{align*}
+  Dh(t) &amp;= \left[ \diff{h}{t}(t)\right]\\
+  Df(\vc{x}) &amp;= \left[ \pdiff{f}{x}(\vc{x}) \,\,\,\,
+    \pdiff{f}{y}(\vc{x})\right]\\
+  D{\vc{g}}(t) &amp;= \left[
+    \begin{array}{c}
+      \displaystyle \diff{g_1}{t} (t)\\
+      \displaystyle \diff{g_2}{t} (t)
+    \end{array}
+  \right].
+\end{align*}
+By multiplying out
+equation \eqref{chainrule2D},
+we find that
+\begin{align}
+  \diff{h}{t}(t) = \pdiff{f}{x}(\vc{g}(t)) \diff{g_1}{t} (t) + 
+  \pdiff{f}{y}(\vc{g}(t))\diff{g_2}{t} (t).
+  {% equation_tag chainrule2Dcomp 4 %}
+\end{align}
+Equation \eqref{chainrule2Dcomp}
+shows that the chain rule in our
+two-variable case is just like the one-variable chain rule 
+(equation \eqref{chainrule1D})
+ applied twice.  
+</p>
+
+<p>
+The nice thing about equation \eqref{chainrule2D}
+is that it
+applies when you take the derivative of any composition of functions.
+So if you remember equation \eqref{chainrule2D}
+(and how to {% intlink matrix_vector_multiplication %}multiply
+matrices{%endintlink%}), then you'll be all set.  You can then even compute
+the derivative of $\vc{h} = \vc{f} \circ \vc{g}$ for the functions
+$\vc{f} : \R^n \to \R^p,$
+$\vc{g} : \R^m \to \R^n,$
+$\vc{h} : \R^m \to \R^p.$
+It's just a matter of forming the {% intlink derivative_matrix%}matrices of partial derivatives{%endintlink%} and multiplying the matrices.
+Or, if you prefer, you can look a number of {%intlink chain_rule_multivariable_special_cases %}chain rule special cases{%endintlink%} for particular dimensions $m$, $n$, and $p$, where we multiply out the matrices to obtain chain rule formulas in in terms of their components.
+</p>
+
+
+
+
+{% comment %}
+%% Note: one challenge for students in learning the chain rule is that
+%% there are many different ways of denoting the chain rule.  For
+%% example, we sometimes make equation \eqref{chainrule2Dcomp} simpler by
+%% denoting $\vc{f}(t) = (f_1(t),f_2(t)) = (x(t),y(t)) = \vc{x}(t)$.
+%% After all, $\vc{f}(t)$ gives position in terms of $x$ and $y$.
+%% Moreover, since both $h(t)$ and $g(\vc{x})$ mean height, we could
+%% abuse notation and denote them both functions by the same letter $h$.
+%% Then equation \eqref{chainrule2Dcomp} looks like
+%% \begin{align*}
+%%   \diff{h}{t}(t) = \pdiff{h}{x}(\vc{x}(t)) \diff{x}{t} (t) + 
+%%   \pdiff{h}{y}(\vc{x}(t))\diff{y}{t} (t).
+%% \end{align*}
+%% The new version of the chain rule is easier to remember as there
+%% are fewer variable names.  However, it is important to understand its
+%% relationship to equation \eqref{chainrule2Dcomp}, and more
+%% generally, equation \eqref{chainrule2D}.
+
+%% The chain rule saves us from having to memorize many different
+%% formalas for differentiation.  If $g(x,y) = \sin x+\cos y$ and
+%% $\vc{f}=(t^2,t^3)$, then the chain rule helps us compute the
+%% derivative of $h(t) = (g \circ \vc{f})(t) = \sin(t^2) + \cos(t^3)$
+{% endcomment %}
+
+<p>Click {%intlink chain_rule_multivariable_examples %}here{%endintlink%} for some
+chain rule examples.
+</p>
+
+{% endblock %}

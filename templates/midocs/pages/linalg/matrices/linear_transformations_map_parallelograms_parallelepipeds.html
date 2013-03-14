@@ -1,0 +1,61 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "linear transformation" "parallelograms" %}
+{% index_entry "linear transformation" "parallelepipeds" %}
+{% title "How linear transformations map parallelograms and parallelepipeds" "Overview" %}
+{% description "Why linear transformations map parallelograms onto parallelograms and parallelepipeds onto parallelepipeds." %}
+
+<p>The notion of linearity plays an important role in calculus because any {% intlink differentiability_multivariable_introduction %}differentiable function{% endintlink%} is locally linear, i.e., looks linear if you zoom in enough.  In fact, the {% intlink differentiability_multivariable_definition %}definition of differentiability{% endintlink%} is based on the ability to {% intlink linear_approximation_multivariable%}approximate{%endintlink%} a function $\vc{f}(\vc{x})$ by a {% intlink linear_transformation_definition_euclidean%}linear transformation{%endintlink%} $\vc{T}(\vc{x})$.</p>
+
+<p>Here we discuss a simple geometric property of linear transformations.  A two-dimensonal linear transformation maps parallelograms onto parallelograms and a three-dimensional linear transformation maps {% intlink parallelepiped_definition%}parallelepipeds{%endintlink%} onto parallelepipeds.  This property, combined with the fact that differentiable functions become approximately linear when one zooms in on a small region, forms the basis for calculating the {%intlink double_integral_change_variables_area_calculation%}area{%endintlink%} or {%intlink triple_integral_change_variables_volume_calculation%}volume{%endintlink%} transformation when changing variables in {%intlink double_integral_change_variables_introduction %}double{%endintlink%} or {%intlink triple_integral_change_variables_introduction %}triple{%endintlink%} integrals as well as {%intlink parametrized_surface_area_calculation %}calculating area{%endintlink%} for {%intlink parametrized_surface_introduction%}parametrized surfaces{%endintlink%}.</p>
+
+
+{% navigation_tag "map2D" "Parallelograms" %}
+<h4>Mapping parallelograms in two dimensions</h4>
+
+<p>A two-dimensional linear transformation $\vc{T}: \R^2 \to \R^2$ {% confusedlink function_notation %} is a type of mapping from a two-dimensional plane onto another two-dimensional plane.  It can be written as
+$$\vc{T}(x,y) = (ax+by,cx+dy) = 
+  \left[\begin{array}{cc}a &amp;b\\ c &amp;d\end{array}\right]\left[\begin{array}{c}x\\y\end{array}\right],$$
+where $a$, $b$, $c$, and $d$ are numbers defining the linear transformation, or more succinctly as
+$$\vc{T}(\vc{x}) = A\vc{x},$$
+where $\vc{x}=(x,y)$ and $A$ is the $2 \times 2$ matrix 
+$$A =  \left[\begin{array}{cc}a &amp;b\\ c &amp;d\end{array}\right].$$</p>
+
+<p>We can view $\vc{T}$ as mapping regions from the $xy$-plane onto an 
+$x'y'$-plane: $(x',y')=\vc{T}(x,y)$.  You can experiment with this mapping by a linear transformation in the following applet.</p>
+
+{% boxedapplet linear_transformation_2d %}
+
+<p>The first thing to notice the linear transformation maps quadrilaterals onto quadrilaterals.  Unlike a {% appletlink nonlinear_2d_map%}nonlinear transformation{%endappletlink%}, which can bend straight lines into curves, a linear transformation maps straight lines onto straight lines.  This fact is easily seen by thinking of a {% intlink line_parametrization %}parametrization of a line{%endintlink%}, such as $$\vc{x} = t \vc{v} + \vc{a}.$$   Given a linear transformation $\vc{x}' = \vc{T}\vc{x} = A\vc{x}$, we can multiply the line parametrization equation by the matrix $A$ associated with the linear transformation, yielding $$A\vc{x} = t A\vc{v} + A\vc{a}.$$  If we let $\vc{v}'=A\vc{v}$ and $\vc{a}' = A\vc{a}$ be the images of the vectors $\vc{v}$ and $\vc{a}$ under the linear transformation, then the parametrization in terms of the transformed variables $\vc{x}'$ is simply
+$$\vc{x}' = t \vc{v}' + \vc{a}'$$
+which is clearly also a parametrization of a line.</p>
+
+<p>We want to show a stronger condition, though, namely that the linear transformation $\vc{T}$ always maps parallelograms onto parallelograms.  Starting with a parallelogram spanned by the vectors $\vc{u}$ and $\vc{v}$ with one vertex at the point $\vc{a}$, illustrated below, we can calculate that the image of this parallelogram under $\vc{T}$ must also be a parallelogram.  Since we already know that the edges will be straight lines, we simply need to show that the vertices of the parallelogram are mapped to locations corresponding to vertices of another parallelogram.</p>
+
+<p>We label the vertices neighboring $\vc{a}$ as $\vc{b}=\vc{a}+\vc{u}$ and $\vc{c}=\vc{a}+\vc{v}$.  What makes the quadrilateral a parallelogram is that the fourth vertex $\vc{d}$ is constrained to be equal to the first vertex $\vc{a}$ plus the vectors from $\vc{a}$ to both $\vc{b}$ and $\vc{c}$, i.e., $\vc{d} = \vc{a}+\vc{u}+\vc{v}$.  In terms of just the vertices, we can write the condition for the parallelogram as $\vc{d} = \vc{b}+\vc{c}-\vc{a}$. Or, if we don't want to make any vertex special, we could write the condition as $\vc{d}+\vc{a} = \vc{b}+\vc{c}$.  The sums of the opposite vertices must be the same, or equivalently, the midpoints of opposite vertices must be the same point, labeled as $\vc{e}$ in the figure.  (We can add points because here, as always, we equate a point with the vector whose tail is at the origin and head is at the point.)</p>
+
+<p class="centeredImage">{% image parallelogram %}</p>
+
+
+<p>In order to show that the image of the parallelogram under $\vc{T}$ is still a parallelogram, we simply need to show that the same relationship among the vertices still holds.  Label the vertices of the image quadrilateral as $\vc{a}'=\vc{T}(\vc{a})$, $\vc{b}'=\vc{T}(\vc{b})$, $\vc{c}'=\vc{T}(\vc{c})$, and $\vc{d}'=\vc{T}(\vc{d})$.  Given the condition $\vc{d}+\vc{a} = \vc{b}+\vc{c}$, which means the original quadrilateral is a parallelogram, we can multiply the condition by the matrix $A$ associated with $\vc{T}$ and obtain that $A\vc{d}+A\vc{a} = A\vc{b}+A\vc{c}$.  Rewriting this expression in terms of the new vertices, this equation is exactly $\vc{d}'+\vc{a}' = \vc{b}'+\vc{c}'$.  Indeed, the image of a parallelogram under a linear transformation is another parallelogram.</p>
+
+
+
+{% navigation_tag "map3D" "Parallelepipeds" %}
+<h4>Mapping parallelepipeds in three dimensions</h4>
+
+
+<p>A three-dimensional linear transformation is a function $\vc{T}: \R^3 \to \R^3$ of the form
+$$\vc{T}(x,y,z) = (a_{11}x+a_{12}y + a_{13}z,
+  a_{21}x+a_{22}y+a_{23}z,a_{31}x+a_{32}y+a_{33}z) = 
+  A\vc{x}.$$
+where
+$$A=\left[\begin{array}{ccc}a_{11}&amp;a_{12}&amp;a_{13}\\a_{21}&amp;a_{22}&amp;a_{23}\\a_{31}&amp;a_{32}&amp;a_{33}\end{array}\right]$$ and $\vc{x}=(x,y,z)$.
+The components $a_{ij}$ of $A$ define the linear transformation.</p>
+
+<p>An example of such a three-dimensional linear transformation is shown in the following applet.  The original region is constrained to be a {% intlink parallelepiped_definition%}parallelepiped{%endintlink%}, and you can observe that is always mapped to another parallelepiped.</p>
+
+{% boxedapplet linear_transformation_3d_preserve %}
+
+<p>We don't need to do any additional work to demonstrate that linear transformations in three-dimensions map parallelepipeds onto parallelepipeds.  Since the above calculations were not specific to two dimensions, they demonstrate that three-dimensional linear transformations map parallelograms onto parallelograms.  Therefore, $\vc{T}$ maps the six parallelogram faces of a parallelepiped onto six other parallelograms.  This result means that $\vc{T}$ maps the parallelepiped onto a three-dimensional geometric solid with six faces that are parallelograms, which is the definition of a parallelepiped.  We can conclude that linear transformations map parallelepipeds onto parallelepipeds.</p>
+
+{%endblock%}

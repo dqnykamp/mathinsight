@@ -1,0 +1,129 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parametrization" "curve"%}
+{% index_entry "curve" "parametrized" %}
+{% index_entry "parametrized curve"%}
+{% index_entry "visualization" "parametrized curve" %}
+{% title "An introduction to parametrized curves" %}
+{% description "An introduction to how a vector-valued function of a single variable can be viewed as parametrizing a curve. Interactive graphics illustrate the way in which the function maps an interval onto a curve." %}
+
+<p>A simple way to visualize a scalar-valued function of one or two variables
+is through their graphs.  In a graph, you plot the domain and range
+of the function on the same set of axes, so the value of the function
+for a value of its input can be immediately read off the graph.  
+Whether you plot the function $f(x)$ by the curve of points $(x,f(x))$
+or the function $f(x,y)$ by the surface of points $(x,y,f(x,y))$, 
+these graphs give a fairly comprehensive view of the behavior of the function.
+</p>
+
+<p>If we have a two-dimensional vector-valued function of a single variable,
+$\vc{f}: \R \to \R^2$ {% confusedlink function_notation %}, it is still possible to display its graph.
+If the function is $\vc{f}(t)=(f_1(t),f_2(t))$, we could plot the set of
+points $(t,f_1(t),f_2(t))$ and obtain a curve in three-dimensional space.</p>
+
+<p>For example, the graph of the function
+$\dllp(t)=(3\cos t)\vc{i} + (2 \sin t) \vc{j}$
+is a spiral, or helix, as shown here.</p>
+
+{%boxedapplet parametrized_ellipse_graph %}
+
+<p>Graphing a vector valued function is possible for functions 
+$\vc{f}: \R \to \R^2$ because the graph required only three dimensions.
+However, we are unable to plot the graph with an higher-dimensional
+input or output space, as these graphs would require more than three
+dimensions.
+We need a new method to visualize these functions.</p>
+
+<p>One way to visualize vector-valued functions is by 
+choosing a set in their domain and viewing how the function 
+maps this set into its range. 
+This procedure is particularly effective for vector-valued functions
+of a single variable.  
+We pick an interval in their domain, and these functions
+will map that interval into a curve.
+If the function is two or three-dimensional, we can easily
+plot these curves to visualize the behavior of the function.</p>
+
+<p>Returning to the example function 
+$\dllp(t)=(3\cos t)\vc{i} + (2 \sin t) \vc{j}$,
+you can see in the below applet how it maps the interval $[0,2\pi]$ 
+into an ellipse.
+As $t$ sweeps through the interval $[0,2\pi]$, the vector $\dllp(t)$
+sweeps out the ellipse.  
+We refer to $t$ as a free parameter,
+and say that $\dllp$ parametrizes the ellipse.
+(You can see the {% appletlink parametrized_ellipse %} applet's page{% endappletlink%} for details on how to show that $\dllp$ indeed
+sweeps out a ellipse.)
+</p>
+
+{%boxedapplet parametrized_ellipse %}
+
+<p>The ellipse is the image of the $[0,2\pi]$ under the mapping $\dllp$.
+If we think of $[0,2\pi]$ being being made of rubber,
+the function $\dllp$ stretches the rubber and curves it into the ellipse.
+Viewing $\dllp(t)$ as parametrizing ellipse hides some of the 
+information, as the dependence on the parameter is less obvious.
+But, we still retain knowledge of which values of the parameter $t$
+correspond to which points of the ellipse.  
+To emphasize that we have more than just a curve of points, 
+we refer to such curves as <i>parametrized curves</i>. 
+</p>
+
+<p>Often we think of the variable $t$ as representing time 
+and $\dllp(t)$ as representing position as a function of time.
+For example, in the {%intlink chain_rule_multivariable_introduction%}introduction
+to the chain rule{%endintlink%}, we used a parametrized curve
+to represent position of a hiker climbing a mountain.
+We retained the representation of time $t$ so that 
+we could calculate how fast the climber ascended.</p>
+ 
+<p>A single image curve, such as the ellipse, could have many
+parametrizations.  
+For example, we could parametrize the ellipse by the function
+$\adllp(t)=(3\cos\frac{t^2}{2\pi})\vc{i} + (2 \sin \frac{t^2}{2\pi}) \vc{j}$,
+as shown in the below applet.
+This function also maps the interval $[0, 2\pi]$ onto the ellipse.
+In this case, the function stretches the interval unevenly
+as it curves $[0, 2\pi]$ into the ellipse;
+the right end of the interval is greatly stretched while the 
+left end of the interval is compressed.
+If you change $t$ at a constant speed from 0 to $2\pi$, 
+the vector $\adllp(t)$ moves slowly at first and picks up speed
+as $t$ increases.</p>
+
+{%boxedapplet parametrized_ellipse_2 %}
+
+<p>The differences between $\dllp(t)$ and $\adllp(t)$ are not
+obvious when looking at the curves they parametrize.  
+We could make the difference more obvious by labeling points
+along the curve by their corresponding values of $t$.
+The difference is much more evident from their graphs; 
+compare the following graph $\adllp$ with the graph 
+of $\dllp$ at the beginning of this page.</p>
+
+{%boxedapplet parametrized_ellipse_graph_2 %}
+
+<p>Three-dimensional vector-valued functions can parametrize
+curves embedded in three-dimensions.
+The function $\sadllp(t) = (3\cos t)\vc{i} + (2 \sin t) \vc{j} + \vc{k}$
+parametrizes a helix, as shown below.
+This helix looks like the graph of $\dllp$, above. 
+But, in this case, we have a mapping from the interval
+$[0,2\pi]$ onto the helix, so this is a parametrized helix.
+If we wanted to graph $\sadllp$, we would need four dimensions.</p>
+
+
+{%boxedapplet parametrized_elliptical_helix %}
+
+<p>A special case of a parametrized curve is a parametrized line. 
+In {% intlink line_parametrization %}this page{%endintlink%},
+we introduce a simple parametrization of a line.
+But after seeing how we could change the vector-valued function and
+still parametrize the same curve, can you think of other
+types of vector-valued functions that would parametrize a line?
+</p>
+
+
+<p>The {% intlink parametrized_curve_derivative%}derivative of a parametrized 
+curve{%endintlink%} also has special meaning.</p>
+
+{%endblock%}

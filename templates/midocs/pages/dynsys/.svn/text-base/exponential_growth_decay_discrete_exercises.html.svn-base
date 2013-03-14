@@ -1,0 +1,92 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Discrete exponential growth and decay exercises" %}
+{% description "Exercises on solving problems involving exponential growth and decay in discrete time. " %}
+
+<p>These exercises allow you to practice how to solve {% intlink discrete_dynamical_system_introduction%}discrete dynamical systems{%endintlink%} involving {% intlink exponential_growth_decay_discrete%}exponential growth and decay{%endintlink%}.</p>
+
+{% navigation_tag "exercise1" "Exercises" "Exercise 1" %}
+<h4>Exercise 1</h4>
+
+<p>Write a solution equation for the following discrete dynamical systems.  In each case, compute the solution at time $t=100$.
+\begin{align*}
+{\rm{a.}} \hspace{2mm} x_0 & = 1,000  & x_{t+1} - x_t & =  0.2 \times x_t  \\
+{\rm{b.}} \hspace{2mm} x_0 & = 138   & x_{t+1} - x_t & =  0.05 \times x_t  \\
+{\rm{c.}} \hspace{2mm} B_0 & = 138  & B_{t+1} - B_t & =  0.5 \times B_t  \\
+{\rm{d.}} \hspace{2mm} y_0 & = 1,000 & y_{t+1} - y_t & = -0.2 \times y_t  \\
+{\rm{e.}} \hspace{2mm} P_0 & = 1,000 & P_{t+1}  & =  1.2 \times P_t  \\
+{\rm{f.}} \hspace{2mm} z_0 & = 1000 & z_{t+1} - z_t & =  -0.1 \times z_t  \\
+{\rm{g.}} \hspace{2mm} c_0 & = 1,000 & c_{t+1}  & =  0.9 \times c_t
+\end{align*}
+</p>
+
+
+{% navigation_tag "exercise2" "Exercises" "Exercise 2" %}
+<h4>Exercise 2</h4>
+
+<p>The equation, $x_{t} - x_{t-1} = r x_{t-1}$,
+carries the same information as $x_{t+1} - x_{t} = r x_{t}$.</p>
+<ol style="list-style-type:lower-alpha">
+<li>Write the first
+four instances of $x_{t} - x_{t-1} = r x_{t-1}$
+using $t=1$, $t=2$, $t=3$, and $t=4$.</li>
+<li>Obtain an expression for $x_4$ in terms of $r$ and $x_0$.</li>
+<li>Write solutions to and compute $x_{40}$ for
+\begin{align*}
+{\rm{(i.)}} \hspace{2mm} x_0 & = 50 \hspace{5mm} & x_{t} - x_{t-1} & = 0.2 \times x_{t-1}  \\
+{\rm{(ii.)}} \hspace{2mm} x_0 & = 50 & x_{t} - x_{t-1} &= 0.1 \times x_{t-1}\\
+{\rm{(iii.)}} \hspace{2mm} x_0 & = 50 & x_{t} - x_{t-1} &= 0.05 \times x_{t-1}\\
+{\rm{(iv.)}} \hspace{2mm} x_0 & = 50 & x_{t} - x_{t-1} &= -0.1 \times x_{t-1}
+\end{align*}
+</li>
+</ol>
+
+{% navigation_tag "exercise3" "Exercises" "Exercise 3" %}
+<h4>Exercise 3</h4>
+
+<p>Suppose a population is initially of size 1,000,000 and grows at the rate of 2% per year.  What will be the size of the population after 50 years?</p>
+
+{% navigation_tag "exercise4" "Exercises" "Exercise 4" %}
+<h4>Exercise 4</h4>
+
+<p>The polymerase chain reaction is a means of making multiple copies of a DNA segment from only a minute amount of original DNA.  The procedure consists of a sequence of multiple cycles.  During the course of one cycle, each DNA segment present is duplicated.  Introduce notation and write a discrete dynamical system with initial condition from which the amount of DNA present at the end of each cycle can be computed.  Suppose you begin with 1 picogram = 0.000000000001 g of DNA.  How many grams of DNA would be present after 30 cycles.</p>
+
+{% navigation_tag "exercise5" "Exercises" "Exercise 5" %}
+<h4>Exercise 5</h4>
+
+<p>Write a solution to the dynamic system you obtained for growth of <em>V. natriegens</em> in growth medium of pH 7.85 in {% intlink bacteria_growth_initial_model_exercises exercise5 %}exericse 5 from the bacteria growth exercises{%endintlink%}. Use your solution to compute an estimate of $B_4$.
+</p>
+
+{% navigation_tag "exercise6" "Exercises" "Exercise 6" %}
+<h4>Exercise 6</h4>
+
+<p>There is a suggestion that the world human population
+is growing exponentially.    Shown below are
+the human population numbers
+in billions of people for the decades 1940 - 2010.</p>
+<table class="basic centered compact" style="width:50%">
+<caption>World Human Population</caption>
+<tr><th>Year</th><th>Index, $t$</th><th>Human population (billons)</th></tr>
+<tr><td>1940</td><td>0</td><td>2.30</td></tr>
+<tr><td>1950</td><td>1</td><td>2.52</td></tr>
+<tr><td>1960</td><td>2</td><td>3.02</td></tr>
+<tr><td>1970</td><td>3</td><td>3.70</td></tr>
+<tr><td>1980</td><td>4</td><td>4.45</td></tr>
+<tr><td>1990</td><td>5</td><td>5.30</td></tr>
+<tr><td>2000</td><td>6</td><td>6.06</td></tr>
+<tr><td>2010</td><td>7</td><td>6.80</td></tr>
+</table>
+
+<ol style="list-style-type:lower-alpha">
+<li>Test the equation
+$$P_t = 2.2 \times 1.19^t$$
+against the data where $t$ is the time index
+in decades after 1940 and $P_t$ is the human population in billions.</li>
+<li>What percentage increase in human population each decade does the model for the equation assume?</li>
+<li>What world human population does the equation predict for the year 2050?</li>
+</ol>
+
+<h4>Selected answers</h4>
+
+<p>Once you've worked out some of these exercises, you can check your work with the {% intlink exponential_growth_decay_discrete_answers%}answers to selected problems{%endintlink%}.</p>
+
+{% endblock %}

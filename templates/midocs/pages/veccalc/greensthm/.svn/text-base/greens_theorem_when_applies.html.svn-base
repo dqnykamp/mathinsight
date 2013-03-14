@@ -1,0 +1,57 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Green's theorem" %}
+{% title "When Green's theorem applies" %}
+{% description "A discussion of situations where you are allowed to use Green's theorem." %}
+
+<p>{% intlink greens_theorem_idea %}Green's theorem{%endintlink%}
+provides another way to calculate
+\begin{align*}
+    \dlint
+\end{align*}
+that you can use instead of calculating the line integral directly.
+However, some common mistakes involve using Green's theorem to
+attempt to calculate line integrals where it doesn't even apply.</p>
+
+
+<p>First, Green's theorem works <b>only</b> for the case where $\dlc$
+is a {% intlink closed_curve_definition %}closed curve{%endintlink%}.
+If $\dlc$ is an 
+{% intlink open_curve_definition %}open curve{%endintlink%}, please
+<i>don't even think</i> about using Green's theorem.</p>
+
+<p>If you think of the {% intlink greens_theorem_idea %}idea of Green's theorem in terms of circulation{%endintlink%}, 
+you won't make this mistake.  Green's
+theorem converts the line integral to a double integral of the
+microscopic circulation.  The double integral is taken over the region
+$\dlr$ inside the path.  Only closed paths have a region $\dlr$ inside them.
+The idea of circulation makes sense only for closed paths.</p>
+
+<p>So if you are asked to compute the integral
+\begin{align*}
+  \int_\dlc y\, dx + xy \, dy
+\end{align*}
+where $\dlc$ is the line from $(0,1)$ to $(1,1)$, can you use Green's
+theorem?  <b>No</b>, because $\dlc$ is an open curve.</p>
+
+<p>You could, for example, use Green's theorem to compute
+\begin{align*}
+  \int_\dlc y\, dx + xy \, dy
+\end{align*}
+where $\dlc$ is the counterclockwise unit circle.</p>
+
+<p>Second, Green's theorem can be used only for vector fields in
+<b>two</b> dimensions, such as the $\dlvf(x,y)= (y, xy)$ of the
+above example.  It <b>cannot</b> be used for vector fields in three
+dimensions.  So, don't bother with Green's theorem if you are given an
+integral like
+\begin{align*}
+  \int_\dlc  z\, dx + xy \, dy - yz \, dz
+\end{align*}
+even if $\dlc$ is a closed path.</p>
+
+<p>Why a whole page just to stress these simple ideas?
+Because students frequently
+under pressure try to use Green's theorem when it doesn't apply.  
+Maybe now that you've read this warning, you'll resist that temptation.</p>
+
+{% endblock %}

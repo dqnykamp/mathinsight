@@ -1,0 +1,50 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "function" "as a machine" %}
+{% index_entry "function machine"  %}
+{% title "The function machine" %}
+{% description "The function machine metaphor helps explain the definition and properties of a function." %}
+
+{% navigation_tag "technical_definition" "Technical definition" %}
+
+<h4>The technical definition of a function</h4>
+
+<p>The following technical {% intlink function_definition%}definition of a function{%endintlink%} is a little abstract.</p>
+
+<blockquote><p>Given a set of inputs $X$ and a set of possible outputs $Y$, a function is {% intlink relation_definition %}relation{%endintlink%} between these sets, i.e., a collection of ordered pairs of the form $(x,y)$ where $x \in X$ and $y \in Y$ {% confusedlink set_membership_symbol_definition %}, that satisfies one condition: every element $x$ in the {% intlink domain_definition %}domain{%endintlink%} $X$ must be paired with exactly one element $y$ in the {% intlink codomain_definition%}codomain{%endintlink%} $Y$.</p></blockquote>
+
+<p>That's it.  A function $f$ is just this collection of ordered pairs.  Since we know each element $x \in X$ is paired with exactly one element $y \in Y$, we could denote this element by $y=f(x)$ so that the ordered pairs are denoted by $(x,f(x))$.</p>
+
+<p>You may not find this set-of-ordered-pairs definition extremely illuminating.  But, that's OK, as there are other ways to explain the concept of a function that may be more helpful at first.  One tool for understanding functions is the function machine metaphor.  Once you understand the concepts of functions better, you can always go back and try unpacking the technical definition of a function.  You never know; you may end up appreciating the definition in the end.</p>
+
+{% navigation_tag "machine" "Machine metaphor" %}
+<h4>The function machine metaphor</h4>
+
+<p>We can view a function as something that can take an object (as long as the object is in its domain) and turn it into (or map it to) a different object.  We can imagine it is some machine that does this transformation.  You put some object into its input funnel.  If the input object fits into the funnel, then the function machine will process that object and turn it into some other object, which comes out its output chute.</p>
+
+<p class="centeredImage">{% image function_machine %}</p>
+
+<p>In this illustration, the inputs are spheres of various sizes (the domain presumably contains only those spheres that are small enough to fit into the funnel).  The outputs are illustrated by the cubes coming out of the chute.  Hence, this function transforms each sphere into a cube.</p>
+
+<p>We may usually think of functions as taking numbers for inputs and spitting out numbers as outputs, but there's no need to take such a limited view of functions.  There's nothing about a function machine that implies it must deal with numbers.  Any collection of objects could serve as the domain or codomain, as we illustrate with {% intlink function_examples%}examples{%endintlink%}.</p>
+
+
+{% navigation_tag "powermachine" "Machine power" %}
+<h4>The power of the function machine metaphor</h4>
+
+<p>The function machine metaphor is quite versatile and powerful.  It can be used to explain many important properties of functions and concepts involving functions.</p>
+
+<ul>
+<li><p><b>{% intlink domain_definition %}The domain{%endintlink%}</b>: The domain is simply the set of objects that fit into the input funnel and can be processed by the function machine.</p></li>
+<li><p><b>{% intlink codomain_definition %}The codomain{%endintlink%}</b>: You could think of the codomain as the set of objects that could theoretically fit out the chute.</p></li>
+<li><p><b>{% intlink range_definition %}The range{%endintlink%}</b>: The range is the set of objects that would come out the chute if you put all the elements of the domain into the funnel.</p></li>
+<li><p><b>The unique pairing</b>: If the machine is in good condition, it should always produce an output when you put in an input.  If you put in the same input multiple times, the machine should always yield the same output.  In this way, each element of the domain is paired with exactly one output from the codomain.</p></li>
+<li><p><b>{% intlink parameter_definition %}Parameters{%endintlink%}</b>:  Parameters of a function can be viewed as {% intlink function_machine_parameters %}dials that change the behavior{% endintlink%} of the function machine.</p></li>
+<li><p><b>{% intlink composition_definition %}Composition{%endintlink%}</b>: One can use multiple function machines to {% intlink function_machine_composition %}illustrate the composition{%endintlink%} of functions.</p></li>
+<li><p><b>{% intlink inverse_function_definition %}Inverse{%endintlink%}</b>: The inverse of a function is equivalent to {% intlink function_machine_inverse %}running the machine backwards{%endintlink%}.  But, if two different input elements are transformed into the same output element, the backward function machine won't know which of the input elements to spit out and the inverse isn't defined.</p></li>
+</ul>
+
+<p>Of course, the function machine metaphor isn't perfect.  A function doesn't actually destroy its inputs and turn them into its outputs.  That's good when we define the {% intlink function_examples mother %}mother function{%endintlink%}, so we don't actually turn people into their mothers.</p>
+
+<p>To further explore the idea of a function, you can read some {%intlink function_examples%}examples{%endintlink%}.</p>
+
+{%endblock%}

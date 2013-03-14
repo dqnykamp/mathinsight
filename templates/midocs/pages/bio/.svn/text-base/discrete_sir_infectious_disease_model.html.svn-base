@@ -1,0 +1,122 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "infectious disease" %}
+{% index_entry "disease" "infectious" %}
+{% title "A discrete SIR infectious disease model" %}
+{% description "" %}
+
+
+{% navigation_tag "videos" "Videos" %}
+<h4>Introductory videos</h4>
+
+{% navigation_tag "video_1" "Videos" "Part 1"%}
+<h5>Part 1</h5>
+
+{% boxedvideo discrete_sir_infectious_disease_model_1 %}
+
+
+{% navigation_tag "question" "Videos" "Question" %}
+<h5>Question</h5>
+{% display_video_questions "discrete_sir_infectious_disease_model_1" %}
+
+
+{% navigation_tag "video_2" "Videos" "Part 2" %}
+<h5>Part 2</h5>
+
+{% boxedvideo discrete_sir_infectious_disease_model_2 %}
+
+{% navigation_tag "exploration" "Exploration" %}
+<h4>Initial exploration of model</h4>
+
+<p>The model introduced in the video introduction contained three state variables:</p>
+<ul>
+  <li>$S_t$ = the number of susceptibles in day $t$</li>
+  <li>$I_t$ = the number of infectives in day $t$</li>
+  <li>$R_t$ = the number of removed in day $t$.</li>
+</ul>
+
+<p>The rule by which the state variables involve was
+\begin{align*}
+  S_{t+1} - S_t &= -b S_t I_t\\
+  I_{t+1} - I_t &= b S_tI_t - aI_t\\
+  R_{t+1} - R_t &= a I_t.
+\end{align*}
+This rule which has two parameters: the recovery rate parameter $a$ and the infection rate parameter $b$.  Sometimes, we can just leave the parameters be and just keep them around as symbols that have unknown values.  Here, though, let's give the parameter numerical values, so that we can calculate numerical results of the model.</p>
+
+<p>Let use the parameters set:
+\begin{align*}
+a &=0.1\\
+b &=0.00005
+\end{align*}
+The model with these parameter values is
+\begin{align*}
+  S_{t+1} - S_t &= -0.00005 S_t I_t\\
+  I_{t+1} - I_t &= 0.00005 S_tI_t - 0.1I_t\\
+  R_{t+1} - R_t &= 0.1 I_t.
+\end{align*}
+</p>
+
+<p>Let's imagine that we start out with $S_0=20,000$ susceptible people and $I_0=100$ infective people in day zero.  Might as well say that we start off with no one in the recovered class, i.e., with $R_0=0$.  In that case, how many people get sick in the first day?  How many people recover in the first day?  (Let's be cheerful and say that people in the removed class have recovered from the disease.)  After the first day, how many people are susceptible ($S_1$) and how many are infective $(I_1$)?  How many have recovered from the disease ($R_1$)?</p>
+
+<p>You should have calculated that number of infectives is going up and the number of susceptibles is going down.  What will happen to the disease as time progresses?  Will we have an epidemic where almost everyone gets sick?  To check this, let's see how many people have still escaped the sickness after about month.  Go ahead and see if you can quickly calculate the number of susceptibles after 30 days, i.e., $S_{30}$!</p>
+
+<p>Maybe that's a bit too much calculation to do by hand or calculator.  You'll be glad to know what we have an applet that will do the grunt work for you.  In the following applet, you can type in the values of the parameters and the values of the initial conditions for the discrete SIR model, and it will evolve the dynamical system for you.  (At least it will calculate and plot the first 500 time steps.)</p>
+
+<p>Using the applet, plug in the given parameter values and initial conditions in order to determine the values of the three state variables ($S_t$, $I_t$, and $R_t$) after 30 days and after 60 days.  What happens to the state variables as more time passes?  How do you interpret the results in terms of the outcome of the disease?  Include a plot of $S_t$, $I_t$, and $R_t$ (a sketch is OK), and use the plot to explain your result.</p>
+
+{% boxedapplet discrete_sir_infectious_disease_model_versus_time %}
+
+
+<p>The outcome of the disease will clearly depend on the values of the parameters $a$ and $b$.   First, keep $a=0.1$, fix the initial conditions as above,  and explore what happens as you change the value of $b$.  Find a value of $b$ where the long term results of the disease aren't so bad.  Explain why this occurred, both mathematically and in terms of how the disease works.  Do you find any values of $b$ where the model doesn't make sense?  Explain what went wrong?</p>
+
+<p>Next, keep $b=0.00005$, fix the initial conditions as above, and explore what happens as you change the value of $a$.  How do you change $a$ to make the disease better or worse?  Explain your results.
+</p>
+
+<p>One way that we try to control infectious diseases and prevent epidemics is to vaccinate people.  In the above model, vaccination corresponds to removing them from the susceptible pool.  It might make sense to just put those people directly in the recovered pool, but instead, let's just remove them entirely from the model.  That way, we can still use the final value of $R_t$ to see how many people got the disease in the end.</p>
+
+<p>With the initial conditions $S_0=20,000$, $I_0=100$, and $R_0$, using the parameters $a=0.1$ and $b=0.00005$, you should have found above that we had a complete epidemic and basically everyone got sick.  Can we use vaccination to stop the spread of the disease?  Clearly, if we vaccinated everyone, then $S_0=0$, and no one would get sick.  But, do we have to vaccinate everyone in order to stop the disease?</p>
+
+<p>To use this model to answer this question, see what happens as you vaccinate more and more people, i.e., as you decrease $S_0$, keeping $I_0=100$ and $R_0=0$.  If you vaccinate enough people, is it possible to wipe out the disease before it gets all the remaining unvaccinated susceptibles sick?  Without vaccinations and $S_0=20,000$, the disease only stopped when it ran out of susceptibles to infect.  If you can get the disease to stop even when there are still plenty of susceptibles around, what is happening to end the disease?  Is there hope to eradicate a disease without vaccinating every single individual?</p>
+
+
+{% navigation_tag "analysis" "Mathematical analysis" %}
+<h4>Mathematical analysis of model</h4>
+
+
+<p>The above results were determined by calculating the solution of the model for particular parameter values and initial condition, and then inferring model properties from those observations.  We can also learn more about the model by analyzing the equations themselves.  We can often determine the behavior of the model even without computing solutions.  The advantage (or is it a disadvantage?) is that you typically don't have to plug in numerical values for the parameters.  Instead, you can just manipulate the equations and learn important properties of the model.  Sounds fun?  Let's see what we can do.</p>
+
+<p>To make them handy, here are the model equations with the parameters $a$ and $b$ left as unknown parameters.
+\begin{align*}
+  S_{t+1} - S_t &= -b S_t I_t\\
+  I_{t+1} - I_t &= b S_tI_t - aI_t\\
+  R_{t+1} - R_t &= a I_t
+\end{align*}
+</p>
+
+{% navigation_tag "analysis" "Mathematical analysis" "Stopping the spread" %}
+<h5>Stopping the spread of the disease</h5>
+
+<p>Let's revisit the last question we asked in the previous section.  How can we make the disease stop?  To use math to answer the question, we need to formulate the question mathematically.  What do we mean for the disease to stop?   Let's say we mean the disease isn't spreading. We don't want any more people to get sick.  What expression involving the state variables and parameters is the number of people that get sick in one day?  If the disease isn't spreading, then this expression must be zero.  Write out the condition for the disease to not be spreading.</p>
+
+<p>The no-spread condition should be an equation where the product of three factors is zero.  If the product of three factors is zero, what do you know about the three factors individually?  You should end up with three different conditions, each of which alone is sufficient for the disease to stop spreading.  Interpret each of these conditions in terms of the model and compare to the results you achieved in the first part.</p>
+
+{% navigation_tag "analysis" "Mathematical analysis" "Outbreak or extinguish" %}
+<h5>Outbreak or extinguish</h5>
+
+<p>The above no-spread condition is a very strong condition.  All the three ways in which the condition could be satisfied are extreme cases, and the results are obvious.  I don't think many of us would need a mathematical model to be convinced that the disease would stop in those cases.  But, maybe  those results at least gave you some confidence that the model isn't complete nonsense.</p>
+
+<p>To be more useful, we would like a less extreme condition that would signal that the disease is on its way out.  Let's relax our condition and simply require that the infection is going down.  In other words, we want a condition that guarantees that the number of infectives is decreasing.  In terms of the state variables and parameters, what is the expression that gives the net gain in the number of infectives over the course of a day?  Use this expression to write an inequality that is the condition for a decreasing number of infectives.  Explain how this decreasing infective condition is a weaker condition than the no-spread condition.  (In other words, the no-spread condition implies the decreasing infective condition, but the decreasing infective condition does not imply the no-spread condition.)</p>
+
+<p>The decreasing infective condition can be simplified.  The original
+condition you derived presumably involved two state variables.  Assuming that the no spread condition is not satisfied, can you eliminate one of the state variables?  The result should be an inequality involving both parameters as well as one state variable.</p>
+
+<p>The decreasing infective condition should explain the results you achieved in the first part when you varied the values of the parameters $a$ and $b$ as well as modeled a vaccination by decreasing the initial size $S_0$ of the susceptibles.  When $S_0=20,000$, $a=0.1$, and $b=0.00005$, show that the decreasing infective condition is not satisfied.  If you keep $a$ and $b$ fixed at those values, what is the condition on the initial susceptible population size $S_0$ so that the decreasing infective condition is satisfied?  Verify with the SIR applet that the initial increase or decrease of the infective population size is predicted by this condition.</p>
+
+<p>We could view the decreasing infective condition as a condition for the preventing an outbreak of the disease.  If one can get the decreasing infective condition satisfied at the outset (by decreasing $S_0$ due to vaccination, decreasing the infection rate $b$, or increasing the recovery rate $a$), then one can be sure that the number of infectives will dwindle away, and the disease will die out.</p>
+
+<p>One last question: why does the decreasing infective condition not depend on the number of infectives $I_t$?</p>
+
+
+<p>Questions are summarized in the {% intlink discrete_sir_infectious_disease_model_worksheet %}discrete SIR model worksheet{%endintlink %}.</p>
+
+
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "double integral" "as area"%}
+{% index_entry "area" "from double integral" %}
+{% title "Double integrals as area" %}
+{% description "Explanation of how double integrals could be used to represent area." %}
+
+
+{% navigation_tag "area" "Area of region" %}
+<p>One use of the single variable integral is calculate 
+the area under a curve $f(x)$ over some interval $[a,b]$
+by integrating $f(x)$ over that interval.</p>
+
+<p class="centeredImage">{% image integral_area_under_curve %}</p>
+
+<p>Sometimes, we use double integrals to calculate area as well.
+But, the approach is quite different.  
+It's fairly simple to see the trick to accomplish this once you
+can imagine how to use a single integral to calculate
+the length of the interval.</p>
+
+<p>What happens if you integrate the function
+$f(x)=1$ over the interval $[a,b]$?  You can calculate that
+\begin{align*}
+  \int_a^b f(x)dx = \int_a^b 1 dx = x\big|_a^b = b-a.
+\end{align*}
+The integral of the function $f(x)=1$ is just the length of the
+interval $[a,b]$.  It also happens to be the area of the rectangle of
+height 1 and length $(b-a)$, but we can interpret it as the length of
+the interval $[a,b]$.</p>
+
+<p>We can do the same trick for double integrals. 
+The integral of a function $f(x,y)$ over a region $\dlr$ can be
+interpreted as the {% intlink double_integral_volume %}volume
+under the surface{%endintlink%} $z=f(x,y)$ over the region $\dlr$.
+As we did above, we can try the trick of integrating the
+function $f(x,y)=1$ over the region $\dlr$.  
+This would give the volume under the function $f(x,y)=1$ over $\dlr$.  But
+the integral of $f(x,y)=1$ is also the area of the region $\dlr$.  This
+can be a nifty way of calculating the area of the region $\dlr$.  If we
+let $A$ be the area of the region $\dlr$, we can write this as
+\begin{align*}
+  A = \iint_\dlr dA.
+\end{align*}</p>
+
+
+{% navigation_tag "example" "Example" %}
+<h4>Example</h4>
+
+<p>Find area of region bounded by parabola $x=y^2$ and the
+line $y=x$.  The region is pictured below.</p>
+
+
+<p class="centeredImage">{% image double_integral_area_example %}</p>
+
+<p><b>Solution</b>: We'll let $y$ go from 0 to 1.  Then $x$ goes from $y^2$ to $y$.</p>
+
+
+<p>The area is 
+\begin{align*}
+  \int_0^1 \int_{y^2}^y dx\, dy &amp;= \int_0^1 \left( \left. x
+  \right|_{x=y^2}^{x=y}\right) dy\\
+  &amp;= \int_0^1 (y-y^2) dy\\
+  &amp;= \biggl[\frac{y^2}{2} - \frac{y^3}{3}\biggr]_0^1\\
+  &amp;=\frac{{1}}{2}-\frac{{1}}{3} = \frac{{1}}{6}.
+\end{align*}
+</p>
+
+{% endblock%}

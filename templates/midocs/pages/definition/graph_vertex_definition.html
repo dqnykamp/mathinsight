@@ -1,0 +1,14 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "vertex" "definition" %}
+{% title "Vertex definition" %}
+{% description "A vertex of a graph is one of the objects that are connected together." %}
+
+<p>A vertex (or {% intlink network_node_definition %}node{%endintlink%}) of a {% intlink graph_definition %}graph{%endintlink%} is one of the objects that are connected together.  The connections between the vertices are called {% intlink network_edge_definition%}edges{%endintlink%} or {% intlink network_link_definition%}links{%endintlink%}.</p>
+
+{% image small_undirected_network_labeled %}
+<p style="text-align:center">A graph with 10 vertices (or nodes) and 11 edges (links).</p>
+
+<p>For more information about graph vertices, see the {%intlink network_introduction%}network introduction{%endintlink%}.</p>
+
+
+{% endblock%}

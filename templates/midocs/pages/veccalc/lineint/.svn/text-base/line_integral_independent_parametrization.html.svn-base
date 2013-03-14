@@ -1,0 +1,116 @@
+{% extends "midocs/page_base.html" %}
+
+{% load mi_tags %}
+
+{% block content %}
+{% index_entry "line integral" "parametrization"%}
+{% title "Line integrals are independent of parametrization" %}
+{% description "Description of how the value of a line integral over a curve is independent of the parametrization of the curve." %}
+
+<p>In the {%intlink line_integral_scalar_function_introduction%}introduction
+to scalar line integrals{%endintlink%},
+we derived the formula for $\slint{\dllp}{\dlsi}$, 
+the line integral of a function $f$ over
+a curve parametrized by $\dllp(t)$ for $a \le t \le b$:
+\begin{align*}
+  \slint{\dllp}{\dlsi} =\int_a^b \dlsi(\dllp(t))\| \dllp\,'(t) \| dt.
+\end{align*}
+</p>
+
+<p>However, the value of this integral should not depend on the 
+specific parametrization $\dllp$, as it is designed to capture quantities
+like the total mass of a wire with density $\dlsi$.  
+The integral should only depend on the density function $\dlsi(\vc{x})$ and
+the image curve, denoted by $\dlc$, which is the set of points
+$\dllp(t)$ for all values of $t$ in the interval $[a,b]$.</p>
+
+<p>For the reason, we can think of the line integral as being over the curve $\dlc$, rather than
+the particular parametrization given by $\dllp(t)$.  To reflect this
+viewpoint, we could write the integral that gives the mass of the
+slinky as
+\begin{align*}
+  \dslint =  \pslint{a}{b}{\dlsi}{\dllp},
+\end{align*}
+where the only difference from above is that we replaced $\dllp$ with $\dlc$.
+</p>
+
+
+<p>
+The notation $\dslint$ makes it explicit that line integrals
+are independent of the
+parametrization $\dllp(t)$ (after all, the notation does not mention
+$\dllp(t)$).  You may remember that the same curve $\dlc$ can be
+parametrized by many functions.  For example, we gave
+{% intlink parametrized_curve_derivative_location_velocity %}two 
+different parametrizations of the unit circle{%endintlink%}.
+Above, we parametrized the
+slinky by $\dllp(t) = (\cos t, \sin t, t)$, for $0 \le t \le 2\pi$.
+We could have equally well parametrized the same slinky by $\adllp(t)
+= (\cos 2t, \sin 2t, 2t)$ for $0 \le t \le \pi$.  (If $\dllp(t)$ and
+$\adllp(t)$ were the positions at time $t$ of two particles traveling
+along the slinky, the particle given by $\adllp(t)$ travels twice as
+fast, covering the slinky in half the time, compared to the particle
+given by $\dllp(t)$.)  
+</p>
+
+<p>As long as the density $\dlsi(\vc{x})$ is
+unchanged, the mass of the slinky had better be the same, no matter
+which parametrization we use.  Hence, it must be true that the mass is
+both
+\begin{align*}
+  \dslint = \int_{\dllp} \dlsi \, d\als = \pslint{0}{2\pi}{\dlsi}{\dllp} 
+\end{align*}
+and 
+\begin{align*}
+  \dslint = \int_{\adllp} \dlsi \, d\als = \pslint{0}{\pi}{\dlsi}{\adllp}.
+\end{align*}
+</p>
+
+<p>Can you see why the integral is the same for both parametrizations
+$\dllp(t)$ and $\adllp(t)$, i.e., why
+\begin{align*}
+\pslint{0}{2\pi}{\dlsi}{\dllp} = \pslint{0}{\pi}{\dlsi}{\adllp}?
+\end{align*}
+</p>
+
+<p>In the first case, you are integrating over an interval that is twice
+as long (from 0 to $2\pi$ versus from 0 to $\pi$), but the speed $\|
+\dllp'(t)\|$ is half the speed $\| \adllp'(t) \|$.  The two effects cancel
+and the integrals are equal.</p>
+
+<p>
+Since the {% intlink line_integral_vector_field_introduction %}line integral 
+of a vector field{%endintlink%} $\dlvf$ over the curve is based on 
+the line integral of a scalar function $f = \dlvf \cdot \vc{T}$,
+where $\vc{T}$ is the unit tangent vector of the curve, we expect that 
+line integrals of vector fields should also be independent of the
+parametrization $\dllp(t)$.  Indeed, this is the case, with one 
+important exception.  Since $\vc{T} = \dllp'(t)/\dllp(t)$, the unit
+tangent vector, and hence the integral $\dlint$, will be independent
+of the speed $\|\dllp'(t)\|$ of the parametrization.  The unit tangent 
+vector, as its name implies will always be of length 1.  
+But, at any point along the curve, there are two
+unit tangent vectors pointing in opposite directions.  If we call
+one of them $\vc{T}$, then the other is $-\vc{T}$.
+The choice of these unit tangent vectors will depend on the direction
+that $\dllp(t)$ transverses the curve $\dlc$ as $t$ increases.
+</p>
+
+<p>We refer to the choice of the unit tangent vector, or equivalently,
+the choice of the direction to tranverse $\dlc$, as the
+{% intlink parametrized_curve_orient %}orientation{%endintlink%} of the curve.
+Every {% intlink simple_curve_definition %}simple{%endintlink%}
+curve has two orientations, one corresponding to one unit tangent vector
+$\vc{T}$ and the other corresponding to its opposite $-\vc{T}$.
+Scalar line integrals are independent of curve orientation, 
+but vector line integrals will switch sign if you switch the orientation of the
+curve. This make sense intuitively, as the mass of the slinky 
+shouldn't change, but the work done by a force field changes sign if you
+move in the opposite direction.
+</p>
+
+
+<p>The examples of line integrals of {% intlink line_integral_scalar_examples %}scalar functions{%endintlink%} and {% intlink line_integral_vector_examples %}vector fields{%endintlink%} include calculations of the same line integral with different parametrizations.</p>
+
+
+{% endblock %}

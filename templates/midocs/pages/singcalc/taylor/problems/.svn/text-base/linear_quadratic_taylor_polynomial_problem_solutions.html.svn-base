@@ -1,0 +1,126 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% title "Solutions to linear and quadratic Taylor polynomial problems" %}
+{% description "Solutions to sample problems involving first and second order Taylor polynomials." %}
+
+<p>The following is a set of solutions to the {% intlink linear_quadratic_taylor_polynomial_problems %}linear and quadratic Taylor polynomial problems{%endintlink%}. </p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+
+<ol><li>Since $f(3)=1$ and $f'(3)$, a linear approximation around $x=3$  is 
+\begin{align*}
+    p_1(x) &= f(3) + f'(3)(x-3)\\
+    &=1 + 5(x-3)
+\end{align*}
+</li>
+<li>Given that, in addition, $f''(3)=-4$, the quadratic approximation is
+\begin{align*}
+    p_1(x) &= f(3) + f'(3)(x-3)+ \frac{f''(3)}{2}(x-3)^2\\
+    &= 1 + 5(x-3)-2(x-3)^2
+\end{align*}
+</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+ 
+<ol><li>A linear approximation around $q=-2$ is
+\begin{align*}
+    L(q) &= m(-2)+m'(-2)(q+2)\\
+    &= -4 +0 (q+2)\\
+    &= -4
+\end{align*}</li>
+<li>A quadratic approximation around  $q=-2$ is
+\begin{align*}
+  Q(q) &= m(-2)+m'(-2)(q+2) + \frac{m''(-2)}{2}(q+2)^2\\
+    &= -4 +0 (q+2) + \frac{1}{2}(q+2)^2\\
+    &= -4 + \frac{1}{2}(q+2)^2
+\end{align*}</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Since $g(z)=e^{2-3z}$, its derivatives are
+\begin{align*}
+  g'(z) &= -3e^{2-3z}\\
+  g''(z) &= 9e^{2-3z}.
+\end{align*}
+The function and its derivatives evaluated at $z=1$ are
+\begin{align*}
+  g(1) &= e^{-1}\\
+  g'(1) &= -3e^{-1}\\
+  g''(1) &= 9e^{-1}.
+\end{align*}
+The second order Taylor polynomial around $z=1$ is
+\begin{align*}
+  p_2(z) &= g(1) + g'(1)(z-1) + \frac{g''(1)}{2}(z-1)^2\\
+  &= e^{-1} -3e^{-1}(z-1) + \frac{9}{2}e^{-1}(z-1)^2.
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>The derivatives of $k(t)=t^4-t^2+t$ are
+\begin{align*}
+  k'(t) &= 4t^3-2t+1\\
+  k''(t) &= 12t^2 -2.
+\end{align*}
+Evaluating the function and its derivatives at $t=-2$,
+\begin{align*}
+  k(-2) &= (-2)^4 -(-2)^2 -2 = 18\\
+  k'(-2) &= 4(-2)^3-2(-2)+1 = -27\\
+  k''(-2) &= 12(-2)^2 -2 = 46,
+\end{align*}
+we calculate that the second order Taylor polynomial around $t=-2$ is
+\begin{align*}
+  p_2(t) &= k(-2) + k'(-2)(t+2) + \frac{k''(-2)}{2}(t+2)^2\\
+  &= 18 -27(t+2) +23 (t+2)^2.
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol><li>Let $C(t)$ be the temperature in degrees Celsius on planet Cook, where $t$ denotes years since 3012.  The given information means that
+$C(0)=15$ and $C'(0) = 2$.</li>
+  <li>A linear approximation to $C(t)$ is
+    \begin{align*}
+    L(t) &= C(0) + C'(0)t\\
+    &=15  + 2t.
+    \end{align*}
+    The linear approximation predicts that the temperature of Cook will be $L(50) = 115$ degrees Celsius in year 3062 and $L(100) = 215$ degrees Celsius in year 3112.</li>
+  <li>The new measures would lead to $C''(0) = 0.03$.  (Or maybe you could argue that it means $C''(t)=0.03$ for all time $t$, but that wasn't the intent.  You'll get the same answer either way.)</li>
+  <li>A quadratic approximation to $C(t)$ is
+    \begin{align*}
+    Q(t) &= C(0) + C'(0)t + \frac{C''(0)}{2}t^2\\
+    &=15  + 2t + 0.015 t^2.
+    \end{align*}
+    The quadratic approximation predicts that the temperature of Cook will be $$Q(50) = 115-0.015 (50)^2 = 77.5 \text{ degrees Celsius}$$ in year 3062 and $$Q(100)=215-0.015(100)^2 = 65 \text{ degrees Celsius}$$ in year 3112.</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink linear_quadratic_taylor_polynomial_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>Let $r(k)$ be the width of the river in meters measured $k$ kilometers east of the city.  The given information means that $r(10)=50$, $r'(10)=1$, and $r''(10) =0.1$.  A quadratic Taylor polynomial approximation is
+\begin{align*}
+  p_2(k) &= r(10) + r'(10)(k-10) + \frac{r''(10)}{2}(k-10)^2\\
+  &= 50 + (k-10) + 0.05(k-10)^2.
+\end{align*}
+According to this approximation, the width of the river 15 kilometers east of the city is
+\begin{align*}
+  p_2(15) = 50 + 5 + 0.05(5)^2 = 56.25 \text{ meters}.
+\end{align*}
+</p>
+
+{% endblock %}

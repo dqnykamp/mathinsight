@@ -1,0 +1,15 @@
+{{ object.code }}
+{{ object.annotated_title }}
+{{ object.applet_type }}
+{{ object.description }}
+{{ object.detailed_description }}
+{{ object.transcript }}
+{% for author in object.authors.all %}
+   {{ author }}
+{% for keyword in object.keywords.all %}
+   {{ keyword.code }}
+{% endfor %}
+{{ object.additional_credits }}
+
+{% endfor %}
+

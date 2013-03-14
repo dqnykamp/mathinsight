@@ -1,0 +1,116 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "path independent vector field" "potential function" %}
+{% index_entry "conservative vector field" "potential function" %}
+{% index_entry "potential function" "conservative fields" %}
+{% title "Finding a potential function for three-dimensional conservative vector fields" %}
+{% description "How to find a potential function for a given three-dimensional conservative, or path-independent, vector field." %}
+
+<p>In this page, we give an example of finding a potential function of a three-dimensional conservative vector field.  This procedure is an extension of the procedure of {% intlink conservative_vector_field_find_potential %}finding the potential function of a two-dimensional field {%endintlink%}.</p>
+
+<p>The vector field we'll analyze is
+$$\dlvf(x,y,z) = (2xyz^3 + ye^{xy}, x^2z^3+xe^{xy}, 3x^2yz^2+\cos z).$$
+We first check {% intlink conservative_vector_field_determine test4 %}if it is
+conservative{%endintlink%} by calculating its curl, which {% intlink curl_components %}in terms of the components{%endintlink%} of $\dlvf$, is
+$$\curl \dlvf = \left(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}{z} -
+  \pdiff{\dlvfc_3}{x}, \pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y} \right).$$</p>
+
+<p>Since
+\begin{align*}
+\pdiff{\dlvfc_3}{y} &amp;= \pdiff{\dlvfc_2}{z} = 3x^2z^2\\
+\pdiff{\dlvfc_1}{z} &amp;= \pdiff{\dlvfc_3}{x} = 6xyz^2\\
+\pdiff{\dlvfc_2}{x} &amp;= \pdiff{\dlvfc_1}{y} = 2xz^3+(1+xy)e^{xy},
+\end{align*}
+the curl of $\dlvf$ is zero.  The vector field is defined in all $\R^3$, 
+which is {% intlink simply_connected_definition %}simply connected{%endintlink%},
+so $\dlvf$ is conservative.</p>
+
+<p>We need to find a potential function $f(x,y,z)$ that satisfies $\nabla f = \dlvf$, i.e., the three conditions
+\begin{align*}
+  \pdiff{f}{x}(x,y,z) &amp;= 2xyz^3 + ye^{xy}\\
+  \pdiff{f}{y}(x,y,z) &amp;= x^2z^3+xe^{xy}\\
+  \pdiff{f}{z}(x,y,z) &amp;= 3x^2yz^2+\cos z.
+\end{align*}
+</p>
+
+<p>We start with the first condition involving $\pdiff{f}{x}$.  We integrate with 
+respect to $x$, viewing $y$ and $z$ as constants, to obtain that $f(x,y,z)$
+must satisfy
+\begin{align*}
+f(x,y,z) =  x^2yz^3 + e^{xy} + g(y,z).
+\end{align*}
+Since we viewed $y$ and $z$ as constants, the constant of integration
+$g(y,z)$ can be an arbitrary function of $y$ and $z$.  You can verify that
+$f(x,y,z)$ does satisfy the first condition.</p>
+
+<p>Now, we simply need to determine what $g(y,z)$ must be for $f$ 
+to satisfy the remaining two conditions involving derivatives with respect
+to $y$ and $z$.  Let's differentiate our new expression for $f$ with
+respect to $y$, obtaining
+\begin{align*}
+  \pdiff{f}{y}(x,y,z) =  x^2z^3 + xe^{xy} + \pdiff{g}{y}(y,z)
+\end{align*}
+We need to $f$ to satisfy the second condition, above, involving $\pdiff{f}{y}$.
+For this to be true, we require
+\begin{align*}
+   \pdiff{g}{y}(y,z) = 0.
+\end{align*}
+</p>
+
+<p>Since $\dlvf$ is conservative, this equation for $\pdiff{g}{y}$ must be 
+a function of $y$ and $z$ alone (and not involve $x$).  If $x$ appeared,
+we would know we had made a mistake somewhere.  Since $x$ is absent,
+we can keep going.</p>
+
+<p>In this case, since we need $\pdiff{g}{y}(y,z)=0$, we conclude that $g(y,z)$
+cannot depend on $y$.  It must be a function of $z$ alone, which we'll
+call $h(z)$.  Our expression for $f(x,y,z)$ simplifies to 
+\begin{align*}
+   f(x,y,z) =  x^2yz^3 + e^{xy} + h(z)
+\end{align*}
+</p>
+
+<p>We have one more condition to satisfy, the one involving $\pdiff{f}{z}$. 
+We differentiate our new expression for $f$ with respect to $z$:
+\begin{align*}
+  \pdiff{f}{z} = 3x^2yz^2 + \diff{h}{z}(z).
+\end{align*}
+For $f(x,y,z)$ to satisfy the third condition for $f$, the function $h(z)$ must satisfy
+\begin{align*}
+   \diff{h}{z}(z) = \cos z.
+\end{align*}
+This is good news, as $\diff{h}{z}$ does not depend on $x$ or $y$.  If it had,
+we would know something went wrong</p>
+
+<p>We can easily integrate to obtain an expression for $h$,
+\begin{align*}
+   h(z) = \sin z + k
+\end{align*}
+for an arbitrary constant $k$.  A potential function can only be determined
+up to an arbitrary constant, since we only have conditions on
+its derivatives.  But, line integrals of $\dlvf$ depend only on differences among the values of $f(x,y,z)$.  The constant $k$ will always cancel out, so we can just set $k=0$.</p>
+
+<p>Therefore, our potential function for 
+$$\dlvf(x,y,z) = (2xyz^3 + ye^{xy}, x^2z^3+xe^{xy}, 3x^2yz^2+\cos z).$$
+is
+$$f(x,y,z) = x^2yz^3 + e^{xy} + \sin z.$$
+</p>
+
+<p>For any curve $\dlc$ from point $\vc{p}$ to point $\vc{q}$, the integral
+of $\dlvf$ is
+$$\dlint = f(\vc{q}) - f(\vc{p})$$
+independent of the path taken by $\dlc$.  
+Although we had to do a lot of work to calculate $f$, the last step of
+computing the integral is simple.</p>
+
+<p>If $\dlc$ is the arc of a helix parametrized by $\dllp(t) = (\cos t, \sin t, t)$
+for $0 \le t \le \pi/2$, the line integral of $\dlvf$ is simply
+\begin{align*}
+  \dlint &amp;= f(\dllp(\pi/2)) - f(\dllp(0))\\
+  &amp;= f(0,1,\pi/2) - f(1,0,0)\\
+  &amp;= 0 + e^0 + \sin \frac{\pi}{2} - 0 - e^0 - \sin 0
+  = 1 + 1 - 1 = 1.
+\end{align*}
+</p>
+
+
+{% endblock%}

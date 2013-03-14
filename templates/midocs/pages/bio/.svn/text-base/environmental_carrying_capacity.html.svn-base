@@ -1,0 +1,177 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "discrete dynamical system" "example" %}
+{% index_entry "logistic growth" %}
+{% index_entry "carrying capacity" %}
+{% title "Environmental carrying capacity" %}
+{% description "We examine a difference equation used to describe population growth in limited environments." %}
+
+{% navigation_tag "limits" "Environmental limits" %}
+<h4>Environmental limits decrease growth rate</h4>
+
+<p>One of the simplest types of {% intlink discrete_dynamical_system_introduction %}discrete dynamical systems{%endintlink%} describes the {% intlink exponential_growth_decay_discrete %}exponential growth{%endintlink%} of a population, where reproduction in each time step is proportional to the number of individuals.  In such exponential growth, the population grows faster and faster, continuing to {% intlink doubling_time_half_life_discrete %}double in size at regular intervals{%endintlink%}.</p>
+
+<p>Exponential growth may be a good model for early stages of population growth , such as we can observe with a {% intlink bacteria_growth_initial_model %}model for the initial growth of a bacteria population{%endintlink%}.  However, as one can readily see by exploring some of the 
+{% intlink discrete_dynamical_system_elementary_biology_problems problem5 %}problems involving exponential growth{%endintlink%}, exponential growth cannot continue for long or a population will reach astronomical values.</p>
+
+<p>One reason that exponential growth cannot continue is because the environment in which a population lives cannot support an indefinitely large population of a given species.  Based on the amount of available food, space, water, and other necessities, an environment will have a finite <em>carrying capacity</em>, which is the maximum population size that the environment can sustain indefinitely.  As populations near their environmental limits, the growth rates decrease.</p>
+
+{% navigation_tag "logistic" "Logistic model" %}
+<h4>The logistic model</h4>
+
+<p>One way to develop a model that incorporates a carrying capacity is to make the reproduction be proportional not only to the population size but also to the fraction of unused carrying capacity.  The resulting model is the logistic model for population growth.</p>
+
+<p>Let $P_t$ denote the population size in time period $t$.  Let $M$ be the carrying capacity, which is the population size that the environment can support.  Then, </p>
+<ul><li>
+  $\displaystyle \frac{P_t}{M}$ is the fraction of the carrying capacity that is used, and</li>
+  <li>$\displaystyle 1 - \frac{P_t}{M}$ is the unused fraction of the carrying capacity.</li>
+</ul>
+
+<p>Because of the double proportionality, the annual increase is proportional
+to the <em>product</em> the population size and the unused carrying
+capacity:</p>
+\begin{equation}  
+P_{t+1} - P_t = r \, P_t \, \times \left( 1 - \frac{P_t}{M} \right)
+\label{logistic}
+\end{equation}
+Equation \eqref{logistic} is the discrete logistic equation.</p>
+
+<p>Logistic growth is similar to exponential growth when the population is small.  The quantity $r$ is called the <em>low density growth rate</em> and plays the same role as the parameter $r$ defined in {% intlink exponential_growth_decay_discrete %}exponential growth page{% endintlink%}.  In fact, for small population sizes, we can show that we get the equation for exponential growth back.  
+When $P_t$ is &ldquo;small&rdquo; compared
+to $M$, then the factor $\frac{P}{M}$ is close to zero and the factor $\left( 1 - \frac{P_t}{M} \right)$ is close to 1.  If we replace the factor $\left( 1 - \frac{P_t}{M} \right)$ with 1, the logistic equation \eqref{logistic} becomes
+\begin{align*}
+P_{t+1} - P_t \approx r \, P_t.
+\end{align*}
+which is the same as {% intlinkeq exponential_growth_decay_discrete  linear_dynamical_system_change %}of the exponential growth page{%endintlinkeq%}.</p>
+
+<p>Once the population size $P_t$ becomes appreciable compared carrying capacity $M$, then the growth rate slows down becomes the factor $\left( 1 - \frac{P_t}{M} \right)$ becomes substantially smaller than 1.  As $P_t$ approaches the value of $M$, the factor $\left(1 - \frac{P_t}{M} \right)$ approaches
+0.  In this case, the logistic equation \eqref{logistic} for the population change becomes
+\begin{align*}
+P_{t+1} - P_t \approx r \times P_t \times 0 = 0.
+\end{align*}
+As the population change $P_{t+1}-P_t$ is zero when $P_t=M$, the carrying capacity is an equilibrium of the logistic equation.</p>
+
+<p>To be concrete, consider a low density growth rate $r = 0.4$
+and a carrying capacity $M = 1000$.  Then equation \ref{logistic} becomes
+\begin{align*}
+P_{t+1} - P_t = 0.4 \times P_t \times \left(1 - \frac{P_t}{1000} \right)
+\end{align*}
+When $P_t = 10$ (small compared to 1000), then
+$1 - \frac{P_t}{1000} = 0.99 \approx 1$ and
+\begin{align*}
+P_{t+1} - P_t \approx 0.4 \times P_t \times 1 = 0.4 \times P_t
+\end{align*}
+The
+population increases approximately 40%
+each time period, and there is exponential growth.  This growth continues
+until the population size compared to $1000$ is significant.</p>
+
+<p>When $P_t = 500$,
+$1 - \frac{P_t}{1000} = 0.5$ and
+\begin{align*}
+P_{t+1} - P_t \approx 0.4 \times P_t \times 0.5 = 0.2 \times P_t
+\end{align*}
+The population is still growing, but only at 20% per time period,
+one-half of that at low density.</p>
+
+<p>When the populations size, $P_t$ reaches 990 (high density, almost
+to carrying capacity),
+$1 - \frac{P_t}{1000} = 0.01$ and
+\begin{align*}
+P_{t+1} - P_t \approx 0.4 \times P_t \times 0.01 = 0.004 \times P_t
+\end{align*}
+and the growth rate has fallen to 0.4% per time period.</p>
+
+<p>The following applet shows the solutions to the dynamical system
+\begin{align*}
+P_0 &= 10 \\
+P_{t+1} & =  P_t + 0.4 P_t \left( 1 - \frac{P_t}{1000} \right)
+\end{align*}
+in the blue circles and 
+\begin{align*}
+W_0 &= 10\\
+W_{t+1} & =  W_t + 0.4 W_t
+\end{align*}
+in the red X's.
+The exponential growth $W_t$ follows the logistic growth $P_t$ until $P_t \approx 200$
+and $1 - \frac{P_t}{1000} \approx 0.8$.</p>
+
+{% boxedapplet logistic_and_exponential_growth %}
+
+{% navigation_tag "alternates" "Alternate forms" %}
+<h4>Alternate forms</h4>
+
+<p>The form of the logistic equation \eqref{logistic} that we have studied,
+\begin{align*}  
+P_{t+1} - P_t = r \, P_t \, \times \left( 1 - \frac{P_t}{M} \right),
+\end{align*}
+gives the change $P_{t+1}-P_t$ of the population as a function of the low density growth rate $r$ and the carrying capacity $M$.  Such equation is the form of a difference equation, since the change is the difference between the population sizes. Sometimes, it is convenient to write the equation in alternate forms.  We could normalize the difference equation to remove the carrying capacity parameter $M$.  We could also rewrite the equation by solving it for the new population size $P_t$, putting it in function iteration form. </p>
+
+
+{% navigation_tag "normalized_difference"  "Alternate forms" "Normalize difference equation" %}
+<h5>Normalized difference equation</h5>
+
+<p>The carrying capacity $M$ is an important quantity as it determines the population size where the population begins to decline.  However, the actual value of the carrying capacity doesn't fundamentally change the behavior of the system.  No matter what (positive) value of $M$ we start with, we can normalize the equation to remove the dependence on $M$, giving us the same equation but with the number 1 instead of $M$.</p>
+
+<p>To perform this normalization, we divide each term of the above equation by $M$ to obtain
+\begin{align*}
+\frac{P_{t+1}}{M} - \frac{P_t}{M} = r \times \frac{P_t}{M} \times \left(1 - \frac{P_t}{M} \right).
+\end{align*}
+Then, we can defined a new variable
+\begin{align*}
+Q_t = \frac{P_t}{M},
+\end{align*}
+which gives the population size relative to the carrying capacity.  $Q_t=1$ means the population has reached carrying capacity; $Q_t=1/2$ means the population is at half the carrying capacity, etc.  In terms of $Q_{t}$, the dynamical system is simply
+\begin{align*}
+Q_{t+1} - Q_t = r \times Q_t \times \left(1 - Q_t \right),
+\end{align*}
+which is the original equation with the number 1 for the carrying capacity.  In this way, we can justify that the carrying capacity doesn't fundamentally change the behavior of the system.  For any value of $M$, the rescaled population size $Q_t$ follows the same equation.  This normalized equation is simpler as it has only one parameter $r$.
+</p>
+
+<p>When going from the original system to the normalized system, sometimes one doesn't both to change the notation from $P_t$ to $Q_t$.  The same variable name, such as $P_t$, can used ambiguously
+for both the original population size (what we wrote as $P_t$) and the normalized population size (what we wrote as $Q_t$).</p>
+
+{% navigation_tag "function_iteration"  "Alternate forms" "Function iteration form" %}
+<h5>Function iteration form</h5>
+
+<p>The original model \eqref{logistic} is not the traditional way of representing the discrete time version logistic equation.  A more traditional way is to solve the equation for $P_{t+1}$ by adding $P_t$ to both sides, yielding
+\begin{align*}  
+P_{t+1} = r  P_t  \left( 1 - \frac{P_t}{M} \right) + P_t.
+\end{align*}
+This right hand side of the new equation is still a quadratic equation in $P_t$.  We can multiply it out and then refactor the equation to put it into a similar form as the original one.
+\begin{align*}  
+P_{t+1} &= r P_t - \frac{rP_t^2}{M}+ P_t\\ 
+  &= (r+1) P_t - \frac{rP_t^2}{M}\\
+  &= (r+1) P_t  \left( 1 - \frac{rP_t}{M(r+1)}\right)
+\end{align*}
+</p>
+
+<p>The new version looks a lot uglier. But, we can make it look pretty by defining new parameters.  Let
+\begin{align*}
+  R &= r+1\\
+  K &= M(r+1)/r.
+\end{align*}
+In terms of these new parameters, the dynamical system in function iteration form looks much better:
+\begin{align}  
+P_{t+1} &= R P_t \left( 1 - \frac{P_t}{K}\right).
+  \label{logistic_iteration}
+\end{align}
+</p>
+<p>Equation \eqref{logistic_iteration} is a more traditional form for the logistic discrete dynamical system.  Unfortunately, in this form, the parameter $K$ is not the carrying capacity.  Instead, it is the carrying capacity multiplied by $(r+1)/r = R/(R-1)$.  In equation \eqref{logistic}, the equilibria are always $P_t=0$ and $P_t=M$.  In the new form of \eqref{logistic_iteration}, one has to do some algebra to determine that the equilibria are $P_t=0$ and $P_t=K(R-1)/R$.</p>
+
+{% navigation_tag "normalized_function_iteration"  "Alternate forms" "Normalized function iteration form" %}
+<h5>Normalized function iteration form</h5>
+
+<p>One can do the same trick to normalized the new form of the logistic equation.  Divide by $K$ to obtain
+\begin{align*}  
+\frac{P_{t+1}}{K} &= R \frac{P_t}{K}  \left( 1 - \frac{P_t}{K}\right).
+\end{align*}
+Define a new variable, the population size as a fraction of $K$.  We might as well use the same letter as above even though it is a different quantity, and define
+\begin{align*}
+Q_t = \frac{P_t}{K}.
+\end{align*}
+In terms of $Q_t$, the function iteration form of the logistic dynamical system is
+\begin{align*}  
+Q_{t+1} &= R Q_t ( 1 - Q_t).
+\end{align*}
+
+{% endblock %}

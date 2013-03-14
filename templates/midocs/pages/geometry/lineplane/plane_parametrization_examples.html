@@ -1,0 +1,121 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parametrization" "plane" %}
+{% index_entry "parametrization" "parametrization" %}
+{% title "Plane parametrization example" "Example" %}
+{% description "Example showing how to parametrize a plane." %}
+
+Example: Find a parametrization of (or a set of parametric equations
+for) the plane 
+\begin{align}
+  x-2 y + 3z = 18.
+  \label{planeeqn}
+\end{align}
+
+<p>A parametrization for a plane can be written as 
+\begin{align*}
+  \vc{x} = s \vc{a} + t \vc{b} + \vc{c}
+\end{align*}
+where $\vc{a}$ and $\vc{b}$ are vectors parallel to the plane and
+$\vc{c}$ is a point on the plane.  The parameters $s$ and $t$ are real
+numbers.  Any point $\vc{x}$ on the plane is given by $s \vc{a} + t
+\vc{b} + \vc{c}$ for some value of $(s,t)$.  Any value of $(s,t)$
+corresponds to a point $\vc{x}$ on the plane.</p>
+
+<p>Note that $\vc{x}$ is different from $x$; in fact, $\vc{x}$ is the
+vector $\vc{x}=(x,y,z)$.</p>
+
+{% navigation_tag "solution1" "Example" "Solution method 1" %}
+<h4>Solution method 1</h4>
+
+<p>To find a parametrization, we need to find two vectors parallel to the
+plane and a point on the plane.  Finding a point on the plane is easy.
+We can choose any value for $x$ and $y$ and calculate $z$ from the
+equation for the plane.  Let $x=0$ and $y=0$, then 
+equation \eqref{planeeqn}
+means that
+\begin{align*}
+  z = \frac{18-x+2y}{3} = \frac{18-0+2(0)}{3} = 6.
+\end{align*}
+A point on the plane is $\vc{c} = (0,0,6)$.  (Clearly, there are many
+other choices.)</p>
+
+<p>Now, we have to find two vectors parallel to the plane.  A normal
+vector of the plane is $\vc{n}=(1,-2,3)$.  (Why?)  So, we need to find
+two vectors $\vc{a}$ and $\vc{b}$ that are perpendicular to $\vc{n}$,
+i.e., we need  $\vc{a} \cdot \vc{n} = 0$ and $\vc{b} \cdot \vc{n}=0$.  
+If $\vc{a} = (a_1,a_2,a_3)$ and $\vc{b} = (b_1,b_2,b_3)$, we need 
+\begin{align}
+  a_1-2a_2 + 3a_3=0
+  \label{aperp}
+\end{align}
+ and 
+\begin{align}
+  b_1-2b_2+3b_3 = 0
+  \label{bperp}
+\end{align}
+</p>
+
+<p>There are many choices for $\vc{a}$ and $\vc{b}$.  In fact, we can
+choose any two components of $\vc{a}$ or $\vc{b}$ and use the above
+condition to specify the third component.  To keep life simple, we set
+$a_1=1$ and $a_2=0$.  Then, by equation \eqref{aperp}, we know that 
+\begin{align*}
+  a_3 = \frac{-a_1+2a_2}{3} = -\frac{1}{3}.  
+\end{align*}
+We conclude that the vector $\vc{a}=(1,0,-1/3)$ is parallel to the
+plane.</p>
+
+<p>We need to choose $\vc{b}$ so that $\vc{b}$ is not parallel to
+$\vc{a}$.  To ensure this, we set $b_1=0$ and $b_2=1$.  Then, by
+equation \eqref{bperp}, we know that
+\begin{align*}
+  b_3=\frac{-b_1+2b_2}{3} = \frac{2}{3}.
+\end{align*}
+We conclude that the vector $\vc{b}=(0,1,2/3)$ is parallel to the
+plane.  (You should double check this for both $\vc{a}$ and $\vc{b}$.)</p>
+
+<p>We are finished.  A parametrization for the plane is
+\begin{align*}
+  \vc{x} &amp;= s (1,0,-1/3) + t (0,1,2/3) + (0,0,6) = (s,t,6-s/3+2t/3).
+\end{align*}
+Since $\vc{x}=(x,y,z)$, we could write this as
+\begin{align*}
+  \begin{cases}
+    x=s\\y=t\\z=6-s/3+2t/3.
+  \end{cases}
+\end{align*}
+(If we had made different choices for $a_1$, $a_2$, $b_1$, and $b_2$,
+we would have come up with a different parametrization.  Or, if we
+chose a different point, we would have come up with a different
+parametriaztion.)</p>
+
+{% navigation_tag "shortcut" "Example" "Shortcut method" %}
+<h4>Shortcut method</h4>
+
+<p>There is a quick way to come up with the particular parametrization I
+made above.  Because I chose $a_1=1$, $a_2=0$, $b_1=0$, and $b_2=1$
+and chose the first two components of $\vc{c}$ to be zero, we ended up
+with a parametrization where $x=s$ and $y=t$.  (Can you see why this
+is true?)</p>
+
+<p>Since equation \eqref{planeeqn}
+can be written
+\begin{align*}
+  z = \frac{18-x+2y}{3}
+\end{align*}
+we can plug in those values of $x$ and $y$ to determine that
+\begin{align*}
+  z= \frac{18-s+2t}{3} = 6-s/3+2t/3.
+\end{align*}
+Again, we end up with the parametrization
+\begin{align*}
+  \begin{cases}
+    x=s\\y=t\\z=6-s/3+2t/3.
+  \end{cases}
+\end{align*}
+</p>
+
+<p>Question: will the shortcut method always work?  (I.e., is there a
+reason to know the longer method?)</p>
+
+{%endblock%}

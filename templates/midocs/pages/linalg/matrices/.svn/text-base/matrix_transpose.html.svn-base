@@ -1,0 +1,57 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "matrix" "transpose"%}
+{% title "The transpose of a matrix" %}
+{% description "Definition of the transpose of a matrix or a vector." %}
+
+<p>The <i>transpose</i> of a {% intlink matrix_introduction %}matrix{%endintlink%} is simply
+a flipped version of the original matrix.  
+We can transpose a matrix by switching its rows with its
+columns.  We denote the transpose of matrix $A$ by $A^T$.  For
+example, if
+\begin{align*}
+  A=\left[
+    \begin{array}{rrr}
+      1&amp;2&amp;3\\4&amp;5&amp;6
+    \end{array}
+  \right]    
+\end{align*}
+then the transpose of $A$ is
+\begin{align*}
+  A^T=\left[
+    \begin{array}{rr}
+      1&amp;4\\2&amp;5\\3&amp;6
+    \end{array}
+  \right].   
+\end{align*}
+</p>
+
+<p>We can take a transpose of a vector as a special case.  
+Since an $n$-dimensional vector $\vc{x}$ {%intlink matrix_introduction vectors_as_matrices %}is represented by{%endintlink%} 
+an $n \times 1$ column matrix,
+\begin{align*}
+  \vc{x} = 
+  \left[
+    \begin{array}{c}
+      x_1\\
+      x_2\\
+      x_3\\
+      \vdots\\
+      x_n
+    \end{array}
+  \right],
+\end{align*}
+the transpose $\vc{x}^T$ is a $1 \times n$ row matrix
+\begin{align*}
+  \vc{x}^T =
+  \left[
+    \begin{array}{ccccc}
+      x_1&amp;
+      x_2&amp;
+      x_3&amp;
+      \cdots&amp;
+      x_n
+    \end{array}
+  \right].
+\end{align*}
+</p>
+{%endblock%}

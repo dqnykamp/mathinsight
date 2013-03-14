@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load mi_tags %}{% load url from future %}
+
+{% block title %}Math Insight contributor {{author.full_name}}{% endblock %}
+{% block nolinksection %}{% endblock %}
+
+{% block pagenav %}
+  <li><a href="#sitenav">Top</a></li>
+  {% if author.published_pages %}<li><a href="#pages">Pages</a></li>{%endif%}
+  {% if author.published_applets %}<li><a href="#applets">Applets</a></li>{%endif%}
+  {% if author.published_images %}<li><a href="#images">Images</a></li>{%endif%}
+{% endblock %}
+
+{% block content %}
+
+<h3>Math Insight contributor {{author.full_name}}</h3>
+
+<p>{{author.full_name}}<br/>
+{{ author.title }}<br/>
+{{ author.institution }}
+{% if author.display_email %}<br/>E-mail: <a href="mailto:{{ author.email_address }}" class="email">{{ author.email_address }}</a>{% endif %}
+{% if author.web_address %}<br/>Web site: <a href="{{ author.web_address }}" class="external">{{ author.web_address }}</a>{%endif%}</p>
+
+{% if author.contribution_summary %}{{ author.contribution_summary|safe}}{%endif%}
+
+
+{% if author.published_pages %}
+<a id="pages" class="anchor"></a>
+<h4>Pages by {{author.full_name }}</h4>
+<p>
+{% for page in author.published_pages %}{% intlink page %}{{page.title}}{% endintlink %}{% if not forloop.last %},{%endif%} {% endfor %}
+</p>
+{%endif %}
+{% if author.published_applets %}
+<a id="applets" class="anchor"></a>
+<h4>Applets by {{author.full_name }}</h4>
+<p>{% for applet in author.published_applets %}
+<a href="{% url 'mi-applet' applet.code %}" class="applet">{{applet.title}}</a>{% if not forloop.last %},{%endif%} {% endfor %}
+</p>
+{%endif %}
+{% if author.published_videos %}
+<a id="videos" class="anchor"></a>
+<h4>Videos by {{author.full_name }}</h4>
+<p>{% for video in author.published_videos %}
+<a href="{% url 'mi-video' video.code %}" class="video">{{video.title}}</a>{% if not forloop.last %},{%endif%} {% endfor %}
+</p>
+{%endif %}
+{% if author.published_images %}
+<a id="images" class="anchor"></a>
+<h4>Images by {{author.full_name }}</h4>
+<p>{% for image in author.published_images %}
+<a href="{% url 'mi-image' image.code %}" class="image">{{image.title}}</a>{% if not forloop.last %},{%endif%} {% endfor %}
+</p>
+{%endif %}
+
+{% endblock %}
+
+{% block rightcolumn %}
+<h3><a href="{% url 'mi-authorlist' %}">Math Insight contributors</a></h3>
+<ul class="linklist">
+{% for other_author in author_list %}
+<li><a href="{% url 'mi-authordetail' other_author.code  %}">{{other_author.full_name}}</a></li>
+{%endfor %}
+<p><a href="{% url 'mi-authorlist' %}" class="normaltext">All Math Insight contributors</a></p>
+
+
+{% endblock %}
+

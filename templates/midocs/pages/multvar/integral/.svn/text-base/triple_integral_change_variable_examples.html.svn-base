@@ -1,0 +1,298 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "triple integral" "change variables"%}
+{% index_entry "change variables" "triple integrals"%}
+{% title "Triple integral change of variable examples" %}
+{% description "Examples of changing variables in triple integrals." %}
+
+{% navigation_tag "spherical" "Spherical coords" %}
+<h4>Spherical coordinates example</h4>
+
+<p class="centeredImage">{% image spherical_coordinates %}</p>
+
+<p>For {% intlink spherical_coordinates %}spherical coordinates{%endintlink%}, the change of variables function is
+\begin{align*}
+  (x,y,z) &amp;= \cvarf(\rho,\theta,\phi)
+\end{align*}
+where the components of $\cvarf$ are given by 
+\begin{align*}
+  x &amp;= \rho \sin\phi \cos\theta\\
+  y &amp;= \rho \sin\phi \sin\theta\\
+  z &amp;= \rho \cos\phi.
+\end{align*}
+We can compute that
+\begin{align*}
+  \jacm{\cvarf}(\rho,\theta,\phi)
+  &amp;=
+  \left|
+    \begin{array}{ccc}
+      \displaystyle \pdiff{x}{\rho} &amp; 
+      \displaystyle \pdiff{x}{\theta} &amp; 
+      \displaystyle \pdiff{x}{\phi}\\
+      \displaystyle \pdiff{y}{\rho} &amp; 
+      \displaystyle \pdiff{y}{\theta} &amp; 
+      \displaystyle \pdiff{y}{\phi}\\
+      \displaystyle \pdiff{z}{\rho} &amp; 
+      \displaystyle \pdiff{z}{\theta} &amp; 
+      \displaystyle \pdiff{z}{\phi}\\
+    \end{array}
+  \right|\\
+  &amp;=
+  \left|
+    \begin{array}{ccc}
+      \sin\phi \cos\theta &amp; - \rho\sin\phi \sin\theta &amp; 
+      \rho\cos\phi\cos\theta\\
+      \sin\phi \sin\theta &amp; \rho \sin\phi \cos\theta &amp;
+      \rho\cos\phi\sin\theta\\
+      \cos\phi &amp; 0 &amp; -\rho \sin\phi
+    \end{array}
+  \right|\\
+  &amp;= -\rho^2 \sin\phi.
+\end{align*}
+</p>
+
+<p>
+The change of variable factor is the absolute value of the determinant
+\begin{align*}
+  \left| \jacm{\cvarf}(\rho,\theta,\phi) \right| = \rho^2 \sin\phi.
+\end{align*}
+This means that the map from spherical coordinates to rectangular
+coordinates changes volume by the factor $\rho^2 \sin\phi$.  For this
+reason, you need to do the above calculation only once.  Now, you can
+just remember that the factor for spherical coordinates is $\rho^2 \sin\phi$.
+</p>
+
+<p>
+Now we're ready for the example: find the mass of a star $\dlv$ that is a
+ball of radius 3 centered at the origin if the density of the star
+is $g(x,y,z) = 10 - x^2-y^2-z^2$.</p>
+
+<p>If we try to compute the integral directly in rectangular coordinates,
+it isn't so easy:
+\begin{align*}
+  &amp;\iiint_\dlv g(x,y,z) dx\,dy\,dz\\
+  &amp;= \int_{-3}^3 \int_{-\sqrt{9-z^2}}^{\sqrt{9-z^2}}
+  \int_{-\sqrt{9-z^2-y^2}}^{\sqrt{9-z^2-y^2}} (10 - x^2
+  -y^2-z^2)
+  dx\,dy\,dz
+\end{align*}
+This would lead to a mess.</p>
+
+<p>We can find the mass of the star more easily in spherical coordinates.
+The star density $g(x,y,z) = 10 - x^2-y^2-z^2$
+becomes $g(\cvarf(\rho,\theta,\phi)) = 10-\rho^2$.</p>
+
+<p>In spherical coordinates, the integral over ball of radius 3 is the
+integral over the region
+\begin{align*}
+  0 \le \rho \le 3, \quad 0 \le \theta \le 2\pi,
+  \quad 0 \le \phi \le \pi.
+\end{align*}
+The volume element is $\rho^2 \sin\phi \,d\rho\,d\theta\,d\phi$.</p>
+
+<p>Therefore, the mass of the star is
+\begin{align*}
+  &amp;\int_0^3 \int_0^{2\pi} \int_0^{\pi} 
+  (10-\rho^2) \rho^2 \sin\phi \,d\phi\,d\theta\,d\rho\\
+  &amp;=\int_0^3 \int_0^{2\pi} \left.(10-\rho^2) \rho^2  (-\cos\phi )
+  \right|_{\phi=0}^{\phi=\pi} d\theta\,d\rho\\
+  &amp;=\int_0^3 \int_0^{2\pi} (10-\rho^2) \rho^2 2  d\theta\,d\rho\\
+  &amp;=\int_0^3 4\pi (10-\rho^2) \rho^2 d\rho = \frac{828 \pi}{5}
+  \approx 520.
+\end{align*}
+</p>
+
+{%navigation_tag "cylindrical" "Cylindrical coords" %}
+<h4>Cylindrical coordinates example</h4>
+
+<p class="centeredImage">{%image cylindrical_coordinates %}</p>
+
+<p>For {% intlink cylindrical_coordinates %}cylindrical coordinates{%endintlink%}, the change of variables function is
+\begin{align*}
+  (x,y,z) &amp;= \cvarf(r,\theta,z)
+\end{align*}
+where the components of $\cvarf$ are given by
+\begin{align*}
+  x &amp;= r \cos\theta\\
+  y &amp;= r \sin\theta\\
+  z &amp;= z.
+\end{align*}
+We can compute that
+\begin{align*}
+  \jacm{\cvarf}(\rho,\theta,\phi)
+  &amp;=
+  \left|
+    \begin{array}{ccc}
+      \displaystyle \pdiff{x}{r} &amp; 
+      \displaystyle \pdiff{x}{\theta} &amp; 
+      \displaystyle \pdiff{x}{z}\\
+      \displaystyle \pdiff{y}{r} &amp; 
+      \displaystyle \pdiff{y}{\theta} &amp; 
+      \displaystyle \pdiff{y}{z}\\
+      \displaystyle \pdiff{z}{r} &amp; 
+      \displaystyle \pdiff{z}{\theta} &amp; 
+      \displaystyle \pdiff{z}{z}\\
+     \end{array}
+  \right|\\
+  &amp;=
+  \left|
+    \begin{array}{ccc}
+      \cos\theta &amp; -r\sin\theta &amp;0\\
+      \sin\theta &amp; r \cos\theta &amp;0\\
+      0 &amp; 0 &amp; 1
+    \end{array}
+  \right|\\
+  &amp;= r \cos^2\theta + r\sin^2\theta = r.
+\end{align*}
+Volume changes by $|r|=r$ (just like area change for polar
+coordinates).  Replace $dx\,dy\,dz$ by $r \,dr\,d\theta\,dz$.</p>
+
+
+<p>We can calculate the following example problem. Find the volume of cone of height 1 and radius one.  It is bounded
+by surface $z=\sqrt{x^2+y^2}$ and plane $z=1$. </p>
+
+<p>The volume is
+\begin{align*}
+  \int_{-1}^{1} \int_{-\sqrt{1-x^2}}^{\sqrt{1-x^2}}
+  \int_{\sqrt{x^2+y^2}}^{1}
+  dz \, dy\, dz.
+\end{align*}</p>
+
+<p>The integral is easier to compute in cylindrical coordinates.
+In cylindrical coordinates, the cone is described by
+\begin{align*}
+  0 \le \theta \le 2\pi, \quad 0 \le r \le 1,\quad
+  r \le z \le 1.
+\end{align*}
+</p>
+
+<p>
+The volume of cone is
+\begin{align*}
+  &amp;\int_0^1 \int_0^{2\pi} \int_r^{1}
+  r \, dz\,d\theta\,dr\\
+  &amp;=\int_0^1 \int_0^{2\pi} (1 -r)r\, d\theta\,dr\\
+  &amp;=\int_0^1 2\pi (1-r)r\, dr =  \frac{\pi}{3}.
+\end{align*}
+</p>
+
+
+{% navigation_tag "icecream" "Ice cream cone" %}
+<h4>Ice cream cone revisited</h4>
+
+<p>Armed with the knowledge of how to change to spherical coordinates,
+we can now revisit the {%intlink triple_integral_examples ice_cream_cone_example %}ice cream cone example{%endintlink%}.</p>
+
+{% boxedapplet ice_cream_cone_region %}
+
+
+<p>On the {%intlink triple_integral_examples  ice_cream_cone_example%}triple integral examples page{%endintlink%}, we tried to find the volume of an ice cream cone $\dlv$
+and discovered the volume was
+\begin{align*}
+  \iiint_\dlv  dV
+  = \int_{-1/\sqrt{2}}^{1/\sqrt{2}} \int_{-\sqrt{1/2-x^2}}^{\sqrt{1/2-x^2}}
+  \int_{\sqrt{x^2+y^2}}^{\sqrt{1-x^2-y^2}}
+  dz\,dy\,dx.
+\end{align*}
+</p>
+
+<p>
+We need to describe the bounds in terms of spherical coordinates.
+Since the cone is symmetrical around the $z$ axis, $\theta$ is easy.
+$0 \le \theta \le 2\pi$ in the cone and the ranges of the other
+variables don't depend on $\theta$.  Also, we see that $0 \le r \le
+1$, since a given line from the origin extends until it hits the sphere
+$z=\sqrt{1-x^2-y^2}$, which is a sphere of radius 1.  Lastly, $\phi$
+is determined by requiring that we are in the cone $z \ge
+\sqrt{x^2+y^2}$.  (To see this is exactly a condition on $\phi$, look
+at the page on {%intlink spherical_coordinates %}spherical coordinates{%endintlink%}.)  On the cone,
+$z=\sqrt{x^2+y^2}$, $\phi = \pi/4$.  Consquently, the condition on
+$\phi$ is $0 \le \phi \le \pi/4$.  </p>
+
+<p>In summary, the ice cream cone is described by
+\begin{align*}
+  0 \le \theta \le 2\pi, \quad 0 \le r \le 1, \quad
+  0 \le \phi \le \pi/4.
+\end{align*}
+</p>
+
+<p>Changing to spherical  coordinates, we calculate that the volume of
+the ice cream cone is
+\begin{align*}
+  \int_0^1 \int_0^{2\pi} \int_0^{\pi/4}
+  \rho^2 \sin \phi  d\phi \,d\theta\,d\rho 
+  &amp;=\int_0^1 \int_0^{2\pi} [\cos(0)-\cos(\pi/4)]  \rho^2 d\theta\,d\rho\\
+  &amp;=\int_0^1 \int_0^{2\pi} \frac{2-\sqrt{2}}{2}  \rho^2 d\theta\,d\rho\\
+  &amp;=\int_0^1 \pi (2-\sqrt{2})  \rho^2 d\rho\\
+  &amp;= \pi \frac{2-\sqrt{2}}{3}.
+\end{align*}
+</p>
+
+{%comment%}
+
+%% \subheading{General change of variables example}
+
+%% For general change of variables 
+%% \begin{align*}
+%%   (x,y,z) = \cvarf(s,t,u)    
+%% \end{align*}
+%% we need $\displaystyle \pdiff{(x,y,z)}{(s,t,u)}$.
+
+%% As can be the case for \intlink[doc=cvarex]{changing variables in double integrals}, sometimes it is easier to find $\displaystyle
+%% \pdiff{(s,t,u)}{(x,y,z)}$.  In that case, we can take advantage of the
+%%   useful fact that
+%% \begin{align*}
+%%   \pdiff{(x,y,z)}{(s,t,u)} = \frac{1}{ \,\,\displaystyle\pdiff{(s,t,u)}{(x,y,z)}\,\,}.
+%% \end{align*}
+
+%% For example, find 
+%% \begin{align*}
+%%   \iiint_S \cos y \,dx\,dy\,dz
+%% \end{align*}
+%% where $S$ is the solid bounded by the surfaces $z -\sin y=1$,
+%% $z- \sin y = -1$, $y=0$, $y=\pi/2$, $x+z=0$, and $x+z=1$.
+
+%% A natural change of variables is $s=z-\sin y$, $t=y$, and $u= x+z$.
+%% Then the solid $S^*$ is 
+%% $-1 \le s \le 1, \quad 0 \le t \le \pi/2, \quad 0 \le u
+%% \le 1$.
+
+%% We compute:
+%% \begin{align*}
+%%   \pdiff{s}{x} = 0, \quad \pdiff{s}{y} = -\cos y, \quad
+%%   \pdiff{s}{z}=1\\
+%%   \pdiff{t}{x} = 0, \quad \pdiff{t}{y} = 1, \quad \pdiff{t}{z}=0\\
+%%   \pdiff{u}{x} = 1, \quad \pdiff{u}{y} = 0, \quad \pdiff{u}{z}=1
+%% \end{align*}
+%% Therefore, 
+%% \begin{align*}
+%%   \pdiff{(s,t,u)}{(x,y,z)}
+%%   = 
+%%   \left|
+%%     \begin{array}{ccc}
+%%       0 &amp; -\cos y &amp; 1\\
+%%       0 &amp; 1 &amp; 0\\
+%%       1 &amp; 0 &amp; 1
+%%     \end{array}
+%%   \right|
+%%   =-1
+%% \end{align*}
+%% Since
+%% \begin{align*}
+%%   \pdiff{(x,y,z)}{(s,t,u)} = \frac{1}{ \,\,\displaystyle\pdiff{(s,t,u)}{(x,y,z)}\,\,}
+%%   = \frac{1}{-1} = -1,
+%% \end{align*}
+%% the change of volume factor is
+%% \begin{align*}
+%%   \left|\pdiff{(x,y,z)}{(s,t,u)} \right| = 1.
+%% \end{align*}
+%% Since $\cos y = \cos t$, integral is
+%% \begin{align*}
+%%   \int_{-1}^1 \int_0^{\pi/2} \int_0^1
+%%   \cos t \,du\,dt\,ds
+%%   &amp;=  \int_{-1}^1 \int_0^{\pi/2} \cos t \,du\,dt\\
+%%   &amp;= \int_{-1}^1 \sin t \Big|_{t=0}^{t=\pi/2} du
+%%   =  \int_{-1}^1 1 du = 2
+%% \end{align*}
+{%endcomment%}
+
+{%endblock%}

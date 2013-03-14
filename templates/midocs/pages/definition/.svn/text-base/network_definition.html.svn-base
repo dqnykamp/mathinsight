@@ -1,0 +1,22 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "network" "definition" %}
+{% title "Network definition" %}
+{% description "A network is a set of objects (called vertices or nodes) that are connected together." %}
+
+<p>A network is a set of objects (called {% intlink network_node_definition %}nodes{%endintlink%} or {% intlink graph_vertex_definition %}vertices{%endintlink%}) that are connected together.  The connections between the nodes are called {% intlink network_edge_definition%}edges{%endintlink%} or {% intlink network_link_definition%}links{%endintlink%}.  In mathematics, networks are often referred to as {% intlink graph_definition %}graphs{%endintlink%} (which must be distinguished from an alternative use of the graph to mean a {% intlink graph_function_definition %}graph of a function{%endintlink%}).</p>
+
+<p>If the edges in a network are directed, i.e., pointing in only one direction, the network is called a directed network (or a {% intlink directed_graph_definition%}directed graph{%endintlink%}, sometimes <em>digraph</em> for short).  When drawing a directed network, the edges are typically drawn as arrows indicating the direction, as illustrated in the first figure, below.  If all edges are bidirectional, or undirected, the network is an undirected network (or {% intlink undirected_graph_definition%}undirected graph{%endintlink%}), as illustrated by the second figure.</p>
+
+{% twocolumns 50 2 "padding-top:1em;" %}
+{% image small_directed_network_labeled %}
+<p>A directed network with 10 nodes (or vertices) and 13 edges (or links).</p>
+{% nextcolumn %}
+{% image small_undirected_network_labeled %}
+<p>An undirected network with 10 nodes (or vertices) and 11 edges (or links).</p>
+ {% endtwocolumns %}
+
+<p>One can formally define an undirected graph as $G= (\mathcal{N},\mathcal{E})$, consisting of the set $\mathcal{N}$ of nodes and the set $\mathcal{E}$ of edges, which are unordered pairs of elements of $\mathcal{N}$.  The formal definition of a directed graph is similar, the only difference is that the set $\mathcal{E}$ contains ordered pairs  of elements of $\mathcal{N}$. </p>
+
+<p>For more information about networks, see the {%intlink network_introduction%}network introduction{%endintlink%}.</p>
+
+{% endblock%}

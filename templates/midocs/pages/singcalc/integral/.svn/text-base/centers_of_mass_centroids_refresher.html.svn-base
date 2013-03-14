@@ -1,0 +1,81 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "center of mass" %}
+{% index_entry "centroid" %}
+{% title "Centers of mass (centroids)" %}
+{% description "An integral to find the length of a curve." %}
+
+<p>For many (but certainly not all!) purposes in physics and mechanics,
+it is necessary or useful to be able to consider a physical object as
+being a mass concentrated at a single point, its <i>geometric
+center</i>, also called its <b>centroid</b>. <i>The centroid is essentially
+the &lsquo;average&rsquo; of all the points in the object.</i> For simplicity, we will
+just consider the two-dimensional version of this, looking only at
+regions in the plane.</p>
+
+<p>The simplest case is that of a rectangle: it is pretty clear
+that the centroid is the &lsquo;center&rsquo; of the rectangle. That is, if the
+corners are $(0,0), (u,0), (0,v)$ and $(u,v)$, then the centroid is
+$$\biggl({u\over 2},{v\over 2}\biggr)$$
+The formulas below are obtained by &lsquo;integrating up&rsquo; this simple idea:</p>
+
+<p>For the center of mass (centroid) of the plane region
+described by $f(x)\le y\le g(x)$ and $a\le x\le b$, we have
+
+\begin{align*}
+\hbox{ $x$-coordinate of the centroid }&amp;= \hbox{ average $x$-coordinate}\\
+&amp;={\int_a^b x[g(x)-f(x)]\;dx\over \int_a^b [g(x)-f(x)]\;dx}\\
+&amp;={ \int_{\textit{ left}}^{\textit{ right}} x[\textit{ upper}-\textit{ lower}]\;dx \over \int_{\textit{ left }}^{\textit{ right }} [\textit{ upper}-\textit{ lower}]\;dx } \\
+&amp;={ \int_{\textit{ left }}^{\textit{ right }} x[\textit{ upper}-\textit{ lower}]\;dx \over \hbox{ area of the region } }
+\end{align*}</p>
+
+<p>And also
+\begin{align*}
+\hbox{ $y$-coordinate of the centroid }&amp;= \hbox{ average
+$y$-coordinate}\\
+  &amp;={\int_a^b {1\over 2}[g(x)^2-f(x)^2]\;dx \over 
+\int_a^b [g(x)-f(x)]\;dx}\\
+&amp;={\int_{\textit{ left }}^{\textit{ right }} {1\over 2}[\textit{ upper}^2-\textit{
+lower}^2]\;dx 
+\over
+\int_{\textit{ left }}^{\textit{ right }} [\textit{ upper}-\textit{ lower}]\;dx}\\
+&amp;={\int_{\textit{ left }}^{\textit{ right }} {1\over 2}[\textit{ upper}^2-\textit{
+lower}^2]\;dx
+\over 
+\hbox{ area of the region }}
+\end{align*}</p>
+
+<p><i>Heuristic:</i> For the $x$-coordinate: 
+there is an amount
+$(g(x)-f(x))dx$ of the region at distance $x$ from the $y$-axis. This is
+integrated, and then <i>averaged</i> dividing by the <i>total</i>, that is, dividing by
+the <i>area</i> of the entire region.</p>
+
+<p>For the $y$-coordinate: in each vertical band of width $dx$ there is
+amount $dx\;dy$ of the region at distance $y$ from the $x$-axis. This
+is integrated up and then averaged by dividing by the total area.</p>
+
+<p>For example, let's find the centroid of the region bounded by
+$x=0$, $x=1$, $y=x^2$, and $y=0$.
+\begin{align*}
+\hbox{ $x$-coordinate of the centroid }&amp;=
+{\int_0^1 x[x^2-0]\;dx\over \int_0^1 [x^2-0]\;dx}\\
+&amp;={[x^4/4]_0^1 \over [x^3/3]_0^1} = {1/4-0 \over 1/3-0}={3 \over 4}
+\end{align*}
+And
+\begin{align*}\hbox{ $y$-coordinate of the centroid }&amp;= 
+{\int_0^1 {1\over 2}[(x^2)^2-0]\;dx \over \int_0^1 [x^2-0]\;dx}\\
+&amp;={{1\over 2}[x^5/5]_0^1 \over [x^3/3]_0^1}={{1\over 2}(1/5-0) \over
+1/3-0}={3 \over 10}
+\end{align*}</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find the center of mass (centroid) of the region $0\leq x\leq 1$
+and $0\leq y\leq x^2$.</li>
+<li>Find the center of mass (centroid) of the region defined by
+$0\leq x\leq 1, 0\leq y\leq 1$ and $x+y\leq 1$.</li>
+<li>Find the center of mass (centroid) of a homogeneous plate in the
+shape of an equilateral triangle.</li>
+</ol>
+
+{%endblock%}

@@ -1,0 +1,10 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "path connected" "definition" %}
+{% title "Path connected definition" %}
+{% description "A path connected domain is a domain where every pair of points in the domain can be connected by a path going through the domain." %}
+
+<p>A path connected domain is a domain where every pair of points in the domain can be connected by a path going through the domain.</p>
+
+<p class="centeredImage">{% image path_connected %}</p>
+
+{%endblock%}

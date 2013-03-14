@@ -1,0 +1,49 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative" "product rule" %}
+{% index_entry "product rule" %}
+{% index_entry "differentiation rules" "product rule" %}
+{% title "A refresher on the product rule" %}
+{% description "How to compute the derivative of a product." %}
+
+<p>Not only will the <i>product rule</i> be of use in general and later
+on, but it's already helpful in perhaps unexpected ways in dealing
+with polynomials. Anyway, the general rule is
+$${d\over dx}(fg)=f'g+fg'$$
+While this is certainly not as awful as the {%intlink quotient_rule_refresher %}quotient rule{%endintlink%},
+it is not as simple as the rule for sums, which was the good-sounding
+slogan that <i>the derivative of the sum is the sum of the
+derivatives</i>. It is <i>not</i> true that the derivative of the product
+is the product of the derivatives. Too bad. Still, it's not as bad as
+the quotient rule.</p>
+
+<p>One way that the product rule can be useful is in postponing or
+eliminating a lot of algebra. For example, to evaluate
+$${d\over dx}\left((x^3+x^2+x+1)(x^4+x^3+2x+1)\right)$$
+we <i>could</i> multiply out and then take the derivative term-by-term
+as we did with several polynomials above. This would be at least
+mildly irritating because we'd have to do a bit of algebra. Rather,
+just apply the product rule <i>without</i> feeling compelled first to
+do any algebra:
+$${d\over dx}\left((x^3+x^2+x+1)(x^4+x^3+2x+1)\right)$$
+$$=(x^3+x^2+x+1)'(x^4+x^3+2x+1)+(x^3+x^2+x+1)(x^4+x^3+2x+1)'$$
+$$=(3x^2+2x+1)(x^4+x^3+2x+1)+(x^3+x^2+x+1)(4x^3+3x^2+2)$$
+Now if we were somehow still obliged to multiply out, then we'd still
+have to do some algebra. But <i>we can take the derivative without
+multiplying out</i>, if we want to, by using the product rule.</p>
+
+<p>For that matter, once we see that there is a <i>choice</i> about doing
+algebra either <i>before</i> or <i>after</i> we take the derivative, it
+might be possible to make a choice which minimizes our computational
+labor. This could matter.</p>
+
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find ${ d \over dx }(x^3-1)(x^6+x^3+1))$</li>
+<li>Find ${ d \over dx }(x^2+x+1)(x^4-x^2+1)$.</li>
+<li>Find ${ d \over dx }(x^3+x^2+x+1)(x^4+x^2+1))$</li>
+<li>Find ${ d \over dx }(x^3+x^2+x+1)(2x + \sqrt{x}))$</li>
+</ol>
+
+
+{%endblock%}

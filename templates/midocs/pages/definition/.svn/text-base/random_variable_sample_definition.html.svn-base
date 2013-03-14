@@ -1,0 +1,11 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "sample" "definition" %}
+{% title "Sample definition" %}
+{% description "A sample is an outcome of a random experiment.  When we sample a random variable, we obtain one specific value out of the set of its possible values.  That particular value is called a sample." %}
+
+<p>A <em>sample</em> is an outcome of a random experiment.  When we sample a {% intlink random_variable_definition %}random variable{% endintlink%}, we obtain one specific value out of the set of its possible values.  That particular value is called a sample.</p>
+
+<p>The possible values and the likelihood of each is determined by the random variable's {% intlink probability_distribution_idea %}probability distribution{%endintlink%}.</p>
+
+
+{% endblock %}

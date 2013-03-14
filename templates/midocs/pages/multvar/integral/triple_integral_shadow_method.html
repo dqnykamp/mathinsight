@@ -1,0 +1,123 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "triple integral" "shadow method" %}
+{% index_entry "shadow method" "triple integral" %}
+{% title "The shadow method for determining triple integral bounds" %}
+{% description "Explanation of the shadow method for turning a triple integral into a double integral combined with a single integral in order to compute the limits of integration." %}
+
+{% navigation_tag "overview" "Overview" %}
+<p>Although we {% intlink triple_integral_introduction tripleriemann %}define triple integrals{%endintlink%} using a Riemann sum, we usually evaluate triple integrals by turning them into {% intlink triple_integral_introduction tripleiterated %}iterated integrals{%endintlink%} involving three single integrals.  One tricky part of triple integrals is describing the three-dimensional regions of integration and the resulting bounds on the iterated integrals.  Forming {% intlink double_integral_iterated%}double iterated integrals{%endintlink%} is easier because one can draw the domain and label all the edges and corners, which makes determining the bounds more tractable.  Three-dimensional regions are much more difficult to visualize or draw, which can make the prospect of determining integration bounds a formidable task.</p>
+
+<p>Fortunately, there are ways to reduce a triple integral into a double integral combined with a single integral.  One such method is one we call the &ldquo;shadow method,&rdquo; which we describe here.  A related method is one we call the &ldquo;cross section method&rdquo; which we describe on {% intlink triple_integral_cross_section_method %}another page{%endintlink%}.</p>
+
+<p>In the shadow method, you imagine there is a light source, such as the sun, positioned far away along one of the coordinate axis (such as the positive $z$-axis).  We'll think of this sun as being straight up in the sky and think of the chosen coordinate axis as though it were vertical.</p>
+
+<p>As this sun is shining on the three-dimesional region $\dlv$ of our integral, it is casting a shadow onto the flat ground below the region, i.e., on a plane perpendicular to the axis the sun is coming from.  This shadow is a two-dimensional region, and we turn the triple integral over $\dlv$ into a double integral over the shadow.  Inside the double integral, we still need to include a single integral in the third &ldquo;vertical&rdquo; variable, where this variable ranges from the bottom of $\dlv$ to its top.  If, for example, we had chosen $z$ to be the &ldquo;vertical&rdquo; variable where the sun is coming from, the shadow method for integrating a function $f$ over $\dlv$ would be of the form
+\begin{gather*}
+  \iiint_{\dlv}f(x,y,z)dV = \iint_{\text{shadow}} \left( \int_{\text{bottom}(x,y)}^{\text{top}(x,y)} f(x,y,z) dz\right) dx\,dy.
+\end{gather*}
+But, we don't need to have the sun coming from the $z$ direction.  It might be easier to let the sun be in the $x$ direction, giving an integral of the form
+\begin{gather*}
+  \iiint_{\dlv}f(x,y,z) dV= \iint_{\text{shadow}} \left( \int_{\text{bottom}(y,z)}^{\text{top}(y,z)} f(x,y,z) dx\right) dy\,dz,
+\end{gather*}
+or let the sun being in the $y$ direction, giving an integral of the form
+\begin{gather*}
+  \iiint_{\dlv}f(x,y,z)dV = \iint_{\text{shadow}} \left( \int_{\text{bottom}(x,z)}^{\text{top}(x,z)} f(x,y,z) dy\right) dx\,dz.
+\end{gather*}
+We can choose the axis we use for the &ldquo;vertical&rdquo; direction based on the shape of the region $\dlv$.
+</p>
+
+<p>The use of the shadow method is best illustrated by examples.</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $\dlv$ be the three-dimesional region bounded by the vertical planes $x=0$, $y=1$, and $x=y$ as well as the angled planes $z=2+x-y$ and $z=x-y$.  Let $f(x,y,z)=xy$ and compute the integral of $f$ over $\dlv$.</p>
+
+<p><b>Solution</b>: Given that there are three planes parallel to the $z$-axis, we'll use the $z$ direction as the vertical direction.  We'll think of the sun as coming from that direction and casting a shadow below it.  As shown by the below figure, those three vertical planes cause $\dlv$ to cast a triangular shadow.</p>
+
+{% boxedapplet triple_integral_shadow_example_planes %}
+
+<p>According to the shadow method, we need to integrate $x$ and $y$ over this shadow.  Then, for each point $(x,y)$ in the shadow, we need to integrate $z$ from the bottom to the top of $\dlv$.  The bottom and top are formed by the angled planes, so the range of $z$ for each point in the shadow is
+  \begin{gather*}
+  x-y \lt z \lt 2+x-y.
+  \end{gather*}
+  The inner integral is therefore
+  \begin{gather*}
+  \int_{\text{bottom}(x,y)}^{\text{top}(x,y)} f(x,y,z) dz = \int_{x-y}^{2+x-y}f(x,y,z)dz.
+  \end{gather*}
+</p>
+
+<p>The outer double integral is an integral over the shadow. The shadow is the maximal extend of $\dlv$ in the $x$ and $y$ directions.  For this example, the shadow is fairly simple, since the extent of $\dlv$ is determined by the three vertical planes $x=0$, $y=1$ and $x=y$.  In any plane parallel to the $xy$-plane, these planes become lines given by the same equations (as the original equations don't contain a $z$).  The shadow is the triangle bounded by the lines $x=0$, $y=1$ and $x=y$.</p>
+	    
+<p class="centeredImage">{% image triple_integral_triangle_shadow %}</p>
+
+<p>To find bounds for the double integral over the shadow, we'll let $x$ be the inner integral.  For any value of $y$, $x$ ranges from $x=0$ to $x=y$ so the range of $x$ is
+\begin{gather*}
+  0 \lt x \lt y.
+\end{gather*}
+The maximum range of $y$ is shadow is
+\begin{gather*}
+  0 \lt y \lt 1.
+\end{gather*}
+Therefore, the double integral over the shadow is of the form
+\begin{gather*}
+  \iint_{\text{shadow}} \cdots dx\,dy = \int_0^1 \int_0^y \cdots dx\,dy.
+\end{gather*}
+</p>
+
+<p>Putting all the limits of integration together and inserting the integrand $f(x,y,z)=xy$, we calculate the integral:
+\begin{align*}
+\iiint_{\dlv}f(x,y,z)dV &amp;=\int_0^1 \int_0^y \int_{x-y}^{2+x-y} xy\, dz\,dx\,dy\\
+&amp;= \int_0^1 \int_0^y xyz \bigg|_{z=x-y}^{z=2+x-y} dx\,dy\\
+&amp;= \int_0^1 \int_0^y 2xy dx\,dy\\
+&amp;= \int_0^1 x^2y \bigg|_{x=0}^{x=y}dy\\
+&amp;= \int_0^1 y^3 dy = \frac{y^4}{4}\bigg|_0^1 = \frac{1}{4}.
+\end{align*}
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Let $\rho(x,y,z)$ be the charge density at the point $(x,y,z)$ inside an object $\dlv$ bounded by the {%intlink elliptic_paraboloid%}elliptic paraboloids{%endintlink%} $y=5-4 x^2-z^2$ and $y=x^2+z^2/4$.  Set up the integral giving the total charge inside $\dlv$.</p>
+
+<p><b>Solution:</b> The total charge is the integral of the charge density $\rho$ over the region $\dlv$:
+\begin{gather*}
+  \text{total charge} = \iiint_{\dlv} \rho(x,y,z) \, dV.
+\end{gather*}
+Our task is to calculate the limits of integration determined by $\dlv$.</p>
+
+<p>For this region, the shadow method will work well if we choose the $y$-axis as the &ldquo;vertical&rdquo; direction, i.e., the direction where the sun comes from.  If the positive $y$ direction is upward, then one boundary, $y=5-4 x^2-z^2$, is a paraboloid opening downward that intersects the $y$-axis at $y=5$.  The other boundary, $y=x^2+z^2/4$ is a paraboloid that opens upward and intersects the $y$-axis at the origin.  Therefore, the bounded region $\dlv$ between the surfaces will be the region below $y=5-4 x^2-z^2$ and above $y=x^2+z^2/4$, i.e., the region described by 
+$$x^2+\frac{z^2}{4} \le y \le 5-4 x^2-z^2,$$
+as illustrated below.  The two paraboloid surfaces are the top and bottom limits for the shadow method,
+  \begin{gather*}
+  \int_{\text{bottom}(x,z)}^{\text{top}(x,z)} \rho(x,y,z) dy = \int_{x^2+z^2/4}^{5-4 x^2-z^2}\rho(x,y,z)dy.
+  \end{gather*}
+</p>
+
+{% boxedapplet triple_integral_shadow_example_paraboloids%}
+
+<p>The remaining task is to determine the shadow of $\dlv$, illustrated by the ellipse, above.  The widest part of $\dlv$ is where the two paraboloids intersect, i.e., where
+$$x^2+\frac{z^2}{4} = 5-4 x^2-z^2,$$
+which can be written more simply as
+$$x^2+\frac{z^2}{4} = 1.$$
+This boundary of the shadow is an ellipse with a semi-major axis of 2 and a semi-minor axis of 1.  The shadow itself is the region
+$$x^2+\frac{z^2}{4} \le 1,$$
+which includes the interior of the ellipse, shown below.</p>
+
+<p class="centeredImage">{% image triple_integral_ellipse_shadow %}</p>
+
+<p>Since inside the ellipse, $x^2 \le 1- z^2/4$, the range of $x$ for each value of $z$ is 
+$$ -\sqrt{1-z^2/4} \le x \le \sqrt{1-z^2/4}.$$
+The maximum range of $z$ is $-2 \le z \le 2$, so the integration limits for the shadow are
+\begin{gather*}
+  \iint_{\text{shadow}} \cdots dx\,dz = \int_{-2}^2 \int_{-\sqrt{1-z^2/4}}^{\sqrt{1-z^2/4}} \cdots dx\,dz.
+\end{gather*}
+</p>
+
+<p>Putting the top and bottom limits together with the shadow, we conclude that the total charge inside $\dlv$ is the integral
+\begin{align*}
+  \text{total charge} &amp;= \iiint_{\dlv} \rho(x,y,z) \, dV\\
+  &amp;=\int_{-2}^2 \int_{-\sqrt{1-z^2/4}}^{\sqrt{1-z^2/4}}\int_{x^2+z^2/4}^{5-4 x^2-z^2}\rho(x,y,z)dy\,dx\,dz.
+\end{align*}
+</p>
+
+{%endblock%}

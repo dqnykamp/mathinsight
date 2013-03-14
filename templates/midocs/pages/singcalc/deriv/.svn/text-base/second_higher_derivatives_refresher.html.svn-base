@@ -1,0 +1,36 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative" "second"%}
+{% index_entry "derivative" "third"%}
+{% title "The second and higher derivatives" %}
+{% description "Taking derivatives multiple times to calculate the second or higer derivative." %}
+
+<p>The <b>second derivative</b> of a function is simply <i>the
+derivative of the derivative</i>. The <b>third derivative</b> of a
+function is the derivative of the second derivative. And so on.</p>
+
+<p>The second derivative of a function $y=f(x)$ is written as
+$$y''=f''(x)={d^2\over dx\,^2}f={d^2\,f\over dx\,^2}={d^2\,y\over dx\,^2}$$
+The third derivative is
+$$y'''
+=f'''(x)={d^3\over dx\,^3}f={d^3\,f\over dx\,^3}={d^3\,y\over dx\,^3}$$
+And, generally, we can put on a &lsquo;prime&rsquo; for each derivative taken. Or
+write
+$${d^n\over dx\,^n}f={d^n\,f\over dx\,^n}={d^n\,y\over dx\,^n}$$
+for the $n$th derivative. There is yet another notation for high order
+derivatives where the number of &lsquo;primes&rsquo; would become unwieldy:
+$${d^n\,f\over dx\,^n}=f^{(n)}(x)$$
+as well.</p>
+
+<p>The geometric interpretation of the higher derivatives is subtler than
+that of the first derivative, and we won't do much in this direction,
+except for the {% intlink inflection_points_concavity_upward_downward_refresher %}next little section{%endintlink%}.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find $f"(x)$ for $f(x)=x^3-5x+1$.</li>
+<li>Find $f"(x)$ for $f(x)=x^5-5x^2+x-1$.</li>
+<li>Find $f"(x)$ for $f(x)=\sqrt{x^2-x+1}$.</li>
+<li>Find $f"(x)$ for $f(x)=\sqrt{x}$.</li>
+</ol>
+
+{%endblock%}

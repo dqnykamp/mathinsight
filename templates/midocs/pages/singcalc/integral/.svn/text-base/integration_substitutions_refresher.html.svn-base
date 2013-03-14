@@ -1,0 +1,57 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integration" "substitution"%}
+{% index_entry "substitution" %}
+{% index_entry "u-substitution" %}
+{% title "Integration substitutions" %}
+{% description "Reversing the chain rule to compute integrals." %}
+
+<p>The <i>{% intlink chain_rule_refresher %}chain rule{%endintlink%}</i> can also be &lsquo;run backward&rsquo;, and is called <b>change of variables</b> or <b>substitution</b> or sometimes <b>u-substitution</b>. Some examples of what happens are straightforward,
+but others are less obvious. It is at this point that the capacity to
+<i>recognize derivatives</i> from past experience becomes very
+helpful. </p>
+
+<p><i>Example</i> Since (by the chain rule)
+$${d\over dx} e^{\sin x}=\cos x\;e^{\sin x}$$
+then we can anticipate that
+$$\int \cos x\;e^{\sin x}\; dx= e^{\sin x}+C$$</p>
+
+<p><i>Example</i> Since (by the chain rule)
+$${d\over dx} \sqrt{x^5+3x}={1\over 2}(x^5+3x)^{-1/2}\cdot(5x^4+3)$$
+then we can anticipate that
+$$\int {1\over 2}(5x^4+3)(x^5+3x)^{-1/2}\;dx=\sqrt{x^5+3x}+C$$</p>
+
+<p>Very often it happens that things are <i>off by a
+constant</i>. This should not deter a person from recognizing the
+possibilities. For example: since, by the chain rule,
+$${d\over dx}\sqrt{5+e^x}={1\over 2}(5+e^x)^{-1/2}\cdot e^x$$
+then
+$$\int e^x\,(5+e^x)^{-1/2}\;dx=2\int {1\over 2}e^x(5+e^x)^{-1/2}\;dx=
+2\,\sqrt{5+e^x}+C$$
+Notice how for &lsquo;bookkeeping purposes&rsquo; we put the ${1\over 2}$ into
+the integral (to make the constants right there) and put a
+compensating $2$ outside. </p>
+
+<p><i>Example</i>: Since (by the chain rule)
+$${d\over dx}\sin^7(3x+1)=7\cdot \sin^6(3x+1)\cdot \cos (3x+1)\cdot
+3$$
+then we have
+\begin{multline*}\int \cos(3x+1)\,\sin^6(3x+1)\;dx\\
+={1\over 21}\int 7\cdot 3\cdot \cos(3x+1) \sin^6(3x+1)\; dx=
+{1\over 21} \sin^7(3x+1)+C
+\end{multline*}</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>$\int \cos x\,\sin x\,dx=?$</li>
+<li>$\int 2x \;e^{x^2}\;dx=?$</li>
+<li>$\int 6x^5\;e^{x^6}\; dx=?$</li>
+<li>$\int { \cos x \over \sin x }\; dx=?$</li>
+<li>$\int \cos x e^{\sin x}\; dx=?$</li>
+<li>$\int { 1 \over 2\sqrt{x }}e^{\sqrt{x}}\; dx=?$</li>
+<li>$\int \cos x \sin^5 x\; dx=?$</li>
+<li>$\int \sec^2 x \tan^7 x\; dx=?$</li>
+<li>$\int (3\cos x+ x)\,e^{6\sin  x+x^2}\,dx=?$</li>
+<li>$\int e^x\sqrt{e^x+1}\,dx=?$</li>
+</ol>
+
+{%endblock%}

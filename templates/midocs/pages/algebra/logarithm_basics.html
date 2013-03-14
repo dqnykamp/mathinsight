@@ -1,0 +1,181 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "logarithm" "basic rules" %}
+{% title "Basic idea and rules for logarithms" %}
+{% description "A brief overview of the basic idea and rules for logarithms." %}
+
+{% navigation_tag "idea" "Basic idea" %}
+<h4>The basic idea</h4>
+
+<p>A logarithm is the opposite of a {% intlink exponentiation_basic_rules %}power{%endintlink%}.  In other words, if we take a logarithm of a number, we undo an {% intlink exponentiation_basic_rules %}exponentiation{%endintlink%}.</p>
+
+<p>Let's start with simple example.  If we take the base $b=2$ and raise it to the power of $k=3$, we have the expression $2^3$.  The result is some number, we'll call it $c$, defined by $2^3=c$.  
+We can use the {% intlink exponentiation_basic_rules %}rules of exponentiation{%endintlink%} to  calculate that the result is
+$$c= 2^3 = 8.$$
+</p>
+
+<p>Let's say I didn't tell you what the exponent $k$ was.  Instead, I told that the base was $b=2$ and the final result of the exponentiation was $c=8$.  To calculate the exponent $k$, you need to solve
+$$2^k = 8.$$
+From the above calculation, we already know that $k=3$.  But, what if I changed my mind, and told you that the result of the exponentiation was $c=4$, so you need to solve $2^k=4$?  Or, I could have said the result was $c=16$ (solve $2^k=16$) or $c=1$ (solve $2^k=1$).</p>
+
+<p>A logarithm is a function that does all this work for you.  We define one type of logarithm (called &ldquo;log base 2&rdquo; and denoted $\log_2$) to be the solution to the problems I just asked.  Log base 2 is defined so that
+$$\log_2 c = k$$
+is the solution to the problem 
+$$2^k=c$$
+for any given number $c$.  In other words, the logarithm gives the exponent as the output if you give it the exponentiation result as the input.  To get all answers for the above problems, we just need to give the logarithm the exponentiation result $c$ and it will give the right exponent $k$ of $2$.  The solution to the above problems are:
+\begin{align*}
+  \log_2 8 &= 3\\
+  \log_2 4 &=2\\
+  \log_2 16 &= 4\\
+  \log_2 1 &=0
+\end{align*}
+</p>
+
+<p>Just like we can change the base $b$ for the {% intlink exponential_function%}exponential function{%endintlink%}, we can also change the base $b$ for the logarithmic function.  The logarithm with base $b$ is defined so that
+$$\log_b c = k$$
+is the solution to the problem 
+$$b^k=c$$
+for any given number $c$ and any base $b$.</p>
+
+<p>For example, since we can calculate that $10^3=1000$, we know that $\log_{10} 1000 = 3$ (&ldquo;log base 10 of 1000 is 3&rdquo;).  Using base 10 is fairly common.  But, since in science, we typically use {% intlink exponential_function exponent_base_e %}exponents with base $e${%endintlink%}, it's even more natural to use $e$ for the base of the logarithm.  This natural logarithm is frequently denoted by $\ln(x)$, i.e., 
+$$\ln(x) = \log_e x.$$
+In other words,
+\begin{gather}
+k= \ln(c)
+  \label{naturalloga}
+\end{gather}
+is the solution to the problem
+\begin{gather}
+e^k = c
+  \label{naturallogb}
+\end{gather}
+for any number $c$.
+Since using base $e$ is so natural to mathematicians, they will sometimes just use the notation $\log x$ instead of $\ln x$.  But, if someone uses $\log x$ without stating the logarithm, you might not know what base they are implying, so it's good to ask.</p>
+
+
+{% navigation_tag "rules" "Basic rules" %}
+<h4>Basic rules for logarithms</h4>
+
+<p>Since taking a logarithm is the opposite of exponentiation (more precisely, the logarithmic function $\log_b x$ is the {% intlink inverse_function_definition%}inverse function{%endintlink%} of the {%intlink exponential_function%}exponential function{%endintlink%} $b^x$), we can derive the basic rules for logarithms from the {% intlink exponentiation_basic_rules %}basic rules for exponents{%endintlink%}.</p>
+
+<p>For simplicity, we'll write the rules in terms of the natural logarithm $\ln(x)$.  The rules apply for any logarithm $\log_b x$, except that you have to replace any occurence of $e$ with the new base $b$.</p>
+
+<p>The natural log was defined by equations \eqref{naturalloga} and \eqref{naturallogb}.  If we plug the value of $k$ from equation \eqref{naturalloga} into equation \eqref{naturallogb}, we determine that a relationship between the natural log and the exponential function is
+\begin{gather}
+  e^{\ln c} = c.
+  \label{lnexpinversesa}
+\end{gather}
+Or, if we plug in the value of $c$ from \eqref{naturallogb} into equation \eqref{naturalloga}, we'll obtain another relationship
+\begin{gather}
+  \ln \bigl(e^{k}\bigr) = k.
+  \label{lnexpinversesb}
+\end{gather}
+These equations simply state that $e^x$ and $\ln x$ are inverse functions.  We'll use equations \eqref{lnexpinversesa} and \eqref{lnexpinversesb} to derive the following rules for the logarithm.</p>
+
+<table class="basic compact">
+  <tr><th>Rule or special case</th><th>Formula</th></tr>
+  <tr><td><a href="#product">Product</a></td><td>$\ln(xy) = \ln(x)+\ln(y)$</td></tr>
+  <tr><td><a href="#quotient">Quotient</a></td><td>$\ln(x/y) = \ln(x)-\ln(y)$</td></tr>
+  <tr><td><a href="#log_power">Log of power</a></td><td>$\ln(x^y) = y\ln(x)$</td></tr>
+  <tr><td><a href="#log_e">Log of $e$</a></td><td>$\ln(e)=1$</td></tr>
+  <tr><td><a href="#log_one">Log of one</a></td><td>$\ln(1)=0$</td></tr>
+  <tr><td><a href="#log_reciprocal">Log reciprocal</a></td><td>$\ln(1/x)=-\ln(x)$</td></tr>
+</table>
+
+{% navigation_tag "product" "Basic rules" "Product rule" %}
+<h5>The product rule</h5>
+
+<p>We can use the {% intlink exponentiation_basic_rules product %}product rule for exponentiation{% endintlink%} to derive a corresponding product rule for logarithms.  Using the base $b=e$, the product rule for exponentials is
+\begin{gather*}
+e^ae^b = e^{a+b}
+\end{gather*}
+for any numbers $a$ and $b$.  Starting with the log of the product of $x$ and $y$, $\ln(xy)$, we'll use equation \eqref{lnexpinversesa} (with $c=xy$) to write
+$$e^{\ln(xy)}=xy.$$
+Then, we'll use equation \eqref{lnexpinversesa} two more times (with $c=x$ and with $c=y$) to write $xy$ in terms of $\ln(x)$ and $\ln(y)$,
+\begin{align*}
+  e^{\ln(xy)}&=xy\\
+  &=e^{\ln(x)}e^{\ln(y)}.
+\end{align*}
+Lastly, we use the product rule for exponents with $a=\ln(x)$ and $b=\ln(y)$ to conclude that
+\begin{align*}
+  e^{\ln(xy)}&=e^{\ln(x)}e^{\ln(y)}\\
+  &= e^{\ln(x)+\ln(y)}.
+\end{align*}
+</p>
+
+<p>When  we take the logarithm of both sides of $e^{\ln(xy)} =e^{\ln(x)+\ln(y)}$, we obtain
+$$\ln\bigl(e^{\ln(xy)}\bigr) =\ln\bigl(e^{\ln(x)+\ln(y)}\bigr).$$
+The logarithms and exponentials cancel each other out (equation \eqref{lnexpinversesb}), giving our product rule for logarithms,
+$$\ln(xy) =\ln(x)+\ln(y).$$
+</p>
+
+{% navigation_tag "quotient" "Basic rules" "Quotient rule" %}
+<h5>The quotient rule</h5>
+
+<p>The quotient rule for logarithms follows from the {% intlink exponentiation_basic_rules quotient %}quotient rule for exponentiation{% endintlink%},
+\begin{gather*}
+\frac{e^a}{e^b} = e^{a-b}
+\end{gather*}
+in the same way.</p>
+
+<p>Starting with $c=x/y$ in equation \eqref{lnexpinversesa} and applying it again with $c=x$ and $c=y$, we can calculate that
+\begin{align*}
+e^{\ln(x/y)}&=\frac{x}{y}\\
+&= \frac{e^{\ln(x)}}{e^{\ln(y)}}\\
+&= e^{\ln(x)-\ln(y)},
+\end{align*}
+where in the last step we used the quotient rule for exponentation with $a=\ln(x)$ and $b=\ln(y)$.  Since $e^{\ln(x/y)} = e^{\ln(x)-\ln(y)}$, we can conclude that the quotient rule for logarithms is
+$$\ln(x/y) = \ln(x)-\ln(y).$$
+(This last step could follow from, for example, taking logarithms of both sides  of $e^{\ln(x/y)} = e^{\ln(x)-\ln(y)}$ like we did in the last step for the product rule.) </p>
+
+{% navigation_tag "log_power" "Basic rules" "Log of a power" %}
+<h5>Log of a power</h5>
+
+<p>To obtain the rule for the log of a power, we start with the rule for {% intlink exponentiation_basic_rules power_power %}power of a power{% endintlink%},
+\begin{gather}
+  (e^a)^b = e^{ab}.
+\end{gather}
+</p>
+
+<p>Starting with $c=x^y$ in equation \eqref{lnexpinversesa} and applying it again, this time just once more with $c=x$, we can calculate that
+\begin{align*}
+  e^{\ln (x^y)} &= x^y\\
+  &= \bigl(e^{\ln(x)}\bigr)^y\\
+  &= e^{y\ln(x)}
+\end{align*}
+where in the last step we used the power of a power rule for $a=\ln(x)$ and $b=y$.   From $e^{\ln (x^y)} = e^{y\ln(x)}$, we can conclude that
+$$\ln (x^y) = y\ln(x),$$
+which is the rule for the log of a power.</p>
+
+{% navigation_tag "log_e" "Basic rules" "Log of $e$" %}
+<h5>Log of $e$</h5>
+
+<p>The formula for the log of $e$ comes from the formula for the  {% intlink exponentiation_basic_rules power_one %}power of one{% endintlink%},
+$$e^1=e.$$
+Just take the logarithm of both sides of this equation and use equation \eqref{lnexpinversesb} to conclude that 
+\begin{align*}
+  \ln(e) =  1.
+\end{align*}
+</p>
+
+{% navigation_tag "log_one" "Basic rules" "Log of one" %}
+<h5>Log of one</h5>
+
+<p>The formula for the log of one comes from the formula for the  {% intlink exponentiation_basic_rules power_zero %}power of zero{% endintlink%},
+$$e^0=1.$$
+Just take the logarithm of both sides of this equation and use equation \eqref{lnexpinversesb} to conclude that 
+\begin{align*}
+  \ln(1) = 0.
+\end{align*}
+</p>
+
+{% navigation_tag "log_reciprocal" "Basic rules" "Log of reciprocal" %}
+<h5>Log of reciprocal</h5>
+
+<p>The rule for the log of a reciprocal follows from the rule for the {% intlink exponentiation_basic_rules power_negative_one %}power of negative one{% endintlink%} 
+$$x^{-1}=\frac{1}{x}$$
+and the above rule for the <a href="#log_power">log of a power</a>.  Just substitute $y=-1$ into the the log of power rule, and you have that
+$$\ln(1/x) = - \ln (x).$$</p>
+
+
+
+{% endblock %}

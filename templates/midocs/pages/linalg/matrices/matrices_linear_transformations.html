@@ -1,0 +1,151 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "matrix" "linear transformation"%}
+{% index_entry "linear transformation" "matrix" %}
+{% title "Matrices and linear transformations" %}
+{% description "A description of how every matrix can be associated with a linear transformation." %}
+
+<p>Let $A$ be a $2 \times 3$ matrix, say
+\begin{align*}
+  A = \left[
+    \begin{array}{rrr}
+      1 &amp; 0 &amp; -1\\
+      3 &amp; 1 &amp; 2
+    \end{array}
+  \right].
+\end{align*}
+What do you get if you multiply $A$ by the vector $\vc{x}=(x,y,z)$?
+Remembering {%intlink matrix_vector_multiplication %}matrix multiplication{%endintlink%}, we see that
+\begin{align*}
+  A\vc{x} = 
+  \left[
+    \begin{array}{rrr}
+      1 &amp; 0 &amp; -1\\
+      3 &amp; 1 &amp; 2
+    \end{array}
+  \right]
+  \left[
+    \begin{array}{c}
+      x\\
+      y\\
+      z
+    \end{array}
+  \right]
+  =
+  \left[
+    \begin{array}{c}
+      x - z\\
+      3x + y +2z
+    \end{array}
+  \right]
+  =(x-z,3x+y+2z).
+\end{align*}
+</p>
+
+<p>
+If we define a function $\vc{f}(\vc{x}) = A\vc{x}$, we have created a
+function of three variables $(x,y,z)$ whose output is a
+two-dimensional vector $(x-z,3x+y+2z)$.  Using 
+{% intlink function_notation%}function notation{%endintlink%}, we can
+write $\vc{f} : \R^3 \to \R^2$.  We have created a
+vector-valued function of three variables.  So, for example,
+$\vc{f}(1,2,3) = (1-3,3\cdot 1 + 2 + 2 \cdot 3) = (-2, 11)$.
+</p>
+
+<p>
+Given any $m \times n$ matrix $B$, we can define a function $\vc{g}:
+\R^n \to \R^m$ (note the order of $m$ and $n$
+switched) by $\vc{g}(\vc{x}) = B \vc{x}$, where $\vc{x}$ is an
+$n$-dimensional vector.  As another example, if
+\begin{align*}
+    C = \left[
+    \begin{array}{rr}
+      5 &amp; -3\\
+      1 &amp; 0\\
+      -7 &amp; 4\\
+      0 &amp; -2
+    \end{array}
+  \right],
+\end{align*}
+then the function $\vc{h}(\vc{y}) = C \vc{y}$, where $y=(y_1, y_2)$, is $\vc{h}(\vc{y}) = (5y_1-3y_2,y_1,-7y_1+4y_2,-2y_2)$.
+</p>
+
+<p>
+In this way, we can associate with every matrix a function.  What
+about going the other way around?  Given some function, say $\vc{g}:
+\R^n \to \R^m$, can we associate with $\vc{g}(\vc{x})$ some matrix?
+We can only if $\vc{g}(\vc{x})$ is a special kind of function called a
+{%intlink linear_transformation_definition_euclidean%}linear transformation{%endintlink%}.
+The function $\vc{g}(\vc{x})$ is a linear
+transformation if each term of each component of
+$\vc{g}(\vc{x})$ is a number times one of the variables.  So, for
+example, the functions $\vc{f}(x,y)=(2x+y,y/2)$ and
+$\vc{g}(x,y,z)=(z,0,1.2 x)$ are linear transformation, but none of the following
+functions are: $\vc{f}(x,y)=(x^2,y,x)$,
+$\,\vc{g}(x,y,z)=(y,xyz)$, or $\vc{h}(x,y,z)=(x+1,y,z)$.  Note that
+both functions we obtained from matrices above were linear transformations.
+</p>
+
+<p>
+Let's take the function $\vc{f}(x,y)=(2x+y,y,x-3y)$, which is a linear
+transformation from $\R^2$ to $\R^3$.  The matrix $A$ associated with
+$\vc{f}$ will be a $3 \times 2$ matrix, which we'll write as 
+\begin{align*}
+    A = 
+  \left[
+    \begin{array}{cc}
+      a_{11} &amp; a_{12}\\
+      a_{21} &amp; a_{22}\\
+      a_{31} &amp; a_{32}
+    \end{array}
+  \right].
+\end{align*}
+We need $A$ to satisfy $\vc{f}(\vc{x})=A\vc{x}$, where $\vc{x}=(x,y)$.
+</p>
+
+<p>
+The easiest way to find $A$ is the following.  If we let
+$\vc{x}=(1,0)$, then $f(\vc{x})= A\vc{x}$ is the first column of $A$.  (Can you
+see that?)  So we know the first column of $A$ is simply 
+\begin{align*}
+  f(1,0)=(2,0,1) = 
+  \left[
+    \begin{array}{r}
+      2\\0\\1
+    \end{array}
+  \right].
+\end{align*}
+</p>
+
+<p>
+Similarly, if $\vc{x}=(0,1)$, then $f(\vc{x})=A\vc{x}$ is the second column of
+$A$, which is
+\begin{align*}
+  f(0,1) = (1,1,-3) = 
+  \left[
+    \begin{array}{r}
+      1\\1\\-3
+    \end{array}
+  \right].
+\end{align*}
+</p>
+
+<p>
+Putting these together, we see that
+the linear transformation $\vc{f}(\vc{x})$ is associated with the matrix
+\begin{align*}
+  A=
+  \left[
+    \begin{array}{rr}
+      2 &amp; 1\\
+      0 &amp; 1\\
+      1 &amp; -3
+   \end{array}
+  \right].
+\end{align*}
+</p>
+
+<p>
+The important conclusion is that every linear transformation is associated
+with a matrix and vice versa.</p>
+
+{%endblock%}

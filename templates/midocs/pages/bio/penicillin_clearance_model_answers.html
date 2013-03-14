@@ -1,0 +1,28 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Penicillin clearance model exercise answers" %}
+{% description "Answers to selected exercises on developing discrete dynamical systems for the clearance of penicillin." %}
+
+<p>Here we give answers to some of the {% intlink penicillin_clearance_model_exercises %}exercises on penicillin clearance.{%endintlink%}.</p>
+
+{% navigation_tag "exercise1" "Exercise answers" "Exercise 1" %}
+<h4>{% intlink penicillin_clearance_model_exercises exercise1 normaltext %}Exercise 1{%endintlink%}</h4>
+
+<p>$$A_t = 2 \times 0.95^t, \qquad A_{20} = 0.717$$</p>
+
+{% navigation_tag "exercise2" "Exercise answers" "Exercise 2" %}
+<h4>{% intlink penicillin_clearance_model_exercises exercise2 normaltext %}Exercise 2{%endintlink%}</h4>
+
+<p>\begin{align*}
+S_{t+1} - S_t & =  \text{Amount added to serum} -
+\text{Amount removed from serum} \\
+& =  0.10 I_t \quad - \quad 0.15 \times S_t
+\end{align*}
+
+{% navigation_tag "exercise3" "Exercise answers" "Exercise 3" %}
+<h4>{% intlink penicillin_clearance_model_exercises exercise3 normaltext %}Exercise 3{%endintlink%}</h4>
+
+<p>a.  $P_t \approx 71 \times 0.78^t $</p>
+
+
+
+{%endblock%}

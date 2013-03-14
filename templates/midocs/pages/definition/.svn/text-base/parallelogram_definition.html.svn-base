@@ -1,0 +1,14 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parallelogram" "definition" %}
+{% title "Parallelogram definition" %}
+{% description "A parallelogram is a quadrilateral that has two pairs of parallel sides." %}
+
+
+<p>A parallelogram is a quadrilateral that has two pairs of parallel sides.</p>
+
+<p class="centeredImage">{% image parallelogram %}</p>
+
+<p>The parallelogram has vertices at the points $\vc{a}$, $\vc{b}$, $\vc{c}$, and $\vc{d}$.  We say it is spanned by the {% intlink vector_introduction %}vectors{%endintlink%} $\vc{u}$ and $\vc{v}$.  The point  $\vc{e}$ is the midpoint  between $\vc{a}$ and $\vc{d}$ as well as the midpoint between $\vc{b}$ and $\vc{c}$.</p>
+
+{%endblock%}
+

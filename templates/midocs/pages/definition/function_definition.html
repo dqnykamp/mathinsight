@@ -1,0 +1,17 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "function" "definition" %}
+{% title "Function definition" %}
+{% description "A function is a relation from a set of inputs to a set of possible outputs where each input is related to exactly one output." %}
+
+
+<p>A technical definition of a function is: a {% intlink relation_definition%}relation{%endintlink%} from a set of inputs to a set of possible outputs where each input is related to exactly one output.</p>
+
+<p>This means that if the object $x$ is in the set of inputs (called the {% intlink domain_definition%}domain{%endintlink%}) then a function $f$ will map the object $x$ to exactly one object $f(x)$ in the set of possible outputs (called the {%intlink codomain_definition%}codomain{%endintlink%}).</p>
+
+<p>The notion of a function is easily understood using the metaphor of a {%intlink function_machine %}function machine{%endintlink%} that takes in an object for its input and, based on that input, spits out another object as its output.</p>
+
+<p>A function is more formally defined given a set of inputs $X$ ({% intlink domain_definition%}domain{%endintlink%}) and a set of possible outputs $Y$ ({%intlink codomain_definition%}codomain{%endintlink%}) as a set of ordered pairs $(x,y)$ where $x \in X$ {% confusedlink set_membership_symbol_definition %} and $y \in Y$, subject to the restriction that there can be only one ordered pair with the same value of $x$.  We can write the statement that $f$ is a function from $X$ to $Y$ using the {% intlink function_notation%}function notation{%endintlink%} $f: X \to Y$. </p>
+
+<p>For more information about functions, check out the {%intlink function_machine%}function machine{%endintlink%} or the {% intlink function_examples %}function examples{% endintlink%}.</p>
+
+{%endblock%}

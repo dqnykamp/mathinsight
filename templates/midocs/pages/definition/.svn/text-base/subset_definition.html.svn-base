@@ -1,0 +1,11 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "subset" "definition" %}
+{% title "Definition of subset" %}
+{% description "A set $A$ is a subset of another set $B$ if all elements of the set $A$ are elements of the set $B$. The subset relationship is denoted as $A \subset B$." %}
+
+<p>A set $A$ is a subset of another set $B$ if all elements of the set $A$ are elements of the set $B$. In other words, the set $A$ is contained inside the set $B$. The subset relationship is denoted as $A \subset B$. </p>
+
+<p>For example, if $A$ is the set $\{ \diamondsuit, \heartsuit, \clubsuit,  \spadesuit \}$ and $B$ is the set $\{ \diamondsuit, \triangle, \heartsuit, \clubsuit,  \spadesuit \}$, then $A \subset B$ but $B \not\subset A$.  Since $B$ contains elements not in $A$, we can say that $A$ is a {% intlink proper_subset_definition%}proper subset{%endintlink%} of $B$.  Or if $I_1$ is the interval $[0,2]$ and $I_2$ is the interval $[0,1]$, then $I_2 \subset I_1$.</p>
+
+
+{%endblock%}

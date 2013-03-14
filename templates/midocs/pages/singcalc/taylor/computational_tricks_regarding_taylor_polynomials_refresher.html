@@ -1,0 +1,63 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor polynomial"  %}
+{% title "Computational tricks regarding Taylor polynomials" %}
+{% description "A short cut to calculating Taylor polynomials in terms of Taylor polynomials of simple functions." %}
+
+<p>The obvious question to ask about Taylor polynomials is &lsquo;What are the
+first so-many terms in the Taylor polynomial of some function expanded
+at some point?&rsquo;.</p>
+
+<p>The most straightforward way to deal with this is just to do
+what is indicated by the formula: take however high order derivatives
+you need and plug in. However, very often this is not at all the most
+efficient.</p>
+
+<p>Especially in a situation where we are interested in a composite
+function of the form $f(x^n)$ or $f(\hbox{polynomial in }x)$ with a
+&lsquo;familiar&rsquo; function $f$, there are alternatives.</p>
+
+<p>For example, looking at $f(x)=e^{x^3}$, if we start taking
+derivatives to expand this at $0$, there will be a big mess pretty
+fast. On the other hand, we might start with the &lsquo;familiar&rsquo; expansion
+for $e^x$ 
+$$e^x=1+x+{x^2\over 2!}+{x^3\over 3!}+{e^c\over 4!}x^4$$
+with some $c$ between $0$ and $x$, where our choice to cut it off
+after that many terms was simply a whim. But then
+replacing $x$ by $x^3$ gives
+$$e^{x^3}=1+x^3+{x^6\over 2!}+{x^9\over 3!}+{e^c\over 4!}x^{12}$$
+with some $c$ between $0$ and $x^3$. Yes, we need to keep track of $c$
+in relation to the <i>new</i> $x$.</p>
+
+<p>So we get a polynomial plus that funny term with the &lsquo;c&rsquo; in
+it, for the remainder. Yes, this gives us a different-looking error
+term, but that's fine.</p>
+
+<p>So we obtain, with relative ease, the expansion of degree
+<i>eleven</i> of this function, which would have been horrible to
+obtain by repeated differentiation and direct application of the
+general formula. Why &lsquo;eleven&rsquo;?: well, the error term has the $x^{12}$
+in it, which means that the polynomial itself stopped with a $x^{11}$
+term. Why didn't we see that term? Well, evidently the coefficients of
+$x^{11}$, and of $x^{10}$ (not to mention $x,x^2,x^4,x^5,x^7,x^8$!)
+are <i>zero</i>.</p>
+
+<p>As another example, let's get the degree-eight expansion of
+$\cos x^2$ at $0$. Of course, it makes sense to use
+$$\cos x=1-{x^2\over 2!}+{x^4\over 4!}+{-\sin c\over 5!}x^5$$
+with $c$ between $0$ and $x$, where we note that $-\sin x$ is the
+fifth derivative of $\cos x$. Replacing $x$ by $x^2$, this becomes
+$$\cos x^2=1-{x^4\over 2!}+{x^8\over 4!}+{-\sin c\over 5!}x^{10}$$
+where now we say that $c$ is between $0$ and $x^2$.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Use a shortcut to compute the Taylor expansion at $0$
+of $\cos (x^5)$.</li>
+<li>Use a shortcut to compute the Taylor expansion at $0$ of
+$e^{(x^2+x)}$. </li>
+<li>Use a shortcut to compute the Taylor expansion at $0$ of
+$\log({ 1 \over 1-x })$. </li>
+</ol>
+
+
+{%endblock%}

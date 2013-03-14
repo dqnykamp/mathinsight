@@ -1,0 +1,101 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "doubling time"  %}
+{% index_entry "half-life" %}
+{% index_entry "exponential growth" "doubling time" %}
+{% index_entry "exponential decay" "half-life"  %}
+{% title "Doubling time and half-life of exponential growth and decay" %}
+{% description "How exponential growth is characterized by a doubling time and exponential decay is characterized by a half-life." %}
+
+{% boxedvideo doubling_time_half_life_discrete %}
+
+<p>Sometimes, a population size $P_T$ as a function of time can be {% intlink exponential_growth_decay_discrete%}characterized by an exponential function.{%endintlink%}  For example, the {% intlink bacteria_growth_initial_model %}population growth of bacteria{% endintlink %}  was characterized by the function $P_T = 0.022 \times 1.032^T$.  Such exponential growth or decay can be characterized by the time it takes for the population size to double or shrink in half.  For exponential growth, we can define a characteristic <em><a href="#doubling_time">doubling time</a></em>.  For exponential decay, we can define a characteristic <em><a href="#half_life">half-life</a></em>.</p>
+
+{% navigation_tag "doubling_time" "Doubling time" %}
+<h4>Doubling time</h4>
+
+<p>The <em>doubling time</em> of a population exhibiting exponential growth is the time required for a population to double.  Implicit in this definition is the fact that, no matter when you start measuring, the population will always take the same amount of time to double.  This doubling time is illustrated in the following applet.</p>
+
+{% boxedapplet doubling_time_half_life_discrete %}
+
+
+<p>For example, we fit a linear {% intlink discrete_dynamical_system_introduction %}discrete dynamical system{%endintlink%} model to the {% intlink bacteria_growth_initial_model %}population growth of the bacteria <i>V. natriegens</i>{%endintlink%}.  The resulting exponential growth equation was $P_T = 0.022 \times 1.032^T$  ({% intlinkeq bacteria_growth_initial_model specific_solution_time_units %}of the bacteria growth page{%endintlinkeq%}.)  We can plot the <i>V. natriegens</i> along with the model function in a modified version of the above applet.</p>
+
+{% boxedapplet doubling_time_half_life_bacteria_data 0 0 "The previous applet shown with data from the population growth of the bacteria <i>V. natriegens</i> (blue points).  For the model $P_T = 0.022 \times 1.032^T$ fit to the data, the doubling time is about 22 minutes." %}
+
+<p>Observe that at $T = 26$, $P = 0.05$
+and at $T=48$, $P = 0.1$; thus $P$ doubled from 0.05 to 0.1
+in the 22 minutes between
+$T=26$ and $T=48$.  Also, at $T=70$, $P = 0.2$ so the population also
+doubled from 0.1 to 0.2 between $T=48$ and $T=70$, which is also 22 minutes.</p>
+
+<p>The doubling time, $T_{\text{double}}$, can be computed as follows for
+exponential growth of the form
+\begin{gather}
+x_t = x_0 \times b^t, \quad \text{for $b > 1$},
+{% equation_tag expgrowth 1 %}
+\end{gather}
+where $x_0$ is the population size at time $t=0$.</p>
+
+<p>An important feature of exponential growth is that it doesn't matter where we start measuring in order to calculate the doubling time.  We'll choose some arbitrary time $t_1$ so that $x_{t_1}$ is the population size at that time.  We want to calculate the time $t_2$ at which the population size has double to twice $x_{t_1}$.  If $x_{t_2}= 2 x_{t_1}$, then the doubling time is $T_{\text{double}}=t_2-t_1$.  We'll show that this $T_{\text{double}}$ won't depend on our choice of $t_1$.</p>
+
+<p>To determine $t_2$ (and hence $T_{\text{double}}$), we must solve the equation
+\begin{gather*}
+  x_{t_2} = 2 x_{t_1}
+\end{gather*}
+which, according to the model of equation \eqref{expgrowth}, we can rewrite as
+\begin{gather*}
+  x_0 \times b^{t_2} = 2 x_0 \times b^{t_1}.
+\end{gather*}
+Dividing both sides of the equation by $x_0  \times b^{t_1}$, we can simplify the condition to
+\begin{gather*}
+ \frac{b^{t_2}}{b^{t_1}} = 2,
+\end{gather*}
+which is the same as
+\begin{gather*}
+ b^{t_2-t_1} = 2.
+\end{gather*}
+As we claimed at the beginning, we can find an equation for  $T_{\text{double}}=t_2-t_1$ that doesn't depend on our choice of $t_1$.  Substituting in this expression for $T_{\text{double}}=t_2-t_1$ into the previous equation, we obtain our equation for $T_{\text{double}}$:
+\begin{gather*}
+ b^{T_{\text{double}}} = 2.
+\end{gather*}
+</p>
+
+<p>We can make this equation look even nicer by taking the logarithm of both sides.
+\begin{gather*}
+ \log b^{T_{\text{double}}} = \log 2.
+\end{gather*}
+Then, based on the properties of the logarithm, we can bring the exponent down to write the answer as 
+\begin{gather*}
+ T_{\text{double}}\log b = \log 2.
+\end{gather*}
+or
+\begin{gather}
+ T_{\text{double}}= \frac{\log 2}{\log b}.
+  {% equation_tag doubling_time 2 %}
+\end{gather}
+</p>
+
+<p>Important points to remember about the doubling time $T_{\text{double}}$ is that it doesn't depend on the time $t_1$ used to calculate the doubing, the initial population size $x_0$, nor the base we use for the logarithm.</p>
+
+<p>For the equation, $P_T = 0.022 \times 1.032^T$, the doubling time is
+$\log 2 / \log 1.032  = 22.0056$, as shown in the above applet.</p>
+
+{% navigation_tag "half_life" "Half life" %}
+<h4>Half-life</h4>
+
+<p>For the exponential equation $y_t = y_0 \times b^t$ with $0 \lt b \lt 1$, the quantity $y_t$ does not grow with time $t$.  Instead $y_t$ decreases.  The half-life, $T_{\text{half}}$ is the time it takes for $y_t$ to decrease by one-half.
+(The term &ldquo;half-life&rdquo; is  also used in the context $y_x = y_0 \times b^x$
+where $x$ denotes distance instead of time.)</p>
+
+<p>You can explore the concept of half-life by setting $b$ in the range $0 \lt b \lt 1$ in the above applets.  For example, for the model $P_t = 0.4 \times 0.82^t$, you will find that the half-life is about 3.5.</p>
+
+<p>Repeating the same procedure that we used above to calculate the doubling time, you can calculate that the half-life is a function of just the parameter $b$:
+\begin{gather}
+ T_{\text{half}}= \frac{\log \frac{1}{2}}{\log b}.
+  {% equation_tag half_life 3 %}
+\end{gather}
+</p>
+
+
+
+{% endblock %}

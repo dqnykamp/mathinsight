@@ -1,0 +1,94 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "asymptotes"%}
+{% index_entry "rational functions"%}
+{% title "Graphing rational functions, asymptotes" %}
+{% description "Finding vertical and horizontal asymptotes of functions to aid in graphing them." %}
+
+
+<p>This section shows another kind of function whose graphs we can
+understand effectively by our methods. There is one new item here, the
+idea of <i>asymptote</i> of the graph of a function.</p>
+
+<p>A <b>vertical asymptote</b> of the graph of a function $f$ most
+commonly occurs when $f$ is defined as a <i>ratio</i> $f(x)=g(x)/h(x)$
+of functions $g,h$ continuous at a point $x_o$, but with the
+denominator going to zero at that point while the numerator
+doesn't. That is, $h(x_o)=0$ but $g(x_o) \ne 0$. Then we say that $f$
+<i>blows up</i> at $x_o$, and that the line $x=x_o$ is a <b>vertical
+asymptote</b> of the graph of $f$.</p>
+
+<p>And as we take $x$ closer and closer to $x_o$, the graph of $f$ zooms
+off (either up or down or both) <i>closely to the line</i> $x=x_o$.</p>
+
+<p>A very simple example of this is $f(x)=1/(x-1)$, whose denominator is
+$0$ at $x=1$, so causing a <i>blow-up</i> at that point, so that $x=1$
+is a <i>vertical asymptote</i>. And as $x$ approaches $1$ from the
+right, the values of the function zoom <i>up</i> to $+\infty$. When $x$
+approaches $1$ from the <i>left</i>, the values zoom <i>down</i> to
+$-\infty$.</p>
+
+<p>A <b>horizontal asymptote</b> of the graph of a function $f$
+occurs if either limit
+$$\lim_{x\rightarrow +\infty}f(x)$$
+or
+$$\lim_{x\rightarrow -\infty}f(x)$$
+exists. If $R=\lim_{x\rightarrow +\infty}f(x)$, then $y=R$ is a <b>horizontal asymptote</b> of the function, and if $L=\lim_{x\rightarrow
+-\infty}f(x)$ exists then $y=L$ is a horizontal asymptote.</p>
+
+<p>As $x$ goes off to $+\infty$ the graph of the function gets closer and
+closer to the horizontal line $y=R$ if <i>that</i> limit exists. As $x$
+goes of to $-\infty$ the graph of the function gets closer and
+closer to the horizontal line $y=L$ if <i>that</i> limit exists.</p>
+
+<p>So in rough terms <i>asymptotes</i> of a function are <i>straight lines</i> which the graph of the function approaches <i>at
+infinity</i>. In the case of <i>vertical asymptotes</i>, it is the
+$y$-coordinate that goes off to infinity, and in the case of <i>horizontal asymptotes</i> it is the $x$-coordinate which goes off to
+infinity.</p>
+
+<h4>Example</h4>
+
+<p>Find asymptotes, critical points, intervals of increase and
+decrease, inflection points, and intervals of concavity up and down of
+$f(x)={x+3\over 2x-6}$: First, let's find the asymptotes. The
+denominator is $0$ for $x=3$ (and this is <i>not</i> cancelled by the
+numerator) so the line $x=3$ is a <i>vertical asymptote</i>. And as $x$
+goes to $\pm\infty$, the function values go to $1/2$, so the line
+$y=1/2$ is a horizontal asymptote.</p>
+
+<p>The derivative is 
+$$f'(x)={1\cdot(2x-6)-(x+3)\cdot
+2\over (2x-6)^2}={-12\over (2x-6)^2}$$
+Since a ratio of polynomials can be zero only if the numerator is
+zero, this $f'(x)$ can <i>never</i> be zero, so there are <i>no
+critical points</i>. There is, however, the discontinuity at $x=3$ which
+we must take into account. Choose auxiliary points $0$ and $4$ to the
+left and right of the discontinuity. Plugging in to the derivative, we
+have
+$f'(0)=-12/(-6)^2
+<0$, so the function is <i>decreasing</i> on the
+interval $(-\infty,3)$. To the right, $f'(4)=-12/(8-6)^2
+<0$, so the
+function is also decreasing on $(3,+\infty)$.</p>
+
+<p>The second derivative is $f''(x)=48/(2x-6)^3$. This is never zero, so
+there are <i>no inflection points</i>. There is the discontinuity at
+$x=3$, however. Again choosing auxiliary points $0,4$ to the left and
+right of the discontinuity, we see $f''(0)=48/(-6)^3
+<0$ so the curve is <i>concave downward</i> on the interval $(-\infty,3)$. And
+$f''(4)=48/(8-6)^3>0$, so the curve is concave <i>upward</i> on
+$(3,+\infty)$.</p>
+
+<p>Plugging in just two or so values into the function then is enough to
+enable a person to make a fairly good qualitative sketch of the graph
+of the function.</p>
+
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find all asymptotes of $f(x)={ x-1 \over x+2 }$.</li>
+<li>Find all asymptotes of $f(x)={ x+2 \over x-1 }$.</li>
+<li>Find all asymptotes of $f(x)={ x^2-1 \over x^2-4 }$.</li>
+<li>Find all asymptotes of $f(x)={ x^2-1 \over x^2+1 }$.</li>
+</ol>
+
+{%endblock%}

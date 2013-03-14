@@ -1,0 +1,73 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Divergence theorem" %}
+{% index_entry "Divergence theorem" "idea"%}
+{% index_entry "Gauss's theorem" %}
+{% index_entry "fundamental theorems of vector calculus" "Divergence theorem" %}
+{% title "The idea behind the divergence theorem" %}
+{% description "Introduction to divergence theorem (also called Gauss's theorem), based on the intuition of expanding gas." %}
+
+<p>Let's say I have a rigid container filled with some gas.  If the gas
+starts to expand but the container does not expand, what has to
+happen?  Since we assume that the container does not expand (it is
+rigid) but that the gas is expanding, then gas has to somehow leak out
+of the container.  (Or I suppose the container could burst, but that
+counts as both gas leaking out of the container and the container
+expanding.)</p>
+
+<p>If I go to a gas station and pump air into one of my car's tires, what
+has to happen to the air inside the tire?  (Assume the tire is rigid
+and does not expand as I put air inside it.)  The air inside of the
+tire compresses.</p>
+
+<p>These two examples illustrate the divergence theorem (also called Gauss's theorem).  Recall that if
+a vector field $\dlvf$ represents the flow of a fluid, then the
+divergence of $\dlvf$ represents the {% intlink divergence_idea %}expansion or compression of the fluid{%endintlink%}.  The divergence
+theorem says that the total expansion of the fluid inside some
+three-dimensional region $\dlv$ equals the total flux of the fluid out
+of the boundary of $\dlv$.  In math terms, this means the triple
+integral of $\div \dlvf$ over the region $\dlv$ is equal to the flux
+integral (or surface integral) of $\dlvf$ over the surface $\partial
+\dlv$ that is the boundary of $\dlv$ (with outward pointing {% intlink parametrized_surface_normal_vector %}normal{%endintlink%}):
+\begin{align*}
+  \iiint_\dlv \div \dlvf\, dV = \sint{\partial \dlv}{\dlvf}.
+\end{align*}
+</p>
+
+<p>I hope that this makes sense intuitively from the above two examples.
+In the first example, the gas expanding meant $\div \dlvf >0$
+everywhere in $\dlv$, the inside of the container.  Therefore, the net
+flux out of $\dlv$, $\sint{\partial \dlv}{\dlvf}$, must
+also be greater than zero, i.e., the gas must leak out through the
+container walls $\partial \dlv$.  In the second example, by pumping
+air into the tire $\dlv$, I insisted that the net flux out of the
+tire, $\sint{\partial \dlv}{\dlvf}$, must be negative
+(since there was a net flux \textbf{into} the tire, and we are
+assuming an <b>outward</b> pointing normal).  By the divergence
+theorem, the total expansion inside $\dlv$,
+$\displaystyle\iiint_\dlv \div \dlvf\, dV$, must be negative,
+meaning the air was compressing.</p>
+
+<p>Notice that the divergence theorem equates a surface integral with a
+triple integral over the volume inside the surface.  In this way, it
+is analogous to {% intlink greens_theorem_idea %}Green's theorem{%endintlink%}, which equates a line integral
+with a double integral over the region inside the curve.  Remember
+that Green's theorem applies only for closed curves.  For the same
+reason, the divergence theorem applies to the surface integral
+\begin{align*}
+  \dsint
+\end{align*}
+only if the surface $\dls$ is a closed surface.  Just like a closed curve, a
+closed surface has no boundary.  A closed surface has to enclose some
+region, like the surface that represents a container or a tire.  In
+other words, the surface has to be a boundary of some $\dlv$ (i.e., $\dls=
+\partial \dlv$), as described above.  You cannot use the divergence
+theorem to calculate a surface integral over $\dls$ if $\dls$ is an open
+surface, like part of a cone or a {%intlink elliptic_paraboloid %}paraboloid{%endintlink%}.  If you want to use the
+divergence theorem to calculate the ice cream flowing out of a cone,
+you have to include a top to your cone to make your surface a closed
+surface.</p>
+
+<p>{% intlink divergence_theorem_examples %}Here{%endintlink%} are some divergence theorem examples.</p>
+
+{%endblock%}
+

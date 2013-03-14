@@ -1,0 +1,10 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "independent variable" "definition" %}
+{% title "Independent variable definition" %}
+{% description "An independent variable is a variable that represents a quantity that is being manipulated in an experiment.  In the context of a function, the independent variable is the input to the function." %}
+
+<p>An independent variable is a {% intlink variable_definition%}variable{%endintlink%} that represents a quantity that is being manipulated in an experiment.  A {% intlink dependent_variable_definition%}dependent variable{%endintlink%} represents a quantity whose value depends on those manipulations.</p>
+
+<p>In the context of a {% intlink function_definition%}function{%endintlink%}, the independent variables are the inputs to the function and the dependent variables are the outputs of the function.</p>
+
+{% endblock %}

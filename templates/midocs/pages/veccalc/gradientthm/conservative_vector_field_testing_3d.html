@@ -1,0 +1,56 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "path independent vector field" "example" %}
+{% index_entry "conservative vector field" "example" %}
+{% title "Testing if three-dimensional vector fields are conservative" %}
+{% description "Examples of testing whether or not three-dimensional vector fields are conservative (or path-independent)." %}
+
+<p>Here are two examples of {% intlink conservative_vector_field_determine %}testing whether or not{%endintlink%} three-dimensional vector fields are conservative (which is also called path-independent).</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Does the integral
+$$\int_\dlc (x^2-ze^y) dx + (y^3-xze^y) dy + (z^4-xe^y) dz$$
+depend on the specific path $\dlc$ takes?</p>
+
+<p><b>Solution</b>:  The. integral is of the vector field $\dlvf(x,y,z) = (x^2-ze^y, y^3-xze^y, z^4-xe^y)$.
+The vector field $\dlvf$ defined on $\R^3$, which is {% intlink simply_connected_definition%}simply connected{%endintlink%}.  
+We can {% intlink conservative_vector_field_determine test4 %}show path-independence{%endintlink%} if the {% intlink curl_idea %}curl{%endintlink%} is zero.</p>
+
+<p>The partial derivatives of $\dlvf$ are
+\begin{align*}
+  \pdiff{\dlvfc_1}{y} &amp;= \pdiff{\dlvfc_2}{x} = -ze^y\\
+  \pdiff{\dlvfc_1}{z} &amp;= \pdiff{\dlvfc_3}{x} = -e^y\\
+  \pdiff{\dlvfc_2}{z} &amp;= \pdiff{\dlvfc_3}{y} = -xe^y.
+\end{align*}
+Therefore, the curl is zero, and $\dlvf$ is conservative.  The integral of $\dlvf$ 
+does not depend on the particular path the $\dlc$ takes, but depends only
+on the endpoints of the curve.</p>
+
+<p>Note that path-independence doesn't depend on $\pdiff{\dlvfc_1}{x}$, $\pdiff{\dlvfc_2}{y}$, or $\pdiff{\dlvfc_3}{z}$.  You can also easily conclude from this example that
+\begin{align*}
+  \dlvf(x,y,z) =  (x^2-ze^y+x^{1000}, y^3-xze^y-\cos y^{372},
+z^4-xe^y+e^{z+99})
+\end{align*}
+is also conservative.</p>
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+
+<p>Does the integral
+$$\int_\dlc (x^2-xe^y) dx + (y^3-xze^y) dy + (z^4-xe^y) dz$$
+depend on the specific path $\dlc$ takes?</p>
+
+
+<p><b>Solution</b>:  The integral is of the vector field $\dlvf(x,y,z) = (x^2-xe^y, y^3-xze^y, z^4-xe^y)$.  The partial derivatives of $\dlvf$ are
+\begin{gather*}
+  \pdiff{\dlvfc_1}{y} = -xe^y \neq \pdiff{\dlvfc_2}{x} = -ze^y\\
+  \pdiff{\dlvfc_1}{z} = 0 \neq \pdiff{\dlvfc_3}{x} = -e^y\\
+  \pdiff{\dlvfc_2}{z} = \pdiff{\dlvfc_3}{y} = -xe^y\\
+\end{gather*}
+The curl of $\dlvf$ is not zero, so $\dlvf$ is path-dependent.  The
+integral will, in general, depend on the specific path of $\dlc$.</p>
+
+{%endblock%}

@@ -1,0 +1,136 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parametrized surface" "orient"%}
+{% index_entry "orient" "surface"%}
+{% index_entry "normal vector" "parametrized surface"%}
+{% title "Orienting surfaces" %}
+{% description "How to orient a surface by choosing a normal vector." %}
+
+<p>Choosing an {% intlink parametrized_curve_orient%}orientation of a 
+curve{%endintlink%} is a fairly simply idea.  One just needs to
+choose the direction by which one moves along the curve.
+However, choosing an orientation of a curve is also equivalent to 
+{% intlink parametrized_curve_orient%}choosing one of its possible
+unit tangent vectors{%endintlink%}. </p>
+
+<p>Orientating  a 
+{% intlink parametrized_surface_introduction%}parametrized surfaces{%endintlink%}
+is a little trickier than orienting a curve. 
+But, if you think of choosing an orientation as choosing between
+one of two possible unit vectors, it will help you understand the orientation of
+surfaces.</p>
+
+<p>Like curves, we can parametrize a surface in two
+different orientations.  The orientation of a curve is given by the
+unit tangent vector $\vc{n}$; the orientation of a surface is given by
+the {%intlink parametrized_surface_normal_vector %}unit normal vector{%endintlink%}
+$\vc{n}$.  Unless we are dealing with an {%intlink moebius_strip_not_orientable %}unusual surface{%endintlink%}, a surface has two sides.
+We can pick the normal vector to point out one side of the surface, or
+we can pick the normal vector to point out the other side of the
+surface.  Our choice of normal vector specifies the orientation of the
+surface.  We call the side of the surface with the normal vector the
+{%intlink positive_side_definition%}positive side{%endintlink%} of the surface.</p>
+
+<p>As an example, consider the sphere of radius $R$ centered at the
+origin.  Using {%intlink spherical_coordinates %}spherical coordinates{%endintlink%}, we could parametrize the
+sphere using
+\begin{align*}
+  \dlsp(\theta,\phi) = (R\sin \phi \cos\theta, R\sin\phi \sin\theta, R\cos\phi)
+\end{align*}
+for $0 \le \theta \le 2\pi$ and $0 \le \phi \le \pi$.  Remember that
+a formula for the {%intlink parametrized_surface_normal_vector %}unit normal vector{%endintlink%}
+ is
+\begin{align*}
+    \vc{n} = \frac{\displaystyle \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times
+  \pdiff{\dlsp}{\spsv}(\spfv,\spsv)}{\displaystyle \left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)
+  \right\|}.
+\end{align*}
+only in this case, we have $\theta$ and $\phi$ rather than $\spfv$ and
+$\spsv$.</p>
+
+<p>Let's find an unit normal vector of the sphere.
+\begin{align*}
+  \pdiff{\dlsp}{\theta}(\theta,\phi) &amp;= (-R\sin\phi \sin\theta, R\sin\phi
+  \cos\theta,0)\\
+  \pdiff{\dlsp}{\phi}(\theta,\phi) &amp;= (R\cos\phi \cos\theta, R\cos\phi \sin\theta,
+  -R\sin\phi)\\
+  \pdiff{\dlsp}{\theta} (\theta,\phi)\times \pdiff{\dlsp}{\phi}(\theta,\phi)
+  &amp;= \left|
+    \begin{array}{ccc}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      -R\sin\phi \sin\theta&amp;  R\sin\phi \cos\theta  &amp;0\\
+      R\cos\phi \cos\theta &amp; R\cos\phi \sin\theta &amp;
+      -R\sin\phi
+    \end{array}
+  \right|\\
+  &amp;= -R^2 \sin^2\phi \cos\theta\, \vc{i}
+  -R^2 \sin^2\phi \sin\theta\, \vc{j}\\
+  &amp; \quad
+  -R^2 \sin\phi \cos\phi (\sin^2\theta + \cos^2\theta)\vc{k}\\
+  &amp; = -R^2 \sin^2\phi \cos\theta \,\vc{i}
+  -R^2 \sin^2\phi \sin\theta \, \vc{j}\\
+  &amp; \quad -R^2 \sin\phi \cos\phi \, \vc{k}\\
+  &amp; = -R^2\sin\phi \left( \sin\phi \cos\theta \,\vc{i}
+    +\sin\phi \sin\theta \, \vc{j} + \cos\phi \, \vc{k}\right)\\
+  \left\|\pdiff{\dlsp}{\theta} (\theta,\phi)\times
+    \pdiff{\dlsp}{\phi}(\theta,\phi)\right\| &amp;=
+  R^2\sin \phi \sqrt{\sin^2 \phi \cos^2\theta
+    + \sin^2\phi \sin^2\theta + \cos^2\phi}\\
+   &amp;=
+   R^2\sin \phi \sqrt{\sin^2\phi( \cos^2\theta + \sin^2\theta) +
+  \cos^2\phi}\\
+   &amp;=
+   R^2\sin \phi \sqrt{\sin^2\phi +
+     \cos^2\phi}\\
+   &amp;=R^2\sin \phi
+\end{align*}
+</p>
+
+<p>We obtain the unit normal vector
+\begin{align*}
+  \vc{n} &amp;= \frac{\displaystyle \pdiff{\dlsp}{\theta} (\theta,\phi)\times
+    \pdiff{\dlsp}{\phi}(\theta,\phi)}
+  {\displaystyle \left\|\pdiff{\dlsp}{\theta} (\theta,\phi)\times
+      \pdiff{\dlsp}{\phi}(\theta,\phi)\right\|}\\
+  &amp;=-\sin\phi \cos\theta \,\vc{i}
+  -\sin\phi \sin\theta \, \vc{j} - \cos\phi \, \vc{k}\\
+  &amp;=(-\sin\phi \cos\theta, -\sin\phi \sin\theta, - \cos\phi)
+\end{align*}
+</p>
+
+<p>
+This is the normal vector for the point on the surface given by
+$$\dlsp(\theta,\phi) = (R\sin \phi \cos\theta, R\sin\phi \sin\theta,
+R\cos\phi).$$  Note that $\vc{n}$ points in the opposite direction as
+$\dlsp(\theta,\phi)$ (as $\vc{n}$ is $-1/R$ times
+$\dlsp(\theta,\phi)$).  Consequently, $\vc{n}$ points back toward the
+origin, i.e., points inside the sphere.  For example, if $\theta=0$
+and $\phi=\pi/2$, then $\dlsp(0,\pi/2) = (R,0,0)$ and
+$\vc{n}=(-1,0,0)$.  The vector $\vc{n}$ for any value of $\theta$ or
+$\phi$ is shown in the figure below.  Notice that $\vc{n}$ always
+points toward the inside of the sphere.  In this case, the inside of
+the sphere is the {%intlink positive_side_definition%}positive side{%endintlink%} of the surface.</p>
+
+{%boxedapplet sphere_inward_normal_vector %}
+
+<p>We could also orient the surface by 
+choosing the normal vector $\pdiff{\dlsp}{\phi} \times
+\pdiff{\dlsp}{\theta}$ instead of the vector $\pdiff{\dlsp}{\theta} \times \pdiff{\dlsp}{\phi}$ that we used above.  
+How does the new normal vector orient the surface?</p>
+
+<p>Recalling the properties
+of the {%intlink cross_product %}cross product{%endintlink%},
+we can conclude these vectors are opposites: $\displaystyle
+\pdiff{\dlsp}{\phi} \times \pdiff{\dlsp}{\theta} = -\pdiff{\dlsp}{\theta} \times
+\pdiff{\dlsp}{\phi}$.  In this case, unit normal is
+\begin{align*}
+  \vc{n} =  \frac{\displaystyle\pdiff{\dlsp}{\phi} \times  \pdiff{\dlsp}{\theta}}
+  {\displaystyle\left\| \pdiff{\dlsp}{\phi} \times  \pdiff{\dlsp}{\theta} \right\|}
+  = (\sin\phi \cos\theta, \sin\phi \sin\theta,\cos\phi)
+\end{align*}
+The normal vector points toward the outside the sphere, as shown below.  For this second
+orientation of the sphere, the outside is the {%intlink positive_side_definition%}positive side{%endintlink%} of the
+surface.
+{%boxedapplet sphere_outward_normal_vector %}
+
+
+{%endblock%}

@@ -1,0 +1,177 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% index_entry "derivative" "problems" %}
+{% title "Elementary derivative problems" %}
+{% description "Sample problems illustrating the ordinary derivative." %}
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Below is a graph of the function $h(p)$.  </p>
+<ol>
+  <li>For what values of $p$ is $\diff{h}{p}$
+    <ol>
+      <li>negative?</li>
+      <li>positive?</li>
+      <li>zero?</li>
+      <li>undefined?</li>
+    </ol>
+  </li>
+  <li>Find all critical points of $h$.</li>
+  <li>For what values of $p$ is $\diffn{h}{p}{2}$
+    <ol>
+      <li>negative?</li>
+      <li>positive?</li>
+      <li>zero?</li>
+      <li>undefined?</li>
+    </ol>
+  </li>
+  <li>Find all inflection points of $h$.</li>
+</ol>
+
+
+{% image derivative_example_function_1 %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Below is a graph of the function $r(z)$.  </p>
+<ol>
+  <li>For what values of $z$ is $r'(z)$
+    <ol>
+      <li>negative?</li>
+      <li>positive?</li>
+      <li>zero?</li>
+      <li>undefined?</li>
+    </ol>
+  </li>
+  <li>Find all critical points of $r$.</li>
+  <li>For what values of $z$ is $r''(z)$
+    <ol>
+      <li>negative?</li>
+      <li>positive?</li>
+      <li>zero?</li>
+      <li>undefined?</li>
+    </ol>
+  </li>
+  <li>Find all inflection points of $r$.</li>
+</ol>
+
+
+{% image derivative_example_function_2 %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $f(b)$ be the function graphed below.  Identify critical points, inflection points, and locations where the derivative and second derivative of $f$ are positive and negative.  Use these results to graph $f'(b)$.</p>
+
+{% image derivative_example_function_3 %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $w(y)$ be the function graphed below.  Identify critical points, inflection points, and locations where the derivative and second derivative of $w$ are positive and negative.  Use these results to graph $\diff{w}{y}$.</p>
+
+
+{% image derivative_example_function_4 %}
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $u(x)$ be the function graphed below.  Identify critical points, inflection points, and locations where the derivative and second derivative of $u$ are positive and negative.  Use these results to graph $\diff{u}{x}$ and $\diffn{u}{x}{2}$.</p>
+
+
+{% image derivative_example_function_5 %}
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $g(z)=5z^2-z+22$.  Find a linear function that is a good approximation of $g$ for values of $z$ near $3$.</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $g(z)=5z^2-z+22$.  Find the equation for the tangent line to the graph of $g$ at the point $z=3$.</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $k(q)=qe^{-q}$. Find the linear approximation for $k$ around $q=a$.</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $m(y)=e^{y^2}$. Find the equation for the tangent line of the graph of $m$ at $y=b$.</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $x(t) = t^3 \ln (t)$.  What is the slope of the tangent line to the graph of $x$ at the point $t=2$.  At the point $t=\bigstar$?</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $y(z)=\ln(az)$ for some positive parameter $a$.</p>
+<ol>
+<li>What is $\diff{y}{z}$?</li>
+<li>What is $\diffn{y}{z}{2}$?</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $z(y)=ce^{by}$ for some parameters $b$ and $c$.</p>
+<ol>
+  <li>What is $z'(y)$?</li>
+  <li>What is $z'(0)$?</li>
+  <li>What is $z'(1/b)$?</li>
+  <li>What is $z''(y)$?</li>
+  <li>What is $z''(0)$?</li>
+  <li>What is $z''(1/b)$?</li>
+</ol>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $h(s)=(a^2+b^2)e^{s^2}$ for parameters $a$ and $b$.</p>
+<ol>
+  <li>What is $h'(s)$?</li>
+  <li>What is $h'(1)$?</li>
+  <li>What is $h''(s)$?</li>
+  <li>What is $h''(1)$?</li>
+</ol>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $s(u)=\frac{1+u}{1-u}$.  What is $s'(u)$?</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $g(x)=x^2e^{-x}$.  Find $g'(x)$.</p>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>Problem {{probnum}}</h4>
+
+<p>Let $f(x)=x^ne^{-x}$, where $n$ is a parameter.  Find $f'(x)$.</p>
+
+<p>One you have worked on a few problems, you can compare your solutions to the {% intlink derivative_elementary_problem_solutions %}ones we came up with{%endintlink%}.</p>
+
+{% endblock %}

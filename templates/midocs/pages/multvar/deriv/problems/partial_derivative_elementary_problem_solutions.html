@@ -1,0 +1,86 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}
+{% block extrastyle2 %}
+<style type="text/css">
+ol {list-style-type: lower-alpha;}
+ol ol {list-style-type: lower-roman;}
+</style>
+{% endblock %}
+{% block content %}
+{% title "Solutions to elementary partial derivative problems" %}
+{% description "Solutions to sample problems illustrating the partial derivative." %}
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>\begin{align*}
+  \pdiff{h}{y} &= e^{-z}\\
+  \pdiff{h}{z} &= -ye^{-z}
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+<p>\begin{align*}
+  \pdiff{z}{s} &= 2s+u\\
+  \pdiff{z}{u} &= s+2u
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>\begin{align*}
+  \pdiff{q}{y} &= 10-z\\
+  \pdiff{q}{z} &= -y-3
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+
+<p>\begin{align*}
+  \pdiff{r}{a} &= b\ln(ca) + ab c \frac{1}{ca}\\
+  &= b\ln(ca) + b \\
+  \pdiff{r}{b} &= a\ln(ca)
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<p>\begin{align*}
+  \pdiff{r}{a} &= b\ln(ca) + ab c \frac{1}{ca}\\
+  &= b\ln(ca) + b \\
+  \pdiff{r}{b} &= a\ln(ca)\\
+  \pdiff{r}{c} &= ab a\frac{1}{ca} = \frac{ab}{c}
+\end{align*}
+</p>
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+  <li>The quantity $\pdiff{t}{q}$ indicates how much the tip will increases as the quality of the food increases while the kindness of the server stays constant.</li>
+  <li>
+  \begin{align*}
+  \pdiff{t}{k} &=  5 e^{2q+5k}\\
+  \pdiff{t}{q} &= 2 e^{2q+5k}
+\end{align*}
+</li>
+</ol>
+
+
+{% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
+<h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
+
+<ol>
+  <li><p>$\pdiff{h}{c}$ indicates how much your risk of heart disease increases as you increase the amount of cholesterol you eat while keeping the amount of vegetables, sodium and whole grains you eat constant.</p>
+<p>$\pdiff{h}{v}$ indicates how much your risk of heart disease increases as you increase the amount of vegetables you eat while keeping the amount of cholesterol, sodium and whole grains you eat constant.</p>
+<p>$\pdiff{h}{s}$ indicates how much your risk of heart disease increases as you increase the amount of sodium you eat while keeping the amount of cholesterol, vegetables and whole grains you eat constant.</p>
+<p>$\pdiff{h}{g}$ indicates how much your risk of heart disease increases as you increase the amount of whole grains you eat while keeping the amount of cholesterol, vegetables and sodium you eat constant.</p>
+</li>
+  <li><p>$\pdiff{h}{v}$ and $\pdiff{h}{g}$ must be negative, while $\pdiff{h}{c}$ and $\pdiff{h}{s}$ must be positive.</p></li>
+</ol>
+
+{% endblock %}

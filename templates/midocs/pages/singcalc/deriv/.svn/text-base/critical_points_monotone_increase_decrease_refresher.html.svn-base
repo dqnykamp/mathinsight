@@ -1,0 +1,118 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "critical points" %}
+{% index_entry "increasing" "intervals"%}
+{% index_entry "decreasing" "intervals"%}
+{% title "Critical points, monotone increase and decrease" %}
+{% description "How to compute the intervals along which a function is increasing or decreasing." %}
+
+<p>A function is called <b>increasing</b> if it increases as the input $x$
+moves from left to right, and is called <b>decreasing</b> if it
+decreases as $x$ moves from left to right. Of course, a function can
+be increasing in some places and decreasing in others: that's the
+complication.</p>
+
+<p>We can notice that a function is increasing if the slope of its
+tangent is positive, and decreasing if the slope of its tangent is
+negative. Continuing with the idea that the slope of the tangent is the
+derivative: <i>a function is increasing where its derivative is
+positive, and is decreasing where its derivative is negative</i>.</p>
+
+<p>This is a great principle, because we don't have to graph the function
+or otherwise list lots of values to figure out where it's increasing
+and decreasing. If anything, it should be a big help in graphing to
+know in advance where the graph goes up and where it goes down.</p>
+
+<p>And the points where the tangent line is horizontal, that is, where
+the derivative is zero, are <b>critical points</b>. The points where
+the graph has a <i>peak</i> or a <i>trough</i> will certainly lie among
+the critical points, although there are other possibilities for
+critical points, as well.</p>
+
+<p class="pre_list">Further, for the kind of functions we'll deal with here, there is a
+fairly systematic way to get all this information: to find the
+intervals of increase and decrease of a function $f$:</p>
+<ul>
+<li>Compute the derivative $f'$ of $f$, and <i>solve</i> the equation
+$f'(x)=0$ for $x$ to find all the critical points, which we list in
+order as $x_1
+< x_2
+< \ldots
+< x_n$. </li>
+<li>(If there are points of discontinuity
+or non-differentiability, these points should be added to the list!
+But points of discontinuity or non-differentiability are <i>not</i>
+called <i>critical points</i>.)</li>
+<li>We need some <i>auxiliary points</i>: To the left of the leftmost
+critical point $x_1$ pick any convenient point $t_o$, between each pair of
+consecutive critical points $x_i,x_{i+1}$ choose any convenient point
+$t_i$, and to the right of the rightmost critical point $x_n$ choose a
+convenient point $t_n$.</li>
+<li>Evaluate the <i>derivative</i> $f'$ at all the <i>auxiliary</i>
+points $t_i$. </li>
+<li>Conclusion: if $f'(t_{i+1})>0$, then $f$ is <i>increasing</i> on
+$(x_i,x_{i+1})$, while if $f'(t_{i+1})
+<0$, then $f$ is <i>decreasing</i> on
+that interval.</li>
+<li>Conclusion: on the &lsquo;outside&rsquo; interval $(-\infty,x_o)$, the
+function $f$ is <i>increasing</i> if $f'(t_o)>0$ and is <i>decreasing</i> if $f'(t_o)
+<0$. Similarly, on $(x_n,\infty)$, the
+function $f$ is <i>increasing</i> if $f'(t_n)>0$ and is <i>decreasing</i> if $f'(t_n)
+<0$.</li>
+</ul>
+
+<p>It is certainly true that there are many possible shortcuts to this
+procedure, especially for polynomials of low degree or other rather
+special functions. However, if you are able to quickly compute values
+of (derivatives of!) functions on your calculator, you may as well use
+this procedure as any other.</p>
+
+<p>Exactly which <i>auxiliary points</i> we choose does not matter, as
+long as they fall in the correct intervals, since we just need a
+single sample on each interval to find out whether $f'$ is positive or
+negative there. Usually we pick integers or some other kind of number
+to make computation of the derivative there as easy as possible.</p>
+
+<p>It's important to realize that even if a question does not directly
+ask for <i>critical points</i>, and maybe does not ask about <i>intervals</i> either, still it is <i>implicit</i> that we have to find the
+critical points and see whether the functions is increasing or
+decreasing on the <i>intervals between critical points</i>.</p>
+
+<h4> Examples</h4>
+
+<p>Find the critical points and intervals on which
+$f(x)=x^2+2x+9$ is increasing and decreasing: Compute
+$f'(x)=2x+2$. Solve $2x+2=0$ to find only one critical point $-1$. To
+the left of $-1$ let's use the <i>auxiliary point</i> $t_o=-2$ and to
+the right use $t_1=0$. Then $f'(-2)=-2
+<0$, so $f$ is <i>decreasing</i>
+on the interval $(-\infty,-1)$. And $f'(0)=2>0$, so $f$ is <i>increasing</i> on the interval $(-1,\infty)$.</p>
+
+<p>Find the critical points and intervals on which
+$f(x)=x^3-12x+3$ is increasing, decreasing. Compute
+$f'(x)=3x^2-12$. Solve $3x^2-12=0$: this simplifies to $x^2-4=0$, so
+the <i>critical points</i> are $\pm 2$. To the left of $-2$ choose <i>auxiliary point</i> $t_o=-3$, between $-2$ and $+2$ choose auxiliary
+point $t_1=0$, and to the right of $+2$ choose $t_2=3$. Plugging in
+the auxiliary points to the derivative, we find that $f'(-3)=27-12>0$,
+so $f$ is <i>increasing</i> on $(-\infty,-2)$. Since $f'(0)=-12
+<0$, $f$
+is <i>decreasing</i> on $(-2,+2)$, and since $f'(3)=27-12>0$, $f$ is
+<i>increasing</i> on $(2,\infty)$.</p>
+
+<p>Notice too that we don't really need to know the exact value of the
+derivative at the auxiliary points: all we care about is whether the
+derivative is positive or negative. The point is that sometimes some
+tedious computation can be avoided by stopping as soon as it becomes
+clear whether the derivative is positive or negative.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find the critical points and intervals on which
+$f(x)=x^2+2x+9$ is increasing, decreasing. </li>
+<li>Find the critical points and intervals on which
+$f(x)=3x^2-6x+7$ is increasing, decreasing.</li>
+<li>Find the critical points and intervals on which
+$f(x)=x^3-12x+3$ is increasing, decreasing.</li>
+</ol>
+
+
+{%endblock%}

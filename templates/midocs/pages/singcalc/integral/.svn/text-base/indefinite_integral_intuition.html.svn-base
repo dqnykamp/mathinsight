@@ -1,0 +1,13 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative" %}
+{% title "Developing intuition about the indefinite integral" %}
+{% description "An intuitive exploration into the properties of the indefinite integral, illustrated by interactive graphics." %}
+
+
+{% boxedapplet indefinite_integral_interpolating_polynomial_chebyshev_nodes %}
+
+{% boxedapplet indefinite_integral_function %}
+
+
+
+{% endblock %}

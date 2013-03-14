@@ -1,0 +1,101 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "implicit differentiation" %}
+{% index_entry "differentiation" "implicit" %}
+{% title "Implicit differentiation" %}
+{% description "Differenting a function that is defined implicitly in terms of a relation between two variables." %}
+
+<p>There is nothing &lsquo;implicit&rsquo; about the differentiation we do here, it
+is quite &lsquo;explicit&rsquo;. The difference from earlier situations is that we
+have a <i>function defined &lsquo;implicitly&rsquo;</i>. What this means is that,
+instead of a clear-cut (if complicated) formula for the value of the
+function in terms of the input value, we only have a <i>relation</i>
+between the two. This is best illustrated by examples.</p>
+
+<p>For example, suppose that $y$ is a function of $x$ and
+$$y^5-xy+x^5=1$$ 
+and we are to find some useful expression for $dy/dx$.
+Notice that it is not likely that
+we'd be able to <i>solve</i> this equation for $y$ as a function of $x$
+(nor vice-versa, either), so our previous methods do not obviously do
+anything here! But both sides of that equality are functions of $x$,
+and are <i>equal</i>, so their derivatives are equal, surely. That is,
+$$5y^4{dy\over dx}-1\cdot y-x{dy\over dx}+5x^4=0$$
+Here the trick is that we can &lsquo;take the derivative&rsquo; without knowing
+exactly what $y$ is as a function of $x$, but just using the rules for
+differentiation. </p>
+
+<p>Specifically, to take the derivative of the term $y^5$, we
+view this as a <i>composite</i> function, obtained by applying the
+take-the-fifth-power function after applying the (not clearly known!)
+function $y$. Then use the {% intlink chain_rule_refresher%}chain rule{%endintlink%}!</p>
+
+<p>Likewise, to differentiate the term $xy$, we use the product rule
+$${d\over dx}(x\cdot y)={dx\over dx}\cdot y+x\cdot{dy\over dx}=
+y+x\cdot{dy\over dx}$$
+since, after all,
+$${dx\over dx}=1.$$</p>
+
+<p>And the term $x^5$ is easy to differentiate, obtaining the $5x^4$. The
+other side of the equation, the function &lsquo;$1$&rsquo;, is <i>constant</i>, so
+its derivative is $0$. (The fact that this means that the left-hand
+side is also constant should not be mis-used: we need to use the very
+non-trivial looking expression we have for that constant function,
+there on the left-hand side of that equation!).</p>
+
+<p>Now the amazing part is that this equation can be <i>solved for
+$y'$</i>, if we tolerate a formula involving not only $x$, but also $y$:
+first, regroup terms depending on whether they have a $y'$ or not:
+$$y'(5y^4-x)+(-y+5x^4)=0.$$
+Then move the non-$y'$ terms to the other side
+$$y'(5y^4-x)=y-5x^4$$
+and divide by the &lsquo;coefficient&rsquo; of the $y'$:
+$$y'={y-5x^4\over 5y^4-x}$$</p>
+
+<p>Yes, this is <i>not</i> as good as if there were a formula for
+$y'$ <i>not</i> needing the $y$. But, on the other hand, the initial
+situation we had did not present us with a formula for $y$ in terms of
+$x$, so it was necessary to lower our expectations. </p>
+
+<p>Yes, if we are given a value of $x$ and told to find the
+corresponding $y'$, it would be impossible without luck or some
+additional information. For example, in the case we just looked at, if
+we were asked to find $y'$ when $x=1$ and $y=1$, it's easy: just plug
+these values into the formula for $y'$ in terms of <i>both</i> $x$ and
+$y$: when $x=1$ and $y=1$, the corresponding value of $y'$ is
+$$y'={1-5\cdot 1^4\over 5\cdot 1^4-1}=-4/4=-1$$</p>
+
+<p>If, instead, we were asked to find $y$ and $y'$ when $x=1$,
+not knowing in advance that $y=1$ fits into the equation when $x=1$,
+we'd have to hope for some luck. First, we'd have to try to solve the
+original equation for $y$ with $x$ replace by its value $1$: solve
+$$y^5-y+1=1$$
+By luck indeed, there is some cancellation, and the equation becomes
+$$y^5-y=0$$
+By further luck, we can factor this &lsquo;by hand&rsquo;: it is
+$$0=y(y^4-1)=y(y^2-1)(y^2+1)=y(y-1)(y+1)(y^2+1)$$
+So there are actually <i>three</i> real numbers which work as $y$ for
+$x=1$: the values $-1,0,+1$. There is no clear way to see which is
+&lsquo;best&rsquo;. But in any case, any one of these three values could be used
+as $y$ in substituting into the formula 
+$$y'={y-5x^4\over 5y^4-x}$$
+we obtained above.</p>
+
+<p>Yes, there are really <i>three solutions</i>, three functions, etc.</p>
+
+<p>Note that we <i>could</i> have used the Intermediate Value
+Theorem and/or Newton's Method to <i>numerically</i> solve the equation,
+even without too much luck. In &lsquo;real life&rsquo; a person should be prepared
+to do such things.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Suppose that $y$ is a function of $x$ and
+$$y^5-xy+x^5=1$$
+Find $dy/dx$ at the point $x=1,y=0$.</li>
+<li>Suppose that $y$ is a function of $x$ and
+$$y^3-xy^2+x^2y+x^5=7$$
+Find $dy/dx$ at the point $x=1,y=2$. Find ${ d^2\,y \over dx\,^2 }$ at
+that point.</li>
+</ol>
+
+{%endblock%}

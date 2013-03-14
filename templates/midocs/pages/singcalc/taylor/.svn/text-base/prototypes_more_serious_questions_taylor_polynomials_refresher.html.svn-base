@@ -1,0 +1,48 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "Taylor polynomial"  %}
+{% title "Prototypes: More serious questions about Taylor polynomials" %}
+{% description "Questions regarding using Taylor polynomials to approximate a function over an interval." %}
+
+<p>Beyond just writing out Taylor expansions, we could actually use them
+to approximate things in a more serious way. There are roughly three
+different sorts of <i>serious</i> questions that one can ask in this
+context. They all use similar words, so a careful reading of such
+questions is necessary to be sure of answering the question asked.</p>
+
+<p class="pre_list">(The word &lsquo;tolerance&rsquo; is a synonym for &lsquo;error
+estimate&rsquo;, meaning that we know that the error is <i>no worse</i> than
+such-and-such)</p>
+<ul>
+<li>Given a Taylor polynomial
+approximation to a function, expanded at some given point, and given a
+required tolerance, <i>on how large an interval</i> around the given point
+does the Taylor polynomial achieve that tolerance?</li>
+<li>Given a Taylor polynomial approximation to a function,
+expanded at some given point, and given an interval around that
+given point, <i>within what tolerance</i> does the Taylor polynomial
+approximate the function on that interval?</li>
+<li>Given a function, given a fixed point, given an interval
+around that fixed point, and given a required tolerance, find <i>how many
+terms</i> must be used in the Taylor expansion to approximate the function
+to within the required tolerance on the given interval.</li>
+</ul>
+
+<p>As a special case of the last question, we can consider the
+question of <i>approximating $f(x)$ to within a given
+tolerance/error in terms of $f(x_o), f'(x_o), f''(x_o)$ and higher
+derivatives of $f$ evaluated at a given point $x_o$.</i> </p>
+
+<p>In &lsquo;real life&rsquo; this last question is not really so important
+as the third of the questions listed above, since evaluation at just
+one point can often be achieved more simply by some other
+means. Having a polynomial approximation that works <i>all along an
+interval</i> is a much more substantive thing than evaluation at a single
+point. </p>
+
+<p>It must be noted that there are also <i>other</i> ways to
+approach the issue of <i>best approximation by a polynomial on an
+interval</i>. And beyond worry over approximating the <i>values</i> of the
+function, we might also want the values of one or more of the <i>derivatives</i> to be close, as well. The theory of <b>splines</b> is one
+approach to approximation which is very important in practical applications.</p>
+
+{%endblock%}

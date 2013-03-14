@@ -1,0 +1,122 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integration" "substitution"%}
+{% index_entry "substitution" %}
+{% index_entry "u-substitution" %}
+{% index_entry "integration" "trigonometric substitution" %}
+{% index_entry "trigonometric substitution" %}
+{% title "Trigonometric substitution" %}
+{% description "Using trigonometric substitution to simplify integrals involving square roots." %}
+
+<p>This section continues development of relatively special tricks to do
+special kinds of integrals. Even though the application of such things
+is limited, it's nice to be <i>aware</i> of the possibilities, at least
+a little bit.</p>
+
+<p>The key idea here is to use trig functions to be able to
+&lsquo;take the square root&rsquo; in certain integrals. There are just three
+prototypes for the kind of thing we can deal with:
+$$\sqrt{1-x^2}\;\;\;\;\;\sqrt{1+x^2}\;\;\;\;\;\sqrt{x^2-1}$$
+Examples will illustrate the point.</p>
+
+<p>In rough terms, the idea is that in an integral where the
+&lsquo;worst&rsquo; part is $\sqrt{1-x^2}$, replacing $x$ by $\sin u$ (and,
+correspondingly, $dx$ by $\cos u\;du$), <i>we will be able to take
+the square root</i>, and then obtain an integral in
+the variable $u$ which is one of the <i>trigonometric integrals</i>
+which in principle we now know how to do. The point is that then
+$$\sqrt{1-x^2}=\sqrt{1-\sin^2x}=\sqrt{\cos^2x}=\cos x$$
+We have &lsquo;taken the square root&rsquo;.</p>
+
+<p>For example, in
+$$\int \sqrt{1-x^2}\;dx$$
+we replace $x$ by $\sin u$ and $dx$ by $\cos u\,du$ to obtain
+$$\int \sqrt{1-x^2}\;dx=\int \sqrt{1-\sin^2u}\;\cos u\;du=
+\int \sqrt{\cos^2u}\;\cos u\;du=$$
+$$=\int\cos u \;\cos u\;du=\int\cos^2u\;du$$
+Now we have an integral we know how to integrate: using the half-angle
+formula, this is
+$$\int\cos^2u\;du=\int{1+\cos 2u\over 2}\;du={u\over 2}+{\sin
+2u\over 4}+C$$
+And there still remains the issue of <i>substituting back</i> to obtain
+an expression in terms of $x$ rather than $u$. Since $x=\sin u$, it's
+just the definition of <i>inverse function</i> that
+$$u=\arcsin x$$
+To express $\sin 2u$ in terms of $x$ is more aggravating. We use another
+<i>half-angle formula</i> 
+$$\sin 2u=2\sin u\cos u$$
+Then
+$${1\over 4}\sin 2u={1\over 4}\cdot 2\sin u\cos
+u={1\over 4}x\cdot\sqrt{1-x^2}$$
+where &lsquo;of course&rsquo; we used the Pythagorean identity to give us
+$$\cos u=\sqrt{1-\sin^2u}=\sqrt{1-x^2}$$
+Whew.</p>
+
+<p>The next type of integral we can &lsquo;improve&rsquo; is one containing
+an expression 
+$$\sqrt{1+x^2}$$
+In this case, we use another Pythagorean identity
+$$1+\tan^2u=\sec^2u$$
+(which we can get from the usual one $\cos^2u+\sin^2u=1$ by dividing
+by $\cos^2u$). So we'd let
+$$x=\tan u\;\;\;\;\;dx=\sec^2u\;du$$
+(mustn't forget the $dx$ and $du$ business!).</p>
+
+<p>For example, in
+$$\int { \sqrt{1+x^2} \over x }\;dx$$
+we use
+$$x=\tan u\;\;\;\;\;dx=\sec^2u\;du$$
+and turn the integral into
+\begin{align*}\int { \sqrt{1+x^2} \over x }\;dx&amp;=\int
+{ \sqrt{1+\tan^2 u} \over \tan u }\sec^2u\;du\\
+&amp;=\int { \sqrt{\sec^2u} \over \tan u }\sec^2u\;du\\
+&amp;=
+\int {\sec u\over \tan u}\sec^2u\;du=\int {1\over \sin u\cos^2u}\;du
+\end{align*}
+by rewriting everything in terms of $\cos u$ and $\sin u$.</p>
+
+<p>For integrals containing $\sqrt{x^2-1}$, use $x=\sec u$ in
+order to invoke the Pythagorean identity
+$$\sec^2u-1=\tan^2u$$
+so as to be able to &lsquo;take the square root&rsquo;. Let's not execute any
+examples of this, since nothing new really happens.</p>
+
+<p><i>Rather,</i>, let's examine some <i>purely
+algebraic variants</i> of these trigonometric substitutions, where we can
+get some mileage out of <i>completing the square</i>. For example,
+consider 
+$$\int\sqrt{-2x-x^2}\;dx$$
+The quadratic polynomial inside the square-root is <i>not</i> one of
+the three simple types we've looked at. But, by completing the square,
+we'll be able to rewrite it in essentially such forms:
+$$-2x-x^2=-(2x+x^2)=-(-1+1+2x+x^2)=-(-1+(1+x)^2)=1-(1+x)^2$$
+Note that always when completing the square we &lsquo;take out&rsquo; the
+coefficient in front of $x^2$ in order to see what's going on, and
+then put it back at the end.</p>
+
+<p>So, in this case, we'd let
+$$\sin u=1+x\;\;\;\;\;\cos u\;du=dx$$</p>
+
+<p>In another example, we might have
+$$\int\sqrt{8x-4x^2}\;dx$$
+Completing the square again, we have
+$$8x-4x^2=-4(-2+x^2)=-4(-1+1-2x+x^2)=-4(-1+(x-1)^2)$$
+Rather than put the whole &lsquo;$-4$&rsquo; back, we only keep track of the
+$\pm$, and take a &lsquo;$+4$&rsquo; outside the square root entirely:
+\begin{align*}
+\int\sqrt{8x-4x^2}\;dx&amp;=\int\sqrt{-4(-1+(x-1)^2)}\;dx\\
+&amp;=2\int\sqrt{-(-1+(x-1)^2)}\;dx\\
+&amp;=2\int\sqrt{1-(x-1)^2)}\;dx
+\end{align*}
+Then we're back to a familiar situation.</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Tell what trig substitution to use for $\int x^8\sqrt{x^2-1}\,dx$</li>
+<li>Tell what trig substitution to use for $\int \sqrt{25+16x^2}\,dx$</li>
+<li>Tell what trig substitution to use for $\int \sqrt{1-x^2}\,dx$</li>
+<li>Tell what trig substitution to use for $\int \sqrt{9+4x^2}\,dx$</li>
+<li>Tell what trig substitution to use for $\int x^9\sqrt{x^2+1}\,dx$</li>
+<li>Tell what trig substitution to use for $\int x^8\sqrt{x^2-1}\,dx$</li>
+</ol>
+
+{%endblock%}

@@ -1,0 +1,54 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "quadric surfaces" "hyperbolic paraboloid" %}
+{% index_entry "hyperbolic paraboloid" %}
+{% index_entry "paraboloid" "hyperbolic" %}
+
+{% title "The hyperbolic paraboloid" %}
+{% description "Description of the hyperbolic paraboloid with interactive graphics that illustrate cross sections and the effect of changing parameters." %}
+
+
+<center>
+<div class="highlight"><h4>The hyperbolic paraboloid</h4>
+<p>Equation: $z=Ax^2+By^2$<br/>
+(where A and B have <b>DIFFERENT</b> signs)</p>
+</div>
+</center>
+
+<p>With just the flip of a sign, say
+$$x^2 + y^2 \quad \text{to} \quad x^2 - y^2,$$
+we can change from an {% intlink elliptic_paraboloid %}elliptic paraboloid{%endintlink%} to a much more complex surface. Because it's such a neat surface, with a fairly simple equation, we use it over and over in examples.</p>
+
+<p>Hyperbolic paraboloids are often referred to as &ldquo;saddles,&rdquo; for fairly obvious reasons. Their official name stems from the fact that their vertical cross sections are parabolas, while the horizontal cross sections are hyperbolas. But even the vertical cross sections are more complicated than with an elliptic paraboloid. Look at the below applet, which shows the surface $z = x^2 - y^2$.</p>
+
+{% boxedapplet hyperbolic_paraboloid_cross_sections %}
+
+<p>Notice that the parabolas open in different directions; the green parabolas open downward, while the purple ones open upward. Also, the hyperbolas which make up the horizontal cross sections can open in either the $x$- or $y$- direction, depending on the chosen value for $z$. All of these are important features of any hyperbolic paraboloid.</p>
+
+<p>The second applet lets you explore what happens when you adjust the coefficients of the equation
+$$z = Ax^2 + By^2.$$
+(Here we're assuming $A$ is positive and $B$ is negative; in other words this &ldquo;looks&rdquo; like $z = x^2 - y^2$.)</p>
+
+{% boxedapplet hyperbolic_paraboloid_coefficients %}
+
+<p class="pre_list">Here are a few things for you to think about:</p>
+<ul>
+<li>What does the horizontal cross section given by $z=0$ look like? Check on the first applet, and also look at the equation when $z=0$. Is this still a hyperbola?</li>
+<li>How would $z = y^2 - x^2$ look different than $z = x^2 - y^2$?</li>
+</ul>
+
+<p>Be very careful; if you hear somebody refer simply to a &ldquo;paraboloid,&rdquo; they generally mean an {% intlink elliptic_paraboloid%}elliptic paraboloid{%endintlink%}, or even a surface where $A=0$ or $B=0$. If you're in doubt which surface somebody means, ask. </p>
+
+<p>The horizontal cross sections of graphs of functions are also called {% intlink level_sets level_curves%}level curves{%endintlink%}, and you can compare the above horizontal cross sections with {% intlink level_set_examples %}how we calculate them as level curves{%endintlink%}.</p>
+
+<h4>List of quadric surfaces</h4>
+
+<ul>
+<li>{% intlink elliptic_paraboloid %}Elliptic paraboloid{%endintlink%}</li>
+<li>Hyperbolic paraboloid</li>
+<li>{% intlink ellipsoid %}Ellipsoid{%endintlink%}</li>
+<li>{% intlink double_cone %}Double cone{%endintlink%}</li>
+<li>{% intlink hyperboloid_one_sheet %}Hyperboloid of one sheet{%endintlink%}</li>
+<li>{% intlink hyperboloid_two_sheets %}Hyperboloid of two sheets{%endintlink%}</li>
+</ul>
+
+{%endblock %}

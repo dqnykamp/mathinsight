@@ -1,0 +1,62 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Controlling a rabbit population worksheet" %}
+{% description "A worksheet on determining a strategy for maintaining a stable population of rabbits in an environment without predators." %}
+
+{% navigation_tag "fixednumber"  "Fixed" %}
+<h4>1. Removing a fixed number</h5>
+
+<P>The model of rabbit growth where one removes a fixed number each month is
+\begin{align}
+   p_{t+1}-p_t &= r p_t-h.  \label{fixedremoval}
+\end{align}
+</p>
+
+<p class="question largespacebelow">Were you able to find a combination of the parameters $r$, $h$, and $p_0$ that leads to a stable population size of around a thousand?  If so, what were they?  If not, why is this impossible?</p>
+
+<p class="question largespacebelow">Explain the behavior of this model.  What does the equilibrium $E=h/r$ mean?  How does one get the expression $E=h/r$ from model \eqref{fixedremoval}?  What happens if you start with $p_0$ just above the equilibrium, right at the equilibrium, and just below the equilibrium?</p>
+
+<p class="question medspacebelow">Does the model give unphysical results in some cases?  Why does this occur?  How could you fix the model to make it better correspond to what would really happen?</p>
+
+
+{% navigation_tag "proportional" "Proportional" %}
+<h4>2. Removing a proportional number</h5>
+
+<p>The model of rabbit growth with monthly removal of a number of rabbits proportional to the population size
+is
+\begin{align*}
+   p_{t+1}-p_t &= r p_t-h(p_t)\\
+  h(p_t)&=b p_t\\
+\end{align*}
+</p>
+
+<p class="question smallspacebelow">Can you find a value of $b$ so that the model gives a stable population size of around a thousand rabbits?</p>
+
+<p class="question medspacebelow">How does your answer depend on the initial population size $p_0$?</p>
+
+<p class="question medspacebelow">What would happen if you changed the reproduction rate $r$ a little bit while keeping your choice of $b$ fixed?</p>
+
+
+{% navigation_tag "challenge" "Challenge" %}
+<div style="page-break-inside: avoid"><h4>3. A challenge</h5>
+
+<p>The model of rabbit growth with removal that is an arbitrary function of the population size is
+\begin{align*}
+   p_{t+1}-p_t &= r p_t-h(p_t),
+\end{align*}
+where you must choose the form for the function $h(p_t)$.
+</p>
+
+<p class="question medspacebelow">Could you find a function $h(p_t)$ that could keep the population size steady around a thousand rabbits?  If so, what function did you find?</p></div>
+<p class="question largespacebelow">If you found a such function,  explain how you came up with that function.  For what ranges of $p_0$ and $r$ does it give reasonable values?  Explain why your function works.  Does it seem like a reasonable strategy to test out? Is it perfect or does it have some flaws?  Do you feel confident enough to implement this strategy?  If you could not find such a function, explain what you tried and why your attempts didn't work.  Given that you couldn't get your model to give you a reasonable answer, what are you going to do about the rabbits?</p>
+
+
+{% navigation_tag "parameters" "Parameters" %}
+<div style="page-break-inside: avoid"><h4>4. Parameters and variables</h4>
+
+<p>The rabbit control model had both parameters and variables.  The following questions ask you to think about their roles.</p>
+<p class="question medspacebelow">What is the difference between a parameter and a variable?</p></div>
+
+<p class="question medspacebelow">One might view the step of introducing parameters as optional, as one could have a rabbit growth model with any parameters (such as $p_{t+1}-p_t=0.2p_t$).  Yet, the introduction of parameters such as $r$, $h$, and $p_0$ were crucial to the analysis of the model.  Explain the role these parameters played in the model analysis.  What questions would have been difficult, if not impossible, to answer without introducing parameters?</p>
+
+<p class="question medspacebelow">When you introduced a new form for $h(p_t)$ did you include any parameters?  If you did, what role did the parameters play?  If you didn't, what numbers in your $h(p_t)$ could you change to parameters?  How can parameters help you understand how your control strategy works?</p>
+{% endblock %}

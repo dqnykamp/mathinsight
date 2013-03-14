@@ -1,0 +1,12 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "positively oriented boundary" "definition" %}
+{% title "Positively oriented boundary definition" %}
+{% description "A boundary of a surface is positively oriented if its direction corresponds to the fingers of your right hand when your thumb points in the direction of the surface normal." %}
+
+<p>A boundary of a surface is positively {% intlink parametrized_surface_orient %}oriented{%endintlink%} if its direction corresponds to the fingers of your right hand when your thumb points in the direction of the surface {%intlink parametrized_surface_normal_vector %}normal{%endintlink%}.
+Equivalently, if you walk near the edge on the {%intlink positive_side_definition%}positive side{%endintlink%} of the surface  in the direction corresponding to the orientation of boundary, then
+surface must be to your left and the edge must be to your right.</p>
+
+
+
+{%endblock%}

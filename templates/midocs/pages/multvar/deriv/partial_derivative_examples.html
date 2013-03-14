@@ -1,0 +1,126 @@
+{% extends "midocs/page_base.html" %}
+
+{% load mi_tags %}
+
+{% block content %}
+{% index_entry "partial derivative"%}
+{% index_entry "derivative" "partial" %}
+{% title "Partial derivative examples" %}
+{% description "Examples of how to calculate partial derivatives." %}
+
+{% navigation_tag "video_introduction" "Video introduction" %}
+<h4>Video introduction</h4>
+
+{% boxedvideo partial_derivative_examples %}
+
+{% navigation_tag "examples" "Examples" %}
+
+<p>Once you understand the {% intlink partial_derivative_introduction %}concept of a partial derivative{%endintlink%} as the rate that something is changing, calculating partial derivatives usually isn't difficult.  (Unfortunately, there are {% intlink partial_derivative_limit_definition %}special cases{%endintlink%} where calculating the partial derivatives is hard.)  As these examples show, calculating a partial derivatives is usually just like calculating an ordinary derivative of one-variable calculus.  You just have to remember with which variable you are taking the derivative.</p>
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $f(x,y) = y^3x^2$.  Calculate $\displaystyle \pdiff{f}{x}(x,y)$.</p>
+
+<p><b>Solution</b>:  To calculate $\displaystyle \pdiff{f}{x}(x,y)$, we simply view
+$y$ as being a fixed number and calculate the ordinary derivative with
+respect to $x$.  The first time you do this, it might be easiest to
+set $y=b$, where $b$ is a constant, to remind you that you should
+treat $y$ as though it were number rather than a variable.  Then, the
+partial derivative $\displaystyle \pdiff{f}{x}(x,y)$ is the same as
+the ordinary derivative of the function $g(x)=b^3x^2$.  Using the rules
+for ordinary differentiation, we know that
+\begin{align*}
+  \diff{g}{x}(x) = 2b^3x.
+\end{align*}
+Now, we remember that $b=y$ and substitute $y$ back in to conclude that
+\begin{align*}
+  \pdiff{f}{x}(x,y) = 2y^3x.
+\end{align*}
+</p>
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>For the same $f$, calculate $\displaystyle \pdiff{f}{y}(x,y)$.</p>
+
+<p><b>Solution</b>: This time, we'll just calculate the derivative with respect
+to $y$ directly without replacing $x$ with a constant.  We just have
+to remember to treat $x$ like a constant and use the rules for
+ordinary differentiation.  We don't touch the $x^2$ and only
+differentiate the $y^3$ factor to calculate that
+\begin{align*}
+  \pdiff{f}{y}(x,y) =3 x^2 y^2.
+\end{align*}
+</p>
+
+{% navigation_tag "example3" "Examples" "Example 3" %}
+<h4>Example 3</h4>
+
+<p>For the same $f$, calculate $\displaystyle \pdiff{f}{x}(1,2)$.</p>
+
+<p><b>Solution</b>: From example 1, we know that $\displaystyle
+\pdiff{f}{x}(x,y) = 2y^3x$.  To evaluate this partial derivative at
+the point $(x,y)=(1,2)$, we just substitute the respective values for
+$x$ and $y$:
+\begin{align*}
+  \pdiff{f}{x}(1,2) = 2 (2^3)(1) = 16.
+\end{align*}
+</p>
+
+{% navigation_tag "example4" "Examples" "Example 4" %}
+<h4>Example 4</h4>
+
+<p>For 
+\begin{align*}
+f(x_1,x_2,x_3,x_4) = 3
+\frac{\cos(x_1x_4)\sin(x_2^5)}{e^{x_2}+ (1+x_2^2)/(x_1x_2x_4)} + 5x_1x_3x_4
+\end{align*}
+calculate $\displaystyle \pdiff{f}{x_3}(a,b,c,d)$.
+</p>
+
+<p><b>Solution</b>: Although this initially looks hard, it's really any easy
+problem.  The ugly term does not depend on $x_3$, so in calculating
+partial derivative with respect to $x_3$, we treat it as a constant.
+The derivative of a constant is zero, so that term drops out.  The
+derivative is just the derivative of the last term with respect to
+$x_3$, which is
+\begin{align*}
+  \pdiff{f}{x_3}(x_1,x_2,x_3,x_4) = 5x_1x_4
+\end{align*}
+Substituting in the values $(x_1,x_2,x_3,x_4)=(a,b,c,d)$, we obtain
+the final answer
+\begin{align*}
+  \pdiff{f}{x_3}(a,b,c,d) = 5ad.
+\end{align*}
+</p>
+
+
+{% navigation_tag "example5" "Examples" "Example 5" %}
+<h4>Example 5</h4>
+
+<p>Let
+\begin{align*}
+p(y_1,y_2,y_3) = 9\frac{y_1y_2y_3}{y_1+y_2+y_3}
+\end{align*}
+and calculate $\displaystyle \pdiff{p}{y_3}(y_1,y_2,y_3)$ at the point $(y_1,y_2,y_3)=(1,-2,4)$.
+</p>
+
+<p><b>Solution</b>: In calculating partial derivatives, we can use all the rules for ordinary derivatives.  We can calculate $\pdiff{p}{y_3}$ using the {% intlink quotient_rule_refresher %}quotient rule{%endintlink%}.
+\begin{align*}
+\pdiff{p}{y_3}(y_1,y_2,y_3) &amp;= 9\frac{\displaystyle(y_1+y_2+y_3)\pdiff{}{y_3}(y_1y_2y_3)
+  -(y_1y_2y_3)\pdiff{}{y_3}(y_1+y_2+y_3) }{(y_1+y_2+y_3)^2}\\
+  &amp;= 9\frac{(y_1+y_2+y_3)(y_1y_2)-(y_1y_2y_3)1 }{(y_1+y_2+y_3)^2}\\
+  &amp;= 9\frac{(y_1+y_2)y_1y_2}{(y_1+y_2+y_3)^2}.
+\end{align*}
+</p>
+<p>Plugging in the point $(y_1,y_2,y_3)=(1,-2,4)$ yields the answer
+\begin{align*}
+\pdiff{p}{y_3}(1,-2,4) &amp;= 9\frac{(1-2)1(-2)}{(1-2+4)^2}= 2.
+\end{align*}
+
+</p>
+
+
+
+{%endblock%}

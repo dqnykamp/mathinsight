@@ -1,0 +1,140 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integral" "surface"%}
+{% index_entry "surface integral" "vector field"%}
+{% index_entry "flux integral" %}
+{% title "Vector surface integral examples" "Examples" %}
+{% description "Examples of calculating the integral of vector fields over parametrized surfaces." %}
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $\dls$ be the cylinder of radius 3 and height 5 given by $x^2+y^2=3^2$ and
+$0 \le z \le 5$. Let $\dlvf$ be the vector field $\dlvf(x,y,z) = (2x,2y,2z)$.
+Find the integral of $\dlvf$ over $\dls$.  (Note that &ldquo;cylinder&rdquo; in this example means a surface, not the solid object, and doesn't include the top or bottom.)</p>
+
+<p class="centeredImage">{% image cylinder_flux_out %}</p>
+
+<p>This problem is still not well-defined, as we have to choose an orientation for the surface.  Let the positive side be the outside of the cylinder, i.e., use the outward pointing normal vector.</p>
+
+
+<p><b>Solution</b>:
+What is the sign of integral?  Since the vector field and normal vector
+point outward, the integral better be positive.</p>
+
+<p>Parameterize the cylinder by 
+\begin{align*}
+  \dlsp(\theta,t) = (3 \cos\theta, 3\sin\theta, t)
+\end{align*}
+for $0 \le \theta \le 2\pi$ and $0 \le t \le 5$. </p>
+
+<p>Since
+\begin{align*}
+  \pdiff{\dlsp}{\theta}(\theta,t) &amp;= (-3\sin\theta, 3\cos\theta,0)\\
+  \pdiff{\dlsp}{t}(\theta,t) &amp;= (0,0,1)
+\end{align*}
+the normal vector is
+\begin{align*}
+  \pdiff{\dlsp}{\theta}(\theta,t) \times  \pdiff{\dlsp}{t}(\theta,t)
+  &amp;= \left|
+    \begin{array}{ccc}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      -3\sin\theta &amp; 3\cos\theta &amp; 0\\
+      0 &amp; 0 &amp; 1
+    \end{array}
+  \right|\\
+  &amp;= \vc{i} 3 \cos\theta - \vc{j} (-3\sin \theta)\\
+  &amp;= (3\cos\theta, 3\sin\theta,0).
+\end{align*}
+</p>
+
+<p>Is $(3\cos\theta, 3\sin\theta,0)$ an outward pointing normal?  It is a
+normal at the point $\dlsp(\theta,t)=(3 \cos\theta, 3\sin\theta,
+t)$.  As shown in the below figure, it is an outward pointing normal.</p>
+
+<p class="centeredImage">{% image cylinder_outward_normal %}</p>
+
+<p>One could also verify orientation by just choosing a single point, such as picking $\theta=0$ and $t=0$.  In that case, the point is $(3,0,0)$ and the normal vector is $(3,0,0)$, which can be see as pointing outside the cylinder.</p>
+
+<p>We can now calculate total flux.
+\begin{align*}
+  \dsint &amp;=
+  \psint{0}{5}{0}{2\pi}{\dlvf}{\dlsp}{\theta}{t}
+  \\
+  &amp;=
+  \int_0^5\int_0^{2\pi} 
+  \dlvf(3 \cos\theta, 3\sin\theta, t)
+  \cdot (3\cos\theta, 3\sin\theta,0)
+  d\theta\,dt\\
+  &amp;=
+  \int_0^5\int_0^{2\pi} 
+  (6 \cos\theta, 6\sin\theta, 2t)
+  \cdot (3\cos\theta, 3\sin\theta,0)
+  d\theta\,dt\\
+  &amp;= \int_0^5\int_0^{2\pi}
+  18 \cos^2\theta + 18\sin^2\theta \, d\theta\,dt \qquad\quad\\
+  &amp;=\int_0^5\int_0^{2\pi} 18 \, d\theta \, dt\\
+  &amp;=\int_0^5 18(2\pi) dt\\
+  &amp;= 18(2\pi)(5) = 180 \pi
+\end{align*}  
+</p>
+
+<p>The answer is postive, as we knew it must be.  There are two orientations for the cylinder.  If we had instead chosen
+the orientation given by the inward pointing normal vector, we would have obtained the answer $-180\pi$.</p>
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Let $\dls$ be a disk of radius 6 centered around the $z$-axis in plane $z=-4$, oriented with an upward pointing normal. 
+Let a magnetic field be given by $\dlvf(x,y,z) = (0,0,x^2+y^2)$.
+What is total magnetic flux through disk? </p>
+
+<p><b>Solution</b>:
+The total magnet flux is $\dsint$.  What is the sign of this integral? Since the vector field is pointing upward and the surface is oriented with upward pointing normal vector, the integral must be positive.</p>
+
+<p>We can parameterize this disk by
+\begin{align*}
+  \dlsp(\theta,r) = (r\cos\theta, r\sin\theta,-4)
+\end{align*}
+for  $0 \le \theta \le 2\pi$, $0 \le r \le 6$.</p>
+
+<p>We calculate the normal vector through the cross product of the derivatives of $\dlsp$.
+\begin{align*}
+  \pdiff{\dlsp}{\theta} &amp;= (-r\sin\theta, r\cos\theta, 0)\\
+  \pdiff{\dlsp}{r} &amp;= (\cos\theta, \sin\theta, 0)
+\end{align*}
+\begin{align*}
+  \pdiff{\dlsp}{\theta} \times \pdiff{\dlsp}{r}
+  &amp;= \left|
+    \begin{array}{ccc}
+      \vc{i} &amp; \vc{j} &amp; \vc{k}\\
+      -r \sin\theta &amp; r \cos\theta &amp; 0\\
+      \cos\theta &amp; \sin\theta &amp; 0
+    \end{array}
+  \right|\\
+  &amp;= 0\vc{i}  + 0 \vc{j} + (-r\cos^2\theta-r\sin^2\theta) \vc{k}\\
+  &amp;= (0,0, -r)
+\end{align*}
+The normal vector is downward pointing, but we need to orient $\dls$ with upward normal vector.  For correct orientation, we must choose the normal vector  $\pdiff{\dlsp}{r} \times \pdiff{\dlsp}{\theta} = (0,0, r)$.  (Otherwise, we would be off by a sign.)
+ </p>
+
+
+<p>Putting these pieces together, the total flux is:
+\begin{align*}
+  \dsint &amp;=
+  \psint{0}{2\pi}{0}{6}{\dlvf}{\dlsp}{r}{\theta}\\
+  &amp;= \int_0^{2\pi}\int_0^6 \vc{F}(r\cos\theta,r\sin\theta,-4) 
+  \cdot (0,0,r) dr\,d\theta\\
+  &amp;=\int_0^{2\pi}\int_0^6
+  (0,0,r^2\cos^2\theta+r^2\sin^2\theta) 
+  \cdot (0,0,r) dr\,d\theta\\
+  &amp;=\int_0^{2\pi}\int_0^6
+  r^3 dr\,d\theta\\
+  &amp;=\int_0^{2\pi} \left( \frac{r^4}{4}\bigg|_{r=0}^{r=6} \right)
+  d\theta
+  =\int_0^{2\pi} \frac{6^4}{4} d\theta = 648\pi.
+\end{align*}
+The total magnetic flux is positive, consistent with what we had observed at the outset.</p>
+
+
+{%endblock%}

@@ -1,0 +1,39 @@
+{% extends "mitesting/assessment_base.html" %}
+{% load testing_tags %}
+
+{% block content %}
+<table class="examinfo"><tr><td>{{ course }}</td></tr>
+<tr><td>{{ semester }}</td></tr>
+<tr><td>{{ the_assessment_name }}, version {{ version }}</td></tr>
+<tr><td>{{ assessment_date }}</td></tr>
+{% if the_assessment.time_limit%}<tr><td>Time limit: {{ the_assessment.time_limit }}</td></tr>{%endif %}
+</table>
+<div class="right_header">
+<table class="examstudentinfo">
+<tr><td class="examlabel">Name (print):</td><td class="blank"></td></tr>
+<tr><td class="examlabel">Student ID:</td><td class="blank"></td></tr>
+<tr><td class="examlabel">Section: </td><td class="blank"></td></tr>
+<tr><td class="examlabel">Teaching Assistant: </td><td class="blank"></td></tr>
+<tr><td class="examlabel">Signature: </td><td class="blank"></td></tr>
+</table>
+</div>
+<section class="exam_instructions">
+{{ the_assessment.render_instructions }}
+</section>
+<table class="question_scores">
+{% for question in question_list %}
+<tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
+{% endfor %}
+ <tr><td class="examlabel">Total</td><td class="points">{{ the_assessment.total_points }} pts</td><td class="blank"></td></tr>
+</table>
+<section class="exam_main">
+<ol class="exam_questions">
+{% for question in question_list %}
+{% new_exam_page %}
+<li class="question{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
+{% endfor %}
+</ol>
+</section>
+
+{% endblock %}
+

@@ -1,0 +1,46 @@
+{% extends "midocs/page_base.html" %}
+
+{% load mi_tags %}
+
+{% block content %}
+{% index_entry "linear transformation"%}
+{% index_entry "linear transformation" "definition"%}
+{% title "Linear transformations" %}
+{% description "Definition of a linear transformation of Euclidean spaces." %}
+
+<p class="pre_list">A linear transformation (or a linear map) is a function $\vc{T}: \R^n \to \R^m$ that
+  satisfies the following properties:</p>
+<ol>
+<li>$\vc{T}(\vc{x}+\vc{y}) = \vc{T}(\vc{x}) +\vc{T}(\vc{y})$</li>
+<li>$\vc{T}(a\vc{x}) =  a\vc{T}(\vc{x})$</li>
+</ol>
+<p>for any vectors $\vc{x}, \vc{y} \in \R^n$ and any scalar $a \in \R$.</p>
+
+<p>It is simple enough to identify whether or not a given function
+$\vc{f}(\vc{x})$ is a linear transformation.  Just look at each term
+of each component of $\vc{f}(\vc{x})$.  If each of these terms is a
+number times one of the components of $\vc{x}$, then $\vc{f}$ is a
+linear transformation.</p>
+
+<p>Therefore, the function $$\vc{f}(x,y,z) = (3x-y, 3z, 0, z-2x)$$ is a
+linear transformation, while neither 
+$$\vc{g}(x,y,z) = (3x-y, 3z+2, 0,z-2x)$$ nor 
+$$\vc{h}(x,y,z) = (3x-y, 3xz, 0,z-2x)$$ are linear transformations.
+The function $\vc{h}$ has a nonlinear component $3xz$ that  disqualifies it.
+What about the function $\vc{g}$?  
+It's that term $2$ that's the problem, which doesn't contain any components of our input vector $(x,y,z)$.</p>
+
+<p>It's easy to see that the function $\vc{g}$ violates the second condition above. 
+In particular, if you set $a=0$ in that second condition, you see that each linear transformation must satisfy $$\vc{T}(\vc{0}) = \vc{0}$$
+but $\vc{g}(0,0,0) = (0,2,0,0)$.
+The condition for a linear transformation is stronger than the condition one learns in grade school for a function whose graph is a line. 
+A single variable function $f(x)=ax+b$ is not a linear transformation unless its y-intercept $b$ is zero.</p>
+
+<p>A useful feature of a feature of a linear transformation is that there is a
+{% intlink matrices_linear_transformations %}one-to-one correspondence{%endintlink%} 
+between matrices and linear transformations, based on
+{% intlink matrix_vector_multiplication %}matrix vector multiplication{%endintlink%}.  
+So, we can talk without ambiguity of <b>the</b> matrix associated with a linear transformation $\vc{T}(\vc{x})$.
+</p>
+
+{% endblock %}

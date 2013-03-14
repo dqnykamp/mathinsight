@@ -1,0 +1,127 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "integration" "find area"%}
+{% index_entry "area" "under a curve"%}
+{% title "Area and definite integrals" %}
+{% description "Integrating to find the area under a curve or the area between two curves." %}
+
+<p>The actual <i>definition</i> of &lsquo;integral&rsquo; is as a limit of sums, which
+might easily be viewed as having to do with <i>area</i>. One of the
+original issues integrals were intended to address was computation of
+area.</p>
+
+<p>First we need more notation. Suppose that we have a function
+$f$ whose integral is another function $F$:
+$$\int f(x)\;dx=F(x)+C$$
+Let $a,b$ be two numbers. Then the <b>definite integral</b> of $f$ <b>with limits</b> $a,b$ is
+$$\int_a^b f(x)\;dx=F(b)-F(a)$$
+The left-hand side of this equality is just <i>notation</i> for the
+definite integral. The use of the word &lsquo;limit&rsquo; here has little to do
+with our earlier use of the word, and means something more like
+&lsquo;boundary&rsquo;, just like it does in more ordinary English. </p>
+
+<p>A similar notation is to write
+$$[g(x)]_a^b=g(b)-g(a)$$
+for any function $g$. So we could also write
+$$\int_a^b f(x)\;dx=[F(x)]_a^b$$</p>
+
+<p>For example,
+$$\int_0^5
+x^2\;dx=\biggl[{x^3\over 3}\biggr]_0^5={5^3-0^3\over 3}={125\over 3}$$
+As another example,
+$$\int_2^3 3x+1 \;dx=\biggl[{3x^2\over 2}+x\biggr]_2^3
+=\biggl({3\cdot 3^2\over 2}+3\biggr)-\biggl({3\cdot 2^2\over 2}+2\biggr)={21\over 2}$$</p>
+
+<p>All the other integrals we had done previously would be
+called <b>indefinite integrals</b> since they didn't have &lsquo;limits&rsquo;
+$a,b$. So a <i>definite</i> integral is just the difference of two
+values of the function given by an <i>indefinite</i> integral. That is,
+there is almost nothing new here except the idea of evaluating the
+function that we get by integrating.</p>
+
+<p>But now we <i>can</i> do something new: compute <i>areas</i>:
+
+<p>For example, if a function $f$ is <i>positive</i> on an
+interval $[a,b]$, then
+$$\int_a^b f(x)\;dx = \hbox{ area between graph and $x$-axis, between
+$x=a$ and $x=b$}$$
+It is important that the function be <i>positive</i>, or the result is
+false.</p>
+
+<p>For example, since $y=x^2$ is certainly always positive (or
+at least non-negative, which is really enough), the area &lsquo;under the
+curve&rsquo; (and, implicitly, above the $x$-axis) between $x=0$ and $x=1$
+is just
+$$\int_0^1 x^2\;dx=\biggl[{x^3\over 3}\biggr]_0^1={1^3-0^3\over 3}={1\over 3}$$</p>
+
+<p>More generally, <i>the area below $y=f(x)$, above $y=g(x)$,
+and between $x=a$ and $x=b$ is</i>
+\begin{align*}\hbox{ area }&amp;=\int_a^b f(x)-g(x) \;dx\\
+&amp;=\int_{\textit{left limit}}^{\textit{right limit}} 
+(\text{upper curve - lower curve}) \;dx
+\end{align*}
+It is important that $f(x)\ge g(x)$ throughout the interval $[a,b]$.</p>
+
+<p>For example, the area below $y=e^x$ and above $y=x$, and
+between $x=0$ and $x=2$ is
+$$\int_0^2 e^x-x\;dx=\biggl[e^x-{x^2\over 2}\biggr]_0^2=(e^2-2)-(e^0-0)=e^2+1$$
+since it really is true that $e^x\ge x$ on the interval $[0,2]$.</p>
+
+<p class="pre_list">As a person might be wondering, in general it may be not so
+easy to tell whether the graph of one curve is above or below
+another. The procedure to examine the situation is as follows: given
+two functions $f,g$, to find the intervals where $f(x)\le g(x)$ and
+vice-versa:</p>
+<ul>
+<li>Find where the graphs cross by solving $f(x)=g(x)$ for $x$ to
+find the $x$-coordinates of the points of intersection.</li>
+<li> Between any two solutions $x_1,x_2$ of $f(x)=g(x)$ (and also to the
+left and right of the left-most and right-most solutions!), plug in
+<i>one</i> auxiliary point of your choosing to see which function is larger.</li>
+</ul>
+
+<p>Of course, this procedure works for a similar reason that the <i>first derivative test</i> for local minima and maxima worked: we
+implicitly assume that the $f$ and $g$ are <i>continuous</i>, so if the
+graph of one is above the graph of the other, then the situation can't
+<i>reverse</i> itself without the graphs actually <i>crossing</i>.</p>
+
+<p>As an example, and as an example of a certain delicacy of
+wording, consider the problem to <i>find the area between $y=x$ and
+$y=x^2$ with $0\le x\le 2$</i>. To find where $y=x$ and $y=x^2$ <i>cross</i>, solve $x=x^2$: we find solutions $x=0,1$. In the present
+problem we don't care what is happening to the left of $0$. Plugging
+in the value $1/2$ as auxiliary point between $0$ and $1$, we get
+${1\over 2}\ge ({1\over 2})^2$, so we see that in $[0,1]$ the curve
+$y=x$ is the higher. To the right of $1$ we plug in the auxiliary
+point $2$, obtaining $2^2\ge 2$, so the curve $y=x^2$ is higher
+there.</p>
+
+<p>Therefore, the area between the two curves has to be broken into two
+parts:
+$$\hbox{ area }=\int_0^1 (x-x^2)\; dx+\int_1^2 (x^2-x)\; dx$$
+since we must always be integrating in the form
+$$\int_{\textit{left}}^{\textit{right}} \hbox{higher - lower}\;dx$$</p>
+
+<p>In some cases the &lsquo;side&rsquo; boundaries are redundant or only
+<i>implied</i>. For example, the question might be to <i>find the
+area between the curves $y=2-x$ and $y=x^2$</i>. What is implied here is
+that these two curves themselves enclose one or more <i>finite</i>
+pieces of area, without the need of any &lsquo;side&rsquo; boundaries of the form
+$x=a$. First, we need to see where the two curves intersect, by
+solving $2-x=x^2$: the solutions are $x=-2,1$. So we <i>infer</i> that
+we are supposed to find the area from $x=-2$ to $x=1$, and that the
+two curves <i>close up</i> around this chunk of area without any need
+of assistance from vertical lines $x=a$. We need to find which curve
+is higher: plugging in the point $0$ between $-2$ and $1$, we see that
+$y=2-x$ is higher. Thus, the desired integral is 
+$$\hbox{ area}=\int_{-2}^1 (2-x)-x^2 \; dx.$$</p>
+
+<h4>Exercises</h4>
+<ol class="padded">
+<li>Find the area between the curves $y=x^2$ and
+$y=2x+3$.</li>
+<li>Find the area of the region bounded vertically by
+$y=x^2$ and $y=x+2$ and bounded horizontally by $x=-1$ and $x=3$.</li>
+<li>Find the area between the curves $y=x^2$ and
+$y=8+6x-x^2$.</li>
+</ol>
+
+{%endblock%}

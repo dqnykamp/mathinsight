@@ -1,0 +1,54 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "level set"%}
+{% index_entry "visualization" "level set"%}
+{% title "Level set examples" "Examples" %}
+{% description "Examples demonstrating how to calculate level curves and level surfaces." %}
+
+{% navigation_tag "example1" "Examples" "Example 1" %}
+<h4>Example 1</h4>
+
+<p>Let $f(x,y) = x^2-y^2$.  We will study the level curves $c=x^2-y^2$.</p>
+
+<p>First, look at the case $c=0$.  The level curve equation $x^2-y^2=0$
+factors to $(x-y)(x+y)=0$.   This equation is satisfied if either
+$y=x$ or $y=-x$.  Both these are equations for lines, so the level
+curve for $c=0$ is two lines.</p>
+
+<p>If $c \ne 0$, then we can rewrite the level curve equation $c=x^2-y^2$ as
+\begin{align*}
+  1 = \frac{x^2}{c} - \frac{y^2}{c}.
+\end{align*}
+If you remember you conic sections, you'll recognize this as the
+equation for a hyperbola.  If $c$ is positive, the hyperbolas open to
+the left and right.  If $c$ is negative, the hyperbolas open up and
+down.</p>
+
+<p>For example, if $c=1$, the equation is $x^2-y^2=1$.  If $c=-1$, the
+equation is $y^2-x^2=1$.  A number of level curves are plotted below.</p>
+
+<p class="centeredImage">{%image level_curves_hyperbolic_paraboloid %}</p>
+
+<p>We can &ldquo;stack&rdquo; these level curves on top of one another to form the
+graph of the function.  Below, the level curves are the thick blue
+lines.  Drag the green point from 0 to 1.  When the point is at 1,
+each level curve given by $c=f(x,y)$ will be at the height $z=c$.</p>
+
+{% boxedapplet level_curves_hyperbolic_paraboloid %}
+
+<p>This is yet another way to visualize the relationship between the
+level curves and the graph of $z=f(x,y)$ shown below, which is a {% intlink hyperbolic_paraboloid %}hyperbolic paraboloid{%endintlink%}.</p>
+
+{% boxedapplet graph_hyperbolic_paraboloid %}
+
+
+{% navigation_tag "example2" "Examples" "Example 2" %}
+<h4>Example 2</h4>
+
+<p>Let $f(x,y,z) = x^2+y^2+z^2$.  Although we cannot plot the graph of
+this function, we can graph some of its level surfaces.  The equation
+for a level surface, $x^2+y^2+z^2=c$, is the equation for a sphere of
+radius $\sqrt{c}$. </p>
+
+{% boxedapplet spherical_level_surfaces %}
+
+{%endblock%}

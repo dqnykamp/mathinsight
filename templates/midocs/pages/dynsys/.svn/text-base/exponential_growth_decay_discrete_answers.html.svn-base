@@ -1,0 +1,43 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Discrete exponential growth and decay exercise answers" "Answers" %}
+{% description "Answers to selected exercises on solving problems involving exponential growth and decay in discrete time. " %}
+
+<p>Here we give answers to several of the {% intlink exponential_growth_decay_discrete_exercises %}exercises on exponential growth and decay in discrete time{%endintlink%}.</p>
+
+{% navigation_tag "exercise1" "Answers" "Exercise 1" %}
+<h4>{% intlink exponential_growth_decay_discrete_exercises exercise1 normaltext %}Exercise 1{%endintlink%}</h4>
+
+<p>\begin{align*}
+{\rm{a.}} \hspace{2mm} x_t &=  1000 \times 1.2^t & x_{100} & = 1000 \times 1.2^{100} \approx  82,817,974,522 \\
+{\rm{c.}} \hspace{2mm} B_t &= 138 \times 1.5^t & B_{100} & = 138 \times 1.5^{100} \approx  5.6 \times 10^{19} \\
+{\rm{e.}} \hspace{2mm} P_t &= 1000 \times 1.2^t & P_{100} & = 1000 \times 1.2^{100} \approx   82,817,974,522 \\
+{\rm{g.}} \hspace{2mm} c_t &= 1000 \times 0.9^t & c_{100} & = 1000 \times 0.9^{100} \approx  0.026
+\end{align*}
+</p>
+
+
+{% navigation_tag "exercise2" "Answers" "Exercise 2" %}
+<h4>{% intlink exponential_growth_decay_discrete_exercises exercise2 normaltext %}Exercise 2{%endintlink%}</h4>
+
+<p>b. $x_4 = (1+r)^4 x_0$</p>
+
+<p>c.\begin{align*}
+{\rm{(i.)}} \hspace{2mm}  x_{t} & = 0.2^t \times 50 &
+  x_{40} &\approx 73,489  \\
+{\rm{(iii.)}} \hspace{2mm} x_{t} & = 1.05^{t} \times 50 &
+x_{40} &\approx 352  
+\end{align*}
+</p>
+
+
+{% navigation_tag "exercise3" "Answers" "Exercise 3" %}
+<h4>{% intlink exponential_growth_decay_discrete_exercises exercise3 normaltext %}Exercise 3{%endintlink%}</h4>
+
+<p>Approximately 2,691,588.</p>
+
+{% navigation_tag "exercise4" "Answers" "Exercise 4" %}
+<h4>{% intlink exponential_growth_decay_discrete_exercises exercise4 normaltext %}Exercise 4{%endintlink%}</h4>
+<p>Approximately 0.00107 g.</p>
+
+
+{% endblock %}

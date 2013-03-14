@@ -1,0 +1,41 @@
+{% extends "midocs/page_base.html" %}
+{% load mi_tags %}{% load url from future %}
+
+{% block content %}
+{% index_entry "quadric surfaces" "interactive gallery" %}
+{% title "Introduction to the Interactive Gallery of Quadric Surfaces" %}
+{% description "A tour of the various quadric surfaces, with interactive applets that illustrate cross sections and the effect of changing parameters." %}
+
+
+<p>The {% extlink "http://www.math.umn.edu/%7Erogness/quadrics/"%}Interactive Gallery of Quadric Surfaces{%endextlink%}
+was written by <a href="{% url 'mi-authordetail' 'jrogness' %}">Jon Rogness</a> and appeared in the 2005 volume of 
+{% extlink "http://www.joma.org" %}Journal of Online Mathematics{%endextlink%}, 
+an electronic journal of the {% extlink "http://www.maa.org"%}Mathematical Association of America{%endextlink%}.</p>
+
+<p>The interactive gallery is a tour through the various {% intlink quadric_surfaces%}quadric surfaces{%endintlink%}, which are basic surfaces determined by quadratic equations in $x$, $y$, and $z$.  They are natural three-dimensional extensions of the two-dimensional conic sections (ellipses, parabolas, and hyperbolas) and are frequently used as example surfaces.</p>
+
+<p>Each page in the interactive gallery features interactive applets that allow you to examine the {% intlink surface_cross_sections %}cross sections{%endintlink%} of the surfaces as well as explore how the coefficients change the surfaces.</p>
+
+<p>You can begin your exploration of the gallery with a page describing {% intlink quadric_surfaces %}quadric surfaces in general.{%endintlink%}</p>
+
+<h4>A Note about Domains</h4>
+
+<p>Sometimes a computer can graph a surface in more than one way. Look at the two pictures below; they both show graphs of the function $z = x^2+y^2$. The one on the left is probably more familiar, and it's what most of us would draw by hand. The picture on the right can be useful, though, because the gridlines on the surface show you the cross sections $x=c$ and $y=c$ of the surface.</p>
+
+<p class="centeredImage">{% image elliptic_paraboloid_circular_domain%} {% image elliptic_paraboloid_square_domain%} </p>
+
+<p>In technical terms, the two pictures show graphs of the same function but with different domains. On the left the domain is a disk, described by
+\begin{gather*}0 \le x^2+y^2 \le 2.\end{gather*}
+On the right, the domain is a square,
+\begin{gather*}
+-1 \le x \le 1\\
+-1 \le y \le 1
+\end{gather*}
+</p>
+
+<p>In the gallery of quadric surfaces, we'll focus on the surfaces with square domains to emphasize the vertical cross sections. We've also included certain pictures using the domain of a disk. You might be surprised how different some of the pictures will look when you change the domain.</p>
+
+<p>In fact, that leads to a good way to gauge how well you understand the quadric surfaces. On each page you'll be able to adjust the coefficients of the equation. Do this with both domains, and see if you can tell that it affects both graphs in the same way. </p>
+
+
+{%endblock%}

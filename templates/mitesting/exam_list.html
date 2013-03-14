@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load mi_tags %}{% load url from future %}
+
+{% block title %}List of exams{% endblock %}
+{% block nolinksection %}{% endblock %}
+{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
+
+{% block content %}
+
+<h3>List of exams</h3>
+<ul class="linklistspace">
+  {% for exam in exam_list %}
+  <li><a href="{{ exam.get_absolute_url}}" >{{exam}}</a>
+    {% if view_solution %}(<a href="{{ exam.get_solution_url}}" >Solution for {{exam}}</a>){%endif%}</li>
+  {% endfor %}
+</ul>
+
+{% if is_paginated %}
+<div>
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">{% endif %}&laquo; Previous{% if page_obj.has_previous %}</a>{% endif %}
+  | Page {{ page_obj.number }} of {{ paginator.num_pages }} |
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">{% endif %}Next &raquo;{% if page_obj.has_next %}</a>{% endif %}
+</div>
+{% endif %}
+  
+
+{% endblock %}
+
+{% block rightcolumn %}
+<ul class="linklist">
+<li><a href="{% url 'mit-questionlist' %}">List of all exam questions</a></li>
+</ul>
+{%endblock%}

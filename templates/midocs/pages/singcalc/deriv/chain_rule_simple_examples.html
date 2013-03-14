@@ -1,0 +1,137 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "derivative" "chain rule" %}
+{% index_entry "chain rule" %}
+{% title "Simple examples of using the chain rule" %}
+{% description "Basic examples that show how to use the chain rule to calculate the derivative of the composition of functions." %}
+
+<p>The {% intlink chain_rule_idea %}chain rule{%endintlink%} is a formula to calculate the derivative of a {% intlink composition_definition%}composition{%endintlink%} of functions.  Once you have a grasp of the {% intlink chain_rule_idea%}basic idea{%endintlink%} behind the chain rule, the next step is to try your hand at some examples.</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Let $f(x)=6x + 3$ and $g(x)=-2x+5$.  Use the chain rule to calculate $h'(x)$, where $h(x)=f(g(x))$.</p>
+
+<p><b>Solution</b>:  The derivatives of $f$ and $g$ are
+\begin{align*}
+  f'(x)&=6\\
+  g'(x)&=-2.
+\end{align*}
+According to the chain rule, 
+\begin{align*}
+  h'(x) &= f'(g(x)) g'(x)\\
+  &= f'(-2x +5) (-2)\\
+  &= 6 (-2)=-12.
+\end{align*}
+</p>
+
+<p>Since the functions were linear, this example was trivial.  Even though we had to evaluate $f'$ at $g(x)=-2x+5$, that didn't make a difference since $f'=6$ not matter what its input is.  Moveover, in this case, if we calculate $h(x)$,
+\begin{align*}
+  h(x) &= f(g(x))\\
+  &= f(-2x+5)\\
+  &= 6(-2x+5)+3\\
+  &= -12x+30+3 = -12x + 33,
+\end{align*}
+then we can quite easily calculate its derivative directly to obtain that $h'(x)=-12$.</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Let $f(x)=e^x$ and $g(x)=4x$.  Use the chain rule to calculate $h'(x)$, where $h(x)=f(g(x))$.</p>
+
+<p><b>Solution</b>: The {% intlink exploring_derivative_exponential_function basee %}derivative of the exponential function with base $e${%endintlink%} is just the function itself, so $f'(x)=e^x$.  The derivative of $g$ is $g'(x)=4$.
+According to the chain rule, 
+\begin{align*}
+  h'(x) &= f'(g(x)) g'(x)\\
+  &= f'(4x) \cdot 4\\
+  &= 4e^{4x}.
+\end{align*}
+</p>
+
+<p>In this example, it was important that we evaluated the derivative of $f$ at $4x$.  The derivative of $h(x)=f(g(x))=e^{4x}$ is not equal to $4e^{x}$.  The only correct answer is $h'(x)=4e^{4x}$.   This result is a special case of {% intlinkeq exploring_derivative_exponential_function derivative_ekx %}from the derivative of exponential function page{%endintlinkeq%} with $k=4$.</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Let $f(x)=e^x$ and $g(x)=3x^2+2$.  Use the chain rule to calculate $h'(x)$, where $h(x)=f(g(x))$.</p>
+
+<p><b>Solution</b>:  The derivatives of $f$ and $g$ are
+\begin{align*}
+  f'(x)&=e^x\\
+  g'(x)&=6x.
+\end{align*}
+According to the chain rule, 
+\begin{align*}
+  h'(x) &= f'(g(x)) g'(x)\\
+  &= f'(3x^2+2) (6x)\\
+  &= 6x e^{3x^2+2}
+\end{align*}
+</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Calculate the derivative of $h(x)=e^{3x^2+2}$.</p>
+
+<p><b>Solution</b>: This problem is a chain rule problem in disguise.  We don't know how to calculate the derivaitve of $e^{3x^2+2}$ directly.  However, we do know how to calculate the derivative of $e^x$ and $3x^2+2$.  If we let $f(x)=e^x$ and $g(x)=3x^2+2$, then $h(x)=f(g(x))$.  This problem is the same as the previous example in disguise.  The derivative is $h'(x)=6xe^{3x^2+2}$.</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Calculate the derivative of $f(x)=6e^{x^4+x^2}$</p>
+
+<p><b>Solution</b>: Again, we must use the chain rule.  The function $f$ is the composition of the function $g(z)=6e^z$ and $h(x)=x^4+x^2$.  (It's OK if we use different notation for the functions or the inputs of the functions.)  With these definitions of $g$ and $h$, our function $f$ is $f(x)=g(h(x))$.</p>
+
+<p>The derivatives of the component functions are
+\begin{align*}
+  g'(z) &= 6e^z\\
+  h'(x)&=4x^3+2x
+\end{align*}
+so that the derivative of $f$ is
+\begin{align*}
+  f'(x) &= g'(h(x))h'(x) \\
+  &= g'(x^4+x^2) (4x^3+2x)\\
+  &= 6e^{x^4+x^2}(4x^3+2x)\\
+  &= (24 x^3 + 12 x) e^{x^4+x^2}
+\end{align*}
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Calculate the derivative of $g(x)=\ln (x^2+1)$.</p>
+
+<p><b>Solution</b>: To use the chain rule for this problem, we need to use the fact that the derivative of $\ln(z)$ is $1/z$.  Then, by the chain rule, the derivative of $g$ is
+\begin{align*}
+  g'(x) &= \diff{}{x}\ln(x^2+1) \\
+  &= \frac{1}{x^2+1} (2x)\\
+  &= \frac{2x}{x^2_1}.
+\end{align*}
+</p>
+
+<p>In this example, we didn't bother specifying the component functions by denoting them with a letter but used the expression $\diff{}{x}(\text{stuff})$ to indicate the derivative of &ldquo;stuff&rdquo; with respect to $x$.  We could have, for example, let $p(z)=\ln(z)$ and $q(x)=x^2+1$ so that $p'(z)=1/z$ and $q'(x)=2x$.  Then, we could have written $g'(x)$ as $p'(q(x))q'(x) = \frac{1}{x^2+1} (2x)$.  Typically, when using the chain rule, we won't bother with the extra steps of defining the component functions.</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Calculate the derivative of $\ln (1+e^y)$ with respect to $y$.</p>
+
+<p><b>Solution</b>:  Since we know the derivative of $\ln(z)$ is $1/z$ and the derivative of $1+e^y$ is $e^y$, we can use the chain rule to calculate that
+\begin{align*}
+  \diff{}{y} \ln(1+e^y) &= \frac{1}{1+e^y}(e^y)\\
+  &= \frac{e^y}{1+e^y}.
+\end{align*}
+</p>
+
+{% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
+<h4>Example {{examplenum}}</h4>
+
+<p>Calculate $\displaystyle\diff{}{x}(2x^2+x)^3$.</p>
+
+<p><b>Solution</b>:
+\begin{align*}
+  \diff{}{x}(2x^2+x)^3 &=3(2x^2+1)^2(4x+1)
+\end{align*}
+</p>
+
+<p>For additional examples, see the {% intlink chain_rule_refresher %}chain rule page from the Calculus Refresher{% endintlink%}.</p>
+
+{% endblock %}

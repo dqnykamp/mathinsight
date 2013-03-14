@@ -1,0 +1,60 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "synchrony" "phase oscillators"  %}
+{% index_entry "phase oscillator" "synchrony"  %}
+{% title "The idea of synchrony of phase oscillators" %}
+{% description "The concepts of a phase oscillator and synchronization of a collection of phase oscillators are introduced through interactive applets." %}
+
+<p>An oscillator model is a {% intlink dynamical_system_idea %}dynamical system{%endintlink%} in which the {% intlink state_variable_definition%}state variables{%endintlink%} evolve through a periodic {% intlink trajectory_dynamical_systems_definition%}trajectory{%endintlink%} or orbit in {% intlink state_space_definition%}state space{%endintlink%} (also called {% intlink phase_space_definition%}phase space{%endintlink%}).  This periodic orbit is a loop through state space, as the state of the system returns to where it started after some time $T$, called the period of the oscillator.</p>
+
+{% navigation_tag "phase_oscillator" "Phase oscillator" %}
+<h4>The phase oscillator</h4>
+
+<p>A phase oscillator is an oscillator model where we view the state of the system as going around the simplest loop, a unit circle.  In a phase oscillator model, the state variable $\theta$ is called the phase of the oscillator.  The state space in which the phase $\theta$ lives is the interval $[0, 2\pi]$.  To turn the interval into a circle, we make it periodic so that $\theta=0$ is the same state as $\theta=2\pi$.  We can view this interval as a unit circle where $\theta$ marks the angle going around the circle.</p>
+
+<p>A simple way to describe the unit circle is by embedding in the complex plane.  A complex number $z$ is on the unit circle if it has length one,  $|z|=1$.  If $|z|=1$, then we can write it as 
+$$z = e^{i\theta},$$
+where $i=\sqrt{-1}$ and $\theta$ is the counterclockwise angle between the positive real axis and the vector from the origin to the complex number $z$, as demonstrated in the below applet. </p>
+
+{% boxedapplet oscillator_phase %}
+
+
+{% navigation_tag "synchrony" "Synchrony" %}
+<h4>Synchrony of phase oscillators</h4>
+
+<p>If we have a collection of phase oscillators, one measure of the collective behavior of the oscillators is their degree of synchrony.  If all the oscillators are going around the circle exactly together, then we say the oscillators are completely synchronized.  There are also lesser degrees of synchrony, as the oscillators could also go around the circle more-or-less together but spread out a bit in phase.  In contrast, the oscillators could be completely asynchronous, meaning their phases are completely spread around the unit circle.</p>
+
+
+{% navigation_tag "order_parameters" "Synchrony" "Order parameters" %}
+{% index_entry "order parameters" "Kuramoto" "kuramoto_order_parameters" %}
+<h5>The Kuramoto order parameters</h5>
+
+<p>We can use a measure of synchrony to capture the level of synchrony of a collection of phase oscillators.  One measure of synchrony is the Kuramoto order parameter.  Actually, there are two Kuramoto order parameters, but we will be primarily concerned with the measure $r$ that indicates the level of synchrony.  The second order parameter $\psi$ gives the average phase of the collection of oscillators.</p>
+
+<p>We define the order parameters simply by averaging the complex numbers that represent the phase of the oscillators on the unit circle.  Given a collection of $N$ phase oscillators with phases $\theta_j$ for $j=1,2, \ldots N$, the positions of the oscillators on the unit circle are represented by the complex numbers $e^{i\theta_j}$.  Define the complex number $z$ as the average of these positions
+$$z = \frac{1}{N}\sum_{j=1}^Ne^{i\theta_j}.$$
+</p>
+
+<p>To understand what this sum means, you can view each oscillator as being represented by a vector from the origin to the corresponding point on the unit circle (e.g., the red vector in the previous applet).  Recalling the {% intlink vector_introduction addition%}geometric definition of vector addition{%endintlink%}, we can deduce that the sum $z$ can be represented by a vector that points in the average direction of all the $\theta_j$ vectors.  If all the phases $\theta_j$ are equal, then their average will be the unit vector pointing to that phase.  On the other hand, if two phases are opposite of each other on the unit circle, their average will be the zero vector.  Hence the closer the phases are to each other, the longer $z$ will be, and it points in the average direction of the phases. You can experiment with the dependence of $z$ on the phases below.</p>
+
+{% boxedapplet kuramoto_order_parameters %}
+
+<p>The Kuramoto order parameters are derived from the average vector $z$.  The synchrony measure $r$ is the length of $z$, $r=|z|$. It achieves its maximum $r=1$ when all the phases are identical.  It achieves its minimum $r=0$ when the phases are balanced around the circle, such as evenly spread or in clusters that balance each other out.  The synchrony measure $r$ is often called the <em>phase coherence</em>.</p>
+
+<p>Another useful piece of information is the average phase of the oscillators, which is the direction that $z$ points.  The second order parameter $\psi$ captures this direction, as it is the counterclockwise angle between $z$ and the positive real axis, also called the argument of $z$.  We can represent the complex number $z$ in terms of its length $r$ and argument $\psi$ as
+$$z = r e^{i\psi}.$$</p>
+
+{% navigation_tag "synchronizing" "Synchrony" "Synchronizing oscillators" %}
+<h5>Synchronizing oscillators</h5>
+
+<p>To view how the Kuramoto order parameter $r$ captures synchrony, we look at two examples.  In this first example, the oscillators begin with phases spread randomly and uniformly over the phase space (the unit circle).  As time evolves, the oscillators begin to synchronize.  The vector $z$ captures this synchronization by getting larger, with $r$ approaching 1 (unless you degrade the final synchrony by making $\sigma$ larger).</p>
+
+{% boxedapplet synchronizing_oscillators %}
+
+{% navigation_tag "desynchronizing" "Synchrony" "Desynchronizing oscillators" %}
+<h5>Desynchronizing oscillators</h5>
+
+<p>In the second example, we look at the opposite situation.  We start the phase oscillators completely synchronized.  But, since they oscillate at different frequencies, their phases soon spread out around the phase space.  The rate of this desynchronization depends on the the spread of the frequencies (controlled by the parameter $\sigma$).  The complex number $z$ and its magnitude $r$ shrink as this desynchronization progresses.</p>
+
+{% boxedapplet desynchronizing_oscillators 0 0 "A group of $N=100$ phase oscillators represented just as in the previous applet, only this group of oscillators tends to desynchronize.  At time $t=0$, all oscillators start at exactly the same phase.  However, as time evolves, the oscillators tend to spread out across the whole circle of phases, i.e., the system tends toward asynchrony.   You can control how they desynchronize by changing the parameter $\sigma$, which controls the spread of oscillator speeds.  When $\sigma=0$, the oscillators will stay synchronized forever." %}
+
+{% endblock%}

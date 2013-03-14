@@ -1,0 +1,24 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "function" "composition" %}
+{% index_entry "composition" "of functions" %}
+{% title "Function composition"  %}
+{% description "How composing two functions forms a new combined function." %}
+
+{% navigation_tag "video" "Video introduction" %}
+<h4>Video introduction</h4>
+
+<p>The composition $f \circ g$ of two {% intlink function_definition %}functions{%endintlink%} $f$ and $g$ is the function formed by first applying the function $g$ and then the function $f$.  The following video gives a introduction into the concept of function composition.</p>
+
+{% boxedvideo function_composition %}
+
+{% navigation_tag "summary" "Summary" %}
+<h4>Summary</h4>
+
+<p>To apply the composition $f \circ g$ to an input $x$, you perform the following two steps.   You first apply the function $g$ to the input $x$ and obtain the result $g(x)$ as the output.  Next, you apply the function $f$ using $g(x)$  as the input and obtain the result $f(g(x))$ as the output.   We can write the composition as $(f \circ g)(x) = f(g(x))$.</p>
+
+
+<p>One can illustrate function composition using the {% intlink function_machine %}function machine{%endintlink%} metaphor by {% intlink function_machine_composition%}connecting function machines together{%endintlink%}.</p>
+
+<p>You can see some {% intlink function_composition_examples %}examples of composing functions{% endintlink%}.</p>
+
+{% endblock %}

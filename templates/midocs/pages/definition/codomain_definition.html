@@ -1,0 +1,14 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "codomain" "definition" %}
+{% title "Codomain definition" %}
+{% description "The codomain of a function is the set of its possible outputs." %}
+
+<p>The codomain of a {% intlink function_definition %}function{%endintlink%} is the set of its possible outputs.  In the {%intlink function_machine%}function machine{%endintlink%} metaphor, the codomain is the set of objects that might possible come out of the machine.</p>
+
+
+<p>For example, when we use the {% intlink function_notation %}function notation{%endintlink%} $f: \R \to \R$, we mean that $f$ is a function from the real numbers to the real numbers.  In other words, the codomain of $f$ is the set of real numbers $\R$ (and its set of possible inputs or {% intlink domain_definition%}domain{%endintlink%} is also the set of real numbers $\R$).</p>
+
+<p>Just because an object is in the codomain of a function, it does not necessarily mean that there is an input for which the function will output that object.  For example, we could define a function $f: \R \to \R$ as $f(x)=x^2$.  Since $f(x)$ will always be non-negative, the number $-3$ is in the codomain of $f$, but there is no input of $x$ for which $f(x)=-3$.  The set of all outputs that result from putting all inputs into the function is called the {% intlink range_definition %}range{%endintlink%}.  For the above $f$, the range is the set of non-negative real numbers while the codomain is the set of all real numbers.</p>
+
+
+{% endblock %}

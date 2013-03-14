@@ -1,0 +1,51 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Functions and inequalities worksheet" %}
+{% description "Worksheet on evaluating functions and manipulating inequalities." %}
+
+{% navigation_tag "Functions"  "Functions" %}
+<h4>Functions</h4>
+
+<p class="question tinyspacebelow">Let $f(x) = 3x^2$.  What is $f(2)$?</p>
+
+<p class="question tinyspacebelow">Let $g(\bigstar) = 3\bigstar^2$.  What is $g(2)$?</p>
+<p class="question tinyspacebelow">Let $h(\pitchfork) = \bowtie \pitchfork^2$.  What is $h(2)$?</p>
+<p class="question tinyspacebelow">Let $\Diamond(\clubsuit) = 3 \clubsuit^2$.  What is $\Diamond(2)$?</p>
+<p class="question tinyspacebelow">Let $g(x) = 3 x^2$.  What is $g(\Box)$?</p>
+<p class="question tinyspacebelow">Let $f(x,y) = yx^2$.  What is $f(3,2)$?</p>
+<p class="question tinyspacebelow">Let $a(b,c)= c^2+b$.  What is $a(3,2)$?</p>
+<p class="question tinyspacebelow">Let $a(b,c)= c^2+b +d$.  What is $a(3,2)$?</p>
+
+
+{% navigation_tag "inequalities"  "Inequalities" %}
+<h4 class="newpage">Inequalities</h4>
+
+<p class="question smallspacebelow">If you allow people to harvest (i.e., catch) a fraction $p$ of the
+fish in a certain lake each year, then the number of fish in the lake
+will eventually drop to $1000(1-10p)$.  Without worrying about
+fractional fish, for what range of values of $p$ could this possibly
+be a reasonable result?  Express your answer as an inequality
+involving $p$.</p>
+
+
+<p class="question smallspacebelow">Let $P=100 p$.  What range of $P$ does your above answer correspond
+to?</p>
+
+<p class="question smallspacebelow">Let $s=\beta p$, where $\beta$ (greek letter &ldquo;beta&rdquo;) is some fixed
+number (a parameter).  What range of $s$ does your above answer
+correspond to?</p>
+
+<p class="question smallspacebelow">Let $M$ be a positive number (a parameter).  If you allow people to
+harvest (i.e., catch) a fraction $q$ of the fish in a certain lake
+each year, then the number of fish in the lake will eventually drop to
+$M(1-10q)$.  Without worrying about fractional fish, for what range
+of values of $q$ could this possibly be a reasonable result?  Express
+your answer as an inequality involving $q$.</p>
+
+<p class="question smallspacebelow">Let $k$ and $a$ be positive numbers (parameters).  If you allow people to
+harvest (i.e., catch) a fraction $v$ of the fish in a certain lake
+each year, then the number of fish in the lake will eventually drop to
+$k(1-av)$.  Without worrying about fractional fish, for what range
+of values of $v$ could this possibly be a reasonable result?  Express
+your answer as an inequality involving $v$.</p>
+
+{% endblock %}

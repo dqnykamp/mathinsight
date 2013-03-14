@@ -1,0 +1,160 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Bacteria growth model exercises" "Exercises"%}
+{% description "Exercises on developing discrete dynamical systems for the growth of a population of bacteria." %}
+
+<p>The {% intlink bacteria_growth_initial_model %}bacteria model page{%endintlink%} explained how to develop a {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%} model based on experimental measurements of population density.  In the following exercises, you can explore similar models and datasets.  </p>
+
+{% navigation_tag "exercise1" "Exercises" "Exercise 1" %}
+<h4>Exercise 1</h4>
+
+<p>Following the procedure outlined in the {% intlink bacteria_growth_initial_model %}bacteria model page{%endintlink%}, compute $B_1$, $B_2$, and $B_3$ for the following discrete dynamical systems.
+\begin{align*}
+{\rm{a.}} \hspace{2mm} B_0 & = 4 & \hspace{5mm} 
+B_{t+1} - B_t & = 0.5 \times B_t  \\
+{\rm{b.}} \hspace{2mm} B_0 & = 4 & \hspace{5mm} 
+B_{t+1} - B_t & =  0.1 \times B_t  \\
+{\rm{c.}} \hspace{2mm} B_0 & = 0.2 & \hspace{5mm} 
+B_{t+1} - B_t & =  0.05 \times B_t  \\
+{\rm{d.}} \hspace{2mm} B_0 & = 0.2 & \hspace{5mm} 
+B_{t+1} - B_t & =  1 \times B_t  \\
+{\rm{e.}} \hspace{2mm} B_0 & = 100 & \hspace{5mm} 
+B_{t+1} - B_t & =  0.4 \times B_t  \\
+{\rm{f.}} \hspace{2mm} B_0 & = 100 & \hspace{5mm} 
+B_{t+1} - B_t & =  0.01 \times B_t 
+\end{align*}
+</p>
+
+{% navigation_tag "exercise2" "Exercises" "Exercise 2" %}
+<h4>Exercise 2</h4>
+<p>Write a solution equation for
+the dynamical systems of Exercise 1 similar to {% intlinkeq bacteria_growth_initial_model specific_solution %}of the bacteria page{%endintlinkeq%}.</p>
+
+{% navigation_tag "whyorigin" "Exercises" "Exercise 3" %}
+<h4>Exercise 3</h4>
+<p>When {% intlink bacteria_growth_initial_model linear_model%}developing the linear model{%endintlink%}, observe that we plotted $B_{t+1} - B_t$ <em>versus</em> $B_t$.  The points are $(B_0, B_1-B_0)$, $(B_1, B_2-B_1)$, etc.    The second coordinate, $B_{t+1} - B_t$ is the population increase during time period $t$, given that the population at the beginning of the time period is $B_t$. Explain why the point (0,0) would be a point of this graph.
+</p>
+
+
+{% navigation_tag "exercise4" "Exercises" "Exercise 4" %}
+<h4>Exercise 4</h4>
+<p>Below are tables with four sets of data.  For each data set, follow the steps from the bacteria growth page to {%intlink bacteria_growth_initial_model linear_model %}fit a dynamical system{%endintlink%} to the data.  The dynamical system should be of the form
+\[B_0 = \text{value from the table}, \hspace{1cm}\goodbreak
+B_{t+1} - B_t = r \times B_t.\]
+Find the number $r$ so that the values
+$B_1$, $B_2$,  $B_3$, $B_4$, $B_5$ and  $B_6$ computed from
+the dynamical system are close to the corresponding numbers in the table.  Once you have calculated $r$, compute the numbers $B_1$ to $B_6$ from the dynamical system and compare your computed values with the original data.</p>
+
+<div class="ym-grid linearize-level-1">
+  <div class="ym-g50 ym-gl">
+    <div class="ym-grid">
+      <div class="ym-g50 ym-gl">
+	<div class="ym-gbox" style="text-align: center; margin-top:2em;">
+	  (a)
+	  <table class="basic centered compact" style="width:50%">
+	    <tr><th>$t$</th><th>$B_t$</th></tr>
+	    <tr><td>0</td><td>1.99</td></tr>
+	    <tr><td>1</td><td>2.68</td></tr>
+	    <tr><td>2</td><td>3.63</td></tr>
+	    <tr><td>3</td><td>4.89</td></tr>
+	    <tr><td>4</td><td>6.63</td></tr>
+	    <tr><td>5</td><td>8.93</td></tr>
+	    <tr><td>6</td><td>12.10</td></tr>
+	  </table>
+	</div>
+      </div>
+      <div class="ym-g50 ym-gr">
+	<div class="ym-gbox" style="text-align: center; margin-top:2em;">
+	  (b)
+	  <table class="basic centered compact" style="width:50%">
+	    <tr><th>$t$</th><th>$B_t$</th></tr>
+	    <tr><td>0</td><td>0.015</td></tr>
+	    <tr><td>1</td><td>0.021</td></tr>
+	    <tr><td>2</td><td>0.031</td></tr>
+	    <tr><td>3</td><td>0.040</td></tr>
+	    <tr><td>4</td><td>0.055</td></tr>
+	    <tr><td>5</td><td>0.075</td></tr>
+	    <tr><td>6</td><td>0.106</td></tr>
+	  </table>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div class="ym-g50 ym-gr">
+    <div class="ym-grid">
+      <div class="ym-g50 ym-gl">
+	<div class="ym-gbox" style="text-align: center; margin-top:2em;">
+	  (c)
+	  <table class="basic centered compact" style="width:50%">
+	    <tr><th>$t$</th><th>$B_t$</th></tr>
+	    <tr><td>0</td><td>22.1</td></tr>
+	    <tr><td>1</td><td>23.4</td></tr>
+	    <tr><td>2</td><td>26.1</td></tr>
+	    <tr><td>3</td><td>27.5</td></tr>
+	    <tr><td>4</td><td>30.5</td></tr>
+	    <tr><td>5</td><td>34.4</td></tr>
+	    <tr><td>6</td><td>36.6</td></tr>
+	  </table>
+	</div>
+      </div>
+      <div class="ym-g50 ym-gr">
+	<div class="ym-gbox" style="text-align: center; margin-top:2em;">
+	  (d)
+	  <table class="basic centered compact" style="width:50%">
+	    <tr><th>$t$</th><th>$B_t$</th></tr>
+	    <tr><td>0</td><td>287</td></tr>
+	    <tr><td>1</td><td>331</td></tr>
+	    <tr><td>2</td><td>375</td></tr>
+	    <tr><td>3</td><td>450</td></tr>
+	    <tr><td>4</td><td>534</td></tr>
+	    <tr><td>5</td><td>619</td></tr>
+	    <tr><td>6</td><td>718</td></tr>
+	  </table>
+
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p>To aid you in calculating the number $r$, you can use the below applet, which is similar to {% appletlink bacteria_density_change_versus_density_line%}original bacteria applet{% endappletlink%} but uses $P_t$ to indicate population size at time $t$.  Enter the data and find a line close to it.  Be sure that the line goes through the origin. For better control over the applet and to be able to print or save your results, we suggest downloading the applet to your computer.  Click on the applet caption to find a link to the applet file and instructions for installing {% extlink "http://geogebra.com" %}Geogebra{%endextlink%}.</p>
+
+{% boxedapplet population_change_versus_population_line %}
+
+
+
+{% navigation_tag "exercise5" "Exercises" "Exercise 5" %}
+<h4>Exercise 5</h4>
+
+<p>The bacterium <em>V. natriegens</em>
+was also grown in a growth medium with pH of 7.85.    Data
+for that experiment is shown in the following table.
+Repeat the analysis demonstrated in the {% intlink bacteria_growth_initial_model %}bacteria growth page{%endintlink%} for this data.
+Compare your computed relative growth rate of <em>V. natriegens</em>
+at pH 7.85 with the computed relative growth rate at pH 6.25, which {% intlink bacteria_growth_initial_model linear_model %}we calculated to be{%endintlink%} 2/3.</p>
+
+<table class="basic centered compact" style="width:50%">
+<caption>Measurements of <em>V. natriegens</em> density at pH 7.85.</caption>
+<tr><th>Time (min)</th><th>Population Density</th></tr>
+<tr><td>0 </td><td>0.028</td></tr>
+<tr><td>16</td><td>0.047</td></tr>
+<tr><td>32</td><td>0.082</td></tr>
+<tr><td>48</td><td>0.141</td></tr>
+<tr><td>64</td><td>0.240</td></tr>
+<tr><td>80</td><td>0.381</td></tr>
+</table> 
+
+{% navigation_tag "exercise6" "Exercises" "Exercise 6" %}
+<h4>Exercise 6</h4>
+
+<p>What discrete dynamical system would describe the growth of an <em>Escherichia coli</em>
+population in a nutrient medium that had 250,000 <em>E. coli</em>
+cells per milliliter at the start of an experiment and one-fourth
+of the cells divided every 30 minutes?</p>
+
+<h4>Selected answers</h4>
+
+<p>Once you've worked out some of these exercises, you can check your work with the {% intlink bacteria_growth_initial_model_answers%}answers to selected problems{%endintlink%}.</p>
+
+
+
+{% endblock %}

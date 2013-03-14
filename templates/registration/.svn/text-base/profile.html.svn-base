@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load mi_tags %}{% load url from future %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Profile of {{ user.first_name }} {{ user.last_name }}{%endblock%}
+
+{% block content %}
+
+<p>You are logged in as {{ user.first_name }} {{ user.last_name }} (username: {{user}}).  <a href="{% url 'mi-logout' %}">Log out</a></p>
+
+
+{% for cgroup in credit_groups %}
+<h4>{{ cgroup.group }}</h4>
+<table class="basic">
+<tr>
+<th>Page title</th>
+<th>Available</th>
+<th>Deadline</th>
+<th>Posted</th>
+<th>Credit</th>
+</tr>
+</tr>
+{% for pcredit in cgroup.page_list %}
+<tr{%if not pcredit.available %} class="unavailable"{%endif%}><td>{% intlink pcredit.page %}{{pcredit.page.title}}{%endintlink%}</td><td>{{pcredit.opendate|date}}</td><td>{{pcredit.deadline|date}}</td><td>{% if pcredit.attempted%}&#x2713;{%endif%}</td><td>{% if pcredit.credit%}&#x2713;{%endif%}</td></tr>
+{%endfor %}
+<tr><td><b>Totals out of {{cgroup.group_totals.total_available}} available</b></td><td></td><td></td><td>{{cgroup.group_totals.total_attempted}}</td><td>{{cgroup.group_totals.total_credit}}</td></tr>
+</table>
+
+{%endfor%}
+
+{% endblock %}

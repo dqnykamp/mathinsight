@@ -1,0 +1,104 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% index_entry "parametrized surface" "area"%}
+{% index_entry "area" "parametrized surface"%}
+{% title "Surface area of parametrized surfaces" %}
+{% description "An introduction to surface area of parametrized surfaces, illustrated by interactive graphics." %}
+
+<p>The calculation of the surface area of a 
+{% intlink parametrized_surface_introduction %}parametrized surface{%endintlink%}
+closely mirrors the calculation of the 
+{%intlink parametrized_curve_arc_length%}arc length{%endintlink%}
+of a {% intlink parametrized_curve_introduction%}parametrized curve{%endintlink%}.
+We estimated the arc length of a parametrized curve by chopping up
+its domain $[a,b]$ into small segments and approximating the 
+corresponding segments of the curve as straight line segments.  
+We could easily calculate the length of the straight line segment approximation to the curve, from which we derived the integral giving the
+arc length of the curve.
+</p>
+
+<p>The procedure for calculating surface area is similar.  A function 
+$\dlsp: \R^2 \to \R^3$ {% confusedlink function_notation %} maps a region $\dlr$ in the plane onto a surface.
+For example, the function
+\begin{align*}
+  \dlsp(\spfv,\spsv) = (\spfv\cos \spsv, \spfv\sin \spsv, \spsv).  
+\end{align*}
+parametrizes a {% intlink parametrized_surface_introduction %}helicoid{%endintlink%}
+for $(\spfv,\spsv) \in \dlr = [0,1] \times [0, 2\pi]$.
+Similar to the arc length calculation, the first step in estimating surface
+area is to chop up the region $\dlr$ into a bunch of small
+rectangles, as illustrated below.</p>
+
+{% boxedapplet parametrized_helicoid_rectangles %}
+
+<p>The small rectangles form a grid on $\dlr$.  The rectangles are mapped by
+$\dlsp$ onto the helicoid, forming a grid on the surface.  In fact,
+the grid on the surface was shown in all the 
+{% intlink parametrized_surface_introduction %}helicoid applets{%endintlink%}
+because we just display an approximation to the true helicoid using such a grid.</p>
+
+<p>The function $\dlsp$ maps each small rectangle in $\dlr$ onto
+the surface.  Below, you can see below how each rectangle in $\dlr$ (outlined in
+green) maps onto a small part of the surface, called the
+<b>image</b> of the rectangle (outlined in red).</p>
+
+{% boxedapplet parametrized_helicoid_surface_area %}
+
+<p>In reality, the image of each rectangle is some &ldquo;curvy rectangle&rdquo; on
+the surface.  (In the above applets, the image of each rectangle appears
+to have straight edges, but what is shown is only an approximation of
+the actual helicoid.)</p>
+
+<p>The next step to calculate the surface area is to estimate the
+area of each of the curvy rectangles.
+We use exactly the same procedure we did to calculate the 
+&ldquo;area expansion factor&rdquo; for a
+{% intlink double_integral_change_variables_introduction %}change of
+variables in double integrals{%endintlink%}.  (In fact, the
+change of variable function $\cvarf: \R^2 \to \R^2$ can be viewed as a special case
+of the function $\dlsp: \R^2 \to \R^3$; the surface that $\cvarf$
+parametrizes just happens to lie in the plane.)
+</p>
+
+<p>
+Let the size of each small rectangle in $\dlr$ be $\Delta\spfv \times \Delta\spsv$.
+As with changing variables, we {%intlink parametrized_surface_area_calculation %}approximate each curvy rectangle{%endintlink%} as a
+parallelogram spanned by the vectors $\pdiff{\dlsp}{\spfv}\Delta\spfv$ and
+$\pdiff{\dlsp}{\spsv}\Delta\spsv$.
+The area of the parallelogram is simply the 
+{%intlink cross_product%}magnitude of the cross product{%endintlink%}
+of those two vectors
+$$\Delta A= \left\| \pdiff{\dlsp}{\spfv} \times \pdiff{\dlsp}{\spsv}\right\|\Delta\spfv \Delta\spsv.$$</p>
+
+<p>The total surface area is approximated by a Riemann sum of such terms.  
+If we let the rectangles shrink so that $\Delta\spfv$ and $\Delta\spsv$ go to zero,
+{%intlink parametrized_surface_area_calculation %}we would see{%endintlink%} that the
+total surface area is the double integral
+\begin{align*}
+  A = \iint_\dlr \left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)
+  \right\|
+  d\spfv\,d\spsv.
+\end{align*}
+ </p>
+
+<p>The expression for surface area is also similar to the expression we derived for
+{% intlink parametrized_curve_arc_length%}the length of a parametrized curve{%endintlink%},
+\begin{align*}
+  L=\int_a^b \| \dllp\,'(t) \| dt.
+\end{align*}
+For surface area, instead of integrating over an interval $[a,b]$, we
+integrate over the region $\dlr$.  In the formula for path length, the
+expression $\| \dllp\,'(t) \|$ estimates how much $\dllp$ is
+stretching the interval $[a,b]$ as it maps $[a,b]$ onto the path (or,
+we could think of it as determining
+{%intlink parametrized_curve_derivative_location_velocity%}how fast a particle{%endintlink%} with position $\dllp(t)$ is
+moving).  The expression
+\begin{align*}
+  \left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)
+  \right\|
+\end{align*}
+is analogous to $\| \dllp\,'(t) \|$. It indicates how
+much $\dlsp$ is stretching $\dlr$ as it maps $\dlr$ onto the surface.</p>
+
+<p>You can read an example {%intlink parametrized_surface_area_examples%}here{%endintlink%}.</p>
+
+{% endblock %}
