@@ -7,3 +7,4 @@ urls.py
 *~
 templates/analytics.html
 apache/django.wsgi
+xapian_index/*
