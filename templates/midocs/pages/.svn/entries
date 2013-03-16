@@ -1,85 +1,0 @@
-10
-
-dir
-413
-svn+ssh://root@asimov.math.umn.edu/home/faculty/nykamp/svn/mi_templates/midocs/pages
-svn+ssh://root@asimov.math.umn.edu/home/faculty/nykamp/svn/mi_templates
-
-
-
-2013-03-08T08:22:43.974694Z
-413
-nykamp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-b3c83351-b28e-4b39-84c2-fa4e75198c15
-
-probability
-dir
-
-singcalc
-dir
-
-neuro
-dir
-
-definition
-dir
-
-dynsys
-dir
-
-multvar
-dir
-
-geometry
-dir
-
-algebra
-dir
-
-diffeq
-dir
-
-modeling
-dir
-
-veccalc
-dir
-
-course
-dir
-
-visualization
-dir
-
-vecalg
-dir
-
-linalg
-dir
-
-functions
-dir
-
-bio
-dir
-
-networks
-dir
-
-general
-dir
-

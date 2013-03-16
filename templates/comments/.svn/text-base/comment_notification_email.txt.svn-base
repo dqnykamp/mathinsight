@@ -1,4 +1,0 @@
-A message has been posted by {{ comment.user_name }} <{{comment.user_email }}> regarding 
-{{ content_object.annotated_title }} (http://{{hostname}}{{content_object.get_absolute_url}})
-
-{{ comment.comment }}

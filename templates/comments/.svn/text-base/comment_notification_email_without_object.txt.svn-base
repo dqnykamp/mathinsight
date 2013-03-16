@@ -1,3 +1,0 @@
-A message has been posted by {{ comment.user_name }} <{{comment.user_email }}>.
-
-{{ comment.comment }}

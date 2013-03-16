@@ -1,7 +1,0 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "unit vector" "definition"%}
-{% title "Unit vector definition" %}
-{% description "A unit vector is a vector of length one." %}
-<p>A unit vector $\vc{u}$ is any vector with length one, i.e., with 
-$\| \vc{u} \| = 1$.</p>
-{%endblock%}

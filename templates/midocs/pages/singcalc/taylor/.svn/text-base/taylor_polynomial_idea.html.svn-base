@@ -1,8 +1,0 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "Taylor polynomial" "quadratic" %}
-{% title "The idea of a Taylor polynomial" %}
-{% description "" %}
-
-<p>
-
-{% endblock %}

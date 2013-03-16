@@ -1,3 +1,0 @@
-<div class="exam_header"><div class="left_header">{{ course}} {{ semester }}</div>
-<div class="right_header">Date: {{ assessment_date}}</div>
-<div class="middle_header">{{ the_assessment_name }}, version {{ version }}</div></div>
