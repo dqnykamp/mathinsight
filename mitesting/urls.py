@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import * 
+from django.conf.urls import patterns
 
 urlpatterns = patterns('mitesting.views',
    url(r'^assessment/list$','assessment_list_view', name='mit-assessmentlist'),

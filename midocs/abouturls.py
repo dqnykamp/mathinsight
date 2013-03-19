@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import * 
+from django.conf.urls import patterns
 from django.views.generic import TemplateView, ListView, DetailView
 from midocs.models import Applet, Video, Image, Author, Page, NotationSystem
 import datetime
