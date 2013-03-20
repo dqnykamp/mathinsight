@@ -1,10 +1,10 @@
 *.swp
 *.pyc
 *.sql
-settings.py
-urls.py
+/settings.py
+/urls.py
 *.bak
 *~
-templates/analytics.html
-apache/django.wsgi
-xapian_index/*
+/templates/analytics.html
+/apache/django.wsgi
+/xapian_index/*
