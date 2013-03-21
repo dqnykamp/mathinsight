@@ -7,10 +7,9 @@ from django.utils.safestring import mark_safe
 from math import *
 import random 
 from mitesting.permissions import return_user_assessment_permission_level
-from sympy.printing import latex
 import re
-import sympy
 from sympy import Symbol
+from sympy.printing import latex
 
 def create_greek_dict():
     from sympy.abc import (alpha, beta,  delta, epsilon, eta,
@@ -263,14 +262,6 @@ class Question(models.Model):
         if not success:
             return "Failed to satisfy question condition"
 
-        # add functions to context
-        for function in self.function_set.all():
-            try:
-                function_value_rendered=Template("{% load testing_tags %}"+function.math_text).render(Context(the_context))
-            except Exception as e:
-                return "Error in function %s: %s" % (function.name, e)
- 
-            the_context[function.name]=function_value_rendered
         
         the_context['sympy_substitutions']=substitutions
         the_context['sympy_function_dict']=function_dict
@@ -722,7 +713,17 @@ class RandomNumber(models.Model):
         # if the_num is an integer, convert to integer so don't have decimal
         if int(the_num)==the_num:
             the_num = int(the_num)
-
+        else:
+            # try to round the answer to the same number of decimal places
+            # as the input values
+            # seems to help with rounding error with the float arithmetic
+            for i in range(1,11):
+                if(round(self.min_value*pow(10,i)) == self.min_value*pow(10,i)
+                   and round(self.max_value*pow(10,i)) == self.max_value*pow(10,i)
+                   and round(self.increment*pow(10,i)) == self.increment*pow(10,i)):
+                    the_num = round(the_num,i)
+                    break
+                
         return the_num
     
 
@@ -779,6 +780,11 @@ class Expression(models.Model):
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
+    figure = models.IntegerField(blank=True, null=True)
+    linestyle = models.CharField(max_length=10, blank=True, null=True)
+    linewidth = models.IntegerField(blank=True, null=True)
+    xmin = models.FloatField(blank=True, null=True)
+    xmax = models.FloatField(blank=True, null=True)
     use_ln = models.BooleanField()
     #pre_eval_subs = models.CharField(max_length=100, blank=True, null=True)
     #post_eval_subs = models.CharField(max_length=100, blank=True, null=True)
@@ -787,36 +793,12 @@ class Expression(models.Model):
         unique_together = ("name", "question")
         ordering = ['sort_order','id']
 
-    def __unicode__(self):
+    def __unicode__(self): 
         return  self.name
 
     def evaluate(self, substitutions, function_dict):
-        # #make a list of safe functions 
-        # safe_list = ['arccos', 'arcsin', 'arctan', 'arctan2', 'ceil', 'cos', 'cosh', 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'piecewise']
-        
-        # from numpy import arccos, arcsin, arctan, arctan2, ceil, cos, cosh, degrees, e, exp, fabs, floor, fmod, frexp, hypot, ldexp, log, log10, modf, pi, radians, sin, sinh, sqrt, tan, tanh, piecewise
-
-
-
-        # #use the list to filter the local namespace 
-        # safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ]) 
-        # #add any needed builtins back in. 
-        # safe_dict['abs'] = abs 
-        # safe_dict['float'] = float 
-        # safe_dict['int'] = int
-        # safe_dict['round'] = round
-        # safe_dict['str'] = str
-        # render expression as template given context
-
-        # c = Context(context)
-        # t = Template(self.expression)
-        # expression= t.render(c)
-
 
         from sympy.parsing.sympy_parser import parse_expr
-
-
-            
 
         expression = parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
 
@@ -858,63 +840,3 @@ class Expression(models.Model):
         return evaluated_expression(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
 
 
-        # parts=re.split('(and|or)',self.expression)
-       
-        # if re.search('and|or',parts[0]):
-        #     raise Exception("Expression cannot start with " + parts[0])
-        # if re.search('and|or',parts[-1]):
-        #     raise Exception("Expression cannot end with " + parts[-1])
-
-        # for part in parts:
-
-        #     subparts=re.split('(==|!=|<>)',part)
-        #     if re.search('==|!=|<>',subparts[0]):
-        #         raise Exception("Expression part cannot start with " + subparts[0])
-        #     if re.search('==|!=|<>',subparts[-1]):
-        #         raise Exception("Expression part cannot end with " + subparts[-1])
-        
-        #     evaluated_subparts=[]
-        #     for part in subparts[::2]:
-        #         evaluated_subparts.append(parse_expr(part,convert_xor=True).subs(substitutions))
-
-        #     if len(subparts)==1:
-        #         return evaluated_expression(evaluated_subparts[0])
-        
-        # combined_string = str(evaluated_subparts[0])
-        # for i, evaluated_part in enumerate(evaluated_subparts[1:]):
-        #     combined_string += subparts[2*i+1] + str(evaluated_part)
-        # combined_evaluated = parse_expr(combined_string)
-        # return evaluated_expression(combined_evaluated)
-
-        #     return evaluated_expression(parse_expr(equality_parts[0],convert_xor=True).subs(substitutions) == parse_expr(equality_parts[1],convert_xor=True).subs(substitutions))
-
-        # if "!=" in self.expression:
-        #     inequality_parts = re.split("!=", self.expression)
-        #     if len(inequality_parts) != 2:
-        #         raise Exception("Invalid !=")
-        #     return evaluated_expression(parse_expr(inequality_parts[0],convert_xor=True).subs(substitutions) != parse_expr(inequality_parts[1],convert_xor=True).subs(substitutions))
-                
-        # expression = parse_expr(self.expression,convert_xor=True).subs(substitutions)
-        # return evaluated_expression(expression)
-        #from sympy import sympify
-        #return evaluated_expression(simpify(expression,convert_xor=True))
-        #return eval(expression,{"__builtins__":None},safe_dict)
-
-
-class Function(models.Model):
-    name = models.SlugField(max_length=50)
-    variable = models.CharField(max_length=10)
-    value = models.CharField(max_length=200)
-    math_text = models.CharField(max_length=200,blank=True,null=True)
-    question = models.ForeignKey(Question)
-    figure = models.IntegerField(blank=True, null=True)
-    solution_only = models.BooleanField()
-    linestyle = models.CharField(max_length=10, blank=True, null=True)
-    linewidth = models.IntegerField(blank=True, null=True)
-    
-
-    class Meta:
-        unique_together = ("name", "question")
-
-    def __unicode__(self):
-        return  self.name

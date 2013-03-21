@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, Function, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType
 import settings
 
 class QuestionAssignedInline(admin.TabularInline):
@@ -29,8 +29,6 @@ class ExpressionInline(admin.TabularInline):
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
-class FunctionInline(admin.TabularInline):
-    model = Function
 
 class QuestionSubpartInline(admin.StackedInline):
     model = QuestionSubpart
@@ -39,7 +37,7 @@ class QuestionReferencePageInline(admin.TabularInline):
     model = QuestionReferencePage
 
 class QuestionAdmin(admin.ModelAdmin):
-    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline,FunctionInline, QuestionReferencePageInline]
+    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, QuestionReferencePageInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
