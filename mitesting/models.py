@@ -10,6 +10,7 @@ from mitesting.permissions import return_user_assessment_permission_level
 import re
 from sympy import Symbol
 from sympy.printing import latex
+from django.db.models import Max
 
 def create_greek_dict():
     from sympy.abc import (alpha, beta,  delta, epsilon, eta,
@@ -778,14 +779,28 @@ class QuestionSetDetail(models.Model):
 class QuestionAssigned(models.Model):
     assessment = models.ForeignKey(Assessment)
     question = models.ForeignKey(Question)
-    question_set = models.SmallIntegerField(default=0)
+    question_set = models.SmallIntegerField(blank=True)
 
     class Meta:
+        verbose_name_plural = "Questions assigned"
         unique_together = ("assessment", "question")
         ordering = ['question_set', 'id']
     def __unicode__(self):
         return "%s for %s" % (self.question, self.assessment)
 
+    def save(self, *args, **kwargs):
+        # and the question set is null
+        # make it be a unique question set,
+        # i.e., one more than any other in the assessment
+        if self.question_set is None:
+            max_question_set = self.assessment.questionassigned_set.aggregate(Max('question_set'))
+            max_question_set = max_question_set['question_set__max']
+            if max_question_set:
+                self.question_set = max_question_set+1
+            else:
+                self.question_set = 1
+                
+        super(QuestionAssigned, self).save(*args, **kwargs) 
 
 class RandomNumber(models.Model):
     name = models.SlugField(max_length=50)
