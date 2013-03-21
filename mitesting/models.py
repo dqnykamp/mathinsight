@@ -84,7 +84,6 @@ class evaluated_expression:
                 pass
         return expression
     def __unicode__(self):
-        
         expression = self.convert_expression()
         output=""
         symbol_name_dict = create_symbol_name_dict()
@@ -131,6 +130,7 @@ class Question(models.Model):
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
+    allow_expand = models.BooleanField()
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     
@@ -207,9 +207,11 @@ class Question(models.Model):
     def setup_context(self, seed=None):
         override_sympy_function=['var','E1']
         
-        if seed is not None:
-            random.seed(seed)
+        if seed is None:
+            seed=self.get_new_seed()
 
+        random.seed(seed)
+            
         the_context={'the_question': self}
 
         max_tries=100
@@ -283,7 +285,7 @@ class Question(models.Model):
         
         the_context['sympy_substitutions']=substitutions
         the_context['sympy_function_dict']=function_dict
-
+        the_context['question_%s_seed' % self.id] = seed
         return the_context
 
 
@@ -329,17 +331,24 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
-    def render_question(self, context, user=None, show_help=True, 
-                        seed_used=None):
+    def render_question(self, context, user=None, show_help=True):
+        seed_used = context['question_%s_seed' % self.id]
         if self.question_type.name=="Multiple choice":
             return self.render_multiple_choice_question(context,
                                                         seed_used=seed_used)
+        elif self.question_type.name=="Math write in":
+            return self.render_math_write_in_question(context,
+                                                      seed_used=seed_used)
         else:
             return self.render_text(context, user, solution=False, 
                                     show_help=show_help, seed_used=seed_used)
 
-    def render_solution(self, context, user=None, seed_used=None):
-        return self.render_text(context, user, solution=True, 
+    def render_solution(self, context, user=None):
+        seed_used = context['question_%s_seed' % self.id]
+        if self.question_type.name=="Math write in":
+            return self.render_solution_as_expression(context, user, seed_used=seed_used)
+        else:
+            return self.render_text(context, user, solution=True, 
                                 seed_used=seed_used)
 
     def render_multiple_choice_question(self, context, seed_used=None):
@@ -375,6 +384,41 @@ class Question(models.Model):
         html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, self.id, send_command)
 
         return mark_safe(html_string)
+
+    def render_math_write_in_question(self, context, seed_used):
+        
+        html_string = '<p>%s</p>' % self.render_text(context, show_help=False)
+
+        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s' });" % ( self.id, self.id, seed_used, self.id)
+
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (self.id, self.id)
+
+
+        html_string += '%s<form action="" method="post" id="id_question_%s" >' %  (callback_script, self.id)
+
+        html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
+            (self.id, self.id, self.id)
+        html_string += '<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></form>'  % (self.id, send_command)
+        
+        return mark_safe(html_string)
+    
+    def render_solution_as_expression(self, context, user=None, seed_used=None):
+        function_dict = context['sympy_function_dict']
+        from sympy.parsing.sympy_parser import parse_expr
+        the_solution = parse_expr(self.solution_text, local_dict=function_dict,convert_xor=True)
+        substitutions = context['sympy_substitutions']
+
+        try: 
+            the_solution=the_solution.subs(substitutions)
+        except AttributeError:
+            raise
+        try: 
+            the_solution=the_solution.doit()
+        except AttributeError:
+            pass
+        
+        return evaluated_expression(the_solution)
+    
 
 
 class QuestionSubpart(models.Model):
@@ -621,7 +665,7 @@ class Assessment(models.Model):
             if not isinstance(question_context, dict):
                 question_text = question_context
             else:
-                question_text = the_question.render_question(question_context, user=user, seed_used = question['seed'])
+                question_text = the_question.render_question(question_context, user=user)
 
 
             rendered_question_list.append({'question_text': question_text,
@@ -886,6 +930,7 @@ class Expression(models.Model):
     name = models.SlugField(max_length=50)
     expression = models.CharField(max_length=200)
     required_condition = models.BooleanField(default=False)
+    expand = models.BooleanField()
     n_digits = models.IntegerField(blank=True, null=True)
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
@@ -931,11 +976,9 @@ class Expression(models.Model):
             expression=expression.doit()
         except AttributeError:
             pass
-
-                
-
         
-
+        if self.expand:
+            expression=expression.expand()
 
         if self.function_inputs:
             input_list = [item.strip() for item in self.function_inputs.split(",")]

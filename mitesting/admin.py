@@ -50,7 +50,7 @@ class QuestionAdmin(admin.ModelAdmin):
                 'fields': ('code', 'name', 'question_type', 
                            'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
-                           'hint_text', )
+                           'hint_text', 'allow_expand' )
                 }),
         # ('Optional', {
         #         'classes': ('collapse',),

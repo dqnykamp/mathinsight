@@ -13,6 +13,10 @@ var Dajaxice = {
         return Dajaxice.call('midocs.confirm_delete_content', 'POST', callback_function, argv, custom_settings);
     },
 
+    send_multiple_choice_question_form: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.send_multiple_choice_question_form', 'POST', callback_function, argv, custom_settings);
+    },
+
     cancel_delete_section: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.cancel_delete_section', 'POST', callback_function, argv, custom_settings);
     },
@@ -23,10 +27,6 @@ var Dajaxice = {
 
     move_content_down: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.move_content_down', 'POST', callback_function, argv, custom_settings);
-    },
-
-    send_multiple_choice_question_form: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.send_multiple_choice_question_form', 'POST', callback_function, argv, custom_settings);
     },
 
     move_content_up: function(callback_function, argv, custom_settings){
@@ -77,6 +77,10 @@ var Dajaxice = {
         return Dajaxice.call('midocs.cancel_delete_content', 'POST', callback_function, argv, custom_settings);
     },
 
+    send_multiple_choice_question_form_2: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.send_multiple_choice_question_form_2', 'POST', callback_function, argv, custom_settings);
+    },
+
     update_combo_content_form_below_section: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.update_combo_content_form_below_section', 'POST', callback_function, argv, custom_settings);
     },
@@ -107,6 +111,10 @@ var Dajaxice = {
 
     cancel_insert_section_below: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.cancel_insert_section_below', 'POST', callback_function, argv, custom_settings);
+    },
+
+    check_math_write_in: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.check_math_write_in', 'POST', callback_function, argv, custom_settings);
     },
 
     delete_content: function(callback_function, argv, custom_settings){

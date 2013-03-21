@@ -51,6 +51,10 @@ def question_view(request, question_id):
     # no Google analytics for assessments
     noanalytics=True
 
+
+    if the_question.question_type.name=="Math write in":
+        rendered_solution = "$%s$" % rendered_solution.__unicode__()
+
     return render_to_response \
         ('mitesting/question.html', {'the_question': the_question, 
                                      'rendered_question': rendered_question,

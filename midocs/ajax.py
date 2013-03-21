@@ -1,7 +1,8 @@
 from dajaxice.decorators import dajaxice_register
 from dajax.core import Dajax
 #from dajaxice.utils import deserialize_form
-from mitesting.forms import MultipleChoiceQuestionForm
+from mitesting.forms import MultipleChoiceQuestionForm, MathWriteInForm
+from mitesting.models import Question
 from midocs.models import Page
 from micourses.models import QuestionStudentAnswer
 from mithreads.models import Thread, ThreadSection, ThreadContent
@@ -51,7 +52,6 @@ def send_multiple_choice_question_form(request, form, prefix, seed):
         
 
             # record answer by user
-            user=None
             try:
                 if request.user.is_authenticated():
                     if not question_context:
@@ -81,6 +81,81 @@ def send_multiple_choice_question_form(request, form, prefix, seed):
     return dajax.json()
 
 
+
+@dajaxice_register
+def check_math_write_in(request, answer, question_id, seed):
+    
+    dajax = Dajax()
+
+    try: 
+        feedback_selector = "#question_%s_feedback" % question_id
+        # clear any previous answer feedback
+        dajax.assign(feedback_selector, 'innerHTML', '')
+
+        from sympy.parsing.sympy_parser import parse_expr
+
+        the_question = Question.objects.get(id=question_id)
+
+        try:
+
+            question_context = the_question.setup_context(seed)
+            the_solution = the_question.render_solution(question_context).expression
+
+        except Exception as e:
+            #dajax.alert("Something wrong with solution: %s" % e )
+
+            dajax.append(feedback_selector, 'innerHTML', "<p>Sorry, we messed up.  There is something wrong with the solution for this problem.  You'll get this error no matter what you type...</p>")
+            return dajax.json()
+
+        credit=0
+
+        the_answer= answer['answer_%s' % question_id]
+        try:
+            the_answer_parsed = parse_expr(the_answer, convert_xor=True)
+        except:
+            dajax.append(feedback_selector, 'innerHTML', '<p>Sorry.  Unable to understand the answer.</p>')
+
+        else:
+            
+            from sympy.printing import latex
+
+            correct_answer=False
+            correct_if_expand=False
+            if the_question.allow_expand:
+                if the_answer_parsed.expand()==the_solution.expand():
+                    correct_answer=True
+            else:
+                if the_answer_parsed==the_solution:
+                    correct_answer=True
+                elif the_answer_parsed.expand()==the_solution.expand():
+                    correct_if_expand=True
+
+            feedback=''
+            if correct_answer:
+                credit=1
+                feedback='<p>Yes, $%s$ is correct.</p>' % latex(the_answer_parsed)
+            elif correct_if_expand:
+                feedback="<p>No, $%s$ is not correct.  You are close as it does simplify to the right answer, but this question requires you to make those simplifications yourself.</p>" % latex(the_answer_parsed)
+            else:
+                feedback='<p>No, $%s$ is incorrect.  Try again.</p>' % latex(the_answer_parsed)
+
+            dajax.append(feedback_selector, 'innerHTML', feedback)
+
+    
+        # record answer by user
+        try:
+            if request.user.is_authenticated():
+                QuestionStudentAnswer.objects.create(user=request.user, question=the_question, answer=the_answer, seed=seed, credit=credit)
+                dajax.append(feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
+        except Exception as e:
+            pass
+
+    except Exception as e:
+        dajax.alert("not sure what is wrong: %s" % e )
+
+    return dajax.json()
+
+    
 @dajaxice_register
 def dec_section_level(request, section_code, thread_code):
     dajax = Dajax()
