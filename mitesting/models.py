@@ -101,9 +101,18 @@ class evaluated_expression:
     def float(self):
         return self.__float__()
 
+class QuestionSpacing(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    css_code = models.SlugField(max_length=50, unique=True)
+
+    def __unicode__(self):
+        return  self.name
+
+    class Meta:
+        ordering = ['name']
+
 
 class QuestionType(models.Model):
-    code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
     privacy_level=models.SmallIntegerField(default=0)
     privacy_level_solution=models.SmallIntegerField(default=0)
@@ -116,11 +125,12 @@ class Question(models.Model):
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
     description = models.CharField(max_length=400,blank=True, null=True)
+    question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
-    video = models.ForeignKey(Video, blank=True,null=True, related_name='question2')
+    video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     
     def __unicode__(self):
@@ -134,6 +144,13 @@ class Question(models.Model):
             return True
         else:
             return False
+
+    def spacing_css(self):
+        if self.question_spacing:
+            return self.question_spacing.css_code
+ 
+    def get_new_seed(self):
+        return str(random.randint(0,1E8))
 
     @models.permalink
     def get_absolute_url(self):
@@ -297,6 +314,8 @@ class Question(models.Model):
                         template_string += subpart.need_help_html_string(user, seed_used)
                     
                 html_string += "<li class='question"
+                if not solution and subpart.spacing_css():
+                    html_string += " %s" % subpart.spacing_css()
                 if subpart.css_class:
                     html_string += " %s" % subpart.css_class
                 html_string += "'>"
@@ -313,6 +332,7 @@ class Question(models.Model):
 
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
+    question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     sort_order = models.SmallIntegerField(default=0)
     question_text = models.TextField(blank=True, null=True)
@@ -325,7 +345,7 @@ class QuestionSubpart(models.Model):
     
     class Meta:
         ordering = ['sort_order','id']
-        
+                                         
     def fullcode(self):
         return "%s_%s" % (self.question.id, self.id)
 
@@ -334,6 +354,11 @@ class QuestionSubpart(models.Model):
             return list(self.question.questionsubpart_set.all()).index(self)+1
         except:
             return None
+
+    def spacing_css(self):
+        if self.question_spacing:
+            return self.question_spacing.css_code
+
 
     def need_help_html_string(self, user=None, seed_used=None):
         html_string=""
@@ -392,6 +417,30 @@ class QuestionAnswerOption(models.Model):
 
     def __unicode__(self):
         return  self.answer
+
+    def render_answer(self, context):
+        c= Context(context)
+        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string=template_string_base
+        template_string += self.answer
+        try:
+            t = Template(template_string)
+            html_string = t.render(c)
+        except TemplateSyntaxError as e:
+            return "Error in answer template: %s" % e
+        return mark_safe(html_string)
+
+    def render_feedback(self, context):
+        c= Context(context)
+        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string=template_string_base
+        template_string += self.feedback
+        try:
+            t = Template(template_string)
+            html_string = t.render(c)
+        except TemplateSyntaxError as e:
+            return "Error in answer template: %s" % e
+        return mark_safe(html_string)
 
 
 class AssessmentType(models.Model):

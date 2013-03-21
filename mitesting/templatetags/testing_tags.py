@@ -2,7 +2,7 @@ from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
 from mitesting.models import Question, QuestionAnswerOption
-from midocs.forms import QuestionForm
+from mitesting.forms import MultipleChoiceQuestionForm
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
@@ -663,3 +663,169 @@ def figure(parser, token):
                 args.append(parser.compile_filter(value))
 
     return FigureNode(figure_number, args, kwargs)
+
+
+
+
+def _render_question(thequestion, context, blank_style=False, seed=None):
+    
+    if seed is None:
+        seed = thequestion.get_new_seed()
+
+    question_context = thequestion.setup_context(seed)
+
+    html_string = '<div class="question"><p>%s</p>' % thequestion.render_text(question_context, show_help=False)
+
+    if thequestion.question_type.name == "Multiple choice":
+
+        answer_options = thequestion.questionansweroption_set.all()
+        rendered_answer_list = []
+        for answer in answer_options:
+            rendered_answer_list.append({'answer_id':answer.id, 'rendered_answer': answer.render_answer(question_context)})
+        random.shuffle(rendered_answer_list)
+        
+        
+        # answer_form = MultipleChoiceQuestionForm(prefix=thequestion.id)
+    
+        # answer_form.fields['answers'].queryset = thequestion.questionansweroption_set.order_by('?')
+
+        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeObject(), 'prefix':'%s', 'seed':'%s' })" % (thequestion.id, thequestion.id, thequestion.id, seed)
+
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (thequestion.id, thequestion.id)
+
+
+        html_string += '%s<form action="" method="post" id="question_%s" >' % (callback_script,  thequestion.id)
+
+        #html_string += template.Template("{% csrf_token %}").render(context)
+        
+        answer_field_name = '%s-answers' % thequestion.id
+
+        # Format html so that it is formatted as though it came from 
+        # MultipleChoiceQuestionForm(prefix=thequestion.id)
+        # ajax will use that form to parse the result
+        html_string = html_string + '<ul class="answerlist">'
+        for (counter,answer) in enumerate(rendered_answer_list):
+            html_string = '%s<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % (html_string, answer_field_name, counter, answer_field_name, answer['answer_id'], answer_field_name, counter, answer['answer_id'], answer_field_name, answer['rendered_answer'] )
+            html_string = '%s<div id="feedback_%s_%s" ></div></li>' % (html_string, answer_field_name, answer['answer_id'])
+        html_string = html_string + "</ul>"
+
+
+        # for field in answer_form:
+        #     if field.html_name == "%s-answers" % thequestion.id:
+        #         html_string = html_string + '<ul class="answerlist">'
+        #         for (counter, choice) in enumerate(field.field.choices):
+        #             html_string = '%s<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % (html_string, field.html_name, counter, field.html_name, choice[0], field.html_name, counter, choice[0], field.html_name, choice[1] )
+        #             html_string = '%s<div id="feedback_%s_%s" ></div></li>' % (html_string, field.html_name, choice[0])
+        #         html_string = html_string + "</ul>"
+
+        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, thequestion.id, send_command)
+
+    html_string += '</div>'
+    return html_string
+
+
+class QuestionNode(template.Node):
+    def __init__(self,question_id, seed):
+        self.question_id = question_id
+        self.seed = seed
+    def render(self, context):
+        # check if blank_style is set to 1
+        blank_style=0
+        try:
+            blank_style = template.Variable("blank_style").resolve(context)
+        except template.VariableDoesNotExist:
+            pass
+        
+        question_id = self.question_id.resolve(context)
+        if self.seed is None:
+            seed=None
+        else:
+            seed = self.seed.resolve(context)
+        
+        # test if question with question_id exists
+        try:
+            thequestion=Question.objects.get(id=question_id)
+        # if question does not exist, mark as broken. 
+        except ObjectDoesNotExist:
+
+            # if blank style,
+            # and show that it is broken so can search for it
+            if(blank_style):
+                return " BRKNQST "
+            else:
+                return "<p>[Broken Question, question not found]</p>"
+            
+        return _render_question(thequestion, context, blank_style, seed)
+
+
+@register.tag
+def display_question(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+    
+    question_id=parser.compile_filter(bits[1])
+  
+    if len(bits) > 2:
+        seed = parser.compile_filter(bits[2])
+    else:
+        seed = None
+    return QuestionNode(question_id, seed)
+
+
+class VideoQuestionsNode(template.Node):
+    def __init__(self,video_code,seed):
+        self.video_code = video_code
+        self.seed=seed
+    def render(self, context):
+        # check if blank_style is set to 1
+        blank_style=0
+        try:
+            blank_style = template.Variable("blank_style").resolve(context)
+        except template.VariableDoesNotExist:
+            pass
+        
+        if self.seed is None:
+            seed=None
+        else:
+            seed = self.seed.resolve(context)
+        video_code = self.video_code.resolve(context)
+        # test if video with video_code exists
+        try:
+            thevideo=Video.objects.get(code=video_code)
+        # if video does not exist, mark as broken. 
+        except ObjectDoesNotExist:
+
+            # if blank style,
+            # and show that it is broken so can search for it
+            if(blank_style):
+                return " BRKNQST "
+            else:
+                return "<p>[Broken Question, video not found]</p>"
+
+        # render for each question associated with video
+        html_string=""
+
+        if seed is not None:
+            random.seed(seed)
+
+        for question in thevideo.question_set.all():
+            question_seed = question.get_new_seed()
+            html_string = html_string + _render_question(question, context, blank_style, seed=question_seed)
+        return html_string
+
+
+@register.tag
+def display_video_questions(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+    
+    video_code=parser.compile_filter(bits[1])
+
+    if len(bits) > 2:
+        seed = parser.compile_filter(bits[2])
+    else:
+        seed = None
+
+    return VideoQuestionsNode(video_code, seed)

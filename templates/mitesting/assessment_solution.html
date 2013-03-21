@@ -8,7 +8,7 @@
 <ol class="quiz_questions">
 {% for solution in solution_list %}
 <a class="anchor" id="solution{{ forloop.counter}}"></a>
-<li>{{ solution.solution_text }}</li>
+<li class="question{%if solution.question.css_class%} {{ solution.question.css_class }}{%endif%}">{{ solution.solution_text }}</li>
 {% endfor %}
 </ol>
 </section>

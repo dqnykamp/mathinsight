@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption
 import settings
 
 class QuestionAssignedInline(admin.TabularInline):
@@ -36,8 +36,11 @@ class QuestionSubpartInline(admin.StackedInline):
 class QuestionReferencePageInline(admin.TabularInline):
     model = QuestionReferencePage
 
+class QuestionAnswerInline(admin.StackedInline):
+    model = QuestionAnswerOption
+
 class QuestionAdmin(admin.ModelAdmin):
-    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, QuestionReferencePageInline]
+    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
@@ -45,7 +48,7 @@ class QuestionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
                 'fields': ('code', 'name', 'question_type', 
-                           'description', 'css_class',
+                           'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
                            'hint_text', )
                 }),
@@ -70,3 +73,4 @@ admin.site.register(Question, QuestionAdmin)
 admin.site.register(Assessment, AssessmentAdmin)
 admin.site.register(QuestionType)
 admin.site.register(AssessmentType)
+admin.site.register(QuestionSpacing)

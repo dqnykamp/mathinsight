@@ -25,8 +25,8 @@ var Dajaxice = {
         return Dajaxice.call('midocs.move_content_down', 'POST', callback_function, argv, custom_settings);
     },
 
-    send_form: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.send_form', 'POST', callback_function, argv, custom_settings);
+    send_multiple_choice_question_form: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.send_multiple_choice_question_form', 'POST', callback_function, argv, custom_settings);
     },
 
     move_content_up: function(callback_function, argv, custom_settings){

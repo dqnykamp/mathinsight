@@ -1,4 +1,4 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% extends "midocs/page_base.html" %}{% load mi_tags testing_tags %}{% block content %}
 {% index_entry "dynamical system" "discrete" %}
 {% index_entry "discrete dynamical system" "introduction" %}
 {% title "An introduction to discrete dynamical systems" %}
@@ -14,11 +14,8 @@
 
 {% boxedvideo discrete_dynamical_system_introduction_2 %}
 
-
-
 {% navigation_tag "overview" "Overview" %}
 <h4>Overview</h4>
-
 
 
 <p>{% intlink dynamical_system_idea %}Dynamical systems{%endintlink%} are about the evolution of some quantities over time.  This evolution can occur smoothly over time or in discrete time steps.  Here, we give an overview of dynamical systems where the state of the system evolves in discrete time steps, i.e., {% intlink discrete_dynamical_system_definition%}discrete dynamical systems{%endintlink%}.</p>

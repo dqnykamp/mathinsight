@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, Question, QuestionAnswerOption
+from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType
 
 class AppletTypeParameterInline(admin.TabularInline):
     model = AppletTypeParameter
@@ -293,16 +293,6 @@ class NewsAdmin(admin.ModelAdmin):
     save_on_top=True
     prepopulated_fields = {"code": ("title",)}
 
-class QuestionAnswerInline(admin.TabularInline):
-    model = QuestionAnswerOption
-
-class QuestionAdmin(admin.ModelAdmin):
-    inlines = [QuestionAnswerInline]
-    formfield_overrides = {
-        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-        }
-    save_on_top=True
-
 
 admin.site.register(NotationSystem)
 admin.site.register(Author)
@@ -330,4 +320,3 @@ admin.site.register(Reference,ReferenceAdmin)
 admin.site.register(ReferenceType)
 admin.site.register(AuxiliaryFileType)
 admin.site.register(AuxiliaryFile)
-admin.site.register(Question, QuestionAdmin)

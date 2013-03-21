@@ -219,17 +219,21 @@ table.question_scores td.blank {
     .newpage {
 	page-break-before: always;
     }
-    .smallspacebelow
-    {
-	padding-bottom: 5em;
-    }
     .tinyspacebelow
     {
 	padding-bottom: 2em;
     }
+    .smallspacebelow
+    {
+	padding-bottom: 5em;
+    }
     .medspacebelow
     {
 	padding-bottom: 10em;
+    }
+    .medlargespacebelow
+    {
+       padding-bottom: 15em;
     }
     .largespacebelow
     {

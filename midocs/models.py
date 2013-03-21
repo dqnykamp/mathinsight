@@ -1833,7 +1833,7 @@ class PageCitation(models.Model):
 class Question(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     question = models.CharField(max_length=400)
-    video = models.ForeignKey(Video, blank=True,null=True)
+    video = models.ForeignKey(Video, blank=True,null=True, related_name='question2')
 
     def __unicode__(self):
         return  self.question

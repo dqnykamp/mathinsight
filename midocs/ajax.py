@@ -1,7 +1,7 @@
 from dajaxice.decorators import dajaxice_register
 from dajax.core import Dajax
 #from dajaxice.utils import deserialize_form
-from midocs.forms import QuestionForm
+from mitesting.forms import MultipleChoiceQuestionForm
 from midocs.models import Page
 from micourses.models import QuestionStudentAnswer
 from mithreads.models import Thread, ThreadSection, ThreadContent
@@ -10,18 +10,19 @@ from django.contrib.contenttypes.models import ContentType
 import re
 
 @dajaxice_register
-def send_form(request, form, prefix):
+def send_multiple_choice_question_form(request, form, prefix, seed):
 
     dajax = Dajax()
  
     try:
-        form = QuestionForm(form, prefix=prefix)
+        form = MultipleChoiceQuestionForm(form, prefix=prefix)
+        question_context=None
 
         if form.is_valid():
             theanswer = form.cleaned_data.get('answers')
-            thequestioncode = theanswer.question.code
-            general_feedback_selector = "#question_%s_feedback" % thequestioncode
-            answer_feedback_selector_base = '#feedback_%s-answers' % thequestioncode
+            thequestionid = theanswer.question.id
+            general_feedback_selector = "#question_%s_feedback" % thequestionid
+            answer_feedback_selector_base = '#feedback_%s-answers' % thequestionid
             answer_feedback_selector = "%s_%s" % (answer_feedback_selector_base, theanswer.pk)
            
             
@@ -32,25 +33,34 @@ def send_form(request, form, prefix):
                 dajax.assign(the_selector, 'innerHTML', '')
                 
 
+            credit=0
             # check if answer is correct
             if(theanswer.correct):
+                credit=1
                 dajax.assign(answer_feedback_selector, 'innerHTML', '<p class="success" style="margin-top: 0;">Yes, you are correct!</p>')
-                dajax.add_css_class('#label_%s-answers_%s' % (thequestioncode, theanswer.pk), 'correct')
+                dajax.add_css_class('#label_%s-answers_%s' % (thequestionid, theanswer.pk), 'correct')
             else:
                 dajax.assign(answer_feedback_selector, 'innerHTML', '<p class="error" style="margin-top: 0;">No, try again.</p>') 
-                dajax.add_css_class('#label_%s-answers_%s' % (thequestioncode, theanswer.pk), 'wrong')
-        
+                dajax.add_css_class('#label_%s-answers_%s' % (thequestionid, theanswer.pk), 'wrong')
+
+            
             if(theanswer.feedback):
-                dajax.append(general_feedback_selector, 'innerHTML', '<p>%s</p>' % theanswer.feedback)
+                if not question_context:
+                    question_context=theanswer.question.setup_context(seed)
+                dajax.append(general_feedback_selector, 'innerHTML', '<p>%s</p>' % theanswer.render_feedback(question_context))
         
+
             # record answer by user
             user=None
             try:
                 if request.user.is_authenticated():
-                    QuestionStudentAnswer.objects.create(user=request.user, question=theanswer.question, answer=theanswer)
+                    if not question_context:
+                        question_context=theanswer.question.setup_context(seed)
+                    QuestionStudentAnswer.objects.create(user=request.user, question=theanswer.question, answer=theanswer.render_answer(question_context), seed=seed, credit=credit)
                     dajax.append(general_feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
-            except:
+            except Exception as e:
                 pass
+
 
         else:
             # dajax.remove_css_class('#my_form input', 'error')
