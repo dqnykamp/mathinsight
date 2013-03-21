@@ -13,7 +13,7 @@ import re
 def send_multiple_choice_question_form(request, form, prefix, seed):
 
     dajax = Dajax()
- 
+
     try:
         form = MultipleChoiceQuestionForm(form, prefix=prefix)
         question_context=None

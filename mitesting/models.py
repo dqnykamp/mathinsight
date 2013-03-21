@@ -328,6 +328,52 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
+    def render_question(self, context, user=None, show_help=True, 
+                        seed_used=None):
+        if self.question_type.name=="Multiple choice":
+            return self.render_multiple_choice_question(context,
+                                                        seed_used=seed_used)
+        else:
+            return self.render_text(context, user, solution=False, 
+                                    show_help=show_help, seed_used=seed_used)
+
+    def render_solution(self, context, user=None, seed_used=None):
+        return self.render_text(context, user, solution=True, 
+                                seed_used=seed_used)
+
+    def render_multiple_choice_question(self, context, seed_used=None):
+        html_string = '<p>%s</p>' % self.render_text(context, show_help=False)
+        
+        answer_options = self.questionansweroption_set.all()
+        rendered_answer_list = []
+        for answer in answer_options:
+            rendered_answer_list.append({'answer_id':answer.id, 'rendered_answer': answer.render_answer(context)})
+        random.shuffle(rendered_answer_list)
+        
+        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeObject(), 'prefix':'%s', 'seed':'%s' })" % (self.id, self.id, self.id, seed_used)
+
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (self.id, self.id)
+
+        html_string += '%s<form action="" method="post" id="question_%s" >' % (callback_script,  self.id)
+
+        # Format html so that it is formatted as though it came from 
+        # MultipleChoiceQuestionForm(prefix=self.id)
+        # ajax will use that form to parse the result
+        answer_field_name = '%s-answers' % self.id
+        html_string = html_string + '<ul class="answerlist">'
+        for (counter,answer) in enumerate(rendered_answer_list):
+            html_string = '%s<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % \
+                (html_string, answer_field_name, counter, answer_field_name,
+                 answer['answer_id'], answer_field_name, counter, 
+                 answer['answer_id'], answer_field_name, 
+                 answer['rendered_answer'] )
+            html_string = '%s<div id="feedback_%s_%s" ></div></li>' % \
+                (html_string, answer_field_name, answer['answer_id'])
+        html_string = html_string + "</ul>"
+
+        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, self.id, send_command)
+
+        return mark_safe(html_string)
 
 
 class QuestionSubpart(models.Model):
@@ -574,7 +620,7 @@ class Assessment(models.Model):
             if not isinstance(question_context, dict):
                 question_text = question_context
             else:
-                question_text = the_question.render_text(question_context, user=user, seed_used = question['seed'])
+                question_text = the_question.render_question(question_context, user=user, seed_used = question['seed'])
 
 
             rendered_question_list.append({'question_text': question_text,
@@ -609,8 +655,8 @@ class Assessment(models.Model):
                 question_text = question_context
                 solution_text = question_context
             else:
-                question_text = the_question.render_text(question_context)
-                solution_text = the_question.render_text(question_context, solution=True)
+                question_text = the_question.render_question(question_context)
+                solution_text = the_question.render_solution(question_context)
 
             solution_dict['question_text'] = question_text
             solution_dict['solution_text'] = solution_text

@@ -34,14 +34,14 @@ def question_view(request, question_id):
 
     question_context = the_question.setup_context(seed)
     
-    # if there was an error, question_context is a string string,
+    # if there was an error, question_context is a string 
     # so just make rendered question text be that string
     if not isinstance(question_context, dict):
-        rendered_question_text = question_context
-        rendered_solution_text = question_context
+        rendered_question = question_context
+        rendered_solution = question_context
     else:
-        rendered_question_text = the_question.render_text(question_context, user=request.user)
-        rendered_solution_text = the_question.render_text(question_context, solution=True)
+        rendered_question = the_question.render_question(question_context, user=request.user)
+        rendered_solution = the_question.render_solution(question_context)
 
     if user_has_given_assessment_permission_level(request.user, 2, solution=True):
         show_lists=True
@@ -53,8 +53,8 @@ def question_view(request, question_id):
 
     return render_to_response \
         ('mitesting/question.html', {'the_question': the_question, 
-                                     'question_text': rendered_question_text,
-                                     'solution_text': rendered_solution_text,
+                                     'rendered_question': rendered_question,
+                                     'rendered_solution': rendered_solution,
                                      'show_lists': show_lists,
                                      'noanalytics': noanalytics,
                                      },
@@ -86,16 +86,16 @@ def question_solution_view(request, question_id):
     # if there was an error, question_context is a string string,
     # so just make rendered question text be that string
     if not isinstance(question_context, dict):
-        rendered_solution_text = question_context
+        rendered_solution = question_context
     else:
-        rendered_solution_text = the_question.render_text(question_context, solution=True)
+        rendered_solution = the_question.render_solution(question_context)
         
     # no Google analytics for assessments
     noanalytics=True
 
     return render_to_response \
         ('mitesting/question_solution.html', {'the_question': the_question, 
-                                     'solution_text': rendered_solution_text,
+                                     'rendered_solution': rendered_solution,
                                      'noanalytics': noanalytics,
                                      },
          context_instance=RequestContext(request))

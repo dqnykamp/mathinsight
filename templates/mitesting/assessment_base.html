@@ -1,4 +1,5 @@
-{% extends "base.html" %}{% load mi_tags testing_tags %}{% load url from future %}
+{% extends "base.html" %}{% load mi_tags testing_tags %}{% load dajaxice_templatetags %}
+
 
 
 {% block title %}{{ the_assessment_name }}, version {{ version }} - Math Insight{%endblock%}
@@ -6,6 +7,10 @@
 {% block extrastyle %}
 <link href="{{ STATIC_URL }}css/miassessment.css" rel="stylesheet" type="text/css"/>
 <meta name="description" content="{{ the_assessment.description}}"/>
+<script src="{{ STATIC_URL }}js/jquery.dajax.core.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/jquery.ba-serializeobject.min.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% dajaxice_js_import %} 
  <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/excanvas.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
