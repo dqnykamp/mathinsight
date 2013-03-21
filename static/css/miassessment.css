@@ -114,6 +114,12 @@ table.question_scores td.blank {
     margin-top: 2em;
 }
 
+.plot {
+    margin-right: 1em;
+    margin-left: 1em;
+}
+
+
 @media screen {
 
     .namesection {
@@ -207,7 +213,9 @@ table.question_scores td.blank {
     .question {
 	page-break-inside: avoid;
     }
-
+    .plot {
+	page-break-inside: avoid;
+    }
     .newpage {
 	page-break-before: always;
     }

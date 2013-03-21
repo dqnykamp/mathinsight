@@ -262,14 +262,6 @@ class Question(models.Model):
         if not success:
             return "Failed to satisfy question condition"
 
-        # add functions to context
-        for function in self.function_set.all():
-            try:
-                function_value_rendered=Template("{% load testing_tags %}"+function.math_text).render(Context(the_context))
-            except Exception as e:
-                return "Error in function %s: %s" % (function.name, e)
- 
-            the_context[function.name]=function_value_rendered
         
         the_context['sympy_substitutions']=substitutions
         the_context['sympy_function_dict']=function_dict
@@ -721,7 +713,17 @@ class RandomNumber(models.Model):
         # if the_num is an integer, convert to integer so don't have decimal
         if int(the_num)==the_num:
             the_num = int(the_num)
-
+        else:
+            # try to round the answer to the same number of decimal places
+            # as the input values
+            # seems to help with rounding error with the float arithmetic
+            for i in range(1,11):
+                if(round(self.min_value*pow(10,i)) == self.min_value*pow(10,i)
+                   and round(self.max_value*pow(10,i)) == self.max_value*pow(10,i)
+                   and round(self.increment*pow(10,i)) == self.increment*pow(10,i)):
+                    the_num = round(the_num,i)
+                    break
+                
         return the_num
     
 
@@ -781,6 +783,8 @@ class Expression(models.Model):
     figure = models.IntegerField(blank=True, null=True)
     linestyle = models.CharField(max_length=10, blank=True, null=True)
     linewidth = models.IntegerField(blank=True, null=True)
+    xmin = models.FloatField(blank=True, null=True)
+    xmax = models.FloatField(blank=True, null=True)
     use_ln = models.BooleanField()
     #pre_eval_subs = models.CharField(max_length=100, blank=True, null=True)
     #post_eval_subs = models.CharField(max_length=100, blank=True, null=True)
@@ -836,20 +840,3 @@ class Expression(models.Model):
         return evaluated_expression(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
 
 
-class Function(models.Model):
-    name = models.SlugField(max_length=50)
-    variable = models.CharField(max_length=10)
-    value = models.CharField(max_length=200)
-    math_text = models.CharField(max_length=200,blank=True,null=True)
-    question = models.ForeignKey(Question)
-    figure = models.IntegerField(blank=True, null=True)
-    solution_only = models.BooleanField()
-    linestyle = models.CharField(max_length=10, blank=True, null=True)
-    linewidth = models.IntegerField(blank=True, null=True)
-    
-
-    class Meta:
-        unique_together = ("name", "question")
-
-    def __unicode__(self):
-        return  self.name
