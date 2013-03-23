@@ -665,6 +665,28 @@ def figure(parser, token):
     return FigureNode(figure_number, args, kwargs)
 
 
+def _render_question(question, seed, context):
+
+
+    try: 
+        questions_rendered = context['questions_rendered']
+    except KeyError:
+        questions_rendered = 0
+
+    questions_rendered += 1
+    context['questions_rendered'] = questions_rendered
+
+    # use qtag in identifier since coming from tag
+    identifier = "qtag_%s" % questions_rendered
+    
+    question_context = question.setup_context(identifier=identifier,
+                                              seed=seed)
+
+    html_string = '<div class="question">%s</div>' % \
+        question.render_question(question_context, identifier = identifier)
+    return html_string
+
+
 class QuestionNode(template.Node):
     def __init__(self,question_id, seed):
         self.question_id = question_id
@@ -698,12 +720,8 @@ class QuestionNode(template.Node):
             
         if seed is None:
             seed = thequestion.get_new_seed()
-        question_context = thequestion.setup_context(seed)
-
-        html_string = '<div class="question">%s</div>' % \
-            thequestion.render_question(question_context, seed_used=seed)
-
-        return html_string
+            
+        return _render_question(thequestion, seed, context)
 
 
 @register.tag
@@ -759,11 +777,7 @@ class VideoQuestionsNode(template.Node):
 
         for question in thevideo.question_set.all():
             question_seed = question.get_new_seed()
-            question_context = question.setup_context(seed)
-
-            html_string += '<div class="question">%s</div>' % \
-                question.render_question(question_context, 
-                                         seed_used=question_seed)
+            html_string += _render_question(question, seed, context)
 
         return html_string
 

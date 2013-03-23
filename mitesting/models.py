@@ -168,7 +168,8 @@ class Question(models.Model):
         else:
             return self.question_type.privacy_level
 
-    def need_help_html_string(self, user=None, seed_used=None):
+    def need_help_html_string(self, identifier, user=None, seed_used=None):
+        
         html_string=""
         question_subparts = self.questionsubpart_set.exists()
         if question_subparts:
@@ -182,8 +183,8 @@ class Question(models.Model):
             include_solution_link=False
 
         if self.hint_text or reference_pages or include_solution_link:
-            html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (self.id, self.id)
-            html_string += '<section id="%s_help" class="question_help info">' % self.id
+            html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (identifier, identifier)
+            html_string += '<section id="%s_help" class="question_help info">' % identifier
             if self.hint_text:
                 html_string += "<h5>Hint</h5>"
                 html_string += self.hint_text
@@ -199,12 +200,15 @@ class Question(models.Model):
                 if seed_used:
                     solution_url += "?seed=%s" % seed_used
                 html_string += "<p><a href='%s'>View solution</a></p>" % solution_url
-            html_string += '<p><a id="%s_help_hide" class="hide_help" onclick="showHide(\'%s_help\');">Hide help</a></p></section></div>' % (self.id, self.id)
+            html_string += '<p><a id="%s_help_hide" class="hide_help" onclick="showHide(\'%s_help\');">Hide help</a></p></section></div>' % (identifier, identifier)
             
         return html_string
 
         
-    def setup_context(self, seed=None):
+    def setup_context(self, identifier="", seed=None):
+
+        identifier = "%s_%s" % (identifier, self.id)
+
         override_sympy_function=['var','E1']
         
         if seed is None:
@@ -285,11 +289,13 @@ class Question(models.Model):
         
         the_context['sympy_substitutions']=substitutions
         the_context['sympy_function_dict']=function_dict
-        the_context['question_%s_seed' % self.id] = seed
+        the_context['question_%s_seed' % identifier] = seed
         return the_context
 
 
-    def render_text(self, context, user=None, solution=False, show_help=True, seed_used=None):
+    def render_text(self, context, identifier, user=None, solution=False, 
+                    show_help=True, seed_used=None):
+        
         c= Context(context)
         template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
         template_string=template_string_base
@@ -298,7 +304,7 @@ class Question(models.Model):
         else:
             template_string += self.question_text
             if show_help:
-                template_string += self.need_help_html_string(user, seed_used)
+                template_string += self.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used)
         try:
             t = Template(template_string)
             html_string = t.render(c)
@@ -314,7 +320,7 @@ class Question(models.Model):
                 else:
                     template_string += subpart.question_text
                     if show_help:
-                        template_string += subpart.need_help_html_string(user, seed_used)
+                        template_string += subpart.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used)
                     
                 html_string += "<li class='question"
                 if not solution and subpart.spacing_css():
@@ -331,28 +337,38 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
-    def render_question(self, context, user=None, show_help=True):
-        seed_used = context['question_%s_seed' % self.id]
+    def render_question(self, context, user=None, show_help=True, identifier=""):
+        identifier = "%s_%s" % (identifier, self.id)
+
+        seed_used = context['question_%s_seed' % identifier]
         if self.question_type.name=="Multiple choice":
             return self.render_multiple_choice_question(context,
+                                                        identifier=identifier,
                                                         seed_used=seed_used)
         elif self.question_type.name=="Math write in":
             return self.render_math_write_in_question(context,
-                                                      seed_used=seed_used)
+                                                      seed_used=seed_used,
+                                                      identifier=identifier)
         else:
-            return self.render_text(context, user, solution=False, 
+            return self.render_text(context,identifier=identifier, user=user, 
+                                    solution=False, 
                                     show_help=show_help, seed_used=seed_used)
 
-    def render_solution(self, context, user=None):
-        seed_used = context['question_%s_seed' % self.id]
+    def render_solution(self, context, user=None, identifier=""):
+        
+        identifier = "%s_%s" % (identifier, self.id)
+
+        seed_used = context['question_%s_seed' % identifier]
         if self.question_type.name=="Math write in":
             return self.render_solution_as_expression(context, user, seed_used=seed_used)
         else:
-            return self.render_text(context, user, solution=True, 
-                                seed_used=seed_used)
+            return self.render_text(context, identifier=identifier, user=user, 
+                                    solution=True, seed_used=seed_used)
 
-    def render_multiple_choice_question(self, context, seed_used=None):
-        html_string = '<p>%s</p>' % self.render_text(context, show_help=False)
+    def render_multiple_choice_question(self, context,identifier, 
+                                        seed_used=None):
+        html_string = '<p>%s</p>' % self.render_text(context, identifier, 
+                                                     show_help=False)
         
         answer_options = self.questionansweroption_set.all()
         rendered_answer_list = []
@@ -360,16 +376,16 @@ class Question(models.Model):
             rendered_answer_list.append({'answer_id':answer.id, 'rendered_answer': answer.render_answer(context)})
         random.shuffle(rendered_answer_list)
         
-        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeObject(), 'prefix':'%s', 'seed':'%s' })" % (self.id, self.id, self.id, seed_used)
+        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeObject(), 'prefix':'%s', 'seed':'%s', 'identifier':'%s' })" % (identifier, identifier, identifier, seed_used, identifier)
 
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (self.id, self.id)
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
 
-        html_string += '%s<form action="" method="post" id="question_%s" >' % (callback_script,  self.id)
+        html_string += '%s<form action="" method="post" id="question_%s" >' % (callback_script,  identifier)
 
         # Format html so that it is formatted as though it came from 
-        # MultipleChoiceQuestionForm(prefix=self.id)
+        # MultipleChoiceQuestionForm(prefix=identifier)
         # ajax will use that form to parse the result
-        answer_field_name = '%s-answers' % self.id
+        answer_field_name = '%s-answers' % identifier
         html_string = html_string + '<ul class="answerlist">'
         for (counter,answer) in enumerate(rendered_answer_list):
             html_string = '%s<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % \
@@ -381,24 +397,25 @@ class Question(models.Model):
                 (html_string, answer_field_name, answer['answer_id'])
         html_string = html_string + "</ul>"
 
-        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, self.id, send_command)
+        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, identifier, send_command)
 
         return mark_safe(html_string)
 
-    def render_math_write_in_question(self, context, seed_used):
+    def render_math_write_in_question(self, context, seed_used,
+                                      identifier):
         
-        html_string = '<p>%s</p>' % self.render_text(context, show_help=False)
+        html_string = '<p>%s</p>' % self.render_text(context, identifier=identifier, show_help=False)
 
-        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s' });" % ( self.id, self.id, seed_used, self.id)
+        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
 
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (self.id, self.id)
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
 
 
-        html_string += '%s<form action="" method="post" id="id_question_%s" >' %  (callback_script, self.id)
+        html_string += '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" >' %  (callback_script, identifier)
 
         html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
-            (self.id, self.id, self.id)
-        html_string += '<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></form>'  % (self.id, send_command)
+            (identifier, identifier, identifier)
+        html_string += '<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></form>'  % (identifier, send_command)
         
         return mark_safe(html_string)
     
@@ -451,7 +468,10 @@ class QuestionSubpart(models.Model):
             return self.question_spacing.css_code
 
 
-    def need_help_html_string(self, user=None, seed_used=None):
+    def need_help_html_string(self, identifier, user=None, seed_used=None):
+        
+        identifier="%s_%s" % (identifier, self.id)
+
         html_string=""
 
         order_in_sort = self.get_subpart_number()
@@ -464,8 +484,8 @@ class QuestionSubpart(models.Model):
             include_solution_link=False
 
         if self.hint_text or reference_pages or include_solution_link:
-            html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (self.fullcode(), self.fullcode())
-            html_string += '<section id="%s_help" class="question_help info">' % self.fullcode()
+            html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (identifier, identifier)
+            html_string += '<section id="%s_help" class="question_help info">' % identifier
 
             if self.hint_text:
                 html_string += "<h5>Hint</h5>"
@@ -482,7 +502,7 @@ class QuestionSubpart(models.Model):
                 if seed_used:
                     solution_url += "?seed=%s" % seed_used
                 html_string += "<p><a href='%s'>View solution</a></p>" % solution_url
-            html_string += '<p><a id="%s_help_hide" class="hide_help" onclick="showHide(\'%s_help\');">Hide help</a></p></section></div>' % (self.fullcode(), self.fullcode())
+            html_string += '<p><a id="%s_help_hide" class="hide_help" onclick="showHide(\'%s_help\');">Hide help</a></p></section></div>' % (identifier, identifier)
             
         return html_string
 
@@ -655,17 +675,21 @@ class Assessment(models.Model):
 
         rendered_question_list = []
 
-        for question in question_list:
+        for (i, question) in enumerate(question_list):
+
+            # use qa for identifier since coming from assessment
+            identifier="qa%s" % i
 
             the_question = question['question']
-            question_context = the_question.setup_context(seed=question['seed'])
+            question_context = the_question.setup_context(seed=question['seed'],
+                                                          identifier=identifier)
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
             if not isinstance(question_context, dict):
                 question_text = question_context
             else:
-                question_text = the_question.render_question(question_context, user=user)
+                question_text = the_question.render_question(question_context, user=user, identifier=identifier)
 
 
             rendered_question_list.append({'question_text': question_text,
@@ -687,12 +711,16 @@ class Assessment(models.Model):
 
         rendered_solution_list = []
 
-        for question in question_list:
+        for (i, question) in enumerate(question_list):
+
+            # use qa for identifier since coming from assessment
+            identifier="qa%s" % i
 
             solution_dict = question
 
             the_question = question['question']
-            question_context = the_question.setup_context(seed=question['seed'])
+            question_context = the_question.setup_context(seed=question['seed'],
+                                                          identifier=identifier)
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -700,8 +728,10 @@ class Assessment(models.Model):
                 question_text = question_context
                 solution_text = question_context
             else:
-                question_text = the_question.render_question(question_context)
-                solution_text = the_question.render_solution(question_context)
+                question_text = the_question.render_question(question_context,
+                                                          identifier=identifier)
+                solution_text = the_question.render_solution(question_context,
+                                                          identifier=identifier)
 
             solution_dict['question_text'] = question_text
             solution_dict['solution_text'] = solution_text
@@ -827,7 +857,6 @@ class QuestionAssigned(models.Model):
 
     class Meta:
         verbose_name_plural = "Questions assigned"
-        unique_together = ("assessment", "question")
         ordering = ['question_set', 'id']
     def __unicode__(self):
         return "%s for %s" % (self.question, self.assessment)

@@ -32,7 +32,10 @@ def question_view(request, question_id):
         except:
             seed = None
 
-    question_context = the_question.setup_context(seed)
+    # use qv in identifier since coming from question view
+    identifier = "qv"
+    question_context = the_question.setup_context(identifier=identifier,
+                                                  seed=seed)
     
     # if there was an error, question_context is a string 
     # so just make rendered question text be that string
@@ -40,8 +43,11 @@ def question_view(request, question_id):
         rendered_question = question_context
         rendered_solution = question_context
     else:
-        rendered_question = the_question.render_question(question_context, user=request.user)
-        rendered_solution = the_question.render_solution(question_context)
+        rendered_question = the_question.render_question(question_context, 
+                                                         identifier=identifier,
+                                                         user=request.user)
+        rendered_solution = the_question.render_solution(question_context,
+                                                         identifier=identifier)
 
     if user_has_given_assessment_permission_level(request.user, 2, solution=True):
         show_lists=True
@@ -50,7 +56,6 @@ def question_view(request, question_id):
 
     # no Google analytics for assessments
     noanalytics=True
-
 
     if the_question.question_type.name=="Math write in":
         rendered_solution = "$%s$" % rendered_solution.__unicode__()
@@ -85,14 +90,18 @@ def question_solution_view(request, question_id):
         except:
             seed = None
 
-    question_context = the_question.setup_context(seed)
+    # use qsv in identifier since coming from question solution view
+    identifier = "qv"
+    question_context = the_question.setup_context(identifier=identifier,
+                                                  seed=seed)
     
     # if there was an error, question_context is a string string,
     # so just make rendered question text be that string
     if not isinstance(question_context, dict):
         rendered_solution = question_context
     else:
-        rendered_solution = the_question.render_solution(question_context)
+        rendered_solution = the_question.render_solution(question_context,
+                                                         identifier=identifier)
         
     # no Google analytics for assessments
     noanalytics=True

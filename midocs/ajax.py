@@ -11,7 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 import re
 
 @dajaxice_register
-def send_multiple_choice_question_form(request, form, prefix, seed):
+def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
 
     dajax = Dajax()
 
@@ -21,9 +21,8 @@ def send_multiple_choice_question_form(request, form, prefix, seed):
 
         if form.is_valid():
             theanswer = form.cleaned_data.get('answers')
-            thequestionid = theanswer.question.id
-            general_feedback_selector = "#question_%s_feedback" % thequestionid
-            answer_feedback_selector_base = '#feedback_%s-answers' % thequestionid
+            general_feedback_selector = "#question_%s_feedback" % identifier
+            answer_feedback_selector_base = '#feedback_%s-answers' % identifier
             answer_feedback_selector = "%s_%s" % (answer_feedback_selector_base, theanswer.pk)
            
             
@@ -39,10 +38,10 @@ def send_multiple_choice_question_form(request, form, prefix, seed):
             if(theanswer.correct):
                 credit=1
                 dajax.assign(answer_feedback_selector, 'innerHTML', '<p class="success" style="margin-top: 0;">Yes, you are correct!</p>')
-                dajax.add_css_class('#label_%s-answers_%s' % (thequestionid, theanswer.pk), 'correct')
+                dajax.add_css_class('#label_%s-answers_%s' % (identifier, theanswer.pk), 'correct')
             else:
                 dajax.assign(answer_feedback_selector, 'innerHTML', '<p class="error" style="margin-top: 0;">No, try again.</p>') 
-                dajax.add_css_class('#label_%s-answers_%s' % (thequestionid, theanswer.pk), 'wrong')
+                dajax.add_css_class('#label_%s-answers_%s' % (identifier, theanswer.pk), 'wrong')
 
             
             if(theanswer.feedback):
@@ -83,12 +82,12 @@ def send_multiple_choice_question_form(request, form, prefix, seed):
 
 
 @dajaxice_register
-def check_math_write_in(request, answer, question_id, seed):
+def check_math_write_in(request, answer, question_id, seed, identifier):
     
     dajax = Dajax()
 
     try: 
-        feedback_selector = "#question_%s_feedback" % question_id
+        feedback_selector = "#question_%s_feedback" % identifier
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
 
@@ -109,11 +108,17 @@ def check_math_write_in(request, answer, question_id, seed):
 
         credit=0
 
-        the_answer= answer['answer_%s' % question_id]
+        the_answer= answer['answer_%s' % identifier]
         try:
             the_answer_parsed = parse_expr(the_answer, convert_xor=True)
-        except:
-            dajax.append(feedback_selector, 'innerHTML', '<p>Sorry.  Unable to understand the answer.</p>')
+            # test the expand works now, in case get error
+            the_answer_expand = the_answer_parsed.expand()
+        except Exception as e:
+            feedback_message = '<p>Sorry.  Unable to understand the answer. '
+            #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
+            feedback_message += '</p>'
+            
+            dajax.append(feedback_selector, 'innerHTML', feedback_message)
 
         else:
             
@@ -122,12 +127,12 @@ def check_math_write_in(request, answer, question_id, seed):
             correct_answer=False
             correct_if_expand=False
             if the_question.allow_expand:
-                if the_answer_parsed.expand()==the_solution.expand():
+                if the_answer_expand==the_solution.expand():
                     correct_answer=True
             else:
                 if the_answer_parsed==the_solution:
                     correct_answer=True
-                elif the_answer_parsed.expand()==the_solution.expand():
+                elif the_answer_expand==the_solution.expand():
                     correct_if_expand=True
 
             feedback=''
@@ -149,6 +154,7 @@ def check_math_write_in(request, answer, question_id, seed):
                 dajax.append(feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
         except Exception as e:
             pass
+        
 
     except Exception as e:
         dajax.alert("not sure what is wrong: %s" % e )
