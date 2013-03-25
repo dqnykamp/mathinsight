@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet
 import settings
 
 class QuestionAssignedInline(admin.TabularInline):
@@ -47,10 +47,11 @@ class QuestionAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-                'fields': ('code', 'name', 'question_type', 
+                'fields': ('name', 'question_type', 
                            'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
-                           'hint_text', 'allow_expand' )
+                           'hint_text', 'allow_expand',
+                           'allowed_sympy_commands',)
                 }),
         # ('Optional', {
         #         'classes': ('collapse',),
@@ -74,3 +75,4 @@ admin.site.register(Assessment, AssessmentAdmin)
 admin.site.register(QuestionType)
 admin.site.register(AssessmentType)
 admin.site.register(QuestionSpacing)
+admin.site.register(SympyCommandSet)

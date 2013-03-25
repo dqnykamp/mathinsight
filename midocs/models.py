@@ -1828,21 +1828,3 @@ class PageCitation(models.Model):
             return self.reference.compiled_reference()
         else:
             return "?"
-    
-        
-class Question(models.Model):
-    code = models.SlugField(max_length=50, unique=True)
-    question = models.CharField(max_length=400)
-    video = models.ForeignKey(Video, blank=True,null=True, related_name='question2')
-
-    def __unicode__(self):
-        return  self.question
-
-class QuestionAnswerOption(models.Model):
-    question = models.ForeignKey(Question)
-    answer = models.CharField(max_length=400)
-    correct = models.BooleanField(default=False)
-    feedback = models.TextField(blank=True,null=True)
-
-    def __unicode__(self):
-        return  self.answer

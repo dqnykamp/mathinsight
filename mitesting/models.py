@@ -121,7 +121,7 @@ class QuestionType(models.Model):
    
 
 class Question(models.Model):
-    code = models.SlugField(max_length=200, blank=True, null=True)
+    #code = models.SlugField(max_length=200, blank=True, null=True)
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
     description = models.CharField(max_length=400,blank=True, null=True)
@@ -133,6 +133,7 @@ class Question(models.Model):
     allow_expand = models.BooleanField()
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
+    allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
     
     def __unicode__(self):
         return "%s: %s" % (self.id, self.name)
@@ -204,13 +205,28 @@ class Question(models.Model):
             
         return html_string
 
+    def return_sympy_local_dict(self):
+
+        # obtain list of all allowed sympy commands
+        allowed_commands = set()
+        command_lists = self.allowed_sympy_commands.all()
+        for clist in command_lists:
+            allowed_commands=allowed_commands.union([item.strip() for item in clist.commands.split(",")])
         
+        allowed_commands= allowed_commands.union(['Symbol', 'Integer','Float','Rational'])
+        # since don't have a whitelist function
+        # make a blacklist of all functions except those allowed
+        all_commands = {}
+        exec "from sympy import *" in all_commands
+        disallowed_commands_set = set(all_commands.keys()) - allowed_commands
+        disallowed_commands = dict([(key, Symbol(str(key))) for key in disallowed_commands_set]) 
+        
+        return disallowed_commands
+
     def setup_context(self, identifier="", seed=None):
 
         identifier = "%s_%s" % (identifier, self.id)
 
-        override_sympy_function=['var','E1']
-        
         if seed is None:
             seed=self.get_new_seed()
 
@@ -226,15 +242,12 @@ class Question(models.Model):
             substitutions=[]
             function_dict = create_greek_dict()
             function_dict['abs'] = abs
-            for term in override_sympy_function:
-                function_dict[term]=Symbol(term)
+            function_dict.update(self.return_sympy_local_dict())
 
             for random_number in self.randomnumber_set.all():
                 try:
                     the_context[random_number.name] = random_number.get_sample()
                     substitutions.append((Symbol(str(random_number.name)), the_context[random_number.name]))
-
-
 
                 except Exception as e:
                     return "Error in random number %s: %s" % (random_number.name, e)
@@ -1022,3 +1035,9 @@ class Expression(models.Model):
         return evaluated_expression(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
 
 
+class SympyCommandSet(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    commands = models.TextField()
+
+    def __unicode__(self):
+        return self.name

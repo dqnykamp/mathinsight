@@ -46,7 +46,7 @@ def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
             
             if(theanswer.feedback):
                 if not question_context:
-                    question_context=theanswer.question.setup_context(seed)
+                    question_context=theanswer.question.setup_context(seed=seed, identifier=identifier)
                 dajax.append(general_feedback_selector, 'innerHTML', '<p>%s</p>' % theanswer.render_feedback(question_context))
         
 
@@ -54,7 +54,7 @@ def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
             try:
                 if request.user.is_authenticated():
                     if not question_context:
-                        question_context=theanswer.question.setup_context(seed)
+                        question_context=theanswer.question.setup_context(seed=seed, identifier=identifier)
                     QuestionStudentAnswer.objects.create(user=request.user, question=theanswer.question, answer=theanswer.render_answer(question_context), seed=seed, credit=credit)
                     dajax.append(general_feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
             except Exception as e:
@@ -97,11 +97,13 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         try:
 
-            question_context = the_question.setup_context(seed)
-            the_solution = the_question.render_solution(question_context).expression
+            question_context = the_question.setup_context(seed=seed, identifier=identifier)
 
+            the_solution = the_question.render_solution(question_context,identifier=identifier).expression
+
+            dajax.alert("%s" % the_solution)
         except Exception as e:
-            #dajax.alert("Something wrong with solution: %s" % e )
+            dajax.alert("Something wrong with solution: %s" % e )
 
             dajax.append(feedback_selector, 'innerHTML', "<p>Sorry, we messed up.  There is something wrong with the solution for this problem.  You'll get this error no matter what you type...</p>")
             return dajax.json()
@@ -110,9 +112,9 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         the_answer= answer['answer_%s' % identifier]
         try:
-            the_answer_parsed = parse_expr(the_answer, convert_xor=True)
-            # test the expand works now, in case get error
-            the_answer_expand = the_answer_parsed.expand()
+            local_dict = the_question.return_sympy_local_dict()
+            the_answer_parsed = parse_expr(the_answer, local_dict=local_dict,
+                                           convert_xor=True)
         except Exception as e:
             feedback_message = '<p>Sorry.  Unable to understand the answer. '
             #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
@@ -122,17 +124,29 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         else:
             
+            # try expanding answer and solution
+            try:
+                the_answer_expand = the_answer_parsed.expand()
+            except:
+                the_answer_expand = the_answer_parsed
+            try:
+                the_solution_expand = the_solution.expand()
+            except:
+                the_solution_expand = the_solution
+
             from sympy.printing import latex
 
             correct_answer=False
             correct_if_expand=False
             if the_question.allow_expand:
-                if the_answer_expand==the_solution.expand():
+                # check  both expanded and original in case expand gave error
+                if the_answer_expand==the_solution_expand or \
+                        the_answer_parsed==the_solution:
                     correct_answer=True
             else:
                 if the_answer_parsed==the_solution:
                     correct_answer=True
-                elif the_answer_expand==the_solution.expand():
+                elif the_answer_expand==the_solution_expand:
                     correct_if_expand=True
 
             feedback=''

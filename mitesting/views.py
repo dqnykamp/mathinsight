@@ -91,7 +91,7 @@ def question_solution_view(request, question_id):
             seed = None
 
     # use qsv in identifier since coming from question solution view
-    identifier = "qv"
+    identifier = "qsv"
     question_context = the_question.setup_context(identifier=identifier,
                                                   seed=seed)
     
