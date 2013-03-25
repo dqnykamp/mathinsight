@@ -101,7 +101,6 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
             the_solution = the_question.render_solution(question_context,identifier=identifier).expression
 
-            dajax.alert("%s" % the_solution)
         except Exception as e:
             dajax.alert("Something wrong with solution: %s" % e )
 
