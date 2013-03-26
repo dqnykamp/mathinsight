@@ -441,7 +441,7 @@ class Question(models.Model):
         try: 
             the_solution=the_solution.subs(substitutions)
         except AttributeError:
-            raise
+            pass
         try: 
             the_solution=the_solution.doit()
         except AttributeError:
@@ -1013,7 +1013,7 @@ class Expression(models.Model):
         try: 
             expression=expression.subs(substitutions)
         except AttributeError:
-            raise
+            pass
         try: 
             expression=expression.doit()
         except AttributeError:
