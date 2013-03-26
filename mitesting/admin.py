@@ -41,6 +41,7 @@ class QuestionAnswerInline(admin.StackedInline):
 
 class QuestionAdmin(admin.ModelAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline]
+    filter_horizontal = ['allowed_sympy_commands',]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
