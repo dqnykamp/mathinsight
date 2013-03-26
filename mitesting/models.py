@@ -435,8 +435,11 @@ class Question(models.Model):
     def render_solution_as_expression(self, context, user=None, seed_used=None):
         function_dict = context['sympy_function_dict']
         from sympy.parsing.sympy_parser import parse_expr
-        the_solution = parse_expr(self.solution_text, local_dict=function_dict,convert_xor=True)
-        substitutions = context['sympy_substitutions']
+        try:
+            the_solution = parse_expr(self.solution_text, local_dict=function_dict,convert_xor=True)
+            substitutions = context['sympy_substitutions']
+        except:
+            the_solution=''
 
         try: 
             the_solution=the_solution.subs(substitutions)
