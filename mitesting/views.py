@@ -58,7 +58,10 @@ def question_view(request, question_id):
     noanalytics=True
 
     if the_question.question_type.name=="Math write in":
-        rendered_solution = "$%s$" % rendered_solution.__unicode__()
+        try:
+            rendered_solution = "$%s$" % rendered_solution.__unicode__()
+        except:
+            rendered_solution = "$%s$" % rendered_solution
 
     return render_to_response \
         ('mitesting/question.html', {'the_question': the_question, 
