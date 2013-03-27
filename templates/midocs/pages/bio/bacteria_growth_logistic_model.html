@@ -12,6 +12,8 @@
 {% navigation_tag "introduction" "Introduction" %}
 <h4>Introduction</h4>
 
+{% boxedvideo bacteria_growth_logistic_model %}
+
 <p>When we {% intlink bacteria_growth_initial_model %}modeled the initial growth of the bacteria <i>V. natriegens</i>{% endintlink%}, we discovered that an {% intlink exponential_growth_decay_discrete %}exponential growth model{%endintlink%} was a good fit to the first 64 minutes of the bacteria growth data.  However, the last data point at 80 minutes was lower that predicted by the exponential growth model.  It appeared that the growth rate was slowing down during the last 16 minutes of that data set.  A likely explanation is that the population was beginning to {% intlink environmental_carrying_capacity%}exhaust its environment{%endintlink%}.</p>
 
 <p>The {% intlink environmental_carrying_capacity%}logistic growth model{%endintlink%} is a model that includes an environmental carrying capacity to capture how growth slows down when a population size becomes so large that the resources available become limited.  Our goal is to apply this model to the bacteria growth data to see if the pattern in the data can be explained by such a model.  Fortunately, we have more data than we revealed in the {% intlink bacteria_growth_initial_model %}initial bacteria model page{%endintlink%}.  We actually have data from growing <i>V. natriegens</i> in a flask for 160 minutes, as shown in the following table.  The population was measured every 16 minutes, and the time index variable $t$ measures the number of these 16 minute intervals since the beginning of the experiment.</p>
