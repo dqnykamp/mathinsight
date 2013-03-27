@@ -153,7 +153,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 credit=1
                 feedback='<p>Yes, $%s$ is correct.</p>' % latex(the_answer_parsed)
             elif correct_if_expand:
-                feedback="<p>No, $%s$ is not correct.  You are close as it does simplify to the right answer, but this question requires you to make those simplifications yourself.</p>" % latex(the_answer_parsed)
+                feedback="<p>No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form.</p>" % latex(the_answer_parsed)
             else:
                 feedback='<p>No, $%s$ is incorrect.  Try again.</p>' % latex(the_answer_parsed)
 

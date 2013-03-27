@@ -8,7 +8,8 @@ from math import *
 import random 
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Symbol
+import sympy
+from sympy import Symbol, Function
 from sympy.printing import latex
 from django.db.models import Max
 
@@ -101,6 +102,44 @@ class evaluated_expression:
     def float(self):
         return self.__float__()
 
+class deferred_gcd(Function):
+    nargs = 2
+    
+    def doit(self, **hints):        
+        if hints.get('deep', True):
+            return sympy.gcd(self.args[0].doit(**hints), self.args[1].doit(**hints))
+        else:
+            return sympy.gcd(self.args[0], self.args[1])
+       
+        
+# class deferred_max(Function):
+#     nargs = 2
+    
+#     def doit(self, **hints):
+#         if hints.get('deep',True):
+#             return max(self.args[0].doit(**hints), self.args[1].doit(**hints))
+#         else:
+#             return max(self.args[0], self.args[1])
+        
+# class deferred_min(Function):
+#     nargs = 2
+    
+#     def doit(self, **hints):
+#         if hints.get('deep',True):
+#             return min(self.args[0].doit(**hints), self.args[1].doit(**hints))
+#         else:
+#             return min(self.args[0], self.args[1])
+
+# class deferred_sign(Function):
+#     nargs = 1
+    
+#     def doit(self, **hints):
+#         if hints.get('deep',True):
+#             return sympy.sign(self.args[0].doit(**hints))
+#         else:
+#             return sympy.sign(self.args[0])
+
+    
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
     css_code = models.SlugField(max_length=50, unique=True)
@@ -221,7 +260,17 @@ class Question(models.Model):
         disallowed_commands_set = set(all_commands.keys()) - allowed_commands
         disallowed_commands = dict([(key, Symbol(str(key))) for key in disallowed_commands_set]) 
         
-        return disallowed_commands
+        local_dict = disallowed_commands
+        if 'gcd' in allowed_commands:
+            local_dict['gcd'] = deferred_gcd
+        # if 'max' in allowed_commands:
+        #     local_dict['max'] = deferred_max
+        # if 'min' in allowed_commands:
+        #     local_dict['min'] = deferred_min
+        # if 'sign' in allowed_commands:
+        #     local_dict['sign'] = deferred_sign
+            
+        return local_dict
 
     def setup_context(self, identifier="", seed=None):
 
