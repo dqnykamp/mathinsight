@@ -138,7 +138,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
                 the_correct_answer = the_correct_answers[answer_number].expression
 
-                dajax.alert("%s: answer=%s, correct=%s" % (answer_number, the_answer_parsed, the_correct_answer))
+                #dajax.alert("%s: answer=%s, correct=%s" % (answer_number, the_answer_parsed, the_correct_answer))
 
                 try:
                     the_correct_answer_expand = the_correct_answer.expand()
