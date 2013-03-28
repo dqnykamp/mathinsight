@@ -8,61 +8,25 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'SympyCommand'
-        db.delete_table(u'mitesting_sympycommand')
-
-        # Deleting field 'SympyCommandSet.code'
-        db.delete_column(u'mitesting_sympycommandset', 'code')
-
-        # Adding field 'SympyCommandSet.commands'
-        db.add_column(u'mitesting_sympycommandset', 'commands',
-                      self.gf('django.db.models.fields.TextField')(default=0),
-                      keep_default=False)
-
-        # Removing M2M table for field commands on 'SympyCommandSet'
-        db.delete_table('mitesting_sympycommandset_commands')
-
-        # Adding unique constraint on 'SympyCommandSet', fields ['name']
-        db.create_unique(u'mitesting_sympycommandset', ['name'])
-
-        # Adding M2M table for field allowed_sympy_commands on 'Question'
-        db.create_table(u'mitesting_question_allowed_sympy_commands', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('question', models.ForeignKey(orm[u'mitesting.question'], null=False)),
-            ('sympycommandset', models.ForeignKey(orm[u'mitesting.sympycommandset'], null=False))
+        # Adding model 'MathWriteinAnswer'
+        db.create_table(u'mitesting_mathwriteinanswer', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('answer', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('question', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['mitesting.Question'])),
+            ('number', self.gf('django.db.models.fields.IntegerField')(blank=True)),
         ))
-        db.create_unique(u'mitesting_question_allowed_sympy_commands', ['question_id', 'sympycommandset_id'])
+        db.send_create_signal(u'mitesting', ['MathWriteinAnswer'])
+
+        # Adding unique constraint on 'MathWriteinAnswer', fields ['question', 'number']
+        db.create_unique(u'mitesting_mathwriteinanswer', ['question_id', 'number'])
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'SympyCommandSet', fields ['name']
-        db.delete_unique(u'mitesting_sympycommandset', ['name'])
+        # Removing unique constraint on 'MathWriteinAnswer', fields ['question', 'number']
+        db.delete_unique(u'mitesting_mathwriteinanswer', ['question_id', 'number'])
 
-        # Adding model 'SympyCommand'
-        db.create_table(u'mitesting_sympycommand', (
-            ('command', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'mitesting', ['SympyCommand'])
-
-        # Adding field 'SympyCommandSet.code'
-        db.add_column(u'mitesting_sympycommandset', 'code',
-                      self.gf('django.db.models.fields.SlugField')(default=0, max_length=50),
-                      keep_default=False)
-
-        # Deleting field 'SympyCommandSet.commands'
-        db.delete_column(u'mitesting_sympycommandset', 'commands')
-
-        # Adding M2M table for field commands on 'SympyCommandSet'
-        db.create_table(u'mitesting_sympycommandset_commands', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('sympycommandset', models.ForeignKey(orm[u'mitesting.sympycommandset'], null=False)),
-            ('sympycommand', models.ForeignKey(orm[u'mitesting.sympycommand'], null=False))
-        ))
-        db.create_unique(u'mitesting_sympycommandset_commands', ['sympycommandset_id', 'sympycommand_id'])
-
-        # Removing M2M table for field allowed_sympy_commands on 'Question'
-        db.delete_table('mitesting_question_allowed_sympy_commands')
+        # Deleting model 'MathWriteinAnswer'
+        db.delete_table(u'mitesting_mathwriteinanswer')
 
 
     models = {
@@ -363,6 +327,13 @@ class Migration(SchemaMigration):
             'use_ln': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'xmax': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'xmin': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'})
+        },
+        u'mitesting.mathwriteinanswer': {
+            'Meta': {'unique_together': "(('question', 'number'),)", 'object_name': 'MathWriteinAnswer'},
+            'answer': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'number': ('django.db.models.fields.IntegerField', [], {'blank': 'True'}),
+            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"})
         },
         u'mitesting.question': {
             'Meta': {'object_name': 'Question'},

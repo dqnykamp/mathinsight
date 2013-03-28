@@ -271,6 +271,11 @@ class Question(models.Model):
         #     local_dict['sign'] = deferred_sign
             
         return local_dict
+    
+    def return_math_write_in_answer_numbers(self):
+        the_numbers=[mwri.number for mwri in self.mathwriteinanswer_set.all()]
+        the_numbers.sort()
+        return the_numbers
 
     def setup_context(self, identifier="", seed=None):
 
@@ -357,9 +362,9 @@ class Question(models.Model):
 
     def render_text(self, context, identifier, user=None, solution=False, 
                     show_help=True, seed_used=None):
-        
+
         c= Context(context)
-        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base
         if solution:
             template_string += self.solution_text
@@ -401,6 +406,8 @@ class Question(models.Model):
 
     def render_question(self, context, user=None, show_help=True, identifier=""):
         identifier = "%s_%s" % (identifier, self.id)
+        
+        context['identifier'] = identifier
 
         seed_used = context['question_%s_seed' % identifier]
         if self.question_type.name=="Multiple choice":
@@ -421,11 +428,10 @@ class Question(models.Model):
         identifier = "%s_%s" % (identifier, self.id)
 
         seed_used = context['question_%s_seed' % identifier]
-        if self.question_type.name=="Math write in":
-            return self.render_solution_as_expression(context, user, seed_used=seed_used)
-        else:
-            return self.render_text(context, identifier=identifier, user=user, 
+        
+        return self.render_text(context, identifier=identifier, user=user, 
                                     solution=True, seed_used=seed_used)
+
 
     def render_multiple_choice_question(self, context,identifier, 
                                         seed_used=None):
@@ -466,40 +472,69 @@ class Question(models.Model):
     def render_math_write_in_question(self, context, seed_used,
                                       identifier):
         
-        html_string = '<p>%s</p>' % self.render_text(context, identifier=identifier, show_help=False)
 
         send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
 
         callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
 
 
-        html_string += '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" >' %  (callback_script, identifier)
+        html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" >' %  (callback_script, identifier)
 
-        html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
-            (identifier, identifier, identifier)
+        html_string += '<p>%s</p>' % self.render_text(context, identifier=identifier, show_help=False)
+
+        answer_number_list_used = context.get('answer_number_list',[])
+        answer_number_list_used.sort()
+        answer_numbers_in_question = self.return_math_write_in_answer_numbers()
+        answer_numbers_in_question.sort()
+
+        if answer_number_list_used != answer_numbers_in_question:
+            html_string += "<p>[Malformed question: incorrect answer blanks]</p>"
+            
+        # html_string += '<p>Answer blanks: '
+        # for i in answer_number_list_used:
+        #     html_string += "%i, " % i
+        # html_string += "</p>"
+
+
+        # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
+        #     (identifier, identifier, identifier)
         html_string += '<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></form>'  % (identifier, send_command)
         
         return mark_safe(html_string)
     
-    def render_solution_as_expression(self, context, user=None, seed_used=None):
-        function_dict = context['sympy_function_dict']
-        from sympy.parsing.sympy_parser import parse_expr
-        try:
-            the_solution = parse_expr(self.solution_text, local_dict=function_dict,convert_xor=True)
-            substitutions = context['sympy_substitutions']
-        except:
-            the_solution=''
+    def return_math_write_in_answers(self, context, user=None, identifier=""):
 
-        try: 
-            the_solution=the_solution.subs(substitutions)
-        except AttributeError:
-            pass
-        try: 
-            the_solution=the_solution.doit()
-        except AttributeError:
-            pass
+        identifier = "%s_%s" % (identifier, self.id)
+
+        seed_used = context['question_%s_seed' % identifier]
+
+        function_dict = context['sympy_function_dict']
+
+        rendered_answers = {}
         
-        return evaluated_expression(the_solution)
+        from sympy.parsing.sympy_parser import parse_expr
+
+        for answer in self.mathwriteinanswer_set.all():
+            
+            try:
+                answer_expression = parse_expr(answer.answer, local_dict=function_dict,convert_xor=True)
+                substitutions = context['sympy_substitutions']
+            except:
+                answer_expression=''
+
+            try: 
+                answer_expression=answer_expression.subs(substitutions)
+            except AttributeError:
+                pass
+            try: 
+                answer_expression=answer_expression.doit()
+            except AttributeError:
+                pass
+        
+            rendered_answers[answer.number] = evaluated_expression(answer_expression)
+
+            
+        return rendered_answers
     
 
 
@@ -617,6 +652,29 @@ class QuestionAnswerOption(models.Model):
         except TemplateSyntaxError as e:
             return "Error in answer template: %s" % e
         return mark_safe(html_string)
+
+class MathWriteinAnswer(models.Model):
+    answer = models.CharField(max_length=200)
+    question = models.ForeignKey(Question)
+    number = models.IntegerField(blank=True)
+    
+    def __unicode__(self):
+        return self.answer
+
+    class Meta:
+        unique_together = ("question", "number")
+
+    def save(self, *args, **kwargs):
+        # if number is blank, make it be the next number for the question
+        if self.number is None:
+            max_number = self.question.mathwriteinanswer_set.aggregate(Max('number'))
+            max_number = max_number['number__max']
+            if max_number:
+                self.number= max_number+1
+            else:
+                self.number = 1
+                
+        super(MathWriteinAnswer, self).save(*args, **kwargs) 
 
 
 class AssessmentType(models.Model):

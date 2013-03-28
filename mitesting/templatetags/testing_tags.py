@@ -796,3 +796,68 @@ def display_video_questions(parser, token):
         seed = None
 
     return VideoQuestionsNode(video_code, seed)
+
+
+
+class AnswerBlankNode(template.Node):
+    def __init__(self, answer_number, size):
+        self.answer_number = answer_number
+        self.size = size
+    def render(self, context):
+
+        answer_number_list = context.get('answer_number_list',[])
+
+        answer_number = None
+        if self.answer_number is not None:
+            try:
+                answer_number = int(self.answer_number.resolve(context))
+            except:
+                pass
+            
+        if answer_number is None:
+            if answer_number_list:
+                answer_number = max(answer_number_list)+1
+            else:
+                answer_number = 1
+
+        answer_number_list.append(answer_number)
+        context['answer_number_list'] = answer_number_list
+
+        size=None
+        if self.size is not None:
+            try:
+                size = int(self.size.resolve(context))
+            except:
+                pass
+        if size is None:
+            size = 60
+
+        the_question = context['the_question']
+
+        # find answer number 
+        try:
+            the_question.mathwriteinanswer_set.get(number=answer_number)
+        except:
+            return ""
+        
+        identifier = context['identifier']
+        
+        return '<input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" />' % \
+            (answer_number, identifier,  answer_number, identifier, size)
+    
+
+@register.tag
+def answer_blank(parser, token):
+    bits = token.split_contents()
+    
+    if len(bits) > 1:
+        answer_number = parser.compile_filter(bits[1])
+    else:
+        answer_number = None
+
+    if len(bits) > 2:
+        size = parser.compile_filter(bits[2])
+    else:
+        size = None
+
+    return AnswerBlankNode(answer_number, size)

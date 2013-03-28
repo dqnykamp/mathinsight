@@ -98,8 +98,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         try:
 
             question_context = the_question.setup_context(seed=seed, identifier=identifier)
-
-            the_solution = the_question.render_solution(question_context,identifier=identifier).expression
+            the_correct_answers = the_question.return_math_write_in_answers(question_context, identifier=identifier)
 
         except Exception as e:
             dajax.alert("Something wrong with solution: %s" % e )
@@ -109,61 +108,73 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         credit=0
 
-        the_answer= answer['answer_%s' % identifier]
-        try:
-            local_dict = the_question.return_sympy_local_dict()
-            the_answer_parsed = parse_expr(the_answer, local_dict=local_dict,
-                                           convert_xor=True)
-        except Exception as e:
-            feedback_message = '<p>Sorry.  Unable to understand the answer. '
-            #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
-            feedback_message += '</p>'
-            
-            dajax.append(feedback_selector, 'innerHTML', feedback_message)
+        the_answers={}
 
-        else:
-            
-            # try expanding answer and solution
+        answer_numbers = the_question.return_math_write_in_answer_numbers()
+        
+        for answer_number in answer_numbers:
+            the_answer= answer['answer_%s_%s' % (answer_number, identifier)]
             try:
-                the_answer_expand = the_answer_parsed.expand()
-            except:
-                the_answer_expand = the_answer_parsed
-            try:
-                the_solution_expand = the_solution.expand()
-            except:
-                the_solution_expand = the_solution
+                local_dict = the_question.return_sympy_local_dict()
+                the_answer_parsed = parse_expr(the_answer, 
+                                               local_dict=local_dict,
+                                               convert_xor=True)
+                the_answers[answer_number] = the_answer_parsed
+            except Exception as e:
+                feedback_message = '<p>Sorry.  Unable to understand the answer. '
+                #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
+                feedback_message += '</p>'
+            
+                dajax.append(feedback_selector, 'innerHTML', feedback_message)
 
-            from sympy.printing import latex
-
-            correct_answer=False
-            correct_if_expand=False
-            if the_question.allow_expand:
-                # check  both expanded and original in case expand gave error
-                if the_answer_expand==the_solution_expand or \
-                        the_answer_parsed==the_solution:
-                    correct_answer=True
             else:
-                if the_answer_parsed==the_solution:
-                    correct_answer=True
-                elif the_answer_expand==the_solution_expand:
-                    correct_if_expand=True
 
-            feedback=''
-            if correct_answer:
-                credit=1
-                feedback='<p>Yes, $%s$ is correct.</p>' % latex(the_answer_parsed)
-            elif correct_if_expand:
-                feedback="<p>No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form.</p>" % latex(the_answer_parsed)
-            else:
-                feedback='<p>No, $%s$ is incorrect.  Try again.</p>' % latex(the_answer_parsed)
+            
+                # try expanding answer and correct
+                try:
+                    the_answer_expand = the_answer_parsed.expand()
+                except:
+                    the_answer_expand = the_answer_parsed
 
-            dajax.append(feedback_selector, 'innerHTML', feedback)
+                the_correct_answer = the_correct_answers[answer_number]
+
+                try:
+                    the_correct_answer_expand = the_correct_answer.expand()
+                except:
+                    the_correct_answer_expand = the_correct_answer
+
+                from sympy.printing import latex
+
+                answer_is_correct=False
+                correct_if_expand=False
+                if the_question.allow_expand:
+                    # check  both expanded and original in case expand gave error
+                    if the_answer_expand==the_correct_answer_expand or \
+                            the_answer_parsed==the_correct_answer:
+                        answer_is_correct=True
+                else:
+                    if the_answer_parsed==the_correct_answer:
+                        answer_is_correct=True
+                    elif the_answer_expand==the_correct_answer_expand:
+                        correct_if_expand=True
+
+                feedback=''
+                if answer_is_correct:
+                    credit=1
+                    feedback='<p>Yes, $%s$ is correct.</p>' % latex(the_answer_parsed)
+                elif correct_if_expand:
+                    feedback="<p>No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form.</p>" % latex(the_answer_parsed)
+                else:
+                    feedback='<p>No, $%s$ is incorrect.  Try again.</p>' % latex(the_answer_parsed)
+
+                dajax.append(feedback_selector, 'innerHTML', feedback)
 
     
         # record answer by user
         try:
             if request.user.is_authenticated():
-                QuestionStudentAnswer.objects.create(user=request.user, question=the_question, answer=the_answer, seed=seed, credit=credit)
+                the_answer_string = "%s" % the_answers
+                QuestionStudentAnswer.objects.create(user=request.user, question=the_question, answer=the_answers, seed=seed, credit=credit)
                 dajax.append(feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
         except Exception as e:
             pass

@@ -41,6 +41,14 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'mitesting', ['Question'])
 
+        # Adding M2M table for field allowed_sympy_commands on 'Question'
+        db.create_table(u'mitesting_question_allowed_sympy_commands', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('question', models.ForeignKey(orm[u'mitesting.question'], null=False)),
+            ('sympycommandset', models.ForeignKey(orm[u'mitesting.sympycommandset'], null=False))
+        ))
+        db.create_unique(u'mitesting_question_allowed_sympy_commands', ['question_id', 'sympycommandset_id'])
+
         # Adding model 'QuestionSubpart'
         db.create_table(u'mitesting_questionsubpart', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -190,28 +198,13 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'Expression', fields ['name', 'question']
         db.create_unique(u'mitesting_expression', ['name', 'question_id'])
 
-        # Adding model 'SympyCommand'
-        db.create_table(u'mitesting_sympycommand', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('command', self.gf('django.db.models.fields.CharField')(max_length=50)),
-        ))
-        db.send_create_signal(u'mitesting', ['SympyCommand'])
-
         # Adding model 'SympyCommandSet'
         db.create_table(u'mitesting_sympycommandset', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('code', self.gf('django.db.models.fields.SlugField')(max_length=50)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=50)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=50)),
+            ('commands', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'mitesting', ['SympyCommandSet'])
-
-        # Adding M2M table for field commands on 'SympyCommandSet'
-        db.create_table(u'mitesting_sympycommandset_commands', (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('sympycommandset', models.ForeignKey(orm[u'mitesting.sympycommandset'], null=False)),
-            ('sympycommand', models.ForeignKey(orm[u'mitesting.sympycommand'], null=False))
-        ))
-        db.create_unique(u'mitesting_sympycommandset_commands', ['sympycommandset_id', 'sympycommand_id'])
 
 
     def backwards(self, orm):
@@ -238,6 +231,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Question'
         db.delete_table(u'mitesting_question')
+
+        # Removing M2M table for field allowed_sympy_commands on 'Question'
+        db.delete_table('mitesting_question_allowed_sympy_commands')
 
         # Deleting model 'QuestionSubpart'
         db.delete_table(u'mitesting_questionsubpart')
@@ -275,14 +271,8 @@ class Migration(SchemaMigration):
         # Deleting model 'Expression'
         db.delete_table(u'mitesting_expression')
 
-        # Deleting model 'SympyCommand'
-        db.delete_table(u'mitesting_sympycommand')
-
         # Deleting model 'SympyCommandSet'
         db.delete_table(u'mitesting_sympycommandset')
-
-        # Removing M2M table for field commands on 'SympyCommandSet'
-        db.delete_table('mitesting_sympycommandset_commands')
 
 
     models = {
@@ -587,6 +577,7 @@ class Migration(SchemaMigration):
         u'mitesting.question': {
             'Meta': {'object_name': 'Question'},
             'allow_expand': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'allowed_sympy_commands': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['mitesting.SympyCommandSet']", 'null': 'True', 'blank': 'True'}),
             'css_class': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'hint_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
@@ -672,17 +663,11 @@ class Migration(SchemaMigration):
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
             'sympy_parse': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
-        u'mitesting.sympycommand': {
-            'Meta': {'object_name': 'SympyCommand'},
-            'command': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
         u'mitesting.sympycommandset': {
             'Meta': {'object_name': 'SympyCommandSet'},
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
-            'commands': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['mitesting.SympyCommand']", 'symmetrical': 'False'}),
+            'commands': ('django.db.models.fields.TextField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
         },
         u'mithreads.thread': {
             'Meta': {'ordering': "['sort_order', 'id']", 'object_name': 'Thread'},
