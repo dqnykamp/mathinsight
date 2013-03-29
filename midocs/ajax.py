@@ -115,6 +115,11 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         for answer_number in answer_numbers:
             the_answer= answer['answer_%s_%s' % (answer_number, identifier)]
             try:
+                
+                # get rid of any .methods, so can't call commands like
+                # .expand() or .factor()
+                the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
+                
                 local_dict = the_question.return_sympy_local_dict()
                 the_answer_parsed = parse_expr(the_answer, 
                                                local_dict=local_dict,
@@ -124,11 +129,10 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 feedback_message = '<p>Sorry.  Unable to understand the answer. '
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
                 feedback_message += '</p>'
-            
+                dajax.alert("%s" % e)
                 dajax.append(feedback_selector, 'innerHTML', feedback_message)
 
             else:
-
             
                 # try expanding answer and correct
                 try:
