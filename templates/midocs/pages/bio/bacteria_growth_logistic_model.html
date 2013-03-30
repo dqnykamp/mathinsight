@@ -12,7 +12,7 @@
 {% navigation_tag "introduction" "Introduction" %}
 <h4>Introduction</h4>
 
-{% boxedvideo bacteria_growth_logistic_model %}
+{% boxedvideo bacteria_growth_logistic_model_introduction %}
 
 <p>When we {% intlink bacteria_growth_initial_model %}modeled the initial growth of the bacteria <i>V. natriegens</i>{% endintlink%}, we discovered that an {% intlink exponential_growth_decay_discrete %}exponential growth model{%endintlink%} was a good fit to the first 64 minutes of the bacteria growth data.  However, the last data point at 80 minutes was lower that predicted by the exponential growth model.  It appeared that the growth rate was slowing down during the last 16 minutes of that data set.  A likely explanation is that the population was beginning to {% intlink environmental_carrying_capacity%}exhaust its environment{%endintlink%}.</p>
 
@@ -57,6 +57,8 @@ In order to use such a discrete dynamical system model, we must have an initial 
 {% navigation_tag "the_old" "The old" %}
 <h4>Trying the old method: plotting population change versus density</h4>
 
+{% boxedvideo bacteria_growth_logistic_model_old_method %}
+
 <p>In developing the exponential model for bacteria growth, a critical step was to plot the population change $P_{t+1}-P_t$ in one time interval versus the population density $P_t$ at the beginning of the interval.  By {% appletlink bacteria_density_change_versus_density_line %}fitting the resulting data points by a line through the origin{%endappletlink%}, we obtained the growth rate $r$ as the slope of the line.  What would happen if we attempted to follow this procedure with the full bacteria growth data?</p>
 
 <p>Using the {% appletlink bacteria_density_data %}bacteria density data applet file{%endappletlink%} that you are running from within Geogebra installed on your computer, create a plot of population change $P_{t+1}-P_t$ versus population density $P_t$ and see if the data is well fit by a line through the origin. Use the spreadsheet panel to calculate the population change $P_{t+1}-P_t$ as follows.</p>
@@ -74,6 +76,8 @@ In order to use such a discrete dynamical system model, we must have an initial 
 
 {% navigation_tag "the_new" "The new" %}
 <h4>A new approach: plotting relative population change</h4>
+
+{% boxedvideo bacteria_growth_logistic_model_new_method %}
 
 <p>According to the exponential growth dynamical system
 $$P_{t+1}-P_{t}=rP_t,$$
