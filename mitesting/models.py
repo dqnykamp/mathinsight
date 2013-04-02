@@ -272,11 +272,6 @@ class Question(models.Model):
             
         return local_dict
     
-    def return_math_write_in_answer_numbers(self):
-        the_numbers=[mwri.number for mwri in self.mathwriteinanswer_set.all()]
-        the_numbers.sort()
-        return the_numbers
-
     def setup_context(self, identifier="", seed=None):
 
         identifier = "%s_%s" % (identifier, self.id)
@@ -358,7 +353,6 @@ class Question(models.Model):
         the_context['sympy_function_dict']=function_dict
         the_context['question_%s_seed' % identifier] = seed
         return the_context
-
 
     def render_text(self, context, identifier, user=None, solution=False, 
                     show_help=True, seed_used=None):
@@ -482,19 +476,6 @@ class Question(models.Model):
 
         html_string += '<p>%s</p>' % self.render_text(context, identifier=identifier, show_help=False)
 
-        answer_number_list_used = context.get('answer_number_list',[])
-        answer_number_list_used.sort()
-        answer_numbers_in_question = self.return_math_write_in_answer_numbers()
-        answer_numbers_in_question.sort()
-
-        if answer_number_list_used != answer_numbers_in_question:
-            html_string += "<p>[Malformed question: incorrect answer blanks]</p>"
-            
-        # html_string += '<p>Answer blanks: '
-        # for i in answer_number_list_used:
-        #     html_string += "%i, " % i
-        # html_string += "</p>"
-
 
         # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
         #     (identifier, identifier, identifier)
@@ -502,41 +483,6 @@ class Question(models.Model):
         
         return mark_safe(html_string)
     
-    def return_math_write_in_answers(self, context, user=None, identifier=""):
-
-        identifier = "%s_%s" % (identifier, self.id)
-
-        seed_used = context['question_%s_seed' % identifier]
-
-        function_dict = context['sympy_function_dict']
-
-        rendered_answers = {}
-        
-        from sympy.parsing.sympy_parser import parse_expr
-
-        for answer in self.mathwriteinanswer_set.all():
-            
-            try:
-                answer_expression = parse_expr(answer.answer, local_dict=function_dict,convert_xor=True)
-                substitutions = context['sympy_substitutions']
-            except:
-                answer_expression=''
-
-            try: 
-                answer_expression=answer_expression.subs(substitutions)
-            except AttributeError:
-                pass
-            try: 
-                answer_expression=answer_expression.doit()
-            except AttributeError:
-                pass
-        
-            rendered_answers[answer.number] = evaluated_expression(answer_expression)
-
-            
-        return rendered_answers
-    
-
 
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)

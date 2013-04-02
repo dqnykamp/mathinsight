@@ -800,28 +800,24 @@ def display_video_questions(parser, token):
 
 
 class AnswerBlankNode(template.Node):
-    def __init__(self, answer_number, size):
-        self.answer_number = answer_number
+    def __init__(self, answer_expression, answer_expression_string, size):
+        self.answer_expression = answer_expression
+        self.answer_expression_string = answer_expression_string
         self.size = size
     def render(self, context):
 
-        answer_number_list = context.get('answer_number_list',[])
+        answer_dict = context.get('answer_dict',{})
 
-        answer_number = None
-        if self.answer_number is not None:
-            try:
-                answer_number = int(self.answer_number.resolve(context))
-            except:
-                pass
-            
-        if answer_number is None:
-            if answer_number_list:
-                answer_number = max(answer_number_list)+1
-            else:
-                answer_number = 1
-
-        answer_number_list.append(answer_number)
-        context['answer_number_list'] = answer_number_list
+        # answer expression should refer to an expression that is
+        # defined in the question context
+        try:
+            answer_expression = self.answer_expression.resolve(context)
+        except:
+            return ""
+        
+        answer_dict[self.answer_expression_string] = answer_expression
+        
+        context['answer_dict'] = answer_dict
 
         size=None
         if self.size is not None:
@@ -832,32 +828,27 @@ class AnswerBlankNode(template.Node):
         if size is None:
             size = 60
 
-        the_question = context['the_question']
-
-        # find answer number 
-        try:
-            the_question.mathwriteinanswer_set.get(number=answer_number)
-        except:
-            return ""
-        
         identifier = context['identifier']
         
         return '<input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" />' % \
-            (answer_number, identifier,  answer_number, identifier, size)
+            (self.answer_expression_string, identifier,  self.answer_expression_string,
+             identifier, size)
     
 
 @register.tag
 def answer_blank(parser, token):
     bits = token.split_contents()
-    
-    if len(bits) > 1:
-        answer_number = parser.compile_filter(bits[1])
-    else:
-        answer_number = None
+
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+
+    answer_expression = parser.compile_filter(bits[1])
+    answer_expression_string = bits[1]
+
 
     if len(bits) > 2:
         size = parser.compile_filter(bits[2])
     else:
         size = None
 
-    return AnswerBlankNode(answer_number, size)
+    return AnswerBlankNode(answer_expression, answer_expression_string, size)

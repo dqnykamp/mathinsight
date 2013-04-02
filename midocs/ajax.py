@@ -98,8 +98,13 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         try:
 
             question_context = the_question.setup_context(seed=seed, identifier=identifier)
-            the_correct_answers = the_question.return_math_write_in_answers(question_context, identifier=identifier)
+            question_context['identifier'] = identifier
 
+            # render question text to add answer_dict to question_context
+            the_question.render_text(question_context, identifier='hmm', show_help=False)
+
+            the_correct_answers = question_context.get('answer_dict',[])
+            
         except Exception as e:
             dajax.alert("Something wrong with solution: %s" % e )
 
@@ -108,12 +113,11 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         credit=0
 
+
         the_answers={}
 
-        answer_numbers = the_question.return_math_write_in_answer_numbers()
-        
-        for answer_number in answer_numbers:
-            the_answer= answer['answer_%s_%s' % (answer_number, identifier)]
+        for answer_string in the_correct_answers:
+            the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
             try:
                 
                 # get rid of any .methods, so can't call commands like
@@ -124,12 +128,12 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 the_answer_parsed = parse_expr(the_answer, 
                                                local_dict=local_dict,
                                                convert_xor=True)
-                the_answers[answer_number] = the_answer_parsed
+                the_answers[answer_string] = the_answer_parsed
             except Exception as e:
                 feedback_message = '<p>Sorry.  Unable to understand the answer. '
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
                 feedback_message += '</p>'
-                dajax.alert("%s" % e)
+                #dajax.alert("%s" % e)
                 dajax.append(feedback_selector, 'innerHTML', feedback_message)
 
             else:
@@ -140,9 +144,18 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 except:
                     the_answer_expand = the_answer_parsed
 
-                the_correct_answer = the_correct_answers[answer_number].expression
+                the_correct_answer = the_correct_answers[answer_string]
+                
+                # in case the_correct_answer is an evaluated_expression
+                # try to extract the expression
+                try:
+                    the_correct_answer = the_correct_answer.expression
+                except:
+                    # must not have been an evaluated_expression
+                    # (for example, was a random number)
+                    pass
 
-                #dajax.alert("%s: answer=%s, correct=%s" % (answer_number, the_answer_parsed, the_correct_answer))
+                # dajax.alert("%s: answer=%s, correct=%s" % (answer_string, the_answer_parsed, the_correct_answer))
 
                 try:
                     the_correct_answer_expand = the_correct_answer.expand()
