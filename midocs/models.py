@@ -312,19 +312,6 @@ class Page(models.Model):
         # return -3 if page isn't to be published yet
         # return -4 if page is hideen
         
-        # if page isn't to be published yet, delete links and return -3
-        if(self.publish_date > datetime.date.today() or self.hidden):
-            self.image_set.clear()
-            self.applet_set.clear()
-            self.video_set.clear()
-            self.indexentry_set.all().delete()
-            
-            # don't print anything for hidden pages
-            if self.hidden:
-                return -4
-            print "For %s" % self.code
-            print "Publish date %s is later than today, not updating links" % str(self.publish_date)
-            return -3
 
         full_template_name = 'midocs/pages/%s/%s.html' % (self.template_dir, self.code)
          # find template filename
@@ -361,6 +348,30 @@ class Page(models.Model):
             print "last updated: %s" % self.template_modified
             print "template timestamp: %s" % template_mtime
 
+            update_context = {'thepage': self, 'process_image_entries': 1,
+                              'process_applet_entries': 1,
+                              'process_video_entries': 1,
+                              'process_index_entries': 1,
+                              'process_equation_tags': 1,
+                              'process_navigation_tags': 1,
+                              'process_citations': 1,
+                              'update_database': 1,
+                              'blank_style': 1,
+                              'STATIC_URL': ''}
+
+            # if page isn't to be published yet or is hidden, 
+            # don't add index entries or image/applet/video links
+            if(self.publish_date > datetime.date.today() or self.hidden):
+                if self.publish_date > datetime.date.today():
+                    print "Publish date %s is later than today, not adding links" % str(self.publish_date)
+                else:
+                    print "Page is hidden, not adding links"
+                
+                update_context['process_image_entries']=0
+                update_context['process_applet_entries']=0
+                update_context['process_video_entries']=0
+                update_context['process_index_entries']=0
+                
 
             # delete old data regarding links from templates
             self.image_set.clear()
@@ -374,17 +385,7 @@ class Page(models.Model):
 
             # parse the template with flags to enter links into database
             try:
-                render_to_string(full_template_name, 
-                                 {'thepage': self, 'process_image_entries': 1,
-                                  'process_applet_entries': 1,
-                                  'process_video_entries': 1,
-                                  'process_index_entries': 1,
-                                  'process_equation_tags': 1,
-                                  'process_navigation_tags': 1,
-                                  'process_citations': 1,
-                                  'update_database': 1,
-                                  'blank_style': 1,
-                                  'STATIC_URL': ''})
+                render_to_string(full_template_name, update_context)
                 self.template_modified=template_mtime
             
                 # save without updating links again
@@ -392,6 +393,12 @@ class Page(models.Model):
 
                 #  update similar pages
                 self.update_similar()
+                
+                if self.hidden:
+                    return -4
+                if self.publish_date > datetime.date.today():
+                    return -3
+
                 return 1
  
             except:
