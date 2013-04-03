@@ -806,7 +806,7 @@ class AnswerBlankNode(template.Node):
         self.size = size
     def render(self, context):
 
-        answer_dict = context.get('answer_dict',{})
+        answer_list = context.get('answer_list',[])
 
         # answer expression should refer to an expression that is
         # defined in the question context
@@ -815,9 +815,9 @@ class AnswerBlankNode(template.Node):
         except:
             return ""
         
-        answer_dict[self.answer_expression_string] = answer_expression
+        answer_list.append((self.answer_expression_string, answer_expression))
         
-        context['answer_dict'] = answer_dict
+        context['answer_list'] = answer_list
 
         size=None
         if self.size is not None:

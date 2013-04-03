@@ -100,10 +100,10 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
             question_context = the_question.setup_context(seed=seed, identifier=identifier)
             question_context['identifier'] = identifier
 
-            # render question text to add answer_dict to question_context
+            # render question text to add answer_list to question_context
             the_question.render_text(question_context, identifier='hmm', show_help=False)
 
-            the_correct_answers = question_context.get('answer_dict',[])
+            the_correct_answers = question_context.get('answer_list',[])
             
         except Exception as e:
             dajax.alert("Something wrong with solution: %s" % e )
@@ -116,7 +116,9 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         the_answers={}
 
-        for answer_string in the_correct_answers:
+        for answer_tuple in the_correct_answers:
+            answer_string = answer_tuple[0]
+
             the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
             try:
                 
@@ -144,7 +146,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 except:
                     the_answer_expand = the_answer_parsed
 
-                the_correct_answer = the_correct_answers[answer_string]
+                the_correct_answer = answer_tuple[1]
                 
                 # in case the_correct_answer is an evaluated_expression
                 # try to extract the expression
