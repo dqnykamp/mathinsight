@@ -111,6 +111,14 @@ class deferred_gcd(Function):
         else:
             return sympy.gcd(self.args[0], self.args[1])
        
+class deferred_diff(Function):
+    
+    def doit(self, **hints):        
+        if hints.get('deep', True):
+            return sympy.diff(*[i.doit(**hints) for i in self.args])
+        else:
+            return sympy.diff(*self.args)
+       
         
 # class deferred_max(Function):
 #     nargs = 2
@@ -263,6 +271,8 @@ class Question(models.Model):
         local_dict = disallowed_commands
         if 'gcd' in allowed_commands:
             local_dict['gcd'] = deferred_gcd
+        if 'diff' in allowed_commands:
+            local_dict['diff'] = deferred_diff
         # if 'max' in allowed_commands:
         #     local_dict['max'] = deferred_max
         # if 'min' in allowed_commands:
@@ -494,7 +504,7 @@ class QuestionSubpart(models.Model):
     hint_text = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
-        return "subpart %s" % self.get_subpart_number()
+        return "subpart %s" % self.get_subpart_letter()
     
     
     class Meta:
@@ -506,6 +516,14 @@ class QuestionSubpart(models.Model):
     def get_subpart_number(self):
         try:
             return list(self.question.questionsubpart_set.all()).index(self)+1
+        except:
+            return None
+
+    def get_subpart_letter(self):
+        try:
+            subpart_number = list(self.question.questionsubpart_set.all()).index(self)+1
+            alphabet="abcdefghijklmnopqrstuvwxyz"
+            return alphabet[subpart_number-1]
         except:
             return None
 
