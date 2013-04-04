@@ -52,6 +52,15 @@ ol ol ol {
     list-style-type: lower-roman;
 }
 
+ol.question_subparts {
+    list-style-type: lower-alpha;
+}
+
+ol.question_subparts ol {
+    list-style-type: lower-roman;
+}
+
+
 ol.exam_questions {
     padding-left: 0em;
 }

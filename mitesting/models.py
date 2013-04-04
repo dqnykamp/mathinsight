@@ -373,7 +373,7 @@ class Question(models.Model):
             return "Error in question template: %s" % e
         subparts = self.questionsubpart_set.all()
         if subparts:
-            html_string += "\n<ol>\n"
+            html_string += "\n<ol class='question_subparts'>\n"
             for subpart in subparts:
                 template_string=template_string_base
                 if solution:
