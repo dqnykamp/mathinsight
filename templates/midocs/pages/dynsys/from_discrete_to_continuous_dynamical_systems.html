@@ -59,7 +59,7 @@ At this point, we don't really have any reason to believe these models might hav
 or, dividing by $\Delta t$, as
 \begin{align}
   \frac{x(t+\Delta t)-x(t)}{\Delta t} &= 0.15 x(t) (1-x(t))
-  \label{model_deltat}
+  {% equation_tag model_deltat 3 %}
 \end{align}
 </p>
 
@@ -84,7 +84,7 @@ or, dividing by $\Delta t$, as
 In this limit, the difference equation \eqref{model_deltat} becomes the <em>differential equation</em>
 \begin{align}
   \diff{x}{t} =  0.15 x(t) (1-x(t)).
-  \label{continuous_model}
+  {% equation_tag continuous_model 4 %}
 \end{align}
 This differential equation is a <em>continuous dynamical system</em>.  Like the discrete dynamical system of equation \eqref{discrete_model}, it describes the evolution of the population size.  The differential equation, though, describes continuous evolution in time; at every instant in time, the population size $x(t)$ will change a little bit according to the value of $\diff{x}{t}$.</p>
 
@@ -115,7 +115,7 @@ Enter the differential equation \eqref{continuous_model} in the below applet and
 <p>You are now equipped to analyze the solution to the continuous logistic equation
 \begin{align}
   \diff{x}{t} =  r\, x(t) \left(1-\frac{x(t)}{M}\right).
-  \label{continuous_logistic}
+  {% equation_tag continuous_logistic 5 %}
 \end{align}
 In fact, it turns out the behavior of this equation is even simpler than the {% intlink environmental_carrying_capacity %}discrete logistic equation{%endintlink%}.  The carrying capacity $M$ functions exactly the same way.  As you'll see, the low density growth rate $r$ will do just that: it will simply change how fast the population grows.  Unlike in the discrete case, it won't cause funny things to happen if it gets large.</p>
 

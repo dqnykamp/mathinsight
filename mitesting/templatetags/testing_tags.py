@@ -815,8 +815,11 @@ class AnswerBlankNode(template.Node):
         try:
             answer_expression = self.answer_expression.resolve(context)
         except:
-            return ""
-        
+            return "[invalid answer blank]"
+
+        if not answer_expression:
+            return "[invalid answer blank]"
+
         answer_list.append((self.answer_expression_string, answer_expression))
         
         context['answer_list'] = answer_list
