@@ -119,6 +119,19 @@ class deferred_diff(Function):
         else:
             return sympy.diff(*self.args)
        
+
+# input_list=[Symbol('x'),]
+# expr2 = Symbol('x')**2
+
+# class parsed_function(Function):
+#     the_input_list = input_list
+#     n_args = len(input_list)
+    
+#     def doit(self, **hints):        
+#         if hints.get('deep', True):
+#             return expr2.subs([(self.the_input_list[i],a.doit(**hints)) for (i,a) in enumerate(self.args)])
+#         else:
+#             return expr2.subs([(self.the_input_list[i],a) for (i,a) in enumerate(self.args)])
         
 # class deferred_max(Function):
 #     nargs = 2
@@ -617,29 +630,6 @@ class QuestionAnswerOption(models.Model):
             return "Error in answer template: %s" % e
         return mark_safe(html_string)
 
-class MathWriteinAnswer(models.Model):
-    answer = models.CharField(max_length=200)
-    question = models.ForeignKey(Question)
-    number = models.IntegerField(blank=True)
-    
-    def __unicode__(self):
-        return self.answer
-
-    class Meta:
-        unique_together = ("question", "number")
-
-    def save(self, *args, **kwargs):
-        # if number is blank, make it be the next number for the question
-        if self.number is None:
-            max_number = self.question.mathwriteinanswer_set.aggregate(Max('number'))
-            max_number = max_number['number__max']
-            if max_number:
-                self.number= max_number+1
-            else:
-                self.number = 1
-                
-        super(MathWriteinAnswer, self).save(*args, **kwargs) 
-
 
 class AssessmentType(models.Model):
     code = models.SlugField(max_length=50, unique=True)
@@ -1100,11 +1090,33 @@ class Expression(models.Model):
             input_list = [item.strip() for item in self.function_inputs.split(",")]
             # if any input variables are in substitution list, need to remove
             slist_2=[s for s in substitutions if s[0] not in input_list]
-            expr2= parse_expr(self.expression,local_dict=function_dict,convert_xor=True).subs(slist_2).doit()
+            expr2= parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
 
-            from sympy.utilities.lambdify import lambdify
-            the_function = lambdify(input_list, expr2)
-            function_dict[self.name] = the_function
+            try: 
+                expr2=expr2.subs(slist_2)
+            except AttributeError:
+                pass
+            try: 
+                expr2=expr2.doit()
+            except AttributeError:
+                pass
+            
+            class parsed_function(Function):
+                the_input_list = input_list
+                n_args = len(input_list)
+
+                def doit(self, **hints):        
+                    if hints.get('deep', True):
+                        return expr2.subs([(self.the_input_list[i],a.doit(**hints)) for (i,a) in enumerate(self.args)])
+                    else:
+                        return expr2.subs([(self.the_input_list[i],a) for (i,a) in enumerate(self.args)])
+
+                
+            function_dict[self.name] = parsed_function   
+
+            # from sympy.utilities.lambdify import lambdify
+            # the_function = lambdify(input_list, expr2)
+            # function_dict[self.name] = the_function
             
         return evaluated_expression(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
 
