@@ -261,7 +261,9 @@ def addplus(text):
         val_no_commas = re.sub(',','',input_val)
         if float(val_no_commas) < 0:
             negative_number = True
-    except: pass
+    except: 
+        if input_val[0] == '-':
+            negative_number = True
     
     if negative_number:
         return input_val

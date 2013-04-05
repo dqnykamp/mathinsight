@@ -286,6 +286,10 @@ class Question(models.Model):
             local_dict['gcd'] = deferred_gcd
         if 'diff' in allowed_commands:
             local_dict['diff'] = deferred_diff
+        if 'e' in allowed_commands:
+            from sympy import E
+            local_dict['e'] = E
+            
         # if 'max' in allowed_commands:
         #     local_dict['max'] = deferred_max
         # if 'min' in allowed_commands:
@@ -1087,7 +1091,7 @@ class Expression(models.Model):
             expression=expression.expand()
 
         if self.function_inputs:
-            input_list = [item.strip() for item in self.function_inputs.split(",")]
+            input_list = [parse_expr(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in substitution list, need to remove
             slist_2=[s for s in substitutions if s[0] not in input_list]
             expr2= parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
