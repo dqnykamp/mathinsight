@@ -4,6 +4,12 @@
 {% title "From discrete dynamical systems to continuous dynamical systems" %}
 {% description "Illustration of how a discrete dynamical system approaches a continuous dynamical as the size of the time step shrinks." %}
 
+
+{% navigation_tag "introduction" "Introduction" %}
+<h4>Introduction</h4>
+
+{% boxedvideo from_discrete_to_continuous_dynamical_systems %}
+
 <p>One basic type of {% intlink dynamical_system_idea %}dynamical system{%endintlink%} is a {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%}, where the {% intlink state_variable_definition %}state variables{%endintlink%} evolve in discrete time steps.  We used discrete dynamical systems to model population growth, from simple {% intlink exponential_growth_decay_discrete %}exponential growth{%endintlink%} of {% intlink bacteria_growth_initial_model %}bacteria{%endintlink%} to more complicated models, such as {% intlink environmental_carrying_capacity %}logistic growth{%endintlink%} and {% intlink harvest_natural_populations %}harvesting populations{% endintlink%}. </p>
 
 {% navigation_tag "discrete" "Discrete" %}
@@ -23,7 +29,7 @@ For simplicity, we've set the {% intlink environmental_carrying_capacity%}carryi
 {% navigation_tag "continuous" "Continuous" %}
 <h4>Moving to continuous time</h4>
 
-<p>As a first step to moving away from the 16-minute interval restriction, let's change the notation of our model.  First, let $t$ denote time in minutes so that $t= 16n$. Then, rather than denoting the variables as $x_n$ for population size at time step $n$, we'll denote them as $x(t)$ for population size at time $t$. Then, we can rewrite equation \eqref{discrete_model} as
+<p>As a first step to moving away from the 16-minute interval restriction, let's change the notation of our model.  First, let $t$ denote time in minutes so that $t= 16n$. Then, rather than denoting the variables as $x_n$ for population size at time step $n$, we'll denote them as $x(t)$ for population size at time $t$.  We can rewrite equation \eqref{discrete_model} as
 \begin{align}
   x(t+16)-x(t) = 2.4 \,x(t) (1-x(t))
 \end{align}
@@ -82,7 +88,7 @@ In this limit, the difference equation \eqref{model_deltat} becomes the <em>diff
 \end{align}
 This differential equation is a <em>continuous dynamical system</em>.  Like the discrete dynamical system of equation \eqref{discrete_model}, it describes the evolution of the population size.  The differential equation, though, describes continuous evolution in time; at every instant in time, the population size $x(t)$ will change a little bit according to the value of $\diff{x}{t}$.</p>
 
-<p>Now, unfortunately, just like we couldn't come up with a nice formula for the solution to the difference equation $x_{n+1}-x_n = 2.4x_n(1-x_n)$, we also can't up with a nice formula for the solution to the differential equation \eqref{continuous_model}.  For the difference equation, we can easily calculate the solution anyway just by writing it in function iteration form and using a computer tool (like the function iteration applet) to spit out all the values of $x_n$.  Can we do something similar to calculate the solution to the differential equation \eqref{continuous_model}.</p>
+<p>Now, unfortunately, just like we couldn't come up with a nice formula for the solution to the difference equation $x_{n+1}-x_n = 2.4x_n(1-x_n)$, we also can't up with a nice formula for the solution to the differential equation \eqref{continuous_model}.  For the difference equation, we can easily calculate the solution anyway just by writing it in function iteration form and using a computer tool (like the function iteration applet) to spit out all the values of $x_n$.  Can we do something similar to calculate the solution to the differential equation \eqref{continuous_model}?</p>
 
 <p>In fact, one way that we explore the solution to a differential equation is to do exactly what you did above.  We pick a small time step $\Delta t$, approximate the derivative by
 \begin{align*}
@@ -113,7 +119,7 @@ Enter the differential equation \eqref{continuous_model} in the below applet and
 \end{align}
 In fact, it turns out the behavior of this equation is even simpler than the {% intlink environmental_carrying_capacity %}discrete logistic equation{%endintlink%}.  The carrying capacity $M$ functions exactly the same way.  As you'll see, the low density growth rate $r$ will do just that: it will simply change how fast the population grows.  Unlike in the discrete case, it won't cause funny things to happen if it gets large.</p>
 
-<p>To investigate the behavior of the model, look at three different values of $r$, say $r=1$ as well as 10 times larger and smaller (i.e., $r=10$ and $r=0.1$).  To verify that the carrying capacity does what you think it should, try two values, such as $M=10$ and $M=100$.  For these six cases, explore their behavior in the above Euler method applet.  For run, make sure you choose $\Delta t$ small enough.  To verify that that $\Delta t$ is small enough, cut $\Delta t$ in half and make sure the solution didn't change much. If it changed dramatically, then it wasn't small enough.  Remember, we are supposed to approximate the limit when $\Delta t$ is arbitrarily small.</p>
+<p>To investigate the behavior of the model, look at three different values of $r$, say $r=1$ as well as 10 times larger and smaller (i.e., $r=10$ and $r=0.1$).  To verify that the carrying capacity does what you think it should, try two values, such as $M=10$ and $M=100$.  For these six cases, explore their behavior in the above Euler method applet.  For each case, make sure you choose $\Delta t$ small enough.  To verify that that $\Delta t$ is small enough, cut $\Delta t$ in half and make sure the solution didn't change much. If it changed dramatically, then it wasn't small enough.  Remember, we are supposed to approximate the limit when $\Delta t$ is arbitrarily small.</p>
 
 <p>Answer the following question about the models.</p>
 <ol>
