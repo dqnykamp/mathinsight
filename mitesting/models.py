@@ -12,7 +12,7 @@ import sympy
 from sympy import Symbol, Function
 from sympy.printing import latex
 from django.db.models import Max
-from mitesting.math_objects import create_greek_dict, create_symbol_name_dict, sympy_word
+from mitesting.math_objects import create_greek_dict, create_symbol_name_dict
 from mitesting.math_objects import math_object
 
 class deferred_gcd(Function):
@@ -234,8 +234,10 @@ class Question(models.Model):
 
             for random_number in self.randomnumber_set.all():
                 try:
-                    the_context[random_number.name] = random_number.get_sample()
-                    substitutions.append((Symbol(str(random_number.name)), the_context[random_number.name]))
+                    the_sample = random_number.get_sample()
+                    the_context[random_number.name] = the_sample
+                    substitutions.append((Symbol(str(random_number.name)),
+                                          the_sample.return_expression()))
 
                 except Exception as e:
                     return "Error in random number %s: %s" % (random_number.name, e)
@@ -256,15 +258,15 @@ class Question(models.Model):
                         return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
                     the_context[random_word.name+"_plural"] = the_plural
-                    if isinstance(the_word, sympy_word):
-                        new_sympy_word = the_word.word
+                    if isinstance(the_word, math_object):
+                        sympy_word = the_word.return_expression()
                     else:
                         # sympy can't handle spaces
                         word_text=re.sub(' ', '_', the_word)
-                        new_sympy_word = Symbol(str(the_word))
+                        sympy_word = Symbol(str(the_word))
                         
                     substitutions.append((Symbol(str(random_word.name)), 
-                                          new_sympy_word))
+                                          sympy_word))
 
 
             failed_required_condition = False
@@ -904,7 +906,7 @@ class RandomNumber(models.Model):
                     the_num = round(the_num,i)
                     break
                 
-        return the_num
+        return math_object(the_num)
     
 
 
@@ -939,7 +941,7 @@ class RandomWord(models.Model):
             try:
                 if not function_dict:
                     function_dict = create_greek_dict()
-                the_word = sympy_word(parse_expr(option_list[index], local_dict=function_dict))
+                the_word = math_object(parse_expr(option_list[index], local_dict=function_dict))
             except:
                 pass
         if not the_word:
@@ -965,9 +967,9 @@ class Expression(models.Model):
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
     use_ln = models.BooleanField()
-    allow_expand = models.BooleanField()
-    #pre_eval_subs = models.CharField(max_length=100, blank=True, null=True)
-    #post_eval_subs = models.CharField(max_length=100, blank=True, null=True)
+    expand_on_compare = models.BooleanField()
+    tuple_is_ordered = models.BooleanField()
+    collapse_equal_tuple_elements=models.BooleanField()
     sort_order = models.FloatField(default=0)
     class Meta:
         unique_together = ("name", "question")
@@ -1038,7 +1040,7 @@ class Expression(models.Model):
             # the_function = lambdify(input_list, expr2)
             # function_dict[self.name] = the_function
             
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements)
 
 
 class PlotFunction(models.Model):

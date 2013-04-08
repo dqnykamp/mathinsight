@@ -116,24 +116,29 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         the_answers={}
 
+        from mitesting.math_objects import math_object
+
         for answer_tuple in the_correct_answers:
             answer_string = answer_tuple[0]
 
             the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
             try:
+                the_correct_answer = answer_tuple[1]
+
                 answer_feedback_selector = "#answer_%s_%s_feedback" % (answer_string, identifier)
 
                 # get rid of any .methods, so can't call commands like
                 # .expand() or .factor()
                 the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
                 local_dict = the_question.return_sympy_local_dict()
-                the_answer_parsed = parse_expr(the_answer, 
-                                               local_dict=local_dict,
-                                               convert_xor=True)
+                the_answer_parsed = math_object(parse_expr(the_answer, 
+                                                           local_dict=local_dict,
+                                                           convert_xor=True),
+                                                tuple_is_ordered=the_correct_answer.return_if_ordered())
                 the_answers[answer_string] = the_answer_parsed
             except Exception as e:
                 if the_answer:
-                    feedback_message = 'Sorry.  Unable to understand the answer. %s' % e
+                    feedback_message = 'Sorry.  Unable to understand the answer.  (Remember, you must use an * for every multiplication.)'
                 else:
                     feedback_message = 'No answer.'
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
@@ -142,22 +147,18 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
             else:
 
-                the_correct_answer = answer_tuple[1]
 
                 correctness_of_answer = the_correct_answer.compare_with_expression \
-                    (the_answer_parsed)
+                    (the_answer_parsed.return_expression())
                 
-                from sympy.printing import latex
-
-
                 feedback=''
                 if correctness_of_answer == 1:
                     credit=1
-                    feedback='Yes, $%s$ is correct.' % latex(the_answer_parsed)
+                    feedback='Yes, $%s$ is correct.' % the_answer_parsed
                 elif correctness_of_answer == -1:
                     feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % latex(the_answer_parsed)
                 else:
-                    feedback='No, $%s$ is incorrect.  Try again.' % (latex(the_answer_parsed))
+                    feedback='No, $%s$ is incorrect.  Try again.' % the_answer_parsed
 
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback)
 
