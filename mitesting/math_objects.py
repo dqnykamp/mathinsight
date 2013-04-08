@@ -4,14 +4,18 @@ from sympy.printing import latex
 import sympy
 import re
 
-def parse_expr(s, local_dict=None, rationalize=False, convert_xor=False):
+def parse_expr(s, global_dict=None, local_dict=None):
     # until bug is fixed, call sympify after parse_expr
     # so that tuples are changed to Sympy Tuples
-    from sympy.parsing.sympy_parser import parse_expr
+    from sympy.parsing.sympy_parser import \
+        (standard_transformations, convert_xor, \
+             implicit_multiplication)
+    from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
     from sympy import sympify
 
-    return sympy.sympify(sympy.parsing.sympy_parser.parse_expr(s, local_dict, rationalize, convert_xor))
-
+    transformations=standard_transformations+(convert_xor,implicit_multiplication)
+    
+    return sympify(sympy_parse_expr(s, local_dict=local_dict, transformations=transformations))
 
 
 def create_greek_dict():

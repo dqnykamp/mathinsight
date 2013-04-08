@@ -983,7 +983,7 @@ class Expression(models.Model):
         #from sympy.parsing.sympy_parser import parse_expr
         from mitesting.math_objects import parse_expr
 
-        expression = parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
+        expression = parse_expr(self.expression,local_dict=function_dict)
 
 
         # if self.pre_eval_subs:
@@ -1012,7 +1012,7 @@ class Expression(models.Model):
             input_list = [parse_expr(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in substitution list, need to remove
             slist_2=[s for s in substitutions if s[0] not in input_list]
-            expr2= parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
+            expr2= parse_expr(self.expression,local_dict=function_dict)
 
             try: 
                 expr2=expr2.subs(slist_2)
