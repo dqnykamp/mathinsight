@@ -121,74 +121,45 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
             the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
             try:
-                
+                answer_feedback_selector = "#answer_%s_%s_feedback" % (answer_string, identifier)
+
                 # get rid of any .methods, so can't call commands like
                 # .expand() or .factor()
                 the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
-                
                 local_dict = the_question.return_sympy_local_dict()
                 the_answer_parsed = parse_expr(the_answer, 
                                                local_dict=local_dict,
                                                convert_xor=True)
                 the_answers[answer_string] = the_answer_parsed
             except Exception as e:
-                feedback_message = '<p>Sorry.  Unable to understand the answer. '
+                if the_answer:
+                    feedback_message = 'Sorry.  Unable to understand the answer. %s' % e
+                else:
+                    feedback_message = 'No answer.'
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
-                feedback_message += '</p>'
                 #dajax.alert("%s" % e)
-                dajax.append(feedback_selector, 'innerHTML', feedback_message)
+                dajax.assign(answer_feedback_selector, 'innerHTML', feedback_message)
 
             else:
-            
-                # try expanding answer and correct
-                try:
-                    the_answer_expand = the_answer_parsed.expand()
-                except:
-                    the_answer_expand = the_answer_parsed
 
                 the_correct_answer = answer_tuple[1]
+
+                correctness_of_answer = the_correct_answer.compare_with_expression \
+                    (the_answer_parsed)
                 
-                # in case the_correct_answer is an evaluated_expression
-                # try to extract the expression
-                try:
-                    the_correct_answer = the_correct_answer.expression
-                except:
-                    # must not have been an evaluated_expression
-                    # (for example, was a random number)
-                    pass
-
-                # dajax.alert("%s: answer=%s, correct=%s" % (answer_string, the_answer_parsed, the_correct_answer))
-
-                try:
-                    the_correct_answer_expand = the_correct_answer.expand()
-                except:
-                    the_correct_answer_expand = the_correct_answer
-
                 from sympy.printing import latex
 
-                answer_is_correct=False
-                correct_if_expand=False
-                if the_question.allow_expand:
-                    # check  both expanded and original in case expand gave error
-                    if the_answer_expand==the_correct_answer_expand or \
-                            the_answer_parsed==the_correct_answer:
-                        answer_is_correct=True
-                else:
-                    if the_answer_parsed==the_correct_answer:
-                        answer_is_correct=True
-                    elif the_answer_expand==the_correct_answer_expand:
-                        correct_if_expand=True
 
                 feedback=''
-                if answer_is_correct:
+                if correctness_of_answer == 1:
                     credit=1
-                    feedback='<p>Yes, $%s$ is correct.</p>' % latex(the_answer_parsed)
-                elif correct_if_expand:
-                    feedback="<p>No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form.</p>" % latex(the_answer_parsed)
+                    feedback='Yes, $%s$ is correct.' % latex(the_answer_parsed)
+                elif correctness_of_answer == -1:
+                    feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % latex(the_answer_parsed)
                 else:
-                    feedback='<p>No, $%s$ is incorrect.  Try again.</p>' % latex(the_answer_parsed)
+                    feedback='No, $%s$ is incorrect.  Try again.' % (latex(the_answer_parsed))
 
-                dajax.append(feedback_selector, 'innerHTML', feedback)
+                dajax.assign(answer_feedback_selector, 'innerHTML', feedback)
 
     
         # record answer by user

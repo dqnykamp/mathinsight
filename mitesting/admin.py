@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction
 import settings
 
 class QuestionAssignedInline(admin.TabularInline):
@@ -30,6 +30,12 @@ class ExpressionInline(admin.TabularInline):
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
 
+class PlotFunctionInline(admin.TabularInline):
+    model = PlotFunction
+    formfield_overrides = {
+        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
+        }
+
 class QuestionSubpartInline(admin.StackedInline):
     model = QuestionSubpart
 
@@ -41,7 +47,7 @@ class QuestionAnswerInline(admin.StackedInline):
 
 
 class QuestionAdmin(admin.ModelAdmin):
-    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline]
+    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline]
     filter_horizontal = ['allowed_sympy_commands',]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -52,7 +58,7 @@ class QuestionAdmin(admin.ModelAdmin):
                 'fields': ('name', 'question_type', 
                            'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
-                           'hint_text', 'allow_expand',
+                           'hint_text', 
                            'allowed_sympy_commands',)
                 }),
         # ('Optional', {

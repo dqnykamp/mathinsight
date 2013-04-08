@@ -12,95 +12,8 @@ import sympy
 from sympy import Symbol, Function
 from sympy.printing import latex
 from django.db.models import Max
-
-def create_greek_dict():
-    from sympy.abc import (alpha, beta,  delta, epsilon, eta,
-                           theta, iota, kappa, mu, nu, xi, omicron, pi,
-                           rho, sigma, tau, upsilon, phi, chi, psi, omega)
-    lambda_symbol = Symbol('lambda')
-    gamma_symbol = Symbol('gamma')
-    zeta_symbol = Symbol('zeta')
-    greek_dict = {'alpha': alpha, 'alpha_symbol': alpha, 
-                  'beta': beta,'beta_symbol': beta, 
-                  'gamma_symbol': gamma_symbol, 
-                  'delta': delta, 'delta_symbol': delta, 
-                  'epsilon': epsilon, 'epsilon_symbol': epsilon,
-                  'zeta_symbol': zeta_symbol, 
-                  'eta': eta, 'eta_symbol': eta, 
-                  'theta': theta, 'theta_symbol': theta, 
-                  'iota': iota, 'iota_symbol': iota, 
-                  'kappa': kappa, 'kappa_symbol': kappa, 
-                  'lambda_symbol': lambda_symbol, 
-                  'mu': mu, 'mu_symbol': mu,
-                  'nu': nu, 'nu_symbol': nu,
-                  'xi': xi,'xi_symbol': xi, 
-                  'omicron': omicron,'omicron_symbol': omicron, 
-                  'rho': rho, 'rho_symbol': rho, 
-                  'sigma': sigma, 'sigma_symbol': sigma, 
-                  'tau': tau, 'tau_symbol': tau, 
-                  'upsilon': upsilon,'upsilon_symbol': upsilon,
-                  'phi': phi, 'phi_symbol': phi, 
-                  'chi': chi, 'chi_symbol': chi, 
-                  'psi': psi, 'psi_symbol': psi, 
-                  'omega': omega, 'omega_symbol': omega }
-
-    return greek_dict
-    
-def create_symbol_name_dict():
-
-    symbol_list = 'bigstar bigcirc clubsuit spadesuit heartsuit diamondsuit Diamond bigtriangleup bigtriangledown blacklozenge blacksquare blacktriangle blacktriangledown blacktriangleleft blacktriangleright Box circ lozenge star'.split(' ')
-    symbol_name_dict = {}
-    for symbol in symbol_list:
-        symbol_name_dict[eval("Symbol('%s')" % symbol)] = '\\%s' % symbol
-
-    return symbol_name_dict
-
-class sympy_word:
-    def __init__(self, the_word):
-        self.word=the_word
-    def __unicode__(self):
-        output = latex(self.word, symbol_names=create_symbol_name_dict())
-        return output
-
-class evaluated_expression:
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False):
-        self.expression=expression
-        self.n_digits=n_digits
-        self.round_decimals=round_decimals
-        self.use_ln=use_ln
-    def convert_expression(self):
-        expression=self.expression
-        if self.n_digits:
-            try:
-                expression = expression.evalf(self.n_digits)
-            except:
-                pass
-
-        if self.round_decimals is not None:
-            try:
-                expression = expression.round(self.round_decimals)
-                if self.round_decimals == 0:
-                    expression = int(expression)
-            except:
-                pass
-        return expression
-    def __unicode__(self):
-        expression = self.convert_expression()
-        output=""
-        symbol_name_dict = create_symbol_name_dict()
-        output = latex(expression, symbol_names=symbol_name_dict)
-        if self.use_ln:
-            output = re.sub('operatorname{log}', 'operatorname{ln}', output)
-            output = re.sub('\\log', 'ln', output)
-        return output
-    def __float__(self):
-        expression = self.convert_expression()
-        try:
-            return float(expression)
-        except:
-            return expression
-    def float(self):
-        return self.__float__()
+from mitesting.math_objects import create_greek_dict, create_symbol_name_dict, sympy_word
+from mitesting.math_objects import math_object
 
 class deferred_gcd(Function):
     nargs = 2
@@ -190,7 +103,6 @@ class Question(models.Model):
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
-    allow_expand = models.BooleanField()
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
@@ -339,7 +251,7 @@ class Question(models.Model):
                     if ind==0 or group=='' or group is None:
                         word_index=None
                     try:
-                        (the_word, the_plural, word_index) = random_word.get_sample(word_index)
+                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, function_dict=function_dict)
                     except Exception as e:
                         return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
@@ -362,9 +274,9 @@ class Question(models.Model):
                 except Exception as e:
                     return "Error in expression %s: %s" % (expression.name, e)
                 the_context[expression.name]=expression_evaluated
-                substitutions.append((Symbol(str(expression.name)),expression_evaluated.expression))
+                substitutions.append((Symbol(str(expression.name)),expression_evaluated.return_expression()))
                 if expression.required_condition:
-                    if not expression_evaluated.expression:
+                    if not expression_evaluated.return_expression():
                         failed_required_condition=True
                         break
             
@@ -493,15 +405,27 @@ class Question(models.Model):
     def render_math_write_in_question(self, context, seed_used,
                                       identifier):
         
+        # render question text at the beginning so that have answer_list in context
+        question_text = '<div id=question_text_%s>%s</div>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
 
         send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
 
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
+        the_correct_answers = context.get('answer_list',[])
+        answer_feedback_strings=""
+        for answer_tuple in the_correct_answers:
+            answer_string = answer_tuple[0]
+
+            answer_feedback_strings += "answer_%s_%s_feedback" % (answer_string, identifier)
+            break
+
+
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_text_%s"]);}</script>' % (identifier, identifier)
 
 
         html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" >' %  (callback_script, identifier)
 
-        html_string += '<p>%s</p>' % self.render_text(context, identifier=identifier, show_help=False)
+        html_string += question_text
 
 
         # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
@@ -530,17 +454,11 @@ class QuestionSubpart(models.Model):
     def fullcode(self):
         return "%s_%s" % (self.question.id, self.id)
 
-    def get_subpart_number(self):
-        try:
-            return list(self.question.questionsubpart_set.all()).index(self)+1
-        except:
-            return None
-
     def get_subpart_letter(self):
         try:
-            subpart_number = list(self.question.questionsubpart_set.all()).index(self)+1
+            subpart_number = list(self.question.questionsubpart_set.all()).index(self)
             alphabet="abcdefghijklmnopqrstuvwxyz"
-            return alphabet[subpart_number-1]
+            return alphabet[subpart_number]
         except:
             return None
 
@@ -555,9 +473,7 @@ class QuestionSubpart(models.Model):
 
         html_string=""
 
-        order_in_sort = self.get_subpart_number()
-        
-        reference_pages = self.question.questionreferencepage_set.filter(question_subpart=order_in_sort)
+        reference_pages = self.question.questionreferencepage_set.filter(question_subpart=self.get_subpart_letter())
         
         if self.solution_text and user and self.question.user_can_view(user,solution=True):
             include_solution_link=True
@@ -593,7 +509,7 @@ class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
     page = models.ForeignKey(Page)
     sort_order = models.SmallIntegerField(default=0)
-    question_subpart = models.SmallIntegerField(blank=True,null=True)
+    question_subpart = models.CharField(max_length=1, blank=True,null=True)
     
     class Meta:
         unique_together = ("question", "page", "question_subpart")
@@ -1006,7 +922,7 @@ class RandomWord(models.Model):
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self, index=None):
+    def get_sample(self, index=None, function_dict=None):
         
         # turn comma separated list to python list. 
         # strip off leading/trailing whitespace
@@ -1018,9 +934,12 @@ class RandomWord(models.Model):
             index = random.randrange(len(option_list))
         the_word=None
         if self.sympy_parse:
-            from sympy.parsing.sympy_parser import parse_expr
+            #from sympy.parsing.sympy_parser import parse_expr
+            from mitesting.math_objects import parse_expr
             try:
-                the_word = sympy_word(parse_expr(option_list[index], local_dict=create_greek_dict()))
+                if not function_dict:
+                    function_dict = create_greek_dict()
+                the_word = sympy_word(parse_expr(option_list[index], local_dict=function_dict))
             except:
                 pass
         if not the_word:
@@ -1045,12 +964,8 @@ class Expression(models.Model):
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
-    figure = models.IntegerField(blank=True, null=True)
-    linestyle = models.CharField(max_length=10, blank=True, null=True)
-    linewidth = models.IntegerField(blank=True, null=True)
-    xmin = models.FloatField(blank=True, null=True)
-    xmax = models.FloatField(blank=True, null=True)
     use_ln = models.BooleanField()
+    allow_expand = models.BooleanField()
     #pre_eval_subs = models.CharField(max_length=100, blank=True, null=True)
     #post_eval_subs = models.CharField(max_length=100, blank=True, null=True)
     sort_order = models.FloatField(default=0)
@@ -1063,7 +978,8 @@ class Expression(models.Model):
 
     def evaluate(self, substitutions, function_dict):
 
-        from sympy.parsing.sympy_parser import parse_expr
+        #from sympy.parsing.sympy_parser import parse_expr
+        from mitesting.math_objects import parse_expr
 
         expression = parse_expr(self.expression,local_dict=function_dict,convert_xor=True)
 
@@ -1122,7 +1038,18 @@ class Expression(models.Model):
             # the_function = lambdify(input_list, expr2)
             # function_dict[self.name] = the_function
             
-        return evaluated_expression(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln)
+
+
+class PlotFunction(models.Model):
+    function = models.SlugField(max_length=50)
+    figure = models.IntegerField()
+    question = models.ForeignKey(Question)
+    linestyle = models.CharField(max_length=10, blank=True, null=True)
+    linewidth = models.IntegerField(blank=True, null=True)
+    xmin = models.FloatField(blank=True, null=True)
+    xmax = models.FloatField(blank=True, null=True)
+
 
 
 class SympyCommandSet(models.Model):

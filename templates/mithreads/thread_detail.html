@@ -8,7 +8,7 @@
 <h3>Thread: {{thread}}</h3>
 
 
-<p>{{ thread.description }} </p>
+<p>{{ thread.description|safe }} </p>
 {{ thread.render_html_string|safe }}
 
 {% if include_edit_link %}<p><a href="{% url 'mithreads-thread-edit' thread.code %}">Edit thread</a></p>{%endif%}

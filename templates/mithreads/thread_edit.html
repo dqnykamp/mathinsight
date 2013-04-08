@@ -17,7 +17,7 @@
 
 <p><a href="{% url 'mithreads-thread' thread.code %}">Finish editing</a></p>
 
-<p>{{ thread.description }} </p>
+<p>{{ thread.description|safe }} </p>
 
 <div id="thread_contents">
 {{ thread.render_html_edit_string|safe }}

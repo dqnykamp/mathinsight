@@ -9,6 +9,9 @@ class ThreadSectionInline(admin.TabularInline):
 
 class ThreadAdmin(admin.ModelAdmin):
     inlines=[ThreadSectionInline]
+    formfield_overrides = {
+        models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
+        }
 
 class ThreadContentInline(admin.TabularInline):
     model = ThreadContent

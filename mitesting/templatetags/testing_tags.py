@@ -1,7 +1,7 @@
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
-from mitesting.models import Question, QuestionAnswerOption
+from mitesting.models import Question, QuestionAnswerOption, PlotFunction
 from mitesting.forms import MultipleChoiceQuestionForm
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -197,11 +197,19 @@ class ExprNode(Node):
         
 
         from sympy.parsing.sympy_parser import parse_expr
-        expression = parse_expr(expression,local_dict=function_dict,convert_xor=True).subs(substitutions)
+        expression = parse_expr(expression,local_dict=function_dict,convert_xor=True)
+        try:
+            expression=expression.subs(substitutions)
+        except:
+            pass
+        try:
+            expression=expression.doit()
+        except:
+            pass
 
-        from mitesting.models import evaluated_expression
+        from mitesting.math_objects import math_object
 
-        expression=evaluated_expression(expression, args, kwargs)
+        expression=math_object(expression, args, kwargs)
 
         if self.asvar:
             context[self.asvar] = expression
@@ -518,36 +526,49 @@ class FigureNode(Node):
         point_lists=[]
         series_option_list=[]
 
-        for expression in the_question.expression_set.filter(figure=figure_number):
-            if expression.function_inputs:
+        for plotfunction in the_question.plotfunction_set.filter(figure=figure_number):
+            # find corresponding expression
+            the_function = None
+            try:
+                expression = the_question.expression_set.get(name=plotfunction.function)
+                if expression.function_inputs:
+                    the_function = function_dict[expression.name]
+            except:
+                pass
+
+            if the_function:
                 series_options=dict()
                 the_function = function_dict[expression.name]
                 this_x = x
-                if expression.xmin is not None or expression.xmax is not None:
-                    if expression.xmin is not None:
-                        this_xmin=expression.xmin
+                if plotfunction.xmin is not None or plotfunction.xmax is not None:
+                    if plotfunction.xmin is not None:
+                        this_xmin=plotfunction.xmin
                     else:
                         this_xmin=xmin
-                    if expression.xmax is not None:
-                        this_xmax=expression.xmax
+                    if plotfunction.xmax is not None:
+                        this_xmax=plotfunction.xmax
                     else:
                         this_xmax=xmax
                     this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))
                     this_dx = (this_xmax-this_xmin)/(this_n_points-1)
                     this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
 
-                point_lists.append([(i,the_function(i)) for i in this_x])
+                try:
+                    point_lists.append([(i,float(the_function(i).doit())) for i in this_x])
+                except:
+                    return "[Broken figure]"
+
                 series_options['lineWidth'] = 1
-                if expression.linewidth:
+                if plotfunction.linewidth:
                     try:
-                        series_options['lineWidth'] = float(expression.linewidth)
+                        series_options['lineWidth'] = float(plotfunction.linewidth)
                     except:
                         pass
-                if expression.linestyle:
-                    color = color_from_linestyle(expression.linestyle)
+                if plotfunction.linestyle:
+                    color = color_from_linestyle(plotfunction.linestyle)
                     if color:
                         series_options['color']=color
-                    linePattern = linepattern_from_linestyle(expression.linestyle)
+                    linePattern = linepattern_from_linestyle(plotfunction.linestyle)
                     if linePattern:
                         series_options['linePattern']=linePattern
                 series_option_list.append(series_options)
@@ -555,6 +576,9 @@ class FigureNode(Node):
         if len(point_lists)==0:
             return "[Broken figure]"
 
+        # return "%s %s" % (type(point_lists[0][0][0]), type(point_lists[0][0][1]))
+        # return "%s" % point_lists
+    
         thedata=json.dumps(point_lists)
 
         plot_options=dict()
@@ -802,11 +826,25 @@ def display_video_questions(parser, token):
 
 
 class AnswerBlankNode(template.Node):
-    def __init__(self, answer_expression, answer_expression_string, size):
+    def __init__(self, answer_expression, answer_expression_string, args, kwargs):
         self.answer_expression = answer_expression
         self.answer_expression_string = answer_expression_string
-        self.size = size
+        self.args = args
+        self.kwargs = kwargs
     def render(self, context):
+
+        args = [arg.resolve(context) for arg in self.args]
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        
+        try: 
+            size=int(kwargs['size'])
+        except:
+            size=20
+        try:
+            points=int(kwargs['points'])
+        except:
+            points=1
 
         answer_list = context.get('answer_list',[])
 
@@ -820,24 +858,18 @@ class AnswerBlankNode(template.Node):
         if not answer_expression:
             return "[invalid answer blank]"
 
-        answer_list.append((self.answer_expression_string, answer_expression))
+        answer_list.append((self.answer_expression_string, answer_expression, 
+                            points))
         
         context['answer_list'] = answer_list
 
-        size=None
-        if self.size is not None:
-            try:
-                size = int(self.size.resolve(context))
-            except:
-                pass
-        if size is None:
-            size = 60
 
         identifier = context['identifier']
         
-        return '<input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" />' % \
-            (self.answer_expression_string, identifier,  self.answer_expression_string,
-             identifier, size)
+        return '<div style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" /><br/><div class="info" id="answer_%s_%s_feedback"></div></div>' % \
+            (self.answer_expression_string, identifier,  
+             self.answer_expression_string,
+             identifier, size, self.answer_expression_string, identifier )
     
 
 @register.tag
@@ -850,10 +882,19 @@ def answer_blank(parser, token):
     answer_expression = parser.compile_filter(bits[1])
     answer_expression_string = bits[1]
 
+    args = []
+    kwargs = {} 
+    bits = bits[2:]
 
-    if len(bits) > 2:
-        size = parser.compile_filter(bits[2])
-    else:
-        size = None
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %r tag" % str(bits[0]))
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+            else:
+                args.append(parser.compile_filter(value))
 
-    return AnswerBlankNode(answer_expression, answer_expression_string, size)
+    return AnswerBlankNode(answer_expression, answer_expression_string, args, kwargs)
