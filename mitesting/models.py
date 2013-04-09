@@ -106,7 +106,8 @@ class Question(models.Model):
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
-    
+    show_solution_button_after_attempts=models.IntegerField(default=0)
+
     def __unicode__(self):
         return "%s: %s" % (self.id, self.name)
 
@@ -211,7 +212,7 @@ class Question(models.Model):
             
         return local_dict
     
-    def setup_context(self, identifier="", seed=None):
+    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False):
 
         identifier = "%s_%s" % (identifier, self.id)
 
@@ -220,7 +221,7 @@ class Question(models.Model):
 
         random.seed(seed)
             
-        the_context={'the_question': self}
+        the_context={'the_question': self, 'allow_solution_buttons': allow_solution_buttons}
 
         max_tries=100
         success=False
@@ -422,18 +423,24 @@ class Question(models.Model):
 
 
         callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_text_%s"]);}</script>' % (identifier, identifier)
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]);}</script>' % (identifier, identifier)
 
 
-        html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" >' %  (callback_script, identifier)
+        html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" ><div id="the_question_%s">' %  (callback_script, identifier, identifier)
 
         html_string += question_text
 
+        asb_string = 0
+        if context['allow_solution_buttons']:
+            asb_string = 1
 
+        html_string += '<input type="hidden" id="id_number_attempts_%s" maxlength="5" name="number_attempts_%s" size="5" value = "0" /><input type="hidden" id="id_asb_%s" maxlength="5" name="asb_%s" size="5" value = "%s">' % (identifier, identifier, identifier, identifier, asb_string)
         # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
         #     (identifier, identifier, identifier)
-        html_string += '<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></form>'  % (identifier, send_command)
+
+        # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
+        html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></div></form>'  % (identifier, identifier, send_command, identifier,)
         return mark_safe(html_string)
     
 
@@ -573,7 +580,8 @@ class Assessment(models.Model):
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view_solution")
-    
+    allow_solution_buttons = models.BooleanField()
+
     def __unicode__(self):
         return  self.name
 
@@ -680,8 +688,9 @@ class Assessment(models.Model):
             identifier="qa%s" % i
 
             the_question = question['question']
-            question_context = the_question.setup_context(seed=question['seed'],
-                                                          identifier=identifier)
+            question_context = the_question.setup_context\
+                (seed=question['seed'], identifier=identifier, \
+                     allow_solution_buttons = self.allow_solution_buttons)
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -718,9 +727,10 @@ class Assessment(models.Model):
             solution_dict = question
 
             the_question = question['question']
-            question_context = the_question.setup_context(seed=question['seed'],
-                                                          identifier=identifier)
-            
+            question_context = the_question.setup_context\
+                (seed=question['seed'], identifier=identifier, \
+                     allow_solution_buttons = self.allow_solution_buttons)
+
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
             if not isinstance(question_context, dict):

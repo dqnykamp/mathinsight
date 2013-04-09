@@ -91,7 +91,6 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
 
-        #from sympy.parsing.sympy_parser import parse_expr
         from mitesting.math_objects import parse_expr
 
         the_question = Question.objects.get(id=question_id)
@@ -112,8 +111,8 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
             dajax.append(feedback_selector, 'innerHTML', "<p>Sorry, we messed up.  There is something wrong with the solution for this problem.  You'll get this error no matter what you type...</p>")
             return dajax.json()
 
-        credit=0
-
+        points_achieved=0
+        total_points=0
 
         the_answers={}
 
@@ -125,6 +124,8 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
             the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
             try:
                 the_correct_answer = answer_tuple[1]
+                answer_points = answer_tuple[2]
+                total_points += answer_points
 
                 answer_feedback_selector = "#answer_%s_%s_feedback" % (answer_string, identifier)
 
@@ -153,16 +154,56 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 
                 feedback=''
                 if correctness_of_answer == 1:
-                    credit=1
+                    points_achieved += answer_points
                     feedback='Yes, $%s$ is correct.' % the_answer_parsed
+                    dajax.remove_css_class(answer_feedback_selector, 'error')
+                    dajax.add_css_class(answer_feedback_selector, 'success')
+
                 elif correctness_of_answer == -1:
                     feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % latex(the_answer_parsed)
+                    dajax.remove_css_class(answer_feedback_selector, 'success')
+                    dajax.add_css_class(answer_feedback_selector, 'error')
                 else:
                     feedback='No, $%s$ is incorrect.  Try again.' % the_answer_parsed
+                    dajax.remove_css_class(answer_feedback_selector, 'success')
+                    dajax.add_css_class(answer_feedback_selector, 'error')
+
 
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback)
 
-    
+
+        # increment number of attempts
+        try:
+            number_attempts = int(answer['number_attempts_%s' % identifier])
+        except:
+            number_attempts=0
+        number_attempts+=1
+        dajax.assign('#id_number_attempts_%s' % identifier,'value',str(number_attempts))
+        
+        credit = points_achieved/float(total_points)
+        if points_achieved == total_points:
+            dajax.append(feedback_selector, 'innerHTML', '<p>Answer is correct.</p>')
+        elif points_achieved == 0:
+            dajax.append(feedback_selector, 'innerHTML', '<p>Answer is incorrect.</p>')
+        else:
+            the_feedback = '<p>Answer is %s' % round(credit*100) 
+            the_feedback += "% correct</p>"
+            dajax.append(feedback_selector, 'innerHTML', the_feedback)
+
+        allow_solution_buttons = answer['asb_%s' % identifier]
+
+        if allow_solution_buttons and \
+                the_question.show_solution_button_after_attempts and \
+                number_attempts >= the_question.show_solution_button_after_attempts \
+                and the_question.solution_text:
+            
+            show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed, question_id, identifier)
+
+            show_solution_string = '<input type="button" value="Show solution" onclick="%s">' % (show_solution_command)
+            dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
+        
+
+
         # record answer by user
         try:
             if request.user.is_authenticated():
@@ -172,6 +213,33 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         except Exception as e:
             pass
         
+
+    except Exception as e:
+        dajax.alert("not sure what is wrong: %s" % e )
+
+    return dajax.json()
+
+
+@dajaxice_register
+def show_math_write_in_solution(request, answer, question_id, seed, identifier):
+    
+    dajax = Dajax()
+
+    try: 
+        the_question = Question.objects.get(id=question_id)
+
+        question_context = the_question.setup_context(seed=seed, identifier=identifier)
+        question_context['identifier'] = identifier
+
+        # render question text to add answer_list to question_context
+        rendered_solution = the_question.render_text \
+            (question_context, identifier='hmm', \
+                 show_help=False, solution=True, seed_used=seed)
+
+        rendered_solution = "<h5>Solution</h5><p>%s</p>"  % rendered_solution
+
+        solution_selector = "#question_%s_solution" % identifier
+        dajax.assign(solution_selector, 'innerHTML', rendered_solution)
 
     except Exception as e:
         dajax.alert("not sure what is wrong: %s" % e )
