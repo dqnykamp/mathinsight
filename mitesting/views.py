@@ -35,7 +35,8 @@ def question_view(request, question_id):
     # use qv in identifier since coming from question view
     identifier = "qv"
     question_context = the_question.setup_context(identifier=identifier,
-                                                  seed=seed)
+                                                  seed=seed, 
+                                                  allow_solution_buttons=True)
     
     # if there was an error, question_context is a string 
     # so just make rendered question text be that string
@@ -90,7 +91,8 @@ def question_solution_view(request, question_id):
     # use qsv in identifier since coming from question solution view
     identifier = "qsv"
     question_context = the_question.setup_context(identifier=identifier,
-                                                  seed=seed)
+                                                  seed=seed, 
+                                                  allow_solution_buttons=True)
     
     # if there was an error, question_context is a string string,
     # so just make rendered question text be that string

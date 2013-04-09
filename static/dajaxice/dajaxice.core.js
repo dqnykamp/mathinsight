@@ -61,6 +61,10 @@ var Dajaxice = {
         return Dajaxice.call('midocs.cancel_edit_section', 'POST', callback_function, argv, custom_settings);
     },
 
+    show_math_write_in_solution: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.show_math_write_in_solution', 'POST', callback_function, argv, custom_settings);
+    },
+
     inc_section_level: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.inc_section_level', 'POST', callback_function, argv, custom_settings);
     },
@@ -75,10 +79,6 @@ var Dajaxice = {
 
     cancel_delete_content: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.cancel_delete_content', 'POST', callback_function, argv, custom_settings);
-    },
-
-    send_multiple_choice_question_form_2: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.send_multiple_choice_question_form_2', 'POST', callback_function, argv, custom_settings);
     },
 
     update_combo_content_form_below_section: function(callback_function, argv, custom_settings){
