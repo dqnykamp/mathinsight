@@ -3,6 +3,140 @@
 {% title "Introduction to autonomous differential equations" %}
 {% description "Introduction to solving autonomous differential equations, using a linear differential equation as an example." %}
 
+{% navigation_tag "video" "Video introduction" %}
+<h4>Video introduction</h4>
 {% boxedvideo autonomous_differential_equation_introduction %}
+
+
+{% navigation_tag "overview" "Overview" %}
+<h4>Overview of autonomous differential equation</h4>
+
+<p>An autonomous differential equation is an equation of the form 
+\begin{align*}
+  \diff{y}{t} = f(y).
+\end{align*}
+Let's think of $t$ as indicating time. This equation says that the
+rate of change $dy/dt$ of the function $y(t)$ is given by a some rule.
+The rule says that if the current value is $y$, then the rate of
+change is $f(y)$.</p>
+
+<p>The equation is called a differential equation, because it is an
+equation involving the derivative $dy/dt$.  The differential equation
+is called autonomous because the rule doesn't care what time $t$ it
+is.  It only cares about the current value of the variable $y$.</p>
+
+<p>Given an autonomous differential equation, we'll often want to solve
+the equation, which means find a function a $y(t)$ whose derivative
+$dy/dt$ is equal to $f(y)$.</p>
+
+{% navigation_tag "linear" "Linear" %}
+<h4>A linear differential equation</h4>
+
+<p>An example of an autonomous differential equation, let's let $f(y)$ be
+the linear function $f(y)=2y$, so the equation is
+\begin{align*}
+  \diff{y}{t} = 2y.
+\end{align*}
+which we could also write as
+ \begin{align*}
+  \diff{y}{t}(t) = 2y(t),
+\end{align*}
+but, usually, we won't write out the explicit dependence on $t$.</p>
+
+<p>We've ended up with a linear differential equation, one of the
+simplest types.</p>
+
+{% navigation_tag "linear" "Linear" "Solution methods" %}
+<h5>Solution methods</h5>
+
+<p>How can we solve this equation, i.e., find a function $y(t)$ that, if we
+differentiate, we get the function $y(t)$ back, only multiplied by
+two?  We have three main methods for solving autonomous differential
+equations.</p>
+
+<ol><li><b>Numerical methods.</b> We can approximate the continuous change of the
+differential equation with discrete jumps in time,  By doing this, we
+get a formula for evolving from one time step to the next (like a a discrete
+dynamical system).  We can then use a computer to calculate this
+approximation to the solution.</li>
+
+<li><b>Graphical methods.</b>  We can use a plot of the graph of $f(y)$ to
+determine the behavior of $y(t)$.</li>
+
+<li><b>Analytic methods.</b>  We can use mathematics to find a function $y(t)$
+that satisifies the differential equation.</li>
+</ol>
+
+{% navigation_tag "linear" "Linear" "Guess and Check method" %}
+<h5>The Guess and Check method</h5>
+
+<p>Here, let's try an analytic method.  We'll use an important analytic
+method, which is called <em>guess and check</em>.  Guess and check is a
+perfectly valid method because, if you can find any function that
+satisifies the equation, you've found a solution.  It doesn't matter
+what method you use to find the function; as long as you can show it
+is a solution, you've accomplished the task.</p>
+
+<p>The way to guess is to use your knowledge and intuition above
+derivatives to find a function whose derivative behavies in the
+required way.</p>
+
+<p>Here we want to find a function where, if we take the derivative, we
+get the function back, only multiplied by 2.  Let's forget about the
+factor of two for a moment.  Do you know any function that is it's own
+derivative?  </p>
+
+<p>The exponential function fits the bill.  Remember that
+\begin{align*}
+  \diff{}{t} e^t = e^t.
+\end{align*}
+so if $y(t)=e^t$, then $\diff{y}{t} = e^t = y(t)$.  </p>
+
+<p>That's pretty close to the right behavior.  We just want the
+derivative to bring down a factor of two.  Remember the chain
+rule and how the chain rule says that the derivative of $f(g(t))$
+gives the derivative of $f$ multiplied by the derivative of $g$.  If
+we make $g(t)=2t$, then its derivative is 2, so we multiply by 2.  In
+fact, if
+\begin{align*}
+  y(t) = e^{2t}
+\end{align*}
+then 
+\begin{align*}
+  \diff{y}{t} = 2e^{2t} = 2y(t).
+\end{align*}
+That's exactly what we are looking for.  The function $y(t)=e^{2t}$
+solves the differential equation
+\begin{align*}
+  \diff{y}{t} = 2y.
+\end{align*}
+Our guess and check method found the solution.</p>
+
+{% navigation_tag "linear" "Linear" "The general solution" %}
+<h5>The general solution</h5>
+
+<p>We found a solution OK, but is $y(t)=e^{2t}$ the only solution?  Is
+there any other function whose derivative is twice the function?</p>
+
+<p>What if we multiplied $y(t)$ by 3?  We know that if we multiply a
+function by a constant number, that number just comes out of the
+derivative.  Let's try the function
+\begin{align*}
+  y(t) = 3e^{2t}.
+\end{align*}
+With that $y(t)$,
+\begin{align*}
+  \diff{y}{t} = 6 e^{2t} = 2(3 e^{2t}) = 2y(t).
+\end{align*}
+So the function $y(t)=3e^{2t}$ works.  In fact so does $5e^{2t}$, $2.3
+e^{2t}$ or $Ce^{2t}$ for any number $C$.  In general any function of
+the form
+\begin{align*}
+  y(t) = Ce^{2t}
+\end{align*}
+will satisfy the differential equation $\diff{y}{t} = 2y$.  The
+constant number $C$ just comes out of the derivative.  It turns out
+that all solutions are of this form.  We call $y(t)$,
+the <em>general solution</em> to the differential equation.</p>
 
 {% endblock %}
