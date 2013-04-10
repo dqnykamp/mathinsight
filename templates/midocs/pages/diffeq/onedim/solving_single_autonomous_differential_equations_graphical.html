@@ -3,6 +3,13 @@
 {% title "Solving single autonomous differential equations using graphical methods" %}
 {% description "Using graphical methods, one can observe where the rate of change is positive or negative and determine the behavior of a solution to a differential equation." %}
 
+{% navigation_tag "video" "Video" %}
+<h4>Video introduction</h4>
+{% boxedvideo graphical_approach_solving_autonomous_differential_equation %}
+
+{% navigation_tag "overview" "Overview" %}
+<h4>Overview</h4>
+
 <p>One can understand an autonomous differential equation of the form
 \begin{align}
   \diff{x}{t} &= f(x)\\
@@ -11,6 +18,9 @@
 by using a purely graphical approach.  We can determine the essential behavior of the solution $x(t)$ without doing any analytic calculations.  A graph of the function $f(x)$ will tell us all we need to know to estimate what the solution $x(t)$ will do for any initial condition $x_0$.</p>
 
 <p>Since the derivative $\diff{x}{t}$ is the rate of change of $x(t)$, a glance at the graph of $f(x)$ will tell us where $x(t)$ is increasing or decreasing and how fast it is changing.  The state variable $x(t)$ moves to larger values when $f(x)$ is positive, and it moves to smaller values when $f(x)$ is negative.  The velocity of $x(t)$ drops to zero when $f(x)$ reaches zero.  The points where $f(x)=0$ are the equilibria where $x(t)$ does not move.</p>
+
+{% navigation_tag "example" "Example" %}
+<h4>An example</h4>
 
 <p>For example, we'll look at the differential equation 
 \begin{align*}
