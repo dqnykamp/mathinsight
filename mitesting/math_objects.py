@@ -167,6 +167,8 @@ class math_object(object):
         if self._use_ln:
             output = re.sub('operatorname{log}', 'operatorname{ln}', output)
             output = re.sub('\\log', 'ln', output)
+        # show one character functions as just normal math
+        output = re.sub('\\\\operatorname\{(\w)\}','\\1',output)
                 
         return output
     def __str__(self):
@@ -216,40 +218,3 @@ class math_object(object):
         if equal_if_expand:
             return -1
         return 0
-
-
-class LatexUnicodeMixin(object):
-    def latex(self):
-        from sympy.printing import latex
-        return latex(self)
-    def __unicode__(self):
-        return self.latex()
-
-
-class latexPow(Pow, LatexUnicodeMixin):
-    pass
-
-class latexMul(Mul, LatexUnicodeMixin):
-    pass
-
-class latexMul(Mul):
-    def latex(self):
-        from sympy.printing import latex
-        return latex(self)
-    def __unicode__(self):
-        return self.latex()
- 
-  
-class DerivedMul(Mul):
-    def hello(self):
-        print "hello"
-
-
-
-class math_function(math_object):
-    pass
-
-
-# class function_one_var(math_function):
-#     def initialize_from_string(self, input_string, input_var)
-    

@@ -139,7 +139,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 the_answers[answer_string] = the_answer_parsed
             except Exception as e:
                 if the_answer:
-                    feedback_message = 'Sorry.  Unable to understand the answer.  (Remember, you must use an * for every multiplication.)'
+                    feedback_message = 'Sorry.  Unable to understand the answer.'
                 else:
                     feedback_message = 'No answer.'
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
@@ -192,10 +192,20 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         allow_solution_buttons = answer['asb_%s' % identifier]
 
+        # check if question or subpart has something written in for solution
+        solution_exists = False
+        if the_question.solution_text:
+            solution_exists = True
+        else:
+            for question_subpart in the_question.questionsubpart_set.all():
+                if question_subpart.solution_text:
+                    solution_exists = True
+                    break
+        
         if allow_solution_buttons and \
                 the_question.show_solution_button_after_attempts and \
                 number_attempts >= the_question.show_solution_button_after_attempts \
-                and the_question.solution_text:
+                and solution_exists:
             
             show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed, question_id, identifier)
 

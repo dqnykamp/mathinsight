@@ -927,6 +927,7 @@ class RandomWord(models.Model):
     plural_list = models.CharField(max_length=400, blank=True, null=True)
     group = models.CharField(max_length=50, blank=True, null=True)
     sympy_parse = models.BooleanField()
+    treat_as_function = models.BooleanField()
 
     class Meta:
         unique_together = ("name", "question")
@@ -944,18 +945,24 @@ class RandomWord(models.Model):
         # if index isn't prescribed, generate randomly
         if index is None:
             index = random.randrange(len(option_list))
-        the_word=None
-        if self.sympy_parse:
+        the_word=option_list[index]
+        if self.sympy_parse or self.treat_as_function:
             #from sympy.parsing.sympy_parser import parse_expr
             from mitesting.math_objects import parse_expr
             try:
                 if not function_dict:
                     function_dict = create_greek_dict()
-                the_word = math_object(parse_expr(option_list[index], local_dict=function_dict))
+                local_dict = {}
+                local_dict.update(function_dict)
+                if self.treat_as_function:
+                    local_dict[the_word] = Function(str(the_word))
+                the_word = math_object(parse_expr(the_word, local_dict=local_dict))
+                if self.treat_as_function:
+                    function_dict[self.name] = the_word.return_expression()
             except:
                 pass
         if not the_word:
-            the_word = option_list[index]
+            the_word 
         try:
             the_plural = plural_list[index]
         except:
@@ -1008,11 +1015,11 @@ class Expression(models.Model):
 
         try: 
             expression=expression.subs(substitutions)
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
         try: 
             expression=expression.doit()
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
         
         if self.expand:
@@ -1042,7 +1049,6 @@ class Expression(models.Model):
                         return expr2.subs([(self.the_input_list[i],a.doit(**hints)) for (i,a) in enumerate(self.args)])
                     else:
                         return expr2.subs([(self.the_input_list[i],a) for (i,a) in enumerate(self.args)])
-
                 
             function_dict[self.name] = parsed_function   
 
