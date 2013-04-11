@@ -143,12 +143,6 @@ def assessment_view(request, assessment_code, solution=False):
     except:
         semester = ""
 
-    try: 
-        semester = request.REQUEST['semester']
-    except:
-        semester = ""
-
-
 
     rendered_question_list=[]
     rendered_solution_list=[]
@@ -171,6 +165,11 @@ def assessment_view(request, assessment_code, solution=False):
     else:
         question_numbers=None
 
+
+    if request.user.has_perm("mitesting.administer_assessment"):
+        generate_assessment_link = True
+    else:
+        generate_assessment_link = False
 
 
     # no Google analytics for assessments
@@ -201,6 +200,7 @@ def assessment_view(request, assessment_code, solution=False):
           'course': course,
           'semester': semester,
           'question_numbers': question_numbers,
+          'generate_assessment_link': generate_assessment_link,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
@@ -220,10 +220,29 @@ def assessment_avoid_question_view(request, assessment_code):
         avoid_list= request.REQUEST['avoid_list']
     except:
         avoid_list = ""
+    try:
+        seed = request.REQUEST['seed']
+    except:
+        seed = None
+    try: 
+        assessment_date = request.REQUEST['date']
+    except:
+        assessment_date = datetime.date.today().strftime("%B %m, %Y")
+    try: 
+        course = request.REQUEST['course']
+    except:
+        course = ""
+    try: 
+        semester = request.REQUEST['semester']
+    except:
+        semester = ""
 
-    avoid_question_seed = the_assessment.avoid_question_seed(avoid_list)
+    if avoid_list:
+        new_seed = the_assessment.avoid_question_seed(avoid_list, start_seed=seed)
+    else:
+        new_seed=seed
     
-    new_url = "%s?seed=%s" % (reverse('mit-assessment', kwargs={'assessment_code': assessment_code}), avoid_question_seed)
+    new_url = "%s?seed=%s&assessment_date=%s&course=%s&semester=%s&question_numbers" % (reverse('mit-assessment', kwargs={'assessment_code': assessment_code}), new_seed, assessment_date, course, semester)
     
 
     return HttpResponseRedirect(new_url)

@@ -651,6 +651,7 @@ class Assessment(models.Model):
             ("view_assessment_1_solution", "Can view 1 solution"),
             ("view_assessment_2", "Can view 2"),
             ("view_assessment_2_solution", "Can view 2 solution"),
+            ("administer_assessment","Can administer assessments"),
         )
 
     def return_privacy_level(self, solution=True):
@@ -803,10 +804,15 @@ class Assessment(models.Model):
         return total_points
 
 
-    def avoid_question_seed(self, avoid_list):
+    def avoid_question_seed(self, avoid_list, start_seed=0):
         
         avoid_list = [item.strip() for item in avoid_list.split(",")]
         
+        try:
+            start_seed = int(start_seed)
+        except:
+            start_seed=0
+
         question_sets = self.question_sets()
 
         # form allowable sets of questions for each set
@@ -828,7 +834,7 @@ class Assessment(models.Model):
         min_disallowed_questions=1000
         seed_min_disallowed=None
 
-        for seed in range(1000):
+        for seed in range(start_seed, start_seed+1000):
 
             question_list = self.get_question_list(str(seed))
 
