@@ -487,7 +487,7 @@ class FigureNode(Node):
         except:
             ymax=None
 
-        
+        identifier = context['identifier']
 
         try:
             xaxis_options['label'] = convert_math_to_unicode(kwargs['xlabel'])
@@ -658,10 +658,10 @@ class FigureNode(Node):
             plotnum = 1
         context['plotnum']=plotnum
 
-        html_string = '<div class="plot"><div id="jqplot_%s" style="width:%spx;height:%spx;"></div></div>\n' % (plotnum, width, height)
+        html_string = '<div class="plot"><div id="jqplot_%s_%s" style="width:%spx;height:%spx;"></div></div>\n' % (identifier, plotnum, width, height)
         html_string += '<script type="text/javascript">\n'
         html_string += '$(document).ready(function () {\n'
-        html_string += "    $.jqplot('jqplot_%s', %s, %s);\n" % (plotnum, thedata, plot_options_string)
+        html_string += "    $.jqplot('jqplot_%s_%s', %s, %s);\n" % (identifier, plotnum, thedata, plot_options_string)
         html_string += '});\n</script>'
         return html_string
 

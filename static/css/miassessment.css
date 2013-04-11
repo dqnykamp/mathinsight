@@ -268,8 +268,18 @@ table.question_scores td.blank {
 .yma-gl { float:left; margin: 0; }
 .yma-gr { float:right; margin: 0 0 0 -5px; }
 
+.yma-g20 { width:20%; }
+.yma-g40 { width:40%; }
+.yma-g60 { width:60%; }
+.yma-g80 { width:80%; }
+.yma-g25 { width:25%; }
+.yma-g33 { width:33.333%; }
 .yma-g50 { width:50%; }
-
+.yma-g66 { width:66.666%; }
+.yma-g75 { width:75%; }
+.yma-g38 { width:38.2%; }
+.yma-g62 { width:61.8%; }
+	
 .yma-gbox { padding: 0 10px }
 .yma-gbox-left { padding: 0 10px 0 0 }
 .yma-gbox-right { padding: 0 0 0 10px }
