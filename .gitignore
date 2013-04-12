@@ -8,3 +8,6 @@
 /templates/analytics.html
 /apache/django.wsgi
 /xapian_index/*
+/archive
+/scripts
+/static2
