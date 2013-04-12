@@ -222,6 +222,10 @@ table.question_scores td.blank {
     .question {
 	page-break-inside: avoid;
     }
+    .page-break-ok {
+	page-break-inside: auto;
+    }
+
     .plot {
 	page-break-inside: avoid;
     }

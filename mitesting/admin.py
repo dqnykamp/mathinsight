@@ -11,6 +11,8 @@ class QuestionSetDeatilInline(admin.TabularInline):
 
 class AssessmentAdmin(admin.ModelAdmin):
     inlines = [QuestionAssignedInline,QuestionSetDeatilInline]
+    list_display = ("code","name")
+    search_fields = ['code', 'name']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
@@ -49,6 +51,7 @@ class QuestionAnswerInline(admin.StackedInline):
 class QuestionAdmin(admin.ModelAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline]
     filter_horizontal = ['allowed_sympy_commands',]
+    search_fields = ['id', 'name']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
