@@ -1,5 +1,6 @@
 from sympy import *
-from sympy import Tuple
+from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan
+from sympy.core.relational import Relational
 from sympy.printing import latex
 import sympy
 import re
@@ -105,6 +106,54 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_ordered=True):
             return False
     return True
 
+
+def is_strict_inequality(the_relational):
+    if isinstance(the_relational, StrictLessThan):
+        return True
+    if isinstance(the_relational, StrictGreaterThan):
+        return True
+    return False
+
+def is_nonstrict_inequality(the_relational):
+    if isinstance(the_relational, LessThan):
+        return True
+    if isinstance(the_relational, GreaterThan):
+        return True
+    return False
+
+
+
+def check_relational_equality(the_relational1, the_relational2):
+    if the_relational1==the_relational2:
+        return True
+
+    if (is_strict_inequality(the_relational1) and \
+            is_strict_inequality(the_relational2)) or \
+            (is_nonstrict_inequality(the_relational1) and \
+                 is_nonstrict_inequality(the_relational2)):
+        if the_relational1.lts ==  the_relational2.lts and \
+                the_relational1.gts ==  the_relational2.gts:
+            return True
+        else:
+            return False
+    
+    if (isinstance(the_relational1, Equality) and \
+            isinstance(the_relational2, Equality)) or \
+            (isinstance(the_relational1, Unequality) and \
+                 isinstance(the_relational2, Unequality)):
+        # already checked this case above
+        if the_relational1.lhs == the_relational2.lhs and \
+                the_relational1.rhs == the_relational2.rhs:
+            return True
+        elif the_relational1.lhs == the_relational2.rhs and \
+                the_relational1.rhs == the_relational2.lhs:
+            return True
+        else:
+            return False
+
+    return False
+
+ 
 class math_object(object):
     def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False):
         self._expression=sympify(expression)
@@ -196,6 +245,9 @@ class math_object(object):
                 expressions_equal = check_tuple_equality \
                     (expression_expand, new_expr_expand, 
                      tuple_is_ordered=self._tuple_is_ordered)
+            elif isinstance(self._expression, Relational):
+                expressions_equal = check_relational_equality \
+                    (expression_expand, new_expr_expand)
             else:
                 if expression_expand == new_expr_expand:
                     expressions_equal=True
@@ -206,6 +258,12 @@ class math_object(object):
                     expressions_equal = True
                 elif check_tuple_equality(expression_expand, new_expr_expand, 
                                         tuple_is_ordered=self._tuple_is_ordered):
+                    equal_if_expand=True
+            elif isinstance(self._expression, Relational):
+                if check_relational_equality(self._expression, new_expr):
+                    expressions_equal = True
+                elif check_relational_equality \
+                    (expression_expand, new_expr_expand):
                     equal_if_expand=True
             else:
                 if self._expression==new_expr:

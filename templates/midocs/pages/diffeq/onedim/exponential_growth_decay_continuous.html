@@ -1,10 +1,16 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% extends "midocs/page_base.html" %}{% load mi_tags testing_tags%}{% block content %}
 {% index_entry "exponential growth"  %}
 {% index_entry "exponential decay"  %}
 {% title "Exponential growth and decay modeled by continuous dynamical systems" %}
 {% description "Overview of exponential growth and decay in continuous time, modeled by a linear autonomous differential equation." %}
 
+{% navigation_tag "video" "Video" %}
+<h4>Video</h4>
+
 {% boxedvideo exponential_growth_decay_continuous_dynamical_systems %}
 
+{% navigation_tag "question" "Question" %}
+<h4>Question</h4>
+{% display_video_questions "exponential_growth_decay_continuous_dynamical_systems" %}
 
 {% endblock %}
