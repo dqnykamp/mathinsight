@@ -1,9 +1,17 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% extends "midocs/page_base.html" %}{% load mi_tags testing_tags %}{% block content %}
 {% index_entry "differential equation" "equilibiria"  %}
 {% index_entry "equilibria" "stability" %}
 {% title "The stability of equilibria of a differential equation" %}
 {% description "Identifying stable and unstable equilibria of a differential equation by graphically solving the equation for nearby initial conditions." %}
 
+{% navigation_tag "video" "Video" %}
+<h4>Video</h4>
+
 {% boxedvideo stability_equilibria_differential_equation %}
+
+{% navigation_tag "question" "Question" %}
+<h4>Question</h4>
+{% display_video_questions "stability_equilibria_differential_equation" %}
+
 
 {% endblock %}
