@@ -14,7 +14,7 @@
 <ul class="linklist">
   {% for thread in thread_list %}
   <li><a id="{{ thread.code }}" class="anchor"></a><a href="{% url 'mithreads-thread' thread.code %}" title="{{thread.description}}">{{thread}}</a><br/>
-    {{ thread.description }} </li>
+    {{ thread.description|safe }} </li>
   {% endfor %}
 </ul>
 {% if is_paginated %}
