@@ -49,6 +49,23 @@ class Thread(models.Model):
     def render_html_edit_string(self):
         return self.render_html_string(edit=True)
 
+    def save_as(self, new_code, new_name):
+        original_code = self.code
+
+        new_thread=self
+        new_thread.pk=None
+        new_thread.code = new_code
+        new_thread.name = new_name
+        new_thread.save()
+
+        original_thread=Thread.objects.get(code=original_code)
+        
+        # copy all thread sections
+        for thread_section in original_thread.thread_sections.all():
+            thread_section.save_to_new_thread(new_thread)
+
+        
+    
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=100, db_index=True)
     code = models.SlugField(max_length=50)
@@ -65,6 +82,24 @@ class ThreadSection(models.Model):
         unique_together = (('code', 'thread'),)
         ordering = ['sort_order','id']
     
+
+    def save_to_new_thread(self, thread):
+        original_thread_section_pk = self.pk
+
+        new_thread_section = self
+        new_thread_section.pk=None
+        new_thread_section.thread = thread
+        new_thread_section.save()
+        
+        original_thread_section=ThreadSection.objects.get(pk=original_thread_section_pk)
+        
+
+        # copy thread content
+        for threadcontent in original_thread_section.threadcontent_set.all():
+            threadcontent.save_to_new_thread_section(new_thread_section)
+        
+    
+
     def first_content_title(self):
         try:
             the_content = self.threadcontent_set.all()[0]
@@ -205,6 +240,13 @@ class ThreadContent(models.Model):
 
     class Meta:
         ordering = ['sort_order']
+
+    def save_to_new_thread_section(self, thread_section):
+        new_threadcontent = self
+        new_threadcontent.pk = None
+        new_threadcontent.section = thread_section
+        new_threadcontent.save()
+
 
     def get_title(self):
         if(self.substitute_title):
