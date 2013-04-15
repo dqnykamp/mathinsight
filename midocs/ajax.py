@@ -133,9 +133,17 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 # .expand() or .factor()
                 the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
                 local_dict = the_question.return_sympy_local_dict()
-                the_answer_parsed = math_object(parse_expr(the_answer, 
-                                                           local_dict=local_dict),
-                                                tuple_is_ordered=the_correct_answer.return_if_ordered())
+                the_answer_parsed = parse_expr(the_answer, 
+                                               local_dict=local_dict)
+                
+                try:
+                    the_answer_parsed = the_answer_parsed.doit()
+                except:
+                    pass
+
+                the_answer_parsed=math_object(the_answer_parsed,
+                                              tuple_is_ordered=the_correct_answer.return_if_ordered())
+
                 the_answers[answer_string] = the_answer_parsed
             except Exception as e:
                 if the_answer:
