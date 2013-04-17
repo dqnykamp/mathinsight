@@ -77,12 +77,13 @@ class deferred_diff(Function):
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
     css_code = models.SlugField(max_length=50, unique=True)
+    sort_order = models.SmallIntegerField(default=0)
 
     def __unicode__(self):
         return  self.name
 
     class Meta:
-        ordering = ['name']
+        ordering = ['sort_order', 'name']
 
 
 class QuestionType(models.Model):
