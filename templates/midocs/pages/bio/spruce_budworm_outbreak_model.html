@@ -37,7 +37,7 @@ which is graphed below.  The function saturates for large population size $w$  t
   \diff{w}{t} = r w \left(1 - \frac{w}{a}\right) - \frac{w^2}{1+w^2}.
   \label{logistic_predation}
 \end{align}
-This model is much too complicated to have a nice formula for the solution.  Instead, we will seek to understand the behavior of the spruce budworm population size $w(t)$ using {% intlink solving_single_autonomous_differential_equations_graphical %}graphical methods{%endintlink%}, as well as approximations to the solution using the {% intlink from_discrete_to_continuous_dynamical_systems %}Forward Euler algorithm{%endintlink%}.</p>
+This model is much too complicated to have a nice formula for the solution.  Instead, we will seek to understand the behavior of the spruce budworm population size $w(t)$ using {% intlink solving_single_autonomous_differential_equations_graphical %}graphical methods{%endintlink%}, as well as approximations to the solution using the {% intlink forward_euler_algorithm_autonomous_differential_equation %}Forward Euler algorithm{%endintlink%}.</p>
 
 <p>One challenge is that we don't have values for the parameters $r$ and $a$.  This may seem like an inconvenience, but it will turn out that allowing the parameters to take on different values will be key to understanding the behavior of the outbreaks.</p>
 
@@ -84,7 +84,7 @@ You can explore how this function depends on the parameters $r$ and $a$.
 {% navigation_tag "outbreak" "Model analysis" "The outbreak"%}
 <h5>The outbreak</h5>
 
-<p>If the situation was precarious when $a=20$, it gets downright ugly when the forest grows much larger and increases the carry capacity.  Something happens to the equilibria when the carrying capacity gets much larger than $a=27$.  Describe the situation when the carrying capacity is around $a=30$.  How many equilibria does the equation have?   What are their values?  Are they stable or unstable?  For each equilibrium, determine the initial conditions for which the solution will converge to the equilibrium.</p>
+<p>If the situation was precarious when $a=20$, it gets downright ugly when the forest grows much larger and increases the carrying capacity.  Something happens to the equilibria when the carrying capacity gets much larger than $a=27$.  Describe the situation when the carrying capacity is around $a=30$.  How many equilibria does the equation have?   What are their values?  Are they stable or unstable?  For each equilibrium, determine the initial conditions for which the solution will converge to the equilibrium.</p>
 
 <p>Here, again, don't trust the results of the applet blindly, but reason what should happen based on the graph of $f(w)$.  If the results from the Forward Euler approximation don't match what you expect, maybe you need to increase the total time $t_f$ of the simulation to confirm what you determined from analysis of the graph of $f(w)$.</p>
 
@@ -98,11 +98,11 @@ You can explore how this function depends on the parameters $r$ and $a$.
 
 <p>What finally puts an end to the outbreak?  What the birds couldn't do, the budworms do to themselves.  After a prolonged outbreak, the spruce budworms cause a vast defoilation of the fir and spruce trees.  This decreases the amount of food available for the budworms, effectively decreasing the carrying capacity of the forest.  If the available food can't support the huge population of budworms, many of them will die of starvation, decreasing the population size.  Let's investigate how the model predicts this starvation should end the outbreak.</p>
 
-<p>Imagine that the defoilation due to the budworm outbreak decreased the carry capacity back down to $a=20$.  You don't need to analyze the equilibria for this again, you did all the work already.  For these parameters, you should have showed above that the birds could keep the population under control and the outbreak was prevented.  Therefore, when the carrying capacity gets back down to $a=20$, the outbreak should be ended, and we should be back to a small population of budworms, right?</p>
+<p>Imagine that the defoilation due to the budworm outbreak decreased the carrying capacity back down to $a=20$.  You don't need to analyze the equilibria for this again, you did all the work already.  For these parameters, you should have showed above that the birds could keep the population under control and the outbreak was prevented.  Therefore, when the carrying capacity gets back down to $a=20$, the outbreak should be ended, and we should be back to a small population of budworms, right?</p>
 
-<p>Do you agree with that last sentence?  If we start with a huge population of budworms and bring the carry capacity down to $a=20$, which equilibrium should the budworm population size converge to?  Is the outbreak still occuring or has it ended?</p>
+<p>Do you agree with that last sentence?  If we start with a huge population of budworms and bring the carrying capacity down to $a=20$, which equilibrium should the budworm population size converge to?  Is the outbreak still occuring or has it ended?</p>
 
-<p>Assuming you determine that the outbreak is still occuring, then the budworms should continue their defoilation of the trees, dropping the carrying capacity even further.  Even when the carrying capacity drops all the way down to $a=7.5$, we still had two stable equilibria.  One corresponded to a small population sie and one to the outbreak.  If the carrying capacity was brought down to $a=7.5$ by feasting budworms, which equilibrium should the system be approaching?  Is the outbreak still occuring or has it ended?</p>
+<p>Assuming you determine that the outbreak is still occuring, then the budworms should continue their defoilation of the trees, dropping the carrying capacity even further.  Even when the carrying capacity drops all the way down to $a=7.5$, we still had two stable equilibria.  One corresponded to a small population size and one to the outbreak.  If the carrying capacity was brought down to $a=7.5$ by feasting budworms, which equilibrium should the system be approaching?  Is the outbreak still occuring or has it ended?</p>
 
 <p>Another qualitative change occurs by the time the carrying capacity drops below $a=7$.  What is the dramatic difference between the situation when $a$ is around 7.5 and the situation when $a$ is around 6.5?  Describe what is different about the equilibria?  When a large population brings the carrying capacity down to this level, what happens to the population size?</p>
 
@@ -167,7 +167,7 @@ You can explore how this function depends on the parameters $r$ and $a$.
 
   <li><p><b>The decline of the outbreak</b></p>
     <ol><li>Do you agree with that last sentence, when the carrying capacity gets back down to $a=20$, the outbreak should be ended, and we should be back to a small population of budworms?</li>
-      <li>If we start with a huge population of budworms and bring the carry capacity down to $a=20$, which equilibrium should the budworm population size converge to?  Is the outbreak still occuring or has it ended?</li>
+      <li>If we start with a huge population of budworms and bring the carrying capacity down to $a=20$, which equilibrium should the budworm population size converge to?  Is the outbreak still occuring or has it ended?</li>
       <li>If the carrying capacity was brought down to $a=7.5$ by feasting budworms, which equilibrium should the system be approaching?  Is the outbreak still occuring or has it ended?</li>
       <li>What is the dramatic difference between the situation when $a$ is around 7.5 and the situation when $a$ is around 6.5?  Describe what is different about the equilibria?  When a large population brings the carrying capacity down to this level, what happens to the population size?</li>
     </ol>
