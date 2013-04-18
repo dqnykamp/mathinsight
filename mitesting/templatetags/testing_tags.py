@@ -866,7 +866,7 @@ class AnswerBlankNode(template.Node):
 
         identifier = context['identifier']
         
-        return '<div style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" /><br/><div class="info" id="answer_%s_%s_feedback"></div></div>' % \
+        return '<span style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
             (self.answer_expression_string, identifier,  
              self.answer_expression_string,
              identifier, size, self.answer_expression_string, identifier )
