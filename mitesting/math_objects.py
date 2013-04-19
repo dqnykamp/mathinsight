@@ -1,5 +1,5 @@
 from sympy import *
-from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan
+from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan, Float
 from sympy.core.relational import Relational
 from sympy.printing import latex
 import sympy
@@ -155,13 +155,36 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
         self._use_ln=use_ln
         self._expand_on_compare = expand_on_compare
         self._tuple_is_ordered = tuple_is_ordered
+
+        if copy_properties_from:
+            try:
+                self._n_digits = copy_properties_from._n_digits 
+            except:
+                pass
+            try:
+                self._round_decimals = copy_properties_from._round_decimals
+            except:
+                pass
+            try:
+                self._use_ln = copy_properties_from._use_ln
+            except:
+                pass
+            try:
+                self._expand_on_compare = copy_properties_from._expand_on_compare
+            except:
+                pass
+            try:
+                self._tuple_is_ordered = copy_properties_from._tuple_is_ordered
+            except:
+                pass
+
 
         if isinstance(self._expression,Tuple) and collapse_equal_tuple_elements:
             tuple_list = []
@@ -178,17 +201,27 @@ class math_object(object):
         return self._expression
     def return_if_ordered(self):
         return self._tuple_is_ordered
-    def convert_expression(self):
-        expression=self._expression
 
+    def eval_to_precision(self, expression):
         if self._n_digits:
-            try:
-                if isinstance(expression,Tuple):
-                    expression = Tuple(*[expr.evalf(self._n_digits) for expr in expression])
-                else:
-                    expression = expression.evalf(self._n_digits)
-            except:
-                pass
+            n_digits=self._n_digits
+            # expression = expression.xreplace \
+            #     (dict((orig_float, \
+            #                orig_float.evalf(n_digits)) \
+            #               for orig_float in expression.atoms(Float))) 
+                
+            from sympy.simplify.simplify import bottom_up
+            expression =  bottom_up(expression,
+                                    lambda w: w.evalf(n_digits)
+                                    if not w.is_Float 
+                                    else Float(str(w.evalf(n_digits))),
+                                    atoms=True)
+            
+        return expression
+
+    def convert_expression(self):
+
+        expression=self.eval_to_precision(self._expression)
 
         if self._round_decimals is not None:
             try:
@@ -234,39 +267,42 @@ class math_object(object):
     def compare_with_expression(self, new_expr):
         from sympy import Tuple
 
-        new_expr_expand=try_expand_expr(new_expr)
+        new_expr_expand=self.eval_to_precision(try_expand_expr(new_expr))
 
-        expression_expand = try_expand_expr(self._expression)
+        expression_expand = self.eval_to_precision(try_expand_expr(self._expression))
+
+        new_expr = self.eval_to_precision(new_expr)
+        expression=self.eval_to_precision(self._expression)
 
         expressions_equal=False
         equal_if_expand=False
         if self._expand_on_compare:
-            if isinstance(self._expression, Tuple):
+            if isinstance(expression, Tuple):
                 expressions_equal = check_tuple_equality \
                     (expression_expand, new_expr_expand, 
                      tuple_is_ordered=self._tuple_is_ordered)
-            elif isinstance(self._expression, Relational):
+            elif isinstance(expression, Relational):
                 expressions_equal = check_relational_equality \
                     (expression_expand, new_expr_expand)
             else:
                 if expression_expand == new_expr_expand:
                     expressions_equal=True
         else:
-            if isinstance(self._expression, Tuple):
-                if check_tuple_equality(self._expression, new_expr, 
+            if isinstance(expression, Tuple):
+                if check_tuple_equality(expression, new_expr, 
                                         tuple_is_ordered=self._tuple_is_ordered):
                     expressions_equal = True
                 elif check_tuple_equality(expression_expand, new_expr_expand, 
                                         tuple_is_ordered=self._tuple_is_ordered):
                     equal_if_expand=True
-            elif isinstance(self._expression, Relational):
-                if check_relational_equality(self._expression, new_expr):
+            elif isinstance(expression, Relational):
+                if check_relational_equality(expression, new_expr):
                     expressions_equal = True
                 elif check_relational_equality \
                     (expression_expand, new_expr_expand):
                     equal_if_expand=True
             else:
-                if self._expression==new_expr:
+                if expression==new_expr:
                     expressions_equal=True
                 elif  expression_expand == new_expr_expand:
                     equal_if_expand=True

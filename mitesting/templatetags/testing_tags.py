@@ -196,8 +196,8 @@ class ExprNode(Node):
             subsitutions = []
         
 
-        from sympy.parsing.sympy_parser import parse_expr
-        expression = parse_expr(expression,local_dict=function_dict,convert_xor=True)
+        from mitesting.math_objects import parse_expr
+        expression = parse_expr(expression,local_dict=function_dict)
         try:
             expression=expression.subs(substitutions)
         except:
@@ -526,6 +526,20 @@ class FigureNode(Node):
         point_lists=[]
         series_option_list=[]
 
+        try:
+            function_dict = template.Variable("sympy_function_dict").resolve(context)
+        except:
+            function_dict = {}
+        try:
+            substitutions =  template.Variable("sympy_substitutions").resolve(context)
+        except:
+            subsitutions = []
+        
+
+        from mitesting.math_objects import parse_expr
+
+
+
         for plotfunction in the_question.plotfunction_set.filter(figure=figure_number):
             # find corresponding expression
             the_function = None
@@ -542,11 +556,37 @@ class FigureNode(Node):
                 this_x = x
                 if plotfunction.xmin is not None or plotfunction.xmax is not None:
                     if plotfunction.xmin is not None:
-                        this_xmin=plotfunction.xmin
+                        try:
+                            this_xmin = parse_expr(plotfunction.xmin,local_dict=function_dict)
+                            try:
+                                this_xmin=this_xmin.subs(substitutions)
+                            except:
+                                pass
+                            try:
+                                this_xmin=this_xmin.doit()
+                            except:
+                                pass
+                        
+                            this_xmin = float(this_xmin)
+                        except:
+                            this_xmin=xmin
                     else:
                         this_xmin=xmin
                     if plotfunction.xmax is not None:
-                        this_xmax=plotfunction.xmax
+                        try:
+                            this_xmax = parse_expr(plotfunction.xmax,local_dict=function_dict)
+                            try:
+                                this_xmax=this_xmax.subs(substitutions)
+                            except:
+                                pass
+                            try:
+                                this_xmax=this_xmax.doit()
+                            except:
+                                pass
+                        
+                            this_xmax = float(this_xmax)
+                        except:
+                            this_xmax=xmax
                     else:
                         this_xmax=xmax
                     this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))

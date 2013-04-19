@@ -32,6 +32,21 @@ class deferred_diff(Function):
         else:
             return sympy.diff(*self.args)
        
+class deferred_round(Function):
+    
+    def doit(self, **hints):        
+        if hints.get('deep', True):
+            try:
+                return round(*[i.doit(**hints) for i in self.args])
+            except:
+                return self.args[0].doit(**hiints)
+        else:
+            try:
+                return round(*self.args)
+            except:
+                return self.args[0]
+       
+
 
 # input_list=[Symbol('x'),]
 # expr2 = Symbol('x')**2
@@ -200,6 +215,8 @@ class Question(models.Model):
             local_dict['gcd'] = deferred_gcd
         if 'diff' in allowed_commands:
             local_dict['diff'] = deferred_diff
+        if 'round' in allowed_commands:
+            local_dict['round'] = deferred_round
         if 'e' in allowed_commands:
             from sympy import E
             local_dict['e'] = E
@@ -1072,8 +1089,8 @@ class PlotFunction(models.Model):
     question = models.ForeignKey(Question)
     linestyle = models.CharField(max_length=10, blank=True, null=True)
     linewidth = models.IntegerField(blank=True, null=True)
-    xmin = models.FloatField(blank=True, null=True)
-    xmax = models.FloatField(blank=True, null=True)
+    xmin = models.CharField(max_length=200, blank=True, null=True)
+    xmax = models.CharField(max_length=200, blank=True, null=True)
 
 
 

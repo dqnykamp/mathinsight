@@ -144,7 +144,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 the_answer_parsed=math_object(the_answer_parsed,
                                               tuple_is_ordered=the_correct_answer.return_if_ordered())
 
-                the_answers[answer_string] = the_answer_parsed
+                the_answers[answer_string] = the_answer_parsed.return_expression()
             except Exception as e:
                 if the_answer:
                     feedback_message = 'Sorry.  Unable to understand the answer.'
