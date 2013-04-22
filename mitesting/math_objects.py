@@ -196,6 +196,30 @@ class math_object(object):
             if len(self._expression)==1:
                 self._expression = self._expression[0]
 
+    def __eq__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__eq__(other)
+    def __ne__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__ne__(other)
+    def __lt__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__lt__(other)
+    def __le__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__le__(other)
+    def __gt__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__gt__(other)
+    def __ge__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression.__ge__(other)
 
     def return_expression(self):
         return self._expression
