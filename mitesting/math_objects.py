@@ -220,6 +220,10 @@ class math_object(object):
         if isinstance(other, math_object):
             other=other._expression
         return self._expression.__ge__(other)
+    def __bool__(self):
+        return bool(self._expression)
+    __nonzero__=__bool__
+
 
     def return_expression(self):
         return self._expression
