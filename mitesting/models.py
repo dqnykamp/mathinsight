@@ -264,6 +264,7 @@ class Question(models.Model):
 
             # select random words and add to context
             # if two words have the same group, use the same random index
+            random_word_substitutions = []
             groups = self.randomword_set.values('group').distinct()
             for group_dict in groups:
                 group = group_dict['group']
@@ -284,14 +285,15 @@ class Question(models.Model):
                         word_text=re.sub(' ', '_', the_word)
                         sympy_word = Symbol(str(the_word))
                         
-                    substitutions.append((Symbol(str(random_word.name)), 
-                                          sympy_word))
+                    random_word_substitutions.append((Symbol(str(random_word.name)), 
+                                                      sympy_word))
 
 
             failed_required_condition = False
             for expression in self.expression_set.all():
                 try:
-                    expression_evaluated = expression.evaluate(substitutions, function_dict)
+                    the_subs = substitutions+random_word_substitutions
+                    expression_evaluated = expression.evaluate(the_subs, function_dict)
                 except Exception as e:
                     return "Error in expression %s: %s" % (expression.name, e)
                 the_context[expression.name]=expression_evaluated
@@ -301,6 +303,7 @@ class Question(models.Model):
                         failed_required_condition=True
                         break
             
+            substitutions=substitutions+random_word_substitutions
             if not failed_required_condition:
                 success=True
                 break
