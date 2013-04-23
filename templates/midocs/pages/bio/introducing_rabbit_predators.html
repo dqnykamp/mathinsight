@@ -38,14 +38,14 @@ Since $\alpha$ is positive, the equation will lead to exponential growth of the 
 
 <p>As a warm up, solve the foxless rabbit equation \eqref{rabbits_alone} and the rabbitless fox equation \eqref{foxes_alone}, to obtain an expression for these separate populations.  (Guessing the solution is an OK method.)  What happens to the rabbit population as time increases?  What happens to the fox population as time increases?</p>
 
-<p>You main use of the model is to show how the foxes will decrease the rabbit population.  To model this effect, you subtract a term off the $\diff{r}{t}$ that accounts for the decrease in rabbits due to fox predation.  To keep the model simple, you decided to make the rate of rabbit kills be proportional to the number of rabbits and the number of foxes: $\beta r p$, where the Greek letter $\beta$ (beta) is a parameter that indicates how quickly a fox can reduce the rabbit population.  The rabbit equation becomes
+<p>Your main use of the model is to show how the foxes will decrease the rabbit population.  To model this effect, you subtract a term off the $\diff{r}{t}$ that accounts for the decrease in rabbits due to fox predation.  To keep the model simple, you decided to make the rate of rabbit kills be proportional to the number of rabbits and the number of foxes: $\beta r p$, where the Greek letter $\beta$ (beta) is a parameter that indicates how quickly a fox can reduce the rabbit population.  The rabbit equation becomes
 \begin{align}
   \diff{r}{t} = \alpha r - \beta r p.
   \label{rabbits_with_foxes}
 \end{align}
 </p>
 
-<p>If the fox population size $p$ remained constant, this harvesting by the foxes is strikingly similar to your initial harvesting strategy, where a fix fraction were harvested each month.  The new feature that the foxes can increase their population size when there are plenty of rabbits around.  Again, to keep everything as simple as possible, you model the addition to the fox population as being proportional to the rate that rabbits are eaten.  You add a term to the fox equation of the form $\delta r p$, where $\delta$ (delta) captures how efficiently the eaten rabbits are turned into new foxes.  (Since each rabbit consumed doesn't lead to a new fox, you expect that $\delta$ should be quite a bit smaller than $\beta$.)  The fox equation becomes
+<p>If the fox population size $p$ remained constant, this harvesting by the foxes is strikingly similar to your initial harvesting strategy, where a fixed fraction were harvested each month.  The new feature that the foxes can increase their population size when there are plenty of rabbits around.  Again, to keep everything as simple as possible, you model the addition to the fox population as being proportional to the rate that rabbits are eaten.  You add a term to the fox equation of the form $\delta r p$, where $\delta$ (delta) captures how efficiently the eaten rabbits are turned into new foxes.  (Since each rabbit consumed doesn't lead to a new fox, you expect that $\delta$ should be quite a bit smaller than $\beta$.)  The fox equation becomes
 \begin{align}
   \diff{p}{t} = - \gamma p + \delta rp.
   \label{foxes_with_rabbits}
@@ -121,7 +121,7 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 {% navigation_tag "visualization" "Solving" "Computer visualization" %}
 <h5>Computer visualization</h5>
 
-<p>After some though, you realize you could probably fix the above Forward Euler estimation by taking time steps smaller than a year.  Since you doubt you could do all the required calculations accurately yourself (and you don't feel like spending all day crunching numbers), you decide to hire a computer programmer to create a tool to let you see the solution to the differential equations.  You figure the programmer will be worth the expense, as such a tool will also be useful in persuading others that you have a good solution.</p>
+<p>After some thought, you realize you could probably fix the above Forward Euler estimation by taking time steps smaller than a year.  Since you doubt you could do all the required calculations accurately yourself (and you don't feel like spending all day crunching numbers), you decide to hire a computer programmer to create a tool to let you see the solution to the differential equations.  You figure the programmer will be worth the expense, as such a tool will also be useful in persuading others that you have a good solution.</p>
 
 <p>The programmer scoffs at your use of the Forward Euler algorithm.  Why are you using an algorithm from the 1700's, he asks, when you can at least get into the 1900's with the {% extlink "http://en.wikipedia.org/wiki/Runge%E2%80%93Kutta_methods" %}Runge-Kutta algorithm{%endextlink%}?  You have no idea what he is talking about, but you like the solution he made for you,  which is shown in the following applet.</p>  
 
