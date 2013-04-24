@@ -3,6 +3,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import Http404
 from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required
+from django.conf import settings
 import random
 from math import *
 import datetime
