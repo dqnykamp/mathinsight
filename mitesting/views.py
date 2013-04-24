@@ -190,7 +190,7 @@ def assessment_view(request, assessment_code, solution=False):
         the_assessment_name = the_assessment_name + " solution"
     the_assessment_short_name = the_assessment.return_short_name()
     if solution:
-        the_assessment_short_name = the_assessment_short_name + " solution"
+        the_assessment_short_name = the_assessment_short_name + " sol."
 
     return render_to_response \
         (template, 

@@ -10,8 +10,9 @@ import datetime
 def thread_view(request, thread_code):
     thread = get_object_or_404(Thread, code=thread_code)
 
-    # no Google analytics for now
-    noanalytics=True
+    noanalytics=False
+    if settings.SITE_ID==2:
+        noanalytics=True
 
     if request.user.has_perm('mithreads.change_thread'):
         include_edit_link = True
@@ -32,7 +33,7 @@ def thread_view(request, thread_code):
 def thread_edit_view(request, thread_code):
     thread = get_object_or_404(Thread, code=thread_code)
 
-    # no Google analytics for now
+    # no Google analytics for edit
     noanalytics=True
 
     return render_to_response \
