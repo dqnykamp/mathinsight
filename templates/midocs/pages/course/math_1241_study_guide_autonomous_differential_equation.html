@@ -1,0 +1,86 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Study guide for Math 1241 autonomous differential equation module exam " %}
+{% description "List of topics that could be on the autonomous differential equation module exam." %}
+
+
+<p>The autonomous differential equation module exam for Math 1241 is based on part 5 from the <a href="{% url 'mithreads-thread' 'math1241' %}">Math 1241 thread</a>.  The following highlights what is and what is not good potential material for this exam.</p>
+
+
+
+<ol><li><p>Solving linear equations (<a href="{% url 'mithreads-thread' 'math1241' %}#introduction_autonomous">Introduction</a> and <a href="{% url 'mithreads-thread' 'math1241' %}#solution_linear_autonomous">solution to linear equations</a> from Math 1241 thread).</p>
+<ol>
+<li>We can solve a linear autonomous differential equation such $\diff{x}{t}=ax$.  The general solution is an exponential: $x(t)=Ce^{at}$.</li>
+<li>If $a \lt 0$, we have exponential decay.  If $a \gt 0$, we have exponential growth.</li>
+<li>Given an initial condition $x(0)=x_0$, we can change the general solution with arbitrary constant $C$ to the specific solution $x(t)=x_0e^{at}$.</li>
+</ol>
+</li>
+
+<li><p>Solving a diffeerential equation graphically (<a href="{% url 'mithreads-thread' 'math1241' %}#graphical_autonomous">Graphical methods from Math 1241 thread</a>).</p>
+
+  <ol>
+  <li>For the autonomous equation $\diff{u}{t} = g(u)$, 
+    determine where $u(t)$ is increasing, decreasing, or constant from a plot of $g(u)$. Use this information to
+  sketch the solution $u(t)$.  (Here we use $u$ for the state variable, but of
+  course, the actual letter will be different for different problems.)
+</li>
+
+  <li>One can summarize where $u(t)$ is increasing, decreasing, or constant
+  using a phase-line diagram, with arrows (a vector field) showing the
+  direction of movement.</li>
+
+  <li>Be able to go between a plot of $g$ versus $u$ (where $u$ is the
+  horizontal axis) and plot of $u$ versus $t$ (where $u$ is the
+  vertical axis).  In the phase line, $u$ is also the horizontal axis.</li>
+
+  </ol>
+</li>
+
+  <li><p>Stability of equilibria (<a href="{% url 'mithreads-thread' 'math1241' %}#stability_equilibria_autonomous">Stability of equilibria  from Math 1241 thread</a>).</p>
+  <ol>
+
+    <li>For the autonomous equation $\diff{u}{t} = g(u)$, the equilibria are
+  the points where the rate of change is zero, i.e., the values of $u$
+  where $g(u)=0$. </li>
+
+    <li>One can determine the equilibria analytically (solve $g(u)=0$) or graphically (find points where plot of $g(u)$ crosses the $u$-axis).</li>
+
+    <li>From the graph of $g(u)$, or the vector field on the phase-line,
+  determine the stability of equilibria.</li>
+
+    <li>Use the stability theorem to determine stability of
+  the equilibria without looking at the graph of $g(u)$.
+      The stability theorem says for an equilibrium $u^*$ (with $g(u^*)=0$), the equilibrium is stable if $g'(u^*) \lt 0$ and unstable if
+  $g'(u^*) \gt 0$.</li>
+    
+  </ol>
+</li>
+
+
+  <li><p>Numerical solution (<a href="{% url 'mithreads-thread' 'math1241' %}#numerical_solution_autonomous">Numerical solution from Math 1241 thread</a>).</p>
+  <ol>
+    <li>We can approximate the solution to an autonomous differential equation $\diff{v}{t} = f(v)$ using the Forward Euler algorithm.</li>
+    <li>To use Forward Euler, divide time into interval of length $\Delta t$.</li>
+    <li>If we know the value fo the state variable $v$ at time $t = a$, we can take one Forward Euler step to estimate the value of $v$ at time $t=a+\Delta t$.
+    <ol>
+      <li>Plug in the known value $v(a)$ into the right hand side of the differential equation, getting the number $f(v(a))$, which is the slope $\diff{v}{t}$ at time $t=a$.</li>
+      <li>Assume that from $t=a$ to $t=a+\Delta t$, the slope doesn't change.  In other words, approximate $v(t)$ by its linear approximation at $a$: $v(t) \approx L(t) = v(a) + f(v(a))(t-a)$.</li>
+      <li>Calculate the value of $v$ at $t=a+\Delta t$ using the linear approximation.</li>
+      <li>The resulting formula is that $v(a+\Delta t) \approx L(a+\Delta t) = v(a)+f(v(a))\Delta t.$</li>
+      </ol>
+    </li>
+    <li>Repeatedly apply Forward Euler steps to march forward in time.  At each time step, calculate a new slope, march forward for a time step of $\Delta t$ with that slope (i.e., add $\Delta t$ times that slope to your previous value), and obtain an estimate for $v$ at the next time step.</li>
+  </ol>
+</li>    
+  <li><p>Bifurcations (<a href="{% url 'mithreads-thread' 'math1241' %}#bifurcations_autonomous">Bifurcations from Math 1241 thread</a>).</p>
+  <ol>
+    <li>If a dynamical system depends on a parameter $\beta$, which we might write as $\diff{w}{t} = f(w,\beta)$, we can look for qualitative changes in the behavior of the dynamical system as we change $\beta$.</li>
+    <li>If the stability or number of equilibria changes as we change $\beta$, we say we have a bifurcation.</li>
+    <li>A bifurcation point is the value of $\beta$ where such a change occurs.</li>
+    <li>Given a sequence of graphs of $f(w,\beta)$ or a sequence of phase lines of the dynamical system for different values of $\beta$, sketch a bifurcation diagram, which is a graph of equilibria on a plot of $w$ versus $\beta$.</li>
+    <li>To draw a bifurcation diagram, draw the equilibria will be curves, showing how the value of the equilibrium changes with $\beta$.  Indicate which equilibria are stable and which are unstable.  (Usually, we draw stable equilibria with solid lines and unstable equilibria with dashed lines.)</li>
+    <li>Be able to interpret a bifurcation diagram.  Given a bifurcation diagram, determine the phase line for different parameter values.</li>
+  </ol>
+</li>
+</ol>
+
+{% endblock %}
