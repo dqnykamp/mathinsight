@@ -551,50 +551,53 @@ class FigureNode(Node):
                 pass
 
             if the_function:
-                series_options=dict()
-                the_function = function_dict[expression.name]
-                this_x = x
-                if plotfunction.xmin is not None or plotfunction.xmax is not None:
-                    if plotfunction.xmin is not None:
-                        try:
-                            this_xmin = parse_expr(plotfunction.xmin,local_dict=function_dict)
-                            try:
-                                this_xmin=this_xmin.subs(substitutions)
-                            except:
-                                pass
-                            try:
-                                this_xmin=this_xmin.doit()
-                            except:
-                                pass
-                        
-                            this_xmin = float(this_xmin)
-                        except:
-                            this_xmin=xmin
-                    else:
-                        this_xmin=xmin
-                    if plotfunction.xmax is not None:
-                        try:
-                            this_xmax = parse_expr(plotfunction.xmax,local_dict=function_dict)
-                            try:
-                                this_xmax=this_xmax.subs(substitutions)
-                            except:
-                                pass
-                            try:
-                                this_xmax=this_xmax.doit()
-                            except:
-                                pass
-                        
-                            this_xmax = float(this_xmax)
-                        except:
-                            this_xmax=xmax
-                    else:
-                        this_xmax=xmax
-                    this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))
-                    this_dx = (this_xmax-this_xmin)/(this_n_points-1)
-                    this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
-
                 try:
-                    point_lists.append([(i,float(the_function(i).doit())) for i in this_x])
+                    series_options=dict()
+                    the_function = function_dict[expression.name]
+                    this_x = x
+                    if plotfunction.xmin is not None or plotfunction.xmax is not None:
+                        if plotfunction.xmin is not None:
+                            try:
+                                this_xmin = parse_expr(plotfunction.xmin,local_dict=function_dict)
+                                try:
+                                    this_xmin=this_xmin.subs(substitutions)
+                                except:
+                                    pass
+                                try:
+                                    this_xmin=this_xmin.doit()
+                                except:
+                                    pass
+
+                                this_xmin = float(this_xmin)
+                            except:
+                                this_xmin=xmin
+                        else:
+                            this_xmin=xmin
+                        if plotfunction.xmax is not None:
+                            try:
+                                this_xmax = parse_expr(plotfunction.xmax,local_dict=function_dict)
+                                try:
+                                    this_xmax=this_xmax.subs(substitutions)
+                                except:
+                                    pass
+                                try:
+                                    this_xmax=this_xmax.doit()
+                                except:
+                                    pass
+
+                                this_xmax = float(this_xmax)
+                            except:
+                                this_xmax=xmax
+                        else:
+                            this_xmax=xmax
+                        this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))
+                        this_dx = (this_xmax-this_xmin)/(this_n_points-1)
+                        this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
+
+                    if plotfunction.invert:
+                        point_lists.append([(float(the_function(i).doit()),i) for i in this_x])
+                    else:
+                        point_lists.append([(i,float(the_function(i).doit())) for i in this_x])
                 except:
                     return "[Broken figure]"
 

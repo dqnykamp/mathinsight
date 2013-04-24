@@ -1101,8 +1101,8 @@ class PlotFunction(models.Model):
     linewidth = models.IntegerField(blank=True, null=True)
     xmin = models.CharField(max_length=200, blank=True, null=True)
     xmax = models.CharField(max_length=200, blank=True, null=True)
-
-
+    invert = models.BooleanField()
+    
 
 class SympyCommandSet(models.Model):
     name = models.CharField(max_length=50, unique=True)
