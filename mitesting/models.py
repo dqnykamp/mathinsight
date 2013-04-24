@@ -592,6 +592,7 @@ class AssessmentType(models.Model):
 class Assessment(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     name = models.CharField(max_length=200, unique=True)
+    short_name = models.CharField(max_length=30, blank=True)
     assessment_type = models.ForeignKey(AssessmentType)
     description = models.CharField(max_length=400,blank=True, null=True)
     questions = models.ManyToManyField(Question, through='QuestionAssigned')
@@ -605,6 +606,12 @@ class Assessment(models.Model):
 
     def __unicode__(self):
         return  self.name
+
+    def return_short_name(self):
+        if self.short_name:
+            return self.short_name
+        else:
+            return self.name
 
     def return_link(self, **kwargs):
         try:

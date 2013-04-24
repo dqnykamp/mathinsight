@@ -2,20 +2,28 @@
 {% load testing_tags %}
 
 {% block content %}
-<table class="examinfo"><tr><td>{{ course }}</td></tr>
-<tr><td>{{ semester }}</td></tr>
-<tr><td>{{ the_assessment_name }}, version {{ version }}</td></tr>
-<tr><td>{{ assessment_date }}</td></tr>
-{% if the_assessment.time_limit%}<tr><td>Time limit: {{ the_assessment.time_limit }}</td></tr>{%endif %}
-</table>
-<div class="right_header">
-<table class="examstudentinfo">
-<tr><td class="examlabel">Name (print):</td><td class="blank"></td></tr>
-<tr><td class="examlabel">Student ID:</td><td class="blank"></td></tr>
-<tr><td class="examlabel">Section: </td><td class="blank"></td></tr>
-<tr><td class="examlabel">Teaching Assistant: </td><td class="blank"></td></tr>
-<tr><td class="examlabel">Signature: </td><td class="blank"></td></tr>
-</table>
+<div class="yma-grid">
+  <div class="yma-g50 yma-gl">
+    <div class="yma-gbox-left">
+      <table class="examinfo"><tr><td>{{ course }}</td></tr>
+	<tr><td>{{ semester }}</td></tr>
+	<tr><td>{{ the_assessment_name }}, version {{ version }}</td></tr>
+	<tr><td>{{ assessment_date }}</td></tr>
+	{% if the_assessment.time_limit%}<tr><td>Time limit: {{ the_assessment.time_limit }}</td></tr>{%endif %}
+      </table>
+    </div>
+  </div>
+  <div class="yma-g50 yma-gr">
+    <div class="yma-gbox-right">
+      <table class="examstudentinfo">
+	<tr><td class="examlabel">Name (print):</td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Student ID:</td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Section: </td><td class="blank"></td></tr>
+	<tr><td class="examlabel">TA: </td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Signature: </td><td class="blank"></td></tr>
+      </table>
+    </div>
+  </div>
 </div>
 <section class="exam_instructions">
 {{ the_assessment.render_instructions }}

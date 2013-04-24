@@ -188,11 +188,15 @@ def assessment_view(request, assessment_code, solution=False):
     the_assessment_name = the_assessment.name
     if solution:
         the_assessment_name = the_assessment_name + " solution"
+    the_assessment_short_name = the_assessment.return_short_name()
+    if solution:
+        the_assessment_short_name = the_assessment_short_name + " solution"
 
     return render_to_response \
         (template, 
          {'the_assessment': the_assessment, 
           'the_assessment_name': the_assessment_name, 
+          'the_assessment_short_name': the_assessment_short_name, 
           'question_list': rendered_question_list,
           'solution_list': rendered_solution_list,
           'seed': seed, 'version': version,
