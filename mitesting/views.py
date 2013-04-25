@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required, user_passes_test
+from django.conf import settings
 import random
 from numpy import arccos, arcsin, arctan, arctan2, ceil, cos, cosh, degrees, e, exp, fabs, floor, fmod, frexp, hypot, ldexp, log, log10, modf, pi, radians, sin, sinh, sqrt, tan, tanh, piecewise
 
@@ -55,7 +56,7 @@ def question_view(request, question_id):
     else:
         show_lists=False
 
-    # no Google analytics for assessments
+    # no Google analytics for questions
     noanalytics=True
 
     return render_to_response \
@@ -102,7 +103,7 @@ def question_solution_view(request, question_id):
         rendered_solution = the_question.render_solution(question_context,
                                                          identifier=identifier)
         
-    # no Google analytics for assessments
+    # no Google analytics for questions
     noanalytics=True
 
     return render_to_response \
@@ -172,9 +173,10 @@ def assessment_view(request, assessment_code, solution=False):
         generate_assessment_link = False
 
 
-    # no Google analytics for assessments
-    noanalytics=True
-
+    # turn off google analytics for localhost
+    noanalytics=False
+    if settings.SITE_ID==2:
+        noanalytics=True
     
     solution_postfix=""
     if solution:
@@ -261,7 +263,7 @@ def assessment_list_view(request):
     else:
         view_solution = False
     
-    # no Google analytics for assessments
+    # no Google analytics for assessment list
     noanalytics=True
 
     return render_to_response \
@@ -276,7 +278,7 @@ def assessment_list_view(request):
 def question_list_view(request):
     question_list = Question.objects.all()
 
-    # no Google analytics for assessments
+    # no Google analytics for question list
     noanalytics=True
     
     return render_to_response \
@@ -284,107 +286,3 @@ def question_list_view(request):
                                           'noanalytics': noanalytics,
                                           },
          context_instance=RequestContext(request))
-
-
-def question_figure_view(request, question_id, figure_number):
-    from mitesting.figure import linegraph
-
-    the_question = get_object_or_404(Question, id=question_id)
-    
-    # get functions for figure_number
-    the_functions=the_question.function_set.filter(figure=figure_number)
-    
-    # raise 404 if no such functions
-    if len(the_functions)==0:
-        raise Http404()
-
-    # check if any of the functions are solution_only
-    solution_only=False
-    for function in the_functions:
-        if function.solution_only:
-            solution_only=True
-            break
-
-    # determine if user has permission to view, given privacy level
-    if not the_question.user_can_view(request.user,solution_only):
-        path = request.build_absolute_uri()
-        from django.contrib.auth.views import redirect_to_login
-        return redirect_to_login(path)
-
-    # get random number names from question
-    the_random_numbers=the_question.randomnumber_set.all()
-    
-    # for each random number, get value from GET
-    random_number_values = {}
-    for the_random_number in the_random_numbers:
-        try:
-            random_number_values[the_random_number.name] = request.GET[the_random_number.name]
-            
-        except:
-            pass
-
-    #make a list of safe functions 
-    safe_list = ['arccos', 'arcsin', 'arctan', 'arctan2', 'ceil', 'cos', 'cosh', 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'piecewise']
-
-    #use the list to filter the local namespace 
-    safe_dict = dict([ (k, globals().get(k, None)) for k in safe_list ]) 
-    #add any needed builtins back in. 
-    safe_dict['__builtins__'] = {}
-    safe_dict['abs'] = abs 
-    safe_dict['float'] = float 
-    safe_dict['int'] = int
-    safe_dict['round'] = round
-
-    # process template tags on functions using context of random numbers
-    c = Context(random_number_values)
-    function_list=[]
-    linestyle_list=[]
-    linewidth_list=[]
-    for (ind,function) in enumerate(the_functions):
-        rendered_function_value = Template(function.value).render(c)
-        the_variable = function.variable
-        function_expression = "lambda %s: %s" % (the_variable, rendered_function_value)
-
-        # Try evaluating function.  Ignore if any errors.
-        try:
-            f= eval(function_expression,safe_dict)
-            function_list.append(f)
-            linestyle_list.append(function.linestyle)
-            linewidth_list.append(function.linewidth)
-        except:
-            pass
-
-    # look for graphing parameters from GET
-    kwargs={'linestyle': linestyle_list, 'linewidth': linewidth_list}
-    try:
-        kwargs['xmin'] = float(request.GET['xmin'])
-    except:
-        pass
-    try:
-        kwargs['xmax'] = float(request.GET['xmax'])
-    except:
-        pass
-    try:
-        kwargs['xlabel'] = request.GET['xlabel']
-    except:
-        pass
-    try:
-        kwargs['ylabel'] = request.GET['ylabel']
-    except:
-        pass
-
-    # convert ymin and ymax to ylim
-    try:
-        ymin = float(request.GET['ymin'])
-    except:
-        ymin = None
-    try:
-        ymax = float(request.GET['ymax'])
-    except:
-        ymax = None
-    if ymin is not None or ymax is not None:
-        kwargs['ylim']=[ymin, ymax]
-        
-    #from midocs.figure import linegraph
-    
-    return linegraph(f=function_list, **kwargs)
