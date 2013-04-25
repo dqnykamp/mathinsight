@@ -18,6 +18,19 @@ def parse_expr(s, global_dict=None, local_dict=None):
     
     return sympify(sympy_parse_expr(s, local_dict=local_dict, transformations=transformations))
 
+def parse_subs(s, substitutions=None, local_dict=None):
+    expression = parse_expr(s, local_dict=local_dict)
+    try: 
+        expression=expression.subs(substitutions)
+    except (AttributeError, TypeError):
+        pass
+    try: 
+        expression=expression.doit()
+    except (AttributeError, TypeError):
+        pass
+    
+    return expression
+
 
 def create_greek_dict():
     from sympy.abc import (alpha, beta,  delta, epsilon, eta,
@@ -64,14 +77,15 @@ def create_symbol_name_dict():
 
 def try_expand_expr(expr):
     try:
-        if isinstance(expr, Tuple):
-            # if is tuple, try to expand each element separately
+        if isinstance(expr, Tuple) or isinstance(expr,list):
+            # if is tuple or list, try to expand each element separately
             expr_expand_list = []
-            for expr in expr:
+            for ex in expr:
                 try:
-                    expr_expand_list.append(expr.expand())
+                    expr_expand_list.append(ex.expand())
                 except:
-                    expr_expand_list.append(expr)
+                    expr_expand_list.append(ex)
+            if isinstance(expr,Tuple):    
                 expr_expand = Tuple(*expr_expand_list)
         else:
             expr_expand = expr.expand()
@@ -239,11 +253,21 @@ class math_object(object):
             #               for orig_float in expression.atoms(Float))) 
                 
             from sympy.simplify.simplify import bottom_up
-            expression =  bottom_up(expression,
+            if isinstance(expression, list):
+                new_expr=[]
+                for expr in expression:
+                    new_expr.append(bottom_up(expr,
                                     lambda w: w.evalf(n_digits)
                                     if not w.is_Float 
                                     else Float(str(w.evalf(n_digits))),
-                                    atoms=True)
+                                    atoms=True))
+                expression=new_expr
+            else:
+                expression =  bottom_up(expression,
+                                        lambda w: w.evalf(n_digits)
+                                        if not w.is_Float 
+                                        else Float(str(w.evalf(n_digits))),
+                                        atoms=True)
             
         return expression
 
@@ -253,10 +277,13 @@ class math_object(object):
 
         if self._round_decimals is not None:
             try:
-                if isinstance(expression,Tuple):
-                    expression = Tuple(*[expr.round(self._round_decimals) for expr in expression])
+                if isinstance(expression,Tuple) or isinstance(expression, list):
+
+                    expression = [expr.round(self._round_decimals) for expr in expression]
                     if self._round_decimals == 0:
-                        expression =Tuple(*[int(expr) for expr in expression])
+                        expression =[int(expr) for expr in expression]
+                    if isinstance(expression,Tuple):
+                        expression = Tuple(*expression)
                 else:
                     expression = expression.round(self._round_decimals)
                     if self._round_decimals == 0:

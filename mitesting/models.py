@@ -13,7 +13,7 @@ from sympy import Symbol, Function
 from sympy.printing import latex
 from django.db.models import Max
 from mitesting.math_objects import create_greek_dict, create_symbol_name_dict
-from mitesting.math_objects import math_object
+from mitesting.math_objects import math_object, parse_expr, parse_subs
 
 class deferred_gcd(Function):
     nargs = 2
@@ -24,6 +24,56 @@ class deferred_gcd(Function):
         else:
             return sympy.gcd(self.args[0], self.args[1])
        
+class deferred_polynomial(Function):
+    nargs = 1
+    
+    def doit(self, **hints):        
+        if hints.get('deep', True):
+            return self.args[0].doit(**hints)**3-3*self.args[0].doit(**hints)+0.5
+        else:
+            return self.args[0]**3-3*self.args[0]+0.5
+
+
+class deferred_roots(Function):
+    nargs = 2
+    
+    def doit(self, **hints):        
+        from sympy import roots
+        if hints.get('deep', True):
+            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints))
+        else:
+            return roots(self.args[0],self.args[1])
+   
+class deferred_realroots(Function):
+    nargs = 2
+    
+    def doit(self, **hints):        
+        from sympy import roots
+        if hints.get('deep', True):
+            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R')
+        else:
+            return roots(self.args[0],self.args[1], filter='R')
+   
+class deferred_rootslist(Function):
+    nargs = 2
+    
+    def doit(self, **hints):        
+        from sympy import roots
+        if hints.get('deep', True):
+            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints)).keys()
+        else:
+            return roots(self.args[0],self.args[1]).keys()
+   
+class deferred_realrootslist(Function):
+    nargs = 2
+    
+    def doit(self, **hints):        
+        from sympy import roots
+        if hints.get('deep', True):
+            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R').keys()
+        else:
+            return roots(self.args[0],self.args[1], filter='R').keys()
+   
 class deferred_diff(Function):
     
     def doit(self, **hints):        
@@ -217,6 +267,14 @@ class Question(models.Model):
             local_dict['diff'] = deferred_diff
         if 'round' in allowed_commands:
             local_dict['round'] = deferred_round
+        if 'roots' in allowed_commands:
+            local_dict['roots'] = deferred_roots
+        if 'realroots' in allowed_commands:
+            local_dict['realroots'] = deferred_realroots
+        if 'roots' in allowed_commands:
+            local_dict['rootslist'] = deferred_rootslist
+        if 'realroots' in allowed_commands:
+            local_dict['realrootslist'] = deferred_realrootslist
         if 'e' in allowed_commands:
             from sympy import E
             local_dict['e'] = E
@@ -253,7 +311,9 @@ class Question(models.Model):
 
             for random_number in self.randomnumber_set.all():
                 try:
-                    the_sample = random_number.get_sample()
+                    the_sample = random_number.get_sample \
+                        (substitutions=substitutions, \
+                         function_dict=function_dict)
                     the_context[random_number.name] = the_sample
                     substitutions.append((Symbol(str(random_number.name)),
                                           the_sample.return_expression()))
@@ -297,7 +357,9 @@ class Question(models.Model):
                 except Exception as e:
                     return "Error in expression %s: %s" % (expression.name, e)
                 the_context[expression.name]=expression_evaluated
-                substitutions.append((Symbol(str(expression.name)),expression_evaluated.return_expression()))
+                # append to substitutions only if not a list
+                if not isinstance(expression_evaluated.return_expression(),list):
+                    substitutions.append((Symbol(str(expression.name)),expression_evaluated.return_expression()))
                 if expression.required_condition:
                     if not expression_evaluated.return_expression():
                         failed_required_condition=True
@@ -921,19 +983,26 @@ class QuestionAssigned(models.Model):
 class RandomNumber(models.Model):
     name = models.SlugField(max_length=50)
     question = models.ForeignKey(Question)
-    min_value = models.FloatField(default=0)
-    max_value = models.FloatField(default=10)
-    increment = models.FloatField(default=1)
+    min_value = models.CharField(max_length=200, default='0')
+    max_value = models.CharField(max_length=200, default='10')
+    increment = models.CharField(max_length=200, default='1')
     
-    class Meta:
-        unique_together = ("name", "question")
-
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self):
-        num_possibilities = 1+int(ceil((self.max_value-self.min_value)/self.increment))
-        choices=(self.min_value+n*self.increment for n in range(num_possibilities))
+    def get_sample(self, substitutions=None, function_dict=None):
+        
+        max_value = parse_subs(self.max_value, substitutions=substitutions, 
+                               local_dict=function_dict)
+
+        min_value = parse_subs(self.min_value, substitutions=substitutions, 
+                               local_dict=function_dict)
+        
+        increment = parse_subs(self.increment, substitutions=substitutions, 
+                               local_dict=function_dict)
+           
+        num_possibilities = 1+int(ceil((max_value-min_value)/increment))
+        choices=(min_value+n*increment for n in range(num_possibilities))
         the_num = random.choice(list(choices))
 
         # if the_num is an integer, convert to integer so don't have decimal
@@ -944,9 +1013,9 @@ class RandomNumber(models.Model):
             # as the input values
             # seems to help with rounding error with the float arithmetic
             for i in range(1,11):
-                if(round(self.min_value*pow(10,i)) == self.min_value*pow(10,i)
-                   and round(self.max_value*pow(10,i)) == self.max_value*pow(10,i)
-                   and round(self.increment*pow(10,i)) == self.increment*pow(10,i)):
+                if(round(min_value*pow(10,i)) == min_value*pow(10,i)
+                   and round(max_value*pow(10,i)) == max_value*pow(10,i)
+                   and round(increment*pow(10,i)) == increment*pow(10,i)):
                     the_num = round(the_num,i)
                     break
                 
@@ -963,14 +1032,11 @@ class RandomWord(models.Model):
     sympy_parse = models.BooleanField()
     treat_as_function = models.BooleanField()
 
-    class Meta:
-        unique_together = ("name", "question")
-        
     def __unicode__(self):
         return  self.name
 
     def get_sample(self, index=None, function_dict=None):
-        
+
         # turn comma separated list to python list. 
         # strip off leading/trailing whitespace
         option_list = [item.strip() for item in self.option_list.split(",")]
@@ -981,8 +1047,6 @@ class RandomWord(models.Model):
             index = random.randrange(len(option_list))
         the_word=option_list[index]
         if self.sympy_parse or self.treat_as_function:
-            #from sympy.parsing.sympy_parser import parse_expr
-            from mitesting.math_objects import parse_expr
             try:
                 if not function_dict:
                     function_dict = create_greek_dict()
@@ -1023,16 +1087,12 @@ class Expression(models.Model):
     collapse_equal_tuple_elements=models.BooleanField()
     sort_order = models.FloatField(default=0)
     class Meta:
-        unique_together = ("name", "question")
         ordering = ['sort_order','id']
 
     def __unicode__(self): 
         return  self.name
 
     def evaluate(self, substitutions, function_dict):
-
-        #from sympy.parsing.sympy_parser import parse_expr
-        from mitesting.math_objects import parse_expr
 
         expression = parse_expr(self.expression,local_dict=function_dict)
 
@@ -1102,6 +1162,7 @@ class PlotFunction(models.Model):
     xmin = models.CharField(max_length=200, blank=True, null=True)
     xmax = models.CharField(max_length=200, blank=True, null=True)
     invert = models.BooleanField()
+    condition_to_show = models.CharField(max_length=200, blank=True, null=True)
     
 
 class SympyCommandSet(models.Model):

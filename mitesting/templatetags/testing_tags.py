@@ -521,24 +521,14 @@ class FigureNode(Node):
         # find question
         the_question = context['the_question']
         function_dict = context['sympy_function_dict']
+        substitutions = context['sympy_substitutions']
 
         combined_text=''
         point_lists=[]
         series_option_list=[]
 
-        try:
-            function_dict = template.Variable("sympy_function_dict").resolve(context)
-        except:
-            function_dict = {}
-        try:
-            substitutions =  template.Variable("sympy_substitutions").resolve(context)
-        except:
-            subsitutions = []
-        
 
         from mitesting.math_objects import parse_expr
-
-
 
         for plotfunction in the_question.plotfunction_set.filter(figure=figure_number):
             # find corresponding expression
@@ -551,6 +541,25 @@ class FigureNode(Node):
                 pass
 
             if the_function:
+                if plotfunction.condition_to_show:
+                    try:
+                        condition_to_show = parse_expr(plotfunction.condition_to_show,local_dict=function_dict)
+                    except:
+                        pass
+                    else:
+                        try:
+                            condition_to_show=condition_to_show.subs(substitutions)
+                        except:
+                            pass
+                        try:
+                            condition_to_show=condition_to_show.doit()
+                        except:
+                            pass
+                    
+                        # if condition to show is False, skip function
+                        if not condition_to_show:
+                            continue
+
                 try:
                     series_options=dict()
                     the_function = function_dict[expression.name]
@@ -621,7 +630,7 @@ class FigureNode(Node):
 
         # return "%s %s" % (type(point_lists[0][0][0]), type(point_lists[0][0][1]))
         # return "%s" % point_lists
-    
+
         thedata=json.dumps(point_lists)
 
         plot_options=dict()
@@ -898,7 +907,7 @@ class AnswerBlankNode(template.Node):
         except:
             return "[invalid answer blank]"
 
-        if not answer_expression:
+        if answer_expression is None or answer_expression=="":
             return "[invalid answer blank]"
 
         answer_list.append((self.answer_expression_string, answer_expression, 
