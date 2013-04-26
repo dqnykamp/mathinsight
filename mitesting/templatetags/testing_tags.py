@@ -483,10 +483,20 @@ class FigureNode(Node):
                         this_dx = (this_xmax-this_xmin)/(this_n_points-1)
                         this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
 
+                    # get list of function values where result is real after chop
+                    function_values=[]
+                    ok_x_values=[]
+                    for x in this_x:
+                        try:
+                            function_values.append(float(the_function(x).doit().n(chop=True)))
+                            ok_x_values.append(x)
+                        except:
+                            pass
+
                     if plotfunction.invert:
-                        point_lists.append([(float(the_function(i).doit()),i) for i in this_x])
+                        point_lists.append([(function_values[i],ok_x_values[i]) for i in range(len(ok_x_values))])
                     else:
-                        point_lists.append([(i,float(the_function(i).doit())) for i in this_x])
+                        point_lists.append([(ok_x_values[i],function_values[i]) for i in range(len(ok_x_values))])
                 except:
                     return "[Broken figure]"
 

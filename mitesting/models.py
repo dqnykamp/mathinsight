@@ -1124,9 +1124,9 @@ class Expression(models.Model):
 
                 def doit(self, **hints):        
                     if hints.get('deep', True):
-                        return expr2.subs([(self.the_input_list[i],a.doit(**hints)) for (i,a) in enumerate(self.args)])
+                        return expr2.xreplace(dict((self.the_input_list[i], a.doit(**hints)) for (i,a) in enumerate(self.args)))
                     else:
-                        return expr2.subs([(self.the_input_list[i],a) for (i,a) in enumerate(self.args)])
+                        return expr2.xreplace(dict((self.the_input_list[i],a) for (i,a) in enumerate(self.args)))
                 
             function_dict[self.name] = parsed_function   
 
