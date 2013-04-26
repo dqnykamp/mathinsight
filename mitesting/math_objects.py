@@ -18,12 +18,13 @@ def parse_expr(s, global_dict=None, local_dict=None):
     
     return sympify(sympy_parse_expr(s, local_dict=local_dict, transformations=transformations))
 
-def parse_subs(s, substitutions=None, local_dict=None):
+def parse_and_process(s, substitutions=None, local_dict=None):
     expression = parse_expr(s, local_dict=local_dict)
-    try: 
-        expression=expression.subs(substitutions)
-    except (AttributeError, TypeError):
-        pass
+    for sub in substitutions:
+        try: 
+            expression=expression.xreplace({sub[0]: sub[1]})
+        except (AttributeError, TypeError):
+            pass
     try: 
         expression=expression.doit()
     except (AttributeError, TypeError):
@@ -169,13 +170,23 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, sort_list=False):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
         self._use_ln=use_ln
         self._expand_on_compare = expand_on_compare
         self._tuple_is_ordered = tuple_is_ordered
+        
+        if output_no_delimiters is None:
+            if not tuple_is_ordered:
+                output_no_delimiters=True
+            else:
+                output_no_delimiters=False
+        self._output_no_delimiters = output_no_delimiters
+        
+        if sort_list and isinstance(self._expression,list):
+            self._expression.sort()
 
         if copy_properties_from:
             try:
@@ -198,7 +209,10 @@ class math_object(object):
                 self._tuple_is_ordered = copy_properties_from._tuple_is_ordered
             except:
                 pass
-
+            try:
+                self._output_list_no_delimiters = copy_properties_from._output_list_no_delimiters
+            except:
+                pass
 
         if isinstance(self._expression,Tuple) and collapse_equal_tuple_elements:
             tuple_list = []
@@ -295,8 +309,9 @@ class math_object(object):
         expression = self.convert_expression()
         symbol_name_dict = create_symbol_name_dict()
         
-        if isinstance(expression,Tuple) and not self._tuple_is_ordered:
-            # for unordered Tuple, just separate entries by commas
+        if self._output_no_delimiters and (isinstance(expression,Tuple)
+                                           or isinstance(expression,list)):
+            # just separate entries by commas
             output_list = [latex(expr, symbol_names=symbol_name_dict) for expr in expression]
             output = ",~ ".join(output_list)
         else:

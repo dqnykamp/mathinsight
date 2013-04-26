@@ -83,93 +83,6 @@ def pluralize_word(parser, token):
     return PluralizeWordNode(value, word, word_plural)
 
 
-# class FigureNode(Node):
-#     def __init__(self, figure_number, args, kwargs):
-#         self.figure_number = figure_number
-#         self.args = args
-#         self.kwargs = kwargs
-
-#     def render(self, context):
-#         args = [arg.resolve(context) for arg in self.args]
-#         # for django 1.5
-#         # kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
-#         #                for k, v in self.kwargs.items()])
-#         kwargs = dict([(k, v.resolve(context))
-#                        for k, v in self.kwargs.items()])
-#         kwargs_url_GET_string = ""
-        
-#         width=500
-#         height=500
-#         for k in kwargs.keys():
-#             if k=='width':
-#                 try:
-#                     width = int(kwargs[k])
-#                 except:
-#                     pass
-#             elif k=='height':
-#                 try:
-#                     height = int(kwargs[k])
-#                 except:
-#                     pass
-#             else:
-#                 if kwargs_url_GET_string:
-#                     kwargs_url_GET_string += "&"
-#                 kwargs_url_GET_string = "%s%s=%s" % (kwargs_url_GET_string, k, kwargs[k])
-
-#         figure_number = self.figure_number.resolve(context)
-
-#         if not figure_number:
-#             return "[Broken figure]"
-#             #raise TemplateSyntaxError("'figure' requires a non-empty first argument. ")
-
-#         # find question
-#         the_question = Variable("the_question").resolve(context)
-        
-#         # get URL for figure figure_number (fails if no function with figure=figure_number)
-#         try:
-#             url = reverse('mit-questionfigure', kwargs={'question_id':the_question.id, 'figure_number': figure_number})
-#         except:
-#             raise
-            
-#         if not the_question.function_set.filter(figure=figure_number):
-#             return "[Broken figure]"
-        
-#         # find all random variables from question and add to GET arguments
-#         for randnum in the_question.randomnumber_set.all():
-#             randnum_value = Variable(randnum.name).resolve(context)
-#             if kwargs_url_GET_string:
-#                 kwargs_url_GET_string += "&"
-#             kwargs_url_GET_string = "%s%s=%s" % (kwargs_url_GET_string, randnum.name, randnum_value)
-            
-#         return "<img src='%s?%s' width=%s height=%s>" %(url, kwargs_url_GET_string, width, height)
-        
-
-
-# @register.tag
-# def figure(parser, token):
-#     bits = token.split_contents()
-#     if len(bits) < 2:
-#         raise template.TemplateSyntaxError, "%r tag requires at least one argument" % str(bits[0])
-    
-#     figure_number = parser.compile_filter(bits[1])
-#     args = []
-#     kwargs = {}
-#     bits = bits[2:]
-
-#     if len(bits):
-#         for bit in bits:
-#             match = kwarg_re.match(bit)
-#             if not match:
-#                 raise TemplateSyntaxError("Malformed arguments to %r tag" % str(bits[0]))
-#             name, value = match.groups()
-#             if name:
-#                 kwargs[name] = parser.compile_filter(value)
-#             else:
-#                 args.append(parser.compile_filter(value))
-
-#     return FigureNode(figure_number, args, kwargs)
-
-
 class ExprNode(Node):
     def __init__(self, expression, asvar, args, kwargs):
         self.expression = expression
@@ -196,18 +109,10 @@ class ExprNode(Node):
             subsitutions = []
         
 
-        from mitesting.math_objects import parse_expr
-        expression = parse_expr(expression,local_dict=function_dict)
-        try:
-            expression=expression.subs(substitutions)
-        except:
-            pass
-        try:
-            expression=expression.doit()
-        except:
-            pass
+        from mitesting.math_objects import parse_and_process, math_object
 
-        from mitesting.math_objects import math_object
+        expression = parse_and_process(expression,substitutions=substitutions,
+                                       local_dict=function_dict)
 
         expression=math_object(expression, args, kwargs)
 
@@ -528,7 +433,7 @@ class FigureNode(Node):
         series_option_list=[]
 
 
-        from mitesting.math_objects import parse_expr
+        from mitesting.math_objects import parse_and_process
 
         for plotfunction in the_question.plotfunction_set.filter(figure=figure_number):
             # find corresponding expression
@@ -543,22 +448,13 @@ class FigureNode(Node):
             if the_function:
                 if plotfunction.condition_to_show:
                     try:
-                        condition_to_show = parse_expr(plotfunction.condition_to_show,local_dict=function_dict)
-                    except:
-                        pass
-                    else:
-                        try:
-                            condition_to_show=condition_to_show.subs(substitutions)
-                        except:
-                            pass
-                        try:
-                            condition_to_show=condition_to_show.doit()
-                        except:
-                            pass
-                    
+                        condition_to_show = parse_and_process(plotfunction.condition_to_show,substitutions=substitutions, local_dict=function_dict)
                         # if condition to show is False, skip function
                         if not condition_to_show:
                             continue
+                    except:
+                        raise
+
 
                 try:
                     series_options=dict()
@@ -567,15 +463,7 @@ class FigureNode(Node):
                     if plotfunction.xmin is not None or plotfunction.xmax is not None:
                         if plotfunction.xmin is not None:
                             try:
-                                this_xmin = parse_expr(plotfunction.xmin,local_dict=function_dict)
-                                try:
-                                    this_xmin=this_xmin.subs(substitutions)
-                                except:
-                                    pass
-                                try:
-                                    this_xmin=this_xmin.doit()
-                                except:
-                                    pass
+                                this_xmin = parse_and_process(plotfunction.xmin,substitutions=substitutions,local_dict=function_dict)
 
                                 this_xmin = float(this_xmin)
                             except:
@@ -584,15 +472,7 @@ class FigureNode(Node):
                             this_xmin=xmin
                         if plotfunction.xmax is not None:
                             try:
-                                this_xmax = parse_expr(plotfunction.xmax,local_dict=function_dict)
-                                try:
-                                    this_xmax=this_xmax.subs(substitutions)
-                                except:
-                                    pass
-                                try:
-                                    this_xmax=this_xmax.doit()
-                                except:
-                                    pass
+                                this_xmax = parse_and_process(plotfunction.xmax,substitutions=substitutions,local_dict=function_dict)
 
                                 this_xmax = float(this_xmax)
                             except:

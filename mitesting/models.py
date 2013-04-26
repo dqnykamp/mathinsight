@@ -13,7 +13,7 @@ from sympy import Symbol, Function
 from sympy.printing import latex
 from django.db.models import Max
 from mitesting.math_objects import create_greek_dict, create_symbol_name_dict
-from mitesting.math_objects import math_object, parse_expr, parse_subs
+from mitesting.math_objects import math_object, parse_expr, parse_and_process
 
 class deferred_gcd(Function):
     nargs = 2
@@ -55,24 +55,32 @@ class deferred_realroots(Function):
             return roots(self.args[0],self.args[1], filter='R')
    
 class deferred_rootslist(Function):
-    nargs = 2
     
     def doit(self, **hints):        
         from sympy import roots
         if hints.get('deep', True):
-            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints)).keys()
+            rootlist = roots(self.args[0].doit(**hints), self.args[1].doit(**hints)).keys()
         else:
-            return roots(self.args[0],self.args[1]).keys()
+            rootlist= roots(self.args[0],self.args[1]).keys()
+        rootlist.sort()
+        if len(self.args) > 2:
+            return rootlist[self.args[2]]
+        else:
+            return rootlist
    
 class deferred_realrootslist(Function):
-    nargs = 2
-    
+
     def doit(self, **hints):        
         from sympy import roots
         if hints.get('deep', True):
-            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R').keys()
+            rootlist = roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R').keys()
         else:
-            return roots(self.args[0],self.args[1], filter='R').keys()
+            rootlist = roots(self.args[0],self.args[1], filter='R').keys()
+        rootlist.sort()
+        if len(self.args) > 2:
+            return rootlist[self.args[2]]
+        else:
+            return rootlist
    
 class deferred_diff(Function):
     
@@ -357,8 +365,9 @@ class Question(models.Model):
                 except Exception as e:
                     return "Error in expression %s: %s" % (expression.name, e)
                 the_context[expression.name]=expression_evaluated
-                # append to substitutions only if not a list
-                if not isinstance(expression_evaluated.return_expression(),list):
+
+                # add to substitutions only if not list
+                if not isinstance(expression_evaluated.return_expression(), list):
                     substitutions.append((Symbol(str(expression.name)),expression_evaluated.return_expression()))
                 if expression.required_condition:
                     if not expression_evaluated.return_expression():
@@ -992,13 +1001,13 @@ class RandomNumber(models.Model):
 
     def get_sample(self, substitutions=None, function_dict=None):
         
-        max_value = parse_subs(self.max_value, substitutions=substitutions, 
+        max_value = parse_and_process(self.max_value, substitutions=substitutions, 
                                local_dict=function_dict)
 
-        min_value = parse_subs(self.min_value, substitutions=substitutions, 
+        min_value = parse_and_process(self.min_value, substitutions=substitutions, 
                                local_dict=function_dict)
         
-        increment = parse_subs(self.increment, substitutions=substitutions, 
+        increment = parse_and_process(self.increment, substitutions=substitutions, 
                                local_dict=function_dict)
            
         num_possibilities = 1+int(ceil((max_value-min_value)/increment))
@@ -1085,6 +1094,8 @@ class Expression(models.Model):
     expand_on_compare = models.BooleanField()
     tuple_is_ordered = models.BooleanField()
     collapse_equal_tuple_elements=models.BooleanField()
+    output_no_delimiters = models.BooleanField()
+    sort_list = models.BooleanField()
     sort_order = models.FloatField(default=0)
     class Meta:
         ordering = ['sort_order','id']
@@ -1094,27 +1105,7 @@ class Expression(models.Model):
 
     def evaluate(self, substitutions, function_dict):
 
-        expression = parse_expr(self.expression,local_dict=function_dict)
-
-
-        # if self.pre_eval_subs:
-        #     pre_eval_sub_list = []
-        #     for item in self.pre_eval_subs.split(","):
-        #         sub_pair = item.strip().split(':')
-        #         if len(sub_pair==2):
-        #             pre_eval_sub_list.append( (sub_pair[0].strip(), sub_pair[1].strip()) )
-        #     if pre_eval_sub_list:
-        #         expression=expression.subs(pre_eval_sub_list)
-
-
-        try: 
-            expression=expression.subs(substitutions)
-        except (AttributeError, TypeError):
-            pass
-        try: 
-            expression=expression.doit()
-        except (AttributeError, TypeError):
-            pass
+        expression = parse_and_process(self.expression,substitutions=substitutions, local_dict=function_dict)
         
         if self.expand:
             expression=expression.expand()
@@ -1123,16 +1114,9 @@ class Expression(models.Model):
             input_list = [parse_expr(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in substitution list, need to remove
             slist_2=[s for s in substitutions if s[0] not in input_list]
-            expr2= parse_expr(self.expression,local_dict=function_dict)
 
-            try: 
-                expr2=expr2.subs(slist_2)
-            except AttributeError:
-                pass
-            try: 
-                expr2=expr2.doit()
-            except AttributeError:
-                pass
+            expr2= parse_and_process(self.expression,substitutions=slist_2,
+                                     local_dict=function_dict)
             
             class parsed_function(Function):
                 the_input_list = input_list
@@ -1150,7 +1134,7 @@ class Expression(models.Model):
             # the_function = lambdify(input_list, expr2)
             # function_dict[self.name] = the_function
             
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters, sort_list=self.sort_list)
 
 
 class PlotFunction(models.Model):
