@@ -455,6 +455,8 @@ class Question(models.Model):
         
         identifier = "%s_%s" % (identifier, self.id)
 
+        context['identifier'] = identifier
+
         seed_used = context['question_%s_seed' % identifier]
         
         return self.render_text(context, identifier=identifier, user=user, 
