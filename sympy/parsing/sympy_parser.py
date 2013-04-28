@@ -648,8 +648,29 @@ def eval_expr(code, local_dict, global_dict):
 
     Generally, ``parse_expr`` should be used.
     """
+
+    # Create new global dictionary so modifications don't affect original
+    new_global_dict = {}
+    new_global_dict.update(global_dict)
+
+    # Since Symbol could be added by auto_symbol
+    # and Integer, Float, or Rational could be added by auto_number
+    # add them to the global dict if not present
+    if 'Integer' not in new_global_dict:
+        from sympy import Integer
+        new_global_dict['Integer'] = Integer
+    if 'Float' not in new_global_dict:
+        from sympy import Float
+        new_global_dict['Float'] = Float
+    if 'Rational' not in new_global_dict:
+        from sympy import Rational
+        new_global_dict['Rational'] = Rational
+    if 'Symbol' not in new_global_dict:
+        from sympy import Symbol
+        new_global_dict['Symbol'] = Symbol
+
     expr = eval(
-        code, global_dict, local_dict)  # take local objects in preference
+        code, new_global_dict, local_dict)  # take local objects in preference
 
     return expr
 
