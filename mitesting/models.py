@@ -9,142 +9,46 @@ import random
 from mitesting.permissions import return_user_assessment_permission_level
 import re
 import sympy
-from sympy import Symbol, Function
+from sympy import Symbol, Function, Tuple
 from sympy.printing import latex
 from django.db.models import Max
 from mitesting.math_objects import create_greek_dict, create_symbol_name_dict
 from mitesting.math_objects import math_object, parse_expr, parse_and_process
 
-class deferred_gcd(Function):
-    nargs = 2
-    
-    def doit(self, **hints):        
-        if hints.get('deep', True):
-            return sympy.gcd(self.args[0].doit(**hints), self.args[1].doit(**hints))
-        else:
-            return sympy.gcd(self.args[0], self.args[1])
+
+def roots_tuple(f, *gens, **flags):
+    from sympy import roots
+    rootslist = roots(f, *gens, **flags).keys()
+    rootslist.sort()
+    return Tuple(*rootslist)
+
+def root_number(n, f, *gens, **flags):
+    from sympy import roots
+    rootslist = roots(f, *gens, **flags).keys()
+    rootslist.sort()
+    return rootslist[int(n)]
+
+def real_roots(f, *gens):
+    from sympy import roots
+    return roots(f, *gens, filter='R').keys()
+
+def real_roots_tuple(f, *gens):
+    from sympy import roots
+    rootslist = roots(f, *gens, filter='R').keys()
+    rootslist.sort()
+    return Tuple(*rootslist)
+
+def real_root_number(n, f, *gens):
+    from sympy import roots
+    rootslist = roots(f, *gens, filter='R').keys()
+    rootslist.sort()
+    return rootslist[int(n)]
        
-class deferred_polynomial(Function):
-    nargs = 1
-    
-    def doit(self, **hints):        
-        if hints.get('deep', True):
-            return self.args[0].doit(**hints)**3-3*self.args[0].doit(**hints)+0.5
-        else:
-            return self.args[0]**3-3*self.args[0]+0.5
-
-
-class deferred_roots(Function):
-    nargs = 2
-    
-    def doit(self, **hints):        
-        from sympy import roots
-        if hints.get('deep', True):
-            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints))
-        else:
-            return roots(self.args[0],self.args[1])
-   
-class deferred_realroots(Function):
-    nargs = 2
-    
-    def doit(self, **hints):        
-        from sympy import roots
-        if hints.get('deep', True):
-            return roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R')
-        else:
-            return roots(self.args[0],self.args[1], filter='R')
-   
-class deferred_rootslist(Function):
-    
-    def doit(self, **hints):        
-        from sympy import roots
-        if hints.get('deep', True):
-            rootlist = roots(self.args[0].doit(**hints), self.args[1].doit(**hints)).keys()
-        else:
-            rootlist= roots(self.args[0],self.args[1]).keys()
-        rootlist.sort()
-        if len(self.args) > 2:
-            return rootlist[self.args[2]]
-        else:
-            return rootlist
-   
-class deferred_realrootslist(Function):
-
-    def doit(self, **hints):        
-        from sympy import roots
-        if hints.get('deep', True):
-            rootlist = roots(self.args[0].doit(**hints), self.args[1].doit(**hints), filter='R').keys()
-        else:
-            rootlist = roots(self.args[0],self.args[1], filter='R').keys()
-        rootlist.sort()
-        if len(self.args) > 2:
-            return rootlist[self.args[2]]
-        else:
-            return rootlist
-   
-class deferred_diff(Function):
-    
-    def doit(self, **hints):        
-        if hints.get('deep', True):
-            return sympy.diff(*[i.doit(**hints) for i in self.args])
-        else:
-            return sympy.diff(*self.args)
-       
-class deferred_round(Function):
-    
-    def doit(self, **hints):        
-        if hints.get('deep', True):
-            try:
-                return round(*[i.doit(**hints) for i in self.args])
-            except:
-                return self.args[0].doit(**hiints)
-        else:
-            try:
-                return round(*self.args)
-            except:
-                return self.args[0]
-       
-
-
-# input_list=[Symbol('x'),]
-# expr2 = Symbol('x')**2
-
-# class parsed_function(Function):
-#     the_input_list = input_list
-#     n_args = len(input_list)
-    
-#     def doit(self, **hints):        
-#         if hints.get('deep', True):
-#             return expr2.subs([(self.the_input_list[i],a.doit(**hints)) for (i,a) in enumerate(self.args)])
-#         else:
-#             return expr2.subs([(self.the_input_list[i],a) for (i,a) in enumerate(self.args)])
-        
-# class deferred_max(Function):
-#     nargs = 2
-    
-#     def doit(self, **hints):
-#         if hints.get('deep',True):
-#             return max(self.args[0].doit(**hints), self.args[1].doit(**hints))
-#         else:
-#             return max(self.args[0], self.args[1])
-        
-# class deferred_min(Function):
-#     nargs = 2
-    
-#     def doit(self, **hints):
-#         if hints.get('deep',True):
-#             return min(self.args[0].doit(**hints), self.args[1].doit(**hints))
-#         else:
-#             return min(self.args[0], self.args[1])
-
-# class deferred_sign(Function):
-#     nargs = 1
-    
-#     def doit(self, **hints):
-#         if hints.get('deep',True):
-#             return sympy.sign(self.args[0].doit(**hints))
-#         else:
-#             return sympy.sign(self.args[0])
+def try_round(number, ndigits):
+    try:
+        return round(number, ndigits)
+    except TypeError:
+        return number
 
     
 class QuestionSpacing(models.Model):
@@ -252,49 +156,42 @@ class Question(models.Model):
             
         return html_string
 
-    def return_sympy_local_dict(self):
+    def return_sympy_global_dict(self):
 
-        # obtain list of all allowed sympy commands
+        # make a whitelist of allowed commands
+
+        all_sympy_commands = {}
+        exec "from sympy import *" in all_sympy_commands
+
+        localized_commands = {'roots_tuple': roots_tuple, 
+                              'root_number': root_number,
+                              'real_roots': real_roots,
+                              'real_roots_tuple': real_roots_tuple, 
+                              'real_root_number': real_root_number,
+                              'round': try_round,
+                              'e': all_sympy_commands['E'], 
+                              'max': all_sympy_commands['Max'], 
+                              'min': all_sympy_commands['Min'],
+                              'abs': all_sympy_commands['Abs'], }
+  
+        # obtain list of allowed commands from database
         allowed_commands = set()
         command_lists = self.allowed_sympy_commands.all()
         for clist in command_lists:
             allowed_commands=allowed_commands.union([item.strip() for item in clist.commands.split(",")])
         
-        allowed_commands= allowed_commands.union(['Symbol', 'Integer','Float','Rational'])
-        # since don't have a whitelist function
-        # make a blacklist of all functions except those allowed
-        all_commands = {}
-        exec "from sympy import *" in all_commands
-        disallowed_commands_set = set(all_commands.keys()) - allowed_commands
-        disallowed_commands = dict([(key, Symbol(str(key))) for key in disallowed_commands_set]) 
-        
-        local_dict = disallowed_commands
-        if 'gcd' in allowed_commands:
-            local_dict['gcd'] = deferred_gcd
-        if 'diff' in allowed_commands:
-            local_dict['diff'] = deferred_diff
-        if 'round' in allowed_commands:
-            local_dict['round'] = deferred_round
-        if 'roots' in allowed_commands:
-            local_dict['roots'] = deferred_roots
-        if 'realroots' in allowed_commands:
-            local_dict['realroots'] = deferred_realroots
-        if 'roots' in allowed_commands:
-            local_dict['rootslist'] = deferred_rootslist
-        if 'realroots' in allowed_commands:
-            local_dict['realrootslist'] = deferred_realrootslist
-        if 'e' in allowed_commands:
-            from sympy import E
-            local_dict['e'] = E
+        global_dict = {}
+        for command in allowed_commands:
+            try:
+                global_dict[str(command)]=localized_commands[command]
+            except KeyError:
+                try:
+                    global_dict[str(command)]=all_sympy_commands[command]
+                except KeyError:
+                    pass
+
             
-        # if 'max' in allowed_commands:
-        #     local_dict['max'] = deferred_max
-        # if 'min' in allowed_commands:
-        #     local_dict['min'] = deferred_min
-        # if 'sign' in allowed_commands:
-        #     local_dict['sign'] = deferred_sign
-            
-        return local_dict
+        return global_dict
     
     def setup_context(self, identifier="", seed=None, allow_solution_buttons=False):
 
@@ -312,19 +209,15 @@ class Question(models.Model):
 
         for i in range(max_tries):
             # select random numbers and add to context
-            substitutions=[]
-            function_dict = create_greek_dict()
-            function_dict['abs'] = abs
-            function_dict.update(self.return_sympy_local_dict())
+            global_dict = create_greek_dict()
+            global_dict.update(self.return_sympy_global_dict())
 
             for random_number in self.randomnumber_set.all():
                 try:
                     the_sample = random_number.get_sample \
-                        (substitutions=substitutions, \
-                         function_dict=function_dict)
+                        (global_dict=global_dict)
                     the_context[random_number.name] = the_sample
-                    substitutions.append((Symbol(str(random_number.name)),
-                                          the_sample.return_expression()))
+                    global_dict[str(random_number.name)] = the_sample.return_expression()
 
                 except Exception as e:
                     return "Error in random number %s: %s" % (random_number.name, e)
@@ -332,7 +225,6 @@ class Question(models.Model):
 
             # select random words and add to context
             # if two words have the same group, use the same random index
-            random_word_substitutions = []
             groups = self.randomword_set.values('group').distinct()
             for group_dict in groups:
                 group = group_dict['group']
@@ -341,7 +233,7 @@ class Question(models.Model):
                     if ind==0 or group=='' or group is None:
                         word_index=None
                     try:
-                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, function_dict=function_dict)
+                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, global_dict=global_dict)
                     except Exception as e:
                         return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
@@ -353,28 +245,25 @@ class Question(models.Model):
                         word_text=re.sub(' ', '_', the_word)
                         sympy_word = Symbol(str(the_word))
                         
-                    random_word_substitutions.append((Symbol(str(random_word.name)), 
-                                                      sympy_word))
+                    global_dict[str(random_word.name)]=sympy_word
 
 
             failed_required_condition = False
             for expression in self.expression_set.all():
                 try:
-                    the_subs = substitutions+random_word_substitutions
-                    expression_evaluated = expression.evaluate(the_subs, function_dict)
+                    expression_evaluated = expression.evaluate(global_dict=global_dict)
                 except Exception as e:
                     return "Error in expression %s: %s" % (expression.name, e)
                 the_context[expression.name]=expression_evaluated
 
-                # add to substitutions only if not list
-                if not isinstance(expression_evaluated.return_expression(), list):
-                    substitutions.append((Symbol(str(expression.name)),expression_evaluated.return_expression()))
+                # # add to substitutions only if not list
+                # if not isinstance(expression_evaluated.return_expression(), list):
+                #     global_dict[expression.name] = expression_evaluated.return_expression()
                 if expression.required_condition:
                     if not expression_evaluated.return_expression():
                         failed_required_condition=True
                         break
-            
-            substitutions=substitutions+random_word_substitutions
+
             if not failed_required_condition:
                 success=True
                 break
@@ -383,8 +272,7 @@ class Question(models.Model):
             return "Failed to satisfy question condition"
 
         
-        the_context['sympy_substitutions']=substitutions
-        the_context['sympy_function_dict']=function_dict
+        the_context['sympy_global_dict']=global_dict
         the_context['question_%s_seed' % identifier] = seed
         return the_context
 
@@ -1001,16 +889,13 @@ class RandomNumber(models.Model):
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self, substitutions=None, function_dict=None):
+    def get_sample(self, global_dict=None):
         
-        max_value = parse_and_process(self.max_value, substitutions=substitutions, 
-                               local_dict=function_dict)
+        max_value = parse_and_process(self.max_value, global_dict=global_dict)
 
-        min_value = parse_and_process(self.min_value, substitutions=substitutions, 
-                               local_dict=function_dict)
+        min_value = parse_and_process(self.min_value, global_dict=global_dict)
         
-        increment = parse_and_process(self.increment, substitutions=substitutions, 
-                               local_dict=function_dict)
+        increment = parse_and_process(self.increment, global_dict=global_dict)
            
         num_possibilities = 1+int(ceil((max_value-min_value)/increment))
         choices=(min_value+n*increment for n in range(num_possibilities))
@@ -1046,7 +931,7 @@ class RandomWord(models.Model):
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self, index=None, function_dict=None):
+    def get_sample(self, index=None, global_dict=None):
 
         # turn comma separated list to python list. 
         # strip off leading/trailing whitespace
@@ -1059,15 +944,13 @@ class RandomWord(models.Model):
         the_word=option_list[index]
         if self.sympy_parse or self.treat_as_function:
             try:
-                if not function_dict:
-                    function_dict = create_greek_dict()
-                local_dict = {}
-                local_dict.update(function_dict)
+                if not global_dict:
+                    global_dict = create_greek_dict()
+                temp_global_dict = {}
+                temp_global_dict.update(function_dict)
                 if self.treat_as_function:
-                    local_dict[the_word] = Function(str(the_word))
-                the_word = math_object(parse_expr(the_word, local_dict=local_dict))
-                if self.treat_as_function:
-                    function_dict[self.name] = the_word.return_expression()
+                    temp_global_dict[str(the_word)] = Function(str(the_word))
+                the_word = math_object(parse_expr(the_word, global_dict=temp_global_dict))
             except:
                 pass
         if not the_word:
@@ -1105,37 +988,45 @@ class Expression(models.Model):
     def __unicode__(self): 
         return  self.name
 
-    def evaluate(self, substitutions, function_dict):
+    def evaluate(self, global_dict):
 
-        expression = parse_and_process(self.expression,substitutions=substitutions, local_dict=function_dict)
+        expression = parse_and_process(self.expression, global_dict=global_dict)
         
         if self.expand:
             expression=expression.expand()
 
         if self.function_inputs:
             input_list = [parse_expr(item.strip()) for item in self.function_inputs.split(",")]
-            # if any input variables are in substitution list, need to remove
-            slist_2=[s for s in substitutions if s[0] not in input_list]
+            # if any input variables are in global_dict, need to remove
+            global_dict_sub = dict((key, global_dict[key]) for key in global_dict.keys() if key not in input_list)
 
-            expr2= parse_and_process(self.expression,substitutions=slist_2,
-                                     local_dict=function_dict)
+
+            # expr2= parse_and_process(self.expression,
+            #                          global_dict=global_dict_sub)
             
             class parsed_function(Function):
                 the_input_list = input_list
                 n_args = len(input_list)
+                the_global_dict_sub = global_dict_sub
+                expression = self.expression
+                __name__ = self.name
 
-                def doit(self, **hints):        
-                    if hints.get('deep', True):
-                        return expr2.xreplace(dict((self.the_input_list[i], a.doit(**hints)) for (i,a) in enumerate(self.args)))
-                    else:
-                        return expr2.xreplace(dict((self.the_input_list[i],a) for (i,a) in enumerate(self.args)))
+                @classmethod
+                def eval(cls, *args):
+                    temp_global_dict = {}
+                    temp_global_dict.update(cls.the_global_dict_sub)
+                    for i in range(len(cls.the_input_list)):
+                        temp_global_dict[str(cls.the_input_list[i])] = args[i]
+                    return parse_and_process(cls.expression, global_dict=temp_global_dict)
+
                 
-            function_dict[self.name] = parsed_function   
-
-            # from sympy.utilities.lambdify import lambdify
-            # the_function = lambdify(input_list, expr2)
-            # function_dict[self.name] = the_function
+            global_dict[str(self.name)] = parsed_function   
             
+        # if not function, just add expression to global dict
+        else:
+            if not isinstance(expression, list):
+                global_dict[str(self.name)] = expression
+
         return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters, sort_list=self.sort_list)
 
 

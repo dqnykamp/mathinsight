@@ -91,7 +91,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
 
-        from mitesting.math_objects import parse_expr
+        from mitesting.math_objects import parse_and_process, math_object
 
         the_question = Question.objects.get(id=question_id)
 
@@ -116,8 +116,6 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         the_answers={}
 
-        from mitesting.math_objects import math_object
-
         for answer_tuple in the_correct_answers:
             answer_string = answer_tuple[0]
 
@@ -132,15 +130,10 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 # get rid of any .methods, so can't call commands like
                 # .expand() or .factor()
                 the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
-                local_dict = the_question.return_sympy_local_dict()
-                the_answer_parsed = parse_expr(the_answer, 
-                                               local_dict=local_dict)
+                global_dict = the_question.return_sympy_global_dict()
+                the_answer_parsed = parse_and_process(the_answer, 
+                                                      global_dict=global_dict)
                 
-                try:
-                    the_answer_parsed = the_answer_parsed.doit()
-                except:
-                    pass
-
                 the_answer_parsed=math_object(the_answer_parsed,
                                               tuple_is_ordered=the_correct_answer.return_if_ordered())
 

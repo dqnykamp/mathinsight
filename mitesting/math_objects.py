@@ -16,15 +16,10 @@ def parse_expr(s, global_dict=None, local_dict=None):
 
     transformations=standard_transformations+(convert_xor,implicit_multiplication)
     
-    return sympify(sympy_parse_expr(s, local_dict=local_dict, transformations=transformations))
+    return sympify(sympy_parse_expr(s, global_dict=global_dict, local_dict=local_dict, transformations=transformations))
 
-def parse_and_process(s, substitutions=None, local_dict=None):
-    expression = parse_expr(s, local_dict=local_dict)
-    for sub in substitutions:
-        try: 
-            expression=expression.xreplace({sub[0]: sub[1]})
-        except (AttributeError, TypeError):
-            pass
+def parse_and_process(s, global_dict=None, local_dict=None):
+    expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict)
     try: 
         expression=expression.doit()
     except (AttributeError, TypeError):

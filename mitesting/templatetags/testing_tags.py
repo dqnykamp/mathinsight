@@ -99,20 +99,12 @@ class ExprNode(Node):
 
         expression = force_unicode(self.expression.resolve(context))
 
-        try:
-            function_dict = template.Variable("sympy_function_dict").resolve(context)
-        except:
-            function_dict = {}
-        try:
-            substitutions =  template.Variable("sympy_substitutions").resolve(context)
-        except:
-            subsitutions = []
-        
+        global_dict = context["sympy_global_dict"]
 
         from mitesting.math_objects import parse_and_process, math_object
 
-        expression = parse_and_process(expression,substitutions=substitutions,
-                                       local_dict=function_dict)
+        expression = parse_and_process(expression,
+                                       global_dict=global_dict)
 
         expression=math_object(expression, args, kwargs)
 
@@ -425,8 +417,7 @@ class FigureNode(Node):
 
         # find question
         the_question = context['the_question']
-        function_dict = context['sympy_function_dict']
-        substitutions = context['sympy_substitutions']
+        global_dict = context['sympy_global_dict']
 
         combined_text=''
         point_lists=[]
@@ -441,14 +432,14 @@ class FigureNode(Node):
             try:
                 expression = the_question.expression_set.get(name=plotfunction.function)
                 if expression.function_inputs:
-                    the_function = function_dict[expression.name]
+                    the_function = global_dict[expression.name]
             except:
                 pass
 
             if the_function:
                 if plotfunction.condition_to_show:
                     try:
-                        condition_to_show = parse_and_process(plotfunction.condition_to_show,substitutions=substitutions, local_dict=function_dict)
+                        condition_to_show = parse_and_process(plotfunction.condition_to_show, global_dict=global_dict)
                         # if condition to show is False, skip function
                         if not condition_to_show:
                             continue
@@ -458,12 +449,12 @@ class FigureNode(Node):
 
                 try:
                     series_options=dict()
-                    the_function = function_dict[expression.name]
+                    the_function = global_dict[expression.name]
                     this_x = x
                     if plotfunction.xmin is not None or plotfunction.xmax is not None:
                         if plotfunction.xmin is not None:
                             try:
-                                this_xmin = parse_and_process(plotfunction.xmin,substitutions=substitutions,local_dict=function_dict)
+                                this_xmin = parse_and_process(plotfunction.xmin, global_dict=global_dict)
 
                                 this_xmin = float(this_xmin)
                             except:
@@ -472,7 +463,7 @@ class FigureNode(Node):
                             this_xmin=xmin
                         if plotfunction.xmax is not None:
                             try:
-                                this_xmax = parse_and_process(plotfunction.xmax,substitutions=substitutions,local_dict=function_dict)
+                                this_xmax = parse_and_process(plotfunction.xmax,global_dict=global_dict)
 
                                 this_xmax = float(this_xmax)
                             except:
