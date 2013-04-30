@@ -277,6 +277,28 @@ class math_object(object):
                                         if not w.is_Float 
                                         else Float(str(w.evalf(n_digits))),
                                         atoms=True)
+                
+        else:
+            # even if not n_digits, find any floats and round to 14 digits
+            # to overcome machine precision errors
+            # in this case, only modify atoms that are Floats
+            n_digits=14
+            from sympy.simplify.simplify import bottom_up
+            if isinstance(expression, list):
+                new_expr=[]
+                for expr in expression:
+                    new_expr.append(bottom_up(expr,
+                                    lambda w: w
+                                    if not w.is_Float 
+                                    else Float(str(w.evalf(n_digits))),
+                                    atoms=True))
+                expression=new_expr
+            else:
+                expression =  bottom_up(expression,
+                                        lambda w: w
+                                        if not w.is_Float 
+                                        else Float(str(w.evalf(n_digits))),
+                                        atoms=True)
             
         return expression
 
