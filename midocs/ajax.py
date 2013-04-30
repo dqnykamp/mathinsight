@@ -168,7 +168,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                     dajax.add_css_class(answer_feedback_selector, 'success')
 
                 elif correctness_of_answer == -1:
-                    feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % latex(the_answer_parsed)
+                    feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'success')
                     dajax.add_css_class(answer_feedback_selector, 'error')
                 else:
