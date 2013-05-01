@@ -470,9 +470,13 @@ class FigureNode(Node):
                                 this_xmax=xmax
                         else:
                             this_xmax=xmax
+                        
                         this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))
-                        this_dx = (this_xmax-this_xmin)/(this_n_points-1)
-                        this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
+                        if this_n_points > 0:
+                            this_dx = (this_xmax-this_xmin)/(this_n_points-1)
+                            this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
+                        else:
+                            this_x = [this_xmax,]
 
                     # get list of function values where result is real after chop
                     function_values=[]
@@ -492,6 +496,8 @@ class FigureNode(Node):
                     return "[Broken figure]"
 
                 series_options['lineWidth'] = 1
+                series_options['showMarker'] = True
+                series_options['markerOptions'] = {'style': "circle" }
                 if plotfunction.linewidth:
                     try:
                         series_options['lineWidth'] = float(plotfunction.linewidth)
