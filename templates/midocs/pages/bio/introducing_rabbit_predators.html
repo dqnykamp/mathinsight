@@ -175,9 +175,9 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 
 <p>What can you conclude from your model analysis?  Can you make a convincing case that introducing foxes to Foxless Island will help control the rabbit population?  Even if it doesn't show that one will get good results in all cases, can you use the model to develop a strategy that will lead to a more or less stable population of around a thousand rabbits?</p>
 
-<p>If we estimate that Foxless currently has around 3000 rabbits, can you get to a more or less stable population of a thousand rabbits just by introducing an appropriate number of foxes?  In other words, if you set the initial condition for rabbits to be $r(0)=3000$, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stay close to 1000?</p>
+<p>If we estimate that Foxless currently has around 3000 rabbits, can you get to a more or less stable population of a thousand rabbits just by introducing an appropriate number of foxes?  In other words, if you set the initial condition for rabbits to be $r(0)=3000$, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stays close to 1000?</p>
 
-<p>Can you get to this thousand rabbit population if you help the foxes out by initially harvesting some rabbits yourself?  In other words, if you lower the initial condition $r(0)=3000$ to a smaller number, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stay close to 1000?</p>
+<p>Can you get to this thousand rabbit population if you help the foxes out by initially harvesting some rabbits yourself?  In other words, if you lower the initial condition $r(0)=3000$ to a smaller number, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stays close to 1000?</p>
 
 <p>Does the model help you address the two objections that you envisioned people making?  Why or why not?</p>
 
@@ -195,7 +195,7 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
       <li>Describe the meaning of the four parameters $\alpha$, $\beta$, $\gamma$, and $\delta$.</li>
       <li>Why might the predator-prey model of equations \eqref{rabbits_with_foxes} and \eqref{foxes_with_rabbits} control the rabbit population better than a model where you continually harvest a fixed fraction of rabbits?  The latter model might look like
 	$$\diff{r}{t} = \alpha r - \beta r.$$
-	(Hint: how does the fact the the fox population size responds to fluctuations in the rabbit population size relieve some of the problems of the fix fraction harvesting model.)</li>
+	(Hint: how does the fact the the fox population size responds to fluctuations in the rabbit population size relieve some of the problems of the fixed fraction harvesting model.)</li>
     </ol>
   <li><p><b>A Forward Euler approximation</b></p>
     <ol><li>Finish the calculation to estimate the population sizes $r(2)$ and $p(2)$ after the second year using the Forward Euler algorithm with a time step of 1 year.</li>
@@ -212,7 +212,7 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 
   <li><p><b>Phase plane visualization</b></p>
     <ol><li>In the phase plane, one can just plot the locations of the point $(r(t),p(t))$ for a range of times $t$.  The result is a curve in the phase plane.  Can you tell by looking just at the curve in the phase plane, how quickly the rabbit and fox populations are changing with time?   As time $t$ evolves does the state $(r(t),p(t))$ move at the same speed at all times?  Describe where in the phase plane the state $(r(t),p(t))$ moves faster or slower.</li>
-      <li>By exploring the how trajectories (the curves) depend on the initial condition point $(r(0),p(0)$, determine which initial conditions lead to largest and the smallest oscillations in the population size.  Can you find an initial condition where the oscillations is essentially eliminated?</li>
+      <li>By exploring the how trajectories (the curves) depend on the initial condition point $(r(0),p(0))$, determine which initial conditions lead to largest and the smallest oscillations in the population size.  Can you find an initial condition where the oscillations are essentially eliminated?</li>
     </ol>
 
   <li><p><b>Equilibria</b></p>
