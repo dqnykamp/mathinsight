@@ -222,6 +222,16 @@ def linepattern_from_linestyle(linestyle):
     else:
         return None
 
+def markerpattern_from_linestyle(linestyle):
+    if 'o' in linestyle:
+        return 'circle'
+    elif 'x' in linestyle:
+        return 'x'
+    elif 's' in linestyle:
+        return 'square'
+    else:
+        return None
+
 def convert_greek_to_unicode(string):
 
     greek = {'\[alpha\]':u'\u03b1', '\[beta\]':u'\u03b2', '\[gamma\]':u'\u03b3', '\[delta\]':u'\u03b4', '\[epsilon\]':u'\u03b5', '\[zeta\]':u'\u03b6', '\[eta\]':u'\u03b7', '\[theta\]':u'\u03b8', '\[kappa\]':u'\u03ba', '\[lambda\]':u'\u03bb', '\[mu\]':u'\u03bc', '\[nu\]':u'\u03bd', '\[xi\]':u'\u03be', '\[pi\]':u'\u03c0', '\[rho\]':u'\u03c1', '\[sigma\]':u'\u03c3', '\[tau\]':u'\u03c4', '\[upsilon\]':u'\u03c5', '\[phi\]':u'\u03c6', '\[chi\]':u'\u03c7', '\[psi\]':u'\u03c8', '\[omega\]':u'\u03c9', '\[Gamma\]':u'\u0393', '\[Delta\]':u'\u0394', '\[Theta\]':u'\u0398', '\[Lambda\]':u'\u039b', '\[Xi\]':u'\u039e', '\[Pi\]':u'\u03A1', '\[Sigma\]':u'\u03A3', '\[Upsilon\]':u'\u03A5', '\[Phi\]':u'\u03A6', '\[Psi\]':u'\u03A8', '\[Omega\]':u'\u03A9'}
@@ -496,8 +506,7 @@ class FigureNode(Node):
                     return "[Broken figure]"
 
                 series_options['lineWidth'] = 1
-                series_options['showMarker'] = True
-                series_options['markerOptions'] = {'style': "circle" }
+
                 if plotfunction.linewidth:
                     try:
                         series_options['lineWidth'] = float(plotfunction.linewidth)
@@ -510,6 +519,12 @@ class FigureNode(Node):
                     linePattern = linepattern_from_linestyle(plotfunction.linestyle)
                     if linePattern:
                         series_options['linePattern']=linePattern
+
+                    markerPattern = markerpattern_from_linestyle(plotfunction.linestyle)
+                    if markerPattern:
+                        series_options['showMarker'] = True
+                        series_options['markerOptions'] = {'style': markerPattern }
+
                 series_option_list.append(series_options)
             
         if len(point_lists)==0:
