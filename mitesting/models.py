@@ -22,12 +22,6 @@ def roots_tuple(f, *gens, **flags):
     rootslist.sort()
     return Tuple(*rootslist)
 
-def root_number(n, f, *gens, **flags):
-    from sympy import roots
-    rootslist = roots(f, *gens, **flags).keys()
-    rootslist.sort()
-    return rootslist[int(n)]
-
 def real_roots(f, *gens):
     from sympy import roots
     return roots(f, *gens, filter='R').keys()
@@ -38,12 +32,6 @@ def real_roots_tuple(f, *gens):
     rootslist.sort()
     return Tuple(*rootslist)
 
-def real_root_number(n, f, *gens):
-    from sympy import roots
-    rootslist = roots(f, *gens, filter='R').keys()
-    rootslist.sort()
-    return rootslist[int(n)]
-       
 def try_round(number, ndigits):
     try:
         return round(number, ndigits)
@@ -164,10 +152,8 @@ class Question(models.Model):
         exec "from sympy import *" in all_sympy_commands
 
         localized_commands = {'roots_tuple': roots_tuple, 
-                              'root_number': root_number,
                               'real_roots': real_roots,
                               'real_roots_tuple': real_roots_tuple, 
-                              'real_root_number': real_root_number,
                               'round': try_round,
                               'e': all_sympy_commands['E'], 
                               'max': all_sympy_commands['Max'], 
