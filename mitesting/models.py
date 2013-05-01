@@ -32,7 +32,7 @@ def real_roots_tuple(f, *gens):
     rootslist.sort()
     return Tuple(*rootslist)
 
-def try_round(number, ndigits):
+def try_round(number, ndigits=0):
     try:
         return round(number, ndigits)
     except TypeError:
