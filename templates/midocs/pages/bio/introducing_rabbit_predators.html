@@ -38,7 +38,7 @@ Since $\alpha$ is positive, the equation will lead to exponential growth of the 
 
 <p>As a warm up, solve the foxless rabbit equation \eqref{rabbits_alone} and the rabbitless fox equation \eqref{foxes_alone}, to obtain an expression for these separate populations.  (Guessing the solution is an OK method.)  What happens to the rabbit population as time increases?  What happens to the fox population as time increases?</p>
 
-<p>Your main use of the model is to show how the foxes will decrease the rabbit population.  To model this effect, you subtract a term off the $\diff{r}{t}$ that accounts for the decrease in rabbits due to fox predation.  To keep the model simple, you decided to make the rate of rabbit kills be proportional to the number of rabbits and the number of foxes: $\beta r p$, where the Greek letter $\beta$ (beta) is a parameter that indicates how quickly a fox can reduce the rabbit population.  The rabbit equation becomes
+<p>Your main use of the model is to show how the foxes will decrease the rabbit population.  To model this effect, you subtract a term off the rabbit-change equation, (i.e., the $\diff{r}{t}$ equation \eqref{rabbits_alone}) that accounts for the decrease in rabbits due to fox predation.  To keep the model simple, you decided to make the rate of rabbit kills be proportional to the number of rabbits and the number of foxes: $\beta r p$, where the Greek letter $\beta$ (beta) is a parameter that indicates how quickly a fox can reduce the rabbit population.  The rabbit equation becomes
 \begin{align}
   \diff{r}{t} = \alpha r - \beta r p.
   \label{rabbits_with_foxes}
@@ -74,7 +74,7 @@ They look simple enough, but you don't know how to solve them.  To determine wha
   \diff{r}{t}\bigg|_{t=0} &=  3000 - 0.01 (3000)(70)=900\notag\\
   \diff{p}{t}\bigg|_{t=0} &= - 0.5(70) + 0.0005 (3000)(70)= 70.
 \end{align*}
-Oh no, the rabbit population is still growing!  Aren't the foxes doing their job?  It looks like 70 foxes isn't enough to keep the rabbits in check.  But, the fact that the fox population is growing at a healthy rate is promising.</p>
+Oh no, $\diff{r}{t}$ is positive.  This means the change in the number of rabbits is positive: the rabbit population is still growing!  Aren't the foxes doing their job?  It looks like 70 foxes isn't enough to keep the rabbits in check.  But, the fact that the fox population is growing at a healthy rate is promising.</p>
 
 <p>For a crude initial approximation, you decide to assume the rabbit and fox population grow at these rates for a whole year.  With this assumption, the populations after the first year are
 \begin{align*}
@@ -133,7 +133,7 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 
 
 
-<p>You find the oscillatory behavior of the solution to your system of equations a bit surprising.  You wonder if may the result was just a strange coincidence given that you started with 3000 rabbits and 70 foxes.  If you try different initial conditions, do you get similar behavior?  Does the solution still oscillate?  If it does oscillate, does the oscillation seem to take the same or different amount of time?</p>
+<p>You find the oscillatory behavior of the solution to your system of equations a bit surprising.  You wonder if maybe the result was just a strange coincidence given that you started with 3000 rabbits and 70 foxes.  If you try different initial conditions, do you get similar behavior?  Does the solution still oscillate?  If it does oscillate, does the oscillation seem to take the same or different amount of time?</p>
 
 <p>Maybe the oscillations are just an artifact of the value of the four parameters that you chose.  Change the parameters by small amounts at a time, and see if the behavior of the system is roughly similar or has dramatically different behavior.</p>
 
@@ -145,7 +145,7 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 
 {% boxedapplet lotka_volterra_phase_plane_versus_time_population_display %}
 
-<p>The phase plane visualization helps you better see how the oscillations work and what controls the size of the oscillations.  By dragging the initial condition point $(r(0),p(0))$ around the phase plane, you can see how the initial conditions influence the oscillations.  What initial conditions lead to the largest oscillations in the population sizes?  What initial conditions lead to the smallest oscillations?  Can you find an initial condition where the oscillations is essentially eliminated?</p>
+<p>The phase plane visualization helps you better see how the oscillations work and what controls the size of the oscillations.  By dragging the initial condition point $(r(0),p(0))$ around the phase plane, you can see how the initial conditions influence the oscillations.  What initial conditions lead to the largest oscillations in the population sizes?  What initial conditions lead to the smallest oscillations?  Can you find an initial condition where the oscillations are essentially eliminated?</p>
 
 
 
@@ -175,7 +175,9 @@ dpdt= -0.5(203) + 0.0005(2340)(203) = 136
 
 <p>What can you conclude from your model analysis?  Can you make a convincing case that introducing foxes to Foxless Island will help control the rabbit population?  Even if it doesn't show that one will get good results in all cases, can you use the model to develop a strategy that will lead to a more or less stable population of around a thousand rabbits?</p>
 
-<p>If we estimate that Foxless currently has around 3000 rabbits, can you get to a more or less stable population of a thousand rabbits just by introducing an appropriate number of foxes?  Can you get to this thousand rabbit population if you help the foxes out by initially harvesting some rabbits yourself?</p>
+<p>If we estimate that Foxless currently has around 3000 rabbits, can you get to a more or less stable population of a thousand rabbits just by introducing an appropriate number of foxes?  In other words, if you set the initial condition for rabbits to be $r(0)=3000$, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stay close to 1000?</p>
+
+<p>Can you get to this thousand rabbit population if you help the foxes out by initially harvesting some rabbits yourself?  In other words, if you lower the initial condition $r(0)=3000$ to a smaller number, can you find a solution (by changing the number of foxes $f(0)$ introduced) where $r(t)$ eventually stay close to 1000?</p>
 
 <p>Does the model help you address the two objections that you envisioned people making?  Why or why not?</p>
 
