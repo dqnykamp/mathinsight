@@ -13,6 +13,12 @@ class GenerateAssessmentView(DetailView):
     def dispatch(self, *args, **kwargs):
         return super(GenerateAssessmentView, self).dispatch(*args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = super(GenerateAssessmentView, self).get_context_data(**kwargs)
+        context['the_assessment_name'] = self.get_object().name
+        return context
+
+
 
 urlpatterns = patterns('mitesting.views',
    url(r'^assessment/list$','assessment_list_view', name='mit-assessmentlist'),
