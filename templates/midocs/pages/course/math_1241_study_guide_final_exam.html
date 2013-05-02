@@ -1,0 +1,60 @@
+{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
+{% title "Study guide for Math 1241 final  exam " %}
+{% description "List of topics that could be on the final exam." %}
+
+
+<p>The final exam for Math 1241 is based on parts 2-6 from the <a href="{% url 'mithreads-thread' 'math1241' %}">Math 1241 thread</a>.  The following highlights what is and what is not good potential material for this exam.</p>
+
+
+
+<ol><li><p>Discrete-time dynamical systems (<a href="{% url 'mithreads-thread' 'math1241' %}#discrete">Discrete dynamical systems from Math 1241 thread</a>).</p>
+
+    <p>See {% intlink math_1241_study_guide_discrete_dynamical_systems %}study guide for Math 1241 discrete dynamical system module exam{%endintlink%}.</p>
+    </p>
+</li>
+
+<li><p>Differentiation (<a href="{% url 'mithreads-thread' 'math1241' %}#derivative">The derivative from Math 1241 thread</a>).</p>
+
+<p>See {% intlink math_1241_study_guide_differentiation %}study guide for Math 1241 differentiation module exam{% endintlink %}</p>
+</li>
+
+
+<li><p>Applications of differentiation (<a href="{% url 'mithreads-thread' 'math1241' %}#applications_differentiation">Applications of differentiation from Math 1241 thread</a>).</p>
+
+<p>See {% intlink math_1241_study_guide_applications_of_differentiation %}study guide for Math 1241 applications of differentiation  module exam{% endintlink %}</p>
+</li>
+
+<li><p>Autonomous differential equations (<a href="{% url 'mithreads-thread' 'math1241' %}#autonomous_differential_equations">Autonomous differential equations from Math 1241 thread</a>).</p>
+
+<p>See {% intlink math_1241_study_guide_autonomous_differential_equation %}study guide for Math 1241 autonomous differential equation module exam{% endintlink %}</p>
+</li>
+
+<li><p>Two-dimensional autonomous differential equations (<a href="{% url 'mithreads-thread' 'math1241' %}#two_dimensional_autonomous_differential_equations">Two-dimensional autonomous differential equations from Math 1241 thread</a>).</p>
+  <ol>
+    <li>What it means for two autonomous differential equations to be
+  coupled.</li>  
+
+    <li>Estimating a solution to a two-dimensional differential equation
+  using the Forward Euler algorithm</li>
+
+    <li>Understanding the correspondence between the phase plane plot and
+  plots versus time.</li>
+
+    <li>Finding equilibria by solving the two equations made by setting the rates of change to zero.</li>
+
+    <li>Plotting nullclines in the phase plane.</li>
+
+    <li>Finding equilibria by finding the points where the nullclines intersect.</li>
+
+    <li>Plotting direction arrows on the nullclines and in the regions of the phase plane that are divided by the nullclines.</li>
+
+    <li>Sketching a solution in the phase plane based on direction arrows.</li>
+
+    <li>The predator-prey system, the competition equations, the
+  disease model, and the neuron model are good example equations, but
+  you aren't expected to memorize them.</li>
+  </ol>
+</li>
+</ol>
+
+{% endblock %}
