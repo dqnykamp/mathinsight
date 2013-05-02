@@ -417,7 +417,7 @@ class FigureNode(Node):
 
         n_points=200
         dx = (xmax-xmin)/(n_points-1)
-        x = [xmin+i*dx for i in range(n_points)]
+        all_x = [xmin+i*dx for i in range(n_points)]
 
         figure_number = self.figure_number.resolve(context)
 
@@ -460,7 +460,7 @@ class FigureNode(Node):
                 try:
                     series_options=dict()
                     the_function = global_dict[expression.name]
-                    this_x = x
+                    this_x = all_x
                     if plotfunction.xmin is not None or plotfunction.xmax is not None:
                         if plotfunction.xmin is not None:
                             try:
@@ -528,7 +528,7 @@ class FigureNode(Node):
                 series_option_list.append(series_options)
             
         if len(point_lists)==0:
-            return "[Broken figure]"
+            return "[Broken figure - no points]"
 
         # return "%s %s" % (type(point_lists[0][0][0]), type(point_lists[0][0][1]))
         # return "%s" % point_lists
