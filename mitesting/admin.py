@@ -50,7 +50,7 @@ class QuestionAnswerInline(admin.StackedInline):
 
 class QuestionAdmin(admin.ModelAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline]
-    filter_horizontal = ['allowed_sympy_commands',]
+    filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
     search_fields = ['id', 'name']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -62,7 +62,7 @@ class QuestionAdmin(admin.ModelAdmin):
                            'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
                            'hint_text', 'show_solution_button_after_attempts',
-                           'allowed_sympy_commands',)
+                           'allowed_sympy_commands', 'keywords', 'subjects',)
                 }),
         # ('Optional', {
         #         'classes': ('collapse',),

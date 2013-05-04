@@ -73,6 +73,9 @@ class Question(models.Model):
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
     show_solution_button_after_attempts=models.IntegerField(default=0)
+    keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
+    subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
+
 
     def __unicode__(self):
         return "%s: %s" % (self.id, self.name)
@@ -545,6 +548,7 @@ class Assessment(models.Model):
     questions = models.ManyToManyField(Question, through='QuestionAssigned')
     fixed_order = models.BooleanField(default=False)
     instructions = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
     time_limit = models.CharField(max_length=20, blank=True, null=True)
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
