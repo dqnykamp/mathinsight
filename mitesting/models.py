@@ -937,7 +937,7 @@ class RandomWord(models.Model):
                 if not global_dict:
                     global_dict = create_greek_dict()
                 temp_global_dict = {}
-                temp_global_dict.update(function_dict)
+                temp_global_dict.update(global_dict)
                 if self.treat_as_function:
                     temp_global_dict[str(the_word)] = Function(str(the_word))
                 the_word = math_object(parse_expr(the_word, global_dict=temp_global_dict))
