@@ -18,13 +18,14 @@ def parse_expr(s, global_dict=None, local_dict=None):
     
     return sympify(sympy_parse_expr(s, global_dict=global_dict, local_dict=local_dict, transformations=transformations))
 
-def parse_and_process(s, global_dict=None, local_dict=None):
+def parse_and_process(s, global_dict=None, local_dict=None, doit=True):
     expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict)
-    try: 
-        expression=expression.doit()
-    except (AttributeError, TypeError):
-        pass
-    
+    if doit:
+        try: 
+            expression=expression.doit()
+        except (AttributeError, TypeError):
+            pass
+        
     return expression
 
 

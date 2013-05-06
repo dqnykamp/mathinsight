@@ -961,6 +961,7 @@ class Expression(models.Model):
     expression = models.CharField(max_length=200)
     required_condition = models.BooleanField(default=False)
     expand = models.BooleanField()
+    doit = models.BooleanField(default=True)
     n_digits = models.IntegerField(blank=True, null=True)
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
@@ -980,7 +981,7 @@ class Expression(models.Model):
 
     def evaluate(self, global_dict):
 
-        expression = parse_and_process(self.expression, global_dict=global_dict)
+        expression = parse_and_process(self.expression, global_dict=global_dict, doit=self.doit)
         
         if self.expand:
             expression=expression.expand()
