@@ -12,7 +12,6 @@ import sympy
 from sympy import Symbol, Function, Tuple
 from sympy.printing import latex
 from django.db.models import Max
-from mitesting.math_objects import create_greek_dict, create_symbol_name_dict
 from mitesting.math_objects import math_object, parse_expr, parse_and_process
 
 
@@ -168,8 +167,9 @@ class Question(models.Model):
         command_lists = self.allowed_sympy_commands.all()
         for clist in command_lists:
             allowed_commands=allowed_commands.union([item.strip() for item in clist.commands.split(",")])
-        
-        global_dict = {}
+
+        from mitesting.math_objects import create_greek_dict
+        global_dict = create_greek_dict()
         for command in allowed_commands:
             try:
                 global_dict[str(command)]=localized_commands[command]
@@ -198,8 +198,7 @@ class Question(models.Model):
 
         for i in range(max_tries):
             # select random numbers and add to context
-            global_dict = create_greek_dict()
-            global_dict.update(self.return_sympy_global_dict())
+            global_dict = self.return_sympy_global_dict()
 
             for random_number in self.randomnumber_set.all():
                 try:
@@ -222,7 +221,7 @@ class Question(models.Model):
                     if ind==0 or group=='' or group is None:
                         word_index=None
                     try:
-                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, global_dict=global_dict)
+                        (the_word, the_plural, word_index) = random_word.get_sample(word_index)
                     except Exception as e:
                         return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
@@ -935,9 +934,10 @@ class RandomWord(models.Model):
         if self.sympy_parse or self.treat_as_function:
             try:
                 if not global_dict:
+                    from mitesting.math_objects import create_greek_dict
                     global_dict = create_greek_dict()
                 temp_global_dict = {}
-                temp_global_dict.update(function_dict)
+                temp_global_dict.update(global_dict)
                 if self.treat_as_function:
                     temp_global_dict[str(the_word)] = Function(str(the_word))
                 the_word = math_object(parse_expr(the_word, global_dict=temp_global_dict))
