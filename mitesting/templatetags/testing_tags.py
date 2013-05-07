@@ -481,7 +481,7 @@ class FigureNode(Node):
                         else:
                             this_xmax=xmax
                         
-                        this_n_points = int(ceil(n_points/(xmax-xmin)*(this_xmax-this_xmin)))
+                        this_n_points = int(ceil(n_points/(xmax-xmin)*abs((this_xmax-this_xmin))))
                         if this_n_points > 0:
                             this_dx = (this_xmax-this_xmin)/(this_n_points-1)
                             this_x = [this_xmin+i*this_dx for i in range(this_n_points)]
