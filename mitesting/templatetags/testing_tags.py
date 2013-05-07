@@ -229,6 +229,8 @@ def markerpattern_from_linestyle(linestyle):
         return 'x'
     elif 's' in linestyle:
         return 'square'
+    elif 'd' in linestyle:
+        return 'diamond'
     else:
         return None
 
