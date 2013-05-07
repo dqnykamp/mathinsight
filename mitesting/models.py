@@ -193,7 +193,7 @@ class Question(models.Model):
             
         the_context={'the_question': self, 'allow_solution_buttons': allow_solution_buttons}
 
-        max_tries=100
+        max_tries=500
         success=False
 
         for i in range(max_tries):
