@@ -223,7 +223,13 @@ def linepattern_from_linestyle(linestyle):
         return None
 
 def markerpattern_from_linestyle(linestyle):
-    if 'o' in linestyle:
+    if 'fo' in linestyle:
+        return 'filledCircle'
+    elif 'fs' in linestyle:
+        return 'filledSquare'
+    elif 'fd' in linestyle:
+        return 'filledDiamond'
+    elif 'o' in linestyle:
         return 'circle'
     elif 'x' in linestyle:
         return 'x'
