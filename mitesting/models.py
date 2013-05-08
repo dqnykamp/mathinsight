@@ -418,11 +418,13 @@ class Question(models.Model):
     def render_javascript_commands(self, context, question=True, solution=False):
         template_string=""
         if question:
-            template_string += self.question_javascript
+            if self.question_javascript:
+                template_string += self.question_javascript
         if solution:
             if template_string:
                 template_string += "\n"
-            template_string += self.solution_javascript
+            if self.solution_javascript:
+                template_string += self.solution_javascript
         if template_string:
             c= Context(context)
             template_string_base = "{% load testing_tags mi_tags humanize %}"
