@@ -1011,7 +1011,7 @@ class Applet(models.Model):
                                     verbose_name="file2 (for double)", 
                                     storage=OverwriteStorage())
 
-    # encoded_content=models.TextField(blank=True, null=True)
+    encoded_content=models.TextField(blank=True, null=True)
     parameters = models.ManyToManyField(AppletTypeParameter, 
                                         through='AppletParameter', 
                                         null=True, blank=True)

@@ -1037,6 +1037,20 @@ def return_print_image_string(applet, panel=0):
     return the_string
 
 
+def GeogebraWeb_link(context, applet, width, height):
+
+    html_string=""
+    geogebra_javascript_included=context.get('geogebra_javascript_included',False)
+    if not geogebra_javascript_included:
+        context['geogebra_javascript_included']=True
+        html_string+='<script type="text/javascript" language="javascript" src="http://www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
+
+    html_string += '<div class="applet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>' % \
+        (width, height, applet.code, applet.encoded_content)
+
+    return html_string
+
+
 def Geogebra_link(context, applet, width, height):
     # html_string='<div class="applet"><object class="ggbApplet" type="application/x-java-applet" id="%s" height="%s" width="%s"><param name="code" value="geogebra.GeoGebraApplet" /><param name="archive" value="geogebra.jar" /><param name="codebase" value="%sjar/" />' % \
     #     (applet.code, height, width, context["STATIC_URL"] )
@@ -1257,6 +1271,8 @@ class AppletNode(template.Node):
            applet_link = DoubleLiveGraphics3D_link(context, applet, width, height)
         elif applet.applet_type.code == "Geogebra":
            applet_link = Geogebra_link(context, applet, width, height)
+        elif applet.applet_type.code == "GeogebraWeb":
+           applet_link = GeogebraWeb_link(context, applet, width, height)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text

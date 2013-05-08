@@ -1547,6 +1547,9 @@ article.applethighlight {
 article.videohighlight {
     padding: 10px;
 }
+article.geogebraweb table {
+    margin: 0px;
+}
 
 @media screen {
 .ym-gbox-perpad { padding: 0 8%; }
