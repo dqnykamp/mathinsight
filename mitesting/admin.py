@@ -61,7 +61,7 @@ class QuestionAdmin(admin.ModelAdmin):
                 'fields': ('name', 'question_type', 
                            'description', 'video', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
-                           'hint_text', 'show_solution_button_after_attempts',
+                           'hint_text', 'question_javascript', 'solution_javascript', 'show_solution_button_after_attempts',
                            'allowed_sympy_commands', 'keywords', 'subjects',)
                 }),
         # ('Optional', {

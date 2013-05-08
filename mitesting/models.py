@@ -68,6 +68,8 @@ class Question(models.Model):
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
+    question_javascript = models.TextField(blank=True, null=True)
+    solution_javascript = models.TextField(blank=True, null=True)
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
