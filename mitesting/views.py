@@ -5,6 +5,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
+from django.utils.safestring import mark_safe
 import random
 from numpy import arccos, arcsin, arctan, arctan2, ceil, cos, cosh, degrees, e, exp, fabs, floor, fmod, frexp, hypot, ldexp, log, log10, modf, pi, radians, sin, sinh, sqrt, tan, tanh, piecewise
 
@@ -44,12 +45,20 @@ def question_view(request, question_id):
     if not isinstance(question_context, dict):
         rendered_question = question_context
         rendered_solution = question_context
+        geogebra_oninit_commands=""
     else:
         rendered_question = the_question.render_question(question_context, 
                                                          identifier=identifier,
                                                          user=request.user)
         rendered_solution = the_question.render_solution(question_context,
                                                          identifier=identifier)
+        geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+
+        # n_geogebra_web_applets = question_context.get('n_geogebra_web_applets', 0)
+        # if n_geogebra_web_applets>0:
+        #     html_string = "napplets++;\nif(napplets == %i) {\n%s\n}" \
+        #         % (n_geogebra_web_applets, html_string)
+
 
     if user_has_given_assessment_permission_level(request.user, 2, solution=True):
         show_lists=True
@@ -64,6 +73,7 @@ def question_view(request, question_id):
                                      'rendered_question': rendered_question,
                                      'rendered_solution': rendered_solution,
                                      'show_lists': show_lists,
+                                     'geogebra_oninit_commands': geogebra_oninit_commands,
                                      'noanalytics': noanalytics,
                                      },
          context_instance=RequestContext(request))
@@ -99,16 +109,20 @@ def question_solution_view(request, question_id):
     # so just make rendered question text be that string
     if not isinstance(question_context, dict):
         rendered_solution = question_context
+        geogebra_oninit_commands=""
     else:
         rendered_solution = the_question.render_solution(question_context,
                                                          identifier=identifier)
-        
+
+        geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=False, solution=True)
+
     # no Google analytics for questions
     noanalytics=True
 
     return render_to_response \
         ('mitesting/question_solution.html', {'the_question': the_question, 
                                      'rendered_solution': rendered_solution,
+                                     'geogebra_oninit_commands': geogebra_oninit_commands,
                                      'noanalytics': noanalytics,
                                      },
          context_instance=RequestContext(request))
@@ -149,9 +163,20 @@ def assessment_view(request, assessment_code, solution=False):
     rendered_solution_list=[]
     if solution:
         rendered_solution_list=the_assessment.render_solution_list(seed)
+        geogebra_oninit_commands=""
+        for sol in rendered_solution_list:
+            if geogebra_oninit_commands:
+                geogebra_oninit_commands += "\n"
+            geogebra_oninit_commands += sol['geogebra_oninit_commands']
     else:
         rendered_question_list=the_assessment.render_question_list(seed, user=request.user)
+        geogebra_oninit_commands=""
+        for ques in rendered_question_list:
+            if geogebra_oninit_commands:
+                geogebra_oninit_commands += "\n"
+            geogebra_oninit_commands += ques['geogebra_oninit_commands']
 
+    geogebra_oninit_commands = mark_safe(geogebra_oninit_commands)
 
     if "question_numbers" in request.REQUEST:
         if solution:
@@ -207,6 +232,7 @@ def assessment_view(request, assessment_code, solution=False):
           'semester': semester,
           'question_numbers': question_numbers,
           'generate_assessment_link': generate_assessment_link,
+          'geogebra_oninit_commands': geogebra_oninit_commands,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))

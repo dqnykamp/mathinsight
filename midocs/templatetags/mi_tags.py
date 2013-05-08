@@ -1041,11 +1041,16 @@ def GeogebraWeb_link(context, applet, width, height):
 
     html_string=""
     geogebra_javascript_included=context.get('geogebra_javascript_included',False)
-    if not geogebra_javascript_included:
-        context['geogebra_javascript_included']=True
+    n_geogebra_web_applets=context.get('n_geogebra_web_applets', 0)
+
+    if n_geogebra_web_applets==0:
         html_string+='<script type="text/javascript" language="javascript" src="http://www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
 
-    html_string += '<div class="applet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>' % \
+    n_geogebra_web_applets += 1
+    context['n_geogebra_web_applets']=n_geogebra_web_applets
+
+
+    html_string += '<div class="javascriptapplet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>' % \
         (width, height, applet.code, applet.encoded_content)
 
     return html_string

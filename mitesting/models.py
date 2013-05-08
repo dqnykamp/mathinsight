@@ -414,7 +414,30 @@ class Question(models.Model):
         
         html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></div></form>'  % (identifier, identifier, send_command, identifier,)
         return mark_safe(html_string)
-    
+
+    def render_javascript_commands(self, context, question=True, solution=False):
+        template_string=""
+        if question:
+            template_string += self.question_javascript
+        if solution:
+            if template_string:
+                template_string += "\n"
+            template_string += self.solution_javascript
+        if template_string:
+            c= Context(context)
+            template_string_base = "{% load testing_tags mi_tags humanize %}"
+            template_string = template_string_base+template_string
+            try:
+                t = Template(template_string)
+                html_string = t.render(c)
+            except TemplateSyntaxError as e:
+                pass
+            
+            return mark_safe(html_string)
+        else:
+            return ""
+
+  
 
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
@@ -677,15 +700,18 @@ class Assessment(models.Model):
             # so just make rendered question text be that string
             if not isinstance(question_context, dict):
                 question_text = question_context
+                geogebra_oninit_commands=""
             else:
                 question_text = the_question.render_question(question_context, user=user, identifier=identifier)
+                geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
 
 
             rendered_question_list.append({'question_text': question_text,
                                            'question': the_question,
                                            'points': question['points'],
                                            'seed': question['seed'],
-                                           'question_set': question['question_set']})
+                                           'question_set': question['question_set'],
+                                           'geogebra_oninit_commands': geogebra_oninit_commands})
         if not self.fixed_order:
             random.shuffle(rendered_question_list)
         
@@ -717,14 +743,17 @@ class Assessment(models.Model):
             if not isinstance(question_context, dict):
                 question_text = question_context
                 solution_text = question_context
+                geogebra_oninit_commands=""
             else:
                 question_text = the_question.render_question(question_context,
                                                           identifier=identifier)
                 solution_text = the_question.render_solution(question_context,
                                                           identifier=identifier)
+                geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
 
             solution_dict['question_text'] = question_text
             solution_dict['solution_text'] = solution_text
+            solution_dict['geogebra_oninit_commands'] = geogebra_oninit_commands
 
             rendered_solution_list.append(solution_dict)
 

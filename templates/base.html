@@ -174,11 +174,13 @@
   obj.style.position="static";
   }
 </script>
-{% if embedded_geogebra %}<script type="text/javascript">
+<script type="text/javascript">
+
 function ggbOnInit(arg) {
+
 {{geogebra_oninit_commands}}
 }
-</script>{% endif %}
+</script>
 
 </body>
 </html>

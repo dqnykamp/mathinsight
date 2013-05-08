@@ -1938,7 +1938,7 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
     margin-top: 0em;
 }
 
-.applet {
+.applet, .javascriptapplet {
     text-align: center;
 }
 
