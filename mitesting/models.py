@@ -185,7 +185,7 @@ class Question(models.Model):
             
         return global_dict
     
-    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False):
+    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False, previous_context = None):
 
         identifier = "%s_%s" % (identifier, self.id)
 
@@ -193,8 +193,13 @@ class Question(models.Model):
             seed=self.get_new_seed()
 
         random.seed(seed)
-            
-        the_context={'the_question': self, 'allow_solution_buttons': allow_solution_buttons}
+        
+        the_context={}
+        if previous_context:
+            the_context.update(previous_context)
+
+        the_context['the_question'] = self
+        the_context['allow_solution_buttons']=allow_solution_buttons
 
         max_tries=500
         success=False
@@ -688,7 +693,8 @@ class Assessment(models.Model):
         question_list = self.get_question_list(seed)
 
         rendered_question_list = []
-
+        
+        previous_context={}
         for (i, question) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
@@ -697,7 +703,8 @@ class Assessment(models.Model):
             the_question = question['question']
             question_context = the_question.setup_context\
                 (seed=question['seed'], identifier=identifier, \
-                     allow_solution_buttons = self.allow_solution_buttons)
+                     allow_solution_buttons = self.allow_solution_buttons,\
+                     previous_context = previous_context)
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -715,6 +722,9 @@ class Assessment(models.Model):
                                            'seed': question['seed'],
                                            'question_set': question['question_set'],
                                            'geogebra_oninit_commands': geogebra_oninit_commands})
+
+            previous_context = question_context
+
         if not self.fixed_order:
             random.shuffle(rendered_question_list)
         
@@ -729,6 +739,7 @@ class Assessment(models.Model):
 
         rendered_solution_list = []
 
+        previous_context = {}
         for (i, question) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
@@ -739,7 +750,8 @@ class Assessment(models.Model):
             the_question = question['question']
             question_context = the_question.setup_context\
                 (seed=question['seed'], identifier=identifier, \
-                     allow_solution_buttons = self.allow_solution_buttons)
+                     allow_solution_buttons = self.allow_solution_buttons, \
+                     previous_context = previous_context )
 
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -759,6 +771,8 @@ class Assessment(models.Model):
             solution_dict['geogebra_oninit_commands'] = geogebra_oninit_commands
 
             rendered_solution_list.append(solution_dict)
+
+            previous_context = question_context
 
         if not self.fixed_order:
             random.shuffle(rendered_solution_list)
