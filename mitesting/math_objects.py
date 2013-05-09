@@ -288,18 +288,26 @@ class math_object(object):
             if isinstance(expression, list):
                 new_expr=[]
                 for expr in expression:
-                    new_expr.append(bottom_up(expr,
-                                    lambda w: w
-                                    if not w.is_Float 
-                                    else Float(str(w.evalf(n_digits))),
-                                    atoms=True))
+                    try:
+                        new_expr.append(bottom_up(expr,
+                                                  lambda w: w
+                                                  if not w.is_Float 
+                                                  else Float(str(w.evalf(n_digits))),
+                                                  atoms=True))
+                    except TypeError:
+                        new_expr.append(expr)
+
                 expression=new_expr
             else:
-                expression =  bottom_up(expression,
-                                        lambda w: w
-                                        if not w.is_Float 
-                                        else Float(str(w.evalf(n_digits))),
-                                        atoms=True)
+                try:
+                    expression =  bottom_up(expression,
+                                            lambda w: w
+                                            if not w.is_Float 
+                                            else Float(str(w.evalf(n_digits))),
+                                            atoms=True)
+                except TypeError:
+                    pass
+                    
             
         return expression
 
