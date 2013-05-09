@@ -226,7 +226,7 @@ class Question(models.Model):
                     try:
                         (the_word, the_plural, word_index) = random_word.get_sample(word_index)
                     except Exception as e:
-                        raise #return "Error in random word %s: %s" % (random_word.name, e)
+                        return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
                     the_context[random_word.name+"_plural"] = the_plural
                     if isinstance(the_word, math_object):
