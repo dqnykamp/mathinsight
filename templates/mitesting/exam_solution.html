@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends "mitesting/assessment_base.html" %}
 {% load testing_tags %}
 
-{% block extrastyle %}
+{% block extrastyle2 %}
 <link href="{{ STATIC_URL }}css/miexam.css" rel="stylesheet" type="text/css"/>
 {% endblock %}
 {% block title %}{{ the_assessment_name }}, version {{ version }} - Math Insight{%endblock%}

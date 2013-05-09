@@ -187,7 +187,7 @@ def assessment_view(request, assessment_code, solution=False):
         question_numbers=[]
         for q in the_list:
             question_numbers.append(str(q['question'].id))
-        question_numbers = ",".join(question_numbers)
+        question_numbers = ", ".join(question_numbers)
     else:
         question_numbers=None
 

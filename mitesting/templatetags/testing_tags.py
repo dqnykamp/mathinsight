@@ -506,6 +506,9 @@ class FigureNode(Node):
                         except:
                             pass
 
+                    if len(ok_x_values)==0:
+                        return "[Broken figure - no ok x values]"
+
                     if plotfunction.invert:
                         point_lists.append([(function_values[i],ok_x_values[i]) for i in range(len(ok_x_values))])
                     else:
