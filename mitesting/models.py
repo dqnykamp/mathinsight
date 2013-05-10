@@ -196,7 +196,10 @@ class Question(models.Model):
         
         the_context={}
         if previous_context:
-            the_context.update(previous_context)
+            try:
+                the_context.update(previous_context)
+            except:
+                pass
 
         the_context['the_question'] = self
         the_context['allow_solution_buttons']=allow_solution_buttons
@@ -714,6 +717,7 @@ class Assessment(models.Model):
             else:
                 question_text = the_question.render_question(question_context, user=user, identifier=identifier)
                 geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
+                previous_context = question_context
 
 
             rendered_question_list.append({'question_text': question_text,
@@ -723,7 +727,6 @@ class Assessment(models.Model):
                                            'question_set': question['question_set'],
                                            'geogebra_oninit_commands': geogebra_oninit_commands})
 
-            previous_context = question_context
 
         if not self.fixed_order:
             random.shuffle(rendered_question_list)
@@ -765,6 +768,9 @@ class Assessment(models.Model):
                 solution_text = the_question.render_solution(question_context,
                                                           identifier=identifier)
                 geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+                
+                previous_context = question_context
+
 
             solution_dict['question_text'] = question_text
             solution_dict['solution_text'] = solution_text
@@ -772,7 +778,6 @@ class Assessment(models.Model):
 
             rendered_solution_list.append(solution_dict)
 
-            previous_context = question_context
 
         if not self.fixed_order:
             random.shuffle(rendered_solution_list)
@@ -1033,28 +1038,27 @@ class Expression(models.Model):
             expression=expression.expand()
 
         if self.function_inputs:
-            input_list = [parse_expr(item.strip()) for item in self.function_inputs.split(",")]
+            input_list = [str(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in global_dict, need to remove
             global_dict_sub = dict((key, global_dict[key]) for key in global_dict.keys() if key not in input_list)
 
 
-            # expr2= parse_and_process(self.expression,
-            #                          global_dict=global_dict_sub)
+            expr2= parse_and_process(self.expression,
+                                     global_dict=global_dict_sub)
             
             class parsed_function(Function):
                 the_input_list = input_list
                 n_args = len(input_list)
                 the_global_dict_sub = global_dict_sub
-                expression = self.expression
+                expression = expr2
                 __name__ = self.name
 
                 @classmethod
                 def eval(cls, *args):
-                    temp_global_dict = {}
-                    temp_global_dict.update(cls.the_global_dict_sub)
+                    expr_sub=cls.expression
                     for i in range(len(cls.the_input_list)):
-                        temp_global_dict[str(cls.the_input_list[i])] = args[i]
-                    return parse_and_process(cls.expression, global_dict=temp_global_dict)
+                        expr_sub=expr_sub.xreplace({Symbol(cls.the_input_list[i]): args[i]})
+                    return expr_sub
 
                 
             global_dict[str(self.name)] = parsed_function   
