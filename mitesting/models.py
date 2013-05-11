@@ -583,6 +583,7 @@ class Assessment(models.Model):
     questions = models.ManyToManyField(Question, through='QuestionAssigned')
     fixed_order = models.BooleanField(default=False)
     instructions = models.TextField(blank=True, null=True)
+    instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     time_limit = models.CharField(max_length=20, blank=True, null=True)
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
@@ -687,6 +688,15 @@ class Assessment(models.Model):
             return mark_safe(t.render(Context({})))
         except TemplateSyntaxError as e:
             return "Error in instructions template: %s" % e
+
+    def render_instructions2(self):
+        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string=template_string_base + self.instructions2
+        try:
+            t = Template(template_string)
+            return mark_safe(t.render(Context({})))
+        except TemplateSyntaxError as e:
+            return "Error in instructions2 template: %s" % e
 
 
     def render_question_list(self, seed=None, user=None):

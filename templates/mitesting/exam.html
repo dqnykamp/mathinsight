@@ -28,12 +28,23 @@
 <section class="exam_instructions">
 {{ the_assessment.render_instructions }}
 </section>
+<div class="yma-grid">
+  <div class="yma-g50 yma-gl">
+    <div class="yma-gbox-left">
+{{ the_assessment.render_instructions2 }}
+    </div>
+  </div>
+  <div class="yma-g50 yma-gr">
+    <div class="yma-gbox-right">
 <table class="question_scores">
 {% for question in question_list %}
 <tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
 {% endfor %}
  <tr><td class="examlabel">Total</td><td class="points">{{ the_assessment.total_points }} pts</td><td class="blank"></td></tr>
 </table>
+   </div>
+  </div>
+</div>
 <section class="exam_main">
 <ol class="exam_questions">
 {% for question in question_list %}
