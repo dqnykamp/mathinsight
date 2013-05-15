@@ -148,7 +148,7 @@ def assessment_view(request, assessment_code, solution=False):
     try: 
         assessment_date = request.REQUEST['date']
     except:
-        assessment_date = datetime.date.today().strftime("%B %m, %Y")
+        assessment_date = datetime.date.today().strftime("%B %d, %Y")
     try: 
         course = request.REQUEST['course']
     except:
@@ -259,7 +259,7 @@ def assessment_avoid_question_view(request, assessment_code):
     try: 
         assessment_date = request.REQUEST['date']
     except:
-        assessment_date = datetime.date.today().strftime("%B %m, %Y")
+        assessment_date = datetime.date.today().strftime("%B %d, %Y")
     try: 
         course = request.REQUEST['course']
     except:
@@ -274,7 +274,7 @@ def assessment_avoid_question_view(request, assessment_code):
     else:
         new_seed=seed
     
-    new_url = "%s?seed=%s&assessment_date=%s&course=%s&semester=%s&question_numbers" % (reverse('mit-assessment', kwargs={'assessment_code': assessment_code}), new_seed, assessment_date, course, semester)
+    new_url = "%s?seed=%s&date=%s&course=%s&semester=%s&question_numbers" % (reverse('mit-assessment', kwargs={'assessment_code': assessment_code}), new_seed, assessment_date, course, semester)
     
 
     return HttpResponseRedirect(new_url)
