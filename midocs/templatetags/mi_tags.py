@@ -1173,13 +1173,15 @@ def DoubleLiveGraphics3D_link(context, applet, width, height):
 
 
 class AppletNode(template.Node):
-    def __init__(self, applet_code, width, height,caption,boxed):
+    def __init__(self, applet_code, width, height,caption,boxed, 
+                 capture_changes=False):
         self.applet_code_var=template.Variable("%s.code" % applet_code)
         self.applet_code_string = applet_code
         self.width=width
         self.height=height
         self.caption=caption
         self.boxed=boxed
+        self.capture_changes=capture_changes
     def render(self, context):
         # first test if applet_code_var is a variable
         # if so, applet_code will be the resolved variable

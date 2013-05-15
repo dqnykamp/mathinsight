@@ -5,6 +5,9 @@ from sympy.printing import latex
 import sympy
 import re
 
+def underscore_to_camel(word):
+    return ''.join(x.capitalize() for x in  word.split('_'))
+
 def parse_expr(s, global_dict=None, local_dict=None):
     # until bug is fixed, call sympify after parse_expr
     # so that tuples are changed to Sympy Tuples

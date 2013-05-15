@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType
+from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject
 
 class AppletTypeParameterInline(admin.TabularInline):
     model = AppletTypeParameter
@@ -40,6 +40,9 @@ class AppletParameterInline(admin.TabularInline):
 # class AppletInPagesInline(admin.TabularInline):
 #     model = Applet.in_pages.through
 
+class AppletObjectInline(admin.TabularInline):
+    model = AppletObject
+
 class AppletAuthorInline(admin.TabularInline):
     model = AppletAuthor
 
@@ -47,7 +50,7 @@ class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
 class AppletAdmin(admin.ModelAdmin):
-    inlines = [AppletParameterInline, AppletAuthorInline,AppletNotationSystemInline]
+    inlines = [AppletParameterInline, AppletObjectInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
     list_display = ("code","title","applet_type")
@@ -312,6 +315,7 @@ admin.site.register(AppletType,AppletTypeAdmin)
 admin.site.register(AppletFeature)
 admin.site.register(Applet,AppletAdmin)
 admin.site.register(AppletHighlight,AppletHighlightAdmin)
+admin.site.register(AppletObjectType)
 admin.site.register(VideoType,VideoTypeAdmin)
 admin.site.register(Video,VideoAdmin)
 admin.site.register(VideoHighlight,VideoHighlightAdmin)
@@ -320,4 +324,3 @@ admin.site.register(Reference,ReferenceAdmin)
 admin.site.register(ReferenceType)
 admin.site.register(AuxiliaryFileType)
 admin.site.register(AuxiliaryFile)
-
