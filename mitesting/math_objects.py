@@ -166,14 +166,15 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, sort_list=False):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, sort_list=False, **kwargs):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
         self._use_ln=use_ln
         self._expand_on_compare = expand_on_compare
         self._tuple_is_ordered = tuple_is_ordered
-        
+        self._kwargs = kwargs
+
         if output_no_delimiters is None:
             if not tuple_is_ordered:
                 output_no_delimiters=True
@@ -332,6 +333,7 @@ class math_object(object):
                 pass
         return expression
     def __unicode__(self):
+        from sympy.geometry.line import LinearEntity
         expression = self.convert_expression()
         symbol_name_dict = create_symbol_name_dict()
         
@@ -340,6 +342,12 @@ class math_object(object):
             # just separate entries by commas
             output_list = [latex(expr, symbol_names=symbol_name_dict) for expr in expression]
             output = ",~ ".join(output_list)
+        elif isinstance(expression, LinearEntity):
+            xvar=self._kwargs.get('xvar','x')
+            yvar=self._kwargs.get('yvar','y')
+            output = "%s = 0" % latex(expression.equation(x=xvar,y=yvar))
+            
+            
         else:
             output = latex(expression, symbol_names=symbol_name_dict)
         if self._use_ln:
@@ -361,7 +369,7 @@ class math_object(object):
         return self.__float__()
 
     def compare_with_expression(self, new_expr):
-        from sympy import Tuple
+        from sympy.geometry.line import LinearEntity
 
         new_expr_expand=self.eval_to_precision(try_expand_expr(new_expr))
 
@@ -380,6 +388,11 @@ class math_object(object):
             elif isinstance(expression, Relational):
                 expressions_equal = check_relational_equality \
                     (expression_expand, new_expr_expand)
+            elif isinstance(expression, LinearEntity):
+                try:
+                    expressions_equal = expression_expand.is_similar(new_expr_expand)
+                except AttributeError:
+                    expressions_equal = False
             else:
                 if expression_expand == new_expr_expand:
                     expressions_equal=True
@@ -397,6 +410,15 @@ class math_object(object):
                 elif check_relational_equality \
                     (expression_expand, new_expr_expand):
                     equal_if_expand=True
+            elif isinstance(expression, LinearEntity):
+                try:
+                    expressions_equal = expression.is_similar(new_expr)
+                except AttributeError:
+                    expressions_equal = False
+                try:
+                    equal_if_expand = expression_expand.is_similar(new_expr_expand)
+                except AttributeError:
+                    equal_if_expand = False
             else:
                 if expression==new_expr:
                     expressions_equal=True
