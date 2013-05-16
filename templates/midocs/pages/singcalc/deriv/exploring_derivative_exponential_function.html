@@ -37,7 +37,7 @@ Type in smaller and smaller values of $h$ in the first column, and it will displ
 $$\lim_{h \to 0} \frac{2^{h}-1}{h}$$
 accurate to four decimal places.  Since $h$ can be positive or negative, also check negative values of $h$ to make sure that $(2^h-1)/h$ approaches the same number as $h$ approaches zero from below.</p>
 
-{% boxedapplet limit_b_to_h_minus_1_over_h %}
+{% boxedapplet "limit_b_to_h_minus_1_over_h" %}
 
 <p>However, we can do even better than this.  Look at the limit definition of equation \eqref{limit_definition_2_to_x} for $f'(x)$, and plug in $x=0$.  What do you get?  You get exactly
 \begin{align}
@@ -54,7 +54,7 @@ Our mysterious number in equation \eqref{limit_number} for the derivative $f'(x)
 
 <p>Use the following applet to convince yourself that the result is valid.  Check that the derivative $f'(x)$ is really a multiple of the function $f(x)$ by verifying that the ratio $f'(x)/f(x)$ doesn't change as you change $x$.  This ratio should be $f'(0)$, which should be the mysterious number you estimated to four digits as well as the slope of the tangent line when $x=0$.</p>
 
-{% boxedapplet derivative_exponential_function %}
+{% boxedapplet "derivative_exponential_function" %}
 
 <p>Assuming you've verified that equation \eqref{derivative_f_fprime} seems to be correct, we've done all we can for the derivative of $f(x)=2^x$.  The result is just expressed in terms of the mysterious number
 $$f'(0) = \lim_{h \to 0} \frac{2^h-1}{h},$$
@@ -206,7 +206,7 @@ We've determined that $b^x$ is the same thing as $e^{kx}$ where $k=\ln b$.  This
 <p>In case you aren't comfortable with these manipulations, you should do the best to convince yourself that this limit is the natural logarithm.  Test it out on a calculator.  When you enter $\ln 2$, do you get a result similar to the estimate you made above for the limit $\lim_{h \to 0} (2^h-1)/h$?  Look at how the graph of $(b^h-1)/h$ for different values of $h$ converges $\ln b$ as $h$ gets smaller and smaller.
 </p>
 
-{% boxedapplet limit_b_to_h_minus_1_over_h_ln %}
+{% boxedapplet "limit_b_to_h_minus_1_over_h_ln" %}
 
 <p>It's a lot nicer to have a formula for the derivative of $b^x$ without the mysterious limit, using $\ln b$ instead.  Usually, in calculus, though, we'll stay away from bases another than the natural one $e$.  The most important of the formulas that we've derived are
 $$\diff{}{x}e^x = e^x$$

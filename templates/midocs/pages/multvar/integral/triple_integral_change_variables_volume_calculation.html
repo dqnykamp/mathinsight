@@ -15,7 +15,7 @@ of the integral in $(x,y,z)$ coordinates.</p>
 <p>In the {%intlink triple_integral_change_variables_story %}triple integral change variable story{%endintlink%}, we illustrate, using the below applet involving an electrode tip, how the change of variable map $\cvarf$ transforms volume as it stretches or compresses different parts of $\dlv^*$ to map it onto $\dlv$.</p> 
 
 
-{% boxedapplet electrode_tip_change_variables_volume %}
+{% boxedapplet "electrode_tip_change_variables_volume" %}
 
 <p>The original integral is expressed in terms of the volume factor $dV$ which measures volume in the region $\dlv$, i.e., volume in terms of the original variables $x$, $y$, and $z$.  In order to change variables and rewrite the integral in terms of the new variables $\cvarfv$, $\cvarsv$, and $\cvartv$, we need to make sure that we are still measuring area in the original region $\dlv$ even though we are going to compute the integral over a new region $\dlv^*$ in the new variables.</p>
 
@@ -26,7 +26,7 @@ left corner $(\cvarfv,\cvarsv,\cvartv)$ might be mapped by a change of variables
 &ldquo;curvy region&rdquo; with one corner being at the point $\cvarf(\cvarfv,\cvarsv,\cvartv)$.
 </p>
 
-{% boxedapplet change_variable_volume_transformation %}
+{% boxedapplet "change_variable_volume_transformation" %}
 
 <p>The volume of the small box in $\cvarfv\cvarsv\cvartv$ space is
 clearly $\Delta\cvarfv\Delta\cvarsv\Delta\cvartv$, but the volume of the 
@@ -41,7 +41,7 @@ $dV$ in the integral represents.</p>
 as a parallelepiped, we just need to know the location 
 of the vertex $\cvarf(\cvarfv,\cvarsv,\cvartv)$ and the three vertices that share an edge with it.  The adjacent vertices $(\cvarfv+\Delta\cvarfv,\cvarsv,\cvartv)$, $(\cvarfv,\cvarsv+\Delta\cvarsv,\cvartv)$, and $(\cvarfv,\cvarsv,\cvartv+\Delta\cvartv)$ on the small box are mapped to the vertices $\cvarf(\cvarfv+\Delta\cvarfv,\cvarsv,\cvartv)$, $\cvarf(\cvarfv,\cvarsv+\Delta\cvarsv,\cvartv)$, and $\cvarf(\cvarfv,\cvarsv,\cvartv+\Delta\cvartv)$, as illustrated above.  The resulting parallelepiped with those four vertices is shown below.</p>
 
-{% boxedapplet change_variable_volume_parallelepiped %}
+{% boxedapplet "change_variable_volume_parallelepiped" %}
 
 <p>To calculate the volume of the parallelepiped, we need to take the {% intlink scalar_triple_product %}scalar triple product{%endintlink%} of the three vectors from the point $\cvarf(\cvarfv,\cvarsv,\cvartv)$ to the neighboring vertices, i.e., the vectors corresponding to the colored edges shown above.  These vectors are just the differences between the pair of points, i.e., they are
 \begin{gather*}
