@@ -169,14 +169,16 @@ def assessment_view(request, assessment_code, solution=False):
         for sol in rendered_solution_list:
             if geogebra_oninit_commands:
                 geogebra_oninit_commands += "\n"
-            geogebra_oninit_commands += sol['geogebra_oninit_commands']
+            if sol['geogebra_oninit_commands']:
+                geogebra_oninit_commands += sol['geogebra_oninit_commands']
     else:
         rendered_question_list=the_assessment.render_question_list(seed, user=request.user)
         geogebra_oninit_commands=""
         for ques in rendered_question_list:
             if geogebra_oninit_commands:
                 geogebra_oninit_commands += "\n"
-            geogebra_oninit_commands += ques['geogebra_oninit_commands']
+            if ques['geogebra_oninit_commands']:
+                geogebra_oninit_commands += ques['geogebra_oninit_commands']
 
     geogebra_oninit_commands = mark_safe(geogebra_oninit_commands)
 

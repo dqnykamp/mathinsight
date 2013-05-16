@@ -312,7 +312,7 @@ class Question(models.Model):
                 html_string += "'>"
                 try:
                     t = Template(template_string)
-                    html_string += t.render(c) + "</li>\n"
+                    html_string += t.render(context) + "</li>\n"
                 except TemplateSyntaxError as e:
                     return "Error in question subpart template: %s" % e
                 
