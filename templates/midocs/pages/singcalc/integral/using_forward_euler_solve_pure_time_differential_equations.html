@@ -69,7 +69,7 @@ This tangent line is shown thin gray line in the right panel of the below applet
 With $\Delta t=1$, as in the default setting of the applet, we estimate that $y(1)$ is approximately $50-10\cdot 1=40$.</p>
 
 
-{% boxedapplet forward_euler_pure_time_details %}
+{% boxedapplet "forward_euler_pure_time_details" %}
 
 <p>When we open our eyes after time $\Delta t$, not only do we discover our new position $y(t_0+\Delta t)$, but we also look and discover that $f(t)$ has changed during the interval we had our eyes closed.  We observe its new value of $f(t+\Delta t)$ and realize we need to change our slope $\diff{y}{t}$ to match the new information.  Rather than following the tangent line \eqref{tangentline_t0} calculated at $t=t_0$, we instead will follow the tangent line based on our new position $y(t_0+\Delta)$ and our new slope $f(t_0 + \Delta t)$. This new tangent line is
 \begin{align}
@@ -212,7 +212,7 @@ where the only difference is that the slope is the ending slope $f(t_0 + (i+1) \
 <p>The following applet implements the Backward Euler algorithm.  You can see that it fixes the value of $f(t)$ over an interval using the value of $f$ from the right side of the interval.  Does this do any better than the Forward Euler algorithm?  How does the error compare?  We are particularly interested in what happens  if you cut the step size $\Delta t$ in half.  What happens to the error in the estimate of $y(10)$ if you cut $\Delta t$ from 1 to 0.5?  By what factor does the error go down?  How about if you cut $\Delta t$ in half again?  If you make $\Delta t=0.1$, how does the error compare to Forward Euler?</p>
 
 
-{% boxedapplet backward_euler_pure_time_details %}
+{% boxedapplet "backward_euler_pure_time_details" %}
 
 <p>Another friend says you are both stupid.  You shouldn't close your eyes and fix the slope to either the slope at the beginning or the slope at the end.  Instead, you should fix the slope to a value at the middle of the interval.  When taking a step from $t=t_0+i\Delta t$ to $t=t_0+(i+1)\Delta t$, take the slope at some intermediate time $t= t_0 + (i+p)\Delta t$, where $p$ is a number between 0 and 1.  If $p=0$, you get Forward Euler, and if $p=1$, you get Backward Euler.  Maybe some intermediate value works better.</p>
 
@@ -225,7 +225,7 @@ is implemented in the following applet.  Verify that you get the same results as
 
 <p>Can you find a value of $p$ that is better than $p=0$ or $p=1$?   What would be really great would be to find a value of $p$ that reduces the error by a lot more when you cut the step size $\Delta t$ in half.  Find a value of $p$ that reduces the error in $y(10)$ by the largest value when you cut $\Delta t$ from 1 to 0.5.  Is the error further reduced by the same factor when you cut $\Delta t$ in half again?  For the best value of $p$, if you make $\Delta t=0.1$, how does the error compare to Forward Euler and Backward Euler?</p>
 
-{% boxedapplet modifying_euler_pure_time %}
+{% boxedapplet "modifying_euler_pure_time" %}
 
 
 {% comment%}
@@ -237,7 +237,7 @@ is implemented in the following applet.  Verify that you get the same results as
 
 <p>To be concrete, let's focus on our initial 
  
-{% boxedapplet forward_euler_pure_time_differential_equation %}
+{% boxedapplet "forward_euler_pure_time_differential_equation" %}
 {%endcomment%}
 
 {% navigation_tag "questions" "Questions" %}

@@ -30,7 +30,7 @@ This sum is called a Riemann sum.</p>
 <p>The Riemann sum is only an approximation to the actual area underneath the graph of $f$.  To make the approximation better, we can increase the number of subintervals $n$, which makes the subinterval width $\Delta x= (b-a)/n$ decrease.  To explore what happens as $n$ gets larger and larger, you can use the following applet.</p>
 
 
-{% boxedapplet area_left_riemann_sum %}
+{% boxedapplet "area_left_riemann_sum" %}
 
 <p>For $f(x)=x^3/3-2x^2+12$, write out all four terms of the Riemann sum with $n=4$ that estimates the area underneath the graph of $f$ over the interval $[a,b]=[-2,7]$.  Plug in the numbers from $f$ evaluated at the left endpoints, and calculate this estimate of the area.  This estimate should agree with what you calculate with the above applet for that function and four subintervals.</p>
 
@@ -61,7 +61,7 @@ The only difference from the left Riemann sum \eqref{left_riemann} is that we ev
 
 <p>Since $f$ actually does change over the course of the subinterval, we expect that the left Riemann sum will give a different area than the right Riemann sum.  How does the right Riemann sum compare to the left Riemann sum?  The below applet will let you experiment.  As you make the number of interval $n$ larger, does the estimate of the area converge to a single number?  Does this number seem to be the same as with the left Riemann sum?</p>
 
-{% boxedapplet area_right_riemann_sum %}
+{% boxedapplet "area_right_riemann_sum" %}
 
 <p>In fact, you should get close to the same number as $n$ gets large.  As long as $f$ is nice enough (for example, continuous, or even continuous at all but a finite number of points), these left and right Riemann sums will converge to the same number, which is the definite integral $\int_a^b f(x)dx$.</p>
 
@@ -74,7 +74,7 @@ The only difference from the left Riemann sum \eqref{left_riemann} is that we ev
 
 <p> To emphasize this correspondence between the Forward Euler approximation and the left Riemann sum for area, we made the Forward Euler applets and the area applets in a similar manner.   For the area applets, we used rectangles to estimate the definite integral $\int_a^bf(t)dt$.  But if you relabel some variables, then the calculation is essentially the same as the Forward Euler calculation.  Below, we made an applet that you can transform between the area calculation case and the Forward Euler case that we hope will make the parallel clear.</p>
 
-{% boxedapplet euler_area_riemann_sum %}
+{% boxedapplet "euler_area_riemann_sum" %}
 
 <p>One important difference between the Forward Euler calculation and the area calculation is the initial condition.  For the area calculation, we add up area starting with $A(a)=0$.  With Forward Euler, we can have an arbitrary initial condition $A(a)$, which you can change only when you uncheck the &ldquo;area&rdquo; option in the applet.</p>
 

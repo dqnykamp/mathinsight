@@ -61,7 +61,7 @@ As $(\rho,\theta,\phi)$ ranges over the box $\dlv^*$ in spherical coordinates sp
 <p>Since the function $f(x,y,z)$ is defined in terms of $(x,y,z)$, we cannot simply integrate $f$ over the box $\dlv^*$.  Instead, we must first {% intlink composition_definition%}compose{%endintlink%} $f$ with the change of variables function $\cvarf$.  As we integrate the {% intlink composition_definition%}composition of functions{%endintlink%} $f(\cvarf(\rho,\theta,\phi))$ over $\dlv^*$, we add up the density calculated at the points $(x,y,z) = \cvarf(\rho,\theta,\phi)$ of the dome $\dlv$.</p>
 
 
-{% boxedapplet dome_change_variables_volume %}
+{% boxedapplet "dome_change_variables_volume" %}
 
 <p>The last step is to correctly account for the volume element $dV$.  In the original Cartesian coordinates $(x,y,z)$, the volume element was simply $dV = dx\,dy\,dz$.  The temptation may be to use the analogous expression $d\rho\,d\theta\,d\phi$ for the volume element, but that element measures volume in the box $\dlv^*$ (illustrated by the small red boxes the above applet) not volume in the dome $\dlv$ (illustrated by the small blue curvy regions).  The fact that the small blue regions have different volume than the small red regions shows that $\cvarf$ changes volume as it transforms spherical coordinates to Cartesian coordinates.</p>
 

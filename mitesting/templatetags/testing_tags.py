@@ -6,6 +6,7 @@ from mitesting.forms import MultipleChoiceQuestionForm
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
+from django.template.base import kwarg_re
 import re
 import random
 from django.contrib.sites.models import Site
@@ -16,10 +17,6 @@ import json
 from math import floor, ceil
 
 register=Library()
-
-# do this until have Django 1.5, then add back to django.template.base  import
-# Regex for token keyword arguments
-kwarg_re = re.compile(r"(?:(\w+)=)?(.+)")
 
 
 class PluralizeWordNode(Node):
@@ -791,14 +788,12 @@ def display_video_questions(parser, token):
 
 
 class AnswerBlankNode(template.Node):
-    def __init__(self, answer_expression, answer_expression_string, args, kwargs):
+    def __init__(self, answer_expression, answer_expression_string, kwargs):
         self.answer_expression = answer_expression
         self.answer_expression_string = answer_expression_string
-        self.args = args
         self.kwargs = kwargs
     def render(self, context):
 
-        args = [arg.resolve(context) for arg in self.args]
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
         
@@ -847,7 +842,6 @@ def answer_blank(parser, token):
     answer_expression = parser.compile_filter(bits[1])
     answer_expression_string = bits[1]
 
-    args = []
     kwargs = {} 
     bits = bits[2:]
 
@@ -859,7 +853,6 @@ def answer_blank(parser, token):
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
-            else:
-                args.append(parser.compile_filter(value))
 
-    return AnswerBlankNode(answer_expression, answer_expression_string, args, kwargs)
+
+    return AnswerBlankNode(answer_expression, answer_expression_string, kwargs)

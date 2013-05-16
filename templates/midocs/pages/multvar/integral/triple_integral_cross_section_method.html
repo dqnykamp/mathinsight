@@ -9,7 +9,7 @@
 
 <p>To begin, imagine taking a big meat cleaver and chopping the three-dimensional region $\dlv$ into slices perpendicular to one of the coordinate axes (in a similar manner to the way in which we take {% intlink surface_cross_sections %}cross sections of a surface{%endintlink%}).  If you view the axis perpendicular to the slices as being vertical, then you could view the region $\dlv$ as being composed of a bunch of these cross sections stacked on top of each other.  For example, for the below {% intlink ellipsoid %}ellipsoidal{%endintlink%} region, we would view the $x$-axis as being vertical.</p>
 
-{% boxedapplet cross_section_stack %}
+{% boxedapplet "cross_section_stack" %}
 
 <p>Unless $\dlv$ happens to be a cylinder, the size and/or shape of the cross section will vary as a function of the location along the &ldquo;vertical&rdquo; coordinate axis (i.e., the coordinate axis perpendicular to the cross sections).  The integral over $\dlv$ will correspond to the double integrals over all these cross sections, summed up from the bottom cross section up to the top cross section.  If the &ldquo;vertical&rdquo; axis is the $z$-axis, we can write the integral of $f(x,y,z)$ over $\dlv$ as
 $$\iiint_{\dlv} f(x,y,z)dV = \int_{\text{bottom}}^{\text{top}} \left(\iint_{\text{cross section}(z)} f(x,y,z) dx\,dy\right)dz.$$
@@ -34,7 +34,7 @@ where $\dlv$ is the pyramid.  The first task is to determine the integration lim
 
 <p>The shape of the pyramid $\dlv$ is shown below.  Given that it points in the positive $z$-direction, we choose the $z$-axis as the &ldquo;vertical&rdquo; axis and make the cross sections perpendicular to the $z$-axis.  As illustrated in the below applet, the cross sections are rectangles.</p>
 
-{% boxedapplet triple_integral_cross_section_example_pyramid %}
+{% boxedapplet "triple_integral_cross_section_example_pyramid" %}
 
 <p>For a given value of $z$, the boundaries of the rectangular cross sections are determined by the equations for the planes $z=4-2x$, $z=2-y$, $z=2x$, and $z=2+y$.  Rewriting those equations for $x$ and $y$ in terms of the given $z$, the boundaries are  $x=2-z/2$, $y=2-z$, $x=z/2$, and $y=z-2$.  Inside the rectangle, the ranges of $x$ and $y$ are 
 \begin{gather*}

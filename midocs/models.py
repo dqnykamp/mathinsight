@@ -993,6 +993,13 @@ def applet_2_image_path(instance, filename):
     extension = os.path.splitext(filename)[1]
     return os.path.join(settings.APPLET_UPLOAD_TO, "image/large2", "%s%s" % (instance.code, extension))
 
+
+class AppletObjectType(models.Model):
+    object_type = models.CharField(max_length=50, unique=True)
+    
+    def __unicode__(self):
+        return self.object_type
+
 class Applet(models.Model):
     title = models.CharField(max_length=200)
     code = models.SlugField(max_length=100, unique=True)
@@ -1014,6 +1021,9 @@ class Applet(models.Model):
     encoded_content=models.TextField(blank=True, null=True)
     parameters = models.ManyToManyField(AppletTypeParameter, 
                                         through='AppletParameter', 
+                                        null=True, blank=True)
+    applet_objects = models.ManyToManyField(AppletObjectType,
+                                        through='AppletObject',
                                         null=True, blank=True)
     in_pages = models.ManyToManyField(Page, blank=True, null=True)
     authors = models.ManyToManyField(Author, through='AppletAuthor')
@@ -1079,6 +1089,9 @@ class Applet(models.Model):
             return re.sub(settings.APPLET_UPLOAD_TO,"", self.applet_file2.name)  # get rid of upload path
         else:
             return ""
+
+    def code_camel(self):
+        return ''.join(x.capitalize() for x in  self.code.split('_'))
 
     def anchor(self):
         return "applet:%s" % self.code
@@ -1285,7 +1298,18 @@ class AppletParameter(models.Model):
         if self.applet.applet_type != self.parameter.applet_type:
             raise ValidationError, "Incorrect parameter for applet of type %s"\
                 % self.applet.applet_type
-        
+
+
+class AppletObject(models.Model):
+    applet = models.ForeignKey(Applet)
+    object_type = models.ForeignKey(AppletObjectType)
+    name = models.CharField(max_length=100)
+    change_from_javascript = models.BooleanField(default=True)
+    capture_changes = models.BooleanField()
+    related_objects = models.CharField(max_length=200, blank=True, null=True)
+
+    def __unicode__(self):
+        return "%s: %s" % (self.object_type, self.name)
 
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)

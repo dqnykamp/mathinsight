@@ -42,7 +42,7 @@ def question_view(request, question_id):
     
     # if there was an error, question_context is a string 
     # so just make rendered question text be that string
-    if not isinstance(question_context, dict):
+    if not isinstance(question_context, Context):
         rendered_question = question_context
         rendered_solution = question_context
         geogebra_oninit_commands=""
@@ -52,7 +52,8 @@ def question_view(request, question_id):
                                                          user=request.user)
         rendered_solution = the_question.render_solution(question_context,
                                                          identifier=identifier)
-        geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+        geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+        #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
 
         # n_geogebra_web_applets = question_context.get('n_geogebra_web_applets', 0)
         # if n_geogebra_web_applets>0:
@@ -107,14 +108,15 @@ def question_solution_view(request, question_id):
     
     # if there was an error, question_context is a string string,
     # so just make rendered question text be that string
-    if not isinstance(question_context, dict):
+    if not isinstance(question_context, Context):
         rendered_solution = question_context
         geogebra_oninit_commands=""
     else:
         rendered_solution = the_question.render_solution(question_context,
                                                          identifier=identifier)
 
-        geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=False, solution=True)
+        geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+        #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=False, solution=True)
 
     # no Google analytics for questions
     noanalytics=True

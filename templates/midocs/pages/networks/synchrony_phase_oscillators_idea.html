@@ -15,7 +15,7 @@
 $$z = e^{i\theta},$$
 where $i=\sqrt{-1}$ and $\theta$ is the counterclockwise angle between the positive real axis and the vector from the origin to the complex number $z$, as demonstrated in the below applet. </p>
 
-{% boxedapplet oscillator_phase %}
+{% boxedapplet "oscillator_phase" %}
 
 
 {% navigation_tag "synchrony" "Synchrony" %}
@@ -36,7 +36,7 @@ $$z = \frac{1}{N}\sum_{j=1}^Ne^{i\theta_j}.$$
 
 <p>To understand what this sum means, you can view each oscillator as being represented by a vector from the origin to the corresponding point on the unit circle (e.g., the red vector in the previous applet).  Recalling the {% intlink vector_introduction addition%}geometric definition of vector addition{%endintlink%}, we can deduce that the sum $z$ can be represented by a vector that points in the average direction of all the $\theta_j$ vectors.  If all the phases $\theta_j$ are equal, then their average will be the unit vector pointing to that phase.  On the other hand, if two phases are opposite of each other on the unit circle, their average will be the zero vector.  Hence the closer the phases are to each other, the longer $z$ will be, and it points in the average direction of the phases. You can experiment with the dependence of $z$ on the phases below.</p>
 
-{% boxedapplet kuramoto_order_parameters %}
+{% boxedapplet "kuramoto_order_parameters" %}
 
 <p>The Kuramoto order parameters are derived from the average vector $z$.  The synchrony measure $r$ is the length of $z$, $r=|z|$. It achieves its maximum $r=1$ when all the phases are identical.  It achieves its minimum $r=0$ when the phases are balanced around the circle, such as evenly spread or in clusters that balance each other out.  The synchrony measure $r$ is often called the <em>phase coherence</em>.</p>
 
@@ -48,13 +48,13 @@ $$z = r e^{i\psi}.$$</p>
 
 <p>To view how the Kuramoto order parameter $r$ captures synchrony, we look at two examples.  In this first example, the oscillators begin with phases spread randomly and uniformly over the phase space (the unit circle).  As time evolves, the oscillators begin to synchronize.  The vector $z$ captures this synchronization by getting larger, with $r$ approaching 1 (unless you degrade the final synchrony by making $\sigma$ larger).</p>
 
-{% boxedapplet synchronizing_oscillators %}
+{% boxedapplet "synchronizing_oscillators" %}
 
 {% navigation_tag "desynchronizing" "Synchrony" "Desynchronizing oscillators" %}
 <h5>Desynchronizing oscillators</h5>
 
 <p>In the second example, we look at the opposite situation.  We start the phase oscillators completely synchronized.  But, since they oscillate at different frequencies, their phases soon spread out around the phase space.  The rate of this desynchronization depends on the the spread of the frequencies (controlled by the parameter $\sigma$).  The complex number $z$ and its magnitude $r$ shrink as this desynchronization progresses.</p>
 
-{% boxedapplet desynchronizing_oscillators 0 0 "A group of $N=100$ phase oscillators represented just as in the previous applet, only this group of oscillators tends to desynchronize.  At time $t=0$, all oscillators start at exactly the same phase.  However, as time evolves, the oscillators tend to spread out across the whole circle of phases, i.e., the system tends toward asynchrony.   You can control how they desynchronize by changing the parameter $\sigma$, which controls the spread of oscillator speeds.  When $\sigma=0$, the oscillators will stay synchronized forever." %}
+{% boxedapplet "desynchronizing_oscillators" caption="A group of $N=100$ phase oscillators represented just as in the previous applet, only this group of oscillators tends to desynchronize.  At time $t=0$, all oscillators start at exactly the same phase.  However, as time evolves, the oscillators tend to spread out across the whole circle of phases, i.e., the system tends toward asynchrony.   You can control how they desynchronize by changing the parameter $\sigma$, which controls the spread of oscillator speeds.  When $\sigma=0$, the oscillators will stay synchronized forever." %}
 
 {% endblock%}

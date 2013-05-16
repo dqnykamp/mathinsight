@@ -1,4 +1,4 @@
-{% load url from future %}{% if not blank_style %}<!DOCTYPE html>
+{% load mi_tags %}{% if not blank_style %}<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -174,13 +174,7 @@
   obj.style.position="static";
   }
 </script>
-<script type="text/javascript">
-
-function ggbOnInit(arg) {
-
-{{geogebra_oninit_commands}}
-}
-</script>
+{% accumulated_javascript %}
 
 </body>
 </html>

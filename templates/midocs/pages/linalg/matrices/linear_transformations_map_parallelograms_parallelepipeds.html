@@ -23,7 +23,7 @@ $$A =  \left[\begin{array}{cc}a &amp;b\\ c &amp;d\end{array}\right].$$</p>
 <p>We can view $\vc{T}$ as mapping regions from the $xy$-plane onto an 
 $x'y'$-plane: $(x',y')=\vc{T}(x,y)$.  You can experiment with this mapping by a linear transformation in the following applet.</p>
 
-{% boxedapplet linear_transformation_2d %}
+{% boxedapplet "linear_transformation_2d" %}
 
 <p>The first thing to notice the linear transformation maps quadrilaterals onto quadrilaterals.  Unlike a {% appletlink nonlinear_2d_map%}nonlinear transformation{%endappletlink%}, which can bend straight lines into curves, a linear transformation maps straight lines onto straight lines.  This fact is easily seen by thinking of a {% intlink line_parametrization %}parametrization of a line{%endintlink%}, such as $$\vc{x} = t \vc{v} + \vc{a}.$$   Given a linear transformation $\vc{x}' = \vc{T}\vc{x} = A\vc{x}$, we can multiply the line parametrization equation by the matrix $A$ associated with the linear transformation, yielding $$A\vc{x} = t A\vc{v} + A\vc{a}.$$  If we let $\vc{v}'=A\vc{v}$ and $\vc{a}' = A\vc{a}$ be the images of the vectors $\vc{v}$ and $\vc{a}$ under the linear transformation, then the parametrization in terms of the transformed variables $\vc{x}'$ is simply
 $$\vc{x}' = t \vc{v}' + \vc{a}'$$
@@ -54,7 +54,7 @@ The components $a_{ij}$ of $A$ define the linear transformation.</p>
 
 <p>An example of such a three-dimensional linear transformation is shown in the following applet.  The original region is constrained to be a {% intlink parallelepiped_definition%}parallelepiped{%endintlink%}, and you can observe that is always mapped to another parallelepiped.</p>
 
-{% boxedapplet linear_transformation_3d_preserve %}
+{% boxedapplet "linear_transformation_3d_preserve" %}
 
 <p>We don't need to do any additional work to demonstrate that linear transformations in three-dimensions map parallelepipeds onto parallelepipeds.  Since the above calculations were not specific to two dimensions, they demonstrate that three-dimensional linear transformations map parallelograms onto parallelograms.  Therefore, $\vc{T}$ maps the six parallelogram faces of a parallelepiped onto six other parallelograms.  This result means that $\vc{T}$ maps the parallelepiped onto a three-dimensional geometric solid with six faces that are parallelograms, which is the definition of a parallelepiped.  We can conclude that linear transformations map parallelepipeds onto parallelepipeds.</p>
 

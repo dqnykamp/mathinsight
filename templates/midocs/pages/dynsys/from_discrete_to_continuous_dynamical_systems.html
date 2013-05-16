@@ -24,7 +24,7 @@ x_{n+1}-x_n = r \,x_n (1-x_n).
 \end{align}
 For simplicity, we've set the {% intlink environmental_carrying_capacity%}carrying capacity{%endintlink%} to one.  With this notation, $x_n$ is the bacteria population in time step $n$, i.e., the $n$th 16-minute time interval.  If we write this model in function iteration form, it is $x_{n+1}=f(x_n)$ where $f(x)=x+rx(1-x)$.  Although this wasn't even close to the parameters we found for the bacteria data, let's set $r=2.4$.  You can look at the evolution of the model by typing in $x+2.4x(1-x)$ in the function iteration applet.  Set the initial condition to $x_0=0.01$. You should see that the population, for large enough $n$, oscillates between values of about 0.64 and 1.19.</p>
 
-{% boxedapplet function_iteration %}
+{% boxedapplet "function_iteration" %}
 
 {% navigation_tag "continuous" "Continuous" %}
 <h4>Moving to continuous time</h4>
@@ -65,7 +65,7 @@ or, dividing by $\Delta t$, as
 
 <p>The following applet will allow you to explore the behavior of these different models.  The first step is to reproduce the result you got with the above function iteration applet and $\Delta t = 16$.  Set the initial condition to $x(0)=0.01$ and type in $0.15 x(1-x)$ for the function.  When $\Delta t = 16$, you should get exactly the same numbers as you did above using $x_{n+1}-x_{n} = 2.4x_n(1-x_n)$.   The only difference is that the time will be in minutes rather than number of 16-minute time steps.  You'll need to click the -h button a number of times to zoom out the horizontal axis to larger times.</p>
 
-{% boxedapplet from_function_iteration_to_continuous_evolution %}
+{% boxedapplet "from_function_iteration_to_continuous_evolution" %}
 
 <p>Once you have performed this sanity check, it's time to see what happens if you decrease the time step $\Delta t$.  You could type in a new value of $\Delta t$, say $\Delta t=8$, and then click the iterate button a bunch more times to bring you back to the same time values.  Or, you can just click the &ldquo;refine&rdquo; button once to do this for you automatically.  Clicking this button halves the time step $\Delta t$ and doubles the number of time points so that the solution is still calculated to the same final time point $t$.  What do you observe?  Is the solution $x(t)$ calculated at intervals $\Delta t=8$ more or less the same as the solution calculated at intervals $\Delta t= 16$?  If it looks any different, describe those difference.</p>
 
@@ -106,7 +106,7 @@ to approximate the solution to
 \end{align*}
 Enter the differential equation \eqref{continuous_model} in the below applet and verify that you get the same results for the same time steps $\Delta t$ that you did in the above applet.  In the below applet, you can check smaller $\Delta t$'s more easily, as it will compute up to 10,000 iterations.</p>
 
-{% boxedapplet forward_euler_autonomous_differential_equation %}
+{% boxedapplet "forward_euler_autonomous_differential_equation" %}
 
 
 {% navigation_tag "solution" "Solution" %}

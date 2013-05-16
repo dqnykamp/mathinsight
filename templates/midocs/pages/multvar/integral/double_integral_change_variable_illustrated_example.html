@@ -18,7 +18,7 @@
 
 <p>One step of changing variables is determining how the transformation $\cvarf$ maps a region $\dlr^*$ in the $\cvarfv\cvarsv$-plane onto the $xy$-plane.  The following applet illustrates this mapping for the case when $\dlr^*$ is a rectangle.  You can change the $\dlr^*$ to explore how it is stretched and twisted into an irregularly shaped region $\dlr$.</p>
 
-{%boxedapplet nonlinear_2d_change_variables_map %}
+{% boxedapplet "nonlinear_2d_change_variables_map" %}
 
 <p>Notice how the boundaries of the $\dlr$ are parabolas.  For example, the horizontal boundaries (red and green) of the rectangle $\dlr^*$ correspond to lines $\cvarsv=c$ for some constant $c$.  Assuming $c \ne 0$, we can solve the second component $(y=2\cvarfv\cvarsv)$ of equation \eqref{transformation} for $\cvarfv$, obtaining $\cvarfv = y/(2c)$.  Plugging that result into the first component $(x=\cvarfv^2-\cvarsv^2)$ of  equation \eqref{transformation}, we find that $\cvarsv=c$ corresponds to the parabola $x=y^2/(4c^2)-c^2$.  When $c$ gets very small, the parabola becomes very steep, as you can notice by, for example, moving the green boundary of $\dlr^*$ close to the $u$-axis.  The verticle edges (purple and cyan) of $\dlr^*$ similarly map to parabolic edges of $\dlr$.</p>
 
@@ -40,11 +40,11 @@ The amount of stretching by $\cvarf$ increases with distance from the origin of 
 
 <p>The following applet allows you to explore how $\cvarf$ is changing area in the irregular region $\dlr$ compared to area in the rectangle $\dlr^*$.  See if you can convince yourself that the above formula seems correct.</p>
 
-{%boxedapplet nonlinear_2d_change_variables_map_area_transformation %}
+{% boxedapplet "nonlinear_2d_change_variables_map_area_transformation" %}
 
 <p>To further drive home the concept that $\cvarf$ is taking the rectangle $\dlr^*$ and stretching it into the irregular region $\dlr$, we have one more applet that shows this stretching as an animation.  In the right panel, the animation interpolates between $\dlr^*$ and $\dlr$, emphasizing the action of the transformation from $(\cvarfv,\cvarsv)$ coordinates to $(x,y)$ coordinates.</p>
 
-{%boxedapplet nonlinear_2d_change_variables_map_animation %}
+{% boxedapplet "nonlinear_2d_change_variables_map_animation" %}
 
 <p>Since in this applet, the rectangle $\dlr^*$ is not restricted to the upper half-plane $\cvarfv>0$, you can increase the size of $\dlr^*$ so that the mapping of $\cvarf$ is no longer one-to-one.  By making $\dlr^*$ be a large portion of any of the half-planes of the $\cvarfv\cvarsv$-plane (such as the half-plane $\cvarfv>0$), you can convince yourself that $\cvarf$ takes any of the half-planes, stretches it around an axis of the $xy$-plane, and maps it to the whole $xy$-plane.  If $\dlr^*$ extends beyond one of the half-planes, then it becomes folded, overlaping itself when it is mapped to $\dlr$.  This overlapping demonstrates that the mapping is not one-to-one.  In this case, $\cvarf$ is not a valid change of variables transformation for $\dlr^*$, and we cannot use {% intlinkeq double_integral_change_variables_introduction cvarformula %}of the introductory page{%endintlinkeq%} to calculate the integral.  (Note that an overlap only in the final $\dlr$, when the blue slider is all the way to the right, is a problem.  The intermediate frames of the animation are artificial and are shown just to guide your eye.)</p>
 
