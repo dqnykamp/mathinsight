@@ -194,10 +194,11 @@ class Question(models.Model):
 
         random.seed(seed)
         
-        the_context={}
+        the_context=Context({})
         if previous_context:
             try:
-                the_context.update(previous_context)
+                for d in previous_context.dicts:
+                    the_context.update(d)
             except:
                 pass
 
@@ -278,7 +279,6 @@ class Question(models.Model):
     def render_text(self, context, identifier, user=None, solution=False, 
                     show_help=True, seed_used=None):
 
-        c= Context(context)
         template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base
         if solution:
@@ -289,7 +289,7 @@ class Question(models.Model):
                 template_string += self.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used)
         try:
             t = Template(template_string)
-            html_string = t.render(c)
+            html_string = t.render(context)
         except TemplateSyntaxError as e:
             return "Error in question template: %s" % e
         subparts = self.questionsubpart_set.all()
@@ -361,7 +361,7 @@ class Question(models.Model):
             rendered_answer_list.append({'answer_id':answer.id, 'rendered_answer': answer.render_answer(context)})
         random.shuffle(rendered_answer_list)
         
-        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeObject(), 'prefix':'%s', 'seed':'%s', 'identifier':'%s' })" % (identifier, identifier, identifier, seed_used, identifier)
+        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeArray(), 'prefix':'%s', 'seed':'%s', 'identifier':'%s' })" % (identifier, identifier, identifier, seed_used, identifier)
 
         callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
 
@@ -392,7 +392,7 @@ class Question(models.Model):
         # render question text at the beginning so that have answer_list in context
         question_text = '<div id=question_text_%s>%s</div>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
 
-        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
+        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
 
         the_correct_answers = context.get('answer_list',[])
         answer_feedback_strings=""
@@ -435,12 +435,11 @@ class Question(models.Model):
             if self.solution_javascript:
                 template_string += self.solution_javascript
         if template_string:
-            c= Context(context)
             template_string_base = "{% load testing_tags mi_tags humanize %}"
             template_string = template_string_base+template_string
             try:
                 t = Template(template_string)
-                html_string = t.render(c)
+                html_string = t.render(context)
             except TemplateSyntaxError as e:
                 pass
             
@@ -542,25 +541,23 @@ class QuestionAnswerOption(models.Model):
         return  self.answer
 
     def render_answer(self, context):
-        c= Context(context)
         template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
         template_string=template_string_base
         template_string += self.answer
         try:
             t = Template(template_string)
-            html_string = t.render(c)
+            html_string = t.render(context)
         except TemplateSyntaxError as e:
             return "Error in answer template: %s" % e
         return mark_safe(html_string)
 
     def render_feedback(self, context):
-        c= Context(context)
         template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
         template_string=template_string_base
         template_string += self.feedback
         try:
             t = Template(template_string)
-            html_string = t.render(c)
+            html_string = t.render(context)
         except TemplateSyntaxError as e:
             return "Error in answer template: %s" % e
         return mark_safe(html_string)
@@ -707,7 +704,7 @@ class Assessment(models.Model):
 
         rendered_question_list = []
         
-        previous_context={}
+        previous_context=Context({})
         for (i, question) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
@@ -721,12 +718,13 @@ class Assessment(models.Model):
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
-            if not isinstance(question_context, dict):
+            if not isinstance(question_context, Context):
                 question_text = question_context
                 geogebra_oninit_commands=""
             else:
                 question_text = the_question.render_question(question_context, user=user, identifier=identifier)
-                geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
+                geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+                #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
                 previous_context = question_context
 
 
@@ -752,7 +750,7 @@ class Assessment(models.Model):
 
         rendered_solution_list = []
 
-        previous_context = {}
+        previous_context = Context({})
         for (i, question) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
@@ -768,7 +766,7 @@ class Assessment(models.Model):
 
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
-            if not isinstance(question_context, dict):
+            if not isinstance(question_context, Context):
                 question_text = question_context
                 solution_text = question_context
                 geogebra_oninit_commands=""
@@ -777,7 +775,8 @@ class Assessment(models.Model):
                                                           identifier=identifier)
                 solution_text = the_question.render_solution(question_context,
                                                           identifier=identifier)
-                geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+                geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+                #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
                 
                 previous_context = question_context
 

@@ -4,6 +4,8 @@ from mitesting.models import Assessment
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
+from django.utils.encoding import smart_text
+from django.template.base import kwarg_re
 import re
 import random
 from django.contrib.sites.models import Site
@@ -1036,7 +1038,81 @@ def return_print_image_string(applet, panel=0):
 
     return the_string
 
+def Geogebra_change_object_javascript(context, appletobject, objectvalue):
+    
+    object_type = appletobject.object_type.object_type
+    
+    # if objectvalue is math_object, use expression
+    try:
+        value=objectvalue.return_expression()
+    except:
+        value = objectvalue
 
+    try:
+        if object_type=='Point':
+            # sympify to turn strings into tuple
+            try:
+                from sympy import sympify
+                value=sympify(value)
+            except:
+                return ""
+
+            javascript = 'document.%s.setCoords("%s", "%s", "%s");\n' % \
+                (appletobject.applet.code_camel(), appletobject.name,
+                  value[0], value[1])
+        elif object_type=='Number' or object_type=='Boolean':
+            javascript = 'document.%s.setValue("%s", "%s");\n' % \
+                (appletobject.applet.code_camel(), appletobject.name,
+                 value)
+        elif object_type=='Text':
+            javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
+                (appletobject.applet.code_camel(), appletobject.name,
+                 value)
+        return javascript
+    except:
+        raise #return ""
+
+def Geogebra_capture_object_javascript(context, appletobject, target, 
+                                       related_objects=[]):
+    
+    object_type = appletobject.object_type.object_type
+    javascript= ""
+    if object_type=='Point':
+        xcoord = 'document.%s.getXcoord("%s")' % \
+            (appletobject.applet.code_camel(), appletobject.name)
+        ycoord = 'document.%s.getYcoord("%s")' % \
+            (appletobject.applet.code_camel(), appletobject.name)
+
+        javascript='$("#%s").val("Point("+%s+","+%s+")");\n' % \
+            (target, xcoord,ycoord)
+    elif object_type=='Number' or object_type=='Boolean':
+        value = 'document.%s.getValue("%s")' % \
+            (appletobject.applet.code_camel(), appletobject.name)
+        javascript='$("#%s").val(%s);\n' % (target, value)
+    elif object_type=='Text':
+        value = 'document.%s.getValueString("%s")' % \
+            (appletobject.applet.code_camel(), appletobject.name)
+        javascript='$("#%s").val(%s);\n' % (target, value)
+    elif object_type=='Line':
+        if len(related_objects)==2:
+            point1=related_objects[0]
+            point2=related_objects[1]
+            if point1.object_type.object_type=='Point' and \
+                    point2.object_type.object_type=='Point':
+                xcoord1 = 'document.%s.getXcoord("%s")' % \
+                    (appletobject.applet.code_camel(), point1.name)
+                ycoord1 = 'document.%s.getYcoord("%s")' % \
+                    (appletobject.applet.code_camel(), point1.name)
+                xcoord2 = 'document.%s.getXcoord("%s")' % \
+                    (appletobject.applet.code_camel(), point2.name)
+                ycoord2 = 'document.%s.getYcoord("%s")' % \
+                    (appletobject.applet.code_camel(), point2.name)
+                javascript='$("#%s").val("Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))");\n' % \
+                    (target, xcoord1,ycoord1, xcoord2,ycoord2)
+                
+                
+    return javascript
+    
 def GeogebraWeb_link(context, applet, width, height):
 
     html_string=""
@@ -1050,8 +1126,8 @@ def GeogebraWeb_link(context, applet, width, height):
     context['n_geogebra_web_applets']=n_geogebra_web_applets
 
 
-    html_string += '<div class="javascriptapplet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>' % \
-        (width, height, applet.code, applet.encoded_content)
+    html_string += '<div class="javascriptapplet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>\n' % \
+        (width, height, applet.code_camel(), applet.encoded_content)
 
     return html_string
 
@@ -1082,7 +1158,7 @@ def Geogebra_link(context, applet, width, height):
         html_string = '%s%s' % (html_string, javascript_string)
     else:
         #html_string = '%s</object></div>' % html_string
-        html_string = '%s</applet></div>' % html_string
+        html_string = '%s</applet></div>\n' % html_string
 
     html_string = '%s%s' % (html_string, return_print_image_string(applet))
     return html_string
@@ -1173,57 +1249,65 @@ def DoubleLiveGraphics3D_link(context, applet, width, height):
 
 
 class AppletNode(template.Node):
-    def __init__(self, applet_code, width, height,caption,boxed, 
-                 capture_changes=False):
-        self.applet_code_var=template.Variable("%s.code" % applet_code)
-        self.applet_code_string = applet_code
-        self.width=width
-        self.height=height
-        self.caption=caption
+    def __init__(self, applet, boxed, kwargs, kwargs_string):
+        self.applet= applet
         self.boxed=boxed
-        self.capture_changes=capture_changes
+        self.kwargs=kwargs
+        self.kwargs_string=kwargs_string
     def render(self, context):
-        # first test if applet_code_var is a variable
-        # if so, applet_code will be the resolved variable
-        # otherwise, applet will be applet_code_string
-        try:
-            applet_code=self.applet_code_var.resolve(context)
-        except template.VariableDoesNotExist:
-            applet_code=self.applet_code_string
-        # next, test if applet with applet_code exists
-        try:
-            applet=Applet.objects.get(code=applet_code)
-        # if applet does not exist
-        # return tag to applet code anyway
-        except ObjectDoesNotExist:
-            return '<p>[Broken applet]</p>'
-           #return '<applet archive="/%s" class="broken"></applet>' % applet_code
 
-        # set width and height from tag parameters, if exist
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        kwargs_string = dict([(smart_text(k, 'ascii'), v)
+                              for k, v in self.kwargs.items()])
+
+        applet = self.applet.resolve(context)
+
+        # if applet is not an applet instance
+        # try to load applet with that code
+        if not isinstance(applet, Applet):
+            # test if applet with applet_code exists
+            try:
+                applet=Applet.objects.get(code=applet)
+                # if applet does not exist
+                # return tag to applet code anyway
+            except ObjectDoesNotExist:
+                return '<p>[Broken applet]</p>'
+
+        # set width and height from kwarg parameters, if exist
         # else get defaults from applet, if exist
         # else get defaults from applettype, if exist
         # use default_size for any values not found
         default_size = 500
-        if self.width:
-            width=self.width
-        else:
+
+        width=0
+        try:
+            width = int(kwargs['width'])
+        except:
+            pass
+
+        if width==0:
             try:
                 width=applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_WIDTH").value
             except ObjectDoesNotExist:
-                width=0
+                pass
         if width==0:
             try:
                 width=applet.applet_type.valid_parameters.get(parameter_name ="DEFAULT_WIDTH").default_value
             except ObjectDoesNotExist:
                 width=default_size
 
-        if self.height:
-            height=self.height
-        else:
+        height=0
+        try:
+            height = int(kwargs['height'])
+        except:
+            pass
+
+        if height==0:
             try:
                 height=applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_HEIGHT").value
             except ObjectDoesNotExist:
-                height=0
+                pass
 
         if height==0:
             try:
@@ -1231,43 +1315,35 @@ class AppletNode(template.Node):
             except ObjectDoesNotExist:
                 height=default_size
 
-        if self.caption:
-            caption = self.caption
-        else:
-            try:
-                caption = template.Template("{% load mi_tags %}"+applet.default_inline_caption).render(context)
-            except:
-                caption = applet.default_inline_caption
+        caption = None
+        if self.boxed:
+            caption = kwargs.get('caption')
 
-        # check to see if the variable process_applet_entries==1
-        # if so, add entry to database
-        try:
-            process_applet_entries = template.Variable("process_applet_entries").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_applet_entries == 1:
-                # get page object, 
+            if caption is None:
                 try:
-                    thepage = template.Variable("thepage").resolve(context)
-                # if applet wasn't in a page, just pass
-                except template.VariableDoesNotExist:
-                    pass
-                else:
-                    # add page to in_pages of applet
-                    applet.in_pages.add(thepage)
+                    caption = template.Template("{% load mi_tags %}"+applet.default_inline_caption).render(context)
+                except:
+                    caption = applet.default_inline_caption
+                    
 
-        # check if blank_style is set to 1
+        # check to see if the variable process_applet_entries is set
+        # if so, add entry to database
+        process_applet_entries = context.get("process_applet_entries")
+        if process_applet_entries:
+            # get page object, 
+            thepage = context.get('thepage')
+            # if applet wasn in a page,  add page to in_pages of applet
+            if thepage:
+                applet.in_pages.add(thepage)
+
+        # check if blank_style is set
         # if so, just return title, and caption if "boxed"
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                if self.boxed:
-                    return " %s %s " % (applet.title, caption)
-                else:
-                    return " %s " % applet.title
-        except template.VariableDoesNotExist:
-            pass
+        blank_style = context.get("blank_style")
+        if blank_style:
+            if self.boxed:
+                return " %s %s " % (applet.title, caption)
+            else:
+                return " %s " % applet.title
 
             
         # html for applet inclusion
@@ -1285,7 +1361,96 @@ class AppletNode(template.Node):
             # return broken applet text
             return '<p>[Broken applet]</p>'
 
-            
+        # check if any applet objects are specified 
+        # to be changed with javascript
+        appletobjects=applet.appletobject_set.filter \
+            (change_from_javascript=True)
+        init_javascript = ""
+        for appletobject in appletobjects:
+            objectvalue = kwargs.get(appletobject.name)
+            if objectvalue is not None:
+                if applet.applet_type.code == "Geogebra" \
+                        or applet.applet_type.code == "GeogebraWeb":
+                    init_javascript += Geogebra_change_object_javascript \
+                        (context, appletobject, objectvalue)
+                    #applet_javascript = "%s=%s" % (appletobject.name, objectvalue)
+                    
+
+        # check if any applet objects are specified 
+        # to be captured with javascript
+        appletobjects=applet.appletobject_set.filter \
+            (capture_changes=True)
+        inputboxlist=''
+        capture_javascript=''
+        identifier = context.get('identifier','')
+        answer_list = context.get('answer_list',[])
+
+        for appletobject in appletobjects:
+            the_kw = "answer_blank_%s" % appletobject.name
+            expression_for_object = kwargs.get(the_kw)
+            if expression_for_object is not None:
+                expression_string =  kwargs_string.get(the_kw)
+
+                target = "answer_%s_%s" % (expression_string, identifier)
+                target_id = "id_" + target
+                inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20" />\n' % (target_id, target)
+                    
+                related_objects=[]
+                if appletobject.related_objects:
+                    related_object_names = \
+                        [item.strip() for item in appletobject.related_objects.split(",")]
+                    for name in related_object_names:
+                        try:
+                            ro = applet.appletobject_set.get(name=name)
+                            related_objects.append(ro)
+                        except:
+                            pass
+
+                if applet.applet_type.code == "Geogebra" \
+                        or applet.applet_type.code == "GeogebraWeb":
+                    capture_javascript += Geogebra_capture_object_javascript \
+                        (context, appletobject, target_id, related_objects)
+
+                try:
+                    points = int(kwargs['points_'+the_kw])
+                except:
+                    points = 1
+
+                answer_list.append((expression_string, expression_for_object,
+                                    points))
+        
+        context['answer_list'] = answer_list
+
+
+                        
+        applet_link += inputboxlist
+        if applet.applet_type.code == "Geogebra" \
+                or applet.applet_type.code == "GeogebraWeb":
+            if capture_javascript:
+                listener_function_name = "listener%s" % applet.code_camel()
+                init_javascript += 'document.%s.registerUpdateListener("%s");\n' \
+                    % (applet.code_camel(), listener_function_name)
+                
+                # run the listener function upon initialization
+                # so answer_blanks have values
+                init_javascript += "%s();\n" % listener_function_name
+
+                listener_function_script = '<script type="text/javascript">\nfunction %s(obj) {\n%s}\n</script>\n' %(listener_function_name, capture_javascript)
+                applet_link += listener_function_script
+
+
+        if init_javascript:
+            if applet.applet_type.code == "Geogebra" \
+                    or applet.applet_type.code == "GeogebraWeb":
+                # since javascript has to be combined in ggbOnInit
+                # add javascript to geogebra_init_javascript in context
+                # use context.dicts[0] so available outside template block
+                all_init_javascript = context.dicts[0].get('geogebra_oninit_commands','')
+                all_init_javascript += 'if(arg=="%s") {\n%s}\n' % \
+                    (applet.code_camel(), init_javascript)
+                context.dicts[0]['geogebra_oninit_commands'] = all_init_javascript
+        
+
         # if not boxed, just return code for applet
         if not self.boxed:
             return applet_link
@@ -1314,45 +1479,38 @@ def applet_sub(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    applet_code = bits[1]
-    if len(bits) > 2:
-        try:
-            width = float(bits[2])
-        except ValueError:
-            raise template.TemplateSyntaxError, "%r tag's second argument (width) should be a number" % (bits[0],bits[2])
-    else:
-        width=0
-    if len(bits) > 3:
-        try:
-            height = float(bits[3])
-        except ValueError:
-            raise template.TemplateSyntaxError, "%r tag's third argument (width) should be a number" % (bits[0],bits[3])
-    else:
-        height=0
-    if len(bits) > 4:
-        caption = bits[4]
-        if not (caption[0] == caption[-1] and caption[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's fourth argument should be in quotes" % bits[0]
-        caption = caption[1:-1] 
-    else:
-        caption = ""
+    applet = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    kwargs_string = {}
+    
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+                kwargs_string[name] = value
   
-    return (applet_code, width, height,caption)
+    return (applet, kwargs, kwargs_string)
 
 @register.tag
 def applet(parser, token):
 # applet tag
-# syntax: {% applet applet_code [width] [height] [caption] %}
-    (applet_code, width, height,caption)=applet_sub(parser, token)
-    return AppletNode(applet_code, width, height,caption,0)
+    (applet, kwargs, kwargs_string)=applet_sub(parser, token)
+    return AppletNode(applet, 0, kwargs, kwargs_string)
 
 
 @register.tag
 def boxedapplet(parser, token):
 # boxedapplet tag
-# syntax: {% boxedapplet applet_code [width] [height] [caption] %}
-    (applet_code, width, height,caption)=applet_sub(parser, token)
-    return AppletNode(applet_code, width, height,caption,1)
+    (applet, kwargs, kwargs_string)=applet_sub(parser, token)
+    return AppletNode(applet, 1, kwargs, kwargs_string)
+
 
 class AppletLinkNode(template.Node):
     def __init__(self, applet_code, extended_mode, nodelist):
@@ -2088,3 +2246,17 @@ def counter(parser, token):
         raise template.TemplateSyntaxError("'counter' node requires a variable name.")
     return CounterNode(args)
 
+
+class AccumulatedJavascriptNode(template.Node):
+    def render(self, context):
+        # return any geogebra_init_javascript
+        init_javascript = context.get('geogebra_oninit_commands','')
+        if init_javascript:
+            return '<script type="text/javascript">\nfunction ggbOnInit(arg) {\n%s}\n</script>' % init_javascript
+        else:
+            return ''
+
+
+@register.tag
+def accumulated_javascript(parser, token):
+    return AccumulatedJavascriptNode()

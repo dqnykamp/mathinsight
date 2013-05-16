@@ -16,7 +16,11 @@ def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
     dajax = Dajax()
 
     try:
-        form = MultipleChoiceQuestionForm(form, prefix=prefix)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+
+        form = MultipleChoiceQuestionForm(form_dict, prefix=prefix)
         question_context=None
 
         if form.is_valid():
@@ -115,11 +119,16 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         total_points=0
 
         the_answers={}
-
+        answer_dict = {}
+        for  obj in answer:
+            answer_dict[obj['name']]=obj['value']
+            
         for answer_tuple in the_correct_answers:
             answer_string = answer_tuple[0]
 
-            the_answer= answer['answer_%s_%s' % (answer_string, identifier)]
+            the_answer= answer_dict['answer_%s_%s' % (answer_string, identifier)]
+            
+
             try:
                 the_correct_answer = answer_tuple[1]
                 answer_points = answer_tuple[2]
@@ -175,7 +184,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
         # increment number of attempts
         try:
-            number_attempts = int(answer['number_attempts_%s' % identifier])
+            number_attempts = int(answer_dict['number_attempts_%s' % identifier])
         except:
             number_attempts=0
         number_attempts+=1
@@ -191,7 +200,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
             the_feedback += "% correct</p>"
             dajax.append(feedback_selector, 'innerHTML', the_feedback)
 
-        allow_solution_buttons = answer['asb_%s' % identifier]
+        allow_solution_buttons = answer_dict['asb_%s' % identifier]
 
         # check if question or subpart has something written in for solution
         solution_exists = False
@@ -208,7 +217,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
                 number_attempts >= the_question.show_solution_button_after_attempts \
                 and solution_exists:
             
-            show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer':$('#id_question_%s').serializeObject(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed, question_id, identifier)
+            show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed, question_id, identifier)
 
             show_solution_string = '<input type="button" value="Show solution" onclick="%s">' % (show_solution_command)
             dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
@@ -420,7 +429,7 @@ def edit_section(request, section_code, thread_code):
         
         section_form = ThreadSectionForm({'section_name':thread_section.name, 'section_code': thread_section.code})
         
-        send_command = "Dajaxice.midocs.confirm_edit_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s', 'form':$('#%s_edit_section_form').serializeObject()})" % (section_code, thread_code, section_code)
+        send_command = "Dajaxice.midocs.confirm_edit_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s', 'form':$('#%s_edit_section_form').serializeArray()})" % (section_code, thread_code, section_code)
 
         cancel_command = "Dajaxice.midocs.cancel_edit_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s'})" % (section_code, thread_code)
     
@@ -442,7 +451,10 @@ def confirm_edit_section(request, section_code, thread_code, form):
     dajax = Dajax()
     
     try:
-        form = ThreadSectionForm(form)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = ThreadSectionForm(form_dict)
         
         thread_section = ThreadSection.objects.get(code=section_code, thread__code=thread_code)
 
@@ -492,7 +504,7 @@ def insert_section_form_top(request, thread_code):
     try:
         section_form = ThreadSectionForm()
 
-        send_command = "Dajaxice.midocs.insert_section_top(Dajax.process,{'thread_code': '%s',  'form':$('#insert_section_form_top_form').serializeObject()})" % ( thread_code)
+        send_command = "Dajaxice.midocs.insert_section_top(Dajax.process,{'thread_code': '%s',  'form':$('#insert_section_form_top_form').serializeArray()})" % ( thread_code)
         cancel_command = "Dajaxice.midocs.cancel_insert_section_top(Dajax.process,{'thread_code': '%s'})" % (thread_code)
     
         form_html = '<label for="id_section_name">Section name:</label> %s<div class="error" id="section_name_errors_top"></div><br/><label for="id_section_code">Section code:</label> %s<div class="error" id="section_code_errors_top"></div>' % (section_form['section_name'], section_form['section_code'])
@@ -520,7 +532,10 @@ def insert_section_top(request, thread_code, form):
     dajax = Dajax()
 
     try:
-        form = ThreadSectionForm(form)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = ThreadSectionForm(form_dict)
         
         if form.is_valid():
             new_section_name = form.cleaned_data.get('section_name')
@@ -570,7 +585,7 @@ def insert_section_form_below(request, section_code, thread_code):
     try:
         section_form = ThreadSectionForm()
 
-        send_command = "Dajaxice.midocs.insert_section_below(Dajax.process,{'section_code': '%s', 'thread_code': '%s',  'form':$('#%s_insert_section_form_below_form').serializeObject()})" % (section_code, thread_code, section_code)
+        send_command = "Dajaxice.midocs.insert_section_below(Dajax.process,{'section_code': '%s', 'thread_code': '%s',  'form':$('#%s_insert_section_form_below_form').serializeArray()})" % (section_code, thread_code, section_code)
         cancel_command = "Dajaxice.midocs.cancel_insert_section_below(Dajax.process,{'section_code': '%s', 'thread_code': '%s'})" % (section_code, thread_code)
     
         form_html = '<label for="id_section_name">Section name:</label> %s<div class="error" id="%s_section_name_errors"></div><br/><label for="id_section_code">Section code:</label> %s<div class="error" id="%s_section_code_errors"></div>' % (section_form['section_name'], section_code, section_form['section_code'], section_code)
@@ -602,7 +617,10 @@ def insert_section_below(request, section_code, thread_code, form):
     dajax = Dajax()
 
     try:
-        form = ThreadSectionForm(form)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = ThreadSectionForm(form_dict)
         
         if form.is_valid():
             new_section_name = form.cleaned_data.get('section_name')
@@ -845,7 +863,7 @@ def insert_content_form_below_section(request, section_code, thread_code):
     try:
         content_form = ThreadContentForm(prefix=section_code)
 
-        send_command = "Dajaxice.midocs.insert_content_below_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s',  'form':$('#%s_insert_content_form_below_section_form').serializeObject()})" % (section_code, thread_code, section_code)
+        send_command = "Dajaxice.midocs.insert_content_below_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s',  'form':$('#%s_insert_content_form_below_section_form').serializeArray()})" % (section_code, thread_code, section_code)
         cancel_command = "Dajaxice.midocs.cancel_insert_content_below_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s'})" % (section_code, thread_code)
     
         update_combo_command = "Dajaxice.midocs.update_combo_content_form_below_section(Dajax.process,{'section_code': '%s', 'thread_code': '%s', 'option':this.value})" % (section_code, thread_code)
@@ -920,9 +938,13 @@ def insert_content_below_section(request, section_code, thread_code, form):
     dajax = Dajax()
 
     try:
+
         thread_section = ThreadSection.objects.get(code=section_code, thread__code=thread_code)
         
-        form =  ThreadContentForm(form, prefix=section_code)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form =  ThreadContentForm(form_dict, prefix=section_code)
         if form.is_valid():
             content_type = form.cleaned_data.get('content_type')
             object_id = form.cleaned_data.get('object_id')
@@ -990,7 +1012,7 @@ def edit_content(request, threadcontent_id):
 
         #add_content_form = ThreadContentForm({'content_type': thread_content.content_type, 'object_id': thread_content.object_id, 'substitute_title': thread_content.substitute_title}, prefix="threadcontent_%s" % threadcontent_id)
 
-        send_command = "Dajaxice.midocs.confirm_edit_content(Dajax.process,{'threadcontent_id': '%s', 'form':$('#threadcontent_%s_edit_content_form').serializeObject()})" % (threadcontent_id, threadcontent_id)
+        send_command = "Dajaxice.midocs.confirm_edit_content(Dajax.process,{'threadcontent_id': '%s', 'form':$('#threadcontent_%s_edit_content_form').serializeArray()})" % (threadcontent_id, threadcontent_id)
 
         cancel_command = "Dajaxice.midocs.cancel_edit_content(Dajax.process,{'threadcontent_id': '%s'})" % (threadcontent_id)
     
@@ -1052,7 +1074,10 @@ def confirm_edit_content(request, threadcontent_id, form):
     try:
         thread_content=ThreadContent.objects.get(id=threadcontent_id)
 
-        form = ThreadContentForm(form, prefix="threadcontent_%s" % threadcontent_id)
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = ThreadContentForm(form_dict, prefix="threadcontent_%s" % threadcontent_id)
 
         if form.is_valid():
             content_type = form.cleaned_data.get('content_type')

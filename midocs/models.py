@@ -1090,6 +1090,9 @@ class Applet(models.Model):
         else:
             return ""
 
+    def code_camel(self):
+        return ''.join(x.capitalize() for x in  self.code.split('_'))
+
     def anchor(self):
         return "applet:%s" % self.code
 
