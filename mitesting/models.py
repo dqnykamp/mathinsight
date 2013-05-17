@@ -723,7 +723,7 @@ class Assessment(models.Model):
                 geogebra_oninit_commands=""
             else:
                 question_text = the_question.render_question(question_context, user=user, identifier=identifier)
-                geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+                geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
                 #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
                 previous_context = question_context
 
@@ -775,7 +775,7 @@ class Assessment(models.Model):
                                                           identifier=identifier)
                 solution_text = the_question.render_solution(question_context,
                                                           identifier=identifier)
-                geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+                geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
                 #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
                 
                 previous_context = question_context

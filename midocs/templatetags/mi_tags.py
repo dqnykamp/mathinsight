@@ -10,6 +10,7 @@ import re
 import random
 from django.contrib.sites.models import Site
 from django.db.models import  Max
+from mitesting.math_objects import underscore_to_camel
 
 register=template.Library()
 
@@ -1038,7 +1039,8 @@ def return_print_image_string(applet, panel=0):
 
     return the_string
 
-def Geogebra_change_object_javascript(context, appletobject, objectvalue):
+def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
+                                      objectvalue):
     
     object_type = appletobject.object_type.object_type
     
@@ -1058,40 +1060,40 @@ def Geogebra_change_object_javascript(context, appletobject, objectvalue):
                 return ""
 
             javascript = 'document.%s.setCoords("%s", "%s", "%s");\n' % \
-                (appletobject.applet.code_camel(), appletobject.name,
+                (applet_identifier, appletobject.name,
                   value[0], value[1])
         elif object_type=='Number' or object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", "%s");\n' % \
-                (appletobject.applet.code_camel(), appletobject.name,
+                (applet_identifier, appletobject.name,
                  value)
         elif object_type=='Text':
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
-                (appletobject.applet.code_camel(), appletobject.name,
+                (applet_identifier, appletobject.name,
                  value)
         return javascript
     except:
         raise #return ""
 
-def Geogebra_capture_object_javascript(context, appletobject, target, 
-                                       related_objects=[]):
+def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
+                                       target, related_objects=[]):
     
     object_type = appletobject.object_type.object_type
     javascript= ""
     if object_type=='Point':
         xcoord = 'document.%s.getXcoord("%s")' % \
-            (appletobject.applet.code_camel(), appletobject.name)
+            (applet_identifier, appletobject.name)
         ycoord = 'document.%s.getYcoord("%s")' % \
-            (appletobject.applet.code_camel(), appletobject.name)
+            (applet_identifier, appletobject.name)
 
         javascript='$("#%s").val("Point("+%s+","+%s+")");\n' % \
             (target, xcoord,ycoord)
     elif object_type=='Number' or object_type=='Boolean':
         value = 'document.%s.getValue("%s")' % \
-            (appletobject.applet.code_camel(), appletobject.name)
+            (applet_identifier, appletobject.name)
         javascript='$("#%s").val(%s);\n' % (target, value)
     elif object_type=='Text':
         value = 'document.%s.getValueString("%s")' % \
-            (appletobject.applet.code_camel(), appletobject.name)
+            (applet_identifier, appletobject.name)
         javascript='$("#%s").val(%s);\n' % (target, value)
     elif object_type=='Line':
         if len(related_objects)==2:
@@ -1100,20 +1102,20 @@ def Geogebra_capture_object_javascript(context, appletobject, target,
             if point1.object_type.object_type=='Point' and \
                     point2.object_type.object_type=='Point':
                 xcoord1 = 'document.%s.getXcoord("%s")' % \
-                    (appletobject.applet.code_camel(), point1.name)
+                    (applet_identifier, point1.name)
                 ycoord1 = 'document.%s.getYcoord("%s")' % \
-                    (appletobject.applet.code_camel(), point1.name)
+                    (applet_identifier, point1.name)
                 xcoord2 = 'document.%s.getXcoord("%s")' % \
-                    (appletobject.applet.code_camel(), point2.name)
+                    (applet_identifier, point2.name)
                 ycoord2 = 'document.%s.getYcoord("%s")' % \
-                    (appletobject.applet.code_camel(), point2.name)
+                    (applet_identifier, point2.name)
                 javascript='$("#%s").val("Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))");\n' % \
                     (target, xcoord1,ycoord1, xcoord2,ycoord2)
                 
                 
     return javascript
     
-def GeogebraWeb_link(context, applet, width, height):
+def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
     html_string=""
     geogebra_javascript_included=context.get('geogebra_javascript_included',False)
@@ -1127,12 +1129,12 @@ def GeogebraWeb_link(context, applet, width, height):
 
 
     html_string += '<div class="javascriptapplet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>\n' % \
-        (width, height, applet.code_camel(), applet.encoded_content)
+        (width, height, applet_identifier, applet.encoded_content)
 
     return html_string
 
 
-def Geogebra_link(context, applet, width, height):
+def Geogebra_link(context, applet, applet_identifier, width, height):
     # html_string='<div class="applet"><object class="ggbApplet" type="application/x-java-applet" id="%s" height="%s" width="%s"><param name="code" value="geogebra.GeoGebraApplet" /><param name="archive" value="geogebra.jar" /><param name="codebase" value="%sjar/" />' % \
     #     (applet.code, height, width, context["STATIC_URL"] )
     html_string='<div class="applet"><applet class="ggbApplet" name="%s" code="geogebra.GeoGebraApplet" archive="geogebra.jar" codebase="%sjar/" width="%s" height="%s">' % \
@@ -1165,7 +1167,7 @@ def Geogebra_link(context, applet, width, height):
 
 
 
-def LiveGraphics3D_link(context, applet, width, height):
+def LiveGraphics3D_link(context, applet, applet_identifier, width, height):
     html_string='<div class="applet"><object class="liveGraphics3D" type="application/x-java-applet" height="%s" width="%s"><param name="code" value="Live.class" /> <param name="archive" value="live.jar" /><param name="codebase" value="%sjar/" />' % \
         (height, width, context["STATIC_URL"])
 
@@ -1177,7 +1179,7 @@ def LiveGraphics3D_link(context, applet, width, height):
 
     return html_string
 
-def DoubleLiveGraphics3D_link(context, applet, width, height):
+def DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height):
 
     # first find all the parameters and put them into 
     # two parameter strings, one for each applet
@@ -1348,14 +1350,18 @@ class AppletNode(template.Node):
             
         # html for applet inclusion
         # add html for applet embedding based on applet_type
+        identifier = context.get('identifier','')
+        applet_identifier = "%s00%s" % (applet.code_camel(), 
+                                        underscore_to_camel(identifier))
+
         if applet.applet_type.code == "LiveGraphics3D":
-            applet_link = LiveGraphics3D_link(context, applet, width, height)
+            applet_link = LiveGraphics3D_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "DoubleLiveGraphics3D":
-           applet_link = DoubleLiveGraphics3D_link(context, applet, width, height)
+           applet_link = DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "Geogebra":
-           applet_link = Geogebra_link(context, applet, width, height)
+           applet_link = Geogebra_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "GeogebraWeb":
-           applet_link = GeogebraWeb_link(context, applet, width, height)
+           applet_link = GeogebraWeb_link(context, applet, applet_identifier, width, height)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text
@@ -1372,8 +1378,7 @@ class AppletNode(template.Node):
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     init_javascript += Geogebra_change_object_javascript \
-                        (context, appletobject, objectvalue)
-                    #applet_javascript = "%s=%s" % (appletobject.name, objectvalue)
+                        (context, appletobject, applet_identifier, objectvalue)
                     
 
         # check if any applet objects are specified 
@@ -1382,7 +1387,6 @@ class AppletNode(template.Node):
             (capture_changes=True)
         inputboxlist=''
         capture_javascript=''
-        identifier = context.get('identifier','')
         answer_list = context.get('answer_list',[])
 
         for appletobject in appletobjects:
@@ -1409,7 +1413,8 @@ class AppletNode(template.Node):
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     capture_javascript += Geogebra_capture_object_javascript \
-                        (context, appletobject, target_id, related_objects)
+                        (context, appletobject, applet_identifier, 
+                         target_id, related_objects)
 
                 try:
                     points = int(kwargs['points_'+the_kw])
@@ -1427,9 +1432,9 @@ class AppletNode(template.Node):
         if applet.applet_type.code == "Geogebra" \
                 or applet.applet_type.code == "GeogebraWeb":
             if capture_javascript:
-                listener_function_name = "listener%s" % applet.code_camel()
+                listener_function_name = "listener%s" % applet_identifier
                 init_javascript += 'document.%s.registerUpdateListener("%s");\n' \
-                    % (applet.code_camel(), listener_function_name)
+                    % (applet_identifier, listener_function_name)
                 
                 # run the listener function upon initialization
                 # so answer_blanks have values
@@ -1447,7 +1452,7 @@ class AppletNode(template.Node):
                 # use context.dicts[0] so available outside template block
                 all_init_javascript = context.dicts[0].get('geogebra_oninit_commands','')
                 all_init_javascript += 'if(arg=="%s") {\n%s}\n' % \
-                    (applet.code_camel(), init_javascript)
+                    (applet_identifier, init_javascript)
                 context.dicts[0]['geogebra_oninit_commands'] = all_init_javascript
         
 
