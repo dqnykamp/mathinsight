@@ -89,8 +89,6 @@ def pageview(request, page_code):
     
     thetemplate = 'midocs/pages/%s/%s.html' % (thepage.template_dir, thepage.code)
 
-    base_url = "http://%s" % Site.objects.get_current().domain
-    
     # turn off google analytics for localhost or hidden page
     noanalytics=False
     if settings.SITE_ID==2 or thepage.hidden:
@@ -196,7 +194,6 @@ def pageview(request, page_code):
         return render_to_response \
             (thetemplate, {'thepage': thepage, 'related_pages': related_pages,
                            'manual_links': manual_links,
-                           'base_url': base_url,
                            'notation_system': notation_system,
                            'notation_config': notation_config,
                            'notation_system_form': notation_system_form,
@@ -233,7 +230,6 @@ def imageview(request, image_code):
     theimage = get_object_or_404(Image, code=image_code)
     
     in_pages=theimage.in_pages.all()
-    base_url = "http://%s" % Site.objects.get_current().domain
 
     # turn off google analytics for localhost or hidden
     noanalytics=False
@@ -318,7 +314,6 @@ def imageview(request, image_code):
                                'image_filename': image_filename,
                                'original_image_filename': original_image_filename,
                                'width': width, 'height': height,
-                               'base_url': base_url,
                                'notation_config': notation_config,
                                'notation_system_form': notation_system_form, 
                                'noanalytics': noanalytics,
@@ -338,8 +333,6 @@ def appletview(request, applet_code):
     theapplet = get_object_or_404(Applet, code=applet_code)
     
     in_pages=theapplet.in_pages.all()
-
-    base_url = "http://%s" % Site.objects.get_current().domain
 
     # turn off google analytics for localhost or hidden applet
     noanalytics=False
@@ -402,7 +395,6 @@ def appletview(request, applet_code):
 
     return render_to_response("midocs/applet_detail.html", 
                               {'applet': theapplet, 'in_pages': in_pages,
-                               'base_url': base_url,
                                'applet_filename': applet_filename,
                                'applet_filename2': applet_filename2,
                                'notation_config': notation_config,
@@ -426,8 +418,6 @@ def videoview(request, video_code):
     
     in_pages=thevideo.in_pages.all()
 
-    base_url = "http://%s" % Site.objects.get_current().domain
-
     # turn off google analytics for localhost or hidden video
     noanalytics=False
     if settings.SITE_ID==2 or thevideo.hidden:
@@ -440,7 +430,6 @@ def videoview(request, video_code):
 
     return render_to_response("midocs/video_detail.html", 
                               {'video': thevideo, 'in_pages': in_pages,
-                               'base_url': base_url,
                                'noanalytics': noanalytics,
                                },
                               context_instance=RequestContext(request))

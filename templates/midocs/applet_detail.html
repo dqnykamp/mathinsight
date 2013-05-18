@@ -66,7 +66,7 @@
 <h4>Cite this as</h4>
 {% with cite_authors=applet.author_list_abbreviated_link %}
 <p>{%if cite_authors%}{{cite_authors|safe}}, {%endif%}&ldquo;{{ applet.title_with_period }}&rdquo; From <i>Math Insight</i>. 
-  <a href="{{base_url}}{{applet.get_absolute_url}}" class="normaltext">{{base_url}}<wbr>{{applet.get_absolute_url}}</a></p>
+  <a href="http://mathinsight.org{{applet.get_absolute_url}}" class="normaltext">http://mathinsight.org<wbr>{{applet.get_absolute_url}}</a></p>
 {%endwith%}
 
 {% if applet.keywords.all %}<p>Keywords:
@@ -82,7 +82,7 @@
 {% if applet.author_copyright %}
 {% with credit_authors=applet.author_list_full %}
 <h4><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="{{STATIC_URL}}image/somerights20.png"/></a></h4>
-<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">{{applet.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="{{base_url}}{{applet.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/" class="external">Creative Commons Attribution-Noncommercial-ShareAlike 3.0 License</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="{{base_url}}{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
+<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">{{applet.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{{applet.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/" class="external">Creative Commons Attribution-Noncommercial-ShareAlike 3.0 License</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
 {%endwith%}
 {%endif%}
 

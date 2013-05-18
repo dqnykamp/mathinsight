@@ -5,7 +5,7 @@
 
 {% navigation_tag "background" "Background" %}
 <h4>Background</h4>
-{% boxedvideo controlling_rabbit_population_introduction %}
+{% boxedvideo "controlling_rabbit_population_introduction" %}
 
 
 <p>Trouble is brewing on Foxless Island.  It appears that a family bought a couple of baby rabbits for their children, but then let them loose when their children ended up playing too rough with the bunnies. Unfortunately, without the presence of any predators on the island, the rabbit population is now exploding.  As head of the Foxless animal control team (FACT), you've been commissioned to develop and implement a plan to control the rabbit population.</p>
@@ -31,14 +31,14 @@
 \end{gather}
 where you tentatively set $r=0.2$.</p>
 
-{% boxedvideo controlling_rabbit_population_initial_plan %}
+{% boxedvideo "controlling_rabbit_population_initial_plan" %}
 
 <p>Model \eqref{freemodel} only gives the <em>change</em> in population size from month to month.  In order to use it to calculate any actual population sizes, you have to start it with an initial population size $p_0$ in some month which you'll denote as month 0.  Then the time index $t$ will measure months after that initial month.  You have no idea what to use for $p_0$, so decide to just explore what the model predicts for different values of $p_0$.</p>
 
 {% navigation_tag "strategies" "Strategies" %}
 <h4>Control strategies</h4>
 
-<p>Leaving the rabbit population to grow rapidly according to equation \eqref{freemodel} is definitely not a viable option.   (Try the {% appletlink function_iteration %}function iteration applet{%endappletlink%} with $f(x)=1.2x$ to see what happens when a value increases by 20% at each iteration.)  The island is beginning to be overrun by rabbits.  Despite the objections of the children, you will implement a control strategy that will involve trapping rabbits or hunting rabbits to reduce their numbers.  Your problem is to figure out how many rabbits you should remove each month in order to maintain a stable population of around a thousand rabbits.</p>
+<p>Leaving the rabbit population to grow rapidly according to equation \eqref{freemodel} is definitely not a viable option.   (Try the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%} with $f(x)=1.2x$ to see what happens when a value increases by 20% at each iteration.)  The island is beginning to be overrun by rabbits.  Despite the objections of the children, you will implement a control strategy that will involve trapping rabbits or hunting rabbits to reduce their numbers.  Your problem is to figure out how many rabbits you should remove each month in order to maintain a stable population of around a thousand rabbits.</p>
 
 {% navigation_tag "fixednumber" "Strategies" "Fixed removal" %}
 <h5>1. Removing a fixed number</h5>

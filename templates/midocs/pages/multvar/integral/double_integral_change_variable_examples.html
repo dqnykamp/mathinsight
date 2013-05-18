@@ -32,7 +32,7 @@ rectangular coordinates{%endintlink%}.</p>
 \end{align*}
 where $\dlr^*$ is the region in the $r\theta$-plane that is mapped by
 $\cvarf$ onto the disk $\dlr$.  In polar coordinates, the disk is
-described by $0 \le r \le 6$ and $0 \le \theta \le 2\pi$, so the region $\dlr^*$ is a rectangle, making integration simple.  See the applet on the {% appletlink polar_coordinates_map_rectangle %}polar coordinates map of a rectangle{% endappletlink%} to visualize this transformation from rectangle to disk.</p>
+described by $0 \le r \le 6$ and $0 \le \theta \le 2\pi$, so the region $\dlr^*$ is a rectangle, making integration simple.  See the applet on the {% appletlink "polar_coordinates_map_rectangle" %}polar coordinates map of a rectangle{% endappletlink%} to visualize this transformation from rectangle to disk.</p>
 
 <p>We calculate the pieces of this formula.  The integrand $g(x,y)$ becomes
 \begin{align*}
@@ -91,7 +91,7 @@ area depends on the radius $r$, since its width is approximately
 $r\Delta \theta$ and its height is approximately $\Delta r$.  Hence
 the area $\Delta A$ is approximately $r \Delta r \Delta \theta$.  
 This sketch captures the reason why $dA$ becomes $r\,dr\,d\theta$ when
-changing variables to polar coordinates.  You can also explore the applet about {% appletlink polar_coordinates_map_rectangle_area_transformation %}the area
+changing variables to polar coordinates.  You can also explore the applet about {% appletlink "polar_coordinates_map_rectangle_area_transformation" %}the area
 transformation of the polar coordinates mapping{%endappletlink%} to see how the amount of area expansion increases with radius $r$. </p>
 
 
@@ -198,7 +198,7 @@ The fact that the area expansion factor goes to zero when $\cvarfv$ goes to $\pm
 
 <h4>Understanding the geometric properties of this change of variables</h4>
 
-<p>You can use {% appletlink nonlinear_2d_change_variables_map_animation %}this applet{%endappletlink%} to visualize how $\cvarf$ is stretches the rectangle $\dlr^*$ onto the given region $\dlr$.  Change the transformation in the applet to correspond to the $\cvarf$ of this function.  (The transformation $\cvarf$ of this problem in component form is $x=\cvarsv(1-\cvarfv^2)$ and $y=u$, but you'll need to type $\cvarsv * (1-\cvarfv \wedge 2)$ in the box for $x$ in order to have the applet accept the function.)  Then, if you change the rectangle to correspond to $\dlr^*$, it should be morphed into the parabolic region $\dlr$.  If you are really observant, you may notice that $\cvarf$ flips the region $\dlr^*$ over as it maps it onto $\dlr$; this flipping corresponds to the fact that $\det \jacm{\cvarf}(\cvarfv,\cvarsv)$ is negative.  See {% intlink determinant_linear_transformation %}this page{%endintlink%} to see more on the relationship between determinants and the geometry of mappings. </p>
+<p>You can use {% appletlink "nonlinear_2d_change_variables_map_animation" %}this applet{%endappletlink%} to visualize how $\cvarf$ is stretches the rectangle $\dlr^*$ onto the given region $\dlr$.  Change the transformation in the applet to correspond to the $\cvarf$ of this function.  (The transformation $\cvarf$ of this problem in component form is $x=\cvarsv(1-\cvarfv^2)$ and $y=u$, but you'll need to type $\cvarsv * (1-\cvarfv \wedge 2)$ in the box for $x$ in order to have the applet accept the function.)  Then, if you change the rectangle to correspond to $\dlr^*$, it should be morphed into the parabolic region $\dlr$.  If you are really observant, you may notice that $\cvarf$ flips the region $\dlr^*$ over as it maps it onto $\dlr$; this flipping corresponds to the fact that $\det \jacm{\cvarf}(\cvarfv,\cvarsv)$ is negative.  See {% intlink determinant_linear_transformation %}this page{%endintlink%} to see more on the relationship between determinants and the geometry of mappings. </p>
 </div>
 
 

@@ -34,7 +34,7 @@ we can write $x(t)$ as an expression containing just integrals of functions of $
 <p>Let's make the equation slightly more complicated, adding an extra $x$ to make it
   \begin{gather}
   \diff{x}{t} + x(t)=t^2.
-  {% equation_tag ode1 1 %}
+  {% equation_tag "ode1" 1 %}
   \end{gather}
   Adding that little term would seem innocuous, but it ruined the perfect situation we had with the previous equation.  The right hand side is still a function of $t$ alone, but the left hand side is no longer a derivative with
   respect to $t$. We can't just integrate the left hand side, as we don't 
@@ -63,7 +63,7 @@ we can write $x(t)$ as an expression containing just integrals of functions of $
   both sides of the ODE of \eqref{ode1} by $\mu(t)$, the ODE becomes
   \begin{gather}
   \mu(t)\diff{x}{t} + \mu(t)x(t)=\mu(t)t^2.
-  {% equation_tag multmu1 2 %}
+  {% equation_tag "multmu1" 2 %}
   \end{gather}
 </p>
 
@@ -78,7 +78,7 @@ $\mu(t)$ be a function that lets us switch $\mu(t)$ with $\diff{\mu}{t}$.
 In other words, we could let $\mu(t)$ be the solution to the ODE
 \begin{gather}
   \diff{\mu}{t} = \mu(t).
-  {% equation_tag odemu1 3 %}
+  {% equation_tag "odemu1" 3 %}
 \end{gather}
 </p>
 
@@ -107,7 +107,7 @@ the constant of integration, and we can safely define $$\mu(t)=e^t.$$</p>
 <p>The new version of our ODE is
   \begin{gather*}
   \diff{}{t}(e^tx(t))=e^tt^2.
-  {% equation_tag odederiv1 4 %}
+  {% equation_tag "odederiv1" 4 %}
   \end{gather*}
   Finally we have transformed the ODE of \eqref{ode1} to the simple form we desired.  The left hand side of equation \eqref{odederiv1} is a derivative with
   respect to $t$ and the right hand side is a function of $t$ alone.
@@ -132,7 +132,7 @@ the constant of integration, and we can safely define $$\mu(t)=e^t.$$</p>
   of \eqref{ode1}
   \begin{align}
   x(t) &=2 - 2 t + t^2 +Ce^{-t},
-  {% equation_tag ode1sol 5 %}
+  {% equation_tag "ode1sol" 5 %}
   \end{align}
   where the constant $C$, as usual, must be determined from initial conditions.
 </p>
@@ -157,7 +157,7 @@ linear ODE.  Recall that such an ODE is linear in the function and its
 first derivative.  The general form for a first order linear ODE in $x(t)$ is
 \begin{gather}
   \diff{x}{t} + p(t)x(t)=q(t).
-  {% equation_tag folin 6 %}
+  {% equation_tag "folin" 6 %}
 \end{gather}
 (If an ODE has a function of $t$ multiplying $\diff{x}{t}$, you can
 divide through by the function to put it into this form, assuming the function
@@ -167,7 +167,7 @@ is never zero.)</p>
 Multiplying by an integrating factor $\mu(t)$, the ODE becomes
 \begin{gather}
   \mu(t)\diff{x}{t} + \mu(t)p(t)x(t)=\mu(t)q(t).
-  {% equation_tag folin_multmu 7 %}
+  {% equation_tag "folin_multmu" 7 %}
 \end{gather}
 The left hand side of equation \eqref{folin_multmu} would be the derivative of $\mu(t)x(t)$
 $$\diff{}{t}(\mu(t)x(t)) = \mu(t)\diff{x}{t} + \diff{\mu}{t}x(t)$$
@@ -178,7 +178,7 @@ $p(t)$.  </p>
 <p>The integrating factor $\mu(t)$ must satisfy the equation
 \begin{gather}
   \diff{\mu}{t} = p(t)\mu(t).
-  {% equation_tag folin_odemu 8 %}
+  {% equation_tag "folin_odemu" 8 %}
 \end{gather}
 This equation is similar to 
 {% intlinkeq ordinary_differential_equation_introduction linear_ode 1 %} from the ODE introduction{%endintlinkeq%},
@@ -209,7 +209,7 @@ need any integrating factor $\mu(t)$ that satisfies \eqref{folin_odemu}.
 We let 
 \begin{gather}
   \mu(t) =  e^{\int p(t)dt}.
-  {% equation_tag mu_folin 9 %}
+  {% equation_tag "mu_folin" 9 %}
 \end{gather}
 </p>
 
@@ -219,7 +219,7 @@ succeeded in transforming the left hand side into the derivative of
 $\mu(t)x(t)$:
 \begin{gather}
   \diff{}{t} \left(e^{\int p(t)dt} x(t)\right) =e^{\int p(t)dt}q(t).
-  {% equation_tag folin_presol 10 %}
+  {% equation_tag "folin_presol" 10 %}
 \end{gather}
 </p>
 
@@ -238,7 +238,7 @@ it in terms of the integrating factor $\mu(t)$
 \begin{align}
    x(t) &= \frac{\int \mu(t)q(t) dt +C}{\mu(t)}\notag\\
   \mu(t) &=  e^{\int p(t)dt}.
-  {% equation_tag folin_sol 11 %}
+  {% equation_tag "folin_sol" 11 %}
 \end{align}
 </p>
 

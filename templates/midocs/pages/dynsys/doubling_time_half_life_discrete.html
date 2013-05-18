@@ -6,7 +6,7 @@
 {% title "Doubling time and half-life of exponential growth and decay" %}
 {% description "How exponential growth is characterized by a doubling time and exponential decay is characterized by a half-life." %}
 
-{% boxedvideo doubling_time_half_life_discrete %}
+{% boxedvideo "doubling_time_half_life_discrete" %}
 
 <p>Sometimes, a population size $P_T$ as a function of time can be {% intlink exponential_growth_decay_discrete%}characterized by an exponential function.{%endintlink%}  For example, the {% intlink bacteria_growth_initial_model %}population growth of bacteria{% endintlink %}  was characterized by the function $P_T = 0.022 \times 1.032^T$.  Such exponential growth or decay can be characterized by the time it takes for the population size to double or shrink in half.  For exponential growth, we can define a characteristic <em><a href="#doubling_time">doubling time</a></em>.  For exponential decay, we can define a characteristic <em><a href="#half_life">half-life</a></em>.</p>
 
@@ -32,7 +32,7 @@ doubled from 0.1 to 0.2 between $T=48$ and $T=70$, which is also 22 minutes.</p>
 exponential growth of the form
 \begin{gather}
 x_t = x_0 \times b^t, \quad \text{for $b > 1$},
-{% equation_tag expgrowth 1 %}
+{% equation_tag "expgrowth" 1 %}
 \end{gather}
 where $x_0$ is the population size at time $t=0$.</p>
 
@@ -71,7 +71,7 @@ Then, based on the properties of the logarithm, we can bring the exponent down t
 or
 \begin{gather}
  T_{\text{double}}= \frac{\log 2}{\log b}.
-  {% equation_tag doubling_time 2 %}
+  {% equation_tag "doubling_time" 2 %}
 \end{gather}
 </p>
 
@@ -92,7 +92,7 @@ where $x$ denotes distance instead of time.)</p>
 <p>Repeating the same procedure that we used above to calculate the doubling time, you can calculate that the half-life is a function of just the parameter $b$:
 \begin{gather}
  T_{\text{half}}= \frac{\log \frac{1}{2}}{\log b}.
-  {% equation_tag half_life 3 %}
+  {% equation_tag "half_life" 3 %}
 \end{gather}
 </p>
 

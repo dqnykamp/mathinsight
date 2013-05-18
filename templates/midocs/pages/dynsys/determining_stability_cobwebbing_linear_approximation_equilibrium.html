@@ -5,7 +5,7 @@
 {% title "Determining stability by cobwebbing linear approximations around equilibria" %}
 {% description "By cobwebbing the linear approximation to a discrete dynamical around an equilibrium, one can determine a criterion for the stability of the equilibrium." %}
 
-{% boxedvideo determining_stability_cobwebbing_linear_approximation_equilibrium %}
+{% boxedvideo "determining_stability_cobwebbing_linear_approximation_equilibrium" %}
 
 <p>One way to explore the {% intlink equilibria_discrete_dynamical_systems_stability_idea %}stability of an equilibrium{% endintlink%} of a discrete dynamical system is to use {% intlink cobwebbing_graphical_solution %}cobwebbing{% endintlink%} to see whether or not solutions converge to the equilibrium.  If you can always find a solution that moves away from the equilibrium, even for initial conditions really close to the equilibrium, then the equilibrium is unstable.  If, on the other hand, all solutions that start close enough to the equilibrium stay close, or even approach, the equilibrium, then the equilibrium is stable.</p>
 
@@ -20,13 +20,13 @@
 <p>The simplest form of a linear discrete dynamical system is one where there is no constant term, i.e., a dynamical system of the form
 \begin{align}
   z_{n+1} = a z_n, \quad \text{for $n=0,1,2,\ldots$}
- {% equation_tag linearnoconstant 1 %}
+ {% equation_tag "linearnoconstant" 1 %}
 \end{align}
 where $a$ is a parameter. This form of dynamical system includes {% intlink exponential_growth_decay_discrete %}exponential growth and decay{% endintlink%}, which occurs when $a$ is positive.  But, here we will also allow $a$ to be negative, so we'll get a larger range of behavior.</p>
 
-<p>Our goal is to determine the equilibria of model \eqref{linearnoconstant} and their stability as a function of the parameter $a$.  We can do this graphically, using the {% appletlink function_iteration_cobweb %}cobwebbing applet{%endappletlink%}.  You'll need to do some translations in the notation because the applet is set up for a model of the form $x_{n+1}=f(x_n)$.  Just use $z$ rather than $x$ and notice that for model \eqref{linearnoconstant}, we are using the function $f(z)=az$.</p>
+<p>Our goal is to determine the equilibria of model \eqref{linearnoconstant} and their stability as a function of the parameter $a$.  We can do this graphically, using the {% appletlink "function_iteration_cobweb" %}cobwebbing applet{%endappletlink%}.  You'll need to do some translations in the notation because the applet is set up for a model of the form $x_{n+1}=f(x_n)$.  Just use $z$ rather than $x$ and notice that for model \eqref{linearnoconstant}, we are using the function $f(z)=az$.</p>
 
-<p>To find the equilibria using the {% appletlink function_iteration_cobweb %}cobwebbing applet{%endappletlink%}:</p>
+<p>To find the equilibria using the {% appletlink "function_iteration_cobweb" %}cobwebbing applet{%endappletlink%}:</p>
 <ol>
 <li>Enter the right hand side of model \eqref{linearnoconstant} in the &ldquo;$f(x)=$&rdquo; box in the applet.  Type $x$ for $z_n$.  You'll have to choose a particular numerical value for $a$ and type that number rather than &ldquo;$a$&rdquo;.</li>
 <li>Find the equilibria as the intersections between the graph of $z_{n+1}=f(z_n)$ (in blue) and the graph of the diagonal $z_{n+1}=z_n$ (in red).</li>
@@ -43,7 +43,7 @@ where $a$ is a parameter. This form of dynamical system includes {% intlink expo
 <p>The next step is to determine what happens to the equilibria when one adds a constant term to the dynamical system, yielding a dynamical system of the form
 \begin{align}
   y_{n+1} = b y_n + c, \quad \text{for $n=0,1,2,\ldots$}
-  {% equation_tag linearwithconstant 2 %}
+  {% equation_tag "linearwithconstant" 2 %}
 \end{align}
 where $b$ and $c$ are parameters, which can be positive or negative.</p>
 
@@ -61,7 +61,7 @@ where $b$ and $c$ are parameters, which can be positive or negative.</p>
 <p>Linear dynamical systems are the simplest type to understand.  For a discrete dynamical system of the form
 \begin{align}
   x_{n+1} = f(x_n) \quad \text{for $n=0,1,2,\ldots$}
-  {% equation_tag generalsystem 3 %}
+  {% equation_tag "generalsystem" 3 %}
 \end{align}
 the situation gets much more complicated when $f(x)$ is a nonlinear function. 
 Such nonlinear discrete dynamical systems can exhibit very complicated behavior (even {% intlink chaos_definition %}chaos{%endintlink%}).</p>
@@ -76,7 +76,7 @@ Such nonlinear discrete dynamical systems can exhibit very complicated behavior 
 
 <p>The stability of an equilibrium is defined based on what happens to solutions near the equilibrium; to determine stability, we just need to know whether or not solutions near the equilibrium move away from it.  We'll exploit this fact by simplifying the form of $f(x)$ for values of $x$ around an equilibrium.  We'll make a <em>linear approximation</em> of $f$ around an equilibrium so that we can apply our previous results.  At this point, we won't ask you to find the linear approximation. Instead, we made an applet to do the work for you.</p>
 
-<p>The following applet is a modification of the {% appletlink function_iteration_cobweb%}cobweb applet{%endappletlink%} that can also compute a linear approximation to $f(x)$ around an equilibrium.  To calculate a linear approximation, click the &ldquo;find E&rdquo; and click near an equilibrium, i.e., near where the graph of $f$ (in blue) intersects the diagonal (in red).  If all goes well, the applet will find the equilibrium $E$ and display its value underneath the button.</p>
+<p>The following applet is a modification of the {% appletlink "function_iteration_cobweb" %}cobweb applet{%endappletlink%} that can also compute a linear approximation to $f(x)$ around an equilibrium.  To calculate a linear approximation, click the &ldquo;find E&rdquo; and click near an equilibrium, i.e., near where the graph of $f$ (in blue) intersects the diagonal (in red).  If all goes well, the applet will find the equilibrium $E$ and display its value underneath the button.</p>
 
 <p>When the applet finds an equilibrium, it also calculates a <em>tangent line</em> to the function around that equilibrium and displays it as a green line.  The tangent line is a linear function that matches the function very closely around the equilibrium.  The tangent line is the linear approximation we will need.  The slope of this tangent line is displayed below the value of the equilibrium.</p>
 

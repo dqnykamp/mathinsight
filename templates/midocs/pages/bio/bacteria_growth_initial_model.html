@@ -16,7 +16,7 @@
 {% navigation_tag "developing" "Developing" %}
 <h4>Developing a model from experimental data</h4>
 
-{% boxedvideo developing_bacteria_growth_model_experimental_data %}
+{% boxedvideo "developing_bacteria_growth_model_experimental_data" %}
 
 <p>{% extlink "http://en.wikipedia.org/wiki/Vibrio_natriegens" %}<i>Vibrio natriegens</i>{%endextlink%}, or <i>V. natriegens</i> for short, is a marine bacterium commonly found in the mud around estuaries.   One can manipulate the growth rate of <i>V. natriegens</i> in a laboratory by using simple manipulations of the experimental conditions.  Our goal will be to build discrete dynamical system models describing its population growth under a few experimental conditions.</p>
 
@@ -100,7 +100,7 @@ through the medium with bacteria at time $t$.</p>
 
 <p>But, before we start going down that road, we need to stop and remember the system we are trying to model.  Our purpose in modeling the data is not simply to find an equation that matches the data points.  Our goal is a model that captures the mechanism of the physical system we modeling.  To achieve a model that captures the key features of bacteria population growth, we need to go back and recall what we know about how bacteria reproduce.</p>
 
-<p>As <a href="#why">mentioned at the outset</a>, bacteria cells reproduce by dividing into two cells, and each cell takes about the same time to mature and divide.  If our snapshots occurred at the same interval as this dividing time, the population size would double at each time step, as it did in the {% intlink dynamical_system_idea bacteria_doubling %}example we used to illustrate dynamical systems{%endintlink%}, captured by the {% appletlink bacteria_doubling %}bacteria doubling applet{%endappletlink%}.</p>
+<p>As <a href="#why">mentioned at the outset</a>, bacteria cells reproduce by dividing into two cells, and each cell takes about the same time to mature and divide.  If our snapshots occurred at the same interval as this dividing time, the population size would double at each time step, as it did in the {% intlink dynamical_system_idea bacteria_doubling %}example we used to illustrate dynamical systems{%endintlink%}, captured by the {% appletlink "bacteria_doubling" %}bacteria doubling applet{%endappletlink%}.</p>
 
 <p>Looking at the above data, it doesn't appear that the population is doubling at each time step.  If it doubled, we would have expected that the change $B_{t+1}-B_{t}$ would be equal to the previous population size $B_t$.  In all cases, the change $B_{t+1}-B_{t}$ is substantially less than $B_t$.</p>
 
@@ -124,7 +124,7 @@ through the medium with bacteria at time $t$.</p>
 
 <p>If cells are taking longer than a time step to mature and divide, a reasonable assumption is that a certain fraction of the cells divide each time step.  The population change, $B_{t+1}-B_{t}$, should reflect the number of cells that divided between the snapshot at time $t$ and the snapshot at time $t+1$.  Therefore, if cells are dividing at a constant rate, then we expect that the population change, $B_{t+1}-B_{t}$, should be some fixed fraction of the population $B_t$.  In other words, we expect that the model should be of the form
 \begin{gather}
-  B_{t+1}-B_{t} = c B_t {% equation_tag constant_rate 1 %}
+  B_{t+1}-B_{t} = c B_t {% equation_tag "constant_rate" 1 %}
 \end{gather}
 for some constant $c$.</p>
 
@@ -154,7 +154,7 @@ be &ldquo;fit&rdquo; more quantitatively, but it is not necessary to do so at th
 
 <p>Substituting $c=2/3$ into equation \eqref{constant_rate}, we arrive at the following evolution rule for our initial discrete dynamical system model describing bacterial population growth:
 \begin{gather}
-  B_{t+1}-B_{t} = \frac{2}{3} B_t. {% equation_tag initial_model 2 %}
+  B_{t+1}-B_{t} = \frac{2}{3} B_t. {% equation_tag "initial_model" 2 %}
 \end{gather}
 In words equation \eqref{initial_model} says that the growth during
 the $t$<sup>th</sup> time interval
@@ -174,11 +174,11 @@ every time period.    (In this instance, two-thirds of the cells divide every
 {% navigation_tag "solving" "Solving" %}
 <h4>Solving the model</h4>
 
-{% boxedvideo solving_bacteria_growth_model %}
+{% boxedvideo "solving_bacteria_growth_model" %}
 
 <p>The dynamical system of equation \eqref{initial_model} is simple enough that we can solve it to find an equation for $B_t$ in terms of $t$.  As a first step, we change equation \eqref{initial_model} into an <em>iterator equation</em>, meaning an equation of the form that we introduced in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical system introduction{%endintlink%}.  To do this, we just rewrite equation \eqref{initial_model} so that $B_{t+1}$ is alone on the left hand side:
 \begin{gather}
-  B_{t+1} = \frac{5}{3} B_t = f(B_t){% equation_tag model_iterator 3 %}
+  B_{t+1} = \frac{5}{3} B_t = f(B_t){% equation_tag "model_iterator" 3 %}
 \end{gather}
 where the function $f$ is defined by $f(x)=\frac{5}{3} x$.  As discussed in the 
 {% intlink discrete_dynamical_system_introduction %}introduction{%endintlink%}, evolving a discrete dynamical system can consist of iterating a function such as $f$.</p>
@@ -197,7 +197,7 @@ Beginning with $B_0 = 0.022$ we can compute
 B_1 & = \frac{5}{3} B_0  =  \frac{5}{3} 0.022  \approx 0.037\\
 B_2 & = \frac{5}{3} B_1 = \frac{5}{3} 0.037  \approx 0.061
 \end{align*}
-By continuing to iterate $f$, we can compute $B_3$, $B_4$, and $B_5.$  You can do this by continuing to multiply by $5/3$ or use the {% appletlink function_iteration %}function iteration applet{%endappletlink%} so that you can visualize the results.  To use the applet, plug in $f(x)=5x/3$ and $x_0=0.022$.</p> 
+By continuing to iterate $f$, we can compute $B_3$, $B_4$, and $B_5.$  You can do this by continuing to multiply by $5/3$ or use the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%} so that you can visualize the results.  To use the applet, plug in $f(x)=5x/3$ and $x_0=0.022$.</p> 
 
 <p>We can also write out the solution without putting in the value for the initial condition and without multiplying out the solution.  In this case, the solutions look like
 \begin{align*}
@@ -223,14 +223,14 @@ B_5 =    \left( \frac{5}{3} \right)^5 \times B_0.
 The general form is
 \begin{equation}    
 B_t = \left( \frac{5}{3} \right)^t B_0 = B_0 \left( \frac{5}{3} \right)^t
-{% equation_tag general_solution 4 %}
+{% equation_tag "general_solution" 4 %}
 \end{equation}
 which is the general solution to the discrete dynamical system \eqref{initial_model} for generic initial conditions $B_0$.</p>
 
 <p>For the data, we had the specific initial population density $B_0 = 0.022$.  For that situation, equation \eqref{general_solution} becomes
 \begin{equation} 
  B_t = 0.022 \left( \frac{5}{3} \right)^t
-  {% equation_tag specific_solution 5 %}
+  {% equation_tag "specific_solution" 5 %}
 \end{equation}
 and is the <em>specific solution</em> to the discrete dynamical system of equation \eqref{initial_model} and the given initial condition, which we rewrite together as
 \begin{gather*}
@@ -242,7 +242,7 @@ B_0 = 0.022, \qquad B_{t+1} - B_t = \frac{2}{3} B_t.
 of the time index, $t$.  We can also write the solution in terms of original experimental time.  Denoting this time in minutes by $T$, where $T=16 t$, we can write equation \eqref{specific_solution} as
 \begin{gather}
 \text{Bacteria at $T$ minutes} = 0.022 \left( \frac{5}{3} \right)^{T/16}\goodbreak \approx 0.022 \timesbadbreak 1.032^T.
-  {% equation_tag specific_solution_time_units 6 %}
+  {% equation_tag "specific_solution_time_units" 6 %}
 \end{gather}
 </p>
 
@@ -273,7 +273,7 @@ are said to exhibit <em>{% intlink exponential_growth_decay_discrete %}exponenti
 <tr><td>80</td><td>5</td><td>0.266</td><td>0.283</td></tr>
 </table> 
 
-<p>To visualize the comparison, we again use the {% appletlink function_iteration %}function iteration applet{%endappletlink%}, but this time we modify it by adding the experimental data as purple diamonds.  Since the function and initial conditions are already entered by default, you can simply iterate a few times to see the graphical comparison.</p>
+<p>To visualize the comparison, we again use the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%}, but this time we modify it by adding the experimental data as purple diamonds.  Since the function and initial conditions are already entered by default, you can simply iterate a few times to see the graphical comparison.</p>
 
 {% boxedapplet "function_iteration_bacteria_growth_initial_model" %}
 
