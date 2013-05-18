@@ -8,13 +8,13 @@
 
 <p>Given a function $f(x)$ where $f(x) \ge 0$ over an interval $a \le x \le b$, we investigate the area of the region that is under the graph of $f(x)$ and above the interval $[a, b]$ on the $x$-axis.  For example, the below purple shaded region is the region above the interval $[-1,10]$ and under the graph of a function $f$.  Such an area is often referred to as the &ldquo;area under a curve.&rdquo;</p>
 
-{% image area_under_curve_shaded %}
+{% image "area_under_curve_shaded" %}
 
 <p>Since the region under the curve has such a strange shape, calculating its area is too difficult.  But calculating the area of rectangles is simple.  Let's simplify our life by pretending the region is composed of a bunch of rectangles.  To turn the region into rectangles, we'll use a similar strategy as we did to {% intlink using_forward_euler_solve_pure_time_differential_equations %}use Forward Euler to solve pure-time differential equations{%endintlink%}.</p>
 
 <p>As illustrated in the following figure, we divide the interval $[a,b]$ into $n$ subintervals of length $\Delta x$ (where $\Delta x$ must be $(b-a)/n$).  We label the endpoints of the subintervals by $x_0$, $x_1$, etc., so that the leftmost point is $a=x_0$ and the rightmost point is $b=x_n$.  The picture shows the case with four subintervals.</p>
 
-{% image area_under_curve_subintervals %}
+{% image "area_under_curve_subintervals" %}
 
 <p>The next step is to pretend that $f(x)$ doesn't change over each subinterval. We'll measure $f(x)$ on the left side of the subinterval, and ignore any changes in $f$ across the subinterval.  The result is that we are pretending that the region under $f$ is composed of a bunch of rectangles, one for each subinterval.  Maybe it's a crude approximation, but it makes for an easy calculation of area.</p>
 
@@ -96,7 +96,7 @@ Take this equation, let $n$ go to infinity to rewrite the equation in terms of t
 
 <p>If $f$ goes negative, though, will the definite integral still give area?  One hypothesis is that the definite integral gives the area under the curve (above the $x$-axis) when $f$ is positive plus the area <em>over</em> the curve (under the $x$-axis) when $f$ is negative.  This hypothesis is that the integral $\int_a^b f(x)dx$ would add up both the green areas and the red areas in the following figure.  We'll call this sum the &ldquo;total area.&rdquo;</p>
 
-{% image area_under_over_curve %} 
+{% image "area_under_over_curve" %} 
 
 <p>By changing the function in the applet so that it is both positive and negative (or even negative everywhere) in the interval $[a,b]$, test this hypothesis that the integral gives the total area.  Does the hypothesis seem to be holding true?  If not, what is the relationship between the definite integral $\int_a^b f(x)dx$ and area above or below the graph of $f$?  Does this make sense given the definition of the definite integral in terms of a Riemann sum?  Remember, the integral is just a sum.  What is it adding up here?</p>
 

@@ -694,8 +694,8 @@ class IndexEntry(models.Model):
     page = models.ForeignKey(Page)
     index_type = models.ForeignKey(IndexType, related_name = "entries")
     indexed_phrase = models.CharField(max_length=100, db_index=True)
-    indexed_subphrase = models.CharField(max_length=100, db_index=True, blank=True)
-    page_anchor = models.CharField(max_length=100, blank=True)
+    indexed_subphrase = models.CharField(max_length=100, db_index=True, blank=True, null=True)
+    page_anchor = models.CharField(max_length=100, blank=True, null=True)
     
     def indexed_phrase_first_letter(self):
         return self.indexed_phrase[0].upper()

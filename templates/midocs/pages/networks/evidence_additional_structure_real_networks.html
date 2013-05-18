@@ -3,7 +3,7 @@
 {% title "Evidence for additional structure in real networks" %}
 {% description "Real networks seems to have additional structure than that captured by a random network with independent edges." %}
 
-<p>The {% intlink simplest_type_of_network %}Erdös-Rényi random network{% endintlink%}{% citation erdos_renyi_pm_1959 %} (ER random network) is a nice, tractable network model that reduces the {% intlink absurd_high_dimensionality_random_graphs%}large dimension{% endintlink%} of random networks to a small number of parameters.</p>
+<p>The {% intlink simplest_type_of_network %}Erdös-Rényi random network{% endintlink%}{% citation "erdos_renyi_pm_1959" %} (ER random network) is a nice, tractable network model that reduces the {% intlink absurd_high_dimensionality_random_graphs%}large dimension{% endintlink%} of random networks to a small number of parameters.</p>
 
 <p>In the traditional ER random network model, the probability of any edge is $p$.  We can easily extend the ER random network model to networks where this probability could vary across the network.  But, the network is still quite simple if we generate all edges independently.</p>
 
@@ -21,9 +21,9 @@
 
 <p>The only subtlety is knowing whether or not the non-edges are included in the definition of a particular motif. Typically motifs are drawn just by showing the edges included in its definition.  Sometimes one must read in-between the lines to know whether or not an edge that is not drawn must be absent for the motif to be counted.  If a motif doesn't require edges to be absent, then one must set $n_2=0$ in equation \eqref{ERmotiffreq}.</p>
 
-<p>In a real world networks, the frequencies of motifs don't typically follow equation \eqref{ERmotiffreq}.  For example, in neuroscience, Song et. al. found that some three neuron motifs appear much more likely than expected by a ER random network.{% citation song_et_al_pb_2005 %}  Viewing the network as a {% intlink directed_graph_definition %}directed graph{%endintlink%}, Song et al. examined the sixteen motifs involving three nodes are shown below.  These motifs were defined so that edges not drawn must not exist.  All motifs were sixth-order connection motifs, in the sense that they all involve the presence or absence of six edges (i.e., $n_1+n_2=6$).</p>
+<p>In a real world networks, the frequencies of motifs don't typically follow equation \eqref{ERmotiffreq}.  For example, in neuroscience, Song et. al. found that some three neuron motifs appear much more likely than expected by a ER random network.{% citation "song_et_al_pb_2005" %}  Viewing the network as a {% intlink directed_graph_definition %}directed graph{%endintlink%}, Song et al. examined the sixteen motifs involving three nodes are shown below.  These motifs were defined so that edges not drawn must not exist.  All motifs were sixth-order connection motifs, in the sense that they all involve the presence or absence of six edges (i.e., $n_1+n_2=6$).</p>
 
-{% image three_node_motifs %}
+{% image "three_node_motifs" %}
 
 <p>It's difficult to generate large directed graphs where one can specify the frequency of all 16 of these motifs.  However, if one is content to specify the frequencies of motifs involving just two edges, then one can {% intlink generating_networks_second_order_motif_frequency %}generate large graphs with those motif frequencies{%endintlink%}.</p>
 
@@ -32,12 +32,12 @@
 
 <p>Another way in which real world networks differ from ER random networks is in their {% intlink degree_distribution %}degree distribution{%endintlink%}.  For simplicity, we restrict this discussion to {% intlink undirected_graph_definition%}undirected graphs{%endintlink%}.  If edges are chosen independently, then we expect the degree distribution be to a binomial distribution.  This means that most nodes are connected to a similar number of other nodes.</p>
 
-{% image binomial_degree_distribution %}
+{% image "binomial_degree_distribution" %}
 
 <p>However, one common feature in real world networks is the presence
 <em>{% intlink network_hub_definition%}hubs{%endintlink%}</em>, i.e., nodes with much higher connectivity than the rest.  The presencse of hubs gives a long tail in the degree distribution.</p>
 
-{% image power_law_degree_distribution %}
+{% image "power_law_degree_distribution" %}
 
 <p>There are a number of network models with long tailed degree distributions.  Networks with the thickest tails are the {% intlink scale_free_network %}scale-free networks{% endintlink%} with power-law degree distributions, such as the distribution illustrated above.  One can also {% intlink generating_networks_desired_degree_distribution %}generate networks with arbitrary degree distributions{%endintlink%}.  It also turns out that one can also generate long-tailed degree distributions by {% intlink generating_networks_second_order_motif_frequency %}specifying motif frequencies{%endintlink%}.</p>
 
@@ -46,11 +46,11 @@
 
 <p>One property of real world networks can be summarized by &ldquo;your friends are often friends.&rdquo;  Think of a network describing friendship, where nodes are people and a link exists between nodes if the people are friends.  Since people commonly socialize in groups larger than two, if you take two friends of a person, its likely that those people are themselves friends.  In other words, two nodes that are connected to a third node are more likely to be connected themselves.  This property increases the frequency of finding the triangle motif  that consist of three mutually connected nodes.</p>
 
-{% image network_triangle 200 %}
+{% image "network_triangle" width=200 %}
 
 <p>If the edges in a network are generated randomly, then the fact that two nodes have a common neighbor cannot increase the probability that the nodes are connected.  For example, in the following Erdös-Rényi random network of 50 nodes and 0.1 connection probability, each node is connected to around 5 other nodes.  If you start at a node and follow the connections to two of its neighbors, those neighbors will still have only a small chance (the original 10% connection probability) of being connected.</p>
 
-{% image er_undirected_random_network_50_0_1 %}
+{% image "er_undirected_random_network_50_0_1" %}
 
 <p>Two related quantities measure the relative frequency of triangles in the graph, or the clustering of the graph: the {% intlink transitivity_graph_definition%}transitivity{%endintlink%} $T$ and the {% intlink clustering_coefficient_definition%}clustering coefficient{%endintlink%} $C$ of a graph.  For ER random networks, both $T$ and $C$ are small, while they are comparatively large in most real world networks.</p>
 

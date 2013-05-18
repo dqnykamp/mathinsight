@@ -24,12 +24,12 @@
 <div class="ym-grid linearize-level-2">
   <div class="ym-g50 ym-gl">
     <div class="ym-gbox-left">
-      {% image function_machines_composed %}
+      {% image "function_machines_composed" %}
     </div>
   </div>
   <div class="ym-g50 ym-gr">
     <div class="ym-gbox">
-      {% image function_machines_composed_combined %}
+      {% image "function_machines_composed_combined" %}
     </div>
   </div>
 </div>
@@ -45,7 +45,7 @@
 
 <p>In the function machine picture, the derivative of $h$ is the ratio between the change in the faceted sphere to the change in the sphere.  The derivative of $g$ is the ratio of the change in the cube to the change in the sphere while the derivative of $f$ is the ratio of the change in the facet sphere to the change in the cube.  If we multiply the ratios corresponding to the derivatives of $g$ and $f$, the factors corresponding to the change of the cube cancel, and we obtain the ratio corresponding to the derivative of $h$.  If we think of the $d$ from the notation for derivative as denoting &ldquo;change in,&rdquo; we can write the result of the chain rule in terms of the function machine inputs and outputs as the following.</p>
 
-{% image chain_rule_geometric_objects %}
+{% image "chain_rule_geometric_objects" %}
 
 <p>In terms of the derivatives of the functions, we can write the chain rule as $$h' = f' \cdot g'.$$  We need to be careful to evaluate the derivatives at the correct points.  If we denote the input to $g$ as $x$ (the sphere), then we must evaluate the derivative of $g$ at $x$, using $g'(x)$.  Since the input to $g$ is the input to $h$, we must also evaluate the derivative of $h$ as $x$, using $h'(x)$.  The sphere (or $x$), however, is not what goes into the $f$ machine.  Instead, the cube goes into the $f$ machine.  Consequently, we must evaluate the derivative of $f$ at the cube.  What is the cube?  The cube is the output of the $g$ machine when we put in the sphere (or $x$).  The output of $g$ is $g(x)$, so we must evaluate the derivative of $f$ at $g(x)$, using $f'(g(x))$ in our chain rule formula.  The resulting chain formula is therefore
 \begin{gather}

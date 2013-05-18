@@ -41,7 +41,7 @@
   {% equation_tag "recursion" 1 %}
 \end{gather}
 Using the {% intlink function_machine %}function machine metaphor{%endintlink%}, our evolution rule looks like the following figure, where the snapshots are represented by spheres.</p>
-{% image function_machine_single_iteration %}
+{% image "function_machine_single_iteration" %}
 
 <p>To get the dynamical system going, we have to specify the <em>initial conditions</em>, meaning the state variable $x_0$ at time $t=0$.  Given the initial snapshot $x_0$ and the rule $f$, we have now determined all the future snapshots.  The snapshot $x_1$ at time $t=1$ is the result of appling $f$ to the initial conditions,
 \begin{gather*}
@@ -62,12 +62,12 @@ It's a pretty simple process, but writing it out like this gets a bit messy.  Th
 
 <p>The process of using the output of a function as the input of another function is called {% intlink composition_definition %}composing{%endintlink%} functions.  Function composition is {% intlink function_machine_composition %}well illustrated by function machines{%endintlink%}.  The following figure shows that if we start with the snapshot $x_n$ at time $t=n$ and apply $f$ twice, we get the result $x_{n+2}$ for two time steps later, at time $t=n+2$.  The whole process of evolving this discrete dynamical system could be visualized as a huge chain of these identical function machines hooked together.  Since we are composing the same function over and over again, the process is often called <em>function iteration</em>.</p>
 
-{% image function_machine_two_iterations %}
+{% image "function_machine_two_iterations" %}
 
 
 <p>This simple case seems pretty straightforward. Since we have only one state variable, we have a one-dimensional {% intlink state_space_definition %}state space{%endintlink%}, which we can view as just a number line.  The state $x_n$ at time $t=n$ is just a point the number line.  At the next time step, the point just jumps to a new position $x_{n+1}$.</p>
 
-{% image function_iteration_two_steps_number_line %}
+{% image "function_iteration_two_steps_number_line" %}
 
 <p>The following applet lets you explore this function iteration to obtain the sequence of snapshots $x_n$ for a discrete dynamical system.  You can specify the two ingredients, the function $f$ and the initial condition $x_0$, and then iterate the function to produce the resulting sequence of snapshots $x_1,x_2,x_3,\ldots$ or the {% intlink trajectory_dynamical_systems_definition%}trajectory{%endintlink%} of the initial point $x_0$.  In this applet, we've turned things around a bit, as we are plotting the state space for the snapshots $x_n$ as the vertical axis (which we've highlighted in blue to stress that's where all the action is taking place).  We've reserved the horizontal axis to represent time $t$.  As you iterate the function and the point jumps around the vertical state space, the temporal sequence of these jumps is illustrated with a plot of the points $(n,x_n)$ in the left panel and a list of these points in the right panel.</p>
 

@@ -14,6 +14,12 @@ from mitesting.math_objects import underscore_to_camel
 
 register=template.Library()
 
+def resolve_if_set(variable, context):
+    if variable:
+        return variable.resolve(context)
+    return None
+
+
 class InternalLinkNode(template.Node):
     def __init__(self, link_code, link_anchor, link_class, equation_pos, equation_code, confused, nodelist):
         self.link_code_var=template.Variable("%s.code" % link_code)
@@ -255,6 +261,7 @@ class EquationTagNode(template.Node):
         # and create a html anchor of mjx-eqn-tag
         return '\\label{%s}\\tag{%s}' % (code,tag)
 
+
 @register.tag
 def equation_tag(parser, token):
     bits = token.split_contents()
@@ -271,43 +278,31 @@ class ExternalLinkNode(template.Node):
         self.nodelist=nodelist
     def render(self, context):
         
+        external_url = self.external_url.resolve(context)
         link_text = self.nodelist.render(context)
 
-        # check to see if the variable update_database==1
-        # if so, add entry to database
-        try:
-             update_database = template.Variable("update_database").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if update_database == 1:
-                # get page object, 
-                # and save as linked from that page
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                    extlink = ExternalLink.objects.create \
-                        (external_url=self.external_url,
-                         in_page=thepage, link_text=link_text)
+        # check to see if the variable update_database is set
+        if context.get("update_database"):
+            # get page object, 
+            # and save as linked from that page
+            thepage = context.get("thepage")
+            if thepage:
+                extlink = ExternalLink.objects.create \
+                    (external_url=external_url,
+                     in_page=thepage, link_text=link_text)
                         
-                # if not in a page, save without reference to page
-                except:
-                    extlink = ExternalLink.objects.create \
-                        (external_url=self.external_url,
-                         link_text=link_text)
+            # if not in a page, save without reference to page
+            else:
+                extlink = ExternalLink.objects.create \
+                    (external_url=external_url,
+                     link_text=link_text)
 
-
-        # check if blank_style is set to 1
-        blank_style=0
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-
-        if blank_style:
-            return "%s %s" %  (self.external_url, link_text)
+        # check if blank_style is set
+        if context.get("blank_style"):
+            return "%s %s" %  (external_url, link_text)
         else:
             return '<a href="%s" class="external">%s</a>' % \
-                (self.external_url, link_text)
+                (external_url, link_text)
         
 
 @register.tag
@@ -315,113 +310,100 @@ def extlink(parser, token):
     bits = token.split_contents()
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r tag requires one argument" % bits[0]
-    external_url = bits[1]
-    if not (external_url[0] == external_url[-1] and external_url[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % bits[0]
-    external_url = external_url[1:-1]
+    external_url = parser.compile_filter(bits[1])
 
     nodelist = parser.parse(('endextlink',))
     parser.delete_first_token()
-    
 
     return ExternalLinkNode(external_url,nodelist)
 
+
 class NavigationTagNode(template.Node):
     def __init__(self,page_anchor, navigation_phrase, navigation_subphrase):
-        self.navigation_phrase=template.Template(navigation_phrase)
-        self.navigation_subphrase=template.Template(navigation_subphrase)
-        self.have_subphrase=navigation_subphrase
-        self.page_anchor=template.Template(page_anchor)
+        self.page_anchor=page_anchor
+        self.navigation_phrase=navigation_phrase
+        self.navigation_subphrase=navigation_subphrase
     def render(self, context):
-        # render the phrase, subphrase, and page_anchor under current context
-        the_navigation_phrase=self.navigation_phrase.render(context)
-        the_navigation_subphrase=self.navigation_subphrase.render(context)
-        the_page_anchor=self.page_anchor.render(context)
+        page_anchor = self.page_anchor.resolve(context)
+        navigation_phrase = self.navigation_phrase.resolve(context)
+        navigation_subphrase = resolve_if_set(self.navigation_subphrase, context)
+        
+        # Render the phrase, subphrase, and page_anchor 
+        # as templates under current context.
+        # This way, if include template variables like "number {{number}}"
+        # in the string, they will be replaced with their values.
+        # This is a separate step from the above resolving, which 
+        # allows one to pass in a template variable for the entire string
+        page_anchor=template.Template(page_anchor).render(context)
+        navigation_phrase=template.Template(navigation_phrase).render(context)
+        if navigation_subphrase:
+            navigation_subphrase=template.Template(navigation_subphrase).render(context)
 
-        # check to see if the variable navigation_tags==1
+        # check to see if the variable navigation_tags is set
         # if so, add entry to database
-        try:
-             process_navigation_tags = template.Variable("process_navigation_tags").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_navigation_tags == 1:
-                # get page object, if doesn't exist, just return blank string
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                except template.VariableDoesNotExist:
-                    return ""
+        if context.get("process_navigation_tags"):
+            # get page object, if doesn't exist, just return blank string
+            thepage = context.get("thepage")
+            if not thepage:
+                return ""
             
-                # add navigation_tag
-                if(self.have_subphrase):
-                    # first try to find the phrase already there
-                    # and just create subphrase entry
-                    try:
-                        navigation_entry = PageNavigation.objects.get \
-                            (page=thepage, \
-                                 navigation_phrase=the_navigation_phrase)
-                        navigation_sub_entry=PageNavigationSub.objects.create \
-                            (navigation=navigation_entry, \
-                                 navigation_subphrase=the_navigation_subphrase, \
-                                 page_anchor=the_page_anchor)
-                    except:
-                        # next try to create both phrase and subphrase entries
-                        try:
-                            navigation_entry = PageNavigation.objects.create \
-                                (page=thepage, \
-                                     navigation_phrase=the_navigation_phrase,\
-                                     page_anchor=the_page_anchor)
-                            navigation_sub_entry=PageNavigationSub.objects.create \
-                                (navigation=navigation_entry, \
-                                     navigation_subphrase=the_navigation_subphrase, \
-                                     page_anchor=the_page_anchor)
-                            
-                            
-                        except:
-                            pass
-                else:
-                    # if no subphrase, just create phrase entry
+            # add navigation_tag
+            if navigation_subphrase:
+                # first try to find the phrase already there
+                # and just create subphrase entry
+                try:
+                    navigation_entry = PageNavigation.objects.get \
+                        (page=thepage, \
+                             navigation_phrase=navigation_phrase)
+                    navigation_sub_entry=PageNavigationSub.objects.create \
+                        (navigation=navigation_entry, \
+                             navigation_subphrase=navigation_subphrase, \
+                             page_anchor=page_anchor)
+                except:
+                    # next try to create both phrase and subphrase entries
                     try:
                         navigation_entry = PageNavigation.objects.create \
-                            (page=thepage, 
-                             navigation_phrase=the_navigation_phrase,
-                             page_anchor=the_page_anchor)
+                            (page=thepage, \
+                                 navigation_phrase=navigation_phrase,\
+                                 page_anchor=page_anchor)
+                        navigation_sub_entry=PageNavigationSub.objects.create \
+                            (navigation=navigation_entry, \
+                                 navigation_subphrase=navigation_subphrase, \
+                                 page_anchor=page_anchor)
+                            
+                            
                     except:
-                        pass
+                        raise #pass
+            else:
+                # if no subphrase, just create phrase entry
+                try:
+                    navigation_entry = PageNavigation.objects.create \
+                        (page=thepage, 
+                         navigation_phrase=navigation_phrase,
+                         page_anchor=page_anchor)
+                except:
+                    raise #pass
                         
 
-        # check if blank_style is set to 1
+        # check if blank_style is set 
         # if so, return ""
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                return ""
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            return ""
 
-        # if page_anchor is not null, return an anchor, else return nothing
-        return '<a id="%s" class="anchor"></a>' % the_page_anchor
+        # return an anchor
+        return '<a id="%s" class="anchor"></a>' % page_anchor
  
 @register.tag
 def navigation_tag(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
         raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % bits[0]
-    page_anchor=bits[1]
-    if not (page_anchor[0] == page_anchor[-1] and page_anchor[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's first argument should be in quotes" % bits[0]
-    page_anchor = page_anchor[1:-1]
-    navigation_phrase=bits[2]
-    if not (navigation_phrase[0] == navigation_phrase[-1] and navigation_phrase[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's second argument should be in quotes" % bits[0]
-    navigation_phrase = navigation_phrase[1:-1]
+    page_anchor=parser.compile_filter(bits[1])
+    navigation_phrase=parser.compile_filter(bits[2])
     if len(bits) > 3:
-        navigation_subphrase=bits[3]
-        if not (navigation_subphrase[0] == navigation_subphrase[-1] and navigation_subphrase[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's third argument should be in quotes" % bits[0]
-        navigation_subphrase = navigation_subphrase[1:-1]
+        navigation_subphrase=parser.compile_filter(bits[3])
     else:
-        navigation_subphrase = ""
+        navigation_subphrase = None
     return NavigationTagNode(page_anchor, navigation_phrase, navigation_subphrase)
 
 
@@ -432,55 +414,46 @@ class FootnoteNode(template.Node):
         self.footnote_text=footnote_text
     def render(self, context):
         # get page object, if doesn't exist, just return blank string
-        try:
-            thepage = template.Variable("thepage").resolve(context)
-        except template.VariableDoesNotExist:
+        thepage=context.get("thepage")
+        if not thepage:
             return ""
+        
+        cite_code = self.cite_code.resolve(context)
 
-
-        # check to see if the variable process_citations==1
+        # check to see if the variable process_citations is set
         # if so, add entry to database
-        try:
-             process_citations = template.Variable("process_citations").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_citations == 1:
+        if context.get("process_citations"):
 
-                # check to see if page already has citations
-                # and if so, what the largest reference number is
-                previous_citations=PageCitation.objects.filter(page=thepage)
-                previous_reference_number=0
-                if previous_citations:
-                    previous_reference_number=previous_citations.aggregate(Max('reference_number'))['reference_number__max']
+            # check to see if page already has citations
+            # and if so, what the largest reference number is
+            previous_citations=PageCitation.objects.filter(page=thepage)
+            previous_reference_number=0
+            if previous_citations:
+                previous_reference_number=previous_citations.aggregate(Max('reference_number'))['reference_number__max']
                 
-                try:
-                    # add footnote entry
-                    footnote_entry = PageCitation.objects.create \
-                        (page=thepage, \
-                             code=self.cite_code, \
-                             footnote_text=self.footnote_text, \
-                             reference_number = previous_reference_number+1)
+            try:
+                # add footnote entry
+                footnote_text = self.footnote_text.resolve(context)
+                footnote_entry = PageCitation.objects.create \
+                    (page=thepage, \
+                         code=cite_code, \
+                         footnote_text=footnote_text, \
+                         reference_number = previous_reference_number+1)
             
-                # fail silently
-                except:
-                    pass
+            # fail silently
+            except:
+                pass
 
         # find reference number
         reference_number = 0
         footnote_entry = PageCitation.objects.get( \
-            page=thepage, code=self.cite_code)
+            page=thepage, code=cite_code)
         reference_number = footnote_entry.reference_number
 
-
-        # check if blank_style is set to 1
+        # check if blank_style is set 
         # if so, return reference number
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                return "[%s]" % reference_number
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            return "[%s]" % reference_number
 
         # return link to reference
         return '<a href="#citation:%s"><sup>%s</sup></a>' % (reference_number, reference_number)
@@ -490,11 +463,9 @@ def footnote(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
         raise template.TemplateSyntaxError, "%r tag requires at least two argument" % bits[0]
-    cite_code=bits[1]
-    footnote_text=bits[2]
-    if not (footnote_text[0] == footnote_text[-1] and footnote_text[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's second argument should be in quotes" % bits[0]
-    footnote_text = footnote_text[1:-1]
+
+    cite_code=parser.compile_filter(bits[1])
+    footnote_text=parser.compile_filter(bits[2])
 
     return FootnoteNode(cite_code,footnote_text)
 
@@ -507,48 +478,45 @@ class CitationNode(template.Node):
 
     def render(self, context):
         # get page object, if doesn't exist, just return blank string
-        try:
-            thepage = template.Variable("thepage").resolve(context)
-        except template.VariableDoesNotExist:
+        thepage = context.get("thepage")
+        if not thepage:
             return ""
 
+        cite_codes = []
+        for code in self.cite_codes:
+            cite_codes.append(code.resolve(context))
 
-        # check to see if the variable process_citations==1
+        # check to see if the variable process_citations is set
         # if so, add entry to database
-        try:
-             process_citations = template.Variable("process_citations").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_citations == 1:
+        if context.get("process_citations"):
 
-                # check to see if page already has citations
-                # and if so, what the largest reference number is
-                previous_citations=PageCitation.objects.filter(page=thepage)
-                previous_reference_number=0
-                if previous_citations:
-                    previous_reference_number=previous_citations.aggregate(Max('reference_number'))['reference_number__max']
+            # check to see if page already has citations
+            # and if so, what the largest reference number is
+            previous_citations=PageCitation.objects.filter(page=thepage)
+            previous_reference_number=0
+            if previous_citations:
+                previous_reference_number=previous_citations.aggregate(Max('reference_number'))['reference_number__max']
                 
-                # find references based on cite_code
-                for cite_code in self.cite_codes:
-                    try:
-                        the_reference=Reference.objects.get(code=cite_code)
+            # find references based on cite_code
+            for cite_code in cite_codes:
+                try:
+                    the_reference=Reference.objects.get(code=cite_code)
                         
-                        # add citation entry
-                        citation_entry = PageCitation.objects.create \
-                            (page=thepage, \
-                                 code=cite_code, \
-                                 reference=the_reference, \
-                                 reference_number = previous_reference_number+1)
-                        previous_reference_number += 1
+                    # add citation entry
+                    citation_entry = PageCitation.objects.create \
+                        (page=thepage, \
+                             code=cite_code, \
+                             reference=the_reference, \
+                             reference_number = previous_reference_number+1)
+                    previous_reference_number += 1
 
-                    # fail silently
-                    except:
-                        pass
+                # fail silently
+                except:
+                    pass
 
         # find reference number
         reference_numbers = []
-        for cite_code in self.cite_codes:
+        for cite_code in cite_codes:
             try:
                 citation_entry = PageCitation.objects.get( \
                     page=thepage, code=cite_code)
@@ -558,18 +526,14 @@ class CitationNode(template.Node):
                 
         # check if blank_style is set to 1
         # if so, return reference number
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                reference_number_string=""
-                for i, rn in enumerate(reference_numbers):
-                    reference_number_string="%s%s" \
-                        %(reference_number_string, rn)
-                    if i < len(reference_numbers)-1:
-                        reference_number_string += ","
-                return "[%s]" % reference_number_string
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            reference_number_string=""
+            for i, rn in enumerate(reference_numbers):
+                reference_number_string="%s%s" \
+                    %(reference_number_string, rn)
+                if i < len(reference_numbers)-1:
+                    reference_number_string += ","
+            return "[%s]" % reference_number_string
 
         reference_number_string=""
         for i, rn in enumerate(reference_numbers):
@@ -589,7 +553,7 @@ def citation(parser, token):
 
     cite_codes=[]
     for i in range(1,len(bits)):
-        cite_codes.append(bits[i])
+        cite_codes.append(parser.compile_filter(bits[i]))
     
     return CitationNode(cite_codes)
 
@@ -602,48 +566,44 @@ class IndexEntryNode(template.Node):
         self.page_anchor=page_anchor
         self.index_type=index_type
     def render(self, context):
-        # check to see if the variable process_index_entries==1
+        page_anchor = resolve_if_set(self.page_anchor,context)
+
+        # check to see if the variable process_index_entries is set
         # if so, add entry to database
-        try:
-             process_index_entries = template.Variable("process_index_entries").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_index_entries == 1:
-                # get page object, if doesn't exist, just return blank string
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                except template.VariableDoesNotExist:
-                    return ""
+        if context.get("process_index_entries"):
+            # get page object, if doesn't exist, just return blank string
+            thepage = context.get("thepage")
+            if not thepage:
+                return ""
+
+            indexed_phrase = self.indexed_phrase.resolve(context)
+            indexed_subphrase = resolve_if_set(self.indexed_subphrase,context)
+            index_type = resolve_if_set(self.index_type, context)
                 
-                # check to see if index_type exists.  If not, make it a general index entry
-                if self.index_type:
-                    try:
-                        index_type = IndexType.objects.get(code=self.index_type)
-                    except ObjectDoesNotExist:
-                        index_type = IndexType.objects.get(code="general")
-                else:
-                    index_type = IndexType.objects.get(code="general") 
+            # check to see if index_type exists.  If not, make it a general index entry
+            if index_type:
+                try:
+                    index_type = IndexType.objects.get(code=index_type)
+                except ObjectDoesNotExist:
+                    index_type = IndexType.objects.get(code="general")
+            else:
+                index_type = IndexType.objects.get(code="general") 
                         
                 # add index entry
                 index_entry = IndexEntry.objects.create \
                     (page=thepage, index_type=index_type, 
-                     indexed_phrase=self.indexed_phrase,
-                     indexed_subphrase=self.indexed_subphrase,
-                     page_anchor=self.page_anchor)
+                     indexed_phrase=indexed_phrase,
+                     indexed_subphrase=indexed_subphrase,
+                     page_anchor=page_anchor)
 
-        # check if blank_style is set to 1
+        # check if blank_style is set
         # if so, return ""
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                return ""
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            return ""
 
         # if page_anchor is not null, return an anchor, else return nothing
-        if(self.page_anchor):
-            return '<a id="%s" class="anchor"></a>' % self.page_anchor
+        if(page_anchor):
+            return '<a id="%s" class="anchor"></a>' % page_anchor
         else:
             return ""
  
@@ -652,31 +612,19 @@ def index_entry(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    indexed_phrase=bits[1]
-    if not (indexed_phrase[0] == indexed_phrase[-1] and indexed_phrase[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's first argument should be in quotes" % bits[0]
-    indexed_phrase = indexed_phrase[1:-1]
+    indexed_phrase=parser.compile_filter(bits[1])
     if len(bits) >2:
-        indexed_subphrase=bits[2]
-        if not (indexed_subphrase[0] == indexed_subphrase[-1] and indexed_subphrase[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's second argument should be in quotes" % bits[0]
-        indexed_subphrase = indexed_subphrase[1:-1]
+        indexed_subphrase=parser.compile_filter(bits[2])
     else:
-        indexed_subphrase = "";
+        indexed_subphrase = None;
     if len(bits)>3:
-        page_anchor=bits[3]
-        if not (page_anchor[0] == page_anchor[-1] and page_anchor[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's third argument should be in quotes" % bits[0]
-        page_anchor = page_anchor[1:-1]
+        page_anchor=parser.compile_filter(bits[3])
     else:
-        page_anchor = "";
+        page_anchor = None;
     if len(bits)>4:
-        index_type=bits[4]
-        if not (index_type[0] == index_type[-1] and index_type[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's fourth argument should be in quotes" % bits[0]
-        index_type = index_type[1:-1]
+        index_type=parser.compile_filter(bits[4])
     else:
-        index_type = "";
+        index_type = None;
     return IndexEntryNode(indexed_phrase, indexed_subphrase, page_anchor, index_type)
 
 
@@ -686,36 +634,29 @@ class TitleNode(template.Node):
         self.title_text=title_text
         self.navigation_phrase = navigation_phrase
     def render(self, context):
-        # check to see if the variable update_database==1
+        
+        title_text = self.title_text.resolve(context)
+
+        # check to see if the variable update_database is set
         # if so, add entry to database
-        try:
-             update_database = template.Variable("update_database").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if update_database == 1:
-                # get page object, 
-                # and save title to that database entry
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                    thepage.title=self.title_text
-                # ignore any errors
-                except:
-                    pass
+        if context.get("update_database"):
+            # get page object, 
+            # and save title to that database entry
+            thepage = context.get("thepage")
+            if thepage:
+                thepage.title=title_text
                 
-        # if navigation_phase is nonzero
+        # if navigation_phase exists
         # add a navigation tag with that phrase and anchor main
-        # if process_navigation_tags==1
-        if self.navigation_phrase:
-            try:
-                process_navigation_tags = template.Variable("process_navigation_tags").resolve(context)
-            except template.VariableDoesNotExist:
-                pass
-            else:
-                if process_navigation_tags == 1:
+        # if process_navigation_tags is set
+        navigation_phrase=resolve_if_set(self.navigation_phrase,context)
+
+        if navigation_phrase:
+            if context.get("process_navigation_tags"):
+                thepage = context.get("thepage")
+                if thepage:
                     try:
                         # add an navigation_entry, ignore any errors
-                        thepage = template.Variable("thepage").resolve(context)
                         navigation_entry = PageNavigation.objects.create \
                             (page=thepage, 
                              navigation_phrase=self.navigation_phrase,
@@ -724,17 +665,12 @@ class TitleNode(template.Node):
                         pass
                         
 
-        # check if blank_style is set to 1
+        # check if blank_style is set 
         # if so, return undecorated text
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                return " %s " % self.title_text
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            return " %s " % self.title_text
         
         return ""
-        #return "<h3>%s</h3>" % self.title_text
 
  
 @register.tag
@@ -742,41 +678,30 @@ def title(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    title_text=bits[1]
-    if not (title_text[0] == title_text[-1] and title_text[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's first argument should be in quotes" % bits[0]
-    title_text = title_text[1:-1]
+    title_text=parser.compile_filter(bits[1])
     if len(bits) > 2:
-        navigation_phrase=bits[2]
-        if not (navigation_phrase[0] == navigation_phrase[-1] and navigation_phrase[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's second argument should be in quotes" % bits[0]
-        navigation_phrase = navigation_phrase[1:-1]
+        navigation_phrase=parser.compile_filter(bits[2])
     else:
-        navigation_phrase = ""
-
+        navigation_phrase = None
 
     return TitleNode(title_text, navigation_phrase)
+
 
 class DescriptionNode(template.Node):
     def __init__(self, description_text):
         self.description_text=description_text
     def render(self, context):
-        # check to see if the variable update_database==1
+        # check to see if the variable update_database is set
         # if so, add entry to database
-        try:
-             update_database = template.Variable("update_database").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if update_database == 1:
-                # get page object, 
-                # and save description to that database entry
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                    thepage.description=self.description_text
-                # ignore any errors
-                except:
-                    pass
+        if context.get("update_database"):
+        
+            description_text = self.description_text.resolve(context)
+            # get page object, 
+            # and save description to that database entry
+            thepage = context.get("thepage")
+            if thepage:
+                thepage.description=description_text
+
         return ""
 
 @register.tag
@@ -785,42 +710,40 @@ def description(parser, token):
         tag_name, description_text = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
-    if not (description_text[0] == description_text[-1] and description_text[0] in ('"', "'")):
-        raise template.TemplateSyntaxError, "%r tag's argument should be in quotes" % bits[0]
-    description_text = description_text[1:-1]
+    
+    description_text = parser.compile_filter(description_text)
 
     return DescriptionNode(description_text)
 
 
-
 class ImageNode(template.Node):
-    def __init__(self, image_code, max_width, float_direction):
-        self.image_code_var=template.Variable("%s.code" % image_code)
-        self.image_code_string = image_code
-        self.max_width=max_width
-        self.float_direction=float_direction
+    def __init__(self, image, kwargs, kwargs_string):
+        self.image= image
+        self.kwargs=kwargs
+        self.kwargs_string=kwargs_string
     def render(self, context):
-        # first test if image_code_var is a variable
-        # if so, image_code will be the resolved variable
-        # otherwise, image will be image_code_string
-        try:
-            image_code=self.image_code_var.resolve(context)
-        except template.VariableDoesNotExist:
-            image_code=self.image_code_string
-        # next, test if image with image_code exists
-        try:
-            image=Image.objects.get(code=image_code)
-        # if image does not exist
-        # return tag to image code anyway
-        except ObjectDoesNotExist:
-            return '<img src="/%s" alt="[broken image]" class="broken" />' % image_code
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        kwargs_string = dict([(smart_text(k, 'ascii'), v)
+                              for k, v in self.kwargs.items()])
+
+        image = self.image.resolve(context)
+
+        # if image is not an image instance
+        # try to load image with that code
+        if not isinstance(image, Image):
+            # test if image with image_code exists
+            try:
+                image=Image.objects.get(code=image)
+                # if image does not exist
+                # return tag to image code anyway
+            except ObjectDoesNotExist:
+                return '<img src="/%s" alt="[broken image]" class="broken" />' % image
 
         imagefile=None
         # check if a notation system is defined in template
-        try:
-            notation_system = template.Variable("notation_system").resolve(context)
-        except template.VariableDoesNotExist:
-            notation_system = None
+        notation_system = context.get("notation_system")
             
         # if notation system defined, check if image has notation_system
         if notation_system:
@@ -843,39 +766,20 @@ class ImageNode(template.Node):
             width = image.width*0.75
             height = image.height*0.75
             
-            # # if didn't get an alternative image from notation system
-            # # and have an SVG file from inkscape, display that instead
-            # svgimagetype= ImageType.objects.get(code='inkscape')
-            # if image.original_file_type == svgimagetype and image.original_file:
-            #     svgfile = image.original_file
-        
         title = image.title
 
-        # check to see if the variable process_image_entries==1
-        # if so, add entry to database
-        try:
-             process_image_entries = template.Variable("process_image_entries").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
-        else:
-            if process_image_entries == 1:
-                # get page object, 
-                try:
-                    thepage = template.Variable("thepage").resolve(context)
-                except template.VariableDoesNotExist:
-                    pass
-                else:
-                    # add page to in_pages of image
-                    image.in_pages.add(thepage)
+        # check to see if the variable process_image_entries is set
+        if context.get("process_image_entries"):
+            # get page object, 
+            thepage = context.get("thepage")
+            if thepage:
+                # add page to in_pages of image
+                image.in_pages.add(thepage)
 
-        # check if blank_style is set to 1
+        # check if blank_style is set 
         # if so, just return title of image
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-            if(blank_style):
-                return " %s " % title
-        except template.VariableDoesNotExist:
-            pass
+        if context.get("blank_style"):
+            return " %s " % title
                     
         # return image
         if image.description:
@@ -887,13 +791,18 @@ class ImageNode(template.Node):
         else:
             alt = ""
 
-        if self.max_width and self.max_width < width:
-            reduce_ratio=self.max_width/float(width)
-            width=self.max_width
+        try:
+            max_width = int(kwargs["width"])
+        except:
+            max_width = None
+        if max_width and max_width < width:
+            reduce_ratio=max_width/float(width)
+            width=max_width
             height=int(reduce_ratio*height)
 
-        if self.float_direction:
-            imageclass=self.float_direction
+        css = kwargs.get("css")
+        if css:
+            imageclass=css
         else:
             imageclass="displayed"
 
@@ -910,29 +819,30 @@ def image(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    image_code = bits[1]
-    if len(bits) > 2:
-        try:
-            max_width=int(bits[2])
-        except:
-            max_width=0
-    else:
-        max_width=0
-    if len(bits) > 3:
-        float_direction=bits[3]
-        if not (float_direction[0] == float_direction[-1] and float_direction[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's third argument should be in quotes" % bits[0]
-        float_direction = float_direction[1:-1] 
-    else:
-        float_direction = ""
+    image = parser.compile_filter(bits[1])
 
-    return ImageNode(image_code, max_width, float_direction)
+    kwargs = {}
+    kwargs_string = {}
+    
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+                kwargs_string[name] = value
+  
+    return ImageNode(image, kwargs, kwargs_string)
 
 
 
 class ProcessMiTagsNode(template.Node):
     def __init__(self, the_text_var):
-        self.the_text_var=template.Variable(the_text_var)
+        self.the_text_var=the_text_var
     def render(self, context):
         try:
             templatetext=self.the_text_var.resolve(context)
@@ -952,7 +862,7 @@ def process_mi_tags(parser, token):
     bits = token.split_contents()
     if len(bits) != 2:
         raise template.TemplateSyntaxError, "%r tag requires one argument" % bits[0]
-    the_text_var = bits[1]
+    the_text_var = parser.compile_filter(bits[1])
     return ProcessMiTagsNode(the_text_var)
 
 
@@ -1537,10 +1447,8 @@ class AppletLinkNode(template.Node):
         
         link_url = applet.get_absolute_url()
 
-        if self.extended_mode:
-            extended_mode = self.extended_mode.resolve(context)
-        else:
-            extended_mode=None
+        extended_mode = resolve_if_set(self.extended_mode, context)
+
         if not extended_mode:
             return '<a href="%s" class="applet" title="%s">%s</a>' \
                 % (link_url, link_title, link_text)
@@ -1821,10 +1729,7 @@ class VideoLinkNode(template.Node):
         
         link_url = video.get_absolute_url()
 
-        if self.extended_mode:
-            extended_mode = self.extended_mode.resolve(context)
-        else:
-            extended_mode = None
+        extended_mode = resolve_if_set(self.extended_mode, context)
 
         if not extended_mode:
             return '<a href="%s" class="video" title="%s">%s</a>' \
@@ -1919,10 +1824,7 @@ class ImageLinkNode(template.Node):
         
         link_url = image.get_absolute_url()
 
-        if self.extended_mode:
-            extended_mode = self.extended_mode.resolve(context)
-        else:
-            extended_mode = None
+        extended_mode = resolve_if_set(self.extended_mode, context)
 
         if not extended_mode:
             return '<a href="%s" class="image" title="%s">%s</a>' \

@@ -10,7 +10,7 @@
 
 <p>Network motifs are patterns of connections within a network.  For example, the simplest motif consists of a single edge from one node to another.</p>
 
-{% image network_single_edge 200 %}
+{% image "network_single_edge" width=200 %}
 
 <p>Moving up one step in complexity, we can look at motifs involving two edges.  If we restrict ourselves to connected motifs (excluding the motif with two edges connecting distinct pairs of nodes), there are four motifs with two edges, which we can label as the reciprocal, convergent, divergent, and chain motifs.</p>
 
@@ -19,13 +19,13 @@
     <div class="ym-grid ym-equalize linearize-level-2">
       <div class="ym-50 ym-gl"  style="padding-top:1em;">
 	<div class="ym-gbox-left-perpad">
-	  {% image network_reciprocal_motif 200 %}
+	  {% image "network_reciprocal_motif" width=200 %}
 	  <p style="text-align: center">Reciprocal motif</p>
 	</div>
       </div>
       <div class="ym-g50" style="padding-top:1em;">
 	<div class="ym-gbox-perpad">
-	  {% image network_convergent_motif 200 %}
+	  {% image "network_convergent_motif" width=200 %}
 	  <p style="text-align: center">Convergent motif</p>
 	</div>
       </div>
@@ -35,13 +35,13 @@
     <div class="ym-grid ym-equalize linearize-level-2">
       <div class="ym-g50 ym-gl" style="padding-top:1em;">
 	<div class="ym-gbox">
-	  {% image network_divergent_motif 200 %}
+	  {% image "network_divergent_motif" width=200 %}
 	  <p style="text-align: center">Divergent motif</p>
 	</div>
       </div>
       <div class="ym-g50 ym-gr" style="padding-top:1em;">
 	<div class="ym-gbox-right">
-	  {% image network_chain_motif 200 %}
+	  {% image "network_chain_motif" width=200 %}
 	  <p style="text-align: center">Chain motif</p>
 	</div>
       </div>
@@ -53,7 +53,7 @@
 
 <p>For example, the following four node network has six edges, so the single-edge motif occurs six times.  The total possible number of connections is $4\cdot 3 = 12$, so the network contains 50% of the possible edges.</p>
 
-{% image small_network_motif_count %}
+{% image "small_network_motif_count" %}
 
 <p>As highlighted on the right, the network contains two reciprocal motifs, five chain motifs, two convergent motifs, and two divergent motifs.  The total number of possible reciprocal motifs is $4 \cdot 3/2 = 6$, so the network contains 1/3 of the possible reciprocal motifs.  The total number of possible chain motifs is $4 \cdot 3 \cdot 2 = 24$, so the network contains $5/24$ of the possible chain motifs.  For both convergent and divergent motifs, the total possible number is $4 \cdot 3 \cdot 2/2 = 12$; the network contains 1/6 of the possible convergent and 1/6 of the possible divergent motifs.</p>
 
@@ -62,7 +62,7 @@
 
 <p>One can view the {% intlink simplest_type_of_network %}ER random network{% endintlink%}, as a probability distribution parametrized by the expected relative frequency of the single-edge motif, which is the same as the connection probability.</p>
 
-{% image network_single_edge_labeled 200 %}
+{% image "network_single_edge_labeled" width=200 %}
 
 <p>We could specify that, for any pair of nodes $i$ and $j$, the probability of the motif containing a connection from $j$ to $i$ is 
 \begin{gather}
@@ -79,13 +79,13 @@
 <div class="ym-grid ym-equalize linearize-level-2">
   <div class="ym-50 ym-gl"  style="padding-top:1em;">
     <div class="ym-gbox-left-perpad">
-      {% image network_reciprocal_motif_labeled 200 %}
+      {% image "network_reciprocal_motif_labeled" width=200 %}
       <p> $$\Pr(A_{ij}\nobreak{=}1\nobreak{,}A_{ji}\nobreak{=}1) = p^2(1+\alpha_{\text{recip}})$$</p>
     </div>
   </div>
   <div class="ym-g50" style="padding-top:1em;">
     <div class="ym-gbox-perpad">
-      {% image network_convergent_motif_labeled 200 %}
+      {% image "network_convergent_motif_labeled" width=200 %}
       <p> $$\Pr(A_{ij}\nobreak{=}1\nobreak{,}A_{ik}\nobreak{=}1)=p^2(1+\alpha_{\text{conv}})$$</p>
     </div>
   </div>
@@ -93,13 +93,13 @@
 <div class="ym-grid ym-equalize linearize-level-2">
   <div class="ym-g50 ym-gl" style="padding-top:1em;">
     <div class="ym-gbox-perpad">
-      {% image network_divergent_motif_labeled 200 %}
+      {% image "network_divergent_motif_labeled" width=200 %}
       <p>$$\Pr(A_{ij}\nobreak{=}1\nobreak{,}A_{kj}\nobreak{=}1)= p^2(1+\alpha_{\text{div}})$$</p>
     </div>
   </div>
   <div class="ym-g50 ym-gr" style="padding-top:1em;">
     <div class="ym-gbox-right-perpad">
-      {% image network_chain_motif_labeled 200 %}
+      {% image "network_chain_motif_labeled" width=200 %}
       <p>  $$\Pr(A_{ij}\nobreak{=}1\nobreak{,}A_{jk}\nobreak{=}1)=p^2(1+\alpha_{\text{chain}})$$</p>
     </div>
   </div>
@@ -117,7 +117,7 @@
 </p>
 
 
-<p>For ER random networks, it is a simple matter to {% intlink simplest_type_of_network %}generate a network with given edge probability{% endintlink%}, as we can generate the random number for each edge independently using equation \eqref{probedge}.  However, when we break this independence by adding correlations among the edges through nonzero $\alpha$'s, the process of generating a network with the required statistics is more subtle.  It turns out one can define a random network model based on these statistics, the SONET (second order network) model{% citation zhao_et_al_fcn_2011 %} and sample networks with different values of the $\alpha$'s.  In this way, we obtain a probability distribution for the network parametrized by the first order statistic $p$ and the second order statistics  $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$.</p>
+<p>For ER random networks, it is a simple matter to {% intlink simplest_type_of_network %}generate a network with given edge probability{% endintlink%}, as we can generate the random number for each edge independently using equation \eqref{probedge}.  However, when we break this independence by adding correlations among the edges through nonzero $\alpha$'s, the process of generating a network with the required statistics is more subtle.  It turns out one can define a random network model based on these statistics, the SONET (second order network) model{% citation "zhao_et_al_fcn_2011" %} and sample networks with different values of the $\alpha$'s.  In this way, we obtain a probability distribution for the network parametrized by the first order statistic $p$ and the second order statistics  $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$.</p>
 
 
 

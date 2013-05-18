@@ -24,9 +24,9 @@ where the sum is over all nodes in the network.</p>
 </p>
 
 {% twocolumns 50 2 "padding-top:1em;" 1 %}
-{% image small_undirected_network_numbered %}
+{% image "small_undirected_network_numbered" %}
 {% nextcolumn %}
-{% image small_undirected_network_degree_distribution %}
+{% image "small_undirected_network_degree_distribution" %}
 {% endtwocolumns %}
 
 <p>For this undirected network, the degrees are $k_1=1$, $k_2=3$, $k_3=1$, $k_4=1$, $k_5=2$, $k_6=5$, $k_7=3$, $k_8=3$, $k_9=2$, and $k_{10}=1$.  Its degree distribution is  $P_{\text{deg}}(1)=2/5$, $P_{\text{deg}}(2)=1/5$, $P_{\text{deg}}(3)=3/10$, $P_{\text{deg}}(5)=1/10$, and all other $P_{\text{deg}}(k)=0$.</p>
@@ -37,13 +37,13 @@ where the sum is over all nodes in the network.</p>
 <div class="ym-grid ym-equalize linearize-level-2">
   <div class="ym-50 ym-gl" style="padding-top:1em;">
     <div class="ym-gbox-left-perpad">
-      {% image binomial_degree_distribution %}
+      {% image "binomial_degree_distribution" %}
       <p>A binomial degree distribution of a network with 10,000 nodes and average degree of 10.  The top histogram is on a linear scale while the bottom shows the same data on a log scale. </p>
     </div>
   </div>
   <div class="ym-g50" style="padding-top:1em;">
     <div class="ym-gbox-right-perpad">
-      {% image power_law_degree_distribution %}
+      {% image "power_law_degree_distribution" %}
       <p>A power law degree distribution of a network with 10,000 nodes and average degree of around 7.  The top histogram is on a linear scale while the bottom shows the same data on a log scale. </p>
     </div>
   </div>
@@ -82,7 +82,7 @@ k_i^{\text{tot}} = k_i^{\text{in}} +  k_i^{\text{out}}.
   <div class="ym-g33 ym-gl">
     
     <div class="ym-gbox-left-perpad">
-      {% image small_directed_network_numbered %}
+      {% image "small_directed_network_numbered" %}
       <p></p>
     </div>
   </div>
@@ -90,13 +90,13 @@ k_i^{\text{tot}} = k_i^{\text{in}} +  k_i^{\text{out}}.
     <div class="ym-grid linearize-level-2">
       <div class="ym-g60 ym-gl">
 	<div class="ym-gbox-perpad">
-	  {% image small_directed_network_degree_distribution %}
+	  {% image "small_directed_network_degree_distribution" %}
 
 	</div>
       </div>
       <div class="ym-g40 ym-gr">
 	<div class="ym-gbox-right-perpad">
-	  {% image small_directed_network_marginal_degree_distributions %}
+	  {% image "small_directed_network_marginal_degree_distributions" %}
 	</div>
       </div>
     </div>
@@ -113,7 +113,7 @@ k_i^{\text{tot}} = k_i^{\text{in}} +  k_i^{\text{out}}.
 
 <p>The correlation between in- and out-degree can make a large difference to the effective properties of the network.  Imagine a network where the nodes are people and the directed edges indicate which people talk to which other people.  The incoming hubs then correspond to people (the <em>listeners</em>) who are listening to lots of others .  The outgoing hubs correspond to people (the <em>talkers</em>) who are talking to lots of others.  If one wants a message to spread quickly across the network, then one would want talkers to be the listeners.  On the other hand, as can occur from time to time, when the listeners aren't talking and the talkers aren't listening, information is not efficently passed along the network.</p>
 
-<p>The strong influence of the correlation between in- and out-degree can be seen by the fact that it determines the largest eigenvalue of the adjacency matrix.{% citation restrepo_ott_hunt_pre_2007 %}  This eigenvalue, in turn, influences the properties of {% intlink dynamical_system_idea %}dynamical systems{%endintlink%} that evolve on the network, such as the synchronization of networked oscillators.{% citation restrepo_ott_hunt_prl_2006 zhao_et_al_fcn_2011 %} </p>
+<p>The strong influence of the correlation between in- and out-degree can be seen by the fact that it determines the largest eigenvalue of the adjacency matrix.{% citation "restrepo_ott_hunt_pre_2007" %}  This eigenvalue, in turn, influences the properties of {% intlink dynamical_system_idea %}dynamical systems{%endintlink%} that evolve on the network, such as the synchronization of networked oscillators.{% citation "restrepo_ott_hunt_prl_2006" "zhao_et_al_fcn_2011" %} </p>
 
 
 {% endblock %}

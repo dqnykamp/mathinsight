@@ -8,27 +8,27 @@
 
 <p>A {% intlink network_definition%}network{%endintlink%} is simply a collection of connected objects.  We refer to the objects as {% intlink network_node_definition%}nodes{%endintlink%} or {% intlink graph_vertex_definition%}vertices{%endintlink%}, and usually draw them as points.  We refer to the connections between the nodes as {% intlink network_edge_definition %}edges{%endintlink%}, and usually draw them as lines between points.</p>
 
-{% image small_undirected_network_labeled %}
+{% image "small_undirected_network_labeled" %}
 
 <p>In mathematics, networks are often referred to as {% intlink graph_definition%}graphs{%endintlink%}, and the area of mathematics concerning the study of graphs is called <em>graph theory</em>.  Unfortunately, the term <em>graph</em> can also refer to a {% intlink function_graph_definition%}graph of a function{%endintlink%}, but we won't use that use of the term when talking about networks.  Here, we'll use the terms <em>network</em> and <em>graph</em> interchangeably.</p>
 
 <p>Networks can represent all sorts of systems in the real world.  For example, one could describe the Internet as a network where the nodes are computers or other devices and the edges are physical (or wireless, even) connections between the devices.  The World Wide Web is a huge network where the pages are nodes and links are the edges.  Other examples include social networks of acquaintances or other types of interactions, networks of publications linked by citations, transportation networks, metabolic networks, and communication networks.  You can click on the following images for more information about their respective networks.</p>
 
 {% twocolumns 50 2 "padding-top:1em;" 1 %}
-{% image internet_map_jurvetson_2004 %}
+{% image "internet_map_jurvetson_2004" %}
 <p>Network of connections between devices within the Internet.
   Courtesy of {% extlink "http://www.flickr.com/photos/jurvetson/916142/" %}Steve Jurvetson{%endextlink%}.  Used under a {% extlink "http://creativecommons.org/licenses/by/2.0/deed.en" %}Creative Commons license{%endextlink%}.
 </p>
 {% nextcolumn %}
-{% image us_congress_twitterers_porternovelli_2009 %}
+{% image "us_congress_twitterers_porternovelli_2009" %}
 <p>Network of US congress twitterers.  Courtesy of {% extlink "http://www.flickr.com/photos/porternovelli/3194953832/" %}Porter Novelli Global{%endextlink%}.  Used under a {% extlink "http://creativecommons.org/licenses/by-nc-sa/2.0/deed.en" %}Creative Commons license{%endextlink%}.</p>
 {% endtwocolumns %}
 
 {% twocolumns 50 2 "padding-top:1em;" 1 %}
-{% image c_elegans_connectome_anatomy_model %}
+{% image "c_elegans_connectome_anatomy_model" %}
 <p>C. elegans connectome merged onto a three-dimensional cellular anatomy model.  Courtesy of the {% extlink "http://openworm.org" %}OpenWorm{%endextlink%} project.  Used under a {% extlink "http://www.opensource.org/licenses/mit-license.php" %}MIT License{%endextlink%}.</p>
 {% nextcolumn %}
-{% image metabolic_network_model_for_Escherichia_coli %}
+{% image "metabolic_network_model_for_Escherichia_coli" %}
 <p>Metabolic network model for Escherichia coli.  Obtained from {% extlink "http://commons.wikimedia.org/wiki/File:Metabolic_Network_Model_for_Escherichia_coli.jpg"%}Wikimedia Commons{%endextlink%}.</p>
 {% endtwocolumns %}
 
@@ -46,13 +46,13 @@
     <div class="ym-grid ym-equalize linearize-level-2">
       <div class="ym-50 ym-gl"  style="padding-top:1em;">
 	<div class="ym-gbox-left-perpad">
-	  {% image small_undirected_network %}
+	  {% image "small_undirected_network" %}
 	  <p>An undirected network.</p>
 	</div>
       </div>
       <div class="ym-g50" style="padding-top:1em;">
 	<div class="ym-gbox-perpad">
-	  {% image small_directed_network %}
+	  {% image "small_directed_network" %}
 	  <p>A directed network.</p>
 	</div>
       </div>
@@ -62,13 +62,13 @@
     <div class="ym-grid ym-equalize linearize-level-2">
       <div class="ym-g50 ym-gl" style="padding-top:1em;">
 	<div class="ym-gbox">
-	  {% image small_undirected_node_edge_types_network %}
+	  {% image "small_undirected_node_edge_types_network" %}
 	  <p>An undirected network where the nodes and edges have different types, as indicated by their colors and line styles.</p>
 	</div>
       </div>
       <div class="ym-g50 ym-gr" style="padding-top:1em;">
 	<div class="ym-gbox-right">
-	  {% image small_directed_weighted_nodes_edges_network %}
+	  {% image "small_directed_weighted_nodes_edges_network" %}
 	  <p>A directed network where the edges and nodes have different weights, as indicated by their sizes.</p>
 	</div>
       </div>
@@ -80,7 +80,7 @@
 
 <p>In some contexts, one may work with graphs that have multiple edges between the same pair of nodes.  On might also allow a node to have a self-connection, meaning an edge from itself to itself.  An example of such a network is shown, below.</p>
 
-{% image small_undirected_multi_network 350 %}
+{% image "small_undirected_multi_network" width=350 %}
 
 <p>For simplicity, we will focus primarily on unweighted graphs with a single type of node and a single type of edge. We will consider both directed and undirected graphs, but won't allow multiple connections or self-connections.</p>
 
@@ -101,7 +101,7 @@
 
 <p>For example, we could number the vertices of the above directed graph from 1 to 10.  In the below figure, we label each edge with the corresponding component of the adjacency matrix.</p>
 
-{% image small_directed_network_numbered %}
+{% image "small_directed_network_numbered" %}
 
 <p>From the figure, we see that the adjacency matrix has 13 ones corresponding to the 13 edges.  Of course, the adjacency matrix contains all 100 entries, the rest of which are zero.
 \begin{gather*}
@@ -128,7 +128,7 @@
 
 The bidirectionality means that the adjacency matrix is {% intlink symmetric_matrix_definition%}symmetric{%endintlink%}.</p>
 
-{% image small_undirected_network_numbered %}
+{% image "small_undirected_network_numbered" %}
 
 <p>For undirected graph represented in the above figure, the eleven edges lead to 22 ones in the adjacency matrix since, by symmetry, each edge leads to two entries in the matrix.  For example, the edge between nodes 1 and 2 leads to $a_{12}=1$ and $a_{21}=1$, though we've labeled it by just $a_{12}$ in the above figure.  The symmetry of $A$ means that the rows are equal to the columns.</p>
 \begin{gather*}

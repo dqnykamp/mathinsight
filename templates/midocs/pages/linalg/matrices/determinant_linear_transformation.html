@@ -40,7 +40,7 @@ illustrated by the following figure.
 We colored the interval $[0,1]$ and its image $[0,3]$ with a green to red gradient that illustrates how each point in the interval is mapped by $T$. 
 A point of a given color in $[0,1]$ is mapped to a point of the same color in the image $[0,3]$.</p>
 
-<p class="centeredImage">{%image linear_transformation_3x %}</p>
+<p class="centeredImage">{% image "linear_transformation_3x" %}</p>
 
 <p>The fact that the determinant of the matrix associated with $T$ is 3 means that $T$ stretches objects so that their length is increased by a factor of 3.
 Since the determinant was positive, $T$ preserves the orientation of objects:
@@ -55,7 +55,7 @@ The negative determinant indicates that $T$ reverses the orientation of objects:
 as indicated by the colors, the right of the interval $[0,1]$ is mapped onto the left of the interval $[-\frac{1}{2},0]$.
 
 
-<p class="centeredImage">{%image linear_transformation_minus_half_x %}</p>
+<p class="centeredImage">{% image "linear_transformation_minus_half_x" %}</p>
 
 <p>In general, the linear transformation $T(x)=ax$ stretches objects
 to change their length by a factor of $|a|$.  If $a$ is positive, $T$ preserves
@@ -98,7 +98,7 @@ We colored the quarters of the square in different colors to help visualize
 how points within the square were mapped.
 The figure demonstrates that $\vc{T}$ did rotate the square by $\pi$ radians around the origin and stretched each side by a factor of 2.</p>
 
-<p class="centeredImage">{%image linear_transformation_2d_m2_0_0_m2 %}</p>
+<p class="centeredImage">{% image "linear_transformation_2d_m2_0_0_m2" %}</p>
 
 <p>We claimed this behavior should be reflected in the determinant of the associated matrix 
 $$A = \left[\begin{array}{cc}-2 &amp;0\\ 0 &amp;-2\end{array}\right].$$
@@ -148,7 +148,7 @@ perimeter of the parallelogram leads to the opposite color order
 red, blue, yelow, green.  There is no way to stretch and move the 
 original unit square into the parallelogram without taking it out of the plane and flipping it (or somehow moving the region through itself).  </p>
 
-<p class="centeredImage">{%image linear_transformation_2d_m1_m1_1_3 %}</p>
+<p class="centeredImage">{% image "linear_transformation_2d_m1_m1_1_3" %}</p>
 
 <p>The actual geometric shape and rotation of the square's image
 is not captured by the determinant.  We cannot tell whether or not $\vc{T}$

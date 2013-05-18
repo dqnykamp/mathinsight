@@ -10,7 +10,7 @@
 <h4>Example 1</h4>
 
 <p>Let $\dlc$ be the closed curve illustrated below.</p>
-<p class="centeredImage">{%image quarter_circle_3d%}</p>
+<p class="centeredImage">{% image "quarter_circle_3d" %}</p>
 
 <p>For $\dlvf(x,y,z) = (y,z,x)$, compute
 \begin{align*}
@@ -101,7 +101,7 @@ pointing in a similar direction.</p>
 
 <p>We need to parametrize $\dlc$.  We'll do it by dividing $\dlc$ into
 three parts.
-<p class="centeredImage">{%image quarter_circle_parts_3d%}</p>
+<p class="centeredImage">{% image "quarter_circle_parts_3d" %}</p>
 <p>We'll use the fact that
 \begin{align*}
   \dlint =\lint{\dlc_1}{\dlvf} +
@@ -181,7 +181,7 @@ points: (1,1,0), (3,1,4), (1,1,5), (-1,1,1)</p>
 <p>Does this curve lie in a plane?  Yes, in the plane $y=1$.  The figure
 below is just the plane $y=1$.</p>
 
-<p class="centeredImage">{%image rectangle_y_1%}</p>
+<p class="centeredImage">{% image "rectangle_y_1" %}</p>
 
 <p>If one coordinate is constant, then curve is parallel to a coordinate
 plane.  (The $xz$-plane for above example). For Stokes' theorem, use
@@ -199,7 +199,7 @@ rectangle and whose $y$ component is 1.</p>
 which the cone $z^2=x^2+y^2$ intersects the plane $z=1$. (Oriented
 counter clockwise viewed from positive $z$-axis).</p>
 
-<p class="centeredImage">{%image curve_intersection_cone_plane %}</p>
+<p class="centeredImage">{% image "curve_intersection_cone_plane" %}</p>
 
 <p>\begin{align*}
   \dlint = \sint{\dls}{\curl \dlvf}
@@ -210,8 +210,8 @@ for what surface $\dls$?</p>
 could use the portion of the plane or the portion of the cone
 illustrated below.</p>
 
-<p class="centeredImage">{%image stokes_surface_option_cone %}
-{%image stokes_surface_option_plane %}</p>
+<p class="centeredImage">{% image "stokes_surface_option_cone" %}
+{% image "stokes_surface_option_plane" %}</p>
 
 <p>Let $P$ be the portion of the plane $z=1$ with $x^2+y^2 < 1$ with
 upward pointing normal.  Let $Q$ be the portion of the cone

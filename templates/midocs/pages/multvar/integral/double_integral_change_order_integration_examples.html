@@ -56,7 +56,7 @@ and the limits on the inner $dx$ integral mean that for each value of $y$ the ra
 $1 \le x \le e^y.$
 The region $\dlr$ is shown in the following figure.</p>
 
-<p class="centeredImage">{% image double_integral_change_order_example_exp_x%}</p>
+<p class="centeredImage">{% image "double_integral_change_order_example_exp_x" %}</p>
 
 <p>The maximum range of $y$ over the region is from 0 to 1, as indicated by the gray bar to the left of the figure.  The horizontal hashing within the figure indicates the range of $x$ for each value of $y$, beginning at the left edge $x=1$ (blue line) and ending at the right curve edge $x=e^y$ (red curve).</p>
 
@@ -64,7 +64,7 @@ The region $\dlr$ is shown in the following figure.</p>
 
 <p>To change order of integration, we need to write an integral with order $dy\,dx$.  This means that $x$ is the variable of the outer integral.  Its limits must be constant and correspond to the total range of $x$ over the region $\dlr$.  The total range of $x$ is $1 \le x \le e$, as indicated by the gray bar below the region in the following figure.</p>
 
-<p class="centeredImage">{% image double_integral_change_order_example_exp_y%}</p>
+<p class="centeredImage">{% image "double_integral_change_order_example_exp_y" %}</p>
 
 <p>Since $y$ will be the variable for the inner integration, we need to integrate with respect to $y$ first.  The vertical hashing indicates how, for each value of $x$, we will integrate from the lower boundary (red curve) to the upper boundary (purple line).  These two boundaries determine the range of $y$.  Since we can rewrite the equation $x=e^y$ for the red curve as $y=\log x$, the range of $y$ is $\log x \le y \le 1$. (The function $\log x$ indicates the natural logarithm, which sometimes we write as $\ln x$.)</p>
 
@@ -108,7 +108,7 @@ after we finish integrating with respect to $x$.</p>
 \end{gather*}
 which is shown in the following picture.</p>
 
-<p class="centeredImage">{% image double_integral_change_order_example_triangle%}</p>
+<p class="centeredImage">{% image "double_integral_change_order_example_triangle" %}</p>
 
 <p>Since we can also describe the region by 
 \begin{gather*}
@@ -152,13 +152,13 @@ to 1, and we calculate the integral as
 \end{gather*}
 as shown in the following image, where the total range on $x$ is shown by the gray bar below the region, and the variable boundaries for $y$ are shown by the blue and cyan curves.</p>
 
-<p class="centeredImage">{% image double_integral_change_order_example_sin_y %}</p>
+<p class="centeredImage">{% image "double_integral_change_order_example_sin_y" %}</p>
 
 <p>One trick for changing variables with this region is correctly dealing with the lower boundary $y = \sin(x)$.  When we solve this boundary equation for $x$ as a function of $y$, we may be tempted to write it as $x = \arcsin(y)$ and maybe even think that $x \le \arcsin(y)$ in the region. </p>
 
 <p>Looking closely at the picture, we see this cannot be the case.  In fact, the lower boundary for $y$ as a function of $x$ (the blue curve) has to be both the upper and lower boundaries for $x$ as a function of $y$, as shown by the red and purple curves in the below figure.</p>
 
-<p class="centeredImage">{% image double_integral_change_order_example_sin_x %}</p>
+<p class="centeredImage">{% image "double_integral_change_order_example_sin_x" %}</p>
 
 <p>To get the formula for these boundaries, we have to remember how the inverse of the sinusoid, $\arcsin(y)$, is defined.  In order to define the inverse of $\sin(x)$, we need to restrict the function to an interval where it takes on each value only one time.  The standard way to define $\arcsin(y)$ is to restrict $\sin(x)$ to values of $x$ in the interval $[-\pi/2,\pi/2]$ as $\sin(x)$ ranges from $-1$ to 1 in that interval.  This means that $\arcsin(y)$ ranges from $[-\pi/2,\pi/2]$ as $y$ goes from $-1$ to 1.</p>
 

@@ -30,7 +30,7 @@ as $i$ increases, as illustrated in this graph of $r(i)$.  (The curve
 levels off for high values of $i$ because there is a limit on how fast
 the neuron can emit output spikes.  For example, the limit might be
 200 spikes per second.)</p>
-<p class="centeredImage">{%image neuron_firing_rate_kink %}</p>
+<p class="centeredImage">{% image "neuron_firing_rate_kink" %}</p>
 
 <p>The function is differentiable everywhere except at the point where $i
 = I_0$.  By differentiable, we mean that we can fit the graph of $r(i)$
@@ -38,7 +38,7 @@ with a (non-vertical) tangent line.  Given any level of input, say $i=a$, we can
 find a line that closely approximates $r(i)$ around $a$, as long as
 $a \ne I_0$.</p>
 
-<p class="centeredImage">{%image neuron_firing_rate_kink_tangent_line %}</p>
+<p class="centeredImage">{% image "neuron_firing_rate_kink_tangent_line" %}</p>
 
 <p>The function $r(i)$ is not differentiable at $i = I_0$ because there is
 no tangent line at $i=I_0$.  The graph of $r$ has a kink there, so no
@@ -95,7 +95,7 @@ becomes $r(i,2)$, a shifted and flattened version of the original
 curve.  Increasing nicotine further to $s=4$  gives the further shifted
 and flattened curve $r(i,4)$.</p>
 
-<p class="centeredImage">{% image neuron_firing_rate_kink_nicotine %}</p>
+<p class="centeredImage">{% image "neuron_firing_rate_kink_nicotine" %}</p>
 
 <p>To get a complete picture, we can plot the full function $r(i,s)$.
 Here is an applet showing

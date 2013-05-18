@@ -22,7 +22,7 @@
 
 <p>Bacterial growth data from a <i>V. natriegens</i> experiment are shown
 in the following table.  The population was grown in a commonly used nutrient
-growth medium, but the pH of the medium was adjusted to be pH 6.25.{% footnote bacteriaexperiment "The experiment was a semester project of Deb Christensen in which several <i>V. natriegens</i> populations were grown in a range of pH values." %}</p>
+growth medium, but the pH of the medium was adjusted to be pH 6.25.{% footnote "bacteriaexperiment" "The experiment was a semester project of Deb Christensen in which several <i>V. natriegens</i> populations were grown in a range of pH values." %}</p>
 
 <table class="basic centered compact" style="width:50%">
 <caption>Measurements of bacterial density at pH 6.25.<br/>
@@ -72,7 +72,7 @@ through the medium with bacteria at time $t$.</p>
 
 <p>With the state space and set of times determined, the remaining step in developing the dynamical system model is to determine the time evolution rule.  This step, of course, is the most difficult part, as it must capture the dynamics of the system.  Sometimes, one has a sufficiently explicit description of the dynamics so that one can immediately write down a reasonable evolution rule.  In most cases, developing an equation that captures key features of the underlying dynamics will require multiple iterations and an effort to look at both the experiment and the mathematical system from different angles.</p>
 
-{% image bacteria_density_versus_time %}
+{% image "bacteria_density_versus_time" %}
 
 <p>We begin by looking at the plot of bacteria density $B_t$ versus the rescaled time $t$, above.  It's immediately clear that the density is increasing faster and faster as time progresses.  Dynamics is all about the change in the state variables, so let's focus in on the change in $B_t$ at each time step.  The population change per unit time is simply $B_{t+1}-B_{t}$.  These changes are, for example, $B_1 - B_0 = 0.014$ and $B_2 - B_1 = 0.024$.  Calculating all these population changes, we add them to our table of results.  From now on, let's just use the rescaled time $t$.</p>
 
@@ -92,7 +92,7 @@ through the medium with bacteria at time $t$.</p>
 
 <p>We can visualize these dynamics by plotting the population change as a function of time, below.  As we observed from the original plot, the population change increases as a function of time.</p>
 
-{% image bacteria_density_change_versus_time %}
+{% image "bacteria_density_change_versus_time" %}
 
 <p>If we stare at the above plot, we can observe that the population change increases faster than linearly.  In other words, the above points don't increase as a straight line, but the trail of points tends to bend upward as time increases.  It doesn't look like we can make a good dynamical systems model by finding some slope $m$ and a constant $c$ and writing $B_{t+1}-B_{t}=mt+c$.  Lines are one of the simplest types of equations, so we often want to find a nice simple linear relationship among variables.  But, here, it looks like it won't be able to do that.</p>
 
@@ -131,7 +131,7 @@ for some constant $c$.</p>
 <p>We can test this hypothesis by plotting the data a little differently.  Instead of plotting population change versus time, as we did above, we should  plot the population change, $B_{t+1}-B_{t}$, versus the population size $B_t$.  If equation \eqref{constant_rate} holds, then the resulting points should lie on a line that goes through the origin.  The slope of the line will give us the constant $c$, which is the fraction of the bacteria that divided in the time step.</p>
 
 
-{% image bacteria_density_change_versus_density %}
+{% image "bacteria_density_change_versus_density" %}
 
 <p>As shown in the above plot, the first four data points of population change versus density are pretty much aligned along a line through the origin.  The last point doesn't seem to be exactly in line with the first four, but is a little lower.  For now, let's not worry about the last point and focus on the initial growth represented by the first four points.  In the following applet, you can fit the points with a line by moving the red diamond.  Then, you can read off the slope, which is the constant $c$ in equation \eqref{constant_rate}.</p>
 
@@ -320,7 +320,7 @@ because it is derived from an understanding of
 bacterial growth as described by the model whereas the parabolic
 equation is simply a match of equation to data.</p>
 
-{% image bacteria_density_versus_time_parabola %}
+{% image "bacteria_density_versus_time_parabola" %}
 
 </aside>
 

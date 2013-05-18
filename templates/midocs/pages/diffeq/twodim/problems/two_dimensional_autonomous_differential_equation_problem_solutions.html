@@ -14,13 +14,13 @@ ol ol {list-style-type: lower-roman;}
 
 <ol>
   <li>The direction arrows on the nullclines are green vertical and horizontal arrows in the following plot.
-{% image phase_plane_nullclines_example_1_solution %}
+{% image "phase_plane_nullclines_example_1_solution" %}
 </li>
   <li>The one equilibrium is identified by the orange circle around the one point where the nullclines intersect.  Its coordinates are $(v,r)=(2,-1)$.</li>
   <li>A plausible solution for initial condition $(v(0),r(0))=(2,-3)$ is shown by the black curve starting at the initial conditions (red diamond). Initially, the curve must move upward and to the left, as given by the direction arrow.  It must cross the $v$-nullcline moving straight up and then begin to move upward and to the right.  When it reaches the $r$-nullcline, it must cross it moving straight right and then begin moving downward and to the right.  At this point, the direction arrows don't completely determine what must happen.  In the above figure, the solution is shown heading straight to the equilibrium (orange circle). (It is also theoretically possible that the solution crosses the $v$-nullcline again and moves downward and to the left before getting to the equilibrium.)</li>
   <li>The following graph is a possibility of how $v(t)$ and $r(t)$ could look like as a function of time.  The temporal scale is comletely arbitrary because the phase plane does not include information about time.  The important features are the following: $v$ starts at $2$ and $r$ starts at $-3$; $v(t)$ initially decreases then increases back to 2; $r(t)$ initially increases, overshoots $-1$ by a little bit, then comes back down to $-1$.
 
-{% image phase_plane_nullclines_example_1_solution_time %}
+{% image "phase_plane_nullclines_example_1_solution_time" %}
   </li>
 </ol>
 
@@ -30,14 +30,14 @@ ol ol {list-style-type: lower-roman;}
 
 <ol>
   <li>The direction arrows on the nullclines are green vertical and horizontal arrows in the following plot.
-{% image phase_plane_nullclines_example_2_solution %}
+{% image "phase_plane_nullclines_example_2_solution" %}
 
 
   <li>The two equilibria are identified by the orange circles around the points where the nullclines intersect.  Their coordinates are $(4,-2)$ and $(9,1)$.</li>
   <li>A plausible solution for initial condition $(m(0),b(0))=(6,-1)$ is shown by the black curve starting at the initial conditions (green diamond). Since $m(t)$ is increasing and $b(t)$ is decreasing, the solution trajectory initially moves downward and to the right.  When it crosses the $m$-nullcline, it moves straight downward as the rate of change of $m$ is zero at this point.  Aftewards, the trajectory moves downward and to the left, as both $m$ and $b$ are decreasing.</li>
   <li>The following graph is a possibility of how $m(t)$ and $b(t)$ could look like as a function of time.  The temporal scale is comletely arbitrary because the phase plane does not include information about time.  The important features are the following: $m$ starts at $6$ and $b$ starts at $-1$; $m(t)$ initially increases then decreases; $b(t)$ decreases the whole time.  After $b(t)$ drops below $-6$, the solution left the displayed portion of the phase plane, so we don't have more information about what happens.
 
-{% image phase_plane_nullclines_example_2_solution_time %}
+{% image "phase_plane_nullclines_example_2_solution_time" %}
 
 </li>
 
@@ -50,7 +50,7 @@ ol ol {list-style-type: lower-roman;}
 <ol>
   <li>The $w$-nullcline is the line $-w-u+1=0$ or $w+u=1$.  It is the thin blue line plotted in the below phase plane.  The $u$-nullcline is the line $w-u+1=0$ or $u-w=1$, which is the thick green line plotted below.
     
- {% image phase_plane_example_3_solution %}
+ {% image "phase_plane_example_3_solution" %}
 
    
 </li>
@@ -65,7 +65,7 @@ ol ol {list-style-type: lower-roman;}
   <li>On the $w$-nullcline (thin blue line), we know that $\diff{w}{t}=0$, so there can be no horizontal movement.  The direction arrow must point straight up or straight down.  The left segment of the $w$-nullclines is between regions II and III.  In both those regions $u$ is decreasing and the arrows point downward.  The arrow on the left part of the nullcline must point straight down.  In constrast, the right segment of the the $w$-nullcline is between regions I and IV, where $u$ is increasing.  The direction arrow must point upward.  For the $u$-nullcline (thick green line), the arrows must point left or right since $\diff{u}{t}=0$.  The right segment is between regions I and II, where $w$ is decreasing.  We draw the arrow straight left.  The left segment of the $u$-nullcline is between regions III and IV, where $w$ is increasing.  We draw the arrow straight to the right.</li>
   <li>The direction arrows spiral in a counterclockwise motion around the equilibrium $(0,1)$.  For this case, when you follow the direction arrows, you are forced to spiral inwards toward the equilibrium.  But, there's no way to know how much you spiral around.  You can take your pick of how you want it to look.  The red curve is a good choice, because it is the simplest.  The actual solution looks like the cyan curve (but we know this only because we could use an {% appletlink "two_autonomous_differential_equations_phase_plane_versus_time" %}applet{%endappletlink%} to see what really happens).  A more complicated solution would be the gray curve.  For simplicity, let's imagine the we chose the red curve for our trajectory.</li>
   <li>To plot the red curve as functions $w(t)$ and $u(t)$ versus time, we just need to observe that $w(t)$ increases from zero to about 0.5 and then decreases back to 0.  On the other hand, $u(t)$ increases from zero to one monotonically.  The resulting curves are sketched below.
-{% image phase_plane_example_3_solution_time %}
+{% image "phase_plane_example_3_solution_time" %}
  </li>
   <li>Using Forward Euler with $\Delta t =1$, we calculate $w(1)$ and $u(1)$ from $w(0)=0$ and $u(0)=0$.
 \begin{align*}
@@ -99,7 +99,7 @@ With this Forward Euler approximation, we are spiralling around counterclockwise
 
 <ol>
   <li>The $z$-nullcline is $z+v-1=0$ or $z+v=1$,  It is the thin blue line plotted in the below phase plane.  The $v$-nullcline is the line $z-v+1=0$ or $v-z=1$, which is the thick green line plotted below.
- {% image phase_plane_example_4_solution %}
+ {% image "phase_plane_example_4_solution" %}
 
 </li>
   <li>There is one equilibrium where the nullclines intersect.  It is at the point $(z,v) = (0,1)$.  One can also determine the value by solving system of two equations.  By adding the equations $z+v=1$ and $v-z=1$, one gets $2v=2$ or $v=1$.  Plugging that value into either of the original equations, gives $z=0$.  The equilibrium is shown by the orange circle on the phase plane.</li>
@@ -115,7 +115,7 @@ With this Forward Euler approximation, we are spiralling around counterclockwise
   <li>Starting at  $(z(0),v(0))=(0,0)$, the solution must move upward and to the left and cross the $v$-nullcline moving straight left.  The it moves downward and to the left.  One such solution trajectory is the the cyan curve shown above.
 </li>
   <li>To plot the cyan curve as functions $z(t)$ and $v(t)$ versus time, we just need to observe that $z(t)$ decreases along the trajectory while $v(t)$ initially increases to about 0.5 before decreasing. increases from zero to about 0.5 and then decreases back to 0.  The resulting curves are sketched below.
-    {% image phase_plane_example_4_solution_time %}
+    {% image "phase_plane_example_4_solution_time" %}
   </li>
   <li>Using Forward Euler with $\Delta t =1$, we calculate $z(1)$ and $v(1)$ from $z(0)=0$ and $v(0)=0$.
 \begin{align*}
@@ -164,7 +164,7 @@ must be satisfied (so that $\diff{b}{t}=0$).  We need to find all combinations $
 
 <p>The equilibria are shown by the orange circles in the below phase plane plot.  The thin blue lines are the $a$-nullcline and the thick green lines are the $b$-nullcline.</p>
 
-{% image phase_plane_example_5_solution %}
+{% image "phase_plane_example_5_solution" %}
 
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
@@ -192,7 +192,7 @@ must be satisfied (so that $\diff{q}{t}=0$).  We need to find all combinations $
 
 <p>The equilibria are shown by the orange circles in the below phase plane plot.  The thin blue lines are the $p$-nullcline and the thick green lines are the $q$-nullcline.</p>
 
-{% image phase_plane_example_6_solution %}
+{% image "phase_plane_example_6_solution" %}
 
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
@@ -202,7 +202,7 @@ must be satisfied (so that $\diff{q}{t}=0$).  We need to find all combinations $
 
 <p>By plugging in test points, one can determine the direction arrows in the different regions of the phase plane.  In the region where $r$ and $s$ are positive, the direction arrows show spiralling around the equilibrium $(r,s)=(3,2)$.  Starting at the initial condition $(r(0),s(0))=(1,1)$, the direction arrows plotted aren't enough for one to determine exactly how the solution behaves.  It could, for example, spiral in a circle (cyan curve) or spiral toward the equilibrium (red curve).  The important point is that whatever curve one chooses, it must be consistent with the direction arrows.</p>
 
-{% image phase_plane_example_7_solution %}
+{% image "phase_plane_example_7_solution" %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink two_dimensional_autonomous_differential_equation_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -211,7 +211,7 @@ must be satisfied (so that $\diff{q}{t}=0$).  We need to find all combinations $
 
 <p>By plugging in test points, one can determine the direction arrows in the different regions of the phase plane. Starting at the initial condition $(u(0),u(0))=(1,1)$, the trajectory must first move upward and to the right unless it cross the $u$-nullcline, at which point it moves upward and to the left.  A trajectory consistent with the direction arrows is shown by the cyan curve.</p>
 
-{% image phase_plane_example_8_solution %}
+{% image "phase_plane_example_8_solution" %}
 
 
 {% endblock %}
