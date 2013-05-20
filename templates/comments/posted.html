@@ -7,6 +7,6 @@
 
 <p>{%if comment.credit_eligible %}Message eligible for credit for {{ comment.credit_group }}.  We will review to see if it qualifies.  Status of the credit is available on your <a href="{% url 'mi-profile' %}">profile page</a>. {%endif%}</p>
 
-{% if comment.content_type.model = "page" %}<p>Return to {%intlink comment.content_object %}{{comment.content_object.title}}{%endintlink%}.</p>{%endif%}{% if comment.content_type.model = "applet" %}<p>Return to {%appletlink comment.content_object %}{{comment.content_object.annotated_title}}{%endappletlink%}.</p>{%endif%}{% if comment.content_type.model = "image" %}<p>Return to {%imagelink comment.content_object %}{{comment.content_object.annotated_title}}{%endimagelink%}.</p>{%endif%}
+{% if comment.content_type.model != "author" %}<p>Return to {%intlink comment.content_object %}{%endintlink%}.</p>{%endif%}
 
 {% endblock %}

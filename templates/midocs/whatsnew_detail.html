@@ -2,18 +2,17 @@
 {% load mi_tags comments %}
 {% load url from future %}
 
-{% block title %}Math Insight: newest images{% endblock %}
+{% block title %}Math Insight: newest {{items}}{% endblock %}
 {% block nolinksection %}{% endblock %}
 {% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
 
-<meta name="description" content="{{newsitem.description}}"/>
 
 {% block content %}
-<h3>Newest images on Math Insight</h3>
+<h3>Newest {{items}} on Math Insight</h3>
 
 <ul class="linklistspace">
-  {% for image in image_list %}
-  <li>{% extendedlink image icon_size="medium" added=True %}</li>
+  {% for object in object_list %}
+  <li>{% extendedlink object icon_size="medium" added=True %}</li>
   {% endfor %}
 </ul>
 {% if is_paginated %}
@@ -29,10 +28,14 @@
 
 {% block rightcolumn %}
 <ul class="linklist">
-<li><a href="{% url 'mi-imagelist' %}">List of all images</a></li>
 <li><a href="{% url 'mi-newpages' %}">New pages</a></li>
 <li><a href="{% url 'mi-newapplets' %}">New applets</a></li>
-<li><a href="{% url 'mi-newvideos'%}">New videos</a></li>
+<li><a href="{% url 'mi-newvideos %}">New videos</a></li>
+<li><a href="{% url 'mi-newimages' %}">New images</a></li>
+<li><a href="{% url 'mi-pagelist %}">List of all videos</a></li>
+<li><a href="{% url 'mi-appletlist' %}">List of all videos</a></li>
+<li><a href="{% url 'mi-videolist' %}">List of all videos</a></li>
+<li><a href="{% url 'mi-imagelist' %}">List of all videos</a></li>
 </ul>
 <h3>RSS feeds</h3>
 <ul class="linklist">

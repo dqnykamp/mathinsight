@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.template.loader import render_to_string
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.contenttypes import generic
 import datetime, os
 from django.contrib.sites.models import Site
@@ -18,6 +18,68 @@ import os
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
 
 
+def return_extended_link(obj, **kwargs):
+    
+    link_url = obj.get_absolute_url()
+
+    # in extended mode, include thumbnail, if exists
+    icon_size = kwargs.get("icon_size","small")
+    try:
+        thumbnail = obj.thumbnail
+    except AttributeError:
+        thumbnail = None
+
+    if thumbnail:
+        if icon_size == 'large':
+            thumbnail_width_buffer = obj.thumbnail_large_width_buffer()
+            thumbnail_width=obj.thumbnail_large_width()
+            thumbnail_height=obj.thumbnail_large_height()
+        elif icon_size == 'small':
+            thumbnail_width_buffer = obj.thumbnail_small_width_buffer()
+            thumbnail_width=obj.thumbnail_small_width()
+            thumbnail_height=obj.thumbnail_small_height()
+        else:
+            thumbnail_width_buffer = obj.thumbnail_medium_width_buffer()
+            thumbnail_width=obj.thumbnail_medium_width()
+            thumbnail_height=obj.thumbnail_medium_height()
+
+
+        html_thumbnail = '<div style="width: %spx; float: left;"><a href="%s"><img src="%s" alt="%s" width ="%s" height="%s" /></a></div>' % \
+            (thumbnail_width_buffer, link_url, thumbnail.url, \
+                 obj.title, thumbnail_width,thumbnail_height)
+    else:
+        html_thumbnail = ""
+        
+
+    html_link = obj.return_link(**kwargs)
+
+    try:
+        html_link += ' %s' % obj.feature_list()
+    except AttributeError:
+        pass
+
+    html_link += '<br/>%s' % obj.description
+        
+    if kwargs.get("added"):
+        html_link += "<br/>Added "
+        author_list = obj.author_list_full(include_link = True)
+        if author_list:
+            html_link += "by %s " % author_list
+        html_link += "on %s" % obj.publish_date
+
+    if thumbnail and icon_size != 'small':
+        html_link = '<div style="width: 75%%; float: left;">%s</div>' % \
+            html_link
+
+    if  thumbnail:
+        html_string = '<div class="ym-clearfix">%s%s</div>' % \
+        (html_thumbnail, html_link)
+    else:
+        html_string = html_link
+
+    return mark_safe(html_string)
+
+
 class NotationSystem(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
@@ -28,6 +90,12 @@ class NotationSystem(models.Model):
 
     def __unicode__(self):
         return self.name
+
+class EquationTag(models.Model):
+    code = models.SlugField(max_length=50, db_index=True)
+    page = models.ForeignKey("Page")
+    tag = models.CharField(max_length=20)
+
 
 class Author(models.Model):
     code = models.SlugField(max_length=50, unique=True)
@@ -201,18 +269,52 @@ class Page(models.Model):
         return "Page: %s" % self.title
     
     def return_link(self, **kwargs):
-        try:
-            link_text=kwargs["link_text"]
-        except KeyError:
-            link_text=self.title
-        try:
-            link_class=kwargs["link_class"]
-        except KeyError:
-            link_class=self.level
+        link_text=kwargs.get("link_text", self.title)
         link_title="%s: %s" % (self.title,self.description)
-        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % (self.get_absolute_url(), link_class,  link_title, link_text))
 
-    
+        link_class=kwargs.get("link_class", self.level.code)
+        if kwargs.get("confused"):
+            link_class += " confused"
+
+
+        link_url = self.get_absolute_url()
+        
+        anchor=kwargs.get("anchor")
+        if anchor:
+            link_url += "#%s" % anchor
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
+
+    def return_extended_link(self, **kwargs):
+        return return_extended_link(self, **kwargs)
+
+    def return_extended_link_added(self, **kwargs):
+        kwargs["added"]=True
+        return return_extended_link(self, **kwargs)
+
+  
+    def return_equation_link(self, equation_code, **kwargs):
+        try:
+            equation_tag=EquationTag.objects.get\
+                (code=equation_code, page=self).tag
+        except ObjectDoesNotExist:
+            equation_tag = "???"
+        equation_tag = "(%s)" % equation_tag
+
+        kwargs["anchor"] = "mjx-eqn-%s" % equation_code
+
+        # replace (tag) with equation tag
+        link_text = kwargs.get("link_text")
+        if link_text:
+            link_text= re.sub("\(tag\)", equation_tag, link_text)
+            kwargs["link_text"]=link_text
+
+        if kwargs.get("blank_style"):
+            return link_text
+        else:
+            return self.return_link(**kwargs)
+
+
     @models.permalink
     def get_absolute_url(self):
         return('mi-page', (), {'page_code': self.code})
@@ -769,6 +871,18 @@ class Image(models.Model):
     def annotated_title(self):
           return "Image: %s" % self.title
 
+    def return_link(self, **kwargs):
+        link_text=kwargs.get("link_text", self.annotated_title())
+        link_title="%s: %s" % (self.annotated_title(),self.description)
+        link_class=kwargs.get("link_class", "image")
+        link_url = self.get_absolute_url()
+        
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
+
+    def return_extended_link(self, **kwargs):
+        return return_extended_link(self, **kwargs)
+
     @models.permalink
     def get_absolute_url(self):
         return('mi-image', (), {'image_code': self.code})
@@ -1062,17 +1176,16 @@ class Applet(models.Model):
           return "Applet: %s" % self.title
 
     def return_link(self, **kwargs):
-        try:
-            link_text=kwargs["link_text"]
-        except KeyError:
-            link_text=self.annotated_title()
-        try:
-            link_class=kwargs["link_class"]
-        except KeyError:
-            link_class="applet"
+        link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
-        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % (self.get_absolute_url(), link_class,  link_title, link_text))
+        link_class=kwargs.get("link_class", "applet")
+        link_url = self.get_absolute_url()
+        
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
 
+    def return_extended_link(self, **kwargs):
+        return return_extended_link(self, **kwargs)
       
     @models.permalink
     def get_absolute_url(self):
@@ -1411,16 +1524,16 @@ class Video(models.Model):
         return "Video: %s" % self.title
       
     def return_link(self, **kwargs):
-        try:
-            link_text=kwargs["link_text"]
-        except KeyError:
-            link_text=self.annotated_title()
-        try:
-            link_class=kwargs["link_class"]
-        except KeyError:
-            link_class="video"
+        link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
-        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % (self.get_absolute_url(), link_class,  link_title, link_text))
+        link_class=kwargs.get("link_class", "video")
+        link_url = self.get_absolute_url()
+        
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
+
+    def return_extended_link(self, **kwargs):
+        return return_extended_link(self, **kwargs)
 
     @models.permalink
     def get_absolute_url(self):
@@ -1673,11 +1786,6 @@ class NewsAuthor(models.Model):
         ordering = ['sort_order','id']
     def __unicode__(self):
         return "%s" % self.author
-
-class EquationTag(models.Model):
-    code = models.SlugField(max_length=50, db_index=True)
-    page = models.ForeignKey(Page)
-    tag = models.CharField(max_length=20)
 
 
 class ExternalLink(models.Model):

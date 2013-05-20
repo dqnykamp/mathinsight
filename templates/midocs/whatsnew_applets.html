@@ -13,7 +13,7 @@
 
 <ul class="linklistspace">
   {% for applet in applet_list %}
-  <li>{% appletlink applet 3 %}{{applet.annotated_title}}{%endappletlink%}</li>
+  <li>{% extendedlink applet icon_size="medium" added=True %}</li>
   {% endfor %}
 </ul>
 {% if is_paginated %}

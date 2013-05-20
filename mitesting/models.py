@@ -597,29 +597,24 @@ class Assessment(models.Model):
         else:
             return self.name
 
-    def return_link(self, **kwargs):
-        try:
-            link_text=kwargs["link_text"]
-        except KeyError:
-            link_text="%s: %s" % (self.assessment_type.name,self.name)
-        try:
-            link_class=kwargs["link_class"]
-        except KeyError:
-            link_class='assessment'
-        try:
-            seed=kwargs["seed"]
-        except KeyError:
-            seed="1"
-        link_title="%s: %s" % (self.name,self.description)
-        
-        if seed is None:
-            seed_arg = ""
-        else:
-            seed_arg = "?seed=%s" % seed
-        return mark_safe('<a href="%s%s" class="%s" title="%s">%s</a>' % (self.get_absolute_url(), seed_arg, link_class,  link_title, link_text))
-
     def get_title(self):
         return self.name
+
+    def annotated_title(self):
+        return "%s: %s" % (self.assessment_type.name,self.name)
+
+    def return_link(self, **kwargs):
+        link_text=kwargs.get("link_text", self.annotated_title())
+        link_title="%s: %s" % (self.annotated_title(),self.description)
+        link_class=kwargs.get("link_class", "assessment")
+        link_url = self.get_absolute_url()
+        
+        seed = kwargs.get("seed","1")
+        link_url += "?seed=%s" % seed
+
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
+
 
 
     def user_can_view(self, user, solution=True):

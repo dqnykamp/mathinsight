@@ -12,9 +12,6 @@
   <li><a href="#images">Images</a></li>
 {% endblock %}
 
-{% block extrastyle %}
-<meta name="description" content="{{newsitem.description}}"/>
-{%endblock %}
 
 {% block content %}
 <h3>What's new on Math Insight?</h3>
@@ -24,9 +21,7 @@
 
 <ul class="linklist">
   {% for page in newpages %}
-  <li>{% intlink page %}{{ page.title }}{%endintlink%}<br/>
-    {{ page.description }}<br/>
-    Added {% if page.author_list_full %}by {{page.author_list_full_link|safe }}{%endif%} on {{page.publish_date }}</li>
+  <li>{% extendedlink page added=True %}</li>
   {% endfor %}
   <li><a href="{% url 'mi-newpages'%}">more new pages</a></li>
 </ul>
@@ -36,7 +31,7 @@
 
 <ul class="linklistspace">
   {% for applet in newapplets %}
-  <li>{% appletlink applet 3 %}{{applet.annotated_title}}{%endappletlink%}</li>
+  <li>{% extendedlink applet icon_size="medium" added=True %}</li>
   {% endfor %}
   <li><a href="{% url 'mi-newapplets'%}">more new applets</a></li>
 </ul>
@@ -46,7 +41,7 @@
 
 <ul class="linklistspace">
   {% for video in newvideos %}
-  <li>{% videolink video 3 %}{{video.annotated_title}}{%endvideolink%}</li>
+  <li>{% extendedlink video icon_size="medium" added=True %}</li>
   {% endfor %}
   <li><a href="{% url 'mi-newvideos'%}">more new videos</a></li>
 </ul>
@@ -56,7 +51,7 @@
 
 <ul class="linklistspace">
   {% for image in newimages %}
-  <li>{% imagelink image 3 %}{{image.annotated_title}}{%endimagelink%}</li>
+  <li>{% extendedlink image icon_size="medium" added=True %}</li>
   {% endfor %}
   <li><a href="{% url 'mi-newimages'%}">more new images</a></li>
 </ul>

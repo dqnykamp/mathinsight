@@ -11,8 +11,7 @@
 
 <ul class="linklist">
   {% for page in page_list %}
-  <li>{% intlink page %}{{ page.title }}{%endintlink%}<br/>
-	      {{ page.description }}</li>
+  <li>{% extendedlink page %}</li>
   {% endfor %}
 </ul>
 {% if is_paginated %}

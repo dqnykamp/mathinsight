@@ -13,7 +13,7 @@
 
 <ul class="linklistspace">
   {% for video in video_list %}
-  <li>{% videolink video 3 %}{{video.annotated_title}}{%endvideolink%}</li>
+  <li>{% extendedlink video icon_size="medium" added=True %}</li>
   {% endfor %}
 </ul>
 {% if is_paginated %}

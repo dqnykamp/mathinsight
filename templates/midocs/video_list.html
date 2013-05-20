@@ -10,7 +10,7 @@
 <h3>List of videos</h3>
 <ul class="linklistspace">
   {% for video in video_list %}
-  <li>{% videolink video 1 %}{{video.annotated_title}}{%endvideolink%}</li>
+  <li>{% extendedlink video icon_size="medium" %}</li>
   {% endfor %}
 </ul>
 

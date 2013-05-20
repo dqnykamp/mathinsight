@@ -30,13 +30,7 @@
 
 <ul class="linklistspace">
   {% for result in page.object_list %}
-  {% if result.content_type %}
-  <li>{% if result.content_type == "midocs.page" %}{% intlink result.object %}{{ result.object.title }}{%endintlink%}<br/>
-    {{ result.object.description }}{%endif%}
-    {% if result.content_type == 'midocs.applet'%}{% with applet=result.object %}{%if large_icons%}{% appletlink applet 1 %}{{applet.annotated_title}}{%endappletlink%}{%else%}{% appletlink applet 2 %}{{applet.annotated_title}}{%endappletlink%}{%endif%}{%endwith%}{%endif%}
-    {% if result.content_type == 'midocs.video'%}{% with video=result.object %}{%if large_icons%}{% videolink video 1 %}{{video.annotated_title}}{%endvideolink%}{%else%}{% videolink video 2 %}{{video.annotated_title}}{%endvideolink%}{%endif%}{%endwith%}{%endif%}
-    {% if result.content_type == 'midocs.image'%}{% with image=result.object %}{%if large_icons%}{% imagelink image 1 %}{{image.annotated_title}}{%endimagelink%}{%else%}{% imagelink image 2 %}{{image.annotated_title}}{%endimagelink%}{%endif%}{%endwith%}{%endif%}
-  </li>{%endif%}
+  {% if result.content_type %}<li>{% extendedlink result.object icon_size=icon_size %}</li>{%endif%}
   {% empty %}
   <li>No results found.</li>
   {% endfor %}

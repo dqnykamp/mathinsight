@@ -22,7 +22,7 @@
 
 {% video video %}
 
-{% if video.associated_applet %}<p>This video is an introduction to the applet: {% appletlink video.associated_applet %}{{ video.associated_applet.title }}{%endappletlink%}.</p>{%endif%}
+{% if video.associated_applet %}<p>This video is an introduction to the applet: {% intlink video.associated_applet %}{{ video.associated_applet.title }}{%endintlink%}.</p>{%endif%}
 
 {% process_mi_tags video.detailed_description %}
 
@@ -36,7 +36,7 @@
 {% endfor %}
 </ul>
 {% endif %}
-{% if video.associated_applet %}<p>This video is an introduction to the applet<br/> {% appletlink video.associated_applet %}{{ video.associated_applet.title }}{%endappletlink%}.</p>{%endif%}
+{% if video.associated_applet %}<p>This video is an introduction to the applet<br/> {% intlink video.associated_applet %}{{ video.associated_applet.title }}{%endintlink%}.</p>{%endif%}
 
 <p><a href="{% url 'mi-videolist' %}">List of all videos</a></p>
 

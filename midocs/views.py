@@ -494,6 +494,7 @@ def whatsnewview(request, items):
     includeapplets=False
     includevideos=False
     includeimages=False
+    the_template="midocs/whatsnew_detail.html"
     if items=='summary':
         the_template="midocs/whatsnew_summary.html"
         max_items=5
@@ -502,16 +503,12 @@ def whatsnewview(request, items):
         includevideos=True
         includeimages=True
     elif items=='pages':
-        the_template="midocs/whatsnew_pages.html"
         includepages=True
     elif items=='applets':
-        the_template="midocs/whatsnew_applets.html"
         includeapplets=True
     elif items=='videos':
-        the_template="midocs/whatsnew_videos.html"
         includevideos=True
     elif items=='images':
-        the_template="midocs/whatsnew_images.html"
         includeimages=True
     else:
         the_template="midocs/recent_news_list.html"
@@ -555,6 +552,8 @@ def whatsnewview(request, items):
                                'noanalytics': noanalytics,
                                },
                               context_instance=RequestContext(request))
+
+
 
 # calculate date of applet as the date_modified 
 def date_home(request):
@@ -633,8 +632,13 @@ class MidocsSearchView(SearchView):
         # else:
         #     thumbnail_mode=1
 
+        if include_pages:
+            icon_size='small'
+        else:
+            icon_size='medium'
+
         return {'models_restrict': models_restrict, 
-                'large_icons': not include_pages,
+                'icon_size': icon_size,
                 }
 
 

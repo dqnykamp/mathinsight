@@ -10,7 +10,7 @@
 <h3>List of applets</h3>
 <ul class="linklistspace">
   {% for applet in applet_list %}
-  <li>{% appletlink applet 1 %}{{applet.annotated_title}}{%endappletlink%}</li>
+  <li>{% extendedlink applet icon_size="medium" %}</li>
   {% endfor %}
 </ul>
 

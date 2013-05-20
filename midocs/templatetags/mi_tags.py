@@ -21,130 +21,101 @@ def resolve_if_set(variable, context):
 
 
 class InternalLinkNode(template.Node):
-    def __init__(self, link_code, link_anchor, link_class, equation_pos, equation_code, confused, nodelist):
-        self.link_code_var=template.Variable("%s.code" % link_code)
-        self.link_code_string = link_code
-        if(link_anchor):
-            self.link_anchor_var=template.Variable(link_anchor)
-            self.link_anchor_template_string=template.Template(link_anchor)
-        self.link_anchor_string=link_anchor
-        if(link_class):
-            self.link_class_var=template.Variable(link_class)
-        self.link_class_string=link_class
-        self.equation_pos=equation_pos
-        self.equation_code=equation_code
-        self.confused=confused
+    def __init__(self, target, kwargs, nodelist):
+        self.target=target
+        self.kwargs=kwargs
         self.nodelist=nodelist
-    def render(self, context):
-        the_equation_tag="???"
 
-        # check if blank_style is set to 1
-        blank_style=0
-        try:
-            blank_style = template.Variable("blank_style").resolve(context)
-        except template.VariableDoesNotExist:
-            pass
+    def render(self, context):
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+
+        # check if blank_style is set
+        blank_style=context.get("blank_style")
 
         # get link text
-        if self.confused:
+        if kwargs.get("confused"):
             link_text = "(confused?)"
         else:
-            link_text = self.nodelist.render(context)
-
-        # first test if link_code_var is a variable
-        # if so, link_code will be the resolved varialbe
-        # otherwise, link_code will be link_code_string
-        try:
-            link_code=self.link_code_var.resolve(context)
-        except template.VariableDoesNotExist:
-            link_code=self.link_code_string
-        # next, test if page with the_link_code exists
-        try:
-            thepage=Page.objects.get(code=link_code)
-        # if page does not exist, set link to point to /link_code
-        # mark as broken. 
-        except ObjectDoesNotExist:
-            link_url = "/%s" % link_code
-            link_title=""
-            link_class="broken"
-            
-            # if blank style,
-            # don't give link, just return the link text
-            # and show that it is broken so can search for it
-            if(blank_style):
-                return " %s BRKNLNK" % link_text
-
-        else:
-            # if equation_pos, look up equation_tag based on equation_code
-            if(self.equation_pos):
-                try:
-                    the_equation_tag=EquationTag.objects.get\
-                        (code=self.equation_code, page=thepage).tag
-                    
-                # if equation code does not exist,
-                except ObjectDoesNotExist:
-                    # if blank style,
-                    # show that it is broken so can search for it
-                    if(blank_style):
-                        return "equation (??) %s BRKNEQNREF" \
-                            % link_text
-                    
-            
-            # if blank style, 
-            # don't give link, just return the link text
-            if(blank_style): 
-                if(self.equation_pos):
-                    if(self.equation_pos==2):
-                        return " %s equation (%s) " % \
-                            (link_text,the_equation_tag)
-                    elif(self.equation_pos==1):
-                        return " equation (%s) %s " % \
-                            (the_equation_tag,link_text)
-                
-                # if no equation_pos or equation_pos isn't 1 or 2
-                return " %s " % link_text
-
-            # if page exist, set link_title to page title description
-            link_title="%s: %s" % (thepage.title,thepage.description)
-            
-            # if link_class not specified, use level of page
-            if self.link_class_string:
-                try:
-                    link_class=self.link_class_var.resolve(context)
-                except template.VariableDoesNotExist:
-                    link_class=self.link_class_string
-            else:
-                link_class = ""
-
-            if(not link_class):
-                link_class = thepage.level
-            
-            if self.confused:
-                link_class = "%s confused" % link_class
-
-            link_url = thepage.get_absolute_url()
-            
-        link_anchor=""
-        if(self.equation_pos):
-            link_anchor = "mjx-eqn-%s" % self.equation_code
-        elif self.link_anchor_string:
             try:
-                link_anchor=self.link_anchor_var.resolve(context)
-            except template.VariableDoesNotExist:
-                link_anchor=self.link_anchor_template_string.render(context)
+                link_text = self.nodelist.render(context)
+            except:
+                link_text=None
+        if link_text:
+            kwargs["link_text"]=link_text
 
-        if(link_anchor):
-            link_url = "%s#%s" % (link_url, link_anchor)
+        target = self.target.resolve(context)
+        
+        target_class = None
+        
+        # check if target is an instance of an object
+        if isinstance(target, Page):
+            target_class = Page
+        elif isinstance(target, Applet):
+            target_class = Applet
+        elif isinstance(target, Video):
+            target_class = Video
+        elif isinstance(target, Image):
+            target_class = Image
+        elif isinstance(target, Assessment):
+            target_class = Assessment
+            
+        # if target is not an object, then check for type kwarg
+        # and look for that type of object with code given by target
+        # defaults to Page
+        if not target_class:
+            target_class_string = kwargs.get("class")
+            try:
+                target_class_string=target_class_string.lower()
+            except:
+                pass
+            if target_class_string=="applet":
+                target_class=Applet
+            elif target_class_string=="video":
+                target_class=Video
+            elif target_class_string=="image":
+                target_class=Image
+            elif target_class_string=="assessment":
+                target_class=Assessment
+            else:
+                target_class=Page
+                
+            try:
+                target=target_class.objects.get(code=target)
 
-        if(self.equation_pos):
-            if(self.equation_pos==2):
-                link_text = "%s equation (%s)" % \
-                            (link_text,the_equation_tag)
-            elif(self.equation_pos==1):
-                link_text = "equation (%s) %s" % \
-                    (the_equation_tag,link_text)
-                       
-        return '<a href="%s" class="%s" title="%s">%s</a>' % (link_url, link_class, link_title, link_text)
+            # if object does not exist, set link to point to target
+            # mark as broken
+            except ObjectDoesNotExist:
+                if target_class==Page:
+                    link_url = "/%s" % target
+                else:
+                    link_url = "/%s/%s" % \
+                        (target_class.__name__.lower(), target)
+            
+                # if blank style,
+                # don't give link, just return the link text
+                # and show that it is broken so can search for it
+                if(blank_style):
+                    return " %s BRKNLNK " % link_text
+                else:
+                    return '<a href="%s" class="broken">%s</a>' % \
+                        (link_url, link_text)
+
+        if target_class==Page:
+            equation_code= kwargs.get("equation")
+            if equation_code:
+                kwargs["blank_style"]=blank_style
+                return target.return_equation_link(equation_code,
+                                                   **kwargs)
+            
+        if blank_style:
+            return " %s " % link_text
+
+        if kwargs.get("extended"):
+            return target.return_extended_link(**kwargs)
+
+        return target.return_link(**kwargs)
 
 
 @register.tag
@@ -152,20 +123,53 @@ def intlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    link_code = bits[1]
-    if len(bits) > 2:
-        link_anchor = bits[2]
-    else:
-        link_anchor = ""
-    if len(bits) > 3:
-        link_class = bits[3]
-    else:
-        link_class = ""
+    
+    target = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+  
 
     nodelist = parser.parse(('endintlink',))
     parser.delete_first_token()
 
-    return InternalLinkNode(link_code, link_anchor, link_class, 0, "", 0, nodelist)
+    return InternalLinkNode(target, kwargs, nodelist)
+
+
+
+@register.tag
+def extendedlink(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+    
+    target = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+
+    kwargs["extended"] = parser.compile_filter("1")
+
+    return InternalLinkNode(target, kwargs, "")
+
 
 
 @register.tag
@@ -173,59 +177,25 @@ def confusedlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    link_code = bits[1]
-    if len(bits) > 2:
-        link_anchor = bits[2]
-    else:
-        link_anchor = ""
-    if len(bits) > 3:
-        link_class = bits[3]
-    else:
-        link_class = ""
-
-    return InternalLinkNode(link_code, link_anchor, link_class, 0, "", 1, "")
+    target = parser.compile_filter(bits[1])
 
 
+    kwargs = {}
+    bits = bits[2:]
 
-@register.tag
-def intlinkeq(parser, token):
-    """ intlinkeq template tag
-    Syntax: {% intlinkeq page_code equation_code [equation_pos] %}link text{%endintlinkeq%}
-    
-    equation_pos determines where the reference such as "equation (1)" 
-    will appear in the link text
-    
-    equation_pos=1 means "equation (1)" will appear before link text (default)
-    equation_pos=2 means "equation (1)" will appear after link text
-    equation_pos=-1 means "equation (1)" will not appear
-    
-    """
-    
-    bits = token.split_contents()
-    if len(bits) < 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % bits[0]
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+  
 
-    link_code = bits[1]
-    equation_code = bits[2]
+    kwargs["confused"] = parser.compile_filter("1")
 
-    if len(bits) > 3:
-        try:
-            equation_pos = int(bits[3])
-        except:
-            equation_pos = 1
-    else:
-        equation_pos=1
-        
-    if len(bits) > 4:
-        link_class = bits[4]
-    else:
-        link_class = ""
-
-    nodelist = parser.parse(('endintlinkeq',))
-    parser.delete_first_token()
-    
-    return InternalLinkNode(link_code,"",link_class,equation_pos,equation_code,0,nodelist)
-
+    return InternalLinkNode(target, kwargs, "")
 
 
 
@@ -717,16 +687,13 @@ def description(parser, token):
 
 
 class ImageNode(template.Node):
-    def __init__(self, image, kwargs, kwargs_string):
+    def __init__(self, image, kwargs):
         self.image= image
         self.kwargs=kwargs
-        self.kwargs_string=kwargs_string
     def render(self, context):
 
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
-        kwargs_string = dict([(smart_text(k, 'ascii'), v)
-                              for k, v in self.kwargs.items()])
 
         image = self.image.resolve(context)
 
@@ -822,7 +789,6 @@ def image(parser, token):
     image = parser.compile_filter(bits[1])
 
     kwargs = {}
-    kwargs_string = {}
     
     bits = bits[2:]
 
@@ -834,9 +800,8 @@ def image(parser, token):
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
-                kwargs_string[name] = value
   
-    return ImageNode(image, kwargs, kwargs_string)
+    return ImageNode(image, kwargs)
 
 
 
@@ -1418,103 +1383,6 @@ def boxedapplet(parser, token):
     return AppletNode(applet, 1, kwargs, kwargs_string)
 
 
-class AppletLinkNode(template.Node):
-    def __init__(self, applet, extended_mode, nodelist):
-        self.applet = applet
-        self.extended_mode = extended_mode
-        self.nodelist=nodelist
-    def render(self, context):
-        # check if blank_style is set to 1
-        blank_style=context.get("blank_style",0)
-
-        link_text = self.nodelist.render(context)
-
-        applet = self.applet.resolve(context)
-
-        # if applet is not an Applet, then look for applet with that code
-        if not isinstance(applet,Applet):
-            try:
-                applet=Applet.objects.get(code=applet)
-            # if applet does not exist
-            # return tag to applet code anyway
-            except ObjectDoesNotExist:
-                if(blank_style):
-                    return " %s BRKNAPPLNK" % link_text
-                else:
-                    return '<a href="applet/%s" class="broken">%s</a>' % (applet, link_text)
-            
-        link_title="%s. %s" % (applet.annotated_title(),applet.description)
-        
-        link_url = applet.get_absolute_url()
-
-        extended_mode = resolve_if_set(self.extended_mode, context)
-
-        if not extended_mode:
-            return '<a href="%s" class="applet" title="%s">%s</a>' \
-                % (link_url, link_title, link_text)
-    
-        # in extended mode, include thumbnail, if exists
-        html_text = '<div class="ym-clearfix">'
-        if applet.thumbnail:
-            if extended_mode == '2':
-                thumbnail_width_buffer = applet.thumbnail_small_width_buffer()
-                thumbnail_width=applet.thumbnail_small_width()
-                thumbnail_height=applet.thumbnail_small_height()
-            else:
-                thumbnail_width_buffer = applet.thumbnail_medium_width_buffer()
-                thumbnail_width=applet.thumbnail_medium_width()
-                thumbnail_height=applet.thumbnail_medium_height()
-
-            html_text = '%s<div style="width: %spx; float: left;"><a href="%s"><img src="%s" alt="%s" width ="%s" height="%s" /></a></div>' % \
-                (html_text,thumbnail_width_buffer, link_url,\
-                     applet.thumbnail.url, \
-                     applet.title, thumbnail_width,thumbnail_height)
-            
-        if extended_mode != '2':
-            html_text += '<div style="width: 75%; float: left;">' 
-
-        html_text= '%s<a href="%s" class="applet" title="%s">%s</a>' \
-            % (html_text, link_url, link_title, link_text)
-        
-        html_text= '%s %s' % (html_text,  applet.feature_list())
-        
-        if applet.description:
-            html_text= '%s<br/>%s' % (html_text, applet.description)
-            
-
-        if extended_mode == '3':
-           html_text= '%s<br/>Added ' % html_text
-           if applet.author_list_full():
-               html_text= '%sby %s' % (html_text, applet.author_list_full())
-           html_text = '%s on %s' % (html_text, applet.publish_date)
-
-        if extended_mode != '2':
-            html_text = '%s</div>' % html_text
-
-        html_text = '%s</div>' % html_text
-
-        return html_text
-    
-
-@register.tag
-def appletlink(parser, token):
-    bits = token.split_contents()
-    if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    applet = parser.compile_filter(bits[1])
-    if len(bits) > 2:
-        extended_mode = parser.compile_filter(bits[2])
-    else:
-        extended_mode=None
-
-    nodelist = parser.parse(('endappletlink',))
-    parser.delete_first_token()
-
-    return AppletLinkNode(applet, extended_mode, nodelist)
-
-
-
-
 def youtube_link(context, video, width, height):
     
     try:
@@ -1529,17 +1397,14 @@ def youtube_link(context, video, width, height):
 
 
 class VideoNode(template.Node):
-    def __init__(self, video, boxed, kwargs, kwargs_string):
+    def __init__(self, video, boxed, kwargs):
         self.video= video
         self.boxed=boxed
         self.kwargs=kwargs
-        self.kwargs_string=kwargs_string
     def render(self, context):
 
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
-        kwargs_string = dict([(smart_text(k, 'ascii'), v)
-                              for k, v in self.kwargs.items()])
 
         video = self.video.resolve(context)
 
@@ -1669,7 +1534,6 @@ def video_sub(parser, token):
     video = parser.compile_filter(bits[1])
 
     kwargs = {}
-    kwargs_string = {}
     
     bits = bits[2:]
 
@@ -1681,209 +1545,22 @@ def video_sub(parser, token):
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
-                kwargs_string[name] = value
   
-    return (video, kwargs, kwargs_string)
+    return (video, kwargs)
 
 
 @register.tag
 def video(parser, token):
 # video tag
-    (video, kwargs, kwargs_string)=video_sub(parser, token)
-    return VideoNode(video, 0, kwargs, kwargs_string)
+    (video, kwargs)=video_sub(parser, token)
+    return VideoNode(video, 0, kwargs)
 
 
 @register.tag
 def boxedvideo(parser, token):
 # boxedvideo tag
-    (video, kwargs, kwargs_string)=video_sub(parser, token)
-    return VideoNode(video, 1, kwargs, kwargs_string)
-
-
-class VideoLinkNode(template.Node):
-    def __init__(self, video, extended_mode, nodelist):
-        self.video = video
-        self.extended_mode = extended_mode
-        self.nodelist=nodelist
-    def render(self, context):
-        # check if blank_style is se
-        blank_style=context.get("blank_style")
-
-        link_text = self.nodelist.render(context)
-
-        video = self.video.resolve(context)
-        
-        # if video is not an Video, then look for video with that code
-        if not isinstance(video,Video):
-            try:
-                video=Video.objects.get(code=video)
-            # if video does not exist
-            # return tag to video anyway
-            except ObjectDoesNotExist:
-                if(blank_style):
-                    return " %s BRKNIMGLNK" % link_text
-                else:
-                    return '<a href="video/%s" class="broken">%s</a>' % (video, link_text)
-            
-        link_title="%s. %s" % (video.annotated_title(),video.description)
-        
-        link_url = video.get_absolute_url()
-
-        extended_mode = resolve_if_set(self.extended_mode, context)
-
-        if not extended_mode:
-            return '<a href="%s" class="video" title="%s">%s</a>' \
-                % (link_url, link_title, link_text)
-    
-        # in extended mode, include thumbnail, if exists
-        html_text = '<div class="ym-clearfix">'
-        if video.thumbnail:
-            if extended_mode == '2':
-                thumbnail_width_buffer = video.thumbnail_small_width_buffer()
-                thumbnail_width=video.thumbnail_small_width()
-                thumbnail_height=video.thumbnail_small_height()
-            else:
-                thumbnail_width_buffer = video.thumbnail_medium_width_buffer()
-                thumbnail_width=video.thumbnail_medium_width()
-                thumbnail_height=video.thumbnail_medium_height()
-
-            html_text = '%s<div style="width: %spx; float: left;"><a href="%s"><img src="%s" alt="%s" width ="%s" height="%s" /></a></div>' % \
-                (html_text,thumbnail_width_buffer, link_url,\
-                     video.thumbnail.url, \
-                     video.title, thumbnail_width,thumbnail_height)
-            
-        if extended_mode != '2':
-            html_text += '<div style="width: 75%; float: left;">' 
-
-        html_text= '%s<a href="%s" class="video" title="%s">%s</a>' \
-            % (html_text, link_url, link_title, link_text)
-        
-        if video.description:
-            html_text= '%s<br/>%s' % (html_text, video.description)
-            
-
-        if extended_mode == '3':
-           html_text= '%s<br/>Added ' % html_text
-           if video.author_list_full():
-               html_text= '%sby %s' % (html_text, video.author_list_full())
-           html_text = '%s on %s' % (html_text, video.publish_date)
-
-        if extended_mode != '2':
-            html_text = '%s</div>' % html_text
-
-        html_text = '%s</div>' % html_text
-
-        return html_text
-    
-
-@register.tag
-def videolink(parser, token):
-    bits = token.split_contents()
-    if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    video = parser.compile_filter(bits[1])
-    if len(bits) > 2:
-        extended_mode = parser.compile_filter(bits[2])
-    else:
-        extended_mode=None
-
-    nodelist = parser.parse(('endvideolink',))
-    parser.delete_first_token()
-
-    return VideoLinkNode(video, extended_mode, nodelist)
-
-
-
-
-class ImageLinkNode(template.Node):
-    def __init__(self, image, extended_mode, nodelist):
-        self.image = image
-        self.extended_mode = extended_mode
-        self.nodelist=nodelist
-    def render(self, context):
-        # check if blank_style is set
-        blank_style=context.get("blank_style")
-
-        link_text = self.nodelist.render(context)
-
-        image = self.image.resolve(context)
-        
-        # if image is not an Image, then look for image with that code
-        if not isinstance(image,Image):
-            try:
-                image=Image.objects.get(code=image)
-            # if image does not exist
-            # return tag to image anyway
-            except ObjectDoesNotExist:
-                if(blank_style):
-                    return " %s BRKNIMGLNK" % link_text
-                else:
-                    return '<a href="image/%s" class="broken">%s</a>' % (image, link_text)
-
-        link_title="%s. %s" % (image.annotated_title(),image.description)
-        
-        link_url = image.get_absolute_url()
-
-        extended_mode = resolve_if_set(self.extended_mode, context)
-
-        if not extended_mode:
-            return '<a href="%s" class="image" title="%s">%s</a>' \
-                % (link_url, link_title, link_text)
-    
-        # in extended mode, include thumbnail, if exists
-        html_text = '<div class="ym-clearfix">'
-        if image.thumbnail:
-            if extended_mode == '2':
-                thumbnail_width_buffer = image.thumbnail_small_width_buffer()
-                thumbnail_width=image.thumbnail_small_width()
-                thumbnail_height=image.thumbnail_small_height()
-            else:
-                thumbnail_width_buffer = image.thumbnail_medium_width_buffer()
-                thumbnail_width=image.thumbnail_medium_width()
-                thumbnail_height=image.thumbnail_medium_height()
-
-            html_text = '%s<div class="ym-clearfix"><div style="width: %spx; float: left;"><a href="%s"><img src="%s" alt="%s" width ="%s" height="%s" /></a></div>' % \
-                (html_text,thumbnail_width_buffer, link_url, image.thumbnail.url, \
-                     image.title, thumbnail_width,thumbnail_height)
-            
-        if extended_mode != '2':
-            html_text += '<div style="width: 75%; float: left;">' 
-
-        html_text= '%s<a href="%s" class="image" title="%s">%s</a>' \
-            % (html_text, link_url, link_title, link_text)
-        
-        if image.description:
-            html_text= '%s<br/>%s' % (html_text, image.description)
-            
-        if extended_mode == '3':
-           html_text= '%s<br/>Added ' % html_text
-           if image.author_list_full():
-               html_text= '%sby %s' % (html_text, image.author_list_full())
-           html_text = '%s on %s' % (html_text, image.publish_date)
-
-        if extended_mode != '2':
-            html_text = '%s</div>' % html_text
-
-        html_text = '%s</div>' % html_text
-
-        return html_text
-    
-
-@register.tag
-def imagelink(parser, token):
-    bits = token.split_contents()
-    if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
-    image = parser.compile_filter(bits[1])
-    if len(bits) > 2:
-        extended_mode = parser.compile_filter(bits[2])
-    else:
-        extended_mode=None
-
-    nodelist = parser.parse(('endimagelink',))
-    parser.delete_first_token()
-
-    return ImageLinkNode(image, extended_mode, nodelist)
+    (video, kwargs)=video_sub(parser, token)
+    return VideoNode(video, 1, kwargs)
 
 
 class AssessmentLinkNode(template.Node):

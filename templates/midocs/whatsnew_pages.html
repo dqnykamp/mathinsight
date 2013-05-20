@@ -13,9 +13,7 @@
 
 <ul class="linklist">
   {% for page in page_list %}
-  <li>{% intlink page %}{{ page.title }}{%endintlink%}<br/>
-    {{ page.description }}<br/>
-    Added {% if page.author_list_full %}by {{page.author_list_full_link|safe }}{%endif%} on {{page.publish_date }}</li>
+  <li>{% extendedlink page added=True %}</li>
   {% endfor %}
 </ul>
 {% if is_paginated %}
