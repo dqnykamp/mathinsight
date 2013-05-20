@@ -1138,7 +1138,7 @@ class AppletNode(template.Node):
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
         kwargs_string = dict([(smart_text(k, 'ascii'), v)
-                              for k, v in self.kwargs.items()])
+                              for k, v in self.kwargs_string.items()])
 
         applet = self.applet.resolve(context)
 
