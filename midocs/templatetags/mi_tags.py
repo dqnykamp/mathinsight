@@ -908,7 +908,7 @@ def return_print_image_string(applet, panel=0):
     return the_string
 
 def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
-                                      objectvalue):
+                                      objectvalue, objectvalue_string):
     
     object_type = appletobject.object_type.object_type
     
@@ -938,6 +938,15 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
                 (applet_identifier, appletobject.name,
                  value)
+        elif object_type=='Function':
+            from sympy import Symbol
+            global_dict=context["sympy_global_dict"]
+            the_fun = global_dict[str(objectvalue_string)]
+            javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
+                (applet_identifier, appletobject.name,
+                 str(the_fun(Symbol('x'))))
+                
+            
         return javascript
     except:
         raise #return ""
@@ -1241,11 +1250,13 @@ class AppletNode(template.Node):
         init_javascript = ""
         for appletobject in appletobjects:
             objectvalue = kwargs.get(appletobject.name)
+            objectvalue_string = kwargs_string.get(appletobject.name)
             if objectvalue is not None:
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     init_javascript += Geogebra_change_object_javascript \
-                        (context, appletobject, applet_identifier, objectvalue)
+                        (context, appletobject, applet_identifier, \
+                             objectvalue, objectvalue_string)
                     
 
         # check if any applet objects are specified 
