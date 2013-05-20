@@ -4,13 +4,13 @@
 {% title "Scale-free networks" %}
 {% description "Scale-free networks are those that have a power law degree distribution." %}
 
-<p>A {% intlink evidence_additional_structure_real_networks hubs %}common feature of real world networks{% endintlink%} is the presence of {% intlink network_hub_definition%}hubs{%endintlink%}, or a few nodes that are highly connected to other nodes in the network.  The presence of hubs will give the {% intlink degree_distribution %}degree distribution{%endintlink%} a long tail, indicating the presence of nodes with a much higher {% intlink node_degree_definition%}degree{%endintlink%} than most other nodes.</p>
+<p>A {% intlink "evidence_additional_structure_real_networks" anchor="hubs" %}common feature of real world networks{% endintlink%} is the presence of {% intlink "network_hub_definition" %}hubs{%endintlink%}, or a few nodes that are highly connected to other nodes in the network.  The presence of hubs will give the {% intlink "degree_distribution" %}degree distribution{%endintlink%} a long tail, indicating the presence of nodes with a much higher {% intlink "node_degree_definition" %}degree{%endintlink%} than most other nodes.</p>
 
 {% image "small_network_hub" %}
 
 <p style="text-align: center;">The red node is an example of a hub.</p>
 
-<p><em>Scale-free networks</em> are a type of network characterized by the presence of large hubs.  A scale-free network is one with a power-law degree distribution.  For an {% intlink undirected_graph_definition%}undirected network{%endintlink%}, we can just write the degree distribution as
+<p><em>Scale-free networks</em> are a type of network characterized by the presence of large hubs.  A scale-free network is one with a power-law degree distribution.  For an {% intlink "undirected_graph_definition" %}undirected network{%endintlink%}, we can just write the degree distribution as
 \begin{gather*}
  P_{\text{deg}}(k) \propto k^{-\gamma},
 \end{gather*}
@@ -32,7 +32,7 @@ where $\gamma$ is some exponent.  This form of $P_{\text{deg}}(k)$ decays slowly
 
 <p>To create the above plots, we didn't actually generate any networks (click image to see the Python program used to generate the figures).  One way to generate scale-free networks is using a preferential attachment algorithm.{% citation "albert_barabasi_rmp_2002" %}  If you add new nodes to a network and preferentially attach them to the nodes with high degrees, the &ldquo;rich get richer&rdquo; and you end up with hubs of very high degree.</p>
 
-<p>Another way to generate scale-free networks is to use the models that {% intlink generating_networks_desired_degree_distribution %}generate networks with given degree distributions{%endintlink%}.</p>
+<p>Another way to generate scale-free networks is to use the models that {% intlink "generating_networks_desired_degree_distribution" %}generate networks with given degree distributions{%endintlink%}.</p>
 
 
 

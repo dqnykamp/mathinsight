@@ -7,7 +7,7 @@
 <h4>Exponentially increasing dimension</h4>
 
 
-<p>If $X$ is a {% intlink random_variable_definition%}random variable{%endintlink%} described by the {% intlink probability_distribution_idea discrete%}discrete probability distribution{%endintlink%} 
+<p>If $X$ is a {% intlink "random_variable_definition" %}random variable{%endintlink%} described by the {% intlink "probability_distribution_idea" anchor="discrete" %}discrete probability distribution{%endintlink%} 
 \begin{gather*}
   P_X(x) = \Pr(X =x),
 \end{gather*}
@@ -59,9 +59,9 @@ Specifying this probability distribution requires a table of $6^n$ different num
 {% navigation_tag "random_networks" "Networks" %}
 <h4>The dimension of random networks</h4>
 
-<p>For a {% intlink random_network %}random network{%endintlink%}, the random variables are the entries of the {% intlink network_introduction adjacency_matrix %}adjacency matrix{%endintlink%}.  These entries are 0 or 1, depending on whether or not the corresponding edge exists, so the probability distribution is similar to the previous one mentioned above. The dimension of the parameter space describing the probability distribution will be $2^n-1$ if we have $n$ different random variables.</p>
+<p>For a {% intlink "random_network" %}random network{%endintlink%}, the random variables are the entries of the {% intlink "network_introduction" anchor="adjacency_matrix" %}adjacency matrix{%endintlink%}.  These entries are 0 or 1, depending on whether or not the corresponding edge exists, so the probability distribution is similar to the previous one mentioned above. The dimension of the parameter space describing the probability distribution will be $2^n-1$ if we have $n$ different random variables.</p>
 
-<p>If we have a network of $N$ nodes, then the adjacency matrix is an $N \times N$ matrix.  This matrix has $N^2$ entries, but if we exclude self connections and make the network {% intlink undirected_graph_definition%}undirected{%endintlink%}, then there are only $N(N-1)/2$ unique entries in the matrix.  The probability distribution describing the resulting random network will be in terms of $n=N(N-1)/2$ different Bernoulli random variables. The dimension of the parameter space is $2^{N(N-1)/2}-1$.</p>
+<p>If we have a network of $N$ nodes, then the adjacency matrix is an $N \times N$ matrix.  This matrix has $N^2$ entries, but if we exclude self connections and make the network {% intlink "undirected_graph_definition" %}undirected{%endintlink%}, then there are only $N(N-1)/2$ unique entries in the matrix.  The probability distribution describing the resulting random network will be in terms of $n=N(N-1)/2$ different Bernoulli random variables. The dimension of the parameter space is $2^{N(N-1)/2}-1$.</p>
 
 <p>Therefore, to determine a probability distribution defining an $N \times N$ unweighted and undirected random network, we just need to pick $2^{N(N-1)/2}-1$ different positive numbers (making sure they are all really small so that there sum is no larger than one).  For each possible combination of these $2^{N(N-1)/2}-1$ different numbers, we have a different probability distribution, hence a different random network model.</p>
 
@@ -109,9 +109,9 @@ For the probability distribution of the $n$ variables in $\vc{X}$, we just need 
 
 <p>Still $499,500$ is still a bit large.  We can reduce this further by assuming statistical homogeneity, which in this case is assuming the probability $p_{ij}$ of an edge does not depend on the node labels $i$ and $j$.  Now we just need to pick a single parameter $p$, the probability that any edge exists.  We've reduced the parameter space down to one dimension!</p>
 
-<p>What we've come up with is the Erdös-Rényi random network model{% citation "erdos_renyi_pm_1959" %}, the {% intlink simplest_type_of_network %}simplest type of random network model{%endintlink%}.   This model is so natural, that people often refer to these networks as simply &ldquo;random networks,&rdquo; and may view deviations from the Erdös-Rényi model as &ldquo;non-randomness.&ldquo; </p>
+<p>What we've come up with is the Erdös-Rényi random network model{% citation "erdos_renyi_pm_1959" %}, the {% intlink "simplest_type_of_network" %}simplest type of random network model{%endintlink%}.   This model is so natural, that people often refer to these networks as simply &ldquo;random networks,&rdquo; and may view deviations from the Erdös-Rényi model as &ldquo;non-randomness.&ldquo; </p>
 
-<p>This model stays one-dimensional even if we extend it to {% intlink directed_graph_definition%}directed{%endintlink%} graphs and is easy to generate.  We can also extend the model to populations of different types of nodes, allowing the probability of a connection to depend on the populations of the nodes involved.  As long as we keep the independence assumption, the model is easy to understand, and it is a simple matter to generate the networks.</p>
+<p>This model stays one-dimensional even if we extend it to {% intlink "directed_graph_definition" %}directed{%endintlink%} graphs and is easy to generate.  We can also extend the model to populations of different types of nodes, allowing the probability of a connection to depend on the populations of the nodes involved.  As long as we keep the independence assumption, the model is easy to understand, and it is a simple matter to generate the networks.</p>
 
 
 {% endblock%}

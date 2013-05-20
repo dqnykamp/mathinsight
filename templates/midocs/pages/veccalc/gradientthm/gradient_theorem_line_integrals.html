@@ -25,7 +25,7 @@ along a curve $\dlc$ to the difference in the values of another function $f$ eva
 \dlint = f(Q)-f(P),\label{onlyendpoints}
 \end{gather}
 where $\dlc$ starts at the point $P$ and ends at the point $Q$.
-If we let $\dlvf: \R^n  \to \R^n$ {% confusedlink function_notation %} be a $n$-dimensional vector field,
+If we let $\dlvf: \R^n  \to \R^n$ {% confusedlink "function_notation" %} be a $n$-dimensional vector field,
 then it must be that $f: \R^n \to \R$ is a scalar-valued function, as the
 line integral evaluates to a single number.</p>
 
@@ -37,9 +37,9 @@ depends only on the endpoints of $\dlc$ and doesn't depend on the particular
 path the $\dlc$ takes. 
 In other words, we can hope for a similar fundamental theorem for
 line integrals only if the vector field is 
-{% intlink conservative_vector_field_introduction %}conservative{%endintlink%}
+{% intlink "conservative_vector_field_introduction" %}conservative{%endintlink%}
 (also called path-independent).  
-If the vector field $\dlvf$ is {% intlink conservative_vector_field_introduction pathdependent%}path-dependent{%endintlink%},
+If the vector field $\dlvf$ is {% intlink "conservative_vector_field_introduction" anchor="pathdependent" %}path-dependent{%endintlink%},
 then it will be impossible to reduce its line integral to values of a
 function at the path endpoints.</p>
 
@@ -70,18 +70,18 @@ to be equal to $G'(t)$.
 
 <p>Since $G(t) = f(\dllp(t))$ is a composition of functions,
 we can compute its derivative using the
-{% intlink chain_rule_multivariable_introduction %}chain rule{%endintlink%}.
-For $\dllp: \R  \to \R^n$ and $f: \R^n \to \R$, the {% intlink chain_rule_multivariable_special_cases inneronevariable %}chain rule can be
+{% intlink "chain_rule_multivariable_introduction" %}chain rule{%endintlink%}.
+For $\dllp: \R  \to \R^n$ and $f: \R^n \to \R$, the {% intlink "chain_rule_multivariable_special_cases" anchor="inneronevariable" %}chain rule can be
 written{%endintlink%} as
 \begin{gather*}
   G'(t) = Df(\dllp(t)) D\dllp(t) = \nabla f(\dllp(t)) \cdot \dllp'(t).
 \end{gather*}
 The 
-{% intlink gradient_vector %}gradient vector{%endintlink%}
+{% intlink "gradient_vector" %}gradient vector{%endintlink%}
 $\nabla f$
 is just the vector form of the $1 \times n$ 
-{% intlink derivative_matrix%}derivative matrix{%endintlink%} $Df$, 
-and the {%intlink parametrized_curve_derivative%}derivative of
+{% intlink "derivative_matrix" %}derivative matrix{%endintlink%} $Df$, 
+and the {% intlink "parametrized_curve_derivative" %}derivative of
 a parametrized curve{%endintlink%} is the tangent vector $\dllp'(t)$.</p>
 
 <p>We're in luck!  The expression for $G'(t)$ is in exactly the form
@@ -122,20 +122,20 @@ and the trick is to know if a potential function exists and, if so,
 how find it.</p>
 
 <p>It is clear from the above function that a vector field has a potential
-function only if it is {% intlink conservative_vector_field_introduction pathdependent%}conservative (or path-independent){%endintlink%}. 
+function only if it is {% intlink "conservative_vector_field_introduction" anchor="pathdependent" %}conservative (or path-independent){%endintlink%}. 
 It turns out the converse is true as well, so that a potential function $f$
 exists satisfying $\nabla f = \dlvf$ if and only if $\dlvf$ is conservative.
 So, the two steps for using the gradient theorem to evaluate a line integral $\dlint$ are
 </p>
 <ol>
-  <li>{%intlink conservative_vector_field_determine%}determine if $\dlvf$ is conservative{%endintlink%}, and</li>
-  <li>{%intlink conservative_vector_field_find_potential%}find the potential function $f${%endintlink%} if $\dlvf$ is conservative.</li>
+  <li>{% intlink "conservative_vector_field_determine" %}determine if $\dlvf$ is conservative{%endintlink%}, and</li>
+  <li>{% intlink "conservative_vector_field_find_potential" %}find the potential function $f${%endintlink%} if $\dlvf$ is conservative.</li>
 </ol>
 <p>With the potential function $f$ in hand, evaluating $\dlint$ is as 
 simple as calculating the values of $f$ at the endpoints of $\dlc$ and
 subtracting, according to the gradient theorem of 
 equation \eqref{gradienttheorem}.
-wThis final step is illustrated by {% intlink gradient_theorem_simple_examples %}a 
+wThis final step is illustrated by {% intlink "gradient_theorem_simple_examples" %}a 
 simple example{%endintlink%}.
 </p>
 
@@ -148,7 +148,7 @@ of the derivative $G'(t)$ along an interval $[a,b]$
 to values of the function $G(t)$ at the endpoints $t=a$ and $t=b$.
 This feature of transforming the integral of a function's derivative
 over some set into function values at the boundary unites all four
-{% intlink fundamental_theorems_vector_calculus_summary %}fundamental
+{% intlink "fundamental_theorems_vector_calculus_summary" %}fundamental
 theorems of vector calculus{%endintlink%}.
 This parallel is very obvious for the gradient theorem,
 as it equates the integral of a gradient $\nabla f$
@@ -159,13 +159,13 @@ over a curve to the function values at the endpoints of the curve.
 The difference is that the boundaries of the sets are more complicated,
 so the &ldquo;function values at the boundary&rdquo; are actually
 integrals of the function along the boundary.  
-{% intlink greens_theorem_idea %}Green's theorem{%endintlink%} and
-{% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%}
+{% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%} and
+{% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%}
 convert integrals of one type of derivative (the curl) of a vector field
 to the values of the vector field along the boundary.  
 Since the boundary is a curve, the evaluation of the  vector field function along
 the boundary is a line integral. 
-The {% intlink divergence_theorem_idea %}divergence theorem{%endintlink%}
+The {% intlink "divergence_theorem_idea" %}divergence theorem{%endintlink%}
 converts integrals of another type of derivative (the divergence)
 of a vector field to values of the vector field along the boundary.
 Since the boundary is a surface, 

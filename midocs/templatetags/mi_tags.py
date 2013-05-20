@@ -1562,67 +1562,6 @@ def boxedvideo(parser, token):
     (video, kwargs)=video_sub(parser, token)
     return VideoNode(video, 1, kwargs)
 
-
-class AssessmentLinkNode(template.Node):
-    def __init__(self, the_assessment, nodelist):
-        self.the_assessment = the_assessment
-        self.nodelist=nodelist
-    def render(self, context):
-        # check if blank_style is set
-        blank_style=context.get("blank_style")
-
-        link_text = self.nodelist.render(context)
-        the_assessment = self.the_assessment.resolve(context)
-
-        # if assessment is not already an instance of an assessment
-        # find assessment with that code
-        if not isinstance(the_assessment, Assessment):
-            try:
-                the_assessment = Assessment.objects.get(code=the_assessment)
-            except:
-                if(blank_style):
-                    return " %s BRKNASMTLNK" % link_text
-                else:
-                    return '<a href="assessment/%s" class="broken">%s</a>' % (the_assessment, link_text)
-                
-        link_title="%s. %s" % (the_assessment.name,the_assessment.description)
-        
-        link_url = the_assessment.get_absolute_url()
-
-        return '<a href="%s" class="assessment" title="%s">%s</a>' \
-            % (link_url, link_title, link_text)
-
-@register.tag
-def assessmentlink(parser, token):
-    bits = token.split_contents()
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r tag requires one argument" % bits[0]
-    the_assessment=parser.compile_filter(bits[1])
-    nodelist = parser.parse(('endassessmentlink',))
-    parser.delete_first_token()
-
-    return AssessmentLinkNode(the_assessment, nodelist)
-
-
-                                                                      
-@register.inclusion_tag('midocs/thread_section_contents.html')
-def thread_section_contents(thread_section, recursion, max_recursions):
-    recursion += 1
-    child_sections = thread_section.child_sections.all() 
-    thread_pages = thread_section.thread_pages.all()
-    if recursion < max_recursions and child_sections:
-        include_children=True
-    else:
-        include_children=False
-    return {'thread_section': thread_section,
-            'child_sections': child_sections,
-            'thread_pages': thread_pages,
-            'include_children': include_children,
-            'recursion': recursion,
-            'max_recursions': max_recursions,
-            }
-
-
 class TemplateTextNode(template.Node):
     def __init__(self, page_code):
         self.page_code_var=template.Variable("%s.code" % page_code)

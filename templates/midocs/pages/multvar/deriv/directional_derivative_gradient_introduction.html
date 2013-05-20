@@ -16,7 +16,7 @@ in front of you will depend on the direction you are facing.  It might
 slope steeply up in one direction, be relatively flat in another
 direction, and slope steeply down in yet another direction.</p>
 
-<p>The {%intlink partial_derivative_introduction %}partial derivatives{%endintlink%}
+<p>The {% intlink "partial_derivative_introduction" %}partial derivatives{%endintlink%}
 of $f$ will give the slope $\pdiff{f}{x}$ in the positive $x$ direction
 and the slope $\pdiff{f}{y}$ in the positive $y$ direction.
 We can generalize the partial derivatives to calculate the slope in 
@@ -27,16 +27,16 @@ any direction.  The result is called the <i>directional derivative</i>.
 is to specify the direction.  
 One way to specify a direction is with a vector $\vc{u}=(u_1,u_2)$ that
 points in the direction in which we want to compute the slope. 
-For simplicity, we will insist that $\vc{u}$ is a {% intlink unit_vector_definition %}unit vector{%endintlink%}.
+For simplicity, we will insist that $\vc{u}$ is a {% intlink "unit_vector_definition" %}unit vector{%endintlink%}.
 We write the directional derivative of $f$ in the direction $\vc{u}$ 
 at the point $\vc{a}$ as $D_{\vc{u}}f(\vc{a})$. 
 We could define it with a limit definition just as an ordinary derivative
-or a {%intlink partial_derivative_limit_definition%}partial derivative{%endintlink%}
+or a {% intlink "partial_derivative_limit_definition" %}partial derivative{%endintlink%}
 <a id="directional_derivative_definition"></a>
 \begin{align*}
   D_{\vc{u}}f(\vc{a}) = \lim_{h \to 0} \frac{f(\vc{a}+h\vc{u}) - f(\vc{a})}{h}.
 \end{align*}
-However, it turns out that for {% intlink differentiability_multivariable_introduction%}differentiable{%endintlink %} $f(x,y)$, we won't need to worry about that definition.</p>
+However, it turns out that for {% intlink "differentiability_multivariable_introduction" %}differentiable{%endintlink %} $f(x,y)$, we won't need to worry about that definition.</p>
 
 <p>
 The concept of the directional derivative is simple;
@@ -57,7 +57,7 @@ $\displaystyle D_{\vc{u}}f(\vc{a}) = \pdiff{f}{y}(\vc{a})$.
 </p>
 
 <p>In the following applet, the height $f(x,y)$ of a mountain range
-is shown as a {% intlink level_sets level_curves%}level curve plot{%endintlink%}.
+is shown as a {% intlink "level_sets" anchor="level_curves" %}level curve plot{%endintlink%}.
 You can recognize two steep mountain peaks by the closely spaced
 circular level curves.
 In this applet, you can move the point $\vc{a}$ around, change the
@@ -113,7 +113,7 @@ top of a mountain peak or at the lowest point in a valley, this might
 not be true.)  Let's call this direction of maximal slope $\vc{m}$.
 Both the direction $\vc{m}$ and the maximal directional derivative
 $D_{\vc{m}}f(\vc{a})$ are captured by something called the
-<i>{%intlink gradient_vector%}gradient{%endintlink%}</i> of $f$ and denoted by $\nabla f(\vc{a})$.  The
+<i>{% intlink "gradient_vector" %}gradient{%endintlink%}</i> of $f$ and denoted by $\nabla f(\vc{a})$.  The
 gradient is a vector that points in the direction of $\vc{m}$ and
 whose magnitude is $D_{\vc{m}}f(\vc{a})$.  In math, we can write this
 as $\displaystyle \frac{\nabla f(\vc{a})}{\| \nabla f(\vc{a})\|} =
@@ -184,18 +184,18 @@ always points in the direction where the mountain rises most steeply.</p>
     The above formula for the directional derivative is nice,
     but it's not very useful if you don't know how to calculate $\nabla f$.
     Fortunately, the end result is fairly simple, as 
-    the {%intlink gradient_vector %}gradient{%endintlink%} is just a reformulation of the 
-    {%intlink derivative_matrix%}matrix of partial derivatives{%endintlink%}.
+    the {% intlink "gradient_vector" %}gradient{%endintlink%} is just a reformulation of the 
+    {% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%}.
     You can check out a 
-    {%intlink directional_derivative_gradient_derivation %}simple
+    {% intlink "directional_derivative_gradient_derivation" %}simple
     derivation of the gradient{%endintlink%} to see why this is true.</p>
 
 </div>
 
 <p>Once you know how to 
-{%intlink directional_derivative_gradient_derivation %}calculate 
+{% intlink "directional_derivative_gradient_derivation" %}calculate 
 the gradient{%endintlink%}, 
-you can follow {% intlink directional_derivative_gradient_examples %}these 
+you can follow {% intlink "directional_derivative_gradient_examples" %}these 
 examples{%endintlink%}.
 
 

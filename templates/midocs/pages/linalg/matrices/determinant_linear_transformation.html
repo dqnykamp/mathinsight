@@ -4,14 +4,14 @@
 {% title "Determinants and linear transformations" "Overview" %}
 {% description "A description of how a determinant describes the geometric properties of a linear transformation." %}
 
-<p>A {% intlink linear_transformation_definition_euclidean%}linear transformation{%endintlink%} $\vc{T}: \R^n \to \R^m$ {% confusedlink function_notation %} is a mapping from $n$-dimensional
+<p>A {% intlink "linear_transformation_definition_euclidean" %}linear transformation{%endintlink%} $\vc{T}: \R^n \to \R^m$ {% confusedlink "function_notation" %} is a mapping from $n$-dimensional
 space to $m$-dimensional space.  
-Such a linear transformation can be {% intlink matrices_linear_transformations %}associated with an $m \times n$ matrix{%endintlink%}.</p>
+Such a linear transformation can be {% intlink "matrices_linear_transformations" %}associated with an $m \times n$ matrix{%endintlink%}.</p>
 
 
 <p>If we restrict ourselves to mappings within the same space, such as $\vc{T}: \R^n \to \R^n$, then $\vc{T}$ is associated with a square $n \times n$ matrix.
-One can calculate the {%intlink matrices_determinants_multivariable_calculus %}determinant{%endintlink%} of such a square matrix, 
-and such determinants are {%intlink relationship_determinants_area_volume%}related to area or volume{%endintlink%}.  
+One can calculate the {% intlink "matrices_determinants_multivariable_calculus" %}determinant{%endintlink%} of such a square matrix, 
+and such determinants are {% intlink "relationship_determinants_area_volume" %}related to area or volume{%endintlink%}.  
 It turns out that the determinant of a matrix tells us important
 geometrical properties of its associated linear transformation.
 We'll outline this relationship for <a href="#lintrans1D">one-dimensional</a>, 
@@ -21,7 +21,7 @@ linear transformations.</p>
 {% navigation_tag "lintrans1D" "1D" %}
 <h4>One-dimensional linear transformations</h4>
 
-<p>A one-dimensional linear transformation is a function $T(x) = ax$ for some {%intlink scalar_definition%}scalar{%endintlink%} $a$.  
+<p>A one-dimensional linear transformation is a function $T(x) = ax$ for some {% intlink "scalar_definition" %}scalar{%endintlink%} $a$.  
 To view the one-dimensional case in the same way we view higher dimensional linear transformations, we can view $a$ as a $1 \times 1$ matrix. 
 The determinant of the $1 \times 1$ matrix is just the number $a$ itself. 
 Although this case is very simple, we can gather some intuition about linear maps by first looking at this case.</p>
@@ -86,7 +86,7 @@ in the determinant of the matrix $A$ associated with $\vc{T}$.</p>
 $$\vc{T}(x,y) = \left[\begin{array}{cc}-2 &amp;0\\ 0 &amp;-2\end{array}\right]\left[\begin{array}{c}x\\y\end{array}\right].$$
 As with all linear transformations, it maps the origin $\vc{x}=(0,0)$ back 
 to the origin $(0,0)$.  We can get a feel for the behavior of $\vc{T}$
-by looking at its action on the standard {% intlink unit_vector_definition %}unit vectors{%endintlink%}, $\vc{i}=(1,0)$ and $\vc{j}=(0,1)$.  
+by looking at its action on the standard {% intlink "unit_vector_definition" %}unit vectors{%endintlink%}, $\vc{i}=(1,0)$ and $\vc{j}=(0,1)$.  
 $\vc{T}$ maps $(1,0)$ to $(-2,0)$, and it maps $(0,1)$ to $(0,-2)$.
 It stretched both vectors by a factor of $2$ and rotated them all the way around by $\pi$ radians.
 </p>
@@ -122,7 +122,7 @@ not length.  In fact, the absolute value of the determinant of a $2 \times 2$ ma
   \right]
 \end{align*}
 gives the 
-{%intlink relationship_determinants_area_volume%}area of the parallelogram{%endintlink%} spanned by the vectors $(a_1,a_2)$ and $(b_1,b_2)$.
+{% intlink "relationship_determinants_area_volume" %}area of the parallelogram{%endintlink%} spanned by the vectors $(a_1,a_2)$ and $(b_1,b_2)$.
 The mapping $\vc{T}$ stretched a $1 \times 1$ square of area 1
 into a $2 \times 2$ square of area 4, quadrupling the area. 
 This quadrupling of the area is reflected by a determinant with magnitude 4.</p>
@@ -155,7 +155,7 @@ is not captured by the determinant.  We cannot tell whether or not $\vc{T}$
 will map the square into a square, rectangle, rhombus, or other parallelogram 
 from knowledge of just the determinant of its associate matrix.  
 (We know it has to be some type of
-parallelogram, as all two-dimensional linear transformations do {% intlink linear_transformations_map_parallelograms_parallelepipeds map2D %}map parallelograms into parallelograms{%endintlink%}.)  The determinant simply tells us how $\vc{T}$ changes area and whether or not it reverses orientation.</p>
+parallelogram, as all two-dimensional linear transformations do {% intlink "linear_transformations_map_parallelograms_parallelepipeds" anchor="map2D" %}map parallelograms into parallelograms{%endintlink%}.)  The determinant simply tells us how $\vc{T}$ changes area and whether or not it reverses orientation.</p>
 
 <p>You can experiment with these and other linear transformations using the below applet.
 You can convince yourself that $\vc{T}$ always maps parallelograms 
@@ -180,7 +180,7 @@ The components $a_{ij}$ of $A$ define the linear transformation.</p>
 
 <p>As above, the determinant $\det(A)$ reflects some of the geometric properties of the mapping $(x',y',z')=\vc{T}(x,y,z)$.  
 Due to the fact that the absolute value of a determinant gives the
-{%intlink relationship_determinants_area_volume volume3d%}volume of a parallelepiped{%endintlink%}, the absolute value $|\det(A)|$ reflects how much $\vc{T}$ expands volume.  
+{% intlink "relationship_determinants_area_volume" anchor="volume3d" %}volume of a parallelepiped{%endintlink%}, the absolute value $|\det(A)|$ reflects how much $\vc{T}$ expands volume.  
 The sign of $\det(A)$ reflects whether or not $A$ preserves orientation, as above.
 If the $\det(A)$ is positve, the associated linear transformation preserves orientation in that it only stretches and rotates objects.  
 On the other hand, if $\det(A)$ is negative, the associated linear transformation reverses orientation by also reflecting the object (taking its mirror image).</p>
@@ -190,10 +190,10 @@ $$A=\left[\begin{array}{rrr}2&amp;1&amp;1\\1&amp;2&amp;-1\\-3&amp;-1&amp;2\end{a
 Since $\det(A) = 12$, the linear transformation $\vc{T}(\vc{x}) = A\vc{x}$ expands the volume of objects by a factor of 12.  Since the determinant is positive, it preserves the orientation of objects.</p>
 
 <p>The action of $\vc{T}$ on the unit cube $[0,1] \times [0,1] \times [0,1]$ is illustrated in the following applet. 
-$\vc{T}$ rotated the cube and stretched it into a {%intlink parallelepiped_definition %}parallelepiped{%endintlink%} of volume 12.  
+$\vc{T}$ rotated the cube and stretched it into a {% intlink "parallelepiped_definition" %}parallelepiped{%endintlink%} of volume 12.  
 You can confirm that $\vc{T}$ preserved orientation by comparing faces that have the same four colors and checking if the colors have the same order when moving counterclockwise.  
 Since both the cube and the parallelepiped have faces with colors ordered red, yellow, white, magenta as one moves counterclockwise, 
-the linear transformation preserved orientation, as it must given that $\det(A)$ is positive.  You can change the cube into other parallelepipeds, and $\vc{T}$ always maps it to another parallelepiped, as {% intlink linear_transformations_map_parallelograms_parallelepipeds map3D %}it must{%endintlink%}.</p>
+the linear transformation preserved orientation, as it must given that $\det(A)$ is positive.  You can change the cube into other parallelepipeds, and $\vc{T}$ always maps it to another parallelepiped, as {% intlink "linear_transformations_map_parallelograms_parallelepipeds" anchor="map3D" %}it must{%endintlink%}.</p>
 
 
 {% boxedapplet "linear_transformation_3d_preserve" %}

@@ -3,9 +3,9 @@
 {% title "Redundant parameters in the exponential function" %}
 {% description "Calculation showing that in the exponential function, changing either the base or a constant in the exponent have the same effect on the function." %}
 
-<p>One way to add {% intlink parameter_definition %}parameters{% endintlink%} to the {% intlink exponential_function %}exponential function{% endintlink%} is to let the parameter $b$ be the base and the parameter $k$ multiply the exponent, forming the function
+<p>One way to add {% intlink "parameter_definition" %}parameters{% endintlink%} to the {% intlink "exponential_function" %}exponential function{% endintlink%} is to let the parameter $b$ be the base and the parameter $k$ multiply the exponent, forming the function
 $$f(x)=b^{kx}.$$
-Since the function $f$ has two parameters, $b$ and $k$, it can be represented by a {% intlink function_machine %}function machine{%endintlink%} with {% intlink function_machine_parameters %}two dials representing the parameters{%endintlink%}.</p>
+Since the function $f$ has two parameters, $b$ and $k$, it can be represented by a {% intlink "function_machine" %}function machine{%endintlink%} with {% intlink "function_machine_parameters" %}two dials representing the parameters{%endintlink%}.</p>
 
 {% image "function_machine_parameters" %}
 
@@ -18,14 +18,14 @@ Since the function $f$ has two parameters, $b$ and $k$, it can be represented by
 
 {% boxedapplet "exponential_function" %}
 
-<p>To see why this is true, we can do a simple calculation.  Understanding this calculation requires that you are comfortable with the basic rules of {% intlink exponentiation_basic_rules %}exponents{%endintlink%} and {% intlink logarithm_basics rules %}logarithms{%endintlink%}.</p>
+<p>To see why this is true, we can do a simple calculation.  Understanding this calculation requires that you are comfortable with the basic rules of {% intlink "exponentiation_basic_rules" %}exponents{%endintlink%} and {% intlink "logarithm_basics" anchor="rules" %}logarithms{%endintlink%}.</p>
 
-<p>In the original form of the function, $f(x)=b^{kx}$, it's hard to see any correspondence between $b$ and $k$ because they have very different relationships with the {% intlink independent_variable_definition%}independent variable{%endintlink%} $x$.  The parameter $k$ multiplies $x$, but the parameter $b$ is the base for the exponent involving $x$.  The first step in fixing this problem is to take the logarithm of both sides of the equation $f(x)=b^{kx}$:
+<p>In the original form of the function, $f(x)=b^{kx}$, it's hard to see any correspondence between $b$ and $k$ because they have very different relationships with the {% intlink "independent_variable_definition" %}independent variable{%endintlink%} $x$.  The parameter $k$ multiplies $x$, but the parameter $b$ is the base for the exponent involving $x$.  The first step in fixing this problem is to take the logarithm of both sides of the equation $f(x)=b^{kx}$:
 $$\log f(x) = \log b^{kx}.$$
 (For this calculation, it doesn't matter which base we use for the logarithm.)
 </p>
 
-<p>At first glance, this manipulation might not seem like an improvement.  But, the {% intlink logarithm_basics rules %}properties of the logarithm{%endintlink%} allow us to make an important simplification.  We can take the exponent $kx$ down from $b$ and move it to multiply $\log b$.
+<p>At first glance, this manipulation might not seem like an improvement.  But, the {% intlink "logarithm_basics" anchor="rules" %}properties of the logarithm{%endintlink%} allow us to make an important simplification.  We can take the exponent $kx$ down from $b$ and move it to multiply $\log b$.
 \begin{align*}
   \log f(x) &= \log b^{kx}\\
   &=kx \log b\\

@@ -4,7 +4,7 @@
 {% title "The idea of synchrony of phase oscillators" %}
 {% description "The concepts of a phase oscillator and synchronization of a collection of phase oscillators are introduced through interactive applets." %}
 
-<p>An oscillator model is a {% intlink dynamical_system_idea %}dynamical system{%endintlink%} in which the {% intlink state_variable_definition%}state variables{%endintlink%} evolve through a periodic {% intlink trajectory_dynamical_systems_definition%}trajectory{%endintlink%} or orbit in {% intlink state_space_definition%}state space{%endintlink%} (also called {% intlink phase_space_definition%}phase space{%endintlink%}).  This periodic orbit is a loop through state space, as the state of the system returns to where it started after some time $T$, called the period of the oscillator.</p>
+<p>An oscillator model is a {% intlink "dynamical_system_idea" %}dynamical system{%endintlink%} in which the {% intlink "state_variable_definition" %}state variables{%endintlink%} evolve through a periodic {% intlink "trajectory_dynamical_systems_definition" %}trajectory{%endintlink%} or orbit in {% intlink "state_space_definition" %}state space{%endintlink%} (also called {% intlink "phase_space_definition" %}phase space{%endintlink%}).  This periodic orbit is a loop through state space, as the state of the system returns to where it started after some time $T$, called the period of the oscillator.</p>
 
 {% navigation_tag "phase_oscillator" "Phase oscillator" %}
 <h4>The phase oscillator</h4>
@@ -34,7 +34,7 @@ where $i=\sqrt{-1}$ and $\theta$ is the counterclockwise angle between the posit
 $$z = \frac{1}{N}\sum_{j=1}^Ne^{i\theta_j}.$$
 </p>
 
-<p>To understand what this sum means, you can view each oscillator as being represented by a vector from the origin to the corresponding point on the unit circle (e.g., the red vector in the previous applet).  Recalling the {% intlink vector_introduction addition%}geometric definition of vector addition{%endintlink%}, we can deduce that the sum $z$ can be represented by a vector that points in the average direction of all the $\theta_j$ vectors.  If all the phases $\theta_j$ are equal, then their average will be the unit vector pointing to that phase.  On the other hand, if two phases are opposite of each other on the unit circle, their average will be the zero vector.  Hence the closer the phases are to each other, the longer $z$ will be, and it points in the average direction of the phases. You can experiment with the dependence of $z$ on the phases below.</p>
+<p>To understand what this sum means, you can view each oscillator as being represented by a vector from the origin to the corresponding point on the unit circle (e.g., the red vector in the previous applet).  Recalling the {% intlink "vector_introduction" anchor="addition" %}geometric definition of vector addition{%endintlink%}, we can deduce that the sum $z$ can be represented by a vector that points in the average direction of all the $\theta_j$ vectors.  If all the phases $\theta_j$ are equal, then their average will be the unit vector pointing to that phase.  On the other hand, if two phases are opposite of each other on the unit circle, their average will be the zero vector.  Hence the closer the phases are to each other, the longer $z$ will be, and it points in the average direction of the phases. You can experiment with the dependence of $z$ on the phases below.</p>
 
 {% boxedapplet "kuramoto_order_parameters" %}
 

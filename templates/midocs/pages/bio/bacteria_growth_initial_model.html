@@ -11,7 +11,7 @@
 
 <p>The population growth of bacteria is relatively simple, at least under carefully controlled  environments in the laboratory.  For example, bacterial populations increase rapidly when grown at low bacterial densities in abundant nutrient. The population increase is due to binary {% extlink "http://en.wikipedia.org/wiki/Fission_%28biology%29" %}fission{%endextlink%}, where single cells divide asexually into two cells, subsequently the two cells divide to form four cells, and so on. The time required for a cell to mature and divide is approximately the same for any two cells.</p>
 
-<p>For this reason, bacteria population growth can serve as a basis for a simple {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%} model that introduces some key components of modeling dynamical processes.  In developing a discrete dynamical system model for bacteria growth, we illustrate some of the steps in formulating a model and analyzing its properties, with the goal of using the model to deepen our insight into the underlying physical or biological process. </p>
+<p>For this reason, bacteria population growth can serve as a basis for a simple {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system{%endintlink%} model that introduces some key components of modeling dynamical processes.  In developing a discrete dynamical system model for bacteria growth, we illustrate some of the steps in formulating a model and analyzing its properties, with the goal of using the model to deepen our insight into the underlying physical or biological process. </p>
 
 {% navigation_tag "developing" "Developing" %}
 <h4>Developing a model from experimental data</h4>
@@ -65,9 +65,9 @@ through the medium with bacteria at time $t$.</p>
 {% navigation_tag "density_time" "Developing" "Density versus time" %}
 <h5>Visualizing population density versus time</h5>
 
-<p>The bacteria population size was recorded every 16 minutes, giving us precisely the snapshots we described in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical system introduction{%endintlink%}.  We'll let $t$ denote time rescaled so that the time between snapshots is one unit of time.  Then, the above snapshots occurred at times $t=0,1,2,3,4,5$.  Time $t=3$, for example, indicates the actual time of $3 \times 16 = 48$ minutes.</p>
+<p>The bacteria population size was recorded every 16 minutes, giving us precisely the snapshots we described in the {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system introduction{%endintlink%}.  We'll let $t$ denote time rescaled so that the time between snapshots is one unit of time.  Then, the above snapshots occurred at times $t=0,1,2,3,4,5$.  Time $t=3$, for example, indicates the actual time of $3 \times 16 = 48$ minutes.</p>
 
-<p>The data consists of measurements of bacterial population density at each time point.  In our discrete dynamical system model, this population density will be the single {% intlink state_variable_definition%}state variable{%endintlink%} in our {% intlink state_space_definition%}state space{%endintlink%}, and we'll denote the bacterial density by $B$.  Then $B_t$ is the snapshot of bacterial density at time $t$.  With this notation $B_0 = 0.022$, $B_1 = 0.036$, $B_2 = 0.060$, etc.
+<p>The data consists of measurements of bacterial population density at each time point.  In our discrete dynamical system model, this population density will be the single {% intlink "state_variable_definition" %}state variable{%endintlink%} in our {% intlink "state_space_definition" %}state space{%endintlink%}, and we'll denote the bacterial density by $B$.  Then $B_t$ is the snapshot of bacterial density at time $t$.  With this notation $B_0 = 0.022$, $B_1 = 0.036$, $B_2 = 0.060$, etc.
  </p>
 
 <p>With the state space and set of times determined, the remaining step in developing the dynamical system model is to determine the time evolution rule.  This step, of course, is the most difficult part, as it must capture the dynamics of the system.  Sometimes, one has a sufficiently explicit description of the dynamics so that one can immediately write down a reasonable evolution rule.  In most cases, developing an equation that captures key features of the underlying dynamics will require multiple iterations and an effort to look at both the experiment and the mathematical system from different angles.</p>
@@ -100,7 +100,7 @@ through the medium with bacteria at time $t$.</p>
 
 <p>But, before we start going down that road, we need to stop and remember the system we are trying to model.  Our purpose in modeling the data is not simply to find an equation that matches the data points.  Our goal is a model that captures the mechanism of the physical system we modeling.  To achieve a model that captures the key features of bacteria population growth, we need to go back and recall what we know about how bacteria reproduce.</p>
 
-<p>As <a href="#why">mentioned at the outset</a>, bacteria cells reproduce by dividing into two cells, and each cell takes about the same time to mature and divide.  If our snapshots occurred at the same interval as this dividing time, the population size would double at each time step, as it did in the {% intlink dynamical_system_idea bacteria_doubling %}example we used to illustrate dynamical systems{%endintlink%}, captured by the {% appletlink "bacteria_doubling" %}bacteria doubling applet{%endappletlink%}.</p>
+<p>As <a href="#why">mentioned at the outset</a>, bacteria cells reproduce by dividing into two cells, and each cell takes about the same time to mature and divide.  If our snapshots occurred at the same interval as this dividing time, the population size would double at each time step, as it did in the {% intlink "dynamical_system_idea" anchor="bacteria_doubling" %}example we used to illustrate dynamical systems{%endintlink%}, captured by the {% intlink "bacteria_doubling" class="applet" %}bacteria doubling applet{% endintlink %}.</p>
 
 <p>Looking at the above data, it doesn't appear that the population is doubling at each time step.  If it doubled, we would have expected that the change $B_{t+1}-B_{t}$ would be equal to the previous population size $B_t$.  In all cases, the change $B_{t+1}-B_{t}$ is substantially less than $B_t$.</p>
 
@@ -113,7 +113,7 @@ through the medium with bacteria at time $t$.</p>
 <h5>A thought experiment</h5>
 <p>Let's do a thought experiment to figure out what to do next. We'll use our rescaled time so that one unit of time is equal to the time between our snapshots. Suppose the time it takes for a cell to mature and divide is $\tau$ units of time.  Can you figure out what fraction of the cells should divide in each time step?  Here we imagine the cells are not synchronized so that they do not all divide together at the same time.  Instead, we imagine that at any point in time, the cells are at different points in their cycle of maturing and dividing; just a few would be in the process of dividing at any point in time.</p>
 
-<p>Once you figure out the answer, you can check your answer {% intlink bacteria_growth_initial_model_answers thoughtexperiment1 %}here{%endintlink%}.</p>
+<p>Once you figure out the answer, you can check your answer {% intlink "bacteria_growth_initial_model_answers" anchor="thoughtexperiment1" %}here{%endintlink%}.</p>
 </section></div>
 
 {% endcomment %}
@@ -140,7 +140,7 @@ for some constant $c$.</p>
 <p>From exploring the linear fit in the applet, you can observe that the first points lie along a line through the origin whose slope is approximately $2/3$.  For example, if you move the point $P$ to $(0.15,0.1)$ the line through $P$ is close to the first four points, and the slope is $0.1/0.15=2/3$ (though the applet may show it as a slightly different number due to rounding).  The line can
 be &ldquo;fit&rdquo; more quantitatively, but it is not necessary to do so at this stage.</p>
 
-<p>In the above applet, we forced the line to go through the origin.  Why did we insist the line that goes through the origin?  See {% intlink bacteria_growth_initial_model_exercises whyorigin %}exercise 3{%endintlink%}.</p>
+<p>In the above applet, we forced the line to go through the origin.  Why did we insist the line that goes through the origin?  See {% intlink "bacteria_growth_initial_model_exercises" anchor="whyorigin" %}exercise 3{%endintlink%}.</p>
 
 {% comment %}
 <a id="thoughtexperiment2" class="anchor"></a>
@@ -148,7 +148,7 @@ be &ldquo;fit&rdquo; more quantitatively, but it is not necessary to do so at th
 <h5>Thought experiment followup</h5>
 <p>You can use the results of the <a href="#thoughtexperiment">thought experiment</a> combined with these results to estimate what's going on with individual bacteria cells. Suppose the line giving bacteria density change as function of density has a slope of 2/3.  Estimate the time required for a cell to mature and divide.</p>
 <p>Remember that the snapshots in the data occur at 16 minute intervals, you need to multiply the results you get from direct application of the thought experiment by 16 minutes.</p>
-<p>Once you figure out the answer, you can check your answer {% intlink bacteria_growth_initial_model_answers thoughtexperiment2 %}here{%endintlink%}.</p>
+<p>Once you figure out the answer, you can check your answer {% intlink "bacteria_growth_initial_model_answers" anchor="thoughtexperiment2" %}here{%endintlink%}.</p>
 </section></div>
 {% endcomment %}
 
@@ -176,12 +176,12 @@ every time period.    (In this instance, two-thirds of the cells divide every
 
 {% boxedvideo "solving_bacteria_growth_model" %}
 
-<p>The dynamical system of equation \eqref{initial_model} is simple enough that we can solve it to find an equation for $B_t$ in terms of $t$.  As a first step, we change equation \eqref{initial_model} into an <em>iterator equation</em>, meaning an equation of the form that we introduced in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical system introduction{%endintlink%}.  To do this, we just rewrite equation \eqref{initial_model} so that $B_{t+1}$ is alone on the left hand side:
+<p>The dynamical system of equation \eqref{initial_model} is simple enough that we can solve it to find an equation for $B_t$ in terms of $t$.  As a first step, we change equation \eqref{initial_model} into an <em>iterator equation</em>, meaning an equation of the form that we introduced in the {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system introduction{%endintlink%}.  To do this, we just rewrite equation \eqref{initial_model} so that $B_{t+1}$ is alone on the left hand side:
 \begin{gather}
   B_{t+1} = \frac{5}{3} B_t = f(B_t){% equation_tag "model_iterator" 3 %}
 \end{gather}
 where the function $f$ is defined by $f(x)=\frac{5}{3} x$.  As discussed in the 
-{% intlink discrete_dynamical_system_introduction %}introduction{%endintlink%}, evolving a discrete dynamical system can consist of iterating a function such as $f$.</p>
+{% intlink "discrete_dynamical_system_introduction" %}introduction{%endintlink%}, evolving a discrete dynamical system can consist of iterating a function such as $f$.</p>
 
 <p>Iterating $f$, we can calculate the values of $B_t$ given the model of equation \eqref{model_iterator}.  The result will be in terms of the initial condition $B_0$.  Equation \eqref{model_iterator} is shorthand for at least five
 equations
@@ -197,7 +197,7 @@ Beginning with $B_0 = 0.022$ we can compute
 B_1 & = \frac{5}{3} B_0  =  \frac{5}{3} 0.022  \approx 0.037\\
 B_2 & = \frac{5}{3} B_1 = \frac{5}{3} 0.037  \approx 0.061
 \end{align*}
-By continuing to iterate $f$, we can compute $B_3$, $B_4$, and $B_5.$  You can do this by continuing to multiply by $5/3$ or use the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%} so that you can visualize the results.  To use the applet, plug in $f(x)=5x/3$ and $x_0=0.022$.</p> 
+By continuing to iterate $f$, we can compute $B_3$, $B_4$, and $B_5.$  You can do this by continuing to multiply by $5/3$ or use the {% intlink "function_iteration" class="applet" %}function iteration applet{% endintlink %} so that you can visualize the results.  To use the applet, plug in $f(x)=5x/3$ and $x_0=0.022$.</p> 
 
 <p>We can also write out the solution without putting in the value for the initial condition and without multiplying out the solution.  In this case, the solutions look like
 \begin{align*}
@@ -254,7 +254,7 @@ form
 \begin{gather*}
 P_t = P_0 R^t  \qquad \mbox{with} \qquad R > 1
 \end{gather*}
-are said to exhibit <em>{% intlink exponential_growth_decay_discrete %}exponential growth{% endintlink%}</em>.  Here $P_t$ is the population size at time $t$, analogous to our $B_t$ for bacteria.  For bacteria population in terms of the rescaled time $t$, we determined that $P_0=0.022$ and $R=\frac{5}{3}$.  You can {% intlink exponential_growth_decay_discrete %}read more{%endintlink%} about exponential growth in discrete dynamical systems.</p>
+are said to exhibit <em>{% intlink "exponential_growth_decay_discrete" %}exponential growth{% endintlink%}</em>.  Here $P_t$ is the population size at time $t$, analogous to our $B_t$ for bacteria.  For bacteria population in terms of the rescaled time $t$, we determined that $P_0=0.022$ and $R=\frac{5}{3}$.  You can {% intlink "exponential_growth_decay_discrete" %}read more{%endintlink%} about exponential growth in discrete dynamical systems.</p>
 </aside></div>
 
 {% navigation_tag "how_well" "How well?" %}
@@ -273,7 +273,7 @@ are said to exhibit <em>{% intlink exponential_growth_decay_discrete %}exponenti
 <tr><td>80</td><td>5</td><td>0.266</td><td>0.283</td></tr>
 </table> 
 
-<p>To visualize the comparison, we again use the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%}, but this time we modify it by adding the experimental data as purple diamonds.  Since the function and initial conditions are already entered by default, you can simply iterate a few times to see the graphical comparison.</p>
+<p>To visualize the comparison, we again use the {% intlink "function_iteration" class="applet" %}function iteration applet{% endintlink %}, but this time we modify it by adding the experimental data as purple diamonds.  Since the function and initial conditions are already entered by default, you can simply iterate a few times to see the graphical comparison.</p>
 
 {% boxedapplet "function_iteration_bacteria_growth_initial_model" %}
 
@@ -325,7 +325,7 @@ equation is simply a match of equation to data.</p>
 </aside>
 
 
-<p>To learn how to build your own dynamical system models, try your hand at the {% intlink bacteria_growth_initial_model_exercises%}exercises{%endintlink%}.</p>
+<p>To learn how to build your own dynamical system models, try your hand at the {% intlink "bacteria_growth_initial_model_exercises" %}exercises{%endintlink%}.</p>
 
 
 

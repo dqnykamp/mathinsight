@@ -22,17 +22,17 @@ coordinates.)  Let
 \begin{align*}
   \cvarf(r,\theta) = (r \cos\theta, r \sin \theta).
 \end{align*}
-be the change of variables function {% intlink polar_coordinates_mapping%} from polar coordinates into
+be the change of variables function {% intlink "polar_coordinates_mapping" %} from polar coordinates into
 rectangular coordinates{%endintlink%}.</p>
 
-<p>Then, by the change of variables formula ({% intlinkeq double_integral_change_variables_introduction cvarformula %}of the introductory page{%endintlinkeq%}), the integral becomes
+<p>Then, by the change of variables formula ({% intlink "double_integral_change_variables_introduction" equation="cvarformula" %}equation (tag) of the introductory page{% endintlink %}), the integral becomes
 \begin{align*}
   \iint_\dlr g(x,y) dA = \iint_{\dlr^{\textstyle *}} g(\cvarf(r,\theta))\left| \det
   \jacm{\cvarf}(r,\theta)\right| dr\, d\theta,
 \end{align*}
 where $\dlr^*$ is the region in the $r\theta$-plane that is mapped by
 $\cvarf$ onto the disk $\dlr$.  In polar coordinates, the disk is
-described by $0 \le r \le 6$ and $0 \le \theta \le 2\pi$, so the region $\dlr^*$ is a rectangle, making integration simple.  See the applet on the {% appletlink "polar_coordinates_map_rectangle" %}polar coordinates map of a rectangle{% endappletlink%} to visualize this transformation from rectangle to disk.</p>
+described by $0 \le r \le 6$ and $0 \le \theta \le 2\pi$, so the region $\dlr^*$ is a rectangle, making integration simple.  See the applet on the {% intlink "polar_coordinates_map_rectangle" class="applet" %}polar coordinates map of a rectangle{% endintlink %} to visualize this transformation from rectangle to disk.</p>
 
 <p>We calculate the pieces of this formula.  The integrand $g(x,y)$ becomes
 \begin{align*}
@@ -82,7 +82,7 @@ $$\left|\pdiff{(x,y)}{(r,\theta)}\right|= \left| \det
 
 <p>In case you have trouble believing that formula, we could motivate the result as follows.  Chop up the disk into a grid corresponding to chopping up the $r$ of polar
 coordinates into intervals of length $\Delta r$ and chopping the $\theta$ of polar coordinates into intervals of length $\Delta \theta$, just as we did for the
-{% intlink double_integral_change_variables_introduction %}intro page{%endintlink%}.  A
+{% intlink "double_integral_change_variables_introduction" %}intro page{%endintlink%}.  A
 single &ldquo;curvy rectangle&rdquo; with a corner $\cvarf(r,\theta)$ is pictured below.</p>
 <p class="centeredImage">{% image "polar_coordinates_area_calculation" %}</p>
 
@@ -91,8 +91,8 @@ area depends on the radius $r$, since its width is approximately
 $r\Delta \theta$ and its height is approximately $\Delta r$.  Hence
 the area $\Delta A$ is approximately $r \Delta r \Delta \theta$.  
 This sketch captures the reason why $dA$ becomes $r\,dr\,d\theta$ when
-changing variables to polar coordinates.  You can also explore the applet about {% appletlink "polar_coordinates_map_rectangle_area_transformation" %}the area
-transformation of the polar coordinates mapping{%endappletlink%} to see how the amount of area expansion increases with radius $r$. </p>
+changing variables to polar coordinates.  You can also explore the applet about {% intlink "polar_coordinates_map_rectangle_area_transformation" class="applet" %}the area
+transformation of the polar coordinates mapping{% endintlink %} to see how the amount of area expansion increases with radius $r$. </p>
 
 
 
@@ -102,7 +102,7 @@ transformation of the polar coordinates mapping{%endappletlink%} to see how the 
 <p>Evaluate the integral $\iint_D (3x-2y)dA$ over the parallelogram $D$ bounded by the lines $y=\frac{3}{2}x - 4$, $y=\frac{3}{2}x+2$, $y=-2x +1$, and $y=-2x+3$.  Use the linear change of variables $$(x,y)=\cvarf(\cvarfv,\cvarsv)=(\cvarfv+2\cvarsv, -2\cvarfv+3\cvarsv).$$</p>
 
 <p><b>Solution</b>:
-Since the change of variables is linear, we know know that it {% intlink determinant_linear_transformation 2D %}maps parallelograms onto parallelograms{%endintlink%}.  If we transform the equations for the parallel lines in terms of the variables $\cvarfv$ and $\cvarsv$, we will again get equations for parallel lines.</p>
+Since the change of variables is linear, we know know that it {% intlink "determinant_linear_transformation" anchor="2D" %}maps parallelograms onto parallelograms{%endintlink%}.  If we transform the equations for the parallel lines in terms of the variables $\cvarfv$ and $\cvarsv$, we will again get equations for parallel lines.</p>
 
 <p>Rewrite the equations for the parallelogram boundaries as
 \begin{align*}3x -2y&amp;=8\\
@@ -198,7 +198,7 @@ The fact that the area expansion factor goes to zero when $\cvarfv$ goes to $\pm
 
 <h4>Understanding the geometric properties of this change of variables</h4>
 
-<p>You can use {% appletlink "nonlinear_2d_change_variables_map_animation" %}this applet{%endappletlink%} to visualize how $\cvarf$ is stretches the rectangle $\dlr^*$ onto the given region $\dlr$.  Change the transformation in the applet to correspond to the $\cvarf$ of this function.  (The transformation $\cvarf$ of this problem in component form is $x=\cvarsv(1-\cvarfv^2)$ and $y=u$, but you'll need to type $\cvarsv * (1-\cvarfv \wedge 2)$ in the box for $x$ in order to have the applet accept the function.)  Then, if you change the rectangle to correspond to $\dlr^*$, it should be morphed into the parabolic region $\dlr$.  If you are really observant, you may notice that $\cvarf$ flips the region $\dlr^*$ over as it maps it onto $\dlr$; this flipping corresponds to the fact that $\det \jacm{\cvarf}(\cvarfv,\cvarsv)$ is negative.  See {% intlink determinant_linear_transformation %}this page{%endintlink%} to see more on the relationship between determinants and the geometry of mappings. </p>
+<p>You can use {% intlink "nonlinear_2d_change_variables_map_animation" class="applet" %}this applet{% endintlink %} to visualize how $\cvarf$ is stretches the rectangle $\dlr^*$ onto the given region $\dlr$.  Change the transformation in the applet to correspond to the $\cvarf$ of this function.  (The transformation $\cvarf$ of this problem in component form is $x=\cvarsv(1-\cvarfv^2)$ and $y=u$, but you'll need to type $\cvarsv * (1-\cvarfv \wedge 2)$ in the box for $x$ in order to have the applet accept the function.)  Then, if you change the rectangle to correspond to $\dlr^*$, it should be morphed into the parabolic region $\dlr$.  If you are really observant, you may notice that $\cvarf$ flips the region $\dlr^*$ over as it maps it onto $\dlr$; this flipping corresponds to the fact that $\det \jacm{\cvarf}(\cvarfv,\cvarsv)$ is negative.  See {% intlink "determinant_linear_transformation" %}this page{%endintlink%} to see more on the relationship between determinants and the geometry of mappings. </p>
 </div>
 
 
@@ -223,7 +223,7 @@ With this change of variables, our new region of integration $\dlr^*$ is $0 \le 
 
 <p>Our change of variables as expressed in equation \eqref{thechangevar} gives
 $\cvarfv$ and $\cvarsv$ in terms of $x$ and $y$.  In our
-{% intlink double_integral_change_variables_introduction %}change of variables formula{%endintlink%}, we need
+{% intlink "double_integral_change_variables_introduction" %}change of variables formula{%endintlink%}, we need
 to have $x$ and $y$ expressed in terms of $\cvarfv$ and $\cvarsv$ using some
 function $(x,y)=\cvarf(\cvarfv,\cvarsv)$.  So one way to solve this problem is to
 solve equation \eqref{thechangevar} for $x$ and $y$ to determine the
@@ -339,6 +339,6 @@ Change to polar coordinates.  Region is sector: $0 \le \theta \le
 {% navigation_tag "anotherexample" "Examples" "Another example" %}
 <h4>Another example</h4>
 
-<p>You can check out {% intlink double_integral_change_variable_illustrated_example%}another example{%endintlink%} where the transformation of the change of variables function is illustrated by interactive graphics.</p>
+<p>You can check out {% intlink "double_integral_change_variable_illustrated_example" %}another example{%endintlink%} where the transformation of the change of variables function is illustrated by interactive graphics.</p>
 
 {% endblock%}

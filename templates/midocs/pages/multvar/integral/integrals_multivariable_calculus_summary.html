@@ -13,7 +13,7 @@ where the one integrates either the tangential (for curves) or the
 normal (for surfaces) component of the vector field.</p>
 
 <p>In this page, we outline the various integrals, methods you can use to solve
-them, and their relationship to the {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}.</p>
+them, and their relationship to the {% intlink "fundamental_theorems_vector_calculus_summary" %}fundamental theorems{%endintlink%}.</p>
 
 <p class="pre_list">The integrals covered in this page are:</p>
   <ul>
@@ -29,7 +29,7 @@ them, and their relationship to the {% intlink fundamental_theorems_vector_calcu
 {% navigation_tag "lineintscalar" "The integrals" "Scalar line integral"%}
 <h4>Line integral of scalar-valued function</h4>
 
-<p>The {%intlink line_integral_scalar_function_introduction%}line integral 
+<p>The {% intlink "line_integral_scalar_function_introduction" %}line integral 
 of a scalar-valued function{%endintlink%} $\dlsi(\vc{x})$ over a curve $\dlc$ 
 is written as 
 \begin{align*}
@@ -55,7 +55,7 @@ onto $\dlc$.</p>
 {% navigation_tag "lineintvector" "The integrals" "Vector line integral"%}
 <h4>Line integral of a vector field</h4>
 
-<p>The {%intlink line_integral_vector_field_introduction%}line integral
+<p>The {% intlink "line_integral_vector_field_introduction" %}line integral
  of a vector field{%endintlink%} $\dlvf(\vc{x})$
 over a curve $\dlc$ is written as
 \begin{align*}
@@ -83,7 +83,7 @@ alternatives work only in special cases.</p>
   <p>This method always applies.  Sometimes, though, the integral will be
   difficult or we won't even be able to evaluate it.  Our lives can be
   made easier by using one of the 
-    {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}
+    {% intlink "fundamental_theorems_vector_calculus_summary" %}fundamental theorems{%endintlink%}
   to convert the line integral into something else.</p>
   
   <p>Since this integral is really a
@@ -96,12 +96,12 @@ alternatives work only in special cases.</p>
   scalar-valued path integral with $\dlsi =   \dlvf \cdot \vc{T}$.</p>
   </li>
 
-<li><p>If the vector field $\dlvf$ {% intlink conservative_vector_field_determine%}happens to be conservative{%endintlink%},
-    then we could use the {% intlink gradient_theorem_line_integrals%}gradient theorem for line integrals{%endintlink%}.
+<li><p>If the vector field $\dlvf$ {% intlink "conservative_vector_field_determine" %}happens to be conservative{%endintlink%},
+    then we could use the {% intlink "gradient_theorem_line_integrals" %}gradient theorem for line integrals{%endintlink%}.
     We reduce the problem from an integral over the
     curve $\dlc$ to something just depending on the &ldquo;boundary&rdquo; of $\dlc$,  i.e., its endpoints.  </p>
     
-  <p>We need to {% intlink conservative_vector_field_find_potential %}find a potential function{%endintlink%} $f$ so
+  <p>We need to {% intlink "conservative_vector_field_find_potential" %}find a potential function{%endintlink%} $f$ so
   that $\nabla f = \dlvf$.  Then,
   \begin{align*}
     \dlint  = f(\vc{q}) - f(\vc{p}),
@@ -118,10 +118,10 @@ alternatives work only in special cases.</p>
   
 <li><p>If the vector field $\dlvf$ and the curve $\dlc$ happen to be in
     two dimensions and if $\dlc$ happens to be a 
-    {%intlink simple_curve_definition %}simple{%endintlink%}
-    {%intlink closed_curve_definition %}closed{%endintlink%}
+    {% intlink "simple_curve_definition" %}simple{%endintlink%}
+    {% intlink "closed_curve_definition" %}closed{%endintlink%}
     curve, then we
-    can use {%intlink greens_theorem_idea %}Green's theorem{%endintlink%}.
+    can use {% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%}.
     Green's theorem converts the line integral over $\dlc$ to a double
     integral over the interior of $\dlc$, which we call $\dlr$,
     \begin{align*}
@@ -136,10 +136,10 @@ alternatives work only in special cases.</p>
 
 <li><p> If the vector field $\dlvf$ and the curve $\dlc$ happen to be in
   three dimensions and if $\dlc$ happens to be a    
-    {%intlink simple_curve_definition %}simple{%endintlink%}
-    {%intlink closed_curve_definition %}closed{%endintlink%}
+    {% intlink "simple_curve_definition" %}simple{%endintlink%}
+    {% intlink "closed_curve_definition" %}closed{%endintlink%}
     curve, then we
-  can use {%intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%}.
+  can use {% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%}.
   Stokes' theorem converts the line integral over $\dlc$ to a surface
   integral over any surface $\dls$ for which $\dlc$ is a boundary,
   \begin{align*}
@@ -147,14 +147,14 @@ alternatives work only in special cases.</p>
   \end{align*}
   and is valid for any surface over which $\dlvf$ is continuously differentiable.
   Sometimes we write $\dlc= \partial \dls$ to denote that $\dlc$ is the
-  boundary of $\dls$.  $\dlc$ must be a {% intlink positively_oriented_boundary_definition%}positively oriented boundary{%endintlink%} of $\dls$, otherwise, we'll be off by a minus sign.</p>
+  boundary of $\dls$.  $\dlc$ must be a {% intlink "positively_oriented_boundary_definition" %}positively oriented boundary{%endintlink%} of $\dls$, otherwise, we'll be off by a minus sign.</p>
 </li>
 </ol>
 
 {% navigation_tag "surfintscalar" "The integrals" "Scalar surface integral"%}
 <h4>Surface integral of a scalar-valued function</h4>
 
-<p>The {%intlink surface_integral_scalar_function_introduction%}surface integral of a scalar-valued function{%endintlink%}
+<p>The {% intlink "surface_integral_scalar_function_introduction" %}surface integral of a scalar-valued function{%endintlink%}
 $\dlsi(\vc{x})$ over a surface $\dls$  is written as 
 \begin{align*}
   \dssint
@@ -203,7 +203,7 @@ alternatives work only in special cases.</p>
   <p>This method always applies.  Sometimes, though, the integral will be
     difficult or we won't even be able to evaluate it.  Our lives can be
   made easier by using one of the
-    {% intlink fundamental_theorems_vector_calculus_summary %}fundamental theorems{%endintlink%}
+    {% intlink "fundamental_theorems_vector_calculus_summary" %}fundamental theorems{%endintlink%}
   to convert the surface integral into something else.</p>
   
   <p>Since this integral is really a <a href="#surfintscalar">surface
@@ -221,9 +221,9 @@ alternatives work only in special cases.</p>
   
 <li><p>If the vector field $\dlvf$ happens to be the curl of another
   vector field $\vc{G}$, i.e., $\dlvf = \curl \vc{G}$, then we can
-  apply {% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} to convert the surface
+  apply {% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%} to convert the surface
   integral of $\curl \vc{G}$ into the line integral of $\vc{G}$ around
-  the {%intlink positively_oriented_boundary_definition%}positively oriented boundary{%endintlink%} of $\dls$, which we
+  the {% intlink "positively_oriented_boundary_definition" %}positively oriented boundary{%endintlink%} of $\dls$, which we
   denote $\partial \dls$,
   \begin{align*}
     \dsint = \sint{\dls}{\curl \vc{G}}
@@ -242,13 +242,13 @@ alternatives work only in special cases.</p>
   integral $\sint{\dls}{\curl \vc{G}}$.  We can
   switch the surface $\dls$ to any other surface $\dls'$ as long as the
   boundaries of $\dls$ and $\dls'$ are the same, i.e., $\partial \dls =
-  \partial \dls'$ (assuming both boundaries are {%intlink positively_oriented_boundary_definition%}positively oriented{%endintlink%}).  If $\dls$ is a complicated surface, we could feasibly save
+  \partial \dls'$ (assuming both boundaries are {% intlink "positively_oriented_boundary_definition" %}positively oriented{%endintlink%}).  If $\dls$ is a complicated surface, we could feasibly save
   ourselves some work by integrating over another surface $\dls'$ if that
   surface is simpler than $\dls$.</p></li>
 
 <li><p>If the surface $\dls$ happens to be a closed surface so that it
   is the boundary of some solid $\dlv$, i.e., $\dls = \partial \dlv$,
-  then we can use the {%intlink divergence_theorem_idea %}divergence theorem{%endintlink%} 
+  then we can use the {% intlink "divergence_theorem_idea" %}divergence theorem{%endintlink%} 
   to convert the surface integral into the triple
   integral of $\div \dlvf$ over $\dlv$,
   \begin{align*}
@@ -263,7 +263,7 @@ alternatives work only in special cases.</p>
 {% navigation_tag "doubleint" "The integrals" "Double integral"%}
 <h4>Double integrals</h4>
 
-<p>The {%intlink double_integral_introduction %}double integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
+<p>The {% intlink "double_integral_introduction" %}double integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
 two-dimensional region $\dlr$ is written as
 \begin{align*}
   \iint_\dlr \dlsi \, dA.
@@ -275,7 +275,7 @@ One physical interpretation is the mass of a region with density \dlsi$.</p>
   <li><p>We can compute the integral directly in terms of the original
   variables $x$ and $y$.  In this case, $dA = dx\,dy$.</p></li>
 
-  <li><p>We can compute the integral by {% intlink double_integral_change_variables_introduction%}changing to the variables{%endintlink%} $\cvarfv$ and
+  <li><p>We can compute the integral by {% intlink "double_integral_change_variables_introduction" %}changing to the variables{%endintlink%} $\cvarfv$ and
   $\cvarsv$ by finding a function $(x,y) = \vc{T}(\cvarfv,\cvarsv)$.  Then the integral
   is
   \begin{align*}
@@ -290,7 +290,7 @@ One physical interpretation is the mass of a region with density \dlsi$.</p>
 
 <li><p> If $f$ happens to be equal to $\pdiff{\dlvfc_2}{x} -
   \pdiff{\dlvfc_1}{y}$ for some vector field $\dlvf$, then we could use
-  {%intlink greens_theorem_idea %}Green's theorem{%endintlink%}
+  {% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%}
   to convert the double integral
   into the integral of $\dlvf$ around the boundary of $\dlr$, which we
   denote $\partial \dlr$,
@@ -312,7 +312,7 @@ One physical interpretation is the mass of a region with density \dlsi$.</p>
   theorem is an option.</p>
 
   <p>As a special case, if we are given an
-  integral $\iint_\dlr dA$ (i.e., {%intlink greens_theorem_find_area %}finding the area{%endintlink%}), we can let
+  integral $\iint_\dlr dA$ (i.e., {% intlink "greens_theorem_find_area" %}finding the area{%endintlink%}), we can let
   $\dlvf(x,y) = (-y,x)/2$ so that $\pdiff{\dlvfc_2}{x} -
   \pdiff{\dlvfc_1}{y} =1$ and $\iint_\dlr dA = \lint{\partial \dlr}{\dlvf}$.</p>
 </li>
@@ -321,7 +321,7 @@ One physical interpretation is the mass of a region with density \dlsi$.</p>
 {% navigation_tag "tripleint" "The integrals" "Triple integral"%}
 <h4>Triple integrals</h4>
 
-<p>The {%intlink triple_integral_introduction %}triple integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
+<p>The {% intlink "triple_integral_introduction" %}triple integral{%endintlink%} of a (scalar-valued) function $\dlsi(\vc{x})$ over a
 three-dimensional solid $\dlv$ is written as
 \begin{align*}
   \iiint_\dlv \dlsi \, dV.
@@ -334,7 +334,7 @@ One physical interpretation is the mass of a solid with density given by $\dlsi$
 <li><p>We can compute the integral directly in terms of the original
     variables $x$, $y$, and $z$.  In this case, $dV = dx\,dy\,dz$.</p></li>
   
-<li><p>We can compute the integral by {%intlink triple_integral_change_variables_story%}changing to the variables{%endintlink%} $\cvarfv$,
+<li><p>We can compute the integral by {% intlink "triple_integral_change_variables_story" %}changing to the variables{%endintlink%} $\cvarfv$,
   $\cvarsv$, and $\cvartv$ by finding a function $(x,y,z) = \vc{T}(\cvarfv,\cvarsv,\cvartv)$.  Then
   the integral is
   \begin{align*}
@@ -348,7 +348,7 @@ One physical interpretation is the mass of a solid with density given by $\dlsi$
 
 <li><p>If $\dlsi$ happens to be equal to $\div \dlvf$ for some vector
   field $\dlvf$, then we could use the
-  {%intlink divergence_theorem_idea%}divergence theorem{%endintlink%}
+  {% intlink "divergence_theorem_idea" %}divergence theorem{%endintlink%}
   to convert the triple integral into the surface
   integral of $\dlvf$ around the boundary of $\dlv$, which we denote
   $\partial \dlv$,

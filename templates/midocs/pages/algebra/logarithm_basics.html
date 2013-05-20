@@ -6,10 +6,10 @@
 {% navigation_tag "idea" "Basic idea" %}
 <h4>The basic idea</h4>
 
-<p>A logarithm is the opposite of a {% intlink exponentiation_basic_rules %}power{%endintlink%}.  In other words, if we take a logarithm of a number, we undo an {% intlink exponentiation_basic_rules %}exponentiation{%endintlink%}.</p>
+<p>A logarithm is the opposite of a {% intlink "exponentiation_basic_rules" %}power{%endintlink%}.  In other words, if we take a logarithm of a number, we undo an {% intlink "exponentiation_basic_rules" %}exponentiation{%endintlink%}.</p>
 
 <p>Let's start with simple example.  If we take the base $b=2$ and raise it to the power of $k=3$, we have the expression $2^3$.  The result is some number, we'll call it $c$, defined by $2^3=c$.  
-We can use the {% intlink exponentiation_basic_rules %}rules of exponentiation{%endintlink%} to  calculate that the result is
+We can use the {% intlink "exponentiation_basic_rules" %}rules of exponentiation{%endintlink%} to  calculate that the result is
 $$c= 2^3 = 8.$$
 </p>
 
@@ -30,13 +30,13 @@ for any given number $c$.  In other words, the logarithm gives the exponent as t
 \end{align*}
 </p>
 
-<p>Just like we can change the base $b$ for the {% intlink exponential_function%}exponential function{%endintlink%}, we can also change the base $b$ for the logarithmic function.  The logarithm with base $b$ is defined so that
+<p>Just like we can change the base $b$ for the {% intlink "exponential_function" %}exponential function{%endintlink%}, we can also change the base $b$ for the logarithmic function.  The logarithm with base $b$ is defined so that
 $$\log_b c = k$$
 is the solution to the problem 
 $$b^k=c$$
 for any given number $c$ and any base $b$.</p>
 
-<p>For example, since we can calculate that $10^3=1000$, we know that $\log_{10} 1000 = 3$ (&ldquo;log base 10 of 1000 is 3&rdquo;).  Using base 10 is fairly common.  But, since in science, we typically use {% intlink exponential_function exponent_base_e %}exponents with base $e${%endintlink%}, it's even more natural to use $e$ for the base of the logarithm.  This natural logarithm is frequently denoted by $\ln(x)$, i.e., 
+<p>For example, since we can calculate that $10^3=1000$, we know that $\log_{10} 1000 = 3$ (&ldquo;log base 10 of 1000 is 3&rdquo;).  Using base 10 is fairly common.  But, since in science, we typically use {% intlink "exponential_function" anchor="exponent_base_e" %}exponents with base $e${%endintlink%}, it's even more natural to use $e$ for the base of the logarithm.  This natural logarithm is frequently denoted by $\ln(x)$, i.e., 
 $$\ln(x) = \log_e x.$$
 In other words,
 \begin{gather}
@@ -55,7 +55,7 @@ Since using base $e$ is so natural to mathematicians, they will sometimes just u
 {% navigation_tag "rules" "Basic rules" %}
 <h4>Basic rules for logarithms</h4>
 
-<p>Since taking a logarithm is the opposite of exponentiation (more precisely, the logarithmic function $\log_b x$ is the {% intlink inverse_function_definition%}inverse function{%endintlink%} of the {%intlink exponential_function%}exponential function{%endintlink%} $b^x$), we can derive the basic rules for logarithms from the {% intlink exponentiation_basic_rules %}basic rules for exponents{%endintlink%}.</p>
+<p>Since taking a logarithm is the opposite of exponentiation (more precisely, the logarithmic function $\log_b x$ is the {% intlink "inverse_function_definition" %}inverse function{%endintlink%} of the {% intlink "exponential_function" %}exponential function{%endintlink%} $b^x$), we can derive the basic rules for logarithms from the {% intlink "exponentiation_basic_rules" %}basic rules for exponents{%endintlink%}.</p>
 
 <p>For simplicity, we'll write the rules in terms of the natural logarithm $\ln(x)$.  The rules apply for any logarithm $\log_b x$, except that you have to replace any occurence of $e$ with the new base $b$.</p>
 
@@ -84,7 +84,7 @@ These equations simply state that $e^x$ and $\ln x$ are inverse functions.  We'l
 {% navigation_tag "product" "Basic rules" "Product rule" %}
 <h5>The product rule</h5>
 
-<p>We can use the {% intlink exponentiation_basic_rules product %}product rule for exponentiation{% endintlink%} to derive a corresponding product rule for logarithms.  Using the base $b=e$, the product rule for exponentials is
+<p>We can use the {% intlink "exponentiation_basic_rules" anchor="product" %}product rule for exponentiation{% endintlink%} to derive a corresponding product rule for logarithms.  Using the base $b=e$, the product rule for exponentials is
 \begin{gather*}
 e^ae^b = e^{a+b}
 \end{gather*}
@@ -111,7 +111,7 @@ $$\ln(xy) =\ln(x)+\ln(y).$$
 {% navigation_tag "quotient" "Basic rules" "Quotient rule" %}
 <h5>The quotient rule</h5>
 
-<p>The quotient rule for logarithms follows from the {% intlink exponentiation_basic_rules quotient %}quotient rule for exponentiation{% endintlink%},
+<p>The quotient rule for logarithms follows from the {% intlink "exponentiation_basic_rules" anchor="quotient" %}quotient rule for exponentiation{% endintlink%},
 \begin{gather*}
 \frac{e^a}{e^b} = e^{a-b}
 \end{gather*}
@@ -130,7 +130,7 @@ $$\ln(x/y) = \ln(x)-\ln(y).$$
 {% navigation_tag "log_power" "Basic rules" "Log of a power" %}
 <h5>Log of a power</h5>
 
-<p>To obtain the rule for the log of a power, we start with the rule for {% intlink exponentiation_basic_rules power_power %}power of a power{% endintlink%},
+<p>To obtain the rule for the log of a power, we start with the rule for {% intlink "exponentiation_basic_rules" anchor="power_power" %}power of a power{% endintlink%},
 \begin{gather}
   (e^a)^b = e^{ab}.
 \end{gather}
@@ -149,7 +149,7 @@ which is the rule for the log of a power.</p>
 {% navigation_tag "log_e" "Basic rules" "Log of $e$" %}
 <h5>Log of $e$</h5>
 
-<p>The formula for the log of $e$ comes from the formula for the  {% intlink exponentiation_basic_rules power_one %}power of one{% endintlink%},
+<p>The formula for the log of $e$ comes from the formula for the  {% intlink "exponentiation_basic_rules" anchor="power_one" %}power of one{% endintlink%},
 $$e^1=e.$$
 Just take the logarithm of both sides of this equation and use equation \eqref{lnexpinversesb} to conclude that 
 \begin{align*}
@@ -160,7 +160,7 @@ Just take the logarithm of both sides of this equation and use equation \eqref{l
 {% navigation_tag "log_one" "Basic rules" "Log of one" %}
 <h5>Log of one</h5>
 
-<p>The formula for the log of one comes from the formula for the  {% intlink exponentiation_basic_rules power_zero %}power of zero{% endintlink%},
+<p>The formula for the log of one comes from the formula for the  {% intlink "exponentiation_basic_rules" anchor="power_zero" %}power of zero{% endintlink%},
 $$e^0=1.$$
 Just take the logarithm of both sides of this equation and use equation \eqref{lnexpinversesb} to conclude that 
 \begin{align*}
@@ -171,7 +171,7 @@ Just take the logarithm of both sides of this equation and use equation \eqref{l
 {% navigation_tag "log_reciprocal" "Basic rules" "Log of reciprocal" %}
 <h5>Log of reciprocal</h5>
 
-<p>The rule for the log of a reciprocal follows from the rule for the {% intlink exponentiation_basic_rules power_negative_one %}power of negative one{% endintlink%} 
+<p>The rule for the log of a reciprocal follows from the rule for the {% intlink "exponentiation_basic_rules" anchor="power_negative_one" %}power of negative one{% endintlink%} 
 $$x^{-1}=\frac{1}{x}$$
 and the above rule for the <a href="#log_power">log of a power</a>.  Just substitute $y=-1$ into the the log of power rule, and you have that
 $$\ln(1/x) = - \ln (x).$$</p>

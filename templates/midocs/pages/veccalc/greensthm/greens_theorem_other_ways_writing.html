@@ -3,7 +3,7 @@
 {% title "Other ways of writing Green's theorem" %}
 {% description "Small variations in the way you can write Green's theorem" %}
 
-<p>In the {% intlink greens_theorem_idea %}introductory page on Green's theorem{%endintlink%}, we wrote Green's theorem as
+<p>In the {% intlink "greens_theorem_idea" %}introductory page on Green's theorem{%endintlink%}, we wrote Green's theorem as
 \begin{align*}
   \dlint = \iint_\dlr (\curl \dlvf) \cdot \vc{k} \, dA
 \end{align*}
@@ -15,12 +15,12 @@ where $\dlvf(x,y) = (\dlvfc_1(x,y),\dlvfc_2(x,y))$ is a
 two-dimensional vector field, $\dlr$ is a region in plane, and $\dlc$
 is its positively oriented boundary.  This notation to ties
 Green's theorem nicely in with the concept of the 
-{%intlink curl_idea %}curl of a vector field{%endintlink%}.</p>
+{% intlink "curl_idea" %}curl of a vector field{%endintlink%}.</p>
 
 <p>We often denote $\dlc$ by $\partial \dlr$ to make it explicit that the
 curve $\dlc$ is the (positively oriented) boundary of $\dlr$.  This
 notation is also more natural when the region $\dlr$
-{% intlink greens_theorem_multiple_boundary_components %}has more than one boundary component{%endintlink%}.  Then, Green's theorem can
+{% intlink "greens_theorem_multiple_boundary_components" %}has more than one boundary component{%endintlink%}.  Then, Green's theorem can
 look like, for example,
 \begin{align*}
   \lint{\partial \dlr}{\dlvf} = \iint_\dlr \left(
@@ -46,6 +46,6 @@ Q(x,y))$, so that Green's theorem becomes
 <p>Sometimes, $\vc{F} = (P,Q)$ won't be referred to as a vector field.
 Instead, one can discuss the above version of Green's theorem as
 applied to the two scalar valued functions $Q : \dlr \to \R$ and $P :
-\dlr \to \R$ {% confusedlink function_notation %}.</p>
+\dlr \to \R$ {% confusedlink "function_notation" %}.</p>
 
 {% endblock %}

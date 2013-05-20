@@ -68,7 +68,7 @@ bounded by the cone $z=\sqrt{x^2+y^2}$ and the half-sphere $z =
 
 {% boxedapplet "ice_cream_cone_region" %}
 
-<p><b>Solution</b>:  We'll use the {% intlink triple_integral_shadow_method %}shadow method{%endintlink%} to set up the bounds on the integral.  This means we'll write the triple integral as a double integral on the outside and a single integral on the inside of the form
+<p><b>Solution</b>:  We'll use the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%} to set up the bounds on the integral.  This means we'll write the triple integral as a double integral on the outside and a single integral on the inside of the form
 \begin{gather*}
   \iint_{\textit{shadow}} \int_{\textit{bottom}}^{\textit{top}} f(x,y,z).
 \end{gather*}
@@ -157,9 +157,9 @@ integral of the function $f(x,y,z)$ over $\dlv$ is
   \int_{\sqrt{x^2+y^2}}^{\sqrt{1-x^2-y^2}}
   dz\,dy\,dx.
 \end{align*}
-We won't attempt to evaluate this integral in {% intlink cartesian_coordinates%}rectangular
-coordinates{%endintlink%}.  Once you've learned how to {%intlink triple_integral_change_variables_story%}change variables in triple integrals{%endintlink%}, you can 
-{%intlink triple_integral_change_variable_examples%}read how to compute the integral{%endintlink%} using {% intlink spherical_coordinates %}spherical coordinates{%endintlink%}.</p>
+We won't attempt to evaluate this integral in {% intlink "cartesian_coordinates" %}rectangular
+coordinates{%endintlink%}.  Once you've learned how to {% intlink "triple_integral_change_variables_story" %}change variables in triple integrals{%endintlink%}, you can 
+{% intlink "triple_integral_change_variable_examples" %}read how to compute the integral{%endintlink%} using {% intlink "spherical_coordinates" %}spherical coordinates{%endintlink%}.</p>
 
 
 {% navigation_tag "example4" "Examples" "Example 4" %}
@@ -172,14 +172,14 @@ planes and the plane through $(2,0,0)$, $(0,3,0)$, and $(0,0,1)$.</p>
 
 <p><b>Solution</b>:
 We know the equation for three of the surfaces of the tetrahedron, as they are the equations for the coordinates planes: $x=0$, $y=0$, and $z=0$.  As an initial step, we can find the equation for the angled plane.  You can follow
-the procedure in the {% intlink forming_plane_examples example2 %}second forming plane example{%endintlink%} to calculate that the plane is given by the equation
+the procedure in the {% intlink "forming_plane_examples" anchor="example2" %}second forming plane example{%endintlink%} to calculate that the plane is given by the equation
 \begin{align}
   3x + 2y + 6z = 6.
   \label{plane_equation}
 \end{align}
 </p>
 
-<p>To find the limits of the tetrahedron, we'll use the {% intlink triple_integral_shadow_method %}shadow method{%endintlink%} again, but this time, we'll think of the $y$-axis as being the vertical axis.  You can imagine the sun that is casting the shadow as being at some point far on the positive $y$-axis.  </p>
+<p>To find the limits of the tetrahedron, we'll use the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%} again, but this time, we'll think of the $y$-axis as being the vertical axis.  You can imagine the sun that is casting the shadow as being at some point far on the positive $y$-axis.  </p>
 
 <p>With this orientation, the shadow of the tetrahedron is the maximal range of $x$ and $z$ over the tetrahedron.  Since the tetrahedron gets wider in the $x$ and $z$ directions as $y$ decreases, the shadow of the tetrahedron is exactly the base of the tetrahedron in the $xz$-plane (the plane $y=0$), which is the triangle pictured below.</p>
 
@@ -269,7 +269,7 @@ or
 {% navigation_tag "moreexamples" "Examples" "More examples" %}
 <h4>More examples</h4>
 
-<p>More examples of calculating triple integrals can be found in the pages describing the {% intlink triple_integral_shadow_method%}shadow method{%endintlink%} and {% intlink triple_integral_cross_section_method%}cross section method{%endintlink%} of determining integration bounds.</p>
+<p>More examples of calculating triple integrals can be found in the pages describing the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%} and {% intlink "triple_integral_cross_section_method" %}cross section method{%endintlink%} of determining integration bounds.</p>
 
 {% endblock %}
 

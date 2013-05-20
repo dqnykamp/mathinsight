@@ -10,7 +10,7 @@
 
 {% image "area_under_curve_shaded" %}
 
-<p>Since the region under the curve has such a strange shape, calculating its area is too difficult.  But calculating the area of rectangles is simple.  Let's simplify our life by pretending the region is composed of a bunch of rectangles.  To turn the region into rectangles, we'll use a similar strategy as we did to {% intlink using_forward_euler_solve_pure_time_differential_equations %}use Forward Euler to solve pure-time differential equations{%endintlink%}.</p>
+<p>Since the region under the curve has such a strange shape, calculating its area is too difficult.  But calculating the area of rectangles is simple.  Let's simplify our life by pretending the region is composed of a bunch of rectangles.  To turn the region into rectangles, we'll use a similar strategy as we did to {% intlink "using_forward_euler_solve_pure_time_differential_equations" %}use Forward Euler to solve pure-time differential equations{%endintlink%}.</p>
 
 <p>As illustrated in the following figure, we divide the interval $[a,b]$ into $n$ subintervals of length $\Delta x$ (where $\Delta x$ must be $(b-a)/n$).  We label the endpoints of the subintervals by $x_0$, $x_1$, etc., so that the leftmost point is $a=x_0$ and the rightmost point is $b=x_n$.  The picture shows the case with four subintervals.</p>
 
@@ -20,7 +20,7 @@
 
 <p>Let's number the $n$ subintervals by $i=0,1,2, \ldots, n-1$.  Then, the left endpoint of subinterval number $i$ is $x_i$ and its right endpoint is $x_{i+1}$.  We are imagining that the height of $f$ over the entire subinterval is $f(x_{i})$, the value of $f$ at the left endpoint.  Since the width of the rectangle is $\Delta x$, its area is $f(x_{i})\Delta x$. </p>
 
-<p>To estimate the area under the graph of $f$ with this approximation, we just need to add up the areas of all the rectangles.  Using {% intlink using_forward_euler_solve_pure_time_differential_equations summation %}summation notation{%endintlink%}, the sum of the areas of all $n$ rectangles for $i=0, 1, \ldots, n-1$ is
+<p>To estimate the area under the graph of $f$ with this approximation, we just need to add up the areas of all the rectangles.  Using {% intlink "using_forward_euler_solve_pure_time_differential_equations" anchor="summation" %}summation notation{%endintlink%}, the sum of the areas of all $n$ rectangles for $i=0, 1, \ldots, n-1$ is
 \begin{align}
   \text{Area of rectangles} = \sum_{i=0}^{n-1} f(x_{i}) \Delta x.
   \label{left_riemann}
@@ -45,7 +45,7 @@ This sum is called a Riemann sum.</p>
 \end{align*}
 The integral sign $\int$ refers to a sum just like summation sign $\sum$.  (OK, it's a sum over an infinite number of terms, whatever that means, but let's not get hung up on that.)  When we integrate a function $f$ from $a$ to $b$, we are just adding up values of $f(x)$ for $x$ going from $a$ to $b$.</p>
 
-<p>Another important thing to remember is that the definite integral $\int_a^bf(x)dx$ is just a single number.  This fact is in contrast to the {% intlink indefinite_integral_intuition %}indefinite integral{%endintlink%} $\int f(x)dx$, which, although it looks similar, is something different.  The indefinite integral $\int f(x)dx$ is a function (actually a whole family of functions, as you can add an arbitrary constant).  When you add the <em>limits of integration</em> $a$ and $b$, the expression turns into a definite integral $\int_a^b f(x)dx$, which is just a number.  In this case, we are viewing the number as the area under the function $f$ over the interval $[a,b]$.</p>
+<p>Another important thing to remember is that the definite integral $\int_a^bf(x)dx$ is just a single number.  This fact is in contrast to the {% intlink "indefinite_integral_intuition" %}indefinite integral{%endintlink%} $\int f(x)dx$, which, although it looks similar, is something different.  The indefinite integral $\int f(x)dx$ is a function (actually a whole family of functions, as you can add an arbitrary constant).  When you add the <em>limits of integration</em> $a$ and $b$, the expression turns into a definite integral $\int_a^b f(x)dx$, which is just a number.  In this case, we are viewing the number as the area under the function $f$ over the interval $[a,b]$.</p>
 
 
 {% navigation_tag "right" "Right" %}
@@ -68,9 +68,9 @@ The only difference from the left Riemann sum \eqref{left_riemann} is that we ev
 {% navigation_tag "fearea" "FE and area" %}
 <h4>Forward Euler and area</h4>
 
-<p>This method for computing area should seem familiar.  It should remind you of how we  {% intlink using_forward_euler_solve_pure_time_differential_equations %}used Forward Euler to solve pure time differential equations{%endintlink%}. To make the connection even clearer, let's change our variable name from $x$ to $t$.  (The variable name doesn't matter, after all, and $t$ makes more sense so we can talk about time. )  Then, our definite integral is $\int_a^bf(t)dt$ and the corresponding indefinite integral is $\int f(t)dt$.</p>
+<p>This method for computing area should seem familiar.  It should remind you of how we  {% intlink "using_forward_euler_solve_pure_time_differential_equations" %}used Forward Euler to solve pure time differential equations{%endintlink%}. To make the connection even clearer, let's change our variable name from $x$ to $t$.  (The variable name doesn't matter, after all, and $t$ makes more sense so we can talk about time. )  Then, our definite integral is $\int_a^bf(t)dt$ and the corresponding indefinite integral is $\int f(t)dt$.</p>
 
-<p>To make our Forward Euler result be similar to the area estimation problem, let's use $A(t)$ for the variable in a pure-time differential equation, writing it as $\diff{A}{t}=f(t)$.  If we make the initial condition be $A(a)=0$, then Forward Euler approximates the solution $A(t)$, i.e., the antiderivative $A(t)=\int f(t)dt$ that has $A(a)=0$.  By comparing the sum we wrote for Forward Euler ({% intlinkeq using_forward_euler_solve_pure_time_differential_equations fe_sum %} from the Forward Euler page{%endintlinkeq%}) and the left Riemann sum \eqref{left_riemann}, we should be able to convince ourselves that they are the same when the initial condition is zero. </p>
+<p>To make our Forward Euler result be similar to the area estimation problem, let's use $A(t)$ for the variable in a pure-time differential equation, writing it as $\diff{A}{t}=f(t)$.  If we make the initial condition be $A(a)=0$, then Forward Euler approximates the solution $A(t)$, i.e., the antiderivative $A(t)=\int f(t)dt$ that has $A(a)=0$.  By comparing the sum we wrote for Forward Euler ({% intlink "using_forward_euler_solve_pure_time_differential_equations" equation="fe_sum" %}equation (tag) from the Forward Euler page{% endintlink %}) and the left Riemann sum \eqref{left_riemann}, we should be able to convince ourselves that they are the same when the initial condition is zero. </p>
 
 <p> To emphasize this correspondence between the Forward Euler approximation and the left Riemann sum for area, we made the Forward Euler applets and the area applets in a similar manner.   For the area applets, we used rectangles to estimate the definite integral $\int_a^bf(t)dt$.  But if you relabel some variables, then the calculation is essentially the same as the Forward Euler calculation.  Below, we made an applet that you can transform between the area calculation case and the Forward Euler case that we hope will make the parallel clear.</p>
 
@@ -80,7 +80,7 @@ The only difference from the left Riemann sum \eqref{left_riemann} is that we ev
 
 <p>To calculate the area under the curve, is it essential that we keep $A(a)=0$?  Or, if we let $A(a)$ be another value, can we still estimate the area from the result?  Using a different value of $A(a)$ for the Forward Euler calculation means that it estimates a different antiderivative (since the initial condition determines the arbitrary constant).  How do we get the area of the region under the graph of $f$ regardless of which antiderivative we use?</p>
 
-<p>The answer lies by comparing the Forward Euler solution to the area solution.  We can rewrite {% intlinkeq using_forward_euler_solve_pure_time_differential_equations fe_sum %} from the Forward Euler page{%endintlinkeq%} in the notation used for this page:
+<p>The answer lies by comparing the Forward Euler solution to the area solution.  We can rewrite {% intlink "using_forward_euler_solve_pure_time_differential_equations" equation="fe_sum" %}equation (tag) from the Forward Euler page{% endintlink %} in the notation used for this page:
 \begin{align}
   A(b) &\approx 
   A(a) + \sum_{i=0}^{n-1}f(t_i)\Delta t.

@@ -15,16 +15,16 @@
 {% navigation_tag "model" "Growth model" %}
 <h4>The growth model</h4>
 
-<p>A critical first step, you realize, is to develop a mathematical model of how the rabbit population is growing.  You employ a team of counters to sample the rabbit population each month in various locations across the island.  They report back that the rabbit population seems to be increasing by 20% each month.  Based on this information, you postulate the following {% intlink discrete_dynamical_system_introduction %}model{%endintlink%} for rabbit population growth.</p>
+<p>A critical first step, you realize, is to develop a mathematical model of how the rabbit population is growing.  You employ a team of counters to sample the rabbit population each month in various locations across the island.  They report back that the rabbit population seems to be increasing by 20% each month.  Based on this information, you postulate the following {% intlink "discrete_dynamical_system_introduction" %}model{%endintlink%} for rabbit population growth.</p>
 
-<p>You let the {%intlink variable_definition%}variable{%endintlink%} $p_t$ be the number of rabbits in month $t$.  The change in rabbit population from month $t$ to month $t+1$ is $p_{t+1}-p_t$, which you set equal to 20% of the population $p_t$ at the beginning of month:
+<p>You let the {% intlink "variable_definition" %}variable{%endintlink%} $p_t$ be the number of rabbits in month $t$.  The change in rabbit population from month $t$ to month $t+1$ is $p_{t+1}-p_t$, which you set equal to 20% of the population $p_t$ at the beginning of month:
 \begin{gather}
   p_{t+1}-p_t = 0.2 p_t.
   \label{freemodelnoparameters}
 \end{gather}
 </p>
 
-<p>After creating this model, you decide to replace the fixed fraction of 0.2 with a {% intlink parameter_definition%}parameter{%endintlink%} $r$ that you could change, to explore what would happen if the rabbit counters were a bit off in their estimate of the growth rate.  You end up with the model
+<p>After creating this model, you decide to replace the fixed fraction of 0.2 with a {% intlink "parameter_definition" %}parameter{%endintlink%} $r$ that you could change, to explore what would happen if the rabbit counters were a bit off in their estimate of the growth rate.  You end up with the model
 \begin{gather}
    p_{t+1}-p_t = r p_t,
   \label{freemodel}
@@ -38,7 +38,7 @@ where you tentatively set $r=0.2$.</p>
 {% navigation_tag "strategies" "Strategies" %}
 <h4>Control strategies</h4>
 
-<p>Leaving the rabbit population to grow rapidly according to equation \eqref{freemodel} is definitely not a viable option.   (Try the {% appletlink "function_iteration" %}function iteration applet{%endappletlink%} with $f(x)=1.2x$ to see what happens when a value increases by 20% at each iteration.)  The island is beginning to be overrun by rabbits.  Despite the objections of the children, you will implement a control strategy that will involve trapping rabbits or hunting rabbits to reduce their numbers.  Your problem is to figure out how many rabbits you should remove each month in order to maintain a stable population of around a thousand rabbits.</p>
+<p>Leaving the rabbit population to grow rapidly according to equation \eqref{freemodel} is definitely not a viable option.   (Try the {% intlink "function_iteration" class="applet" %}function iteration applet{% endintlink %} with $f(x)=1.2x$ to see what happens when a value increases by 20% at each iteration.)  The island is beginning to be overrun by rabbits.  Despite the objections of the children, you will implement a control strategy that will involve trapping rabbits or hunting rabbits to reduce their numbers.  Your problem is to figure out how many rabbits you should remove each month in order to maintain a stable population of around a thousand rabbits.</p>
 
 {% navigation_tag "fixednumber" "Strategies" "Fixed removal" %}
 <h5>1. Removing a fixed number</h5>
@@ -110,6 +110,6 @@ where $b$ is the proportionality constant.</p>
 
 <p>If you cannot find a function $h(p_t)$ that gives a stable population of around a thousand rabbits, explain what you tried and why your attempts didn't work.  Given that you couldn't get your model to give you a reasonable answer, what are you going to do about the rabbits?</p>
 
-<p>See the {% intlink controlling_rabbit_population_worksheet %}controlling rabbit population worksheet{%endintlink%} for questions about the rabbit control plan.</p>
+<p>See the {% intlink "controlling_rabbit_population_worksheet" %}controlling rabbit population worksheet{%endintlink%} for questions about the rabbit control plan.</p>
   
 {% endblock %}

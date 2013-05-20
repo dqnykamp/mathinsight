@@ -3,28 +3,28 @@
 {% index_entry "circulation" "microscopic"%}
 {% title "The definition of curl from line integrals" %}
 {% description "How the curl of a vector field is defined by line integrals representing circulation." %}
-<p>We can get a {% intlink curl_components %}pretty good intuition{%endintlink%}
+<p>We can get a {% intlink "curl_components" %}pretty good intuition{%endintlink%}
 behind the formula for the components of the curl by just visualizing
 spinning spheres immersed in fluid.  
 However, to really master curl and the meaning of its components,
 you need to understand the basis of curl from the 
-{% intlink line_integral_circulation %}circulation{%endintlink%} that is
+{% intlink "line_integral_circulation" %}circulation{%endintlink%} that is
 captured by 
-{%intlink line_integral_vector_field_introduction %}line integrals{%endintlink%}.</p>
+{% intlink "line_integral_vector_field_introduction" %}line integrals{%endintlink%}.</p>
 
 <p>In fact, the way one formally defines the curl of a vector field is 
 through line integrals.  
 We define the vector $\curl \dlvf$ by prescribing an expression for
 any component $\curl \dlvf \cdot \vc{u}$ of the curl vector in the direction
-of the {% intlink unit_vector_definition %}unit vector{% endintlink%} $\vc{u}$.
+of the {% intlink "unit_vector_definition" %}unit vector{% endintlink%} $\vc{u}$.
 To define the curl at a point $\vc{a} \in \R^3$, we let $\dlc$ 
-be a {% intlink closed_curve_definition %}closed curve{%endintlink%} around $\vc{a}$ lying in a plane perpendicular to $\vc{u}$.
+be a {% intlink "closed_curve_definition" %}closed curve{%endintlink%} around $\vc{a}$ lying in a plane perpendicular to $\vc{u}$.
 We orient $\dlc$ by the right-hand rule, so that when the fingers of your
 right hand curl in the direction of the orientation of $\dlc$, 
 your right thumb points in the direction of $\vc{u}$.</p>
 
-<p>The circulation of the vector field $\dlvf: \R^3 \to \R^3$ {% confusedlink function_notation %} around 
-$\dlc$ is given by the {% intlink line_integral_circulation%}line integral{%endintlink%} of $\dlvf$ around $\dlc$: $\dlint.$ 
+<p>The circulation of the vector field $\dlvf: \R^3 \to \R^3$ {% confusedlink "function_notation" %} around 
+$\dlc$ is given by the {% intlink "line_integral_circulation" %}line integral{%endintlink%} of $\dlvf$ around $\dlc$: $\dlint.$ 
 The line integral is just a number, and if we divide it by the area inside $\dlc$, which we'll denote by $A(\dlc)$, 
 we get an expression for the circulation per unit area:
 $$\frac{1}{A(\dlc)} \dlint.$$</p>
@@ -44,10 +44,10 @@ doesn't depend on the choice of $\dlc$.  But we won't address those details
 here.  Let's just assume this definition works out.</p>
 
 <p>We can use this definition to set up line integrals that 
-should give the {% intlink curl_components %}formulas for the curl 
+should give the {% intlink "curl_components" %}formulas for the curl 
 components{%endintlink%} in the directions of the standard unit vectors.
 Let's focus on the $z$ component $\curl \dlvf \cdot \vc{k}$.
-We {% intlink curl_components %}can visualize this component{%endintlink%}
+We {% intlink "curl_components" %}can visualize this component{%endintlink%}
 as the rotation of a ball on a rod parallel to the $z$-axis.</p>
 
 {% boxedapplet "z_component_curl_sphere" %}
@@ -72,7 +72,7 @@ on the rod spin.</p>
 
 <p>To obtain a formula for $\curl \dlvf \cdot \vc{k}$, we need to choose
 a particular $\dlc$.  The simplest case is to make $\dlc$ be a rectangle.
-You can {% intlink circulation_unit_area_calculation %}read a sketch of the
+You can {% intlink "circulation_unit_area_calculation" %}read a sketch of the
 proof{% endintlink %} why for such a $\dlc$, we obtain that the $z$-component 
 of the curl is
 \begin{align*}
@@ -82,6 +82,6 @@ of the curl is
 
 <p>One can perform similar calculations to determine the formulas for the
 other components of the curl, as given in the
-{% intlink curl_components %}page introducing the curl components{%endintlink%}.
+{% intlink "curl_components" %}page introducing the curl components{%endintlink%}.
 </p>
 {% endblock %}

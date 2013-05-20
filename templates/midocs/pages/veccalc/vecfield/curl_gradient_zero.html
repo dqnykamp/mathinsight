@@ -4,14 +4,14 @@
 {% description "Calculation showing that the curl of a gradient is zero." %}
 
 <p>Let $f(x,y,z)$ be a scalar-valued function.  Then its
-{%intlink gradient_vector %}gradient{%endintlink%}
+{% intlink "gradient_vector" %}gradient{%endintlink%}
 $$\nabla f(x,y,z) = \left(\pdiff{f}{x}(x,y,z),\pdiff{f}{y}(x,y,z),\pdiff{f}{z}(x,y,z)\right)$$
 is a vector field, which we denote by $\dlvf = \nabla f$.
-We can easily calculate that the {%intlink curl_idea %}curl{%endintlink%}
+We can easily calculate that the {% intlink "curl_idea" %}curl{%endintlink%}
 of $\dlvf$ is zero.</p>
 
 <p>We use the formula for $\curl\dlvf$ in terms of 
-{%intlink curl_components %}its components{%endintlink%}
+{% intlink "curl_components" %}its components{%endintlink%}
 $$\curl \dlvf = \left(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}{z} -
   \pdiff{\dlvfc_3}{x}, \pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y} \right).$$
 Since each component of $\dlvf$ is a derivative of $f$, we can rewrite the curl as

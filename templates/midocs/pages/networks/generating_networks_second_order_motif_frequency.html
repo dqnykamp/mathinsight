@@ -3,7 +3,7 @@
 {% title "Generating networks with a desired second order motif frequency" %}
 {% description "An approach to generating networks with given frequency of second order connection motifs." %}
 
-<p>One way to add structure beyond the {% intlink simplest_type_of_network %}Erdös-Rényi random network{%endintlink%} (ER random network) is to generate ensembles of networks with a {% intlink generating_networks_desired_degree_distribution %}prescribed degree distribution{%endintlink%}.  Here we describe another approach: modulating the frequencies of small {% intlink evidence_additional_structure_real_networks motifs %}network motifs{% endintlink%} in {% intlink directed_graph_definition%}directed graphs{%endintlink%}.</p>
+<p>One way to add structure beyond the {% intlink "simplest_type_of_network" %}Erdös-Rényi random network{%endintlink%} (ER random network) is to generate ensembles of networks with a {% intlink "generating_networks_desired_degree_distribution" %}prescribed degree distribution{%endintlink%}.  Here we describe another approach: modulating the frequencies of small {% intlink "evidence_additional_structure_real_networks" anchor="motifs" %}network motifs{% endintlink%} in {% intlink "directed_graph_definition" %}directed graphs{%endintlink%}.</p>
 
 {% navigation_tag "motifs" "Motifs" %}
 <h4>Network motifs</h4>
@@ -60,7 +60,7 @@
 {% navigation_tag "generating" "Generating" %}
 <h4>Generating networks with given expected motif frequencies</h4>
 
-<p>One can view the {% intlink simplest_type_of_network %}ER random network{% endintlink%}, as a probability distribution parametrized by the expected relative frequency of the single-edge motif, which is the same as the connection probability.</p>
+<p>One can view the {% intlink "simplest_type_of_network" %}ER random network{% endintlink%}, as a probability distribution parametrized by the expected relative frequency of the single-edge motif, which is the same as the connection probability.</p>
 
 {% image "network_single_edge_labeled" width=200 %}
 
@@ -69,11 +69,11 @@
 \Pr(A_{ij}=1)=E(A_{ij})=p,
  \label{probedge}
 \end{gather} where the expected value $E(\cdot)$ is computed over the probability distribution of the adjacency matrix, 
- {%intlinkeq random_network probability_adjacency_matrix %}of the random network page{%endintlinkeq%}.</p>
+ {% intlink "random_network" equation="probability_adjacency_matrix" %}equation (tag) of the random network page{% endintlink %}.</p>
 
 <p>In the ER random network, the second order connectivity motifs will occur, too.  But, we cannot independently specify their frequencies.  Since all edges occur independently with probability $p$, any pair of edges (such as the two-edge motifs) must occur with probability $p^2$.  (The probability of two independent random variables is the product of their individual probabilities.)</p>
 
-<p>Given that real world networks motif frequencies {% intlink evidence_additional_structure_real_networks motifs %}differ from the ER prediction{% endintlink%}, we'd like to generate networks where the two-connection motifs occur at frequencies other than $p^2$.  We introduce four more parameters, $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$, through which to specify the frequencies of the reciprocal, convergent, divergent, and chain motifs, respectively.  We define each $\alpha$ to indicate deviation from the ER model, so if an $\alpha$ is zero, the corresponding motif will appear with probability $p^2$.  The definitions of the four $\alpha$ parameters in terms of the probability of the respective motif are as follows.</p>
+<p>Given that real world networks motif frequencies {% intlink "evidence_additional_structure_real_networks" anchor="motifs" %}differ from the ER prediction{% endintlink%}, we'd like to generate networks where the two-connection motifs occur at frequencies other than $p^2$.  We introduce four more parameters, $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$, through which to specify the frequencies of the reciprocal, convergent, divergent, and chain motifs, respectively.  We define each $\alpha$ to indicate deviation from the ER model, so if an $\alpha$ is zero, the corresponding motif will appear with probability $p^2$.  The definitions of the four $\alpha$ parameters in terms of the probability of the respective motif are as follows.</p>
 
 
 <div class="ym-grid ym-equalize linearize-level-2">
@@ -117,7 +117,7 @@
 </p>
 
 
-<p>For ER random networks, it is a simple matter to {% intlink simplest_type_of_network %}generate a network with given edge probability{% endintlink%}, as we can generate the random number for each edge independently using equation \eqref{probedge}.  However, when we break this independence by adding correlations among the edges through nonzero $\alpha$'s, the process of generating a network with the required statistics is more subtle.  It turns out one can define a random network model based on these statistics, the SONET (second order network) model{% citation "zhao_et_al_fcn_2011" %} and sample networks with different values of the $\alpha$'s.  In this way, we obtain a probability distribution for the network parametrized by the first order statistic $p$ and the second order statistics  $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$.</p>
+<p>For ER random networks, it is a simple matter to {% intlink "simplest_type_of_network" %}generate a network with given edge probability{% endintlink%}, as we can generate the random number for each edge independently using equation \eqref{probedge}.  However, when we break this independence by adding correlations among the edges through nonzero $\alpha$'s, the process of generating a network with the required statistics is more subtle.  It turns out one can define a random network model based on these statistics, the SONET (second order network) model{% citation "zhao_et_al_fcn_2011" %} and sample networks with different values of the $\alpha$'s.  In this way, we obtain a probability distribution for the network parametrized by the first order statistic $p$ and the second order statistics  $\alpha_{\text{recip}}$, $\alpha_{\text{conv}}$, $\alpha_{\text{div}}$, and $\alpha_{\text{chain}}$.</p>
 
 
 

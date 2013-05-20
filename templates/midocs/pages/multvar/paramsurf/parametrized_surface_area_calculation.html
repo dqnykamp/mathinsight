@@ -4,10 +4,10 @@
 {% title "Calculation of the surface area of a parametrized surface" %}
 {% description "A calculation deriving the expression for the surface area of a parametrized surface." %}
 
-<p>A {%intlink parametrized_surface_introduction %}parametrized surface{%endintlink%}
-is a mapping by a function $\dlsp: \R^2 \to \R^3$ {% confusedlink function_notation %} of a planar region $\dlr$
+<p>A {% intlink "parametrized_surface_introduction" %}parametrized surface{%endintlink%}
+is a mapping by a function $\dlsp: \R^2 \to \R^3$ {% confusedlink "function_notation" %} of a planar region $\dlr$
 onto a surface floating in three dimensions.
-To {% intlink parametrized_surface_area %}calculate the area{%endintlink%}
+To {% intlink "parametrized_surface_area" %}calculate the area{%endintlink%}
 of this surface, we chop up the region $\dlr$ into small rectangles, 
 as displayed below for the function 
 \begin{align*}
@@ -55,7 +55,7 @@ small, the other side of the parallelogram is approximatly
 \end{align*}</p>
 
 <p> The area of a parallegram
-spanned by these vectors is the {%intlink cross_product%}magnitude of their cross product{%endintlink%}.  The
+spanned by these vectors is the {% intlink "cross_product" %}magnitude of their cross product{%endintlink%}.  The
 area of the &ldquo;curvy rectangle&rdquo; is approximately
 \begin{align*}
   \Delta A=\left\|\pdiff{\dlsp}{\spfv}(\spfv,\spsv)
@@ -72,6 +72,6 @@ to a double integral, and we find that the total surface area is
   \right\|\right.
   d\spfv\,d\spsv
 \end{align*}
-as {% intlink parametrized_surface_area %}promised{%endintlink%}.</p>
+as {% intlink "parametrized_surface_area" %}promised{%endintlink%}.</p>
 
 {%endblock%}

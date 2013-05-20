@@ -32,7 +32,7 @@ something called the <i>generalized Stokes' theorem</i>.</p>
 
 <p>Recognizing the similarity of the four fundamental theorems can
 help you understand and remember them.  Here we summarize the theorems and
-outline their relationships to the {%intlink integrals_multivariable_calculus_summary %}various integrals{%endintlink%} you learned in multivariable calculus.</p>
+outline their relationships to the {% intlink "integrals_multivariable_calculus_summary" %}various integrals{%endintlink%} you learned in multivariable calculus.</p>
 
 <p class="pre_list">The fundamental theorems are:</p>
 <ol><li><a href="#gradientthm">the gradient theorem for line integrals</a>,</li>
@@ -44,24 +44,24 @@ outline their relationships to the {%intlink integrals_multivariable_calculus_su
 {% navigation_tag "gradientthm" "The theorems" "Gradient theorem" %}
 <h4>The gradient theorem for line integrals</h4>
 
-<p>The {% intlink gradient_theorem_line_integrals%}gradient theorem for line integrals{%endintlink%} relates a
-{% intlink line_integral_vector_field_introduction%}line integral{%endintlink%}
+<p>The {% intlink "gradient_theorem_line_integrals" %}gradient theorem for line integrals{%endintlink%} relates a
+{% intlink "line_integral_vector_field_introduction" %}line integral{%endintlink%}
 to the values of a function at
 the &ldquo;boundary&rdquo; of the curve, i.e., its endpoints.  It says that
 \begin{align*}
   \lint{\dlc}{\nabla \dlpf}  = \dlpf(\vc{q}) - \dlpf(\vc{p}),
 \end{align*}
 where $\vc{p}$ and $\vc{q}$ are the endpoints of $\dlc$.  In words, this
-means the line integral of the {%intlink gradient_vector %}gradient{%endintlink%} of some function is just the
+means the line integral of the {% intlink "gradient_vector" %}gradient{%endintlink%} of some function is just the
 difference of the function evaluated at the endpoints of the curve.  In particular, this
 means that the integral of $\nabla \dlpf$ does not depend on the curve
-itself.   The vector field $\nabla \dlpf$  is {%intlink conservative_vector_field_introduction %}conservative{%endintlink%} (also called path-independent).</p>
+itself.   The vector field $\nabla \dlpf$  is {% intlink "conservative_vector_field_introduction" %}conservative{%endintlink%} (also called path-independent).</p>
 
 <p>Often, we are not given the potential function, but just the integral 
 in terms of a vector field $\dlvf$: $\dlint$. 
 We can use the gradient theorem only when $\dlvf$ is
-{% intlink conservative_vector_field_determine%}conservative{%endintlink%},
-in which case we can {% intlink conservative_vector_field_find_potential%}find a potential function{%endintlink%}
+{% intlink "conservative_vector_field_determine" %}conservative{%endintlink%},
+in which case we can {% intlink "conservative_vector_field_find_potential" %}find a potential function{%endintlink%}
 $\dlpf$ so that  $\nabla \dlpf = \dlvf$.  Then,
 \begin{align*}
   \dlint  = \dlpf(\vc{q}) - \dlpf(\vc{p}),
@@ -78,10 +78,10 @@ integral of any conservative $\dlvf$ over a closed curve is zero.</p>
 {% navigation_tag "greensthm" "The theorems" "Green's theorem" %}
 <h4>Green's theorem</h4>
 
-<p>{%intlink greens_theorem_idea %}Green's theorem{%endintlink%} relates a 
-{%intlink double_integral_introduction%}double integral{%endintlink%}
+<p>{% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%} relates a 
+{% intlink "double_integral_introduction" %}double integral{%endintlink%}
 over a
-region to a {% intlink line_integral_vector_field_introduction%}line integral{%endintlink%}
+region to a {% intlink "line_integral_vector_field_introduction" %}line integral{%endintlink%}
  over the boundary of
 the region.  If a curve $\dlc$ is the boundary of some region $\dlr$, i.e.,
 $\dlc = \partial \dlr$, then Green's theorem says that
@@ -106,10 +106,10 @@ boundaries must be clockwise.</p>
 <h4>Stokes' theorem</h4>
 
 
-<p>{%intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} relates a
-{% intlink line_integral_vector_field_introduction%}line integral{%endintlink%}
+<p>{% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%} relates a
+{% intlink "line_integral_vector_field_introduction" %}line integral{%endintlink%}
 over a closed curve to a 
-{% intlink surface_integral_vector_field_introduction%}surface integral{%endintlink%}.  If a
+{% intlink "surface_integral_vector_field_introduction" %}surface integral{%endintlink%}.  If a
 path $\dlc$ is the boundary of some surface $\dls$, i.e., $\dlc
 = \partial \dls$, then Stokes' theorem says that
 \begin{align*}
@@ -123,7 +123,7 @@ Thinking of Stokes' theorem in terms of circulation will help prevent
 you from erroneously attempting to use it when $\dlc$ is an open curve.</p>
 
 <p>In order for Stokes' theorem to work, the curve $\dlc$ has to be a
-{%intlink positively_oriented_boundary_definition%}positively oriented boundary{%endintlink%} of the surface $\dls$.  To check for proper
+{% intlink "positively_oriented_boundary_definition" %}positively oriented boundary{%endintlink%} of the surface $\dls$.  To check for proper
 orientation, use the right hand rule. </p>
 
 <p>Since the line integral $\dlint$ depends only on
@@ -137,9 +137,9 @@ it won't work for any arbitrary vector field.  </p>
 {% navigation_tag "divergthm" "The theorems" "The divergence theorem" %}
 <h4>The divergence theorem</h4>
 
-<p>The {%intlink divergence_theorem_idea %}divergence theorem{%endintlink%} relates a 
-{% intlink surface_integral_vector_field_introduction%}surface integral{%endintlink%}
- to a {% intlink triple_integral_introduction%}triple integral{%endintlink%}.  If a surface
+<p>The {% intlink "divergence_theorem_idea" %}divergence theorem{%endintlink%} relates a 
+{% intlink "surface_integral_vector_field_introduction" %}surface integral{%endintlink%}
+ to a {% intlink "triple_integral_introduction" %}triple integral{%endintlink%}.  If a surface
 $\dls$ is the boundary of some solid $\dlv$, i.e., $\dls = \partial \dlv$, then
 the divergence theorem says that
 \begin{align*}

@@ -5,8 +5,8 @@
 {% description "Examples of integrating double integrals over rectangles and triangles." %}
 
 <p>To illustrate computing 
-{%intlink double_integral_introduction %}double integrals{%endintlink%} as
-{%intlink double_integral_iterated%}iterated integrals{%endintlink%},
+{% intlink "double_integral_introduction" %}double integrals{%endintlink%} as
+{% intlink "double_integral_iterated" %}iterated integrals{%endintlink%},
  we start with
 the simplest example of a double integral over a rectangle and then
 move on to an integral over a triangle.</p>
@@ -23,13 +23,13 @@ where $\dlr$ is  the rectangle defined by $0 \le x \le 2$ and $0 \le y \le 1$ pi
 <p class="centeredImage">{% image "double_integral_over_rectangle" %}</p>
 
 <p><b>Solution</b>: We will compute the double integral as the
-{%intlink double_integral_iterated%}iterated integral{%endintlink%}
+{% intlink "double_integral_iterated" %}iterated integral{%endintlink%}
 \begin{align*}
   \int_0^1 \left( \int_0^2 xy^2 dx\right) dy.
 \end{align*}
 We first integrate with respect to $x$ inside the parentheses.
 Similar to the procedure with
-{%intlink partial_derivative_examples %}partial derivatives{%endintlink%},
+{% intlink "partial_derivative_examples" %}partial derivatives{%endintlink%},
 we must treat $y$ as a
 constant during this integration step.  Since for any constant $c$, the integral of $cx$ is
 $cx^2/2$, we calculate
@@ -154,8 +154,8 @@ Thankfully, this does agree with the answer we obtained in Example 2.
 <p>
 To go from Example 2 to Example 2', we &ldquo;changed the order of
 integration.&rdquo;  You can see 
-{%intlink double_integral_change_order_integration_examples %}more
+{% intlink "double_integral_change_order_integration_examples" %}more
   examples of changing the order of integration{%endintlink%} in double
-integrals. You can also see more double integral examples from the special cases of interpreting {% intlink double_integral_area %}double integrals as area{%endintlink%} and {%intlink double_integral_volume%}double integrals as volume{%endintlink%}.</p>
+integrals. You can also see more double integral examples from the special cases of interpreting {% intlink "double_integral_area" %}double integrals as area{%endintlink%} and {% intlink "double_integral_volume" %}double integrals as volume{%endintlink%}.</p>
 
 {%endblock%}

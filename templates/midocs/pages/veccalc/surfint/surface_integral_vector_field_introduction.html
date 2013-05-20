@@ -5,11 +5,11 @@
 {% title "Introduction to a surface integral of a vector field" %}
 {% description "How to define the integral of a vector field over a parametrized surface, illustrated by interactive graphics." %}
 
-<p>The {%intlink line_integral_vector_field_introduction %}line integral of a vector field{%endintlink%} $\dlvf$ could be interpreted as the work
+<p>The {% intlink "line_integral_vector_field_introduction" %}line integral of a vector field{%endintlink%} $\dlvf$ could be interpreted as the work
 done by the force field $\dlvf$ on a particle moving along the path.
 The surface integral of a vector field $\dlvf$ actually has a simpler
 explanation.  If the vector field $\dlvf$ represents the 
-{%intlink vector_field_fluid_flow%}flow of a fluid{%endintlink%},
+{% intlink "vector_field_fluid_flow" %}flow of a fluid{%endintlink%},
 then the surface integral of $\dlvf$ will represent the amount
 of fluid flowing through the surface (per unit time).</p>
 
@@ -26,8 +26,8 @@ total amount of water flowing through the surface, we want to add up
 the component of the vector $\dlvf$ that is perpendicular to the
 surface.</p>
 
-<p>Let $\vc{n}$ be a {%intlink parametrized_surface_normal_vector%}unit normal vector{%endintlink%} to the surface. 
-The choice of normal vector {%intlink parametrized_surface_orient %}orients
+<p>Let $\vc{n}$ be a {% intlink "parametrized_surface_normal_vector" %}unit normal vector{%endintlink%} to the surface. 
+The choice of normal vector {% intlink "parametrized_surface_orient" %}orients
 the surface{%endintlink%} and determines the sign of the fluid flux.
 The flux of fluid
 through the surface is determined by the component of $\dlvf$ that is
@@ -40,7 +40,7 @@ opposite directions.  </p>
 \begin{align*}
   \dlsp(\spfv,\spsv) = (\spfv\cos \spsv, \spfv\sin \spsv, \spsv).  
 \end{align*}
-that parametrizes a {% intlink parametrized_surface_introduction %}helicoid{%endintlink%}
+that parametrizes a {% intlink "parametrized_surface_introduction" %}helicoid{%endintlink%}
 for $(\spfv,\spsv) \in \dlr = [0,1] \times [0, 2\pi]$.
 As shown in the following figure, we chose the upward point normal vector.
 (We
@@ -86,7 +86,7 @@ of the scalar function $\dlvf \cdot \vc{n}$ over $\dls$
 \begin{align*}
   \text{Flux} &amp;= \dsint = \ssint{\dls}{\dlvf \cdot \vc{n}}.
 \end{align*}
-The formula for a {%intlink surface_integral_scalar_function_introduction%}surface integral of a scalar function{%endintlink%} over a surface $\dls$ parametrized by $\dlsp$ is
+The formula for a {% intlink "surface_integral_scalar_function_introduction" %}surface integral of a scalar function{%endintlink%} over a surface $\dls$ parametrized by $\dlsp$ is
 \begin{align*}
   \ssint{\dls}{f} = \iint_\dlr f(\dlsp(\spfv,\spsv))\left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)
   \right\|
@@ -101,7 +101,7 @@ The formula for a {%intlink surface_integral_scalar_function_introduction%}surfa
   d\spfv\,d\spsv.
 \end{align*}</p>
 
-<p>Lastly, the {% intlink parametrized_surface_normal_vector %}formula for a unit normal vector of the surface{%endintlink%} is
+<p>Lastly, the {% intlink "parametrized_surface_normal_vector" %}formula for a unit normal vector of the surface{%endintlink%} is
 \begin{align*}
   \vc{n} = \frac{\displaystyle \pdiff{\dlsp}{\spfv} \times
   \pdiff{\dlsp}{\spsv}}{\displaystyle \left\| \pdiff{\dlsp}{\spfv} \times \pdiff{\dlsp}{\spsv}
@@ -119,7 +119,7 @@ factors cancel, and we obtain the final expression for the surface integral:
 \end{align*}</p>
 
 <p>Note how the equation for a surface integral is similar to the equation for the
-{%intlink line_integral_vector_field_introduction %}line integral of a vector field{%endintlink%}
+{% intlink "line_integral_vector_field_introduction" %}line integral of a vector field{%endintlink%}
 \begin{align*}
   \dlint
   = \int_a^b \dlvf(\dllp(t)) \cdot \dllp'(t) dt.
@@ -130,7 +130,7 @@ we integrate the component of the vector field in the normal direction
 given by $\pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)$.</p>
 
 <p>You can read some 
-{% intlink surface_integral_vector_examples %}examples{%endintlink%}
+{% intlink "surface_integral_vector_examples" %}examples{%endintlink%}
 of calculating surface integrals of vector fields.</p>
 
 

@@ -4,10 +4,10 @@
 {% title "The components of the curl" "The components" %}
 {% description "Illustration of the meaning behind the components of the curl." %}
 
-<p>Recall that one can {%intlink curl_idea %}visualize the curl of a
+<p>Recall that one can {% intlink "curl_idea" %}visualize the curl of a
 three-dimensional vector field{%endintlink%}
 $\dlvf=(\dlvfc_1,\dlvfc_2,\dlvfc_3)$ by inserting a small sphere into
-a {%intlink vector_field_fluid_flow %}fluid with flow given
+a {% intlink "vector_field_fluid_flow" %}fluid with flow given
 by{%endintlink%} $\dlvf$, fixing the center of the sphere, and
 allowing the sphere to rotate in any direction.  The direction of the
 vector $\curl \dlvf$ is given using the right hand rule, and the
@@ -58,7 +58,7 @@ there is also &ldquo;macroscopic circulation&rdquo; in this same direction by
 rotating the figure so that the $z$-axis is coming straight out of the
 screen.  Viewed from that axis, the vector field still appears to
 circulate.  (Remember, of course, that this &ldquo;macroscopic circulation&rdquo; 
-{%intlink curl_subtleties %}doesn't neccesarily correspond to{%endintlink%} the &ldquo;microscopic circulation&rdquo; of the curl.)</p>
+{% intlink "curl_subtleties" %}doesn't neccesarily correspond to{%endintlink%} the &ldquo;microscopic circulation&rdquo; of the curl.)</p>
 
 <p>Notice that when the sphere is fixed to the rod, it cannot response to the 
 $z$-component of the vector field; any push up or down of the fluid 
@@ -92,7 +92,7 @@ The curl is supposed to correspond to &ldquo;microscopic circulation,&rdquo;
 so we view the sphere is being very small.
 The increase of $\dlvfc_2$ as we move a tiny bit to the right (i.e., increase $x$)
 is captured by the 
-{% intlink partial_derivative_introduction %}partial derivative{%endintlink%}
+{% intlink "partial_derivative_introduction" %}partial derivative{%endintlink%}
 of $\dlvfc_2$ with respect to $x$.
 Hence, it seems reasonable that a positive $\pdiff{\dlvfc_2}{x}$ 
 would tend to lead to counterclockwise rotation from the point of view of our
@@ -113,8 +113,8 @@ and $\dlvfc_2$ lead to the sphere spinning in a direction corresponding to
 the $z$-component of the curl.  
 It turns out that the effects of these changes in $\dlvf$ simply add up.
 Although we need 
-{%intlink line_integral_vector_field_introduction %}line integrals{%endintlink%}
-in order to {%intlink curl_definition_line_integral%}fill in all the
+{% intlink "line_integral_vector_field_introduction" %}line integrals{%endintlink%}
+in order to {% intlink "curl_definition_line_integral" %}fill in all the
 details{%endintlink%},
 the above picture at least gives some intuition why the $z$-component of the
 the curl is
@@ -127,7 +127,7 @@ field in $\vc{x}$ and $\vc{y}$.
 Hence the quantity $\pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y}$
 also corresponds to the counterclockwise 
 &ldquo;microscopic circulation,&rdquo; of a vector field in the plane,
-which shows up, for example, in {%intlink greens_theorem_idea %}Green's
+which shows up, for example, in {% intlink "greens_theorem_idea" %}Green's
 theorem{%endintlink%}.</p>
 
 
@@ -147,7 +147,7 @@ axis, the fluid flow would not make the sphere rotate.</p>
 
 <p>If you rotate the above figure so that the $y$-axis is coming straight
 out of the screen, you can see that the vector field no longer looks
-like it is rotating.  (Though, remember, {%intlink curl_subtleties %}this
+like it is rotating.  (Though, remember, {% intlink "curl_subtleties" %}this
   isn't a true test of curl{%endintlink%}, which is &ldquo;microscopic circulation.&rdquo;)
 We can still calculate the component of $\curl \dlvf$ parallel to the
 $y$-axis.  
@@ -186,17 +186,17 @@ $$\curl \dlvf = \biggl(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}
 <p>There isn't anything special about the
 directions $\vc{i}$, $\vc{j}$, and $\vc{k}$
 in the context of the components of the curl.
-For any {% intlink unit_vector_definition %}unit vector{%endintlink%} $\vc{u}$, 
+For any {% intlink "unit_vector_definition" %}unit vector{%endintlink%} $\vc{u}$, 
 we can define the component of the curl in its direction as
 the projection $\curl \dlvf \cdot \vc{u}$.
 The curl component $\curl \dlvf \cdot \vc{u}$ gives the &ldquo;microscopic circulation&rdquo; that corresponds to the rotation of a
 sphere around a rod parallel to $\vc{u}$,
 with the direction being determined by the right hand rule.
 In fact, the way we 
-{% intlink curl_definition_line_integral %}define curl{%endintlink%} is through this projection  $\curl \dlvf
+{% intlink "curl_definition_line_integral" %}define curl{%endintlink%} is through this projection  $\curl \dlvf
 \cdot \vc{u}$. 
 The idea of curl in any direction $\vc{u}$ is also fundamental to
-{%intlink stokes_theorem_idea%}Stokes' Theorem{%endintlink%}.</p>
+{% intlink "stokes_theorem_idea" %}Stokes' Theorem{%endintlink%}.</p>
 </aside>
 
 {% endblock %}

@@ -3,7 +3,7 @@
 {% title "The formula for the cross product" "The formula" %}
 {% description "Derivation of the formula to calculate the cross product of two vectors." %}
 
-<p>The {%intlink cross_product %}geometric definition of the cross product{%endintlink%}
+<p>The {% intlink "cross_product" %}geometric definition of the cross product{%endintlink%}
 is good for understanding the properties of the cross product.
 However, the geometric definition isn't so useful for computing the
 cross product of vectors.  For computations, we will want a formula in
@@ -13,14 +13,14 @@ definition to compute the cross product of the standard unit vectors.</p>
 {% navigation_tag "unitvectors" "The formula" "Unit vectors" %}
 <h4>Cross product of unit vectors</h4>
 
-<p>Let $\vc{i}$, $\vc{j}$, and $\vc{k}$ be the standard {% intlink unit_vector_definition %}unit vectors{%endintlink%} in
+<p>Let $\vc{i}$, $\vc{j}$, and $\vc{k}$ be the standard {% intlink "unit_vector_definition" %}unit vectors{%endintlink%} in
 $\R^3$.  (We define the cross product only in three dimensions.)</p>
 
 <p class="centeredImage">{% image "unit_vectors" %}</p>
 
 <p>The parallelogram spanned by any two of these standard unit vectors is
 a unit square, which has area one.  Hence, by the
-{%intlink cross_product %}geometric definition{%endintlink%}, the cross
+{% intlink "cross_product" %}geometric definition{%endintlink%}, the cross
 product must be a unit vector.  Since the cross product must be
 perpendicular to the two unit vectors, it must be equal to the other
 unit vector or the opposite of that unit vector.  Looking at the above
@@ -101,7 +101,7 @@ Since we know that $\vc{i} \times \vc{i}= \vc{0}= \vc{j} \times
   \right| \vc{k}.
 \end{align*}
 Writing the result as a
-{%intlink matrices_determinants_multivariable_calculus%}determinant{%endintlink%}, as we did in the
+{% intlink "matrices_determinants_multivariable_calculus" %}determinant{%endintlink%}, as we did in the
 last step, is a handy way to remember the result.
 </p>
 
@@ -137,7 +137,7 @@ and then calculate all the cross products of the unit vectors
   - (a_1b_3-a_3b_1) \vc{j}
   +(a_1b_2-a_2b_1) \vc{k}.
 \end{align*}
-Using {%intlink matrices_determinants_multivariable_calculus%}determinants{%endintlink%}, we can write the result as {% index_entry "cross product" "formula" "crossproductformula" %}
+Using {% intlink "matrices_determinants_multivariable_calculus" %}determinants{%endintlink%}, we can write the result as {% index_entry "cross product" "formula" "crossproductformula" %}
 \begin{align*}
   \vc{a} \times \vc{b} &amp;=\left|
     \begin{array}{cc}
@@ -162,7 +162,7 @@ Using {%intlink matrices_determinants_multivariable_calculus%}determinants{%endi
 \end{align*}
 </p>
 
-<p>Looking at the {%intlink matrices_determinants_multivariable_calculus det3x3%}formula for the $3 \times 3$ determinant{%endintlink%}, we see that the formula for a
+<p>Looking at the {% intlink "matrices_determinants_multivariable_calculus" anchor="det3x3" %}formula for the $3 \times 3$ determinant{%endintlink%}, we see that the formula for a
 cross product looks a lot like the formula for the $3 \times 3$
 determinant.  If we allow a matrix to have the vector $\vc{i}$,
 $\vc{j}$, and $\vc{k}$ as entries (OK, maybe this doesn't make sense,

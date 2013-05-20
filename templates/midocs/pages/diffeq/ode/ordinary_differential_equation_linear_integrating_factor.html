@@ -8,7 +8,7 @@
 {% title "Solving linear ordinary differential equations using an integrating factor" %}
 {% description "Illustration of the procedure to find an integrating factor that allows integration of a first order linear ordinary differential equation." %}
 
-<p>A first order linear {% intlink ordinary_differential_equation_introduction %}ordinary differential equation{%endintlink%} (ODE) is an ODE for a function, call it $x(t)$, that is linear in both $x(t)$ and its first order derivative $\diff{x}{t}(t)$.  
+<p>A first order linear {% intlink "ordinary_differential_equation_introduction" %}ordinary differential equation{%endintlink%} (ODE) is an ODE for a function, call it $x(t)$, that is linear in both $x(t)$ and its first order derivative $\diff{x}{t}(t)$.  
 An example of such a linear ODE is
 \begin{gather*}
 \diff{x}{t} + t^3x(t)=\cos t.
@@ -20,7 +20,7 @@ we can write $x(t)$ as an expression containing just integrals of functions of $
 </p>
 
 <p>As background, recall one of the simplest types of ODEs mentioned in the 
-  {% intlink ordinary_differential_equation_introduction %}introductory
+  {% intlink "ordinary_differential_equation_introduction" %}introductory
   page{%endintlink%}.  If we have an equation such as $$\diff{x}{t} = t^2,$$ we 
   can quickly solve it by integration.  This equation is so simple because 
   the left hand side is just a derivative with respect to $t$ and the right hand
@@ -83,8 +83,8 @@ In other words, we could let $\mu(t)$ be the solution to the ODE
 </p>
 
 <p>We can easily solve the ODE of \eqref{odemu1} for $\mu$.  In fact, it's a special case of the
-linear ODE of {% intlinkeq ordinary_differential_equation_introduction linear_ode 1 %} from the ODE introduction{%endintlinkeq%}, with $a=1$ and $b=0$.  
-Using the solution from {%intlinkeq ordinary_differential_equation_introduction linear_ode_sol%}of that page{%endintlinkeq%}, we calculate that
+linear ODE of {% intlink "ordinary_differential_equation_introduction" equation="linear_ode" %}equation (tag)  from the ODE introduction{% endintlink %}, with $a=1$ and $b=0$.  
+Using the solution from {% intlink "ordinary_differential_equation_introduction" equation="linear_ode_sol" %}equation (tag) of that page{% endintlink %}, we calculate that
 $\mu(t) = C_1e^t,$
 where $C_1$ is an arbitrary constant. 
 </p>
@@ -181,7 +181,7 @@ $p(t)$.  </p>
   {% equation_tag "folin_odemu" 8 %}
 \end{gather}
 This equation is similar to 
-{% intlinkeq ordinary_differential_equation_introduction linear_ode 1 %} from the ODE introduction{%endintlinkeq%},
+{% intlink "ordinary_differential_equation_introduction" equation="linear_ode" %}equation (tag)  from the ODE introduction{% endintlink %},
 except we have a time varying coefficient $p(t)$. 
 It can be solved in a similar manner, as follows.</p> 
 
@@ -255,6 +255,6 @@ first order linear ordinary differnetial equation \eqref{folin}.
 Even so, we consider the ODE solved if the solution is just 
 in terms of integrals of $t$.</p>
 
-<p>{% intlink ordinary_differential_equation_linear_integrating_factor_examples %}Some examples{%endintlink%} may help you better understand how to use integrating factors.</p>
+<p>{% intlink "ordinary_differential_equation_linear_integrating_factor_examples" %}Some examples{%endintlink%} may help you better understand how to use integrating factors.</p>
 
 {%endblock %}

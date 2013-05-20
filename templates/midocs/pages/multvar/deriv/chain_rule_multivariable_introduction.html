@@ -31,12 +31,12 @@ to give your height at time $t$.  It is
 {% index_entry "function" "composition" "composition" %}
 {% index_entry  "composition" "of functions" "composition1" %}
 <p>
-The function $h(t)$ is an example of a <i>{%intlink composition_definition%}composition{%endintlink%}</i> of
+The function $h(t)$ is an example of a <i>{% intlink "composition_definition" %}composition{%endintlink%}</i> of
 functions, meaning it is the result of using function $g$ and then
 using the function $f$.  We often write $h = f \circ g$ or $h(t) = (f
 \circ g)(t)$.</p>
 
-<p>The {% intlink chain_rule_refresher %}chain rule{%endintlink%} is the rule we use if we want to take the derivative of
+<p>The {% intlink "chain_rule_refresher" %}chain rule{%endintlink%} is the rule we use if we want to take the derivative of
 a composition of functions.  In this example, how fast is your height
 changing as you walk along the path given by $g(t)$?  It is simply the
 derivative of $h$ with respect to $t$: $\displaystyle
@@ -76,7 +76,7 @@ for the derivative of $\sin(t^2)$; we just need to know the
 derivatives of $\sin x$ and $t^2$.
 </p>
 
-<p>For more information on the one-variable chain rule, see {% intlink chain_rule_idea %}the idea of the chain rule{%endintlink%}, the {% intlink chain_rule_refresher %}chain rule from the Calculus Refresher{%endintlink%}, or {% intlink chain_rule_simple_examples %}simple examples of using the chain rule{%endintlink%}.</p>
+<p>For more information on the one-variable chain rule, see {% intlink "chain_rule_idea" %}the idea of the chain rule{%endintlink%}, the {% intlink "chain_rule_refresher" %}chain rule from the Calculus Refresher{%endintlink%}, or {% intlink "chain_rule_simple_examples" %}simple examples of using the chain rule{%endintlink%}.</p>
 
 {% navigation_tag "generalform" "General form" %}
 <h4>The general form of the chain rule</h4>
@@ -84,10 +84,10 @@ derivatives of $\sin x$ and $t^2$.
 
 <p>Even though $f$, $g$, and $h$ are one-variable functions, we could use
 the notation for the 
-{% intlink differentiability_multivariable_introduction %}derivative 
+{% intlink "differentiability_multivariable_introduction" %}derivative 
 of multivariable functions{%endintlink%}.  Remember that the
 derivative of a multivariable function is its 
-{% intlink derivative_matrix %}matrix of partial
+{% intlink "derivative_matrix" %}matrix of partial
 derivatives{%endintlink%}. 
 We can view the derivatives of $f$, $g$, and $h$
 as $1 \times 1$  matrices,
@@ -117,7 +117,7 @@ means when we use functions $\vc{f}$, $\vc{g}$, and $\vc{h}$ of the form
   \vc{g} &amp;: \R^m \to \R^n\notag\\
   \vc{h} &amp;: \R^m \to \R^p,\notag
 \end{align*}
-(remember {% intlink function_notation %}function notation{%endintlink%}) where $\vc{h} = \vc{f} \circ \vc{g}$, then you don't need to read on.
+(remember {% intlink "function_notation" %}function notation{%endintlink%}) where $\vc{h} = \vc{f} \circ \vc{g}$, then you don't need to read on.
 </p>
 
 {% navigation_tag "mountclimb2D" "2D" %}
@@ -208,14 +208,14 @@ The nice thing about equation \eqref{chainrule2D}
 is that it
 applies when you take the derivative of any composition of functions.
 So if you remember equation \eqref{chainrule2D}
-(and how to {% intlink matrix_vector_multiplication %}multiply
+(and how to {% intlink "matrix_vector_multiplication" %}multiply
 matrices{%endintlink%}), then you'll be all set.  You can then even compute
 the derivative of $\vc{h} = \vc{f} \circ \vc{g}$ for the functions
 $\vc{f} : \R^n \to \R^p,$
 $\vc{g} : \R^m \to \R^n,$
 $\vc{h} : \R^m \to \R^p.$
-It's just a matter of forming the {% intlink derivative_matrix%}matrices of partial derivatives{%endintlink%} and multiplying the matrices.
-Or, if you prefer, you can look a number of {%intlink chain_rule_multivariable_special_cases %}chain rule special cases{%endintlink%} for particular dimensions $m$, $n$, and $p$, where we multiply out the matrices to obtain chain rule formulas in in terms of their components.
+It's just a matter of forming the {% intlink "derivative_matrix" %}matrices of partial derivatives{%endintlink%} and multiplying the matrices.
+Or, if you prefer, you can look a number of {% intlink "chain_rule_multivariable_special_cases" %}chain rule special cases{%endintlink%} for particular dimensions $m$, $n$, and $p$, where we multiply out the matrices to obtain chain rule formulas in in terms of their components.
 </p>
 
 
@@ -245,7 +245,7 @@ Or, if you prefer, you can look a number of {%intlink chain_rule_multivariable_s
 %% derivative of $h(t) = (g \circ \vc{f})(t) = \sin(t^2) + \cos(t^3)$
 {% endcomment %}
 
-<p>Click {%intlink chain_rule_multivariable_examples %}here{%endintlink%} for some
+<p>Click {% intlink "chain_rule_multivariable_examples" %}here{%endintlink%} for some
 chain rule examples.
 </p>
 

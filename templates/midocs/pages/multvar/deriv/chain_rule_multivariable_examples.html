@@ -3,19 +3,19 @@
 {% title "Multivariable chain rule examples" %}
 {% description "Examples demonstrating the chain rule for multivariable functions." %}
 
-<p>The following are examples of using the {% intlink chain_rule_multivariable_introduction%}multivariable chain rule{%endintlink%}.  For examples involving the one-variable chain rule, see {% intlink chain_rule_simple_examples %}simple examples of using the chain rule{%endintlink%} or  the {% intlink chain_rule_refresher %}chain rule from the Calculus Refresher{%endintlink%}.</p>
+<p>The following are examples of using the {% intlink "chain_rule_multivariable_introduction" %}multivariable chain rule{%endintlink%}.  For examples involving the one-variable chain rule, see {% intlink "chain_rule_simple_examples" %}simple examples of using the chain rule{%endintlink%} or  the {% intlink "chain_rule_refresher" %}chain rule from the Calculus Refresher{%endintlink%}.</p>
 
 {% navigation_tag "example1" "Examples" "Example 1" %}
 <h4>Example 1</h4>
 
 <p>Let $\vc{g}: \R \rightarrow \R^2$ and $f:
-\R^2 \rightarrow \R$ {% confusedlink function_notation %} be defined by 
+\R^2 \rightarrow \R$ {% confusedlink "function_notation" %} be defined by 
 \begin{align*}
   \vc{g}(t) &amp;= (t^3, t^4)\\
   f(x,y) &amp;= x^2y.
 \end{align*}
 (You can think of this as the 
-{%intlink chain_rule_multivariable_introduction mountclimb2D%}mountain 
+{% intlink "chain_rule_multivariable_introduction" anchor="mountclimb2D" %}mountain 
 climbing example{%endintlink%} where $f(x,y)$ is
 height of mountain at point $(x,y)$ and the path $\vc{g}(t)$ gives
 your position at time $t$.)
@@ -29,7 +29,7 @@ the change in height) via the chain rule.
 </p>
 
 <p><b>Solution A</b>:  We'll use the
-{%intlinkeq chain_rule_multivariable_introduction chainrule2D -1%}formula{%endintlinkeq%} using
+{% intlink "chain_rule_multivariable_introduction" equation="chainrule2D" %}formula{% endintlink %} using
 matrices of partial derivatives:
 \begin{align*}
   D{h}(t) = Df(\vc{g}(t)) D{\vc{g}}(t).
@@ -98,8 +98,8 @@ The derivative of $h$ is
 
 
 <p><b>Solution B</b>: We'll start immediately with the
-{%intlinkeq chain_rule_multivariable_introduction chainrule2Dcomp -1%}formula
-in component form{%endintlinkeq%}:
+{% intlink "chain_rule_multivariable_introduction" equation="chainrule2Dcomp" %}formula
+in component form{% endintlink %}:
 \begin{align*}
   \diff{h}{t}(t) = \pdiff{f}{x}(\vc{g}(t)) \diff{g_1}{t} (t) + 
   \pdiff{f}{y}(\vc{g}(t))\diff{g_2}{t} (t).
@@ -329,7 +329,7 @@ are
 \end{align*}
 This is the chain rule written out in component form for $h : \R^2 \to
 \R$, $f : \R^2 \to \R$, and $\vc{g} : \R^2 \to \R^2$.
-It is {% intlinkeq chain_rule_multivariable_special_cases chainrule22 %}from the special case page{%endintlinkeq%}.
+It is {% intlink "chain_rule_multivariable_special_cases" equation="chainrule22" %}equation (tag) from the special case page{% endintlink %}.
 </p>
 
 <p>

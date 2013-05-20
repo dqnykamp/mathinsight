@@ -3,13 +3,13 @@
 {% index_entry "circulation" "microscopic"%}
 {% title "Calculating the formula for circulation per unit area" %}
 {% description "A sketch of the proof for the formula for the component of the curl of a vector field." %}
-<p>Given the {% intlink curl_definition_line_integral %}definition{%endintlink%} for a
-{% intlink curl_components %}component of the curl{%endintlink%}
-in the direction of a {% intlink unit_vector_definition %}unit vector{%endintlink%}, 
+<p>Given the {% intlink "curl_definition_line_integral" %}definition{%endintlink%} for a
+{% intlink "curl_components" %}component of the curl{%endintlink%}
+in the direction of a {% intlink "unit_vector_definition" %}unit vector{%endintlink%}, 
 we can sketch a proof for the formula of the &ldquo;microscopic circulation&rdquo; 
 that we identify with curl. 
 For simplicitiy, we will focus on the $z$-component of the curl, $\curl \dlvf \cdot \vc{k}$,
-which is {% intlink curl_definition_line_integral %}defined as{%endintlink%}
+which is {% intlink "curl_definition_line_integral" %}defined as{%endintlink%}
 \begin{align*}
   \curl \dlvf(\vc{a}) \cdot \vc{k} = \lim_{A(\dlc)\to 0} \frac{1}{A(\dlc)} \dlint,
 \end{align*}
@@ -27,7 +27,7 @@ passes through $\vc{a}$, i..e., the plane given by $z=c$.
 In the integral, we can eliminate $z$ by replacing it with the constant value $c$.
 Moreover, the tangent vectors along $\dlc$ must be parallel to the $xy$ plane,
 which means their $z$-components will be zero.
-Since the {% intlink line_integral_vector_field_introduction %}line integral
+Since the {% intlink "line_integral_vector_field_introduction" %}line integral
 of a vector field{%endintlink%} integrates the tangent components of the vector field, 
 the $z$-component of $\dlvf$ will drop out of the integral $\dlint$.  
 Hence, we can, without loss of generality, replace our three-dimensional 
@@ -39,12 +39,12 @@ We can then view the curve $\dlc$ as lying in the $xy$-plane.</p>
 the fact that this calculation is also valid for calculating the 
 &ldquo;microscopic circulation&rdquo; 
 of two-dimensional vector fields, like we need for
-{% intlink greens_theorem_idea %}Green's theorem{%endintlink%}.  
+{% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%}.  
 We just need to remember that, by the right hand rule, positive
 values of the circulation correspond to counterclockwise rotation
 in the $xy$-plane.</p>
 
-<p>The introductory pages give {% intlink curl_components %}some intuition{%endintlink%} 
+<p>The introductory pages give {% intlink "curl_components" %}some intuition{%endintlink%} 
 why the &ldquo;circulation per unit area&rdquo; of the $z$-component of
 the curl is
 \begin{align*}
@@ -208,7 +208,7 @@ Putting these back together, we have
 
 <p>Now, we let the curve $\dlc$ shrink down to a point.  This means that
 $\Delta x \to 0$ and $\Delta y \to 0$.  In this limit, the two
-fractions become something familar: {% intlink partial_derivative_limit_definition%}partial derivatives{%endintlink%} of $\dlvf$.
+fractions become something familar: {% intlink "partial_derivative_limit_definition" %}partial derivatives{%endintlink%} of $\dlvf$.
 \begin{align*}
   \lim_{\Delta x, \Delta y \to 0} 
   \frac{\dlint}{\Delta x \Delta y} &amp;=
@@ -225,7 +225,7 @@ $(x,y)=(a,b)$ is
   \pdiff{\dlvfc_2}{x}(a,b) - \pdiff{\dlvfc_1}{y}(a,b).
 \end{align*}
 This is the expression for the scalar curl that we use for the &ldquo;microscopic circulation&rdquo; 
-in {%intlink greens_theorem_idea %}Green's theorem.{%endintlink%}
+in {% intlink "greens_theorem_idea" %}Green's theorem.{%endintlink%}
 If we rewrite this in terms of the original three-dimensional vector field $\dlvf(x,y,z)$ at the point $(x,y,z)=(a,b,c)$, we obtain the expression 
 for the $z$-component of the curl
 \begin{align*}

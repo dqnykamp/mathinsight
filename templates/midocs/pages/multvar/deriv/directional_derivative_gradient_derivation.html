@@ -6,14 +6,14 @@
 {% title "Derivation of the directional derivative and the gradient" %}
 {% description "Derivation of the directional derivative and the gradient from the definition of differentiability of scalar-valued multivariable functions." %}
 
-<p>In the {%intlink directional_derivative_gradient_introduction %}introduction
+<p>In the {% intlink "directional_derivative_gradient_introduction" %}introduction
 to the directional derivative and the gradient{%endintlink%}, we
 illustrated the concepts behind the directional derivative.
 The main points were that, given a multivariable scalar-valued
-function $f : \R^n \to \R$ {% confusedlink function_notation %}, </p>
+function $f : \R^n \to \R$ {% confusedlink "function_notation" %}, </p>
 <ol>
 <li>the directional derivative $D_{\vc{u}}f$ is a generalization of the partial
-derivative to the slope of $f$ in a direction of an arbitrary {% intlink unit_vector_definition %}unit vector{%endintlink%} $\vc{u}$,</li>
+derivative to the slope of $f$ in a direction of an arbitrary {% intlink "unit_vector_definition" %}unit vector{%endintlink%} $\vc{u}$,</li>
 <li>the gradient $\nabla f$ is a vector that points in the direction
 of the greatest upward slope whose length is the directional derivative
 in that direction, and</li>
@@ -25,20 +25,20 @@ the unit vector: $D_{\vc{u}}f = \nabla f \cdot \vc{u}$.</li>
 what exactly is the gradient?  How can we calculate it from $f$?
 It's actually pretty simple to calculate an expression for the
 gradient, if you can remember what it means for a function to
-be {%intlink differentiability_multivariable_introduction %}differentiable{%endintlink%}.</p>
+be {% intlink "differentiability_multivariable_introduction" %}differentiable{%endintlink%}.</p>
 
 <p>
 What does it mean for a function $f(\vc{x})$ to be differentiable 
 at the point $\vc{x}=\vc{a}$?
 The function must be locally be essentially linear, i.e.,
 there must be a 
-{% intlink linear_approximation_multivariable %}linear approximation{%endintlink%}
+{% intlink "linear_approximation_multivariable" %}linear approximation{%endintlink%}
 \begin{align*}
 L(\vc{x}) = f(\vc{a}) + Df(\vc{a})(\vc{x}-\vc{a})
 \end{align*}
-that is {%intlink differentiability_multivariable_definition%}very close
+that is {% intlink "differentiability_multivariable_definition" %}very close
 to{%endintlink%} to $f(\vc{x})$ for all $\vc{x}$ near $\vc{a}$.
-The {%intlink differentiability_multivariable_definition%}definition 
+The {% intlink "differentiability_multivariable_definition" %}definition 
 of differentiability{%endintlink%} means that,
 for all directions emanating out of $\vc{a}$, 
 $f(\vc{x})$ and $L(\vc{x})$ have the same slope.
@@ -46,7 +46,7 @@ We can therefore calculate the directional derivatives of $f$ at $\vc{x}$ using
 $L$ rather than $f$.</p>
 
 <p>
-Using the {%intlink directional_derivative_gradient_introduction directional_derivative_definition %}definition of directional derivative{%endintlink%},
+Using the {% intlink "directional_derivative_gradient_introduction" anchor="directional_derivative_definition" %}definition of directional derivative{%endintlink%},
 we can calculate the directional derivative of $f$ at $\vc{a}$ in the
 direction of $\vc{u}$:
 \begin{align*}
@@ -57,12 +57,12 @@ direction of $\vc{u}$:
 \end{align*}
 Since $Df(\vc{x})$ is a $1 \times n$ row vector and $\vc{u}$
 is an $n \times 1$ column vector, the 
-{% intlink matrix_vector_multiplication %}matrix-vector product{%endintlink%}
+{% intlink "matrix_vector_multiplication" %}matrix-vector product{%endintlink%}
 is a scalar.  
-We could {% intlink dot_product_matrix_notation%}rewrite{% endintlink%} 
+We could {% intlink "dot_product_matrix_notation" %}rewrite{% endintlink%} 
 this product as a dot-product between two vectors, by reforming the
 $1 \times n$ matrix of partial derivatives into a vector.  
-We denote the vector by $\nabla f$ and we call it the {% intlink gradient_vector%}gradient{%endintlink%}.
+We denote the vector by $\nabla f$ and we call it the {% intlink "gradient_vector" %}gradient{%endintlink%}.
 We obtain that the directional derivative is 
 \begin{align*}
   D_{\vc{u}}f(\vc{a}) = \nabla f(\vc{a}) \cdot \vc{u}

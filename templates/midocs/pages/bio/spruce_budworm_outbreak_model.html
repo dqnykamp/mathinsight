@@ -12,11 +12,11 @@
 <p>As these outbreaks have caused the loss of millions of cords of spruce and fir, the wood products industry would like to understand the cycles of spruce budworm populations as a first step toward developing effective management of the problem.  Here, we investigate a model developed by D. Ludwig, D. D. Jones
 and C.S. Holling, scientists from the University of British Columbia, that explains some of the features of the budworm cycle.{% citation "ludwig_et_al_jae_1978" %}</p>
 
-<p>The model for budworm population size is a modification of the {% intlink from_discrete_to_continuous_dynamical_systems solution  %}continuous logistic equation{%endintlink%}.  Let $t$ be time in some arbitrary scale and let $w(t)$ be the budworm population size at time $t$.  We model the evolution of $w(t)$ according to an autonomous differential equation of the form
+<p>The model for budworm population size is a modification of the {% intlink "from_discrete_to_continuous_dynamical_systems" anchor="solution" %}continuous logistic equation{%endintlink%}.  Let $t$ be time in some arbitrary scale and let $w(t)$ be the budworm population size at time $t$.  We model the evolution of $w(t)$ according to an autonomous differential equation of the form
 \begin{align*}
   \diff{w}{t} = r w \left(1 - \frac{w}{a}\right) - h(w),
 \end{align*}
-with low density growth rate $r$ and carrying capacity $a$.  The last term $h(w)$ models the mortality of budworms due to predatory birds.  This term is similar to the {% intlink harvest_natural_populations %}harvesting{%endintlink%} we added to the {% intlink environmental_carrying_capacity %}discrete logistic model{%endintlink%}.</p>
+with low density growth rate $r$ and carrying capacity $a$.  The last term $h(w)$ models the mortality of budworms due to predatory birds.  This term is similar to the {% intlink "harvest_natural_populations" %}harvesting{%endintlink%} we added to the {% intlink "environmental_carrying_capacity" %}discrete logistic model{%endintlink%}.</p>
 
 <p>The rate of predation $h(w)$ depends on the budworm population in a special way.  First, if the spruce budworm population is small, the predation rate is very low, close to zero, since the birds will opt for some other types of prey.  The predation rate will grow as the budworms become more numerous.  But the second important feature is that the predation rate cannot grow to become too large.  Instead, if the budworm population is very large, the rate of predation reaches some maximum value.</p>
 
@@ -38,7 +38,7 @@ which is graphed below.  The function saturates for large population size $w$  t
   \diff{w}{t} = r w \left(1 - \frac{w}{a}\right) - \frac{w^2}{1+w^2}.
   \label{logistic_predation}
 \end{align}
-This model is much too complicated to have a nice formula for the solution.  Instead, we will seek to understand the behavior of the spruce budworm population size $w(t)$ using {% intlink solving_single_autonomous_differential_equations_graphical %}graphical methods{%endintlink%}, as well as approximations to the solution using the {% intlink forward_euler_algorithm_autonomous_differential_equation %}Forward Euler algorithm{%endintlink%}.</p>
+This model is much too complicated to have a nice formula for the solution.  Instead, we will seek to understand the behavior of the spruce budworm population size $w(t)$ using {% intlink "solving_single_autonomous_differential_equations_graphical" %}graphical methods{%endintlink%}, as well as approximations to the solution using the {% intlink "forward_euler_algorithm_autonomous_differential_equation" %}Forward Euler algorithm{%endintlink%}.</p>
 
 <p>One challenge is that we don't have values for the parameters $r$ and $a$.  This may seem like an inconvenience, but it will turn out that allowing the parameters to take on different values will be key to understanding the behavior of the outbreaks.</p>
 

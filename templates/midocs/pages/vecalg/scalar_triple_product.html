@@ -8,11 +8,11 @@
 
 <p>The scalar triple product of three vectors $\vc{a}$, $\vc{b}$, and
 $\vc{c}$ is $(\vc{a} \times \vc{b}) \cdot \vc{c}$. It is a scalar
-product because, just like the {%intlink dot_product %}dot product{%endintlink%}, it evaluates to a single number. (In this way, it is unlike the
-{%intlink cross_product%}cross product{%endintlink%}, which is a vector.)  The
+product because, just like the {% intlink "dot_product" %}dot product{%endintlink%}, it evaluates to a single number. (In this way, it is unlike the
+{% intlink "cross_product" %}cross product{%endintlink%}, which is a vector.)  The
 scalar triple product is important because its absolute value
 $|(\vc{a} \times \vc{b}) \cdot \vc{c}|$ is the volume of the
-{%intlink parallelepiped_definition%}parallelepiped{%endintlink%} spanned by $\vc{a}$, $\vc{b}$, and $\vc{c}$ (i.e., the
+{% intlink "parallelepiped_definition" %}parallelepiped{%endintlink%} spanned by $\vc{a}$, $\vc{b}$, and $\vc{c}$ (i.e., the
 parallelepiped whose adjacent sides are the vectors $\vc{a}$,
 $\vc{b}$, and $\vc{c}$).</p>
 
@@ -20,7 +20,7 @@ $\vc{b}$, and $\vc{c}$).</p>
 
 <p>This formula for the volume can be understood from the above figure.  The volume  of the parallelepiped is the area of the base
 times the height.  
-From the {%intlink cross_product%} geometric definition of the cross product{%endintlink%},
+From the {% intlink "cross_product" %} geometric definition of the cross product{%endintlink%},
 we know that its magnitude, $\|\vc{a} \times \vc{b}\|$, is the area of the parallelogram base, and that the direction of the vector $\vc{a}
 \times \vc{b}$ is perpendicular to the base.   The height of the parallelepiped is the component of $\vc{c}$
 in the direction normal to the base, i.e., in the direction of $\vc{a}
@@ -34,8 +34,8 @@ The volume of the parallelepiped is therefore
   \text{Volume} =  \|\vc{a} \times \vc{b}\| ~ \|\vc{c}\| ~ |\cos
   \phi | = |(\vc{a} \times \vc{b}) \cdot \vc{c}|.
 \end{align*}
-(Remember the definition of the {% intlink dot_product%}dot product{%endintlink%}.)  Using the
-{%intlink cross_product_formula%}formula for the cross product in component form{%endintlink%}, we can write the scalar
+(Remember the definition of the {% intlink "dot_product" %}dot product{%endintlink%}.)  Using the
+{% intlink "cross_product_formula" %}formula for the cross product in component form{%endintlink%}, we can write the scalar
 triple product in component form as
 \begin{align*}
   (\vc{a} \times \vc{b}) \cdot \vc{c}
@@ -92,7 +92,7 @@ made scalar triple product zero, you'll immediately see that answer.)
 {% boxedapplet "scalar_triple_product" %}
 
 
-<p>In case you like to see it with numbers, {%intlink scalar_triple_product_examples %}here's an example{%endintlink%} of calculating the volume of a
+<p>In case you like to see it with numbers, {% intlink "scalar_triple_product_examples" %}here's an example{%endintlink%} of calculating the volume of a
 parallelepiped using the scalar triple product.</p>
 
 <div class="lookdeep">
@@ -100,13 +100,13 @@ parallelepiped using the scalar triple product.</p>
 
   <p>The scalar triple product is obviously very useful if you have a lot of parallelepipeds lying around and want to know their volume.  But, if you don't happen to find yourself pining to know the volume of a parallelepiped, you may wonder what's the use of the scalar triple product.</p>
 
-<p>To begin with, we recommend you first master the {% intlink cross_product %}cross product{%endintlink%}.  If you have only enough available brain cells to master either the cross product or the scalar triple product, we'd recommend focusing on the cross product.  Its applications are more immediate, and its use is more widespread.</p>
+<p>To begin with, we recommend you first master the {% intlink "cross_product" %}cross product{%endintlink%}.  If you have only enough available brain cells to master either the cross product or the scalar triple product, we'd recommend focusing on the cross product.  Its applications are more immediate, and its use is more widespread.</p>
 
-<p>Nonetheless, the scalar triple product does have its uses even if you aren't that excited about parallelepipeds.  In multivariable calculus, it turns out there are parallelepipeds lurking behind some important formulas and theorems.  The reason stems from the {% intlink differentiability_multivariable_definition %}definition{%endintlink%} of the {% intlink differentiability_multivariable_introduction %}differentiability{%endintlink%} of functions.  In a nutshell, differentiability means that a function looks linear if you zoom in.  Calculus is all about the infinitesimal (i.e., making everything small), so the small structure you see when zooming in is fundamental.  Bottom line of this: linear functions are fundamental in calculus.</p>
+<p>Nonetheless, the scalar triple product does have its uses even if you aren't that excited about parallelepipeds.  In multivariable calculus, it turns out there are parallelepipeds lurking behind some important formulas and theorems.  The reason stems from the {% intlink "differentiability_multivariable_definition" %}definition{%endintlink%} of the {% intlink "differentiability_multivariable_introduction" %}differentiability{%endintlink%} of functions.  In a nutshell, differentiability means that a function looks linear if you zoom in.  Calculus is all about the infinitesimal (i.e., making everything small), so the small structure you see when zooming in is fundamental.  Bottom line of this: linear functions are fundamental in calculus.</p>
 
-<p>The route to parallelepipeds comes through these linear functions, which we'll call {% intlink linear_transformation_definition_euclidean %}linear transformations{%endintlink%} or linear maps to emphasize how they map objects into other objects.  It turns out that {% intlink linear_transformations_map_parallelograms_parallelepipeds %}three-dimensional linear transformations always map parallelepipeds into other parallelepipeds{%endintlink%}.  Thus, {% intlink determinant_linear_transformation %}properties of linear maps{%endintlink%} can be seen by how they transform parallelepipeds.  One of these properties is how linear maps expand or contract objects.  Here comes the scalar triple product, as it measures the volume that is changing.  In particular, the above determinant form of the scalar triple product is key, as {% intlink matrices_linear_transformations%}matrices are strongly linked to linear transformations{%endintlink%}.</p>
+<p>The route to parallelepipeds comes through these linear functions, which we'll call {% intlink "linear_transformation_definition_euclidean" %}linear transformations{%endintlink%} or linear maps to emphasize how they map objects into other objects.  It turns out that {% intlink "linear_transformations_map_parallelograms_parallelepipeds" %}three-dimensional linear transformations always map parallelepipeds into other parallelepipeds{%endintlink%}.  Thus, {% intlink "determinant_linear_transformation" %}properties of linear maps{%endintlink%} can be seen by how they transform parallelepipeds.  One of these properties is how linear maps expand or contract objects.  Here comes the scalar triple product, as it measures the volume that is changing.  In particular, the above determinant form of the scalar triple product is key, as {% intlink "matrices_linear_transformations" %}matrices are strongly linked to linear transformations{%endintlink%}.</p>
 
-<p>If you find this linear transformation business too abstract to help you appreciate the utility of the scalar triple product, you could also think about {% intlink triple_integral_introduction %}triple integrals{%endintlink%}, whose definition is based on chopping up a region into small boxes.  If you are thinking that a box is a type of parallelepiped and small means a linear transformation is relevant, then you definitely need to get out more and do other things besides think about math.  But those connections are exactly how the scalar triple product gets tied to triple integrals.  We don't need a scalar triple product for a regular triple integral, though, as we know how to calculate the volume of a box without it.  But, when you start {%intlink triple_integral_change_variables_introduction%}changing variables in triple integrals{%endintlink%}, then the box gets transformed into a parallelepiped, and the {% intlink triple_integral_change_variables_volume_calculation %}scalar triple product volume calculation{%endintlink%} becomes important.</p>
+<p>If you find this linear transformation business too abstract to help you appreciate the utility of the scalar triple product, you could also think about {% intlink "triple_integral_introduction" %}triple integrals{%endintlink%}, whose definition is based on chopping up a region into small boxes.  If you are thinking that a box is a type of parallelepiped and small means a linear transformation is relevant, then you definitely need to get out more and do other things besides think about math.  But those connections are exactly how the scalar triple product gets tied to triple integrals.  We don't need a scalar triple product for a regular triple integral, though, as we know how to calculate the volume of a box without it.  But, when you start {% intlink "triple_integral_change_variables_introduction" %}changing variables in triple integrals{%endintlink%}, then the box gets transformed into a parallelepiped, and the {% intlink "triple_integral_change_variables_volume_calculation" %}scalar triple product volume calculation{%endintlink%} becomes important.</p>
 
 
 </div>

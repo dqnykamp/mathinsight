@@ -6,11 +6,11 @@
 {% navigation_tag "overview" "Overview" %}
 <h4>Overview of networks</h4>
 
-<p>A {% intlink network_definition%}network{%endintlink%} is simply a collection of connected objects.  We refer to the objects as {% intlink network_node_definition%}nodes{%endintlink%} or {% intlink graph_vertex_definition%}vertices{%endintlink%}, and usually draw them as points.  We refer to the connections between the nodes as {% intlink network_edge_definition %}edges{%endintlink%}, and usually draw them as lines between points.</p>
+<p>A {% intlink "network_definition" %}network{%endintlink%} is simply a collection of connected objects.  We refer to the objects as {% intlink "network_node_definition" %}nodes{%endintlink%} or {% intlink "graph_vertex_definition" %}vertices{%endintlink%}, and usually draw them as points.  We refer to the connections between the nodes as {% intlink "network_edge_definition" %}edges{%endintlink%}, and usually draw them as lines between points.</p>
 
 {% image "small_undirected_network_labeled" %}
 
-<p>In mathematics, networks are often referred to as {% intlink graph_definition%}graphs{%endintlink%}, and the area of mathematics concerning the study of graphs is called <em>graph theory</em>.  Unfortunately, the term <em>graph</em> can also refer to a {% intlink function_graph_definition%}graph of a function{%endintlink%}, but we won't use that use of the term when talking about networks.  Here, we'll use the terms <em>network</em> and <em>graph</em> interchangeably.</p>
+<p>In mathematics, networks are often referred to as {% intlink "graph_definition" %}graphs{%endintlink%}, and the area of mathematics concerning the study of graphs is called <em>graph theory</em>.  Unfortunately, the term <em>graph</em> can also refer to a {% intlink "function_graph_definition" %}graph of a function{%endintlink%}, but we won't use that use of the term when talking about networks.  Here, we'll use the terms <em>network</em> and <em>graph</em> interchangeably.</p>
 
 <p>Networks can represent all sorts of systems in the real world.  For example, one could describe the Internet as a network where the nodes are computers or other devices and the edges are physical (or wireless, even) connections between the devices.  The World Wide Web is a huge network where the pages are nodes and links are the edges.  Other examples include social networks of acquaintances or other types of interactions, networks of publications linked by citations, transportation networks, metabolic networks, and communication networks.  You can click on the following images for more information about their respective networks.</p>
 
@@ -37,7 +37,7 @@
 {% navigation_tag "types" "Types" %}
 <h4>Types of networks</h4>
 
-<p>When one tries to model systems such as those mentioned above, one quickly realizes that the simple network model with identical nodes and edges cannot describe important features of real networks.  One problem is the edges in this simplest network model are {% intlink undirected_graph_definition %}undirected{%endintlink%}.  However, in the World Wide Web, for example, the links between pages are directed.  Unfortunately, just because I link from this page to {% extlink "http://wikipedia.org" %}Wikipedia's main page{%endextlink%} doesn't mean that Wikipedia will put a link from their main page back to this page.  Because the edges directed in this way, we need to use a {% intlink directed_graph_definition %}directed network{%endintlink%} to describe the World Wide Web.  In such a directed graph (or digraph, for short), we typically draw the edges as arrows to indicate the direction, as illustrated below.</p>
+<p>When one tries to model systems such as those mentioned above, one quickly realizes that the simple network model with identical nodes and edges cannot describe important features of real networks.  One problem is the edges in this simplest network model are {% intlink "undirected_graph_definition" %}undirected{%endintlink%}.  However, in the World Wide Web, for example, the links between pages are directed.  Unfortunately, just because I link from this page to {% extlink "http://wikipedia.org" %}Wikipedia's main page{%endextlink%} doesn't mean that Wikipedia will put a link from their main page back to this page.  Because the edges directed in this way, we need to use a {% intlink "directed_graph_definition" %}directed network{%endintlink%} to describe the World Wide Web.  In such a directed graph (or digraph, for short), we typically draw the edges as arrows to indicate the direction, as illustrated below.</p>
 
 
 
@@ -89,7 +89,7 @@
 {% navigation_tag "adjacency_matrix" "Adjacency matrix" %}
 <h4>The adjacency matrix</h4>
 
-<p>For unweighted networks of $N$ nodes without multiple connections, the network structure can be represented an $N \times N$ {% intlink adjacency_matrix_definition%}adjacency{%endintlink%} {% intlink matrix_introduction %}matrix{%endintlink%} $A$.  Unfortunately, if the network is directed, there exist opposite conventions for how to define the adjacency matrix. In these pages, we will act like mathematicians and define the adjacency matrix so that the component $a_{ij}$ indicates a connection <em>from</em> node $j$ and <em>to</em> node $i$.  In this convention, one must read the indices from right to left to determine the direction of the interaction.  (Many people use the opposite convention where one must read the indices from left to right.) The adjacency matrix is a matrix of ones and zeros where a one indicates the presence of a connection.  Therefore we define $A$ by
+<p>For unweighted networks of $N$ nodes without multiple connections, the network structure can be represented an $N \times N$ {% intlink "adjacency_matrix_definition" %}adjacency{%endintlink%} {% intlink "matrix_introduction" %}matrix{%endintlink%} $A$.  Unfortunately, if the network is directed, there exist opposite conventions for how to define the adjacency matrix. In these pages, we will act like mathematicians and define the adjacency matrix so that the component $a_{ij}$ indicates a connection <em>from</em> node $j$ and <em>to</em> node $i$.  In this convention, one must read the indices from right to left to determine the direction of the interaction.  (Many people use the opposite convention where one must read the indices from left to right.) The adjacency matrix is a matrix of ones and zeros where a one indicates the presence of a connection.  Therefore we define $A$ by
 \begin{gather*}
   a_{ij} \nobreak{=}
   \begin{cases}
@@ -126,7 +126,7 @@
 
 <p>For undirected graphs, the convention for denoting the adjacency matrix doesn't matter, as all edges are bidirectional.  In this 
 
-The bidirectionality means that the adjacency matrix is {% intlink symmetric_matrix_definition%}symmetric{%endintlink%}.</p>
+The bidirectionality means that the adjacency matrix is {% intlink "symmetric_matrix_definition" %}symmetric{%endintlink%}.</p>
 
 {% image "small_undirected_network_numbered" %}
 

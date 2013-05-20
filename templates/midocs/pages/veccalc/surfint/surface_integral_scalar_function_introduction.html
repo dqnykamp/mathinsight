@@ -5,35 +5,35 @@
 {% description "How to define the integral of a scalar-valued function over a parametrized surface." %}
 
 <p>There are many parallels between
-{% intlink parametrized_surface_introduction %}parametrized surfaces{%endintlink%}
-and {%intlink parametrized_curve_introduction%}parametrized curves{%endintlink%}.
+{% intlink "parametrized_surface_introduction" %}parametrized surfaces{%endintlink%}
+and {% intlink "parametrized_curve_introduction" %}parametrized curves{%endintlink%}.
 Both are parametrized by vector-valued functions, with the difference 
 being the dimension of their inputs (one-dimensional $t$ for parametrized
 curves and two-dimensional $(\spfv,\spsv)$ for parametrized surfaces).
-Both have two possible orientations (oriented by choice of {%intlink parametrized_curve_orient %}tangent vector{%endintlink%} for curves and by choice of {%intlink parametrized_surface_orient %}normal vector{%endintlink%} for surfaces).
-Both have integrals giving their measure ({%intlink parametrized_curve_arc_length %}arc length{%endintlink%} or {%intlink parametrized_surface_area%}area{%endintlink%})
+Both have two possible orientations (oriented by choice of {% intlink "parametrized_curve_orient" %}tangent vector{%endintlink%} for curves and by choice of {% intlink "parametrized_surface_orient" %}normal vector{%endintlink%} for surfaces).
+Both have integrals giving their measure ({% intlink "parametrized_curve_arc_length" %}arc length{%endintlink%} or {% intlink "parametrized_surface_area" %}area{%endintlink%})
 in terms of derivatives of the parametrization that describe how the domain is stretched and shrunk as it is mapped onto the image.</p>
 
-<p>In the same way, surface integrals are similar to {% intlink line_integral_scalar_function_introduction%}line integrals{%endintlink%}. 
+<p>In the same way, surface integrals are similar to {% intlink "line_integral_scalar_function_introduction" %}line integrals{%endintlink%}. 
 Just as there are two types of integrals over curves
-(line integrals of {% intlink line_integral_scalar_function_introduction%}scalar functions{%endintlink%} and of {% intlink line_integral_vector_field_introduction%}vector fields{%endintlink%})
+(line integrals of {% intlink "line_integral_scalar_function_introduction" %}scalar functions{%endintlink%} and of {% intlink "line_integral_vector_field_introduction" %}vector fields{%endintlink%})
 there are two types of surface integrals:
 surface integrals of scalar functions (discussed on this page) and 
-{% intlink surface_integral_vector_field_introduction%}surface integrals of vector fields{%endintlink%}.
+{% intlink "surface_integral_vector_field_introduction" %}surface integrals of vector fields{%endintlink%}.
 The surface integral of a scalar function is a simple generalization of a
-{% intlink double_integral_introduction%}double integral{%endintlink%}.
-Like the {% intlink line_integral_vector_field_introduction%}line integral of vector fields{%endintlink%}, the {% intlink surface_integral_vector_field_introduction%}surface integrals of vector fields{%endintlink%}
+{% intlink "double_integral_introduction" %}double integral{%endintlink%}.
+Like the {% intlink "line_integral_vector_field_introduction" %}line integral of vector fields{%endintlink%}, the {% intlink "surface_integral_vector_field_introduction" %}surface integrals of vector fields{%endintlink%}
 will play a big role in the fundamental theorems of vector calculus.
 </p>
 
 <p>Let $\dls$ be a surface parametrized by $\dlsp(\spfv,\spsv)$ for $(\spfv,\spsv)$ in some region $\dlr$. 
 Imagine you wanted to calculate the mass of the surface given its density at each point $\vc{x}$ described by the scalar-valued function $f(\vc{x})$.
 The mass will be the integral of the density over the surface
-(just like the mass of a wire was the {%intlink line_integral_scalar_function_introduction%}integral of a density{%endintlink%} over the curve).</p>
+(just like the mass of a wire was the {% intlink "line_integral_scalar_function_introduction" %}integral of a density{%endintlink%} over the curve).</p>
 
 <p>If the surface happened to be lying in the $xy$-plane rather than floating in
 three-dimensional space, the situation would be identical to that of
-{% intlink double_integral_change_variables_introduction%}changing variables
+{% intlink "double_integral_change_variables_introduction" %}changing variables
 in double integrals{%endintlink%} (other than the region we call $\dlr$ here is called $\dlr^*$ in that context changing variables).  
 We need only slight modifications for the case of a surface floating
 in three dimensional space.</p>
@@ -47,7 +47,7 @@ maps $\dlr$ onto the surface, as illustrated in the below applet.</p>
 {% boxedapplet "parametrized_helicoid_surface_area" %}
 
 <p>We already calculated the stretching or shrinking by $\dlsp$ when we 
-calculated {%intlink parametrized_surface_area %}surface area{%endintlink%}.
+calculated {% intlink "parametrized_surface_area" %}surface area{%endintlink%}.
 The area of the region on the surface that is the image of a small $\Delta\spfv \times \Delta\spsv$ rectangle in $\dlr$ is
 \begin{align*}
   \Delta A = \left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv) \right\|
@@ -64,7 +64,7 @@ the integral
   d\spfv\,d\spsv.
 \end{align*}
 This integral is a two-dimensional analog of the
-{%intlink line_integral_scalar_function_introduction%}line integral of a scalar-valued function{%endintlink%} except that $\|\dlsp'(t)\|$
+{% intlink "line_integral_scalar_function_introduction" %}line integral of a scalar-valued function{%endintlink%} except that $\|\dlsp'(t)\|$
 is replaced by
 \begin{align*}
     \left\| \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times \pdiff{\dlsp}{\spsv}(\spfv,\spsv)
@@ -73,7 +73,7 @@ is replaced by
 </p>
 
 <p>You can read some 
-{% intlink surface_integral_scalar_examples %}examples{%endintlink%}
+{% intlink "surface_integral_scalar_examples" %}examples{%endintlink%}
 of calculating surface integrals of scalar functions.</p>
 
 {%endblock%}

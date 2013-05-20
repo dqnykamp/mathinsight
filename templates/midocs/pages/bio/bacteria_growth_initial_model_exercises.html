@@ -2,12 +2,12 @@
 {% title "Bacteria growth model exercises" "Exercises"%}
 {% description "Exercises on developing discrete dynamical systems for the growth of a population of bacteria." %}
 
-<p>The {% intlink bacteria_growth_initial_model %}bacteria model page{%endintlink%} explained how to develop a {% intlink discrete_dynamical_system_introduction%}discrete dynamical system{%endintlink%} model based on experimental measurements of population density.  In the following exercises, you can explore similar models and datasets.  </p>
+<p>The {% intlink "bacteria_growth_initial_model" %}bacteria model page{%endintlink%} explained how to develop a {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system{%endintlink%} model based on experimental measurements of population density.  In the following exercises, you can explore similar models and datasets.  </p>
 
 {% navigation_tag "exercise1" "Exercises" "Exercise 1" %}
 <h4>Exercise 1</h4>
 
-<p>Following the procedure outlined in the {% intlink bacteria_growth_initial_model %}bacteria model page{%endintlink%}, compute $B_1$, $B_2$, and $B_3$ for the following discrete dynamical systems.
+<p>Following the procedure outlined in the {% intlink "bacteria_growth_initial_model" %}bacteria model page{%endintlink%}, compute $B_1$, $B_2$, and $B_3$ for the following discrete dynamical systems.
 \begin{align*}
 {\rm{a.}} \hspace{2mm} B_0 & = 4 & \hspace{5mm} 
 B_{t+1} - B_t & = 0.5 \times B_t  \\
@@ -27,17 +27,17 @@ B_{t+1} - B_t & =  0.01 \times B_t
 {% navigation_tag "exercise2" "Exercises" "Exercise 2" %}
 <h4>Exercise 2</h4>
 <p>Write a solution equation for
-the dynamical systems of Exercise 1 similar to {% intlinkeq bacteria_growth_initial_model specific_solution %}of the bacteria page{%endintlinkeq%}.</p>
+the dynamical systems of Exercise 1 similar to {% intlink "bacteria_growth_initial_model" equation="specific_solution" %}equation (tag) of the bacteria page{% endintlink %}.</p>
 
 {% navigation_tag "whyorigin" "Exercises" "Exercise 3" %}
 <h4>Exercise 3</h4>
-<p>When {% intlink bacteria_growth_initial_model linear_model%}developing the linear model{%endintlink%}, observe that we plotted $B_{t+1} - B_t$ <em>versus</em> $B_t$.  The points are $(B_0, B_1-B_0)$, $(B_1, B_2-B_1)$, etc.    The second coordinate, $B_{t+1} - B_t$ is the population increase during time period $t$, given that the population at the beginning of the time period is $B_t$. Explain why the point (0,0) would be a point of this graph.
+<p>When {% intlink "bacteria_growth_initial_model" anchor="linear_model" %}developing the linear model{%endintlink%}, observe that we plotted $B_{t+1} - B_t$ <em>versus</em> $B_t$.  The points are $(B_0, B_1-B_0)$, $(B_1, B_2-B_1)$, etc.    The second coordinate, $B_{t+1} - B_t$ is the population increase during time period $t$, given that the population at the beginning of the time period is $B_t$. Explain why the point (0,0) would be a point of this graph.
 </p>
 
 
 {% navigation_tag "exercise4" "Exercises" "Exercise 4" %}
 <h4>Exercise 4</h4>
-<p>Below are tables with four sets of data.  For each data set, follow the steps from the bacteria growth page to {%intlink bacteria_growth_initial_model linear_model %}fit a dynamical system{%endintlink%} to the data.  The dynamical system should be of the form
+<p>Below are tables with four sets of data.  For each data set, follow the steps from the bacteria growth page to {% intlink "bacteria_growth_initial_model" anchor="linear_model" %}fit a dynamical system{%endintlink%} to the data.  The dynamical system should be of the form
 \[B_0 = \text{value from the table}, \hspace{1cm}\goodbreak
 B_{t+1} - B_t = r \times B_t.\]
 Find the number $r$ so that the values
@@ -116,7 +116,7 @@ the dynamical system are close to the corresponding numbers in the table.  Once 
   </div>
 </div>
 
-<p>To aid you in calculating the number $r$, you can use the below applet, which is similar to {% appletlink "bacteria_density_change_versus_density_line" %}original bacteria applet{% endappletlink%} but uses $P_t$ to indicate population size at time $t$.  Enter the data and find a line close to it.  Be sure that the line goes through the origin. For better control over the applet and to be able to print or save your results, we suggest downloading the applet to your computer.  On the {% appletlink "population_change_versus_population_line" %}applet information page{%endappletlink%}, you can find a link to the applet file and instructions for installing {% extlink "http://geogebra.com" %}Geogebra{%endextlink%}.</p>
+<p>To aid you in calculating the number $r$, you can use the below applet, which is similar to {% intlink "bacteria_density_change_versus_density_line" class="applet" %}original bacteria applet{% endintlink %} but uses $P_t$ to indicate population size at time $t$.  Enter the data and find a line close to it.  Be sure that the line goes through the origin. For better control over the applet and to be able to print or save your results, we suggest downloading the applet to your computer.  On the {% intlink "population_change_versus_population_line" class="applet" %}applet information page{% endintlink %}, you can find a link to the applet file and instructions for installing {% extlink "http://geogebra.com" %}Geogebra{%endextlink%}.</p>
 
 {% boxedapplet "population_change_versus_population_line" %}
 
@@ -128,9 +128,9 @@ the dynamical system are close to the corresponding numbers in the table.  Once 
 <p>The bacterium <em>V. natriegens</em>
 was also grown in a growth medium with pH of 7.85.    Data
 for that experiment is shown in the following table.
-Repeat the analysis demonstrated in the {% intlink bacteria_growth_initial_model %}bacteria growth page{%endintlink%} for this data.
+Repeat the analysis demonstrated in the {% intlink "bacteria_growth_initial_model" %}bacteria growth page{%endintlink%} for this data.
 Compare your computed relative growth rate of <em>V. natriegens</em>
-at pH 7.85 with the computed relative growth rate at pH 6.25, which {% intlink bacteria_growth_initial_model linear_model %}we calculated to be{%endintlink%} 2/3.</p>
+at pH 7.85 with the computed relative growth rate at pH 6.25, which {% intlink "bacteria_growth_initial_model" anchor="linear_model" %}we calculated to be{%endintlink%} 2/3.</p>
 
 <table class="basic centered compact" style="width:50%">
 <caption>Measurements of <em>V. natriegens</em> density at pH 7.85.</caption>
@@ -153,7 +153,7 @@ of the cells divided every 30 minutes?</p>
 
 <h4>Selected answers</h4>
 
-<p>Once you've worked out some of these exercises, you can check your work with the {% intlink bacteria_growth_initial_model_answers%}answers to selected problems{%endintlink%}.</p>
+<p>Once you've worked out some of these exercises, you can check your work with the {% intlink "bacteria_growth_initial_model_answers" %}answers to selected problems{%endintlink%}.</p>
 
 
 

@@ -5,15 +5,15 @@
 {% title "Orienting surfaces" %}
 {% description "How to orient a surface by choosing a normal vector." %}
 
-<p>Choosing an {% intlink parametrized_curve_orient%}orientation of a 
+<p>Choosing an {% intlink "parametrized_curve_orient" %}orientation of a 
 curve{%endintlink%} is a fairly simply idea.  One just needs to
 choose the direction by which one moves along the curve.
 However, choosing an orientation of a curve is also equivalent to 
-{% intlink parametrized_curve_orient%}choosing one of its possible
+{% intlink "parametrized_curve_orient" %}choosing one of its possible
 unit tangent vectors{%endintlink%}. </p>
 
 <p>Orientating  a 
-{% intlink parametrized_surface_introduction%}parametrized surfaces{%endintlink%}
+{% intlink "parametrized_surface_introduction" %}parametrized surfaces{%endintlink%}
 is a little trickier than orienting a curve. 
 But, if you think of choosing an orientation as choosing between
 one of two possible unit vectors, it will help you understand the orientation of
@@ -22,22 +22,22 @@ surfaces.</p>
 <p>Like curves, we can parametrize a surface in two
 different orientations.  The orientation of a curve is given by the
 unit tangent vector $\vc{n}$; the orientation of a surface is given by
-the {%intlink parametrized_surface_normal_vector %}unit normal vector{%endintlink%}
-$\vc{n}$.  Unless we are dealing with an {%intlink moebius_strip_not_orientable %}unusual surface{%endintlink%}, a surface has two sides.
+the {% intlink "parametrized_surface_normal_vector" %}unit normal vector{%endintlink%}
+$\vc{n}$.  Unless we are dealing with an {% intlink "moebius_strip_not_orientable" %}unusual surface{%endintlink%}, a surface has two sides.
 We can pick the normal vector to point out one side of the surface, or
 we can pick the normal vector to point out the other side of the
 surface.  Our choice of normal vector specifies the orientation of the
 surface.  We call the side of the surface with the normal vector the
-{%intlink positive_side_definition%}positive side{%endintlink%} of the surface.</p>
+{% intlink "positive_side_definition" %}positive side{%endintlink%} of the surface.</p>
 
 <p>As an example, consider the sphere of radius $R$ centered at the
-origin.  Using {%intlink spherical_coordinates %}spherical coordinates{%endintlink%}, we could parametrize the
+origin.  Using {% intlink "spherical_coordinates" %}spherical coordinates{%endintlink%}, we could parametrize the
 sphere using
 \begin{align*}
   \dlsp(\theta,\phi) = (R\sin \phi \cos\theta, R\sin\phi \sin\theta, R\cos\phi)
 \end{align*}
 for $0 \le \theta \le 2\pi$ and $0 \le \phi \le \pi$.  Remember that
-a formula for the {%intlink parametrized_surface_normal_vector %}unit normal vector{%endintlink%}
+a formula for the {% intlink "parametrized_surface_normal_vector" %}unit normal vector{%endintlink%}
  is
 \begin{align*}
     \vc{n} = \frac{\displaystyle \pdiff{\dlsp}{\spfv}(\spfv,\spsv) \times
@@ -108,7 +108,7 @@ and $\phi=\pi/2$, then $\dlsp(0,\pi/2) = (R,0,0)$ and
 $\vc{n}=(-1,0,0)$.  The vector $\vc{n}$ for any value of $\theta$ or
 $\phi$ is shown in the figure below.  Notice that $\vc{n}$ always
 points toward the inside of the sphere.  In this case, the inside of
-the sphere is the {%intlink positive_side_definition%}positive side{%endintlink%} of the surface.</p>
+the sphere is the {% intlink "positive_side_definition" %}positive side{%endintlink%} of the surface.</p>
 
 {% boxedapplet "sphere_inward_normal_vector" %}
 
@@ -118,7 +118,7 @@ choosing the normal vector $\pdiff{\dlsp}{\phi} \times
 How does the new normal vector orient the surface?</p>
 
 <p>Recalling the properties
-of the {%intlink cross_product %}cross product{%endintlink%},
+of the {% intlink "cross_product" %}cross product{%endintlink%},
 we can conclude these vectors are opposites: $\displaystyle
 \pdiff{\dlsp}{\phi} \times \pdiff{\dlsp}{\theta} = -\pdiff{\dlsp}{\theta} \times
 \pdiff{\dlsp}{\phi}$.  In this case, unit normal is
@@ -128,7 +128,7 @@ we can conclude these vectors are opposites: $\displaystyle
   = (\sin\phi \cos\theta, \sin\phi \sin\theta,\cos\phi)
 \end{align*}
 The normal vector points toward the outside the sphere, as shown below.  For this second
-orientation of the sphere, the outside is the {%intlink positive_side_definition%}positive side{%endintlink%} of the
+orientation of the sphere, the outside is the {% intlink "positive_side_definition" %}positive side{%endintlink%} of the
 surface.
 {% boxedapplet "sphere_outward_normal_vector" %}
 

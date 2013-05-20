@@ -5,14 +5,14 @@
 {% title "Finding a potential function for conservative vector fields" %}
 {% description "How to find a potential function for a given conservative, or path-independent, vector field." %}
 
-<p>The process of finding a potential function of a {% intlink conservative_vector_field_introduction %}conservative vector field{%endintlink%} is a multi-step procedure that involves both integration and differentiation, while paying close attention to the variables you are integrating or differentiating with respect to.
+<p>The process of finding a potential function of a {% intlink "conservative_vector_field_introduction" %}conservative vector field{%endintlink%} is a multi-step procedure that involves both integration and differentiation, while paying close attention to the variables you are integrating or differentiating with respect to.
 For this reason, given a vector field $\dlvf$, we recommend that you first
-{% intlink conservative_vector_field_determine %}determine that{%endintlink%}
+{% intlink "conservative_vector_field_determine" %}determine that{%endintlink%}
 that $\dlvf$ is indeed conservative before beginning this procedure.
 That way you know a potential function exists so the procedure should work out in the end.</p>
 
 <p>In this page, we focus on finding a potential function of a two-dimensional conservative vector field.  We address three-dimensional fields in 
-{% intlink conservative_vector_field_find_potential_3d %}another page{%endintlink%}.</p>
+{% intlink "conservative_vector_field_find_potential_3d" %}another page{%endintlink%}.</p>
 
 <p>We introduce the procedure for finding a potential function via an example.
 Let's use the vector field
@@ -32,8 +32,8 @@ we conclude that the scalar curl of $\dlvf$ is zero, as
    \pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y} = 0.
 \end{align*}
 Next, we observe that $\dlvf$ is defined on all of $\R^2$, so there are no
-{% intlink path_dependent_zero_curl %}tricks to worry about{%endintlink%}.
-The vector field $\dlvf$ {% intlink conservative_vector_field_determine test4 %}is indeed conservative{%endintlink%}.</p>
+{% intlink "path_dependent_zero_curl" %}tricks to worry about{%endintlink%}.
+The vector field $\dlvf$ {% intlink "conservative_vector_field_determine" anchor="test4" %}is indeed conservative{%endintlink%}.</p>
 
 <p>Since $\dlvf$ is conservative, we know there exists some
 potential function $f$ so that $\nabla f = \dlvf$.  As a first step toward finding $f$,
@@ -82,7 +82,7 @@ that
 But actually, that's not right yet either.  Since we were viewing $y$
 as a constant, the integration &ldquo;constant&rdquo; $C$ could be a function of $y$ and it wouldn't
 make a difference. 
-The {% intlink partial_derivative_introduction %}partial derivative{%endintlink%} of any function of $y$ with respect to $x$ is zero.
+The {% intlink "partial_derivative_introduction" %}partial derivative{%endintlink%} of any function of $y$ with respect to $x$ is zero.
 We can replace $C$ with any function of $y$, say
 $g(y)$, and condition \eqref{cond1} will be satisfied.
 A new expression for the potential function is
@@ -142,7 +142,7 @@ is a potential function for $\dlvf.$  You can verify that indeed
   \dlint
 \end{align*}
 is simple, no matter what path $\dlc$ is.  We can apply the 
-{% intlink gradient_theorem_line_integrals%}gradient theorem{%endintlink%} 
+{% intlink "gradient_theorem_line_integrals" %}gradient theorem{%endintlink%} 
 to conclude that the integral is simply
 $f(\vc{q})-f(\vc{p})$, where $\vc{p}$ is the beginning point and
 $\vc{q}$ is the ending point of $\dlc$.  (For this reason, if $\dlc$ is a

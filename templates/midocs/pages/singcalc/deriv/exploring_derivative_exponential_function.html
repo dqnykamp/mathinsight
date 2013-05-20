@@ -14,7 +14,7 @@
 \begin{align*}
   f(x)=2^x
 \end{align*}
-we may be tempted to use the  {% intlink derivative_power_function %}power rule{%endintlink%}.  However, the exponential function $2^x$ is very different from the power $x^2$, because in $2^x$ the variable $x$ itself is in the exponent.  We'd get into a lot of trouble with completely bogus results if we replaced the derivative of $2^x$ with $x 2^{x-1}$.  Don't do this.</p>
+we may be tempted to use the  {% intlink "derivative_power_function" %}power rule{%endintlink%}.  However, the exponential function $2^x$ is very different from the power $x^2$, because in $2^x$ the variable $x$ itself is in the exponent.  We'd get into a lot of trouble with completely bogus results if we replaced the derivative of $2^x$ with $x 2^{x-1}$.  Don't do this.</p>
 
 <p>To determine the derivative of the exponential function, we need to go back to the limit definition of the derivative.  According to the limit definition, 
 \begin{align}
@@ -23,7 +23,7 @@ we may be tempted to use the  {% intlink derivative_power_function %}power rule{
 \end{align}
 Here we used $h$ for the step size instead of $\Delta x$, but it doesn't matter what we call it.</p>
 
-<p>The situation might look hopeless, until we remember the {% intlink exponentiation_basic_rules %}rules for exponents{%endintlink%}.  We can replace $2^{x+h}$ with $2^x 2^h$ in the numerator.  Then, we can factor $2^{x}$ out of the numerator since $2^{x}2^h-2^x = 2^x(2^h-1)$.  In fact, we can do even better than that.  The factor $2^x$ doesn't even depend on $h$, so we are allowed to pull it out of the limit.  Our resulting simplified form for the derivative of $2^x$ is
+<p>The situation might look hopeless, until we remember the {% intlink "exponentiation_basic_rules" %}rules for exponents{%endintlink%}.  We can replace $2^{x+h}$ with $2^x 2^h$ in the numerator.  Then, we can factor $2^{x}$ out of the numerator since $2^{x}2^h-2^x = 2^x(2^h-1)$.  In fact, we can do even better than that.  The factor $2^x$ doesn't even depend on $h$, so we are allowed to pull it out of the limit.  Our resulting simplified form for the derivative of $2^x$ is
 \begin{align}
   f'(x) &= 2^x \lim_{h \to 0} \frac{2^{h}-1}{h}.
   \label{limit_number}
@@ -114,12 +114,12 @@ For this reason, only when you enter $e$ for $b$ in the second applet do the fun
 </p>
 
 <p>This fundamental property of $e^x$, that it is its own derivative, is one of the reasons that $e$ is the most common base used for the exponential function throughout the sciences.  The function $e^x$ is often referred to as simply
-<em>{% intlink exponential_function exponent_base_e %}the exponential function{%endintlink%}</em>.</p>
+<em>{% intlink "exponential_function" anchor="exponent_base_e" %}the exponential function{%endintlink%}</em>.</p>
 
 {% navigation_tag "parameters" "Parameters" %}
 <h4>Adding parameters to the exponential function</h4>
 
-<p>When {% intlink exponential_function %}discussing the exponential function{%endintlink%}, we introduced a few parameters, writing the general exponential function as 
+<p>When {% intlink "exponential_function" %}discussing the exponential function{%endintlink%}, we introduced a few parameters, writing the general exponential function as 
 $$f(x)=cb^{kx}$$
 with parameters $b$, $c$, and $k$.  We then showed how the parameters $b$ and $k$ were redundant, so we only needed one of them.  Since we found $b=e$ makes the derivatives nice, let's just use the base $e$ and write our exponential functions as
 $$f(x)=ce^{kx},$$
@@ -133,7 +133,7 @@ which has just two parameters $c$ and $k$.</p>
   f'(x_0) &= \lim_{h \to 0} \frac{f(x_0+h) - f(x_0)}{h}\\
   &= \lim_{h \to 0} \frac{ce^{k(x_0+h)}-ce^{kx_0}}{h}
 \end{align*}
-Again, the {% intlink exponentiation_basic_rules %}rules for exponents{%endintlink%} help us simplify this limit.  Since $e^{k(x_0+h)} = e^{kx_0+kh} = e^{kx}e^{kh}$, we can factor out a $ce^{kx_0}$ from the numerator: $ce^{kx_0}e^{kh}-ce^{kx_0} = ce^{kx_0}(e^{kh} -1)$.  The number $ce^{kx_0}$ is the same thing as $f(x_0)$.  It doesn't depend on $h$, so we can pull it out of the limit and conclude that 
+Again, the {% intlink "exponentiation_basic_rules" %}rules for exponents{%endintlink%} help us simplify this limit.  Since $e^{k(x_0+h)} = e^{kx_0+kh} = e^{kx}e^{kh}$, we can factor out a $ce^{kx_0}$ from the numerator: $ce^{kx_0}e^{kh}-ce^{kx_0} = ce^{kx_0}(e^{kh} -1)$.  The number $ce^{kx_0}$ is the same thing as $f(x_0)$.  It doesn't depend on $h$, so we can pull it out of the limit and conclude that 
 \begin{align*}
   f'(x_0) &= f(x_0) \lim_{h \to 0} \frac{e^{kh}-1}{h}.
 \end{align*}
@@ -188,8 +188,8 @@ Let's see if we can find a nicer looking expression for that limit.  It will sti
 $$x = e^{\ln x}.$$
 If instead of $x$, we insert the expression $b^x$, we can rewrite $b^x$ as
 $$b^x = e^{\ln b^x} = e^{x \ln b},$$
-where for the last step, we used one of the {% intlink logarithm_basics rules %}basic rules for logarithms{% endintlink%}: $\log b^x = x \log b$.
-We've determined that $b^x$ is the same thing as $e^{kx}$ where $k=\ln b$.  This explains why $k$ and $b$ are {% intlink redundant_parameters_exponential_function %}redundant parameters of the exponential function{%endintlink%}.  We don't need to use $b^x$ with different bases $b$, we could get the same function by using $e$ for the base and writing the function as $e^{kx}$ where $k=\ln b$. </p>
+where for the last step, we used one of the {% intlink "logarithm_basics" anchor="rules" %}basic rules for logarithms{% endintlink%}: $\log b^x = x \log b$.
+We've determined that $b^x$ is the same thing as $e^{kx}$ where $k=\ln b$.  This explains why $k$ and $b$ are {% intlink "redundant_parameters_exponential_function" %}redundant parameters of the exponential function{%endintlink%}.  We don't need to use $b^x$ with different bases $b$, we could get the same function by using $e$ for the base and writing the function as $e^{kx}$ where $k=\ln b$. </p>
 
 <p>Given that $k=\ln b$, we can use formula \eqref{derivative_ekx} for the derivative of $e^{kx}$ to compute the derivative of $b^x$.  We just need to multiply the function by $k$, which is the same thing as multiply by $\ln b$.  Our revised formula for the derivative of $b^x$ is
 \begin{align*}

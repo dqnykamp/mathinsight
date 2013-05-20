@@ -7,13 +7,13 @@
 {% title "The idea behind Green's theorem" %}
 {% description "Introduction to Green's theorem, based on the intuition of microscopic and macroscopic circulation of a vector field." %}
 <p>When $\dlc$ is an 
-{% intlink oriented_curve_definition%}oriented{%endintlink%}
-{% intlink simple_curve_definition %}simple{%endintlink%}
-{% intlink closed_curve_definition %}closed{%endintlink%} curve, the integral
+{% intlink "oriented_curve_definition" %}oriented{%endintlink%}
+{% intlink "simple_curve_definition" %}simple{%endintlink%}
+{% intlink "closed_curve_definition" %}closed{%endintlink%} curve, the integral
 \begin{align*}
   \dlint
 \end{align*}
-{%intlink line_integral_circulation %}represents the circulation{%endintlink%} of $\dlvf$ around $\dlc$.
+{% intlink "line_integral_circulation" %}represents the circulation{%endintlink%} of $\dlvf$ around $\dlc$.
 If $\dlvf$ were the velocity field of water flow, for example, this
 integral would indicate how much the water tends to circulate around
 the path in the direction of its orientation.
@@ -22,14 +22,14 @@ the path in the direction of its orientation.
 <p class="centeredImage">{% image "closed_curve" %}</p>
 
 <p>One way to compute this circulation is, of course, to compute the
-{%intlink line_integral_vector_field_introduction %}line integral{%endintlink%} directly.
+{% intlink "line_integral_vector_field_introduction" %}line integral{%endintlink%} directly.
 But, if our line integral happens to be in two dimensions (i.e.,
 $\dlvf$ is a two-dimensional vector field and $\dlc$ is a closed path
 that lives in the plane), then Green's theorem applies and we can use
 Green's theorem as an alternative way to calculate the line integral.</p>
 
 <p>Green's theorem transforms the line integral around $\dlc$ into a
-{% intlink double_integral_introduction %}double integral{%endintlink%} over the
+{% intlink "double_integral_introduction" %}double integral{%endintlink%} over the
 region inside $\dlc$.  However, it's not obvious what function we
 should integrate over the region inside $\dlc$ so that we still get
 the same answer as the line integral.  The notion of circulation can aid us in 
@@ -75,7 +75,7 @@ write Green's theorem as
 <p>
 What is this microscopic circulation?  The microscopic circulation of
 Green's theorem is the same as the microscopic circulation of the
-{% intlink curl_idea %}curl{%endintlink%} of a
+{% intlink "curl_idea" %}curl{%endintlink%} of a
 three-dimensional vector field.   The only difference is that
 Green's theorem applies only with two-dimensional vector fields, e.g.,
 for vector fields in the $xy$-plane.  The microscropic circulation we
@@ -83,8 +83,8 @@ want is circulation in the $xy$-plane.</p>
 
 <p>Microscopic circulation in the $xy$ plane turns out to be the
 $z$-component of the curl.  You can see this as follows.  The
-direction of the {% intlink curl_idea %}curl{%endintlink%} and the
-{% intlink curl_components %}definition of its components{%endintlink%} is
+direction of the {% intlink "curl_idea" %}curl{%endintlink%} and the
+{% intlink "curl_components" %}definition of its components{%endintlink%} is
 determined by the right-hand rule.  (Imagine curling the fingers of
 your right hand around the circles indicating the circulation.  One
 represents such circulation by a vector pointing in the direction of
@@ -99,14 +99,14 @@ $xy$-plane should correspond to the $z$-component of the curl.</p>
 \begin{align*}
   \text{&ldquo;microscopic circulation&rdquo;} = (\curl \dlvf) \cdot \vc{k},
 \end{align*}
-(where $\vc{k}$ is the {% intlink unit_vector_definition %}unit vector{%endintlink%} in the $z$-direction) and we can
+(where $\vc{k}$ is the {% intlink "unit_vector_definition" %}unit vector{%endintlink%} in the $z$-direction) and we can
 write Green's theorem as
 \begin{align*}
   \dlint = \iint_\dlr (\curl \dlvf) \cdot \vc{k} \, dA.
 \end{align*}
 </p>
 
-<p>The {% intlink curl_components %}component of the curl{%endintlink%}
+<p>The {% intlink "curl_components" %}component of the curl{%endintlink%}
 in the $z$-direction is given by the formula
 \begin{align*}
   (\curl \dlvf) \cdot \vc{k} = \pdiff{\dlvfc_2}{x} -
@@ -116,10 +116,10 @@ in the $z$-direction is given by the formula
 {% index_entry "curl" "scalar" "scalar_curl1" %}
 This $z$-component of the curl is often termed the <i>scalar curl</i> of a two-dimensional
 vector field.
-You can {% intlink curl_components %}get intuition{%endintlink%}
+You can {% intlink "curl_components" %}get intuition{%endintlink%}
 behind this formula or see 
-{% intlink circulation_unit_area_calculation %}how to derive{%endintlink%}
-this formula from the {% intlink curl_definition_line_integral %}definition
+{% intlink "circulation_unit_area_calculation" %}how to derive{%endintlink%}
+this formula from the {% intlink "curl_definition_line_integral" %}definition
 of the curl{%endintlink%}.
 Using this formula, we can write Green's theorem as 
 \begin{align*}
@@ -146,11 +146,11 @@ mess up the orientation, you'll be off by a minus sign.
 <h4>Green's theorem and other fundamental theorems</h4>
 
 <p>Green's theorem is one of the
-{% intlink fundamental_theorems_vector_calculus_summary %}four fundamental
+{% intlink "fundamental_theorems_vector_calculus_summary" %}four fundamental
 theorems of vector calculus{%endintlink%}
 all of which are closely linked.  
-Once you learn about {% intlink surface_integral_vector_field_introduction %}surface
-integrals{%endintlink%}, you can see how {% intlink stokes_theorem_idea %}Stokes'
+Once you learn about {% intlink "surface_integral_vector_field_introduction" %}surface
+integrals{%endintlink%}, you can see how {% intlink "stokes_theorem_idea" %}Stokes'
 theorem{%endintlink%} is based on the same principle of linking 
 microscopic and macroscopic circulation. </p>
 
@@ -163,10 +163,10 @@ zero in some region $\dlr$, then the line integral
 \end{align*}
 for any closed curve $\dlc$ in $\dlr$ 
 (for example, the closed curve $\dlc$ that is the boundary of $\dlr$).
-This is a {% intlink conservative_vector_field_no_circulation %}property{%endintlink%}
-of {% intlink conservative_vector_field_introduction %}conservative
+This is a {% intlink "conservative_vector_field_no_circulation" %}property{%endintlink%}
+of {% intlink "conservative_vector_field_introduction" %}conservative
 or path-independent{%endintlink%} vector fields,
-which forms the basis for the {% intlink gradient_theorem_line_integrals %}gradient
+which forms the basis for the {% intlink "gradient_theorem_line_integrals" %}gradient
 theorem{%endintlink%} for line integrals.</p>
 
 </div>
@@ -174,14 +174,14 @@ theorem{%endintlink%} for line integrals.</p>
 
 <p>Are you ready to use Green's theorem?  
 Make sure you understand when you are 
-{% intlink greens_theorem_when_applies %}allowed to use Green's 
+{% intlink "greens_theorem_when_applies" %}allowed to use Green's 
 theorem{%endintlink%}, 
-check out some {% intlink greens_theorem_other_ways_writing %}other 
+check out some {% intlink "greens_theorem_other_ways_writing" %}other 
 ways of writing Green's theorem{%endintlink%},
-then investigate some {% intlink greens_theorem_examples %}examples{%endintlink%}.
+then investigate some {% intlink "greens_theorem_examples" %}examples{%endintlink%}.
 To become a master at Green's theorem, you should understand how
 it applies to more general
-{% intlink greens_theorem_multiple_boundary_components %}regions 
+{% intlink "greens_theorem_multiple_boundary_components" %}regions 
 with holes{%endintlink%}. </p>
 
 {% endblock %}

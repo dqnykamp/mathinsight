@@ -7,7 +7,7 @@
 {% description "A discussion of the ways to determine whether or not a vector field is conservative or path-independent. " %}
 
 
-<p>A {% intlink conservative_vector_field_introduction%}conservative vector 
+<p>A {% intlink "conservative_vector_field_introduction" %}conservative vector 
 field{%endintlink%} (also called a path-independent vector field)
 is a vector field $\dlvf$ whose line integral $\dlint$ over any 
 curve $\dlc$ depends only on the endpoints of $\dlc$.
@@ -27,7 +27,7 @@ was path-dependent.</p>
 <p>Here are some options that could be useful under different circumstances.</p>
 <ol>
 
-  <li><p>{% navigation_tag "test1" "Tests" "Test 1" %}As mentioned in the context of the {%intlink gradient_theorem_line_integrals %}gradient theorem{%endintlink%}, 
+  <li><p>{% navigation_tag "test1" "Tests" "Test 1" %}As mentioned in the context of the {% intlink "gradient_theorem_line_integrals" %}gradient theorem{%endintlink%}, 
       a vector field $\dlvf$ is conservative if and only if it has a potential
       function $f$ with $\dlvf = \nabla f$.  
       Therefore, if you are given a potential function $f$ or if you 
@@ -40,7 +40,7 @@ was path-dependent.</p>
       likewise conclude that $\dlvf$ is non-conservative, or path-dependent.</p>
     <p>For this reason, you could skip this discussion about testing
       for path-dependence and go directly to the procedure for
-      {%intlink conservative_vector_field_find_potential%}finding
+      {% intlink "conservative_vector_field_find_potential" %}finding
       the potential function{%endintlink%}.  If this procedure works
       or if it breaks down, you've found your answer as to whether or
       not $\dlvf$ is conservative.  
@@ -53,10 +53,10 @@ was path-dependent.</p>
       </p></li>
  
   <li><p>{% navigation_tag "test2" "Tests" "Test 2"%}Another possible test involves the link between 
-      {% intlink conservative_vector_field_introduction %}path-independence{%endintlink%}
-      and {% intlink line_integral_circulation %}circulation{%endintlink%}. 
+      {% intlink "conservative_vector_field_introduction" %}path-independence{%endintlink%}
+      and {% intlink "line_integral_circulation" %}circulation{%endintlink%}. 
       One can show that a conservative vector field $\dlvf$ 
-      {% intlink conservative_vector_field_no_circulation %}will have no circulation{%endintlink%} around any closed curve $\dlc$,
+      {% intlink "conservative_vector_field_no_circulation" %}will have no circulation{%endintlink%} around any closed curve $\dlc$,
       meaning that its integral $\dlint$ around $\dlc$
       must be zero.  If you could somehow show that $\dlint=0$ for 
       every closed curve (difficult since there are an infinite number of these),
@@ -72,13 +72,13 @@ was path-dependent.</p>
   </li>
 
   <li><p>{% navigation_tag "test3" "Tests" "Test 3"%}If $\dlvf$ is a three-dimensional
-      vector field, $\dlvf : \R^3 \to \R^3$ {% confusedlink function_notation %}, then we can derive another
+      vector field, $\dlvf : \R^3 \to \R^3$ {% confusedlink "function_notation" %}, then we can derive another
       condition.
       This condition is based on the fact that a vector field $\dlvf$
       is conservative if and only if $\dlvf = \nabla f$
       for some potential function.  
       We can calculate that
-      {% intlink curl_gradient_zero %}the curl of a gradient 
+      {% intlink "curl_gradient_zero" %}the curl of a gradient 
       is zero{%endintlink%}, $\curl \nabla f = \vc{0}$, for any
       twice continuously differentiable $f : \R^3 \to \R$.
       Therefore, if $\dlvf$ is conservative, then its curl must be zero, as
@@ -98,7 +98,7 @@ was path-dependent.</p>
       Without additional conditions on the vector field, the converse may not 
       be true, so we <b>cannot</b> conclude that $\dlvf$ is 
       conservative just from its curl being zero.
-      There are {% intlink path_dependent_zero_curl %}path-dependent vector fields 
+      There are {% intlink "path_dependent_zero_curl" %}path-dependent vector fields 
       with zero curl{%endintlink%}.
       On the other hand, we can conclude that if the curl of $\dlvf$ is non-zero, then $\dlvf$ must
       be path-dependent.</p>
@@ -113,7 +113,7 @@ was path-dependent.</p>
       to check directly.
       Test 3 says that a conservative vector field has no
       &ldquo;microscopic circulation&rdquo; as captured by the
-      {% intlink curl_idea %}curl{%endintlink%}.
+      {% intlink "curl_idea" %}curl{%endintlink%}.
       It's easy to test for lack of curl, but the problem is that 
       lack of curl is not sufficient to determine path-independence.</p>
 
@@ -121,8 +121,8 @@ was path-dependent.</p>
       &ldquo;macroscopic circulation&rdquo; with the easy-to-check
       test of zero &ldquo;microscopic circulation.&rdquo;
       This link is exactly what both 
-      {% intlink greens_theorem_idea %}Green's theorem{%endintlink%} and 
-      {% intlink stokes_theorem_idea%}Stokes' theorem{%endintlink%} provide.
+      {% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%} and 
+      {% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%} provide.
       Don't worry if you haven't learned both these theorems yet. 
       The basic idea is simple enough: the &ldquo;macroscopic circulation&rdquo;
       around a closed curve is equal to the total 
@@ -155,7 +155,7 @@ was path-dependent.</p>
       and the vector field is conservative.</p>
 
     <p>The only way we could 
-      {% intlink path_dependent_zero_curl %}run into trouble{%endintlink%}
+      {% intlink "path_dependent_zero_curl" %}run into trouble{%endintlink%}
       is if there are some
       closed curves $\dlc$ where $\dlvf$ is not defined for some points
       inside the curve.  In other words, if the region where $\dlvf$ is defined has
@@ -165,12 +165,12 @@ was path-dependent.</p>
       &ldquo;macroscopic circulation&rdquo; and hence path-independence.
       Such a hole in the domain of definition of $\dlvf$ was exactly
       what caused in the problem in our
-      {% intlink path_dependent_zero_curl %}counterexample of
+      {% intlink "path_dependent_zero_curl" %}counterexample of
       a path-dependent field with zero curl{%endintlink%}.
     </p>
 
     <p>On the other hand, we know we are safe if the region where $\dlvf$ is defined is 
-      <i>{% intlink simply_connected_definition%}simply connected{%endintlink%}</i>, i.e., the region has no holes through it.
+      <i>{% intlink "simply_connected_definition" %}simply connected{%endintlink%}</i>, i.e., the region has no holes through it.
       In this case, we know $\dlvf$ is defined inside every closed curve 
       $\dlc$ and nothing tricky can happen.
       We can summarize our test for path-dependence of two-dimensional
@@ -194,7 +194,7 @@ was path-dependent.</p>
  
     <p>One subtle difference between two and three dimensions
       is what it means for a region to be 
-      {% intlink simply_connected_definition%}simply connected{%endintlink%}.
+      {% intlink "simply_connected_definition" %}simply connected{%endintlink%}.
       Any hole in a two-dimensional domain is enough to make it 
       non-simply connected.  But, in three-dimensions, a simply-connected
       domain can have a hole in the center, as long as the hole doesn't go
@@ -206,7 +206,7 @@ was path-dependent.</p>
       in three dimensions is that we have more room to move around in 3D. 
       If we have a curl-free vector field $\dlvf$ 
       (i.e., with no &ldquo;microscopic circulation&rdquo;), we can use
-      {% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} 
+      {% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%} 
       to infer the absence of 
       &ldquo;macroscopic circulation&rdquo; around any closed curve $\dlc$.
       To use Stokes' theorem, we just need to find a surface
@@ -223,7 +223,7 @@ was path-dependent.</p>
     <p>The flexiblity we have in three dimensions to find multiple
       surfaces whose boundary is a given closed curve is illustrated in this
       applet that we use to introduce 
-      {% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%}.</p>
+      {% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%}.</p>
       
 
     {% boxedapplet "macroscopic_microscopic_circulation_three_dimensions" %}

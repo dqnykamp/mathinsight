@@ -9,7 +9,7 @@
 
 <p>To get the flavor of their approach, let's imagine a very simplified model, where the $N$-dimensional $\vc{x}$ is the activity of the $N$ network nodes.  Image that, if the network were uncoupled the activity of the nodes would be $\vc{x}_0$.  With the coupling, the activity $\vc{x}$ satisfies this simple linear self-consistency equation
 $$\vc{x} = \vc{x}_0 + wA\vc{x},$$
-where $A$ is the {% intlink network_introduction adjacency_matrix %}adjancency matrix{%endintlink%} and the scalar $w$ is the weighting of the effect of each connection.</p>
+where $A$ is the {% intlink "network_introduction" anchor="adjacency_matrix" %}adjancency matrix{%endintlink%} and the scalar $w$ is the weighting of the effect of each connection.</p>
 
 <p>We can easily solve this equation for $\vc{x}$ in terms of the uncoupled activity $\vc{x}_0$.
 $$\vc{x} = (I-wA)^{-1}\vc{x}_0$$</p>

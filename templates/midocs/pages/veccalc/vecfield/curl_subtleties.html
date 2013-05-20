@@ -8,7 +8,7 @@
 {% navigation_tag "macromicro" "Macro/micro" %}
 <h4>Macroscopic versus microscopic circulation</h4>
 
-<p>We {%intlink curl_idea %}introduced the curl of a vector field{%endintlink%} as
+<p>We {% intlink "curl_idea" %}introduced the curl of a vector field{%endintlink%} as
 the <i>microscopic circulation</i> of the vector field.  In that
 introductory reading we attempted to keep things as simple as
 possible, so we didn't make a big fuss over the difference between
@@ -38,7 +38,7 @@ along with its two-dimensional projection at the right.</p>
 
 
 <p>It is important to remember that this macroscopic circulation isn't
-the curl of the vector field.  Recall that {%intlink curl_idea %}in
+the curl of the vector field.  Recall that {% intlink "curl_idea" %}in
   order to measure the microscopic circulation of the curl{%endintlink%}, one needs
 to <b>fix the center</b> of the sphere and allow it to rotate freely
 around the center.  In this example, there is nothing tricky, and the
@@ -87,7 +87,7 @@ field the macroscopic circulation around the $z$-axis.  However, due
 to the denominator, the vector field shrinks rapidly as one moves away
 from the $z$-axis.  Since for $(x,y) \ne (0,0)$,
 $$\pdiff{\dlvfc_2}{x} =\pdiff{\dlvfc_1}{y}= \frac{y^2-x^2}{(x^2+y^2)^2}$$
-{% intlink curl_components curlformula %}one can compute{%endintlink%} that away from the
+{% intlink "curl_components" anchor="curlformula" %}one can compute{%endintlink%} that away from the
 $z$-axis, $\curl \dlvf(x,y,z) = (0,0,0)$.</p>
 
 
@@ -133,9 +133,9 @@ is any relationship between the macroscopic and microscopic
 circulation. </p>
 
 <p>First of all, roughly speaking, the microscopic circulation measured
-by the curl is the average {% intlink line_integral_circulation %}macroscopic
+by the curl is the average {% intlink "line_integral_circulation" %}macroscopic
   circulation{%endintlink%} around a loop in the 
-  {%intlink curl_definition_line_integral %}limit that the size of the loop
+  {% intlink "curl_definition_line_integral" %}limit that the size of the loop
   shrinks to zero{%endintlink%}.  Therefore, assuming the vector field is
 continuous, the macroscopic circulation should begin to approach the
 microscopic circulation as one looks at smaller loops.</p>
@@ -147,12 +147,12 @@ these counterexamples, the vector field was not defined along the
 $z$-axis.  If, for example, the vector field was continuously
 differentiable everywhere, then there is a fundamental relationship
 between curl and macroscopic circulation called
-{%intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%}.  If Stokes' theorem
+{% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%}.  If Stokes' theorem
 applied, then we'd know that the macroscopic circulation around any
 loop would be determined by the curl inside the loop.  Understanding
 Stokes' theorem, however, requires quite a bit more background than
-this presentation of the curl, including {% intlink line_integral_vector_field_introduction %}line
-  integrals{%endintlink%} and {%intlink surface_integral_vector_field_introduction %}surface integrals{%endintlink%} of vector
+this presentation of the curl, including {% intlink "line_integral_vector_field_introduction" %}line
+  integrals{%endintlink%} and {% intlink "surface_integral_vector_field_introduction" %}surface integrals{%endintlink%} of vector
 fields.</p>
 
 </aside>
@@ -177,7 +177,7 @@ compared with the flow on the negative $y$ side of the sphere.</p>
 
 <p>In this case, the subtle issue isn't between microscopic and
 macroscopic circulation.  The macroscopic circulation, as
-{% intlink line_integral_circulation %}one might define it via line integrals{%endintlink%},
+{% intlink "line_integral_circulation" %}one might define it via line integrals{%endintlink%},
 would also be clockwise when viewed from the positive $z$ axis.  Since
 such macroscopic circulation cannot be measured by letting a sphere
 float freely in the flow, this example shows how measuring macroscopic

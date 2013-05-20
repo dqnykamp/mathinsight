@@ -4,7 +4,7 @@
 {% title "Area calculation for changing variables in double integrals" %}
 {% description "A derivation of how a mapping that changes variables in double integrals transforms area." %}
 
-<p>To {% intlink double_integral_change_variables_introduction %}change variables{%endintlink%} 
+<p>To {% intlink "double_integral_change_variables_introduction" %}change variables{%endintlink%} 
 in a double integral such as
 $$\iint_\dlr f(x,y) dA,$$
 one uses a mapping of the form
@@ -41,7 +41,7 @@ We'll call this area $\Delta A$ to remind us that the area of the
 &ldquo;curvy rectangle&rdquo; is what the
 $dA$ in the integral represents.</p>
 
-<p>Since the {% intlink double_integral_introduction %}double integral{%endintlink%}
+<p>Since the {% intlink "double_integral_introduction" %}double integral{%endintlink%}
 is defined by a Riemann sum where the size of the rectangles go to zero, 
 we don't need an exact expression for the area of the &ldquo;curvy rectangle&rdquo;.
 We just need an expression that approaches the correct value 
@@ -50,8 +50,8 @@ go to zero.
 </p>
 
 <p>When $\Delta\cvarfv$ and $\Delta\cvarsv$ are small, we can approximate 
-the mapping $\cvarf(\cvarfv,\cvarsv)$ with its {% intlink linear_approximation_multivariable %}linear approximation{%endintlink%} centered around $(\cvarfv,\cvarsv)$.
-Since {% intlink linear_transformation_definition_euclidean %}linear transformations{%endintlink%} in two dimensions {% intlink determinant_linear_transformation lintrans2D %}map parallelograms onto parallelograms{%endintlink%}, we can conclude that the  &ldquo;curvy rectangle&rdquo; must approach a parallelogram for small $\Delta\cvarfv$ and $\Delta\cvarsv$.
+the mapping $\cvarf(\cvarfv,\cvarsv)$ with its {% intlink "linear_approximation_multivariable" %}linear approximation{%endintlink%} centered around $(\cvarfv,\cvarsv)$.
+Since {% intlink "linear_transformation_definition_euclidean" %}linear transformations{%endintlink%} in two dimensions {% intlink "determinant_linear_transformation" anchor="lintrans2D" %}map parallelograms onto parallelograms{%endintlink%}, we can conclude that the  &ldquo;curvy rectangle&rdquo; must approach a parallelogram for small $\Delta\cvarfv$ and $\Delta\cvarsv$.
 </p>
 
 <p>If we approximate the &ldquo;curvy rectangle&rdquo;
@@ -73,7 +73,7 @@ spanned by those two vectors, as illustrated in red in the following figure.</p>
 <p>Since we are interested in the limit where $\Delta\cvarfv$ and $\Delta\cvarsv$,
 and hence $\Delta A$,
 go to zero, we can make another approximation.  
-Given the {% intlink partial_derivative_limit_definition%}limit definition{%endintlink%} of partial derivatives, we can approximate these vectors in the limit
+Given the {% intlink "partial_derivative_limit_definition" %}limit definition{%endintlink%} of partial derivatives, we can approximate these vectors in the limit
 of small $\Delta\cvarfv$ and $\Delta\cvarsv$ as
 \begin{align*}
   \cvarf(\cvarfv+\Delta\cvarfv,\cvarsv)-\cvarf(\cvarfv,\cvarsv)
@@ -89,13 +89,13 @@ We labeled the edges of the parallelogram, above, with these approximations.</p>
 
 <p>Given this parallelogram approximation, we have a simple way to calculate
 the approximate area $\Delta A$ of the &ldquo;curvy rectangle&rdquo;.
-The area of the parallelogram is the {%intlink cross_product %}magnitude
+The area of the parallelogram is the {% intlink "cross_product" %}magnitude
 of the cross product{%endintlink%} of the two vectors spanning the parallelogram.
 Since the vectors $\pdiff{\cvarf}{\cvarfv}(\cvarfv,\cvarsv)\Delta\cvarfv$
 and $\pdiff{\cvarf}{\cvarsv}(\cvarfv,\cvarsv)\Delta\cvarsv$ are two-dimensional,
 we view them as 3D vectors with zero third component so that the cross-product
 is define.  Since they are 2D, we can also
-{% intlink relationship_determinants_area_volume area2d%}represent this area
+{% intlink "relationship_determinants_area_volume" anchor="area2d" %}represent this area
 more succinctly{%endintlink%} by the $2\times 2$ determinant 
 \begin{align*}
   \Delta A &amp;\approx
@@ -116,7 +116,7 @@ more succinctly{%endintlink%} by the $2\times 2$ determinant
 
 <p>We can simplify this expression even further by observing that the
 above matrix inside the determinant is precisely the
-{% intlink derivative_matrix %}derivative matrix{%endintlink%} 
+{% intlink "derivative_matrix" %}derivative matrix{%endintlink%} 
 $\jacm{\cvarf}$ of the map $\cvarf$.  Therefore, the area of the 
 &ldquo;curvy rectangle&rdquo; is approximately
 \begin{align*}

@@ -9,7 +9,7 @@
 
 {% boxedvideo "exponential_growth_decay_discrete_dynamical_systems" %}
 
-<p>In the {% intlink discrete_dynamical_system_introduction %}introduction to discrete dynamical systems{%endintlink%}, we discussed the simplest type of discrete dynamical system, where the {% intlink state_space_definition %}state space{%endintlink%} was one-dimensional and the evolution rule at each time point depended just on the values of the {% intlink state_variable_definition%}state variables{%endintlink%} at that time.  If we let $x_t$ be the snapshot of the state variable at time $t$, then then the {% intlink trajectory_dynamical_systems_definition %}trajectory{%endintlink%} of a given initial state $x_0$ is determined by iterating some function $f(x)$.  The result is  {% intlinkeq discrete_dynamical_system_introduction recursion %}from the introduction{% endintlinkeq %}, which we rewrite here as:
+<p>In the {% intlink "discrete_dynamical_system_introduction" %}introduction to discrete dynamical systems{%endintlink%}, we discussed the simplest type of discrete dynamical system, where the {% intlink "state_space_definition" %}state space{%endintlink%} was one-dimensional and the evolution rule at each time point depended just on the values of the {% intlink "state_variable_definition" %}state variables{%endintlink%} at that time.  If we let $x_t$ be the snapshot of the state variable at time $t$, then then the {% intlink "trajectory_dynamical_systems_definition" %}trajectory{%endintlink%} of a given initial state $x_0$ is determined by iterating some function $f(x)$.  The result is  {% intlink "discrete_dynamical_system_introduction" equation="recursion" %}equation (tag) from the introduction{% endintlink %}, which we rewrite here as:
 \begin{gather}
   x_{t+1}=f(x_t) \quad \text{for $t=0,1,2,3, \ldots.$ }
   \label{recursion}
@@ -36,7 +36,7 @@ In this case, the state variable $x_{t+1}$ at time $t+1$ is proportional to the 
 \end{align}
 A <em>solution</em> to the dynamical system \eqref{linear_dynamical_system} is a formula for computing $x_t$ solely in terms of the time $t$ and initial conditions $x_0$.  The given system \eqref{linear_dynamical_system} is a recipe for computing all $x_t$, but it is not considered a solution since it is not a formula that lets us directly compute $x_t$ for any $t$.</p>
 
-<p>As discussed in the {% intlink discrete_dynamical_system_introduction %}discrete dynamical systems introduction{%endintlink%}, we can compute the value of $x_t$ for any $t$ by starting with the initial condition $x_0$ and iterating the function many times.  In the general case, the expression for the iteration got pretty messy.  But, for our special case of $f(x)=Rx$, we can write the result with a nice formula.</p>
+<p>As discussed in the {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical systems introduction{%endintlink%}, we can compute the value of $x_t$ for any $t$ by starting with the initial condition $x_0$ and iterating the function many times.  In the general case, the expression for the iteration got pretty messy.  But, for our special case of $f(x)=Rx$, we can write the result with a nice formula.</p>
 
 <p>Starting with $x_0$, we see that 
 \begin{align*}
@@ -115,12 +115,12 @@ P_{50} = 1.01^{50} \left( 1,000,000 \right) = 1,644,631.
 {% navigation_tag "bacteriaexample" "Examples" "Bacteria growth" %}
 <h5>Bacteria growth</h5>
 
-<p>When nutrients are plentiful and the population size isn't too large, a bacteria can exhibit exponential growth.  See {% intlink bacteria_growth_initial_model %}this page{%endintlink%} for details on developing an exponential growth model from data and solving it.</p>
+<p>When nutrients are plentiful and the population size isn't too large, a bacteria can exhibit exponential growth.  See {% intlink "bacteria_growth_initial_model" %}this page{%endintlink%} for details on developing an exponential growth model from data and solving it.</p>
 
 {% navigation_tag "penicillinexample" "Examples" "Penicillin clearance" %}
 <h5>Penicillin clearance</h5>
 
-<p>If penicillin is given as a {% extlink "http://en.wikipedia.org/wiki/Bolus_%28medicine%29" %}bolus{%endextlink%} injection (a one-time injection) and the kidneys remove a fixed fraction of the penicillin every 5 minutes, the amount of penicillin in the blood exhibits exponential decay.  See {% intlink penicillin_clearance_model %}this page{%endintlink%} for the steps to develop such an exponential decay model from data.</p>
+<p>If penicillin is given as a {% extlink "http://en.wikipedia.org/wiki/Bolus_%28medicine%29" %}bolus{%endextlink%} injection (a one-time injection) and the kidneys remove a fixed fraction of the penicillin every 5 minutes, the amount of penicillin in the blood exhibits exponential decay.  See {% intlink "penicillin_clearance_model" %}this page{%endintlink%} for the steps to develop such an exponential decay model from data.</p>
 
 {% navigation_tag "chocolatedecay" "Examples" "Chocolate decay" %}
 <h5>Chocolate decay</h5>

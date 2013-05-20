@@ -7,7 +7,7 @@
 {% title "A simple example of using the gradient theorem" %}
 {% description "An example of using the gradient theorem to calculate the line integral of a conservative, or path-independent, vector field." %}
 
-<p>If a vector field $\dlvf$ is a {% intlink gradient_theorem_line_integrals %}gradient field{%endintlink%}, meaning $\dlvf = \nabla
+<p>If a vector field $\dlvf$ is a {% intlink "gradient_theorem_line_integrals" %}gradient field{%endintlink%}, meaning $\dlvf = \nabla
 f$ for some scalar-valued function $f$, then we can compute the
 line integral of $\dlvf$ along a curve $\dlc$ from some point $\vc{a}$
 to some other point $\vc{b}$ as
@@ -17,11 +17,11 @@ to some other point $\vc{b}$ as
 This integral does not depend on the entire curve $\dlc$; it
 depends on only the endpoints $\vc{a}$ and $\vc{b}$.  If we
 replaced $\dlc$ by another curve with the same endpoints, the integral
-would be unchanged.  Hence $\dlvf$ is {% intlink conservative_vector_field_introduction %}conservative{%endintlink%} (also called path-independent).</p>
+would be unchanged.  Hence $\dlvf$ is {% intlink "conservative_vector_field_introduction" %}conservative{%endintlink%} (also called path-independent).</p>
 
 <p>As an example, consider $f(x,y) = xy^2$, and let $\dlvf(x,y) = \nabla
 f(x,y) = (y^2, 2xy)$.  Since we wrote $\dlvf$ as a gradient, we know that $\dlvf$
-{% intlink conservative_vector_field_determine test1 %}must be conservative{%endintlink%}.</p>
+{% intlink "conservative_vector_field_determine" anchor="test1" %}must be conservative{%endintlink%}.</p>
 
 <p>What is $\dlint$ where $\dlc$ is the path
 $\dllp(t)=(t^2,2(t-2)^3)$ for $1 \le t \le 3$?
@@ -48,7 +48,7 @@ which agrees with the first answer.</p>
 <p>We should get the same answer for any path from $(1,-2)$ to $(9,2)$.
 Since $(9,2)-(1,-2) = (8,4)$, we let the curve $\adlc$ be the straight
 line path parametrized by $\adllp(t) = (1,-2) + t(8,4) = (1+8t, 4t-2)$
-for $0 \le t \le 1$.  This change is not a {% intlink line_integral_independent_parametrization %}reparametrization{%endintlink%} of
+for $0 \le t \le 1$.  This change is not a {% intlink "line_integral_independent_parametrization" %}reparametrization{%endintlink%} of
 $\dlc$. The curve $\dlc$ was not a straight line, so $\adlc$ is a
 completely different curve, as you can see in the below figure, where $\dlc$ is shown in blue and $\adlc$ is shown in green.</p>
 
@@ -66,12 +66,12 @@ completely different curve, as you can see in the below figure, where $\dlc$ is 
 Indeed, we got the same answer again.</p>
 
 <p>In this example, we were given the potential function at the outset,
-making the application of the {% intlink gradient_theorem_line_integrals%}gradient
+making the application of the {% intlink "gradient_theorem_line_integrals" %}gradient
 theorem{%endintlink%} particularly easy.
 If you aren't given the potential function, then to apply the gradient theorem,
-you'd need to {% intlink conservative_vector_field_determine%}test if the
+you'd need to {% intlink "conservative_vector_field_determine" %}test if the
 vector field is conservative{%endintlink%} and then 
-{%intlink conservative_vector_field_find_potential%}find the potential
+{% intlink "conservative_vector_field_find_potential" %}find the potential
 function{%endintlink%}.</p>
 
 {%endblock%}

@@ -16,9 +16,9 @@
 {% navigation_tag "overview" "Overview" %}
 <h4>Overview of harvesting</h4>
 
-<p>If a population is undergoing {% intlink exponential_growth_decay_discrete %}exponential growth{%endintlink%}, the population will grow without bound.  In the problem of {% intlink controlling_rabbit_population %}controlling a rabbit population{%endintlink%}, we explored how different harvesting strategies could be used to keep the population in check.</p>
+<p>If a population is undergoing {% intlink "exponential_growth_decay_discrete" %}exponential growth{%endintlink%}, the population will grow without bound.  In the problem of {% intlink "controlling_rabbit_population" %}controlling a rabbit population{%endintlink%}, we explored how different harvesting strategies could be used to keep the population in check.</p>
 
-<p>Given that an environment cannot sustain an infinite population of a species, population growth will slow down as the population size increases.  We modeled the effect of these environmental factors with a {% intlink environmental_carrying_capacity %}carrying capacity{%endintlink%} that limited growth, leading to a logistic equation for population growth of the form
+<p>Given that an environment cannot sustain an infinite population of a species, population growth will slow down as the population size increases.  We modeled the effect of these environmental factors with a {% intlink "environmental_carrying_capacity" %}carrying capacity{%endintlink%} that limited growth, leading to a logistic equation for population growth of the form
 \begin{align*}
   P_{t+1}-P_{t} = r P_t\left(1-\frac{P_t}{M}\right),
 \end{align*}
@@ -79,7 +79,7 @@ P_e = 0 \qquad\text{and}\qquad P_e = 1000 (1 - 5h).
 $P_e=0$.  If we harvest more than 20% of the population present at each time, then $h>0.2$ and $1-5h$ is negative.  Such a large harvest rate will cause the population to die out.  This conclusion makes sense.
 The low density growth rate (births minus natural deaths) is 20%, and the low density growth rate is the maximum growth rate (achieved only when the population is small and is far from the carrying capacity).  If the harvest rate exceeds the low density growth rate, the population will dwindle away and disappear.  In fact, even if the harvest rate is exactly 20%, then the second equilibrium is $P_e = 1000 (1 - 5(0.2)) = 0$, and the population will still die out.</p>
 
-<p>To simplify the further analysis, let's {% intlink environmental_carrying_capacity normalized_difference %}normalize the equation{%endintlink%} by dividing equation \eqref{harvest_fraction} by the carrying capacity 1000.
+<p>To simplify the further analysis, let's {% intlink "environmental_carrying_capacity" anchor="normalized_difference" %}normalize the equation{%endintlink%} by dividing equation \eqref{harvest_fraction} by the carrying capacity 1000.
 
 <p>We next normalize the initial equation by dividing by the carrying
 capacity:
@@ -104,7 +104,7 @@ p_{t+1} - p_t & =  0.2  p_t  \left(1 - p_t \right) - h  p_t
 \end{gather}
 </p>
 
-<p>As long as the fractional harvest $h$ is set at a number less than 0.2, both equilibria $0$ and $1-5h$ are valid.  You can show in the {% intlink harvest_natural_populations_exercises %}exercises{% endintlink%} that the equilibrium $p_e=0$ is unstable and the equilibrium $p_e=1-5h$ is stable.  For now, just look at the following applet showing the graph of $p_{t+1}$ versus $p_t$ for $h=0.05$.  From looking at the slopes of the graph at the equilibria, it is apparent that $p_e=0$ is an unstable equilibrium and $p_e=1-5h=0.75$ is stable.  (You can click the equilibria to see the tangent lines.)  You can can see that the stability doesn't change as the change $h$ as long as you keep it less than 0.2.  Once you show in the exercises that this remains true for all $0 \le h < 0.2$, then you can be confident that as long as the harvest rate is less than the low density growth rate, the model predicts that the population won't die out.</p>
+<p>As long as the fractional harvest $h$ is set at a number less than 0.2, both equilibria $0$ and $1-5h$ are valid.  You can show in the {% intlink "harvest_natural_populations_exercises" %}exercises{% endintlink%} that the equilibrium $p_e=0$ is unstable and the equilibrium $p_e=1-5h$ is stable.  For now, just look at the following applet showing the graph of $p_{t+1}$ versus $p_t$ for $h=0.05$.  From looking at the slopes of the graph at the equilibria, it is apparent that $p_e=0$ is an unstable equilibrium and $p_e=1-5h=0.75$ is stable.  (You can click the equilibria to see the tangent lines.)  You can can see that the stability doesn't change as the change $h$ as long as you keep it less than 0.2.  Once you show in the exercises that this remains true for all $0 \le h < 0.2$, then you can be confident that as long as the harvest rate is less than the low density growth rate, the model predicts that the population won't die out.</p>
 
 {% boxedapplet "harvest_natural_populations_equilibria" %}
 
@@ -121,6 +121,6 @@ Our goal is to maximum $G$.  We calculate the critical points of $G$.  Since $G'
 
 <p>In this example, we had set $r=0.2$.  The optimal 10% harvest strategy is exactly one-half the low density growth rate.  Futhermore, the equilibrium when $h=0.1$ is $p_e = 1- 5 h = 0.5$, which is exactly half the maximum supportable population (recall we normalized so that the carrying capacity was equal to 1).</p>
 
-<p>We calculated this result for the special case when $r=0.2$, but it turns out that this is a general property of logistic models, as you can explore in the {% intlink harvest_natural_populations_exercises %}exercises{%endintlink%}.</p>
+<p>We calculated this result for the special case when $r=0.2$, but it turns out that this is a general property of logistic models, as you can explore in the {% intlink "harvest_natural_populations_exercises" %}exercises{%endintlink%}.</p>
 
 {% endblock %}

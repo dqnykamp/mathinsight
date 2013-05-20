@@ -6,9 +6,9 @@
 {% description "An illustration of the basic concept of the chain rule using interactive graphics to diagram the relevant points on the graphs and the corresponding slopes." %}
 
 
-<p>The chain rule gives us a way to calculate the derivative of a {% intlink function_composition %}composition{%endintlink%} of functions, such as the composition $f(g(x))$ of the functions $f$ and $g$.  The chain rule can be tricky to apply correctly, especially since, with a complicated expression, one might need to use the chain rule multiple times.  Nonetheless, the idea of the chain rule can be understood fairly simply.</p>
+<p>The chain rule gives us a way to calculate the derivative of a {% intlink "function_composition" %}composition{%endintlink%} of functions, such as the composition $f(g(x))$ of the functions $f$ and $g$.  The chain rule can be tricky to apply correctly, especially since, with a complicated expression, one might need to use the chain rule multiple times.  Nonetheless, the idea of the chain rule can be understood fairly simply.</p>
 
-<p>The following video outlines the basic idea of the chain rule.  In the remainder of this page, we illustrate the idea of the chain rule in three ways.  <a href="#function_machines">First</a>, we illustrate the concept using {%intlink function_machine %}function machines{%endintlink%}.  <a href="#linear_functions">Second</a>, we show how for linear functions, the chain rule is just the product of the slopes of the function graphs.  <a href="#nonlinear_functions">Third</a>, we show that for nonlinear functions, the chain rule is just the product of the slopes of the tangent lines to the function graphs.  Examples of the chain rule are given on {% intlink chain_rule_simple_examples %}another page{%endintlink%}.</p>
+<p>The following video outlines the basic idea of the chain rule.  In the remainder of this page, we illustrate the idea of the chain rule in three ways.  <a href="#function_machines">First</a>, we illustrate the concept using {% intlink "function_machine" %}function machines{%endintlink%}.  <a href="#linear_functions">Second</a>, we show how for linear functions, the chain rule is just the product of the slopes of the function graphs.  <a href="#nonlinear_functions">Third</a>, we show that for nonlinear functions, the chain rule is just the product of the slopes of the tangent lines to the function graphs.  Examples of the chain rule are given on {% intlink "chain_rule_simple_examples" %}another page{%endintlink%}.</p>
 
 {% navigation_tag "video_introduction" "Video introduction" %}
 <h4>Video introduction</h4>
@@ -19,7 +19,7 @@
 {% navigation_tag "function_machines" "Function machines" %}
 <h4>The chain rule of function machines</h4>
 
-<p>The {% intlink function_composition %}composition{%endintlink%} of $f(g(x))$ of two functions $f$ and $g$ can be visualized as {% intlink function_machine_composition %}hooking up two function machines{%endintlink%} so that the output of $g$ becomes the input of $f$.  Let's call the combined function $h(x)$ so that $h(x)=f(g(x))$.  (Sometimes, we write the composition as $h=f \circ g$, so that the large function machine, below, labeled $f \circ g$ illustrates $h$.)</p> 
+<p>The {% intlink "function_composition" %}composition{%endintlink%} of $f(g(x))$ of two functions $f$ and $g$ can be visualized as {% intlink "function_machine_composition" %}hooking up two function machines{%endintlink%} so that the output of $g$ becomes the input of $f$.  Let's call the combined function $h(x)$ so that $h(x)=f(g(x))$.  (Sometimes, we write the composition as $h=f \circ g$, so that the large function machine, below, labeled $f \circ g$ illustrates $h$.)</p> 
 
 <div class="ym-grid linearize-level-2">
   <div class="ym-g50 ym-gl">
@@ -68,7 +68,7 @@
   g(x) &= ax+b\\
   f(x) &= cx + d\\
 \end{align*}
-where $a$, $b$, $c$, and $d$ are parameters determining the slopes and vertical intercepts of the functions.  See the left panel of the below applet, where $g$ and $f$ are graphed by the thick blue and thin cyan lines, respectively.  The  {% intlink function_composition %}composition{%endintlink%} of $f$ and $g$ is
+where $a$, $b$, $c$, and $d$ are parameters determining the slopes and vertical intercepts of the functions.  See the left panel of the below applet, where $g$ and $f$ are graphed by the thick blue and thin cyan lines, respectively.  The  {% intlink "function_composition" %}composition{%endintlink%} of $f$ and $g$ is
 \begin{align*}
   h(x) &= f(g(x))\\
   &= f(ax +b)\\
@@ -90,7 +90,7 @@ The graph of $h$ is a line with slope $ac$ and vertical intercept $bc+d$, graph 
 
 <p>The following applet illustrates the chain rule for linear functions.  Even though it doesn't make a difference for linear functions, the applet shows graphically the correct points (the green symbols) where one must evaluate the derivatives of $f$ and $g$.  If you understand how these points are calculated, then you'll correctly compute the chain rule even for nonlinear functions.  Since almost every case where we want to use the chain rule will involve nonlinear functions, evaluating the derivatives at the right points is a crucial step.</p>
 
-<p>The red arrows in the left panel illustrate how to graphically calculate $h(x)=f(g(x))$ where $x=x_0$.  The conventions are nearly identical to those one uses for {% intlink cobwebbing_graphical_solution %}cobwebbing the solution to function iteration{%endintlink%}.</p>
+<p>The red arrows in the left panel illustrate how to graphically calculate $h(x)=f(g(x))$ where $x=x_0$.  The conventions are nearly identical to those one uses for {% intlink "cobwebbing_graphical_solution" %}cobwebbing the solution to function iteration{%endintlink%}.</p>
 
 <p>Starting at the red point for $x_0$, one moves vertically to calculate $g(x_0)$, which would be the height of the point (green diamond) where one hits the graph of $g$.  To translate $g(x_0)$ from the vertical axis to the horizontal axis, one must move horizontally to the graph of the diagonal $y=x$.  At that point, the value for the horizontal coordinate and vertical coordinate are the same; both coordinates are equal to $g(x_0)$.  Then, to calculate $h(x_0)=f(g(x_0))$, one just moves vertically to the graph of $f$.  The vertical coordinate of this point (the green triangle) is the required $f(g(x_0))$.</p>
 
@@ -107,6 +107,6 @@ The graph of $h$ is a line with slope $ac$ and vertical intercept $bc+d$, graph 
 
 {% boxedapplet "chain_rule_multiply_slopes" %}
 
-<p>This page focused exclusively on the idea of the chain rule.  Of course, knowing the general idea and accurately using the chain rule are two different things.  If you are new to the chain rule, check out some {% intlink chain_rule_simple_examples %}simple chain rule examples{% endintlink%}.  If you want to see some more complicated examples, take a look at the {% intlink chain_rule_refresher %}chain rule page from the Calculus Refresher{% endintlink%}.</p>
+<p>This page focused exclusively on the idea of the chain rule.  Of course, knowing the general idea and accurately using the chain rule are two different things.  If you are new to the chain rule, check out some {% intlink "chain_rule_simple_examples" %}simple chain rule examples{% endintlink%}.  If you want to see some more complicated examples, take a look at the {% intlink "chain_rule_refresher" %}chain rule page from the Calculus Refresher{% endintlink%}.</p>
 
 {%endblock %}

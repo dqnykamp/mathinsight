@@ -6,30 +6,30 @@
 {% navigation_tag "overview" "Overview" %}
 <h4>Overview of the exponential function</h4>
 
-<p>The exponential function is one of the most important {% intlink function_definition%}functions{%endintlink%} in mathematics (though it would have to admit that the {%intlink linear_function_one_variable %}linear function{%endintlink%} ranks even higher in importance). To form an exponential function, we let the {% intlink independent_variable_definition %}independent variable{%endintlink%} be the {% intlink exponentiation_basic_rules%}exponent{%endintlink%}.  A simple example is the function
+<p>The exponential function is one of the most important {% intlink "function_definition" %}functions{%endintlink%} in mathematics (though it would have to admit that the {% intlink "linear_function_one_variable" %}linear function{%endintlink%} ranks even higher in importance). To form an exponential function, we let the {% intlink "independent_variable_definition" %}independent variable{%endintlink%} be the {% intlink "exponentiation_basic_rules" %}exponent{%endintlink%}.  A simple example is the function
 $$f(x)=2^x.$$</p>
 
 {% image "exponential_function_two_to_x" %}
 
-<p>As illustrated in the above graph of $f$, the exponential function increases rapidly.  Exponential functions are solutions to the simplest types of {% intlink dynamical_system_idea %}dynamical systems{%endintlink%}.  For example, an exponential function arises in {% intlink bacteria_growth_initial_model %}simple models of bacteria growth{%endintlink%}</p>
+<p>As illustrated in the above graph of $f$, the exponential function increases rapidly.  Exponential functions are solutions to the simplest types of {% intlink "dynamical_system_idea" %}dynamical systems{%endintlink%}.  For example, an exponential function arises in {% intlink "bacteria_growth_initial_model" %}simple models of bacteria growth{%endintlink%}</p>
 
-<p>An exponential function can describe {% intlink exponential_growth_decay_discrete %}growth or decay{%endintlink%}.  The function
+<p>An exponential function can describe {% intlink "exponential_growth_decay_discrete" %}growth or decay{%endintlink%}.  The function
 $$g(x)=\left(\frac{1}{2}\right)^x$$
 is an example of exponential decay.  It gets rapidly smaller as $x$ increases, as illustrated by its graph.</p>
 
 {% image "exponential_function_half_to_x" %}
 
-<p>In the exponential growth of $f(x)$, the function doubles every time you add one to its input $x$.  In the exponential decay of $g(x)$, the function shrinks in half every time you add one to its input $x$.  The presence of this {% intlink doubling_time_half_life_discrete%}doubling time or half-life{%endintlink%} is characteristic of exponential functions, indicating how fast they grow or decay.</p>
+<p>In the exponential growth of $f(x)$, the function doubles every time you add one to its input $x$.  In the exponential decay of $g(x)$, the function shrinks in half every time you add one to its input $x$.  The presence of this {% intlink "doubling_time_half_life_discrete" %}doubling time or half-life{%endintlink%} is characteristic of exponential functions, indicating how fast they grow or decay.</p>
 
 
 {% navigation_tag "parameters" "Parameters" %}
 <h4>Parameters of the exponential function</h4>
 
-<p>As with any function, the action of an exponential function $f(x)$ can be captured by the {% intlink function_machine %}function machine metaphor{%endintlink%} that takes inputs $x$ and transforms them into the outputs $f(x)$.</p>
+<p>As with any function, the action of an exponential function $f(x)$ can be captured by the {% intlink "function_machine" %}function machine metaphor{%endintlink%} that takes inputs $x$ and transforms them into the outputs $f(x)$.</p>
 
 {% image "function_machine" width=300 %}
 
-<p>The function machine metaphor is useful for introducing {% intlink parameter_definition %}parameters{%endintlink%} into a function.  The above exponential functions $f(x)$ and $g(x)$ are two different functions, but they differ only by the change in the {% intlink exponentiation_basic_rules %}base of the exponentiation{%endintlink%} from 2 to 1/2. We could capture both functions using a single function machine but {% intlink function_machine_parameters %}dials to represent parameters{%endintlink%} influencing how the machine works.</p>
+<p>The function machine metaphor is useful for introducing {% intlink "parameter_definition" %}parameters{%endintlink%} into a function.  The above exponential functions $f(x)$ and $g(x)$ are two different functions, but they differ only by the change in the {% intlink "exponentiation_basic_rules" %}base of the exponentiation{%endintlink%} from 2 to 1/2. We could capture both functions using a single function machine but {% intlink "function_machine_parameters" %}dials to represent parameters{%endintlink%} influencing how the machine works.</p>
 
 {% image "function_machine_parameters" %}
 
@@ -45,7 +45,7 @@ You can explore the influence of both parameters $b$ and $k$ in the following ap
 
 {% boxedapplet "exponential_function" %}
 
-<p>It turns out that adding both parameters $b$ and $k$ to our definition of $f$ is really unnecessary.  We can still get the full range of functions if we eliminate either $b$ or $k$.  You can see this fact through the above applet.  For example, you can see that the function $f(x)=3^{2x}$ ($k=2$, $b=3$) is exactly the same as the function $f(x)=9^x$ ($k=1$, $b=9$).  In fact, for any change you make to $k$, you can make a compensating change in $b$ to keep the function the same.  To see this, check the &ldquo;fix function&rdquo; checkbox.  Then, if you change either $b$ or $k$, the applet will automatically make a compensatory change in the other parameter to keep the function the same.  If you are curious why this is true, you can check out the {% intlink redundant_parameters_exponential_function %}calculation showing the two parameters are redundant{%endintlink%}.</p>
+<p>It turns out that adding both parameters $b$ and $k$ to our definition of $f$ is really unnecessary.  We can still get the full range of functions if we eliminate either $b$ or $k$.  You can see this fact through the above applet.  For example, you can see that the function $f(x)=3^{2x}$ ($k=2$, $b=3$) is exactly the same as the function $f(x)=9^x$ ($k=1$, $b=9$).  In fact, for any change you make to $k$, you can make a compensating change in $b$ to keep the function the same.  To see this, check the &ldquo;fix function&rdquo; checkbox.  Then, if you change either $b$ or $k$, the applet will automatically make a compensatory change in the other parameter to keep the function the same.  If you are curious why this is true, you can check out the {% intlink "redundant_parameters_exponential_function" %}calculation showing the two parameters are redundant{%endintlink%}.</p>
 
 <p>Since it is silly to have both parameters $b$ and $k$, we will typically eliminate one of them.  The easiest thing to do is eliminate $k$ and go back to the function
 $$f(x)=b^x.$$
@@ -56,7 +56,7 @@ We will use this function a bit at first, changing the base $b$ to make the func
 <p>If we didn't have calculus, we'd probably choose $b=2$, writing our exponential function as $f(x)=2^{kx}$.  Or, since we like the decimal system so well, maybe we'd choose $b=10$ and write our exponential function of $f(x)=10^{kx}$.  According to the above discussion, it shouldn't matter whether we use $b=2$ or $b=10$, as we can get the same functions either way (just with different values of $k$).</p>
 
 <a id="exponent_base_e" class="anchor"></a>
-<p>But, it turns out that calculus tells us there is a natural choice for the base $b$.  Once you learn some calculus, {% intlink exploring_derivative_exponential_function %}you'll see why{% endintlink%} the most common base $b$ throughout the sciences is the irrational number
+<p>But, it turns out that calculus tells us there is a natural choice for the base $b$.  Once you learn some calculus, {% intlink "exploring_derivative_exponential_function" %}you'll see why{% endintlink%} the most common base $b$ throughout the sciences is the irrational number
 $$e= 2.718281828459045 \ldots .$$
 Fixing $b=e$, we can write the exponential functions as
 $$f(x) = e^{kx}.$$

@@ -4,7 +4,7 @@
 {% description "Examples illustrating how to use Stokes' theorem." %}
 
 
-<p>{% intlink stokes_theorem_idea %}Stokes' theorem{%endintlink%} relates a {% intlink surface_integral_vector_field_introduction %}surface integral{%endintlink%} of a the {% intlink curl_idea %}curl{%endintlink%} of the {% intlink vector_field_overview %}vector field{%endintlink%} to a {% intlink line_integral_vector_field_introduction %}line integral{%endintlink%} of the vector field around the boundary of the surface.  After reviewing the {% intlink stokes_theorem_idea %}basic idea of Stokes' theorem{%endintlink%} and how to make sure you have the {% intlink stokes_theorem_orientation %}orientations of the surface and its boundary matched{%endintlink%}, try your hand at these examples to see Stokes' theorem in action.</p>
+<p>{% intlink "stokes_theorem_idea" %}Stokes' theorem{%endintlink%} relates a {% intlink "surface_integral_vector_field_introduction" %}surface integral{%endintlink%} of a the {% intlink "curl_idea" %}curl{%endintlink%} of the {% intlink "vector_field_overview" %}vector field{%endintlink%} to a {% intlink "line_integral_vector_field_introduction" %}line integral{%endintlink%} of the vector field around the boundary of the surface.  After reviewing the {% intlink "stokes_theorem_idea" %}basic idea of Stokes' theorem{%endintlink%} and how to make sure you have the {% intlink "stokes_theorem_orientation" %}orientations of the surface and its boundary matched{%endintlink%}, try your hand at these examples to see Stokes' theorem in action.</p>
 
 {% navigation_tag "example1" "Examples" "Example 1" %}
 <h4>Example 1</h4>
@@ -24,7 +24,7 @@ Since we are given a line integral and told to use Stokes' theorem, we need to c
   \sint{\dls}{\curl \dlvf},
 \end{align*}
 where $\dls$ is a surface with boundary $\dlc$.  We have freedom to choose
-any surface $\dls$, as long as we orient it so that $\dlc$ is a {%intlink positively_oriented_boundary_definition %}positively
+any surface $\dls$, as long as we orient it so that $\dlc$ is a {% intlink "positively_oriented_boundary_definition" %}positively
 oriented boundary{%endintlink%}.</p>
 
 <p>In this case, the simplest choice for $\dls$ is clear. 
@@ -32,11 +32,11 @@ Let $\dls$ be the quarter disk in the $yz$-plane.</p>
 
 <p>Given the orientation of the curve $\dlc$, we need to choose the surface
 normal vector $\vc{n}$ to point in which direction?  By the
-{%intlink stokes_theorem_orientation%}right hand rule criterion{%endintlink%}, the normal vector
+{% intlink "stokes_theorem_orientation" %}right hand rule criterion{%endintlink%}, the normal vector
 should point toward the negative side of the $x$-axis.</p>
 
 <p>We need to calculate the curl of $\dlvf$. We can calculate the curl as
-{%intlink divergence_curl_notation %}using the notation{%endintlink%}
+{% intlink "divergence_curl_notation" %}using the notation{%endintlink%}
 \begin{align*}
   \curl(\dlvf) &amp;= 
   \nabla \times \dlvf = \nabla \times (y,z,x)\\
@@ -167,7 +167,7 @@ in agreement with our Stokes' theorem answer.</p>
 <p>We often present Stoke's theorem problems as we did above.  We give a
 curve $\dlc$ and expect you to compute the surface integral over some
 surface $\dls$ with boundary $\dlc$.  In general, one can pick many
-surfaces.  (See {% appletlink "stokes_theorem_choose_surface" %}this applet{%endappletlink%}.) But, sometimes,  there is a surface that is &ldquo;obviously&rdquo; the
+surfaces.  (See {% intlink "stokes_theorem_choose_surface" class="applet" %}this applet{% endintlink %}.) But, sometimes,  there is a surface that is &ldquo;obviously&rdquo; the
 best one. </p>
 
 <p>One special case where this is relatively easy is when $\dlc$ lies in a

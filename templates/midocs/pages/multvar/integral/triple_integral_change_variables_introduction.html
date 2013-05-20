@@ -5,7 +5,7 @@
 {% description "Introduction to the concepts behind a change of variables in triple integrals." %}
 
 {% navigation_tag "introduction"  "Introduction" %}
-<p>Changing variables in  {% intlink triple_integral_introduction %}triple integrals{%endintlink%} is a lot like {% intlink double_integral_change_variables_introduction %}changing variables in double integrals{%endintlink%}.  The basic concepts are the same, only we have to worry about the additional third dimension.  For a good review of the necessary steps for changing variables put into the context of triple integrals, we recommend you read the {% intlink triple_integral_change_variables_story %}triple integral change variables story{%endintlink%}.  The page gives a more traditional perspective on the process.</p>
+<p>Changing variables in  {% intlink "triple_integral_introduction" %}triple integrals{%endintlink%} is a lot like {% intlink "double_integral_change_variables_introduction" %}changing variables in double integrals{%endintlink%}.  The basic concepts are the same, only we have to worry about the additional third dimension.  For a good review of the necessary steps for changing variables put into the context of triple integrals, we recommend you read the {% intlink "triple_integral_change_variables_story" %}triple integral change variables story{%endintlink%}.  The page gives a more traditional perspective on the process.</p>
 
 {% navigation_tag "example" "Motivating example" %}
 <h4>An example to motivate the problem</h4>
@@ -31,7 +31,7 @@ Given the above description, we can describe the dome $\dlv$ as the region
 \end{gather*}
 </p>
 
-<p>If we try to use the {% intlink triple_integral_cross_section_method %}cross section method{%endintlink%} to determine the bounds on $x$ and $y$, then for each value of $z$, we need to let $x$ and $y$ range over the cross section of the dome at the height of $z$.  In other words, we need $x$ and $y$ to be determined by
+<p>If we try to use the {% intlink "triple_integral_cross_section_method" %}cross section method{%endintlink%} to determine the bounds on $x$ and $y$, then for each value of $z$, we need to let $x$ and $y$ range over the cross section of the dome at the height of $z$.  In other words, we need $x$ and $y$ to be determined by
 \begin{gather*}
   9-z^2 \le x^2+y^2 \le 25-z^2
 \end{gather*}
@@ -40,7 +40,7 @@ where we view $z$ as a constant.  If $z < 3$, then $x$ and $y$ must range over a
 {% navigation_tag "changingvariables" "Changing variables" %}
 <h4>Simplifying by changing variables</h4>
 
-<p>The dome problem illustrates one reason why we may want to change variables: to find an simpler region $\dlv^*$ over which to calculate the integral.  For the dome example, the description of the dome will be much easier if we use {% intlink spherical_coordinates%}spherical coordinates{%endintlink%} instead of the {%intlink cartesian_coordinates%}Cartesian coordinates{%endintlink%} we used above.  In terms of the spherical coordinates $\rho$, $\theta$, and $\phi$, the description of the dome is simple.  The radius $\rho$ ranges in the interval $3 \le \rho \le 5$.  The angle $\pi$ ranges over its entire range $0 \le \theta \le 2\pi$.  Since we have only the top half of the sphere, the angle $\phi$ ranges only over half its range, i.e., $0 \le \phi \le \pi/2$.</p>
+<p>The dome problem illustrates one reason why we may want to change variables: to find an simpler region $\dlv^*$ over which to calculate the integral.  For the dome example, the description of the dome will be much easier if we use {% intlink "spherical_coordinates" %}spherical coordinates{%endintlink%} instead of the {% intlink "cartesian_coordinates" %}Cartesian coordinates{%endintlink%} we used above.  In terms of the spherical coordinates $\rho$, $\theta$, and $\phi$, the description of the dome is simple.  The radius $\rho$ ranges in the interval $3 \le \rho \le 5$.  The angle $\pi$ ranges over its entire range $0 \le \theta \le 2\pi$.  Since we have only the top half of the sphere, the angle $\phi$ ranges only over half its range, i.e., $0 \le \phi \le \pi/2$.</p>
 
 <p>These bounds on the spherical coordinates determine the region $\dlv^*$ in $\rho\theta\phi$-space.  In this space, the dome actually looks like a rectangular box, as all the limits of the region
 \begin{gather}
@@ -50,7 +50,7 @@ where we view $z$ as a constant.  If $z < 3$, then $x$ and $y$ must range over a
 \end{gather}
 are constant, independent of the other variables. </p>
 
-<p>The {% intlinkeq spherical_coordinates spherical_cartesian -1 %}relation between spherical and Cartesian coordinates{%endintlinkeq %} can be written as a mapping:
+<p>The {% intlink "spherical_coordinates" equation="spherical_cartesian" %}relation between spherical and Cartesian coordinates{% endintlink %} can be written as a mapping:
 \begin{gather}
   (x,y,z) = \cvarf(\rho,\theta,\phi) =   ( \rho\sin\phi\cos\theta,
   \rho\sin\phi\sin\theta, \rho\cos\phi).
@@ -58,21 +58,21 @@ are constant, independent of the other variables. </p>
 \end{gather}
 As $(\rho,\theta,\phi)$ ranges over the box $\dlv^*$ in spherical coordinates space, the point $(x,y,z) = \cvarf(\rho,\theta,\phi)$ ranges over the dome $\dlv$, as illustrated in the below applet.  The process of changing variables transforms the integral in terms of the variables $(x,y,z)$ over the dome $\dlv$ to an integral in terms of the variables $(\rho, \theta, \phi)$ over the region $\dlv^*$.</p>  
 
-<p>Since the function $f(x,y,z)$ is defined in terms of $(x,y,z)$, we cannot simply integrate $f$ over the box $\dlv^*$.  Instead, we must first {% intlink composition_definition%}compose{%endintlink%} $f$ with the change of variables function $\cvarf$.  As we integrate the {% intlink composition_definition%}composition of functions{%endintlink%} $f(\cvarf(\rho,\theta,\phi))$ over $\dlv^*$, we add up the density calculated at the points $(x,y,z) = \cvarf(\rho,\theta,\phi)$ of the dome $\dlv$.</p>
+<p>Since the function $f(x,y,z)$ is defined in terms of $(x,y,z)$, we cannot simply integrate $f$ over the box $\dlv^*$.  Instead, we must first {% intlink "composition_definition" %}compose{%endintlink%} $f$ with the change of variables function $\cvarf$.  As we integrate the {% intlink "composition_definition" %}composition of functions{%endintlink%} $f(\cvarf(\rho,\theta,\phi))$ over $\dlv^*$, we add up the density calculated at the points $(x,y,z) = \cvarf(\rho,\theta,\phi)$ of the dome $\dlv$.</p>
 
 
 {% boxedapplet "dome_change_variables_volume" %}
 
 <p>The last step is to correctly account for the volume element $dV$.  In the original Cartesian coordinates $(x,y,z)$, the volume element was simply $dV = dx\,dy\,dz$.  The temptation may be to use the analogous expression $d\rho\,d\theta\,d\phi$ for the volume element, but that element measures volume in the box $\dlv^*$ (illustrated by the small red boxes the above applet) not volume in the dome $\dlv$ (illustrated by the small blue curvy regions).  The fact that the small blue regions have different volume than the small red regions shows that $\cvarf$ changes volume as it transforms spherical coordinates to Cartesian coordinates.</p>
 
-<p>To {% intlink triple_integral_change_variables_volume_calculation %}calculate the volume transformation{%endintlink%}, one can approximate the curvy blue regions as {% intlink parallelepiped_definition%}parallelepipeds{%endintlink%}.  Then, one can easily calculate their volume using the {% intlink scalar_triple_product %}scalar triple product{%endintlink%}.  One {% intlink triple_integral_change_variables_volume_calculation %}can calculate{% endintlink%} that these parallelepipeds are spanned by vectors proportional to the {% intlink partial_derivative_introduction %}partial derivatives{%endintlink%} of the change of variables function $\cvarf$, so that their volume is proportional to the scalar triple product of these partial derivatives.</p>
+<p>To {% intlink "triple_integral_change_variables_volume_calculation" %}calculate the volume transformation{%endintlink%}, one can approximate the curvy blue regions as {% intlink "parallelepiped_definition" %}parallelepipeds{%endintlink%}.  Then, one can easily calculate their volume using the {% intlink "scalar_triple_product" %}scalar triple product{%endintlink%}.  One {% intlink "triple_integral_change_variables_volume_calculation" %}can calculate{% endintlink%} that these parallelepipeds are spanned by vectors proportional to the {% intlink "partial_derivative_introduction" %}partial derivatives{%endintlink%} of the change of variables function $\cvarf$, so that their volume is proportional to the scalar triple product of these partial derivatives.</p>
 
 <p>The end result is that rather than using  $d\rho\,d\theta\,d\phi$ for the volume element, we must use 
 \begin{align*}
   dV=\left| \pdiff{\cvarf}{\rho} \cdot \left(\pdiff{\cvarf}{\theta} \times \pdiff{\cvarf}{\phi}\right)\right|d\rho\,d\theta\,d\phi= | \det \jacm{\cvarf}|\,d\rho\,d\theta\,d\phi,
 \end{align*}
-where $\jacm{\cvarf}$ is the {% intlink derivative_matrix %}matrix of partial derivatives{%endintlink%} of $\cvarf$.
-See {% intlink triple_integral_change_variables_volume_calculation %}this page{%endintlink%} for more of the details in this calculation.</p>
+where $\jacm{\cvarf}$ is the {% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%} of $\cvarf$.
+See {% intlink "triple_integral_change_variables_volume_calculation" %}this page{%endintlink%} for more of the details in this calculation.</p>
 
 <p>We can think of the expression $| \det \jacm{\cvarf}|$ as the  <i>volume 
 expansion factor</i>, as it captures how $\cvarf$ stretches or shrinks $\dlv^*$ as it maps it into $\dlv$.</p>
@@ -82,7 +82,7 @@ expansion factor</i>, as it captures how $\cvarf$ stretches or shrinks $\dlv^*$ 
   \iiint_\dlv f(x,y,z) dV = \iiint_{\dlv^*} f(\cvarf(\rho,\theta,\phi))
  \left|\det\jacm{\cvarf}(\rho,\theta,\phi)\right| d\rho\,d\theta\,d\phi.
 \end{align*}
-For the spherical coordinate change of variables function \eqref{sphericaltrans}, the volume expansion factor is $|\det\jacm{\cvarf}(\rho,\theta,\phi)|=\rho^2\sin\phi$, as shown on the {%intlink triple_integral_change_variable_examples%}example page{%endintlink%}.  Since the density is $f(x,y,z) = 5+z$, composing the function with the change of variable transformation yields
+For the spherical coordinate change of variables function \eqref{sphericaltrans}, the volume expansion factor is $|\det\jacm{\cvarf}(\rho,\theta,\phi)|=\rho^2\sin\phi$, as shown on the {% intlink "triple_integral_change_variable_examples" %}example page{%endintlink%}.  Since the density is $f(x,y,z) = 5+z$, composing the function with the change of variable transformation yields
 \begin{gather*}
   f(\cvarf(\rho,\theta,\phi)) = f( \rho\sin\phi\cos\theta,
   \rho\sin\phi\sin\theta, \rho\cos\phi) = 5+ \rho\cos\phi.
@@ -104,7 +104,7 @@ Although it still takes some trignometric identities and a bit of work, it's a l
   \,d\cvarfv\,d\cvarsv\,d\cvartv.
 \end{align*}
 
-As with {% intlink double_integral_change_variables_introduction%}double integrals{%endintlink%}, we can also denote the expansion factor using partial derivative notation, denoting the volume expansion factor as
+As with {% intlink "double_integral_change_variables_introduction" %}double integrals{%endintlink%}, we can also denote the expansion factor using partial derivative notation, denoting the volume expansion factor as
 \begin{gather*}
   \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv)\right| = 
   \left|\pdiff{(x,y,z)}{(\cvarfv,\cvarsv,\cvartv)}\right|
@@ -118,7 +118,7 @@ and the change of variables formula as
 \end{align*}
 </p>
 
-<p>We've clearly skipped over a lot of details in this introduction.  To fill in the missing parts, you can read how we {%intlink triple_integral_change_variables_volume_calculation %}obtained the volume expansion factor{%endintlink%}.  To help you tie all the steps together, you can peruse a {% intlink triple_integral_change_variables_story %}story outlining the steps{%endintlink%}. You can also read {%intlink triple_integral_change_variable_examples%}examples of changing variables{%endintlink%} into {%intlink spherical_coordinates%}spherical{%endintlink%} and {%intlink cylindrical_coordinates%}cylindrical{%endintlink%} coordinates.</p>
+<p>We've clearly skipped over a lot of details in this introduction.  To fill in the missing parts, you can read how we {% intlink "triple_integral_change_variables_volume_calculation" %}obtained the volume expansion factor{%endintlink%}.  To help you tie all the steps together, you can peruse a {% intlink "triple_integral_change_variables_story" %}story outlining the steps{%endintlink%}. You can also read {% intlink "triple_integral_change_variable_examples" %}examples of changing variables{%endintlink%} into {% intlink "spherical_coordinates" %}spherical{%endintlink%} and {% intlink "cylindrical_coordinates" %}cylindrical{%endintlink%} coordinates.</p>
 
 
 {%endblock%}

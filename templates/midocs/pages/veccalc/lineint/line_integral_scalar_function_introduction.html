@@ -9,24 +9,24 @@
 scalar-valued function can be thought of as a generalization
 of the one-variable integral of a function over an interval,
 where the interval can be shaped into a 
-{% intlink parametrized_curve_introduction %}curve{%endintlink%}.
+{% intlink "parametrized_curve_introduction" %}curve{%endintlink%}.
 A simple analogy that captures the essence of a scalar line integral
 is that of calculating the mass of a wire from its density.</p>
 
 <p>If the density of a wire were constant, then one could calculate
 its mass by multiplying the density by the 
-{%intlink parametrized_curve_arc_length%}arc length{%endintlink%}
+{% intlink "parametrized_curve_arc_length" %}arc length{%endintlink%}
 of the curve.
 If, on the other hand, the density varies along the wire, 
 one can use a procedure similar to 
-{%intlink parametrized_curve_arc_length%}that
+{% intlink "parametrized_curve_arc_length" %}that
 of calculating the  arc length{%endintlink%}
 to derive a formula for the density.  
 This formula defines of the line integral over the wire
 of the function giving the density.</p>
 
 <p>Extending the 
-{%intlink parametrized_curve_arc_length%}slinky example{%endintlink%} 
+{% intlink "parametrized_curve_arc_length" %}slinky example{%endintlink%} 
 used to introduce arc length,
 we let one coil of the slinky be parametrized by 
 $\dllp(t) = (\cos t, \sin t, t)$, for $0 \le t \le 2\pi$,
@@ -42,7 +42,7 @@ $\dlsi(\dllp(t))$, as illustrated below.</p>
 {% boxedapplet "helix_variable_density" %}
 
 <p>To calculate the mass of the slinky, we repeat the procedure we used
-to {% intlink parametrized_curve_arc_length %}calculate its 
+to {% intlink "parametrized_curve_arc_length" %}calculate its 
 length{%endintlink%}.  We pretend the slinky is composed by a bunch of straight line segments.  Moreover, we assume each line segment has constant
 density, so the mass of the line segment is simply its length times its
 density.  We let the density of each line segment be the density of
@@ -66,7 +66,7 @@ slinky.</p>
 
 <p>The derivation of the line integral formula is similar to
 the procedure we used to estimate the
-{% intlink parametrized_curve_arc_length %}slinky length{%endintlink%}.
+{% intlink "parametrized_curve_arc_length" %}slinky length{%endintlink%}.
 The length of the $i$th line segment can be written as
 $\|\dllp(t_i) - \dllp(t_{i-1})\|$.  The density of the line segment is
 simply $\dlsi(\dllp(t_i))$ since $\dllp(t_i)$ is the point where the
@@ -82,7 +82,7 @@ summing over all $n$ line segments:
 
 <p>The only difference between the above expression and the one
 we obtained for
-{% intlink parametrized_curve_arc_length %}arc length calculation{%endintlink%}
+{% intlink "parametrized_curve_arc_length" %}arc length calculation{%endintlink%}
 is the $\dlsi(\dllp(t_i))$ factor.  
 To turn this into an integral, we repeat the same steps we did on that page.
 We again let $\Delta t_i = t_i - t_{i-1}$, multiply and divide each 
@@ -94,7 +94,7 @@ term by $\Delta t_i$, and obtain the more complicated looking expression.
   \Delta t_i.
 \end{align*}
 Since the ugly expression in the $\| \cdot \|$ is the quantity in
-{%intlink parametrized_curve_derivative limit_definition %}limit 
+{% intlink "parametrized_curve_derivative" anchor="limit_definition" %}limit 
 definition of the derivative{%endintlink%} of $\dllp(t)$, 
 when we let $\Delta t_i \to 0$ and $n \to \infty$, the above Riemann 
 sum converges to the integral
@@ -122,10 +122,10 @@ But, if the integral can really represent the mass of a wire
 with density $\dlsi$, then the mass should not depend on how we
 chose to parametrize the wire.  
 In fact, it does not, and you can read about how the line integral
-is {% intlink line_integral_independent_parametrization %}independent
+is {% intlink "line_integral_independent_parametrization" %}independent
 of the parametrization{%endintlink%} used to represent the curve.</p>
 
-<p>You can also read some {% intlink line_integral_scalar_examples %}examples{%endintlink%}
+<p>You can also read some {% intlink "line_integral_scalar_examples" %}examples{%endintlink%}
 of calculating line integrals of scalar functions.</p>
 
 {%endblock%}

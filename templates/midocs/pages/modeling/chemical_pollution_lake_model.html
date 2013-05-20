@@ -11,7 +11,7 @@ is built beside the river and releases 100 kg of chemical waste
 into the lake each day.  What will be the amounts of chemical
 waste in the lake on succeeding days?</p>
 
-<p>We develop a {% intlink discrete_dynamical_system_introduction %}discrete dynamical system{%endintlink%} model as an example of a mathematical model that describes the response of systems to constant infusion of material or energy. We show how these systems can move toward an {% intlink equilibrium_definition %}equilibrium{%endintlink%}.</p>
+<p>We develop a {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system{%endintlink%} model as an example of a mathematical model that describes the response of systems to constant infusion of material or energy. We show how these systems can move toward an {% intlink "equilibrium_definition" %}equilibrium{%endintlink%}.</p>
 
 {% navigation_tag "developing" "Developing" %}
 <h4>Developing the dynamical system model</h4>
@@ -33,7 +33,7 @@ in the lake is uniform.</p>
 {% image "factory_dump_pollution_lake" %}
 
 
-<p>Three of these quantities are constants, and we can view them as {% intlink parameter_definition%}parameters{%endintlink%} of the model.  Each of these parameters can be fixed from the data given in the statement of the problem. One parameter is the lake volume, 
+<p>Three of these quantities are constants, and we can view them as {% intlink "parameter_definition" %}parameters{%endintlink%} of the model.  Each of these parameters can be fixed from the data given in the statement of the problem. One parameter is the lake volume, 
 \begin{align*}
   V &= \mbox{area} \times \mbox{depth} \\
   &= 2 \mbox{ km}^2 \times 10 \mbox{ m} \\
@@ -52,7 +52,7 @@ $$ C_t = \frac{W_t}{V}
 </p>
 
 
-<p>To derive the {% intlink discrete_dynamical_system_introduction%}dynamical systems model{%endintlink%} for the waste $W_t$, we look at the change in the amount of chemical on day $t$, which is 
+<p>To derive the {% intlink "discrete_dynamical_system_introduction" %}dynamical systems model{%endintlink%} for the waste $W_t$, we look at the change in the amount of chemical on day $t$, which is 
 $$\text{change in chemicals} =  W_{t+1} - W_t.$$  The statement of the problem tells us that $R$ (or 100 kg) is the amount of chemical added from the factory each day.  If there were no river flowing through the lake, then the simple answer would be that the change $W_{t+1}-W_{t}$ is exactly $R$, and the amount of chemical would steady increase by 100 kg each day.</p>
 
 <p>However, the fact that the river runs through the lake means that some chemicals get removed from the lake and flows downstream.  We need to calculate the amount of chemicals (in kg) that is removed from the river each day.  We know that the flow of water out the exit river each day is $F$. But that quantity, of course, is water, not chemicals.  The amount of chemical waste that leaves the lake each day is equal to the amount of water that leaves the lake that day times the concentration of chemical waste in that water.</p>
@@ -108,14 +108,14 @@ Or, for the given parameter values, the system is
 
 <p>We can compute the amounts of chemical waste in the lake on the first
 few days.  For example, if you put $f(x)=100+0.9995 x$ and $x_0=0$ in the 
-{% appletlink "function_iteration" %}function iteration applet{%endappletlink%}, you'll find that chemical waste after the each of the first four days is 100, 199.95, 299.85, and 399.70 kg.  To find out the chemical level at the end of the first year, you'd need to iterate 365 times, which would get tiresome.</p>
+{% intlink "function_iteration" class="applet" %}function iteration applet{% endintlink %}, you'll find that chemical waste after the each of the first four days is 100, 199.95, 299.85, and 399.70 kg.  To find out the chemical level at the end of the first year, you'd need to iterate 365 times, which would get tiresome.</p>
 
 
 {% navigation_tag "equilibrium" "Solving" "Equilibrium state" %}
 <h5>The equilibrium state</h5>
 
 <p>Before trying to completely solve the model \eqref{pollution_model} for the waste $W_t$ at any day $t$, we can start by asking what happens to the waste level after a long time. For example, the environmentalists may want to know the
-&ldquo;eventual state&rdquo; of the chemical waste in the lake.  They would predict that the chemical in the lake will increase until there is no perceptual change on successive days.  If this happens, then the {% intlink state_variable_definition%}state of the system{%endintlink%} (i.e., $W_t$) is heading toward an {% intlink equilibrium_definition%}equilibrium{%endintlink%}.</p>
+&ldquo;eventual state&rdquo; of the chemical waste in the lake.  They would predict that the chemical in the lake will increase until there is no perceptual change on successive days.  If this happens, then the {% intlink "state_variable_definition" %}state of the system{%endintlink%} (i.e., $W_t$) is heading toward an {% intlink "equilibrium_definition" %}equilibrium{%endintlink%}.</p>
 
 <p>At an equilibrium state, the state variables don't change.  In our model, an equilibrium $E$ is a value such that if $W_t = E$, then $W_{t+1}$ is also $E$.  We can solve for possible values of $E$ by plugging in $W_t=E$ and $W_{t+1}=E$ into the equation \eqref{pollution_model}.  This means that $E$ must satisfy the equation 
 \begin{align}
@@ -163,12 +163,12 @@ The important consequences are that $R$ disappears and that the equation depends
 The initial condition $D_0=-E$ follows from the fact that $D_0=W_0-E$ and the initial condition for $W_t$ is $W_0=0$.
 </p>
 
-<p>We've reduced the problem to an equation \eqref{equation_for_D} for $D_t$ that is same form as the {%intlink bacteria_growth_initial_model %}initial model for bacteria growth{%endintlink%}.  The equation is another example of {% intlink exponential_growth_decay_discrete%}exponential growth or decay{%endintlink%} since the right hand side of the $D_{t+1}$ equation in \eqref{equation_for_D} is linear in $D_t$.  In fact, equation \eqref{equation_for_D} can be written as 
+<p>We've reduced the problem to an equation \eqref{equation_for_D} for $D_t$ that is same form as the {% intlink "bacteria_growth_initial_model" %}initial model for bacteria growth{%endintlink%}.  The equation is another example of {% intlink "exponential_growth_decay_discrete" %}exponential growth or decay{%endintlink%} since the right hand side of the $D_{t+1}$ equation in \eqref{equation_for_D} is linear in $D_t$.  In fact, equation \eqref{equation_for_D} can be written as 
 \begin{align*}
   D_{t+1}&=rD_t\\
   D_0 &= -E.
 \end{align*}
-with $r=1-F/V$, which is {% intlinkeq exponential_growth_decay_discrete linear_dynamical_system %}from the exponential growth or decay page{%endintlinkeq%} with constant $r$.  Its solution is
+with $r=1-F/V$, which is {% intlink "exponential_growth_decay_discrete" equation="linear_dynamical_system" %}equation (tag) from the exponential growth or decay page{% endintlink %} with constant $r$.  Its solution is
 \begin{gather}
   D_t = -E \times r^t,
   \label{exponential_decay_solution}
@@ -208,7 +208,7 @@ Observe that even after 20 years the lake is not quite to equilibrium.</p>
 {% navigation_tag "deviation" "Solving" "Rate of decay" %}
 <h5>Rate of decay</h5>
 
-<p>With exponential decay, we can quantify how fast the system decays to zero with the {% intlink doubling_time_half_life_discrete half_life %}half-life{%endintlink%}.  For equation \eqref{exponential_decay_solution}, the half-life is (see {% intlinkeq doubling_time_half_life_discrete half_life%}of the half-life page{%endintlinkeq%})
+<p>With exponential decay, we can quantify how fast the system decays to zero with the {% intlink "doubling_time_half_life_discrete" anchor="half_life" %}half-life{%endintlink%}.  For equation \eqref{exponential_decay_solution}, the half-life is (see {% intlink "doubling_time_half_life_discrete" equation="half_life" %}equation (tag) of the half-life page{% endintlink %})
 \begin{gather*}
  T_{\text{half}}= \frac{\log \frac{1}{2}}{\log r}.
 \end{gather*}
@@ -216,7 +216,7 @@ For the given parameters, $r=0.9995$ and the half-life is 1386 days.  For $W_t$,
 
 <p>Half way to the equilibrium isn't very close, so we might be interested in determining how long it takes the system to get closer to equilibrium.  For example, if we double the half life, the deviation from equilibrium is cut in half twice, to one-quarter of its original value, and the waste level evolves to $3/4$ of the equilibrium.</p>
 
-<p>If we want to see how long it takes to get quite close to equilibrium, we can calculate how long it takes for the lake to reach 98 percent of the equilibrium value.  We can repeat the {% intlink doubling_time_half_life_discrete half_life %}half-life calculation{%endintlink%} with a small change by asking for what $t$ is $D_t$ down to 0.02 times its original value.  The only difference from the half-life calculation is to replace 1/2 with 0.02, and the answer is
+<p>If we want to see how long it takes to get quite close to equilibrium, we can calculate how long it takes for the lake to reach 98 percent of the equilibrium value.  We can repeat the {% intlink "doubling_time_half_life_discrete" anchor="half_life" %}half-life calculation{%endintlink%} with a small change by asking for what $t$ is $D_t$ down to 0.02 times its original value.  The only difference from the half-life calculation is to replace 1/2 with 0.02, and the answer is
 \begin{gather*}
  T_{0.02}= \frac{\log 0.02}{\log r}.
 \end{gather*}
@@ -229,6 +229,6 @@ For the given parameters, $r=0.9995$ and the half-life is 1386 days.  For $W_t$,
   &= 21.4 \mbox{ years}.
 \end{align*}
 
-<p>You can build your own models for similar problems in the {% intlink chemical_pollution_lake_model_exercises %}exercises{%endintlink%}.</p>
+<p>You can build your own models for similar problems in the {% intlink "chemical_pollution_lake_model_exercises" %}exercises{%endintlink%}.</p>
 
 {% endblock%}

@@ -4,8 +4,8 @@
 {% description "A visual tour demonstrating discontinuous partial derivatives of a non-differentiable function, as required by the differentiability theorem."%}
 
 
-<p>According to the {% intlink differentiability_multivariable_theorem%}differentiability theorem{%endintlink%}, any {%intlink differentiability_multivariable_subtleties%}non-differentiable function with partial derivatives{%endintlink%} must have discontinuous partial derivatives.  (Otherwise, by {% intlink differentiability_multivariable_theorem%}the theorem{%endintlink%}, the function must be differentiable.)
-For one of the {% intlink differentiability_multivariable_subtleties examplefunction %}example non-differentiable functions{%endintlink%}, let's see if we can visualize that indeed these partial derivatives were the problem.</p>
+<p>According to the {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%}, any {% intlink "differentiability_multivariable_subtleties" %}non-differentiable function with partial derivatives{%endintlink%} must have discontinuous partial derivatives.  (Otherwise, by {% intlink "differentiability_multivariable_theorem" %}the theorem{%endintlink%}, the function must be differentiable.)
+For one of the {% intlink "differentiability_multivariable_subtleties" anchor="examplefunction" %}example non-differentiable functions{%endintlink%}, let's see if we can visualize that indeed these partial derivatives were the problem.</p>
 
 <p>The function we'll examine is
 \begin{align*}
@@ -59,7 +59,7 @@ The partial derivatives of $f(x,y)$ are
   \end{cases}.
 \end{align*}
 To calculate the partial derivatives away from the origin, we just used the usual rules for differentiation.  
-At the origin, we had to use the {% intlink partial_derivative_limit_definition %}limit definition of partial derivatives{%endintlink%}, as shown on {%intlink differentiability_multivariable_subtleties examplefunction %}another page{%endintlink%}.</p>
+At the origin, we had to use the {% intlink "partial_derivative_limit_definition" %}limit definition of partial derivatives{%endintlink%}, as shown on {% intlink "differentiability_multivariable_subtleties" anchor="examplefunction" %}another page{%endintlink%}.</p>
 
 <p>It's easy to see that the partial derivatives are zero along the $x$ and $y$ axes, as setting either $x=0$ or $y=0$ makes all the above expressions disappear.  
 Focusing on the $x$-derivative, you can show that setting $y=x\sqrt{3}$ leads to a positive constant,
@@ -75,7 +75,7 @@ We've obtained different values for the limit of $\pdiff{f}{x}(x,y)$ along paths
 
 {% boxedapplet "discontinuous_partial_x_derivative_nondifferentiable_function_lines" %}
 
-<p>It's a good thing that the partial derivatives of $f(x,y)$ are discontinuous at the origin.  Otherwise, since $f(x,y)$ is {% intlink differentiability_multivariable_subtleties examplefunction %}non-differentiable{%endintlink%} at the origin, it would have contradicted the {% intlink differentiability_multivariable_theorem%}differentiability theorem{%endintlink%}.  Be sure to keep your logic straight, though, as the differentiability theorem does <b>not</b> imply that all differentiable functions have continuous partial derivatives, as shown by {% intlink differentiable_function_discontinuous_partial_derivatives %}this example{%endintlink%}.</p>
+<p>It's a good thing that the partial derivatives of $f(x,y)$ are discontinuous at the origin.  Otherwise, since $f(x,y)$ is {% intlink "differentiability_multivariable_subtleties" anchor="examplefunction" %}non-differentiable{%endintlink%} at the origin, it would have contradicted the {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%}.  Be sure to keep your logic straight, though, as the differentiability theorem does <b>not</b> imply that all differentiable functions have continuous partial derivatives, as shown by {% intlink "differentiable_function_discontinuous_partial_derivatives" %}this example{%endintlink%}.</p>
 
 
 {%endblock%}

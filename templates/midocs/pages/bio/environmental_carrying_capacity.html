@@ -13,10 +13,10 @@
 {% navigation_tag "limits" "Environmental limits" %}
 <h4>Environmental limits decrease growth rate</h4>
 
-<p>One of the simplest types of {% intlink discrete_dynamical_system_introduction %}discrete dynamical systems{%endintlink%} describes the {% intlink exponential_growth_decay_discrete %}exponential growth{%endintlink%} of a population, where reproduction in each time step is proportional to the number of individuals.  In such exponential growth, the population grows faster and faster, continuing to {% intlink doubling_time_half_life_discrete %}double in size at regular intervals{%endintlink%}.</p>
+<p>One of the simplest types of {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical systems{%endintlink%} describes the {% intlink "exponential_growth_decay_discrete" %}exponential growth{%endintlink%} of a population, where reproduction in each time step is proportional to the number of individuals.  In such exponential growth, the population grows faster and faster, continuing to {% intlink "doubling_time_half_life_discrete" %}double in size at regular intervals{%endintlink%}.</p>
 
-<p>Exponential growth may be a good model for early stages of population growth , such as we can observe with a {% intlink bacteria_growth_initial_model %}model for the initial growth of a bacteria population{%endintlink%}.  However, as one can readily see by exploring some of the 
-{% intlink discrete_dynamical_system_elementary_biology_problems problem5 %}problems involving exponential growth{%endintlink%}, exponential growth cannot continue for long or a population will reach astronomical values.</p>
+<p>Exponential growth may be a good model for early stages of population growth , such as we can observe with a {% intlink "bacteria_growth_initial_model" %}model for the initial growth of a bacteria population{%endintlink%}.  However, as one can readily see by exploring some of the 
+{% intlink "discrete_dynamical_system_elementary_biology_problems" anchor="problem5" %}problems involving exponential growth{%endintlink%}, exponential growth cannot continue for long or a population will reach astronomical values.</p>
 
 <p>One reason that exponential growth cannot continue is because the environment in which a population lives cannot support an indefinitely large population of a given species.  Based on the amount of available food, space, water, and other necessities, an environment will have a finite <em>carrying capacity</em>, which is the maximum population size that the environment can sustain indefinitely.  As populations near their environmental limits, the growth rates decrease.</p>
 
@@ -40,13 +40,13 @@ P_{t+1} - P_t = r \, P_t \, \times \left( 1 - \frac{P_t}{M} \right)
 \end{equation}
 Equation \eqref{logistic} is the discrete logistic equation.</p>
 
-<p>Logistic growth is similar to exponential growth when the population is small.  The quantity $r$ is called the <em>low density growth rate</em> and plays the same role as the parameter $r$ defined in {% intlink exponential_growth_decay_discrete %}exponential growth page{% endintlink%}.  In fact, for small population sizes, we can show that we get the equation for exponential growth back.  
+<p>Logistic growth is similar to exponential growth when the population is small.  The quantity $r$ is called the <em>low density growth rate</em> and plays the same role as the parameter $r$ defined in {% intlink "exponential_growth_decay_discrete" %}exponential growth page{% endintlink%}.  In fact, for small population sizes, we can show that we get the equation for exponential growth back.  
 When $P_t$ is &ldquo;small&rdquo; compared
 to $M$, then the factor $\frac{P}{M}$ is close to zero and the factor $\left( 1 - \frac{P_t}{M} \right)$ is close to 1.  If we replace the factor $\left( 1 - \frac{P_t}{M} \right)$ with 1, the logistic equation \eqref{logistic} becomes
 \begin{align*}
 P_{t+1} - P_t \approx r \, P_t.
 \end{align*}
-which is the same as {% intlinkeq exponential_growth_decay_discrete  linear_dynamical_system_change %}of the exponential growth page{%endintlinkeq%}.</p>
+which is the same as {% intlink "exponential_growth_decay_discrete" equation="linear_dynamical_system_change" %}equation (tag) of the exponential growth page{% endintlink %}.</p>
 
 <p>Once the population size $P_t$ becomes appreciable compared carrying capacity $M$, then the growth rate slows down becomes the factor $\left( 1 - \frac{P_t}{M} \right)$ becomes substantially smaller than 1.  As $P_t$ approaches the value of $M$, the factor $\left(1 - \frac{P_t}{M} \right)$ approaches
 0.  In this case, the logistic equation \eqref{logistic} for the population change becomes

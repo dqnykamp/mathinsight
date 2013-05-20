@@ -3,16 +3,16 @@
 {% title "Geometric properties of the determinant" "Overview" %}
 {% description "Explanation of some of the basic geometric properties of the determinant." %}
 
-<p>The {% intlink matrices_determinants_multivariable_calculus %}determinant of a square matrix{%endintlink%} is a single number that, among other things,
-can be related to {%intlink relationship_determinants_area_volume%}the area or volume of a region{%endintlink%}.
-In particular, the determinant of a matrix reflects how the {%intlink matrices_linear_transformations%}linear transformation associated with the matrix{%endintlink%} can {%intlink determinant_linear_transformation%}scale or reflect objects{%endintlink%}.  
+<p>The {% intlink "matrices_determinants_multivariable_calculus" %}determinant of a square matrix{%endintlink%} is a single number that, among other things,
+can be related to {% intlink "relationship_determinants_area_volume" %}the area or volume of a region{%endintlink%}.
+In particular, the determinant of a matrix reflects how the {% intlink "matrices_linear_transformations" %}linear transformation associated with the matrix{%endintlink%} can {% intlink "determinant_linear_transformation" %}scale or reflect objects{%endintlink%}.  
 Here we sketch three properties of determinants that can be understood in this geometric context.</p>
 
 {% navigation_tag "scaling" "Scaling" %}
 <h4>The effect of scaling a matrix</h4>
 
-<p>Since a linear transformation {%intlink matrices_linear_transformations%}can always be written{%endintlink%} as $\vc{T}(\vc{x}) = A\vc{x}$ for some matrix $A$, applying a linear transformation to a vector $\vc{x}$ is the same thing as multiplying by a matrix. 
-For square matrices $A$, the absolute value of the determinant captures how applying $\vc{T}$ {%intlink determinant_linear_transformation%}expands or compresses objects{%endintlink%}.  
+<p>Since a linear transformation {% intlink "matrices_linear_transformations" %}can always be written{%endintlink%} as $\vc{T}(\vc{x}) = A\vc{x}$ for some matrix $A$, applying a linear transformation to a vector $\vc{x}$ is the same thing as multiplying by a matrix. 
+For square matrices $A$, the absolute value of the determinant captures how applying $\vc{T}$ {% intlink "determinant_linear_transformation" %}expands or compresses objects{%endintlink%}.  
 The nature of the expansion or compression depends on the underlying dimension.
 One-dimensional linear transformations expand length by a factor $| \det(A)|$, two-dimensional linear transformations expand area by a factor $| \det(A)|$, and three-dimensional linear transformations expand volume by a factor $| \det(A)|$.
 </p>
@@ -31,7 +31,7 @@ By the same geometric argument, if we multiply every component of the matrix $A$
 $$|\det(cA)| = c^n |\det(A)|.$$</p>
 
 
-<p>What about negative numbers and the sign of the determinant?  The sign of the determinant determines whether a linear transformation {%intlink determinant_linear_transformation %}preserves or reverses orientation{%endintlink%}.  In one dimension, multiplying the one component of the matrix by a negative number would correspond to reflecting in that one dimension.  Therefore, multiply by a negative number would change the size of the determinant.  We can conclude that for one dimension, $\det(cA)=c\det(A)$ for any number $c$. 
+<p>What about negative numbers and the sign of the determinant?  The sign of the determinant determines whether a linear transformation {% intlink "determinant_linear_transformation" %}preserves or reverses orientation{%endintlink%}.  In one dimension, multiplying the one component of the matrix by a negative number would correspond to reflecting in that one dimension.  Therefore, multiply by a negative number would change the size of the determinant.  We can conclude that for one dimension, $\det(cA)=c\det(A)$ for any number $c$. 
 (This result is painfully obvious since the determinant is just equal to the one number of $A$, but we discuss the one-dimensional case just to give intuition on higher dimensions.)</p>
 
 <p>In two dimensions, the situation is different.  If we multiplied every component of $A$ by a negative number, the change would correspond to flipping an object once across the $x$-axis and then once across the $y$-axis.  

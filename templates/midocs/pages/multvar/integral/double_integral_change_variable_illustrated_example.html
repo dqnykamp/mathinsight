@@ -7,7 +7,7 @@
 {% navigation_tag "function" "The function" %}
 <h4>Properties of an example change of variables function</h4>
 
-<p>A common {% intlink double_integral_change_variables_introduction %}change of variables{%endintlink%} in double integrals involves using the {% intlink polar_coordinates_mapping %}polar coordinate mapping{%endintlink%}, as illustrated at the beginning of a {% intlink double_integral_change_variable_examples %}page of examples{%endintlink%}.  Here we illustrate another change of variables as a further demonstration of how such transformations $(x,y) = \cvarf(\cvarfv,\cvarsv)$ map one region to another.  We use the change of variables function
+<p>A common {% intlink "double_integral_change_variables_introduction" %}change of variables{%endintlink%} in double integrals involves using the {% intlink "polar_coordinates_mapping" %}polar coordinate mapping{%endintlink%}, as illustrated at the beginning of a {% intlink "double_integral_change_variable_examples" %}page of examples{%endintlink%}.  Here we illustrate another change of variables as a further demonstration of how such transformations $(x,y) = \cvarf(\cvarfv,\cvarsv)$ map one region to another.  We use the change of variables function
 \begin{align}
 (x,y) = \cvarf(\cvarfv,\cvarsv) = (\cvarfv^2-\cvarsv^2, 2\cvarfv\cvarsv).
   \label{transformation}
@@ -23,7 +23,7 @@
 <p>Notice how the boundaries of the $\dlr$ are parabolas.  For example, the horizontal boundaries (red and green) of the rectangle $\dlr^*$ correspond to lines $\cvarsv=c$ for some constant $c$.  Assuming $c \ne 0$, we can solve the second component $(y=2\cvarfv\cvarsv)$ of equation \eqref{transformation} for $\cvarfv$, obtaining $\cvarfv = y/(2c)$.  Plugging that result into the first component $(x=\cvarfv^2-\cvarsv^2)$ of  equation \eqref{transformation}, we find that $\cvarsv=c$ corresponds to the parabola $x=y^2/(4c^2)-c^2$.  When $c$ gets very small, the parabola becomes very steep, as you can notice by, for example, moving the green boundary of $\dlr^*$ close to the $u$-axis.  The verticle edges (purple and cyan) of $\dlr^*$ similarly map to parabolic edges of $\dlr$.</p>
 
 <p>Another step in changing variables is determining how the map changes area, i.e., the amount that the map stretches or shrinks $\dlr^*$ as it transforms it into $\dlr$.  This stretching is captured by the area expansion factor $| \det
-  \jacm{\cvarf}(\cvarfv,\cvarsv)|$ from {% intlinkeq double_integral_change_variables_introduction cvarformula %}of the introductory page{%endintlinkeq%}.  For out change of variables function, the matrix of partial derivatives is
+  \jacm{\cvarf}(\cvarfv,\cvarsv)|$ from {% intlink "double_integral_change_variables_introduction" equation="cvarformula" %}equation (tag) of the introductory page{% endintlink %}.  For out change of variables function, the matrix of partial derivatives is
 \begin{align*}
   \jacm{\cvarf}(\cvarfv,\cvarsv)
   &amp;= \left(\begin{array}{rr}
@@ -46,10 +46,10 @@ The amount of stretching by $\cvarf$ increases with distance from the origin of 
 
 {% boxedapplet "nonlinear_2d_change_variables_map_animation" %}
 
-<p>Since in this applet, the rectangle $\dlr^*$ is not restricted to the upper half-plane $\cvarfv>0$, you can increase the size of $\dlr^*$ so that the mapping of $\cvarf$ is no longer one-to-one.  By making $\dlr^*$ be a large portion of any of the half-planes of the $\cvarfv\cvarsv$-plane (such as the half-plane $\cvarfv>0$), you can convince yourself that $\cvarf$ takes any of the half-planes, stretches it around an axis of the $xy$-plane, and maps it to the whole $xy$-plane.  If $\dlr^*$ extends beyond one of the half-planes, then it becomes folded, overlaping itself when it is mapped to $\dlr$.  This overlapping demonstrates that the mapping is not one-to-one.  In this case, $\cvarf$ is not a valid change of variables transformation for $\dlr^*$, and we cannot use {% intlinkeq double_integral_change_variables_introduction cvarformula %}of the introductory page{%endintlinkeq%} to calculate the integral.  (Note that an overlap only in the final $\dlr$, when the blue slider is all the way to the right, is a problem.  The intermediate frames of the animation are artificial and are shown just to guide your eye.)</p>
+<p>Since in this applet, the rectangle $\dlr^*$ is not restricted to the upper half-plane $\cvarfv>0$, you can increase the size of $\dlr^*$ so that the mapping of $\cvarf$ is no longer one-to-one.  By making $\dlr^*$ be a large portion of any of the half-planes of the $\cvarfv\cvarsv$-plane (such as the half-plane $\cvarfv>0$), you can convince yourself that $\cvarf$ takes any of the half-planes, stretches it around an axis of the $xy$-plane, and maps it to the whole $xy$-plane.  If $\dlr^*$ extends beyond one of the half-planes, then it becomes folded, overlaping itself when it is mapped to $\dlr$.  This overlapping demonstrates that the mapping is not one-to-one.  In this case, $\cvarf$ is not a valid change of variables transformation for $\dlr^*$, and we cannot use {% intlink "double_integral_change_variables_introduction" equation="cvarformula" %}equation (tag) of the introductory page{% endintlink %} to calculate the integral.  (Note that an overlap only in the final $\dlr$, when the blue slider is all the way to the right, is a problem.  The intermediate frames of the animation are artificial and are shown just to guide your eye.)</p>
 
 
-<p>In the applet, the change of variables is written in component form as $x=\cvarfv^2-\cvarsv^2$ and $y=2\cvarfv\cvarsv$.  You can enter different functions of $\cvarfv$ and $\cvarsv$ in the boxes to explore the behavior of different change of variable functions, such as those from {% intlink double_integral_change_variable_examples %}the change of variable example page{%endintlink%}.  If you change the function $\cvarf$, then there may be different conditions on $\dlr^*$ to ensure that the map is one-to-one.</p>
+<p>In the applet, the change of variables is written in component form as $x=\cvarfv^2-\cvarsv^2$ and $y=2\cvarfv\cvarsv$.  You can enter different functions of $\cvarfv$ and $\cvarsv$ in the boxes to explore the behavior of different change of variable functions, such as those from {% intlink "double_integral_change_variable_examples" %}the change of variable example page{%endintlink%}.  If you change the function $\cvarf$, then there may be different conditions on $\dlr^*$ to ensure that the map is one-to-one.</p>
 
 {% navigation_tag "concreteproblem" "Concrete problem" %}
 <h4>A concrete problem with the example function</h4>
@@ -74,7 +74,7 @@ Use the change of variables $x = \cvarfv^2-\cvarsv^2$, $y=2\cvarfv\cvarsv$.</p>
 
 <p>It turns out that our change of variables maps the rectangle $\dlr^*$ defined by $1 \le \cvarsv \le 2$ and $1 \le \cvarfv \le 2$ onto the given region $\dlr$.  You can use the above applets to convince yourself that this is true.</p>
 
-<p>Since we have already calculated above that the area expansion factor is $4\cvarfv^2+4\cvarsv^2$, the rest is a straightforward integration.  Using {% intlinkeq double_integral_change_variables_introduction cvarformula %}of the introductory page{%endintlinkeq%}, the integral is
+<p>Since we have already calculated above that the area expansion factor is $4\cvarfv^2+4\cvarsv^2$, the rest is a straightforward integration.  Using {% intlink "double_integral_change_variables_introduction" equation="cvarformula" %}equation (tag) of the introductory page{% endintlink %}, the integral is
 \begin{align*}
   \iint_\dlr y^2 dA &amp;= \int_1^2\int_1^2 (2\cvarfv\cvarsv)^2 (4\cvarfv^2+4\cvarsv^2)d\cvarfv\,d\cvarsv\\
   &amp;= \int_1^2\int_1^2 16 (\cvarfv^4\cvarsv^2+ \cvarfv^2\cvarsv^4)d\cvarfv\,d\cvarsv\\
@@ -86,7 +86,7 @@ Use the change of variables $x = \cvarfv^2-\cvarsv^2$, $y=2\cvarfv\cvarsv$.</p>
 
 <h4>More examples</h4>
 
-<p>We have more {% intlink double_integral_change_variable_examples %}examples{%endintlink%} to help you master changing variables.</p>
+<p>We have more {% intlink "double_integral_change_variable_examples" %}examples{%endintlink%} to help you master changing variables.</p>
 
 
 

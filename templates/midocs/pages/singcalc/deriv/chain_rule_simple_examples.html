@@ -4,7 +4,7 @@
 {% title "Simple examples of using the chain rule" %}
 {% description "Basic examples that show how to use the chain rule to calculate the derivative of the composition of functions." %}
 
-<p>The {% intlink chain_rule_idea %}chain rule{%endintlink%} is a formula to calculate the derivative of a {% intlink composition_definition%}composition{%endintlink%} of functions.  Once you have a grasp of the {% intlink chain_rule_idea%}basic idea{%endintlink%} behind the chain rule, the next step is to try your hand at some examples.</p>
+<p>The {% intlink "chain_rule_idea" %}chain rule{%endintlink%} is a formula to calculate the derivative of a {% intlink "composition_definition" %}composition{%endintlink%} of functions.  Once you have a grasp of the {% intlink "chain_rule_idea" %}basic idea{%endintlink%} behind the chain rule, the next step is to try your hand at some examples.</p>
 
 {% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
 <h4>Example {{examplenum}}</h4>
@@ -38,7 +38,7 @@ then we can quite easily calculate its derivative directly to obtain that $h'(x)
 
 <p>Let $f(x)=e^x$ and $g(x)=4x$.  Use the chain rule to calculate $h'(x)$, where $h(x)=f(g(x))$.</p>
 
-<p><b>Solution</b>: The {% intlink exploring_derivative_exponential_function basee %}derivative of the exponential function with base $e${%endintlink%} is just the function itself, so $f'(x)=e^x$.  The derivative of $g$ is $g'(x)=4$.
+<p><b>Solution</b>: The {% intlink "exploring_derivative_exponential_function" anchor="basee" %}derivative of the exponential function with base $e${%endintlink%} is just the function itself, so $f'(x)=e^x$.  The derivative of $g$ is $g'(x)=4$.
 According to the chain rule, 
 \begin{align*}
   h'(x) &= f'(g(x)) g'(x)\\
@@ -47,7 +47,7 @@ According to the chain rule,
 \end{align*}
 </p>
 
-<p>In this example, it was important that we evaluated the derivative of $f$ at $4x$.  The derivative of $h(x)=f(g(x))=e^{4x}$ is not equal to $4e^{x}$.  The only correct answer is $h'(x)=4e^{4x}$.   This result is a special case of {% intlinkeq exploring_derivative_exponential_function derivative_ekx %}from the derivative of exponential function page{%endintlinkeq%} with $k=4$.</p>
+<p>In this example, it was important that we evaluated the derivative of $f$ at $4x$.  The derivative of $h(x)=f(g(x))=e^{4x}$ is not equal to $4e^{x}$.  The only correct answer is $h'(x)=4e^{4x}$.   This result is a special case of {% intlink "exploring_derivative_exponential_function" equation="derivative_ekx" %}equation (tag) from the derivative of exponential function page{% endintlink %} with $k=4$.</p>
 
 {% counter examplenum %}{% navigation_tag "example{{ examplenum }}" "Examples" "Example {{ examplenum }}" %}
 <h4>Example {{examplenum}}</h4>
@@ -132,6 +132,6 @@ so that the derivative of $f$ is
 \end{align*}
 </p>
 
-<p>For additional examples, see the {% intlink chain_rule_refresher %}chain rule page from the Calculus Refresher{% endintlink%}.</p>
+<p>For additional examples, see the {% intlink "chain_rule_refresher" %}chain rule page from the Calculus Refresher{% endintlink%}.</p>
 
 {% endblock %}

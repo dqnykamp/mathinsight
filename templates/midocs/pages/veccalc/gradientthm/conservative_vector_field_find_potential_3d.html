@@ -5,12 +5,12 @@
 {% title "Finding a potential function for three-dimensional conservative vector fields" %}
 {% description "How to find a potential function for a given three-dimensional conservative, or path-independent, vector field." %}
 
-<p>In this page, we give an example of finding a potential function of a three-dimensional conservative vector field.  This procedure is an extension of the procedure of {% intlink conservative_vector_field_find_potential %}finding the potential function of a two-dimensional field {%endintlink%}.</p>
+<p>In this page, we give an example of finding a potential function of a three-dimensional conservative vector field.  This procedure is an extension of the procedure of {% intlink "conservative_vector_field_find_potential" %}finding the potential function of a two-dimensional field {%endintlink%}.</p>
 
 <p>The vector field we'll analyze is
 $$\dlvf(x,y,z) = (2xyz^3 + ye^{xy}, x^2z^3+xe^{xy}, 3x^2yz^2+\cos z).$$
-We first check {% intlink conservative_vector_field_determine test4 %}if it is
-conservative{%endintlink%} by calculating its curl, which {% intlink curl_components %}in terms of the components{%endintlink%} of $\dlvf$, is
+We first check {% intlink "conservative_vector_field_determine" anchor="test4" %}if it is
+conservative{%endintlink%} by calculating its curl, which {% intlink "curl_components" %}in terms of the components{%endintlink%} of $\dlvf$, is
 $$\curl \dlvf = \left(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}{z} -
   \pdiff{\dlvfc_3}{x}, \pdiff{\dlvfc_2}{x} - \pdiff{\dlvfc_1}{y} \right).$$</p>
 
@@ -21,7 +21,7 @@ $$\curl \dlvf = \left(\pdiff{\dlvfc_3}{y}-\pdiff{\dlvfc_2}{z}, \pdiff{\dlvfc_1}{
 \pdiff{\dlvfc_2}{x} &amp;= \pdiff{\dlvfc_1}{y} = 2xz^3+(1+xy)e^{xy},
 \end{align*}
 the curl of $\dlvf$ is zero.  The vector field is defined in all $\R^3$, 
-which is {% intlink simply_connected_definition %}simply connected{%endintlink%},
+which is {% intlink "simply_connected_definition" %}simply connected{%endintlink%},
 so $\dlvf$ is conservative.</p>
 
 <p>We need to find a potential function $f(x,y,z)$ that satisfies $\nabla f = \dlvf$, i.e., the three conditions

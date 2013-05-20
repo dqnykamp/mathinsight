@@ -4,15 +4,15 @@
 {% title "How linear transformations map parallelograms and parallelepipeds" "Overview" %}
 {% description "Why linear transformations map parallelograms onto parallelograms and parallelepipeds onto parallelepipeds." %}
 
-<p>The notion of linearity plays an important role in calculus because any {% intlink differentiability_multivariable_introduction %}differentiable function{% endintlink%} is locally linear, i.e., looks linear if you zoom in enough.  In fact, the {% intlink differentiability_multivariable_definition %}definition of differentiability{% endintlink%} is based on the ability to {% intlink linear_approximation_multivariable%}approximate{%endintlink%} a function $\vc{f}(\vc{x})$ by a {% intlink linear_transformation_definition_euclidean%}linear transformation{%endintlink%} $\vc{T}(\vc{x})$.</p>
+<p>The notion of linearity plays an important role in calculus because any {% intlink "differentiability_multivariable_introduction" %}differentiable function{% endintlink%} is locally linear, i.e., looks linear if you zoom in enough.  In fact, the {% intlink "differentiability_multivariable_definition" %}definition of differentiability{% endintlink%} is based on the ability to {% intlink "linear_approximation_multivariable" %}approximate{%endintlink%} a function $\vc{f}(\vc{x})$ by a {% intlink "linear_transformation_definition_euclidean" %}linear transformation{%endintlink%} $\vc{T}(\vc{x})$.</p>
 
-<p>Here we discuss a simple geometric property of linear transformations.  A two-dimensonal linear transformation maps parallelograms onto parallelograms and a three-dimensional linear transformation maps {% intlink parallelepiped_definition%}parallelepipeds{%endintlink%} onto parallelepipeds.  This property, combined with the fact that differentiable functions become approximately linear when one zooms in on a small region, forms the basis for calculating the {%intlink double_integral_change_variables_area_calculation%}area{%endintlink%} or {%intlink triple_integral_change_variables_volume_calculation%}volume{%endintlink%} transformation when changing variables in {%intlink double_integral_change_variables_introduction %}double{%endintlink%} or {%intlink triple_integral_change_variables_introduction %}triple{%endintlink%} integrals as well as {%intlink parametrized_surface_area_calculation %}calculating area{%endintlink%} for {%intlink parametrized_surface_introduction%}parametrized surfaces{%endintlink%}.</p>
+<p>Here we discuss a simple geometric property of linear transformations.  A two-dimensonal linear transformation maps parallelograms onto parallelograms and a three-dimensional linear transformation maps {% intlink "parallelepiped_definition" %}parallelepipeds{%endintlink%} onto parallelepipeds.  This property, combined with the fact that differentiable functions become approximately linear when one zooms in on a small region, forms the basis for calculating the {% intlink "double_integral_change_variables_area_calculation" %}area{%endintlink%} or {% intlink "triple_integral_change_variables_volume_calculation" %}volume{%endintlink%} transformation when changing variables in {% intlink "double_integral_change_variables_introduction" %}double{%endintlink%} or {% intlink "triple_integral_change_variables_introduction" %}triple{%endintlink%} integrals as well as {% intlink "parametrized_surface_area_calculation" %}calculating area{%endintlink%} for {% intlink "parametrized_surface_introduction" %}parametrized surfaces{%endintlink%}.</p>
 
 
 {% navigation_tag "map2D" "Parallelograms" %}
 <h4>Mapping parallelograms in two dimensions</h4>
 
-<p>A two-dimensional linear transformation $\vc{T}: \R^2 \to \R^2$ {% confusedlink function_notation %} is a type of mapping from a two-dimensional plane onto another two-dimensional plane.  It can be written as
+<p>A two-dimensional linear transformation $\vc{T}: \R^2 \to \R^2$ {% confusedlink "function_notation" %} is a type of mapping from a two-dimensional plane onto another two-dimensional plane.  It can be written as
 $$\vc{T}(x,y) = (ax+by,cx+dy) = 
   \left[\begin{array}{cc}a &amp;b\\ c &amp;d\end{array}\right]\left[\begin{array}{c}x\\y\end{array}\right],$$
 where $a$, $b$, $c$, and $d$ are numbers defining the linear transformation, or more succinctly as
@@ -25,7 +25,7 @@ $x'y'$-plane: $(x',y')=\vc{T}(x,y)$.  You can experiment with this mapping by a 
 
 {% boxedapplet "linear_transformation_2d" %}
 
-<p>The first thing to notice the linear transformation maps quadrilaterals onto quadrilaterals.  Unlike a {% appletlink "nonlinear_2d_map" %}nonlinear transformation{%endappletlink%}, which can bend straight lines into curves, a linear transformation maps straight lines onto straight lines.  This fact is easily seen by thinking of a {% intlink line_parametrization %}parametrization of a line{%endintlink%}, such as $$\vc{x} = t \vc{v} + \vc{a}.$$   Given a linear transformation $\vc{x}' = \vc{T}\vc{x} = A\vc{x}$, we can multiply the line parametrization equation by the matrix $A$ associated with the linear transformation, yielding $$A\vc{x} = t A\vc{v} + A\vc{a}.$$  If we let $\vc{v}'=A\vc{v}$ and $\vc{a}' = A\vc{a}$ be the images of the vectors $\vc{v}$ and $\vc{a}$ under the linear transformation, then the parametrization in terms of the transformed variables $\vc{x}'$ is simply
+<p>The first thing to notice the linear transformation maps quadrilaterals onto quadrilaterals.  Unlike a {% intlink "nonlinear_2d_map" class="applet" %}nonlinear transformation{% endintlink %}, which can bend straight lines into curves, a linear transformation maps straight lines onto straight lines.  This fact is easily seen by thinking of a {% intlink "line_parametrization" %}parametrization of a line{%endintlink%}, such as $$\vc{x} = t \vc{v} + \vc{a}.$$   Given a linear transformation $\vc{x}' = \vc{T}\vc{x} = A\vc{x}$, we can multiply the line parametrization equation by the matrix $A$ associated with the linear transformation, yielding $$A\vc{x} = t A\vc{v} + A\vc{a}.$$  If we let $\vc{v}'=A\vc{v}$ and $\vc{a}' = A\vc{a}$ be the images of the vectors $\vc{v}$ and $\vc{a}$ under the linear transformation, then the parametrization in terms of the transformed variables $\vc{x}'$ is simply
 $$\vc{x}' = t \vc{v}' + \vc{a}'$$
 which is clearly also a parametrization of a line.</p>
 
@@ -52,7 +52,7 @@ where
 $$A=\left[\begin{array}{ccc}a_{11}&amp;a_{12}&amp;a_{13}\\a_{21}&amp;a_{22}&amp;a_{23}\\a_{31}&amp;a_{32}&amp;a_{33}\end{array}\right]$$ and $\vc{x}=(x,y,z)$.
 The components $a_{ij}$ of $A$ define the linear transformation.</p>
 
-<p>An example of such a three-dimensional linear transformation is shown in the following applet.  The original region is constrained to be a {% intlink parallelepiped_definition%}parallelepiped{%endintlink%}, and you can observe that is always mapped to another parallelepiped.</p>
+<p>An example of such a three-dimensional linear transformation is shown in the following applet.  The original region is constrained to be a {% intlink "parallelepiped_definition" %}parallelepiped{%endintlink%}, and you can observe that is always mapped to another parallelepiped.</p>
 
 {% boxedapplet "linear_transformation_3d_preserve" %}
 

@@ -14,7 +14,7 @@ where $g(x,y)=x^2+y^2$ and $\dlr$ is the disk of radius 6 centered at the origin
 
 <p class="centeredImage">{% image "disk_centered_origin" %}</p>
 
-<p>In terms of the standard {% intlink cartesian_coordinates%}rectangular (or Cartesian) coordinates{%endintlink%} $x$ and $y$, the disk 
+<p>In terms of the standard {% intlink "cartesian_coordinates" %}rectangular (or Cartesian) coordinates{%endintlink%} $x$ and $y$, the disk 
 is given by
 \begin{gather*}
   -6 \le x \le 6\\
@@ -29,7 +29,7 @@ We could start to calculate the integral in terms of $x$ and $y$ as
 </p>
 
 <p>It turns out that this integral would be a lot easier if we could
-<b>change variables</b> to {% intlink polar_coordinates%}polar coordinates{%endintlink%}.  
+<b>change variables</b> to {% intlink "polar_coordinates" %}polar coordinates{%endintlink%}.  
 In polar
 coordinates, the disk is the region we'll call $\dlr^*$ defined by $0
 \le r \le 6$ and $0 \le \theta \le 2\pi$.  Hence the region of
@@ -50,7 +50,7 @@ We need to determine what $dA$ becomes when we change variables.
 As you will see, in polar coordinates, $dA$ does <b>not</b> becomes $dr \,
 d\theta$.</p>
 
-<p>The {% intlink polar_coordinates conversion_formulas %}relationship{%endintlink%} between rectangular $(x,y)$ and polar $(r,\theta)$ 
+<p>The {% intlink "polar_coordinates" anchor="conversion_formulas" %}relationship{%endintlink%} between rectangular $(x,y)$ and polar $(r,\theta)$ 
 coordinates is given by $x=r\cos \theta$, $y=r\sin\theta$.
 To see how area gets changed, let's write the change of variables as
 the function
@@ -59,7 +59,7 @@ the function
   \label{polartrans}
 \end{align}
 The function $\cvarf(r,\theta)$ gives rectangular coordinates in terms
-of polar coordinates.  The transformation $\cvarf$ gives the perspective of polar coordinates as a {% intlink polar_coordinates_mapping%}mapping from the polar plane to the Cartesian plane{%endintlink%}.  The below applet shows how $\cvarf$
+of polar coordinates.  The transformation $\cvarf$ gives the perspective of polar coordinates as a {% intlink "polar_coordinates_mapping" %}mapping from the polar plane to the Cartesian plane{%endintlink%}.  The below applet shows how $\cvarf$
 maps a rectangle $\dlr^*$ in the polar plane into the region $\dlr$ in the Cartesian plane.  To make $\dlr^*$ and $\dlr$ correspond to the rectangle and disk of our example, you can expland the rectangle $\dlr^*$ to its maximum size.</p>
 
 {% boxedapplet "polar_coordinates_map_rectangle" %}
@@ -72,10 +72,10 @@ $r\theta$-plane.</p>
 
 <p>We can say that $\cvarf(r,\theta)$ parametrizes $\dlr$ for $(r,\theta)$
 in $\dlr^*$. This uses the same language that we used when
-{% intlink parametrized_curve_introduction %}parametrizing a
+{% intlink "parametrized_curve_introduction" %}parametrizing a
 curve{%endintlink%}.  
 We'll use it again when we talk about 
-{% intlink parametrized_surface_introduction %}parametrizing 
+{% intlink "parametrized_surface_introduction" %}parametrizing 
 surfaces{%endintlink%}.</p>
 
 <p>To look at how $\cvarf(r,\theta)$ changes area, 
@@ -94,28 +94,28 @@ is based on area in $\dlr$ not area in $\dlr^*$.
 So we need to estimate the area of each &ldquo;curvy rectangle&rdquo; in $\dlr$,
 which we'll denote by $\Delta A$.</p>
 
-<p>We can {% intlink double_integral_change_variables_area_calculation %}calculate the area{% endintlink%} of the &ldquo;curvy rectangle&rdquo;
+<p>We can {% intlink "double_integral_change_variables_area_calculation" %}calculate the area{% endintlink%} of the &ldquo;curvy rectangle&rdquo;
 by approximating it as a parallelogram with sides $\pdiff{\cvarf}{r} \Delta r$
 and $\pdiff{\cvarf}{\theta}\Delta\theta$.  
-The area of a parallelogram is the {%intlink cross_product %}magnitude
+The area of a parallelogram is the {% intlink "cross_product" %}magnitude
 of the cross product{%endintlink%}
 $\left\| \pdiff{\cvarf}{r} \times \pdiff{\cvarf}{\theta}\right\| \Delta r\Delta\theta$
  of the two vectors spanning the parallelogram.
-Plus, since we are in two-dimensions, we {% intlink relationship_determinants_area_volume area2d%}write the area more simply{%endintlink%} by a $2\times 2$ determinant.
-{% intlink double_integral_change_variables_area_calculation %}After some
+Plus, since we are in two-dimensions, we {% intlink "relationship_determinants_area_volume" anchor="area2d" %}write the area more simply{%endintlink%} by a $2\times 2$ determinant.
+{% intlink "double_integral_change_variables_area_calculation" %}After some
 simplification{% endintlink%}, the area of the
 &ldquo;curvy rectangle&rdquo; reduces to the expression
 \begin{align*}
   \Delta A \approx | \det \jacm{\cvarf}(r,\theta)|\Delta r\Delta\theta,
 \end{align*}
 where $\jacm{\cvarf}$ is 
-{% intlink derivative_matrix %}derivative matrix{%endintlink%} 
+{% intlink "derivative_matrix" %}derivative matrix{%endintlink%} 
 of the map $\cvarf$.  Just as the derivative matrix $\jacm{\cvarf}$ is sometimes called the &ldquo;Jacobian matrix,&rdquo; its determinant $\det \jacm{\cvarf}$ is sometimes called the &ldquo;Jacobian determinant.&rdquo;</p>
 
 <p>Note that the $D$ in $\jacm{\cvarf}(r,\theta)$ is not the same $D$ as the region $\dlr$ of integration.   Because we need to take
 the absolute value of the determinant, we typically use the notation
 &ldquo;det&rdquo; to denote determinant to avoid confusion (see discussion at end
-of the {% intlink matrices_determinants_multivariable_calculus %}page on matrices and determinants{%endintlink%}).</p>
+of the {% intlink "matrices_determinants_multivariable_calculus" %}page on matrices and determinants{%endintlink%}).</p>
 
 <p>For $\cvarf$ given by equation \eqref{polartrans}, you can calculate
 that $| \det \jacm{\cvarf}(r,\theta)| = r$ so that the area
@@ -148,7 +148,7 @@ which for our example is
 \begin{align*}
   \iint_\dlr (x^2+y^2) dA  = \int_0^{2\pi}\int_0^6 r^2 r\,dr\,d\theta = \int_0^{2\pi}\int_0^6 r^3 \,dr\,d\theta.
 \end{align*}
-You {% intlink double_integral_change_variable_examples %}can compute that this integral is{%endintlink%} $6^4\pi/2$ much easier using this
+You {% intlink "double_integral_change_variable_examples" %}can compute that this integral is{%endintlink%} $6^4\pi/2$ much easier using this
 form than you could using the original integral
 of equation \eqref{integralrect}.</p>
 
@@ -182,12 +182,12 @@ It's just different notation for the same object, but represents that we are tak
 in an effort to just give the big picture.  In particular, we've
 glossed over how we obtained the expression for the area expansion
 factor.  You can read how we
-{% intlink double_integral_change_variables_area_calculation %}obtain that
+{% intlink "double_integral_change_variables_area_calculation" %}obtain that
 formula{% endintlink%}.</p>
 
 <p>You can study some 
-{% intlink double_integral_change_variable_examples %}examples of changing variables{%endintlink%}, including more details on the disk example.  
-To gain more intuition on how changing variables transform regions, you can read an {% intlink double_integral_change_variable_illustrated_example%}illustrated example{%endintlink%} of a particular change of variable function.
+{% intlink "double_integral_change_variable_examples" %}examples of changing variables{%endintlink%}, including more details on the disk example.  
+To gain more intuition on how changing variables transform regions, you can read an {% intlink "double_integral_change_variable_illustrated_example" %}illustrated example{%endintlink%} of a particular change of variable function.
 </p>
 
 
@@ -197,22 +197,22 @@ To gain more intuition on how changing variables transform regions, you can read
 
 <p>The area expansion factor for changing variables in double
 integrals is an example of accounting for the stretching of a map,
-in this case, the function $\cvarf$.  We encounter {% intlink length_area_volume_factors%}such 
+in this case, the function $\cvarf$.  We encounter {% intlink "length_area_volume_factors" %}such 
 factors{%endintlink%} frequently in multivariable and vector calculus.</p>
 
 <p>The simplest example of such an expansion factor is the $\|\dllp'(t)\|$ we 
 obtain when calculating the
-{%intlink parametrized_curve_arc_length%}arc length{%endintlink%}
-or a {% intlink line_integral_scalar_function_introduction %}line integral{%endintlink%}
-over a {% intlink parametrized_curve_introduction %}curve parametrized{%endintlink%} by $\dllp: \R \to \R^2$ {% confusedlink function_notation %}.  
+{% intlink "parametrized_curve_arc_length" %}arc length{%endintlink%}
+or a {% intlink "line_integral_scalar_function_introduction" %}line integral{%endintlink%}
+over a {% intlink "parametrized_curve_introduction" %}curve parametrized{%endintlink%} by $\dllp: \R \to \R^2$ {% confusedlink "function_notation" %}.  
 We could call this a <i>length expansion factor</i>.  
 Just like for the $\cvarf: \R^2 \to \R^2$ of changing variables,
 the expansion factor for parametrized curves
 involves the magnitude of some expression involving the 
-{% intlink derivative_matrix %}derivative matrix{%endintlink%} of the map.</p>
+{% intlink "derivative_matrix" %}derivative matrix{%endintlink%} of the map.</p>
 
 <p>For the map $\cvarf: \R^3 \to \R^3$ used to 
-{% intlink triple_integral_change_variables_story %}change variables
+{% intlink "triple_integral_change_variables_story" %}change variables
 in triple integrals{%endintlink%}, the volume expansion factor
 $|\det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv)|$ is essentially
 the same as for double integrals.</p>
@@ -221,19 +221,19 @@ the same as for double integrals.</p>
 and lifted it out of the plane so that it was a surface floating 
 in three-dimensional space.  
 Then, our mapping $\cvarf$ becomes the function $\dlsp: \R^2 \to \R^3$ that
-{% intlink parametrized_surface_introduction %}parametrizes
+{% intlink "parametrized_surface_introduction" %}parametrizes
 a surface{%endintlink%}.  
 We can repeat 
-{% intlink double_integral_change_variables_area_calculation %}the calculation{%endintlink%}
+{% intlink "double_integral_change_variables_area_calculation" %}the calculation{%endintlink%}
 for the area expansion factor virtually without change
 to obtain the area expansion factor for
-{%intlink parametrized_surface_area %}surface area{%endintlink%}
-or {%intlink surface_integral_scalar_function_introduction%}surface
+{% intlink "parametrized_surface_area" %}surface area{%endintlink%}
+or {% intlink "surface_integral_scalar_function_introduction" %}surface
 integrals{%endintlink%}.
 The only difference that results from being in three dimensions is 
-that you cannot change the {% intlink cross_product %}cross product{%endintlink%}
+that you cannot change the {% intlink "cross_product" %}cross product{%endintlink%}
 for the parallelogram area to a 
-{% intlink relationship_determinants_area_volume area2d %}$2 \times 2$ determinant{%endintlink%}.  
+{% intlink "relationship_determinants_area_volume" anchor="area2d" %}$2 \times 2$ determinant{%endintlink%}.  
 Hence, the area expansion factor for parametrized surfaces is the cross-product
 $\left\| \pdiff{\dlsp}{\spfv} \times  \pdiff{\dlsp}{\spsv} \right\|$.
 </p>

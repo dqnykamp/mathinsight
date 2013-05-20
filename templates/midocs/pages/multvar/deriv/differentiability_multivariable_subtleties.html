@@ -9,21 +9,21 @@
 <p>The definition of differentiability in higher dimensions looks
 fairly intimidating at first glance.
 For this reason, we suggest beginning by reading the page about
-{% intlink differentiability_multivariable_definition %}the 
+{% intlink "differentiability_multivariable_definition" %}the 
 intuition behind this definition{%endintlink%}. 
 We repeat the definition from the end of that page.</p>
 
 
 <p><b>Definition</b>: The function $\vc{f}: \R^n \to \R^m$ is 
 <i>differentiable</i>
- at the point $\vc{a}$ if there exists a {%intlink linear_transformation_definition_euclidean %}linear transformation{%endintlink%} $\vc{T}: \R^n \to \R^m$ that satisfies the condition
+ at the point $\vc{a}$ if there exists a {% intlink "linear_transformation_definition_euclidean" %}linear transformation{%endintlink%} $\vc{T}: \R^n \to \R^m$ that satisfies the condition
 $$\lim_{\vc{x} \to \vc{a}} 
 \frac{\| \vc{f}(\vc{x})-\vc{f}(\vc{a}) - \vc{T}(\vc{x}-\vc{a})\|}{\|\vc{x}-\vc{a}\|} = 0.$$
 </p>
 
-<p>The $m \times n$ {% intlink matrices_linear_transformations %}
+<p>The $m \times n$ {% intlink "matrices_linear_transformations" %}
 matrix associated with the linear transformation{%endintlink%}
-$\vc{T}$ is the {% intlink derivative_matrix %}matrix of partial derivatives{%endintlink%}, which we denote
+$\vc{T}$ is the {% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%}, which we denote
 by $\jacm{f}(\vc{a})$.
 We can refer to $\jacm{f}(\vc{a})$ as the <i>total derivative</i> 
 (or simply the <i>derivative</i>) of $\vc{f}$.
@@ -91,7 +91,7 @@ is a tangent plane.</p>
 <p>We will also leave our formal definition of differentiability aside,
 and just focus on the geometry of the tangent plane.  
 You can gather intuition about the correspondence between this definition 
-and tangent lines in {% intlink differentiability_multivariable_definition%}the
+and tangent lines in {% intlink "differentiability_multivariable_definition" %}the
 page on the definition of differentiability{%endintlink%}. 
 The differentiability definition requires the tangent plane to be tangent to the graph
 along any path of $\vc{x}$ that goes to the point $\vc{a}$.</p>
@@ -173,7 +173,7 @@ The graph of the function is shown below.</p>
 <p>We can show partial derivatives exist at (0,0) but that function is not
 differentiable at (0,0).  Since this function is defined in piecewise fashion
 around the origin, there are no simple formulas for the partial derivatives.
-We have to use the {%intlink partial_derivative_limit_definition %}limit definition{%endintlink%} of the partial derivatives.
+We have to use the {% intlink "partial_derivative_limit_definition" %}limit definition{%endintlink%} of the partial derivatives.
 For the partial derivative with respect to $x$, this formula is
 \begin{align*}
   \pdiff{f}{x}(0,0) &amp;=
@@ -204,8 +204,8 @@ the tangent to the path would not be in the plane $z=0$.</p>
 <h4>Overcoming subtleties</h4>
 
 <p>Thankfully, in many cases, there is a simple way to overcome these subtleties and know for sure that a function is differentiable.
-The {%intlink differentiability_multivariable_theorem %}differentiability theorem{%endintlink%} tells us that a function with continuous partial derivatives must be differentiable and therefore cannot have any of the crazy behavior of the above examples.
+The {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%} tells us that a function with continuous partial derivatives must be differentiable and therefore cannot have any of the crazy behavior of the above examples.
 By the same token, since the above functions are not differentiable, they must have discontinuous partial derivatives.  
-For the latter example, we can visualize how it indeed has {%intlink nondifferentiable_discontinuous_partial_derivatives%}discontinuous partial derivatives{%endintlink%}.
+For the latter example, we can visualize how it indeed has {% intlink "nondifferentiable_discontinuous_partial_derivatives" %}discontinuous partial derivatives{%endintlink%}.
 
 {%endblock%}

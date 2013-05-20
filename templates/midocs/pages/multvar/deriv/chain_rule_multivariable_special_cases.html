@@ -4,12 +4,12 @@
 {% description "Illustrations of different special cases of the multivariable chain rule and their relationship to the general case." %}
 
 {% navigation_tag "general" "General statement" %}
-<p>The general statement of the {% intlink chain_rule_multivariable_introduction %}multivariable chain rule{%endintlink%} is the following.</p>
+<p>The general statement of the {% intlink "chain_rule_multivariable_introduction" %}multivariable chain rule{%endintlink%} is the following.</p>
 
-<p><b>Chain Rule</b>: For {% intlink differentiability_multivariable_introduction %}differentiable{%endintlink%} functions $\vc{g}: \R^m \rightarrow \R^k$ and
-$\vc{f}: \R^k \rightarrow \R^n$ {% confusedlink function_notation %}, the derivative matrix of the {% intlink composition_definition%}composition{%endintlink%}
+<p><b>Chain Rule</b>: For {% intlink "differentiability_multivariable_introduction" %}differentiable{%endintlink%} functions $\vc{g}: \R^m \rightarrow \R^k$ and
+$\vc{f}: \R^k \rightarrow \R^n$ {% confusedlink "function_notation" %}, the derivative matrix of the {% intlink "composition_definition" %}composition{%endintlink%}
 $\vc{h}=\vc{f} \circ \vc{g}$ (i.e,. $\vc{h}(\vc{x}) = \vc{f}(\vc{g}(\vc{x}))$) at the point $\vc{a}$ is the product of the
-{% intlink derivative_matrix %}derivative matrices{%endintlink%}
+{% intlink "derivative_matrix" %}derivative matrices{%endintlink%}
 for $\vc{f}$ and $\vc{g}$:
 \begin{gather}
   D\vc{h}(\vc{a})= D(\vc{f} \circ \vc{g})(\vc{a})
@@ -24,7 +24,7 @@ The biggest difference in the multivariable case is that the ordinary derivative
 One important fact to remember is that the matrix of partial derivatives for $\vc{f}$ is evaluated at $\vc{g}(\vc{a})$, <b>not</b> at $\vc{a}$.</p>
 
 <p>Using the above general form may be the easiest way to learn the chain rule. 
-If you are comfortable forming {% intlink derivative_matrix %}derivative matrices{%endintlink%}, {% intlink matrix_vector_multiplication %}multiplying matrices{%endintlink%}, and using the one-variable chain rule, then using the chain rule \eqref{general_chain_rule} doesn't require memorizing a series of formulas and determining which formula applies to a given problem.</p>
+If you are comfortable forming {% intlink "derivative_matrix" %}derivative matrices{%endintlink%}, {% intlink "matrix_vector_multiplication" %}multiplying matrices{%endintlink%}, and using the one-variable chain rule, then using the chain rule \eqref{general_chain_rule} doesn't require memorizing a series of formulas and determining which formula applies to a given problem.</p>
 
 <p>On the other hand, having a few special case formulas available can save some work.  For a given type of problem, you can form the matrices and calculate their product once to obtain a formula valid for that particular type of problem.
 Then, for each example of that problem type, you can plug the particular functions into the special case formula and get to the final result more quickly.</p>
@@ -39,8 +39,8 @@ We look at two groups of special cases: when $\vc{g}$ is a <a href="#inneronevar
 <p>When the inner function $\vc{g}$ is a function of one variable, $\vc{g}: \R \to \R^n$, and $f$ is a scalar-valued function,  $f: \R^n \to \R$, then the composition $h(t)=f(\vc{g}(t))$ is just a scalar-valued function of a single variable $h: \R \to \R$.  Its derivative is just a single number $h'(t)$.  We show how to express this single number as a dot product of two vectors.
 </p>
 
-<p>Since $\vc{g}$ is a function fo a single variable, we can view $\vc{g}$ as {% intlink parametrized_curve_introduction%}parametrizing a curve{%endintlink%}.  We can write the 
-{%intlink parametrized_curve_derivative%}derivative of the parametrized curve{%endintlink%} as a vector
+<p>Since $\vc{g}$ is a function fo a single variable, we can view $\vc{g}$ as {% intlink "parametrized_curve_introduction" %}parametrizing a curve{%endintlink%}.  We can write the 
+{% intlink "parametrized_curve_derivative" %}derivative of the parametrized curve{%endintlink%} as a vector
 \begin{align*}
   D\vc{g}(t) = 
   \left[
@@ -56,10 +56,10 @@ We look at two groups of special cases: when $\vc{g}$ is a <a href="#inneronevar
 \end{align*}.
 </p>
 
-<p>Since we are considering the case where $f$ is a scalar-valued function, its derivative matrix can be viewed as the {%intlink gradient_vector%}gradient vector{%endintlink%}:
+<p>Since we are considering the case where $f$ is a scalar-valued function, its derivative matrix can be viewed as the {% intlink "gradient_vector" %}gradient vector{%endintlink%}:
 $$\nabla f(\vc{x}) =  \left(\pdiff{f}{x_1}(\vc{x}), \pdiff{f}{x_2}(\vc{x}), \cdots, \pdiff{f}{x_n}(\vc{x}) \right).$$
 The matrix product of the general chain rule $Df(\vc{g}(t))Dg(t)$ can then be 
-{% intlink dot_product_matrix_notation%}viewed as a dot product{%endintlink%} 
+{% intlink "dot_product_matrix_notation" %}viewed as a dot product{%endintlink%} 
 between the gradient vector $\nabla f(\vc{x})$ and the vector $\vc{g}'(t)$.  
 We can write the chain rule as
 \begin{align}
@@ -69,12 +69,12 @@ We can write the chain rule as
 </p>
 <p>If $\vc{g}(t)$ is a one-dimensional function $x=g(t)$ and $f(x)$ is a function of a single variable, then we are back to the single-variable chain rule and equation \eqref{chainruledotproduct} becomes $ h'(t) = f'(g(t))g'(t).$  If we wrote $g(t)=x(t)$, we could also write this chain rule as $\diff{h}{t} = \diff{f}{x} \diff{x}{t}$, where we neglect to write the arguments of each function.</p>
 
-<p>If, on the other hand, $\vc{g}(t)$ is a two-dimensional function $(x,y)=\vc{g}(t)=(g_1(t),g_2(t))$ and $f(\vc{x})$ is a function of two variables, $f(x,y)$, then we can {% intlink dot_product_formula_components %}multiply out the dot product{%endintlink%} of equation \eqref{chainruledotproduct} to write it as
+<p>If, on the other hand, $\vc{g}(t)$ is a two-dimensional function $(x,y)=\vc{g}(t)=(g_1(t),g_2(t))$ and $f(\vc{x})$ is a function of two variables, $f(x,y)$, then we can {% intlink "dot_product_formula_components" %}multiply out the dot product{%endintlink%} of equation \eqref{chainruledotproduct} to write it as
 \begin{align}
   h'(t) = \pdiff{f}{x}(\vc{g}(t))g_1'(t) +  \pdiff{f}{y}(\vc{g}(t))g_2'(t).
   \tag{2a}
 \end{align}
-This special case is exactly {% intlinkeq chain_rule_multivariable_introduction chainrule2Dcomp %} chain rule introduction{%endintlinkeq%}.</p>
+This special case is exactly {% intlink "chain_rule_multivariable_introduction" equation="chainrule2Dcomp" %}equation (tag)  chain rule introduction{% endintlink %}.</p>
 
 <p>If we write $\vc{g}(t)=(g_1(t),g_2(t))=(x(t),y(t))$ and its derivative as $\vc{g}'(t)=\left(\diff{x}{t},\diff{y}{t}\right)$, then we can write this formula in a way that some people fine easier to memorize:
 \begin{align}

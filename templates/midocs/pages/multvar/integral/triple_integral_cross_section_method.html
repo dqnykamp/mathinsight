@@ -5,9 +5,9 @@
 {% description "Explanation of the cross section method for turning a triple integral into a double integral combined with a single integral in order to compute the limits of integration." %}
 
 {% navigation_tag "overview" "Overview" %}
-<p>One tricky part of calculating {% intlink triple_integral_introduction  %}define triple integrals{%endintlink%} is determining the bounds of integration.  To help you in this endeavor, we outline a couple methods for reducing the task of finding these bounds to the simpler task of finding bounds on a double integral combined with a single integral.  One such method is one we call the &ldquo;shadow method,&rdquo; which we describe {% intlink triple_integral_shadow_method %}another page{%endintlink%}.  Here we describe a method we call the &ldquo;cross section method.&rdquo;</p>
+<p>One tricky part of calculating {% intlink "triple_integral_introduction" %}define triple integrals{%endintlink%} is determining the bounds of integration.  To help you in this endeavor, we outline a couple methods for reducing the task of finding these bounds to the simpler task of finding bounds on a double integral combined with a single integral.  One such method is one we call the &ldquo;shadow method,&rdquo; which we describe {% intlink "triple_integral_shadow_method" %}another page{%endintlink%}.  Here we describe a method we call the &ldquo;cross section method.&rdquo;</p>
 
-<p>To begin, imagine taking a big meat cleaver and chopping the three-dimensional region $\dlv$ into slices perpendicular to one of the coordinate axes (in a similar manner to the way in which we take {% intlink surface_cross_sections %}cross sections of a surface{%endintlink%}).  If you view the axis perpendicular to the slices as being vertical, then you could view the region $\dlv$ as being composed of a bunch of these cross sections stacked on top of each other.  For example, for the below {% intlink ellipsoid %}ellipsoidal{%endintlink%} region, we would view the $x$-axis as being vertical.</p>
+<p>To begin, imagine taking a big meat cleaver and chopping the three-dimensional region $\dlv$ into slices perpendicular to one of the coordinate axes (in a similar manner to the way in which we take {% intlink "surface_cross_sections" %}cross sections of a surface{%endintlink%}).  If you view the axis perpendicular to the slices as being vertical, then you could view the region $\dlv$ as being composed of a bunch of these cross sections stacked on top of each other.  For example, for the below {% intlink "ellipsoid" %}ellipsoidal{%endintlink%} region, we would view the $x$-axis as being vertical.</p>
 
 {% boxedapplet "cross_section_stack" %}
 
@@ -19,7 +19,7 @@ If the $x$-axis is the &ldquo;vertical&rdquo; axis, the integral is
 $$\iiint_{\dlv} f(x,y,z)dV = \int_{\text{bottom}}^{\text{top}} \left(\iint_{\text{cross section}(x)} f(x,y,z) dy\,dz\right)dx.$$
 </p>
 
-<p>Note that the differences between the cross section method and the {% intlink triple_integral_shadow_method %}shadow method{%endintlink%}.  For the shadow method, the double integral is on the outside (with constant bounds) and the single integral is on the inside (with variable bounds).  In contrast, for the cross section method, the double integral is on the inside (with variable bounds) and the single integral is on the outside (with constant bounds).  This result is consistent with the idea that the cross sections change size or shape with height while the shadow is just a single shape.</p>
+<p>Note that the differences between the cross section method and the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%}.  For the shadow method, the double integral is on the outside (with constant bounds) and the single integral is on the inside (with variable bounds).  In contrast, for the cross section method, the double integral is on the inside (with variable bounds) and the single integral is on the outside (with constant bounds).  This result is consistent with the idea that the cross sections change size or shape with height while the shadow is just a single shape.</p>
 
 <p>We illustrate the cross section method with an example.</p>
 
@@ -67,7 +67,7 @@ $$\int_{\text{bottom}}^{\text{top}} \cdots dz = \int_0^2 \cdots dz.$$
 \end{align*}
 </p>
 
-<p>It would be possible to calculate the triple integral using the {% intlink triple_integral_shadow_method %}shadow method{%endintlink%}.  The shadow would be the rectangle $0 \le x \le 2$, $-2 \le y \le 2$.  However, for this pyramid, the calculation would be more difficult as the function $\text{top}(x,y)$ for the shadow method would be four different triangular regions.  You'd have to break up the integral into four parts.  For this reason, the cross section method is easier for this example.
+<p>It would be possible to calculate the triple integral using the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%}.  The shadow would be the rectangle $0 \le x \le 2$, $-2 \le y \le 2$.  However, for this pyramid, the calculation would be more difficult as the function $\text{top}(x,y)$ for the shadow method would be four different triangular regions.  You'd have to break up the integral into four parts.  For this reason, the cross section method is easier for this example.
 </p>
 
 

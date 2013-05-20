@@ -12,7 +12,7 @@
     (\vc{H}(\vc{x}_j) - \vc{H}(\vc{x}_i))
   \end{align*}
   $\vc{F}$: internal dynamics function.  $\vc{H}$: coupling function.
-  $S$: coupling strength.   $A$: network {% intlink network_introduction adjacency_matrix %}adjacency matrix{%endintlink%}.</p>
+  $S$: coupling strength.   $A$: network {% intlink "network_introduction" anchor="adjacency_matrix" %}adjacency matrix{%endintlink%}.</p>
   
 <p>Due to the form of coupling, one solution is alwasy the synchronous state $\vc{x}_i(t) = \tilde{\vc{x}}(t)$, where all nodes $i$ are equal to the solution $\tilde{\vc{x}}(t)$ of the uncoupled equation.</p>
 
@@ -42,11 +42,11 @@
 <p>Conclusion from Master Stability Function analysis:
 The effect of the network and the dynamics are separate.  The dynamics $F$ and $H$ determine the region a critical region in the complex plane.  In order for the completely synchronous state of a network to be stable, all scaled eigenvalues $S\mu_i$ must fit into the region.</p>
 
-<p>If we are studying a network without knowing anything about the dynamics, we can still conclude that the more spread out the eigenvalues of $L=D-A$, the more likely the synchronous state will be unstable.  We can use the spread of Laplacian eigenvalues as a {% intlink connecting_network_structure_dynamics synchronizability_index %}synchronizability index{% endintlink%}.</p>
+<p>If we are studying a network without knowing anything about the dynamics, we can still conclude that the more spread out the eigenvalues of $L=D-A$, the more likely the synchronous state will be unstable.  We can use the spread of Laplacian eigenvalues as a {% intlink "connecting_network_structure_dynamics" anchor="synchronizability_index" %}synchronizability index{% endintlink%}.</p>
 
-<p>For {% intlink undirected_graph_definition%}undirected graphs{%endintlink%}, the adjacency matrix $A$, and hence the Laplacian $L$, is symmetric.  The eigenvalue are real.  As one eigenvalue of the $L$ is always zero, so a measure for the spread of eigenvalues is the ratio of the largest to the smallest, $\mu_N/\mu_2$.</p>
+<p>For {% intlink "undirected_graph_definition" %}undirected graphs{%endintlink%}, the adjacency matrix $A$, and hence the Laplacian $L$, is symmetric.  The eigenvalue are real.  As one eigenvalue of the $L$ is always zero, so a measure for the spread of eigenvalues is the ratio of the largest to the smallest, $\mu_N/\mu_2$.</p>
 
-<p>For {% intlink directed_graph_definition%}directed networks{%endintlink%}, 
+<p>For {% intlink "directed_graph_definition" %}directed networks{%endintlink%}, 
 Nishikawa and Motter{% citation "nishikawa_motter_pnas_2010" %} proposed using the normalized standard deviation of the eigenvalues as a synchronizability index.
 
 \begin{align}

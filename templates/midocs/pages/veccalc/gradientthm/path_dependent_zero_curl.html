@@ -12,8 +12,8 @@ Our goal is to determine if the vector field
 is conservative (also called path-independent).</p>
 
 <p>One condition for path independence is 
-{% intlink conservative_vector_field_determine test4 %}the following{%endintlink%}.  For
-a {%intlink simply_connected_definition %}simply connected{%endintlink%} domain, a continuously differentiable vector field
+{% intlink "conservative_vector_field_determine" anchor="test4" %}the following{%endintlink%}.  For
+a {% intlink "simply_connected_definition" %}simply connected{%endintlink%} domain, a continuously differentiable vector field
 $\dlvf$ is path-independent if and only if its curl is zero.</p>
 
 <p>Since $\dlvf(x,y)$ is two dimensional, we need to check the scalar curl
@@ -33,14 +33,14 @@ Since these partial derivatives are equal, the curl is zero.
 <p>Can we conclude $\dlvf$ is conservative?  The problem is that
 $\dlvf$ is not defined at the origin $(0,0)$.  Its domain of definition
 has a hole in it, which for two-dimensional regions, is enough
-to prevent it from being {%intlink simply_connected_definition%}simply connected{%endintlink%}.
+to prevent it from being {% intlink "simply_connected_definition" %}simply connected{%endintlink%}.
 The test does not apply, and we still don't know whether or not $\dlvf$ is conservative. </p>
 
 <p>Let's try another test, this time a test for path-dependence.
 If we can find a closed curve along which the integral of $\dlvf$ is nonzero, then 
-{% intlink conservative_vector_field_determine test2 %}we can conclude{%endintlink%} that $\dlvf$ is path-dependent.  
+{% intlink "conservative_vector_field_determine" anchor="test2" %}we can conclude{%endintlink%} that $\dlvf$ is path-dependent.  
 If the curve does not go around the origin, then we can use
-{% intlink greens_theorem_idea %}Green's theorem{%endintlink%} to
+{% intlink "greens_theorem_idea" %}Green's theorem{%endintlink%} to
 show the integral of $\dlvf$ zero,
 \begin{align*}
   \lint{\adlc}{\dlvf}= \int_\dlr
@@ -76,7 +76,7 @@ We found a curve $\dlc$ where the circulation around $\dlc$ is not zero.
 The vector field $\dlvf$ is path-dependent.</p>
 
 <p>This vector field is the two-dimensional analogue of one we used to 
-illustrate the subtleties of curl, as it had {% intlink curl_subtleties curlfreecirc%}curl-free macroscopic circulation{%endintlink%}.
+illustrate the subtleties of curl, as it had {% intlink "curl_subtleties" anchor="curlfreecirc" %}curl-free macroscopic circulation{%endintlink%}.
 The circulation can be clearly seen by plotting the vector field
 $\dlvf$.  It's difficult to plot, because the vector field blows up
 at the origin. </p>

@@ -13,7 +13,7 @@
 
 
 <p>You learned in one-variable calculus that a function $f: \R \to \R$
-{% confusedlink function_notation %} may or may not be differentiable.  In fact, a function may be
+{% confusedlink "function_notation" %} may or may not be differentiable.  In fact, a function may be
 differentiable at some places but not in others.</p>
 
 <p>Consider the function $r(i)$ that gives the output rate $r$ of a
@@ -55,7 +55,7 @@ We can think of the fact that &ldquo;$r(i)$ is differentiable at $i=a$&rdquo;
 as meaning that $r(i)$ is nearly linear for $i$ near $a$. 
 We can find a particular value of the slope $m$ so that the line $L(i)$ is a very good approximation for $r(i)$ when $i$ is close to $a$.
 For this particular value of $m$, the line $L(i)$ is called the
-{% intlink linear_approximation_multivariable linapprox1D%}the linear approximation{%endintlink%} to $r(i)$ around $a$. 
+{% intlink "linear_approximation_multivariable" anchor="linapprox1D" %}the linear approximation{%endintlink%} to $r(i)$ around $a$. 
 This line is, of course, the tangent line to $r$.</p>
 
 <p>The particular slope where $L(i)$ becomes the tangent line, or linear approximation, is the derivative $m=r'(a)$.  
@@ -143,12 +143,12 @@ In this case, we have two slopes: the slope $m$ in the direction where $i$ incre
 If $r(i,s)$ is differentiable at $(a_1,a_2)$, that means $r$ is nearly linear for $(i,s)$ near $(a_1,a_2)$.
 Hence, we can find slopes $m$ and $n$ so that $f(i,s)$ is a really good approximation for $r(i,s)$ for $(i,s)$ close to $(a_1,a_2)$.  
 For these particular values of $m$ and $n$, $L(i,s)$ is called 
-{% intlink linear_approximation_multivariable linapprox2D%}the linear approximation{%endintlink%} to $r(i,s)$,
+{% intlink "linear_approximation_multivariable" anchor="linapprox2D" %}the linear approximation{%endintlink%} to $r(i,s)$,
 i.e., $L(i,s)$ is the tangent plane.</p>
 
 <p>What are these special values of $m$ and $n$?  
 They are the slopes of the graph of $r(i,s)$ in the $i$ and $s$ direction,
-which are the {%intlink partial_derivative_introduction%}partial derivatives{%endintlink%} 
+which are the {% intlink "partial_derivative_introduction" %}partial derivatives{%endintlink%} 
 of $r$ at $\vc{a}=(a_1,a_2)$:
 \begin{align*}
   m = \pdiff{r}{i}(a_1,a_2)\\
@@ -175,7 +175,7 @@ $(i,s)=\vc{a}$, then it is differentiable at $\vc{a}$.  The slopes of
 the tangent plane are the partial derivatives of $r$.  The matrix of
 partial derivatives $Dr(\vc{a})$ is the derivative of the function
 $r(i,s)$ at the point $\vc{a}$.  Similar to the one-variable case,
-the tangent plane $L(i,s)$ is called {% intlink linear_approximation_multivariable 2D%}the linear approximation{%endintlink%} to $r(i,s)$.  The fact
+the tangent plane $L(i,s)$ is called {% intlink "linear_approximation_multivariable" anchor="2D" %}the linear approximation{%endintlink%} to $r(i,s)$.  The fact
 that $r(i,s)$ is differentiable means that it is close to its linear
 approximation around $(i,s)=\vc{a}$.</p>
 
@@ -194,7 +194,7 @@ as we used phrases like a &ldquo;really good&rdquo; approximation to the functio
 Once you feel comfortable with the basic idea of differentiability presented in this page,
 then we encourage you to take the next step to toward understanding what differentiability really means.
 One suggestion is to check out the actual 
-{% intlink differentiability_multivariable_definition %}definition of differentiability{%endintlink%}
+{% intlink "differentiability_multivariable_definition" %}definition of differentiability{%endintlink%}
 to learn what we meant when we said the linear approximation must be
 &ldquo;really good&rdquo; approximation to the function.
 (If this is your first time reading about differentiability, 
@@ -209,11 +209,11 @@ than the simple fold we showed in the above example.
 In fact, the matrix of partial derivatives can exist at a point without the function being differentiable at that point.
 That's right, the existence of all partial derivatives is not enough to guarantee differentiability.  
 To really understand differentiability, you need to grapple with some of these
-{% intlink differentiability_multivariable_subtleties %}subtleties of differentiability in higher dimensions{%endintlink%}.
+{% intlink "differentiability_multivariable_subtleties" %}subtleties of differentiability in higher dimensions{%endintlink%}.
 </p>
 
 </div>
 
-<p>Want to {% intlink derivative_multivariable_examples%}see some examples{%endintlink%} of calculating the derivative in higher dimensions?</p>
+<p>Want to {% intlink "derivative_multivariable_examples" %}see some examples{%endintlink%} of calculating the derivative in higher dimensions?</p>
 
 {%endblock%}

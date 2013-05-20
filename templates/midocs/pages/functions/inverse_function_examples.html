@@ -4,14 +4,14 @@
 {% title "Inverse function examples" "Examples" %}
 {% description "Examples of forming an inverse function that does undoes the action of another function." %}
 
-<p>An {% intlink inverse_function_definition %}inverse function{%endintlink%} is a function that undoes the action of the another function.  Using {% intlink function_machine %}function machine{%endintlink%} metaphor, forming an inverse function means {% intlink function_machine_inverse %}running the function machine backwards{%endintlink%}.  The backwards function machine will work only if the original function machine produces a unique output for each unique input.</p>
+<p>An {% intlink "inverse_function_definition" %}inverse function{%endintlink%} is a function that undoes the action of the another function.  Using {% intlink "function_machine" %}function machine{%endintlink%} metaphor, forming an inverse function means {% intlink "function_machine_inverse" %}running the function machine backwards{%endintlink%}.  The backwards function machine will work only if the original function machine produces a unique output for each unique input.</p>
 
 <p>In the following examples, we demonstrate a few simple cases where one can calculate the inverse function.  In most cases, though, we cannot write down a nice formula for the inverse function.</p>
 
 {% navigation_tag "example1" "Examples" "Example 1" %}
 <h4>Example 1</h4>
 
-<p>Let $f: \R \to \R$ {% confusedlink function_notation %} be defined by $f(x)=3x+1$.  Find the inverse function $f^{-1}$.</p>
+<p>Let $f: \R \to \R$ {% confusedlink "function_notation" %} be defined by $f(x)=3x+1$.  Find the inverse function $f^{-1}$.</p>
 
 <p><b>Solution</b>: For any input $x$, the function machine corresponding to $f$ spits out the value $y=f(x)=3x+1$.  We want to find the function $f^{-1}$ that takes the value $y$ as an input and spits out $x$ as the output.  In other words, $y=f(x)$ gives $y$ as a function of $x$, and we want to find $x=f^{-1}(y)$ that will give us $x$ as a function of $y$.</p>
 
@@ -27,7 +27,7 @@ $$f^{-1}(y) = \frac{y}{3} - \frac{1}{3}.$$
 
 <p>In the definition of the function $f^{-1}$, there's nothing special about using the variable $y$.  We could use any other variable, and write the answer as $f^{-1}(x) = x/3-1/3$ or $f^{-1}(\bigstar) = \bigstar/3 -1/3$.  The placeholder variable used in the formula for a function doesn't matter.</p>
 
-<p>To verify that $f^{-1}$ is really the inverse of $f$, we should show that the {% intlink composition_definition%}composition{%endintlink%} of $f$ and $f^{-1}$ doesn't do anything to the input.  In this case, the order shouldn't matter, and the functions $f \circ f^{-1}$ and $f^{-1} \circ $f$ should both do nothing.  Let's check this.</p>
+<p>To verify that $f^{-1}$ is really the inverse of $f$, we should show that the {% intlink "composition_definition" %}composition{%endintlink%} of $f$ and $f^{-1}$ doesn't do anything to the input.  In this case, the order shouldn't matter, and the functions $f \circ f^{-1}$ and $f^{-1} \circ $f$ should both do nothing.  Let's check this.</p>
 
 <p>First, we apply $f$ followed by $f^{-1}$.
 \begin{align*}

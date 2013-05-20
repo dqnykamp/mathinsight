@@ -5,7 +5,7 @@
 {% title "A conservative vector field has no circulation" %}
 {% description "How a conservative, or path-independent, vector field will have no circulation around any closed curve." %}
 
-<p>If the vector field $\dlvf$ is a {% intlink conservative_vector_field_introduction%}conservative vector field{%endintlink%} (also called a path-independent vector field), then the line integral
+<p>If the vector field $\dlvf$ is a {% intlink "conservative_vector_field_introduction" %}conservative vector field{%endintlink%} (also called a path-independent vector field), then the line integral
 \begin{align*}
   \dlint
 \end{align*}
@@ -27,7 +27,7 @@ because $\dlvf$ is conservative.</p>
 
 <p>Now, what would happen is we turned the path $\dlc_2$ around, so that it
 starts at point $\vc{q}$ and ends at point $\vc{p}$?  (We will denote
-this curve with the opposite {% intlink oriented_curve_definition %}orientation{%endintlink%} as $\dlc_2^-$.)  At any point, the tangent vector of $\dlc_2^-$ will
+this curve with the opposite {% intlink "oriented_curve_definition" %}orientation{%endintlink%} as $\dlc_2^-$.)  At any point, the tangent vector of $\dlc_2^-$ will
 be the opposite of the tangent vector of $\dlc_2$ because the path is
 going in the opposite direction.   Consequently
 \begin{align*}
@@ -40,7 +40,7 @@ going in the opposite direction.   Consequently
 If we define the curve $\dlc$ to be the curve $\dlc_1$ followed by the curve
 $\dlc_2^-$, the path of $\dlc$ will start at the point $\vc{p}$, go to the point
 $\vc{q}$ (via $\dlc_1$) and then return to the point $\vc{p}$ (via
-$\dlc_2^-$).  In other words, the $\dlc$ will be a {% intlink closed_curve_definition %}closed{%endintlink%} curve.</p>
+$\dlc_2^-$).  In other words, the $\dlc$ will be a {% intlink "closed_curve_definition" %}closed{%endintlink%} curve.</p>
 <p class="centeredImage">{% image "closed_path_including_two_points" %}</p>
 
 
@@ -64,20 +64,20 @@ If $\dlc$ is a closed curve, we call the integral
 \begin{align*}
   \dlint
 \end{align*}
-the {% intlink line_integral_circulation%}<i>circulation</i>{%endintlink%} of $\dlvf$ around $\dlc$.  If $\dlvf$
+the {% intlink "line_integral_circulation" %}<i>circulation</i>{%endintlink%} of $\dlvf$ around $\dlc$.  If $\dlvf$
 represents fluid flow, this integral indicates the tendancy for the
 fluid to circulate around the curve $\dlc$.  We could use the above
 argument to show that $\dlvf$ is conservative if and only if the
 circulation around <i>any</i> closed curve is zero.</p>
 
-<p>We can use this result as a {% intlink conservative_vector_field_determine test2 %}test for path-dependence{%endintlink%}.  If we can find
+<p>We can use this result as a {% intlink "conservative_vector_field_determine" anchor="test2" %}test for path-dependence{%endintlink%}.  If we can find
 a single closed curve $\dlc$ where
 \begin{align*}
   \dlint \ne 0,
 \end{align*}
 then we know that $\dlvf$ is path-dependent.  For the example vector
 field $\dlvf(x,y) = (y, -x)$ shown at the end of the
-{% intlink conservative_vector_field_introduction %}introduction to conservative fields{%endintlink%}, one can see the nonzero
+{% intlink "conservative_vector_field_introduction" %}introduction to conservative fields{%endintlink%}, one can see the nonzero
 circulation around any circular path centered at the origin.  This
 observation is enough to conclude that $\dlvf$ is path-dependent.
 </p>

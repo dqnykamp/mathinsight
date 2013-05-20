@@ -3,7 +3,7 @@
 {% title "Length, area, and volume factors" "Introduction"%}
 {% description "A summary of the expansion factors that arise from mappings in integrals of multivariable calculus." %}
 
-<p>Many of the {% intlink integrals_multivariable_calculus_summary%}integrals
+<p>Many of the {% intlink "integrals_multivariable_calculus_summary" %}integrals
 of multivariable calculus{%endintlink%} are integrals over mappings 
 from a domain onto another set (the image). 
 In line integrals over parametrized curves, for example, one integrates 
@@ -15,7 +15,7 @@ Hence, one part of calculating these integrals is accounting for
 the expansions or contraction of these maps.</p>
 
 <p>In what follows, we outline the different types of &ldquo;expansion factors&rdquo; 
-that appears in the {% intlink integrals_multivariable_calculus_summary%}integrals{%endintlink%}.
+that appears in the {% intlink "integrals_multivariable_calculus_summary" %}integrals{%endintlink%}.
 There are three types of expansion factors, depending on the dimension of the
 underlying integral.</p>
 
@@ -91,7 +91,7 @@ the same language as multivariable calculus.</p>
 which you want to compute with a &ldquo;$u$-substitution.&rdquo;
 In a $u$-substitution, you write $u$ as a function of $x$, but to make the
 notation match that of a 
-{%intlink double_integral_change_variables_introduction%}multivariable change
+{% intlink "double_integral_change_variables_introduction" %}multivariable change
 of variables{%endintlink%}, let's do the reverse and write  $x = T(u)$,
 where $T$ is an invertible &ldquo;change of variables&rdquo; function.  
 Then the $u$-substitution
@@ -140,7 +140,7 @@ $I^*$ when it maps $I^*$ onto $I$.</p>
 {% navigation_tag "lengthline" "Length" "Line integrals" %}
 <h5>Length in line integrals</h5>
 
-<p>In {%intlink line_integral_scalar_function_introduction%}line integrals{%endintlink%}, a curve
+<p>In {% intlink "line_integral_scalar_function_introduction" %}line integrals{%endintlink%}, a curve
 $\dlc$ is parametrized by a function $\dllp(t)$, 
 which maps on interval $t \in [a,b]$ onto the curve.
 In this case, the
@@ -153,7 +153,7 @@ of a scalar-valued function $\dlsi(\vc{x})$ is
 \end{align*}
 </p>
 
-<p>For {%intlink line_integral_vector_field_introduction%}line integrals of vector fields{%endintlink%},
+<p>For {% intlink "line_integral_vector_field_introduction" %}line integrals of vector fields{%endintlink%},
 we integrate
 $\dlsi = \dlvf \cdot \vc{T}$, where $\vc{T}$ is the unit tangent
 vector of the curve:
@@ -171,7 +171,7 @@ $\dllp'(t)$ factor.</p>
 {% navigation_tag "area" "Area" %}
 <h4>Area expansion factors</h4>
 
-<p>Two-dimensional integrals are based on the {%intlink double_integral_introduction%}double integral{%endintlink%}
+<p>Two-dimensional integrals are based on the {% intlink "double_integral_introduction" %}double integral{%endintlink%}
 of a function $\dlsi(x,y)$ over a planar region $\dlr$,
 \begin{align*}
   \iint_\dlr \dlsi\, dA = \iint_\dlr \dlsi(x,y) \, dx\,dy.
@@ -189,12 +189,12 @@ one must account for how the maps change area.</p>
 {% navigation_tag "areadouble" "Area" "Double integrals" %}
 <h5>Area when changing variables in double integrals</h5>
 
-<p>To {%intlink double_integral_change_variables_introduction%}change variables in a double integral{%endintlink%}, we find a function $(x,y) =
+<p>To {% intlink "double_integral_change_variables_introduction" %}change variables in a double integral{%endintlink%}, we find a function $(x,y) =
 \cvarf(\cvarfv,\cvarsv)$ that maps some new region $\dlr^*$ in $(\cvarfv,\cvarsv)$-space to the
 original region $\dlr$ in $(x,y)$-space.  We then need a factor that
 accounts for the expansion or contraction of $\cvarf$ as it maps $\dlr^*$
 onto $\dlr$.  The area expansion factor is the absolute value of the determinant of the
-{%intlink derivative_matrix %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
+{% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
 \begin{align*}
    \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv) \right|.
 \end{align*}
@@ -216,7 +216,7 @@ With the proper area expansion factor, the formula for changing variables in dou
 {% navigation_tag "areasurface" "Area" "Surface integrals" %}
 <h5>Area in surface integrals</h5>
 
-<p>In {%intlink surface_integral_scalar_function_introduction%}surface integrals{%endintlink%},
+<p>In {% intlink "surface_integral_scalar_function_introduction" %}surface integrals{%endintlink%},
 a surface $\dls$ is
 parametrized by a function $\dlsp(\spfv,\spsv)$ for $(\spfv,\spsv) \in \dlr$,
 where $\dlr$ is a planar region.  In this case, the
@@ -236,7 +236,7 @@ a scalar-valued function $\dlsi(\vc{x})$ is
 \end{align*}
 </p>
 
-<p>For  {%intlink surface_integral_vector_field_introduction%}surface integrals of vector fields{%endintlink%}, we integrate
+<p>For  {% intlink "surface_integral_vector_field_introduction" %}surface integrals of vector fields{%endintlink%}, we integrate
 $\dlsi = \dlvf \cdot \vc{n}$, where $\vc{n}$ is the unit normal
 vector of the surface:
   \begin{align*}
@@ -259,7 +259,7 @@ $\left(\pdiff{\dlsp}{\spfv}
 {% navigation_tag "volume" "Volume" %}
 <h4>Volume expansion factors</h4>
 
-<p>Three-dimensional integrals are based on the {%intlink triple_integral_introduction%}triple integral{%endintlink%}
+<p>Three-dimensional integrals are based on the {% intlink "triple_integral_introduction" %}triple integral{%endintlink%}
 of a function $\dlsi(x,y,z)$ over a three-dimensional region $\dlv$,
 \begin{align*}
   \iiint_\dlv \dlsi\, dV = \iiint_\dlv \dlsi(x,y,z) \, dx\,dy\,dz.
@@ -278,12 +278,12 @@ accurately account for volume.
 {% navigation_tag "volumetriple" "Volume" "Triple integrals"%}
 <h5>Volume when change variables in triple integrals</h5>
 
-<p>To {% intlink triple_integral_change_variables_story %}change variables in a triple integral{%endintlink%}, we find a function $(x,y,z) =
+<p>To {% intlink "triple_integral_change_variables_story" %}change variables in a triple integral{%endintlink%}, we find a function $(x,y,z) =
 \cvarf(\cvarfv,\cvarsv,\cvartv)$ that maps some new solid $\dlv^*$ in $(\cvarfv,\cvarsv,\cvartv)$-space to the
 original solid $\dlv$ in $(x,y,z)$-space.  We then need a factor that
 accounts for the expansion or contraction of $\cvarf$ as it maps $\dlv^*$
 onto $\dlv$.  The volumne expansion factor is the absolute value of the determinant of the
-{%intlink derivative_matrix %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
+{% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%} of $\cvarf$:
 \begin{align*}
    \left| \det \jacm{\cvarf}(\cvarfv,\cvarsv,\cvartv) \right|.
 \end{align*}
