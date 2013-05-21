@@ -1041,6 +1041,9 @@ class Expression(models.Model):
         if self.expand:
             expression=expression.expand()
 
+        if self.sort_list and isinstance(expression,list):
+            expression.sort()
+
         if self.function_inputs:
             input_list = [str(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in global_dict, need to remove
@@ -1069,10 +1072,14 @@ class Expression(models.Model):
             
         # if not function, just add expression to global dict
         else:
-            if not isinstance(expression, list):
+            # if expression is a list, add it to global_dict as a Tuple
+            if isinstance(expression, list):
+                global_dict[str(self.name)] = Tuple(*expression)
+            else:
                 global_dict[str(self.name)] = expression
 
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters, sort_list=self.sort_list)
+
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
 
 
 class PlotFunction(models.Model):

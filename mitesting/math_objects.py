@@ -169,7 +169,7 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, sort_list=False, **kwargs):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
@@ -185,9 +185,6 @@ class math_object(object):
                 output_no_delimiters=False
         self._output_no_delimiters = output_no_delimiters
         
-        if sort_list and isinstance(self._expression,list):
-            self._expression.sort()
-
         if copy_properties_from:
             try:
                 self._n_digits = copy_properties_from._n_digits 
@@ -223,10 +220,6 @@ class math_object(object):
             # if just one element left, collapse to just an element
             if len(self._expression)==1:
                 self._expression = self._expression[0]
-
-        # turn lists to tuples
-        if isinstance(self._expression,list):
-            self._expression = Tuple(*self._expression)
 
 
     def __eq__(self, other):
