@@ -224,6 +224,11 @@ class math_object(object):
             if len(self._expression)==1:
                 self._expression = self._expression[0]
 
+        # turn lists to tuples
+        if isinstance(self._expression,list):
+            self._expression = Tuple(*self._expression)
+
+
     def __eq__(self, other):
         if isinstance(other, math_object):
             other=other._expression

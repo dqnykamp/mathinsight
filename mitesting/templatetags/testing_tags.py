@@ -178,11 +178,11 @@ addplus.is_safe = True
 def invisible_one(text):
     input_val = force_unicode(text)
     
-    plus_added = False
-    if input_val[0] == "+":
-        plus_added = True
-
     try:
+        plus_added = False
+        if input_val[0] == "+":
+            plus_added = True
+
         float_val = float(input_val)
         if float_val == 1:
             if plus_added:
@@ -504,7 +504,9 @@ class FigureNode(Node):
                             pass
 
                     if len(ok_x_values)==0:
-                        return "[Broken figure - no ok x values]"
+                        #return "[Broken figure - no ok x values]"
+                        # just skip this line
+                        continue
 
                     if plotfunction.invert:
                         point_lists.append([(function_values[i],ok_x_values[i]) for i in range(len(ok_x_values))])
