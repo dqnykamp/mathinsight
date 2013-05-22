@@ -421,7 +421,7 @@ class Question(models.Model):
 
         # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
-        html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></div></form>'  % (identifier, identifier, send_command, identifier,)
+        html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
         return mark_safe(html_string)
 
     def render_javascript_commands(self, context, question=True, solution=False):

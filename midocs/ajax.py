@@ -215,11 +215,16 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         if allow_solution_buttons and \
                 the_question.show_solution_button_after_attempts and \
                 number_attempts >= the_question.show_solution_button_after_attempts \
-                and solution_exists:
-            
-            show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed, question_id, identifier)
+                and solution_exists and \
+                the_question.user_can_view(request.user, solution=True):
 
-            show_solution_string = '<input type="button" value="Show solution" onclick="%s">' % (show_solution_command)
+            
+            #show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{ 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, seed, question_id, identifier)
+            from django.template import Template
+            csrftoken=request.COOKIES.get('csrftoken') 
+            question_context['csrf_token']=csrftoken
+            show_solution_string = '<form action="%s" method="post">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
+            show_solution_string = Template(show_solution_string).render(question_context)
             dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
         
 
@@ -241,7 +246,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
 
 
 @dajaxice_register
-def show_math_write_in_solution(request, answer, question_id, seed, identifier):
+def show_math_write_in_solution(request, question_id, seed, identifier):
     
     dajax = Dajax()
 
