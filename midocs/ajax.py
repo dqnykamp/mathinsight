@@ -223,7 +223,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
             from django.template import Template
             csrftoken=request.COOKIES.get('csrftoken') 
             question_context['csrf_token']=csrftoken
-            show_solution_string = '<form action="%s" method="post">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
+            show_solution_string = '<form action="%s" method="post" target="_blank">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
             show_solution_string = Template(show_solution_string).render(question_context)
             dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
         
