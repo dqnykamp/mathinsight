@@ -3,13 +3,14 @@ from django import forms
 from django.db import models
 from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction
 import settings
+import reversion
 
 class QuestionAssignedInline(admin.TabularInline):
     model = QuestionAssigned
 class QuestionSetDeatilInline(admin.TabularInline):
     model = QuestionSetDetail
 
-class AssessmentAdmin(admin.ModelAdmin):
+class AssessmentAdmin(reversion.VersionAdmin):
     inlines = [QuestionAssignedInline,QuestionSetDeatilInline]
     list_display = ("code","name")
     search_fields = ['code', 'name']
@@ -48,7 +49,7 @@ class QuestionAnswerInline(admin.StackedInline):
     model = QuestionAnswerOption
 
 
-class QuestionAdmin(admin.ModelAdmin):
+class QuestionAdmin(reversion.VersionAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
     search_fields = ['id', 'name']
@@ -82,9 +83,22 @@ class QuestionAdmin(admin.ModelAdmin):
         ]
 
 
+class QuestionTypeAdmin(reversion.VersionAdmin):
+    pass
+
+class AssessmentTypeAdmin(reversion.VersionAdmin):
+    pass
+
+class QuestionSpacingAdmin(reversion.VersionAdmin):
+    pass
+
+class SympyCommandSetAdmin(reversion.VersionAdmin):
+    pass
+
+
 admin.site.register(Question, QuestionAdmin)
 admin.site.register(Assessment, AssessmentAdmin)
-admin.site.register(QuestionType)
-admin.site.register(AssessmentType)
-admin.site.register(QuestionSpacing)
-admin.site.register(SympyCommandSet)
+admin.site.register(QuestionType, QuestionTypeAdmin)
+admin.site.register(AssessmentType, AssessmentTypeAdmin)
+admin.site.register(QuestionSpacing, QuestionSpacingAdmin)
+admin.site.register(SympyCommandSet, SympyCommandSetAdmin)

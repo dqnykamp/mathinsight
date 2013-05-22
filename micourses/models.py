@@ -24,10 +24,4 @@ class QuestionStudentAnswer(models.Model):
 
     def __unicode__(self):
         return  "%s" % self.answer
-
-    def clean(self):
-        # check if answer is for the question.  If not, raise exception
-        if self.question != self.answer.question:
-            raise ValidationError, "Not a possible answer for question: %s"\
-                % self.question
  

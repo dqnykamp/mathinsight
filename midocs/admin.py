@@ -2,12 +2,13 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject
+import reversion
 
 class AppletTypeParameterInline(admin.TabularInline):
     model = AppletTypeParameter
     extra = 3
 
-class AppletTypeAdmin(admin.ModelAdmin):
+class AppletTypeAdmin(reversion.VersionAdmin):
     inlines = [AppletTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -49,7 +50,7 @@ class AppletAuthorInline(admin.TabularInline):
 class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
-class AppletAdmin(admin.ModelAdmin):
+class AppletAdmin(reversion.VersionAdmin):
     inlines = [AppletParameterInline, AppletObjectInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
@@ -87,7 +88,7 @@ class VideoTypeParameterInline(admin.TabularInline):
     model = VideoTypeParameter
     extra = 3
 
-class VideoTypeAdmin(admin.ModelAdmin):
+class VideoTypeAdmin(reversion.VersionAdmin):
     inlines = [VideoTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -124,7 +125,7 @@ class VideoAuthorInline(admin.TabularInline):
     model = VideoAuthor
 
 
-class VideoAdmin(admin.ModelAdmin):
+class VideoAdmin(reversion.VersionAdmin):
     inlines = [VideoParameterInline, VideoAuthorInline]
     # inlines = [VideoParameterInline, VideoInPagesInline]
     exclude = ('in_pages',)
@@ -168,7 +169,7 @@ class ImageAuthorInline(admin.TabularInline):
 class ImageNotationSystemInline(admin.TabularInline):
     model = ImageNotationSystem
 
-class ImageAdmin(admin.ModelAdmin):
+class ImageAdmin(reversion.VersionAdmin):
     inlines = [ImageAuthorInline,ImageNotationSystemInline]
     exclude = ('in_pages',)
     list_display = ("code", "title", "imagefile")
@@ -206,7 +207,7 @@ class PageAuthorInline(admin.TabularInline):
 
 
     
-class PageAdmin(admin.ModelAdmin):
+class PageAdmin(reversion.VersionAdmin):
     list_display = ('code','title', 'level')
     inlines = [PageAuthorInline,PageRelationshipInline]
     search_fields = ['code', 'title']
@@ -279,7 +280,7 @@ class PageHighlightAdmin(admin.ModelAdmin):
 class ReferenceAuthorInline(admin.TabularInline):
     model = ReferenceAuthor
 
-class ReferenceAdmin(admin.ModelAdmin):
+class ReferenceAdmin(reversion.VersionAdmin):
     inlines = [ReferenceAuthorInline,]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -290,37 +291,69 @@ class ReferenceAdmin(admin.ModelAdmin):
 class NewsAuthorInline(admin.TabularInline):
     model = NewsAuthor
 
-class NewsAdmin(admin.ModelAdmin):
+class NewsAdmin(reversion.VersionAdmin):
     inlines = [NewsAuthorInline]
     list_display = ("code","title")
     save_on_top=True
     prepopulated_fields = {"code": ("title",)}
 
 
-admin.site.register(NotationSystem)
-admin.site.register(Author)
-admin.site.register(Level)
-admin.site.register(Objective)
-admin.site.register(Subject)
-admin.site.register(Keyword)
-admin.site.register(RelationshipType)
+class NotationSystemAdmin(reversion.VersionAdmin):
+    pass
+class AuthorAdmin(reversion.VersionAdmin):
+    pass
+class LevelAdmin(reversion.VersionAdmin):
+    pass
+class ObjectiveAdmin(reversion.VersionAdmin):
+    pass
+class SubjectAdmin(reversion.VersionAdmin):
+    pass
+class KeywordAdmin(reversion.VersionAdmin):
+    pass
+class RelationshipTypeAdmin(reversion.VersionAdmin):
+    pass
+class IndexTypeAdmin(reversion.VersionAdmin):
+    pass
+class IndexEntryAdmin(reversion.VersionAdmin):
+    pass
+class ImageTypeAdmin(reversion.VersionAdmin):
+    pass
+class AppletFeatureAdmin(reversion.VersionAdmin):
+    pass
+class AppletObjectTypeAdmin(reversion.VersionAdmin):
+    pass
+class ReferenceTypeAdmin(reversion.VersionAdmin):
+    pass
+class AuxiliaryFileTypeAdmin(reversion.VersionAdmin):
+    pass
+class AuxiliaryFileAdmin(reversion.VersionAdmin):
+    pass
+
+
+admin.site.register(NotationSystem,NotationSystemAdmin)
+admin.site.register(Author,AuthorAdmin)
+admin.site.register(Level,LevelAdmin)
+admin.site.register(Objective,ObjectiveAdmin)
+admin.site.register(Subject,SubjectAdmin)
+admin.site.register(Keyword,KeywordAdmin)
+admin.site.register(RelationshipType,RelationshipTypeAdmin)
 admin.site.register(Page,PageAdmin)
 admin.site.register(PageWithNotes,PageWithNotesAdmin)
 admin.site.register(PageHighlight,PageHighlightAdmin)
-admin.site.register(IndexType)
-admin.site.register(IndexEntry)
-admin.site.register(ImageType)
+admin.site.register(IndexType,IndexTypeAdmin)
+admin.site.register(IndexEntry,IndexEntryAdmin)
+admin.site.register(ImageType,ImageTypeAdmin)
 admin.site.register(Image,ImageAdmin)
 admin.site.register(AppletType,AppletTypeAdmin)
-admin.site.register(AppletFeature)
+admin.site.register(AppletFeature,AppletFeatureAdmin)
 admin.site.register(Applet,AppletAdmin)
 admin.site.register(AppletHighlight,AppletHighlightAdmin)
-admin.site.register(AppletObjectType)
+admin.site.register(AppletObjectType,AppletObjectTypeAdmin)
 admin.site.register(VideoType,VideoTypeAdmin)
 admin.site.register(Video,VideoAdmin)
 admin.site.register(VideoHighlight,VideoHighlightAdmin)
 admin.site.register(NewsItem,NewsAdmin)
 admin.site.register(Reference,ReferenceAdmin)
-admin.site.register(ReferenceType)
-admin.site.register(AuxiliaryFileType)
-admin.site.register(AuxiliaryFile)
+admin.site.register(ReferenceType,ReferenceTypeAdmin)
+admin.site.register(AuxiliaryFileType,AuxiliaryFileTypeAdmin)
+admin.site.register(AuxiliaryFile,AuxiliaryFileAdmin)

@@ -2,12 +2,13 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from mithreads.models import Thread, ThreadSection, ThreadContent
+import reversion
 #from django.contrib.contenttypes import generic
 
 class ThreadSectionInline(admin.TabularInline):
     model = ThreadSection
 
-class ThreadAdmin(admin.ModelAdmin):
+class ThreadAdmin(reversion.VersionAdmin):
     inlines=[ThreadSectionInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -16,7 +17,7 @@ class ThreadAdmin(admin.ModelAdmin):
 class ThreadContentInline(admin.TabularInline):
     model = ThreadContent
 
-class ThreadSectionAdmin(admin.ModelAdmin):
+class ThreadSectionAdmin(reversion.VersionAdmin):
     inlines=[ThreadContentInline]
     list_display = ('__unicode__', 'thread', 'first_content_title')
     list_filter = ('thread',)
