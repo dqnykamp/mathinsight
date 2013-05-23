@@ -122,7 +122,7 @@ class InternalLinkNode(template.Node):
 def intlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     
     target = parser.compile_filter(bits[1])
 
@@ -150,7 +150,7 @@ def intlink(parser, token):
 def extendedlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     
     target = parser.compile_filter(bits[1])
 
@@ -176,7 +176,7 @@ def extendedlink(parser, token):
 def confusedlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     target = parser.compile_filter(bits[1])
 
 
@@ -581,7 +581,7 @@ class IndexEntryNode(template.Node):
 def index_entry(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     indexed_phrase=parser.compile_filter(bits[1])
     if len(bits) >2:
         indexed_subphrase=parser.compile_filter(bits[2])
@@ -647,7 +647,7 @@ class TitleNode(template.Node):
 def title(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     title_text=parser.compile_filter(bits[1])
     if len(bits) > 2:
         navigation_phrase=parser.compile_filter(bits[2])
@@ -785,7 +785,7 @@ class ImageNode(template.Node):
 def image(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     image = parser.compile_filter(bits[1])
 
     kwargs = {}
@@ -806,17 +806,24 @@ def image(parser, token):
 
 
 class ProcessMiTagsNode(template.Node):
-    def __init__(self, the_text_var):
+    def __init__(self, the_text_var, blank_style):
         self.the_text_var=the_text_var
+        self.blank_style=blank_style
     def render(self, context):
-        try:
-            templatetext=self.the_text_var.resolve(context)
-        except template.VariableDoesNotExist:
+        templatetext=self.the_text_var.resolve(context)
+        blank_style = resolve_if_set(self.blank_style, context)
+
+        if not templatetext:
             return ""
-        
+
         try:
-            rendered_text = template.Template("{% load mi_tags %}"+templatetext).render(context)
-        except Exception e:
+            if blank_style:
+                extended_context = context
+                extended_context['blank_style']=1
+                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(extended_context)
+            else:
+                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(context)
+        except Exception as e:
             rendered_text = "Template error (TMPLERR): %s" % e
 
         return rendered_text
@@ -825,11 +832,16 @@ class ProcessMiTagsNode(template.Node):
 @register.tag
 def process_mi_tags(parser, token):
     bits = token.split_contents()
-    if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r tag requires one argument" % bits[0]
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     the_text_var = parser.compile_filter(bits[1])
-    return ProcessMiTagsNode(the_text_var)
 
+    if len(bits) > 2:
+        blank_style=parser.compile_filter(bits[2])
+    else:
+        blank_style = None
+
+    return ProcessMiTagsNode(the_text_var, blank_style)
 
 
 
@@ -1013,12 +1025,12 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
 def Geogebra_link(context, applet, applet_identifier, width, height):
     # html_string='<div class="applet"><object class="ggbApplet" type="application/x-java-applet" id="%s" height="%s" width="%s"><param name="code" value="geogebra.GeoGebraApplet" /><param name="archive" value="geogebra.jar" /><param name="codebase" value="%sjar/" />' % \
-    #     (applet.code, height, width, context["STATIC_URL"] )
+    #     (applet.code, height, width, context.get("STATIC_URL","") )
     html_string='<div class="applet"><applet class="ggbApplet" name="%s" code="geogebra.GeoGebraApplet" archive="geogebra.jar" codebase="%sjar/" width="%s" height="%s">' % \
-        (applet.code, context["STATIC_URL"], width, height )
+        (applet.code, context.get("STATIC_URL",""), width, height )
     if applet.javascript:
         html_string='<div class="applet"><applet class="ggbApplet" name="%s" code="geogebra.GeoGebraApplet" archive="geogebra.jar" codebase="%sjar/" width="%s" height="%s">' % \
-            (applet.code, context["STATIC_URL"], width, height )
+            (applet.code, context.get("STATIC_URL",""), width, height )
   
     html_string='%s%s' % (html_string, return_applet_parameter_string(applet))
 
@@ -1046,7 +1058,7 @@ def Geogebra_link(context, applet, applet_identifier, width, height):
 
 def LiveGraphics3D_link(context, applet, applet_identifier, width, height):
     html_string='<div class="applet"><object class="liveGraphics3D" type="application/x-java-applet" height="%s" width="%s"><param name="code" value="Live.class" /> <param name="archive" value="live.jar" /><param name="codebase" value="%sjar/" />' % \
-        (height, width, context["STATIC_URL"])
+        (height, width, context.get("STATIC_URL",""))
 
     html_string='%s%s' % (html_string, return_applet_parameter_string(applet))
     if applet.applet_file:
@@ -1101,7 +1113,7 @@ def DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
 
     # start string with table and first applet tag
     html_string='<div class="ym-grid linearize-level-2"><div class="ym-g50 ym-gl"><div class="ym-gbox-left"><div class="applet"><object class="liveGraphics3D" type="application/x-java-applet" height="%s" width="%s"><param name="code" value="Live.class" /> <param name="archive" value="live.jar" /><param name="codebase" value="%sjar/" />' % \
-        (height, width, context["STATIC_URL"])
+        (height, width, context.get("STATIC_URL",""))
     
     # add the parameters for applet 1
     html_string = '%s%s' \
@@ -1112,7 +1124,7 @@ def DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
         
     # close off applet 1 and begin tag for applet 2
     html_string = '%s%s</object></div>%s</div></div><div class="ym-g50 ym-gr"><div class="ym-gbox-right"><div class="applet"><object class="liveGraphics3D" type="application/x-java-applet" height="%s" width="%s"><param name="code" value="Live.class" /> <param name="archive" value="live.jar" /><param name="codebase" value="%sjar/" />' % \
-        (html_string, return_applet_error_string(applet,1), return_print_image_string(applet,1), height, width, context["STATIC_URL"])
+        (html_string, return_applet_error_string(applet,1), return_print_image_string(applet,1), height, width, context.get("STATIC_URL",""))
     # add the parameters for applet 2
     html_string = '%s%s' \
                 % (html_string, param_string2)
@@ -1201,9 +1213,9 @@ class AppletNode(template.Node):
             if caption is None:
                 try:
                     caption = template.Template("{% load mi_tags %}"+applet.default_inline_caption).render(context)
-                except:
-                    caption = applet.default_inline_caption
-                    
+                except Exception as e:
+                    caption = "Caption template error (TMPLERR): %s" % e
+
 
         # check to see if the variable process_applet_entries is set
         # if so, add entry to database
@@ -1360,7 +1372,7 @@ class AppletNode(template.Node):
 def applet_sub(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     applet = parser.compile_filter(bits[1])
 
     kwargs = {}
@@ -1478,9 +1490,9 @@ class VideoNode(template.Node):
             if caption is None:
                 try:
                     caption = template.Template("{% load mi_tags %}"+video.default_inline_caption).render(context)
-                except:
-                    caption = video.default_inline_caption
-                    
+                except Exception as e:
+                    caption = "Caption template error (TMPLERR): %s" % e
+
 
         # check to see if the variable process_video_entries is set
         # if so, add entry to database
@@ -1541,7 +1553,7 @@ class VideoNode(template.Node):
 def video_sub(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     video = parser.compile_filter(bits[1])
 
     kwargs = {}

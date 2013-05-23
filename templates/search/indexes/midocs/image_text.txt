@@ -1,7 +1,8 @@
+{% load mi_tags %}
 {{ object.code }}
 {{ object.annotated_title }}
 {{ object.description }}
-{{ object.detailed_description }}
+{% process_mi_tags object.detailed_description 1 %}
 {% for author in object.authors.all %}
    {{ author }}
 {% endfor %}
