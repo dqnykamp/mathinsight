@@ -1,4 +1,4 @@
-{% load mi_tags %}{% if not blank_style %}<!DOCTYPE html>
+{% load mi_tags %}<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -98,13 +98,13 @@
 <div id="main">
   <div class="ym-wrapper">
     <div class="ym-wbox">
-      {% endif %}{% block main_columns %}{% if not blank_style %}
+      {% block main_columns %}
       <div id="MJ_PrintWarning" style="display: none">When printing from Firefox, select the SVG renderer in the MathJax contextual menu (right click any math equation) for better printing results</div>
-      {% endif %}{% block main_heading %}{% endblock%}{% if not blank_style %}
+      {% block main_heading %}{% endblock%}
       <div class="ym-column linearize-level-1">
 	<article id="main_content" class="ym-col1">
 	  <div class="ym-cbox">
-	    {% endif %}{% block content %}{% endblock %}{% if not blank_style %}
+	    {% block content %}{% endblock %}
 	  </div>
 	</article>
 	<div class="ym-col3">
@@ -113,7 +113,7 @@
  	  </div>
 	</div>
       </div>
-      {% endif %}{% endblock %}{% if not blank_style  %}
+      {% endblock %}
       {% block nolinksection %}
       <a id="linksection" class="anchor"></a>
       <div class="ym-grid linearize-level-1">
@@ -178,4 +178,3 @@
 
 </body>
 </html>
-{% endif %}
