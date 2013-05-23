@@ -816,8 +816,8 @@ class ProcessMiTagsNode(template.Node):
         
         try:
             rendered_text = template.Template("{% load mi_tags %}"+templatetext).render(context)
-        except:
-            rendered_text = templatetext
+        except Exception e:
+            rendered_text = "Template error (TMPLERR): %s" % e
 
         return rendered_text
 

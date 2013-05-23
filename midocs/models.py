@@ -230,6 +230,7 @@ class Page(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     title = models.CharField(max_length=200, blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
+    text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
     level = models.ForeignKey(Level, default="i")
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
@@ -267,7 +268,7 @@ class Page(models.Model):
 
     def annotated_title(self):
         return "Page: %s" % self.title
-    
+
     def return_link(self, **kwargs):
         link_text=kwargs.get("link_text", self.title)
         link_title="%s: %s" % (self.title,self.description)
@@ -390,33 +391,57 @@ class Page(models.Model):
         
 
     def save(self, *args, **kwargs):
-        # if template filename has changed, reset template_modifed to None
-        if self.pk is not None:
-            orig = Page.objects.get(pk=self.pk)
-            if orig.template_dir != self.template_dir \
-                    or orig.code != self.code :
-                self.template_modified=None
 
         # if publish_date is empty, set it to be today
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
 
         super(Page, self).save(*args, **kwargs) 
-        updated=self.update_template_links()
-        if updated !=1:
-            self.update_similar()
+        self.update_links()
  
-    def update_template_links(self, force_update=0):
-        # return 1 if updated_template_links
-        # return 0 if template links already up-to-date
-        # return -1 if did not find template
-        # return -2 if there was a template error 
-        # return -3 if page isn't to be published yet
-        # return -4 if page is hideen
-        
+    def update_links(self, force_update=0):
 
+        update_context = {'thepage': self, 'process_image_entries': 1,
+                          'process_applet_entries': 1,
+                          'process_video_entries': 1,
+                          'process_equation_tags': 1,
+                          'process_navigation_tags': 1,
+                          'process_citations': 1,
+                          'update_database': 1,
+                          'blank_style': 1,
+                          'STATIC_URL': ''}
+
+        # if page is hidden, don't update image/applet/video links
+        if self.hidden:
+            update_context['process_applet_entries']=0
+            update_context['process_video_entries']=0
+            update_context['process_image_entries']=0
+                
+
+        # delete old data regarding links from templates
+        self.image_set.clear()
+        self.applet_set.clear()
+        self.video_set.clear()
+        self.pagenavigation_set.all().delete()
+        self.pagecitation_set.all().delete()
+        self.equationtag_set.all().delete()
+        self.externallink_set.all().delete()
+
+        # parse the text field with flags to enter links into database
+        try:
+
+            Template("{% load mi_tags %}"+self.text).render(Context(update_context))
+            # save without updating links again
+            super(Page, self).save() 
+
+            #  update similar pages
+            self.update_similar()
+            
+        except:
+            pass
+
+    def find_template(self):
         full_template_name = 'midocs/pages/%s/%s.html' % (self.template_dir, self.code)
-         # find template filename
         found_template=0
         for template_dir in settings.TEMPLATE_DIRS:
             if(template_dir[-1] == '/'):
@@ -432,111 +457,17 @@ class Page(models.Model):
                 continue
             found_template=1
             break
-
-        if(not found_template):
-            print "No template found for %s" % self.code
-            return -1
-
-
-        # update links if don't have template modified recorded
-        # or if force_upate is True
-        # or if recorded template modified time is more than 
-        # a second older than the file's modification time
-        # (need 1 second as template_modified truncates to integer seconds)
-        if(self.template_modified==None or force_update \
-               or template_mtime - self.template_modified \
-               > datetime.timedelta(seconds=1)):
-            print "Updating %s" % self.code
-            print "last updated: %s" % self.template_modified
-            print "template timestamp: %s" % template_mtime
-
-            update_context = {'thepage': self, 'process_image_entries': 1,
-                              'process_applet_entries': 1,
-                              'process_video_entries': 1,
-                              'process_index_entries': 1,
-                              'process_equation_tags': 1,
-                              'process_navigation_tags': 1,
-                              'process_citations': 1,
-                              'update_database': 1,
-                              'blank_style': 1,
-                              'STATIC_URL': ''}
-
-            # if page isn't to be published yet or is hidden, 
-            # don't add index entries or image/applet/video links
-            if(self.publish_date > datetime.date.today() or self.hidden):
-                if self.publish_date > datetime.date.today():
-                    print "Publish date %s is later than today, not adding links" % str(self.publish_date)
-                else:
-                    print "Page is hidden, not adding links"
-                
-                update_context['process_image_entries']=0
-                update_context['process_applet_entries']=0
-                update_context['process_video_entries']=0
-                update_context['process_index_entries']=0
-                
-
-            # delete old data regarding links from templates
-            self.image_set.clear()
-            self.applet_set.clear()
-            self.video_set.clear()
-            self.indexentry_set.all().delete()
-            self.pagenavigation_set.all().delete()
-            self.pagecitation_set.all().delete()
-            self.equationtag_set.all().delete()
-            self.externallink_set.all().delete()
-
-            # parse the template with flags to enter links into database
-            try:
-                render_to_string(full_template_name, update_context)
-                self.template_modified=template_mtime
-            
-                # save without updating links again
-                super(Page, self).save() 
-
-                #  update similar pages
-                self.update_similar()
-                
-                if self.hidden:
-                    return -4
-                if self.publish_date > datetime.date.today():
-                    return -3
-
-                return 1
- 
-            except:
-                print "Error in template of %s" % self.code
-                #raise
-                return -2
+        if found_template:
+            return template_filename
         else:
-            return 0
+            return ""
 
 
     @classmethod
-    def update_all_template_links(theclass, force_update=0):
-        templates_updated=0
-        templates_not_found=0
-        template_errors=0
-        future_pages=0
-        hidden_pages=0
+    def update_all_similar(theclass):
         for thepage in theclass.objects.all():
-            status=thepage.update_template_links(force_update)
-            if(status==1):
-                templates_updated += 1
-            elif(status==-1):
-                templates_not_found +=1
-            elif(status==-2):
-                template_errors += 1
-            elif(status==-3):
-                future_pages += 1
-            elif(status==-4):
-                hidden_pages += 1
-
-        print "\nFinished updating all links"
-        print "Templates updated: %s" % templates_updated
-        print "Templates not found: %s" % templates_not_found
-        print "Template errors: %s" % template_errors
-        print "Future pages: %s" % future_pages
-        print "Hidden pages: %s" % hidden_pages
+            print "Updating %s" % thepage.code
+            thepage.update_similar()
             
 
     def similar_10(self):
@@ -698,29 +629,6 @@ class Page(models.Model):
 
 
 
-
-        # pages_keyword_list = []
-        # for pkey in pages_with_keywords:
-        #     pages_keyword_list.append((pkey.pk, pkey, pkey.hits))
-        # pages_keyword_list=sorted(pages_keyword_list, key=lambda page: page[0])
-
-        # pages_subject_list = []
-        # for psub in pages_with_subjects:
-        #     pages_subject_list.append((psub.pk, psub, psub.hits))
-        # pages_subject_list=sorted(pages_subject_list, key=lambda page: page[0])
-
-
-
-        # return { 'pages_with_keywords': pages_with_keywords,
-        #          'pages_with_subjects': pages_with_subjects,
-        #          'pages_mlt_list': pages_mlt_list,
-        #          'overall_list': overall_list
-        #          }
-
-
-
-
-
 class PageAuthor(models.Model):
     page = models.ForeignKey(Page)
     author = models.ForeignKey(Author)
@@ -794,7 +702,7 @@ class IndexType(models.Model):
 
 class IndexEntry(models.Model):
     page = models.ForeignKey(Page)
-    index_type = models.ForeignKey(IndexType, related_name = "entries")
+    index_type = models.ForeignKey(IndexType, related_name = "entries", default=1)
     indexed_phrase = models.CharField(max_length=100, db_index=True)
     indexed_subphrase = models.CharField(max_length=100, db_index=True, blank=True, null=True)
     page_anchor = models.CharField(max_length=100, blank=True, null=True)

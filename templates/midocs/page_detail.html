@@ -1,0 +1,218 @@
+{% extends "base.html" %}{% load mi_tags comments hitcount_tags%}
+{% load dajaxice_templatetags %}
+
+{% if not blank_style %}
+{% block title %}{{ thepage.title }} - Math Insight{% endblock %}
+
+{% block extrastyle %}
+{% if thepage.worksheet %}<link href="{{ STATIC_URL }}css/miworksheet.css" rel="stylesheet" type="text/css"/>{% endif %} 
+<meta name="description" content="{{ thepage.description}}"/>
+<script src="{{ STATIC_URL }}js/jquery.dajax.core.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/jquery.ba-serializeobject.min.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% dajaxice_js_import %} 
+<script type="text/javascript"><!--
+    $(document).ready(function() {
+        {% get_hit_count_javascript for thepage %}
+    });
+--></script>
+{% block extrastyle2 %}{% endblock %}
+{% endblock %}
+
+
+{% block pagenav %}
+  <li><a href="#sitenav">Top</a></li>
+  {% for naventry in thepage.pagenavigation_set.all %}
+  <li><a href="#{{ naventry.page_anchor }}">{{ naventry.navigation_phrase|safe }}</a>
+    {% if naventry.pagenavigationsub_set.all %}<ul>
+      {% for subentry in  naventry.pagenavigationsub_set.all %}
+      <li><a href="#{{ subentry.page_anchor }}">{{ subentry.navigation_subphrase|safe }}</a></li>
+      {%endfor%}</ul>{%endif%}
+  </li>{%endfor%}
+  {% if thepage.thread_content_set.all %}
+  <li><a href="#threads">In threads</a><ul>
+  {% for thread_content in thepage.thread_content_set.all %}
+  <li><a href="#thread_{{ thread_content.section.thread.code }}">{{ thread_content.section.thread }}</a></li>
+  {% endfor %}</ul></li>{% endif %}
+  {%if notation_system_form %}<li><a href="#notation_systems">Notation</a></li>{%endif%}
+  {% if thepage.keywords.all or manual_links  %}
+  <li><a href="#{% if manual_links %}linksection{%else%}similar_pages{%endif%}">Links</a>
+    <ul>
+      {% if thepage.keywords.all %}<li><a href="#similar_pages">Similar pages</a></li>{%endif%}
+{% if related_pages.generic %}<li><a href="#related_generic">See also</a></li>{%endif%}
+      {% if related_pages.lighter %}<li><a href="#lighter">Lighten up</a></li>{%endif%}
+      {% if related_pages.depth %}<li><a href="#deeper">Go deeper</a></li>{%endif%}</ul>
+  </li>{%endif%}
+  <li><a href="#sendmessage">Contact us</a></li>
+{% endblock %}
+
+
+{% block main_heading %}
+{% if not blank_style %}
+  <div class="ym-column linearize-level-1">
+    <div class="ym-col1">
+      <div class="ym-cbox">
+	<h3>{% endif %}{{ thepage.title}}{% if not blank_style %}</h3>
+	{% if thepage.worksheet %}<section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>{%endif %}
+
+      </div>
+    </div>
+    
+    <div class="ym-col3">
+      <div class="ym-cbox">
+	{% if related_pages.background %}
+	<aside class="box info suggestbackbox">
+	  <h4>Suggested background</h4>
+	  <ul class="linklist">
+	    {% for page in related_pages.background %}
+	    <li>{% intlink page %}{{page.title}}{% endintlink %}</li>
+	    {% endfor %}
+	  </ul>
+	</aside>
+	{% else %}&nbsp;{% endif %}
+	
+      </div>
+    </div>
+  </div>{% endif %}
+{% endblock %}
+
+{% block content %}
+{% process_mi_tags thepage.text %}
+{% endblock %}
+
+
+{% block rightcolumn %}
+{% if thepage.thread_content_set.all %}
+<a id="threads" class="anchor"></a>
+<section class="box threadbox">
+<h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
+{% for thread_content in thepage.thread_content_set.all %}
+<a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
+<ul class="linklist">
+  {% with thread_content.find_previous as previous_in_thread %}
+  {% if previous_in_thread %}
+  <li> Previous: {{ previous_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+  {% with thread_content.find_next as next_in_thread %}
+  {% if next_in_thread %}
+  <li> Next: {{ next_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+</ul>
+{% endfor %}
+</section>
+{% endif %}
+{%if notation_system_form %}
+<a id="notation_systems" class="anchor"></a>
+<section class="notation_systems">
+<h4><a href="{%url 'mi-notationsystem' %}" class="normaltext">Notation systems</a></h4>
+<form action="{{thepage.get_absolute_url}}" method="post">{% csrf_token %}
+<p><label for="id_notation_system">Select a notation system:</label> <br/>
+{{ notation_system_form.notation_system }}
+<input type="submit" value="Submit" /></p>
+</form>
+<p><a href="{%url 'mi-notationsystem' %}">More information on notation systems</a></p>
+</section>
+{%endif%}
+{% if thepage.keywords.all %}
+<a id="similar_pages" class="anchor"></a>
+<section class="similar_pages">
+<h4 class="pre_list">Similar pages</h4>
+<ul class="linklist">
+{% for simpage in thepage.similar_10 %}
+<li>{% intlink simpage.similar %}{{simpage.similar.title}}{% endintlink %}</li>
+{% endfor %}
+<li><a href="{% url 'mi-similar' thepage.code %}" class="normaltext">More similar pages</a></li>
+</ul>
+</section>
+{%endif%}
+{% endblock %}
+
+{% block linksectionA %}
+{% if related_pages.generic %}
+<a id="related_generic" class="anchor"></a>
+<section class="related_generic">
+<h4 class="pre_list">See also</h4>
+<ul class="linklist">
+{% for page in related_pages.generic %}
+<li>{% intlink page %}{{page.title}}{% endintlink %}</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}
+{% endblock %}
+{% block linksectionB %}
+{% if related_pages.lighter %}
+<a id="lighter" class="anchor"></a>
+<section class="lighter">
+<h4 class="pre_list">Lighten up</h4>
+<ul class="linklist">
+{% for page in related_pages.lighter %}
+<li>{% intlink page %}{{page.title}}{% endintlink %}</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}
+{% endblock %}
+{% block linksectionC %}
+{% if related_pages.depth %}
+<a id="deeper" class="anchor"></a>
+<section class="deeper">
+<h4 class="pre_list">Go deeper</h4>
+<ul class="linklist">
+{% for page in related_pages.depth %}
+<li>{% intlink page %}{{page.title}}{% endintlink %}</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}
+{% endblock %}
+{% block footer %}
+{% if thepage.pagecitation_set.all %}
+<section class="references"><h4>References</h4>
+  <ol style="margin-top: 0.5em;">
+  {% for citation in thepage.pagecitation_set.all %}
+  <li><a id="citation:{{ citation.reference_number }}" class="anchor"></a>{{ citation.reference_text|safe }}</li>
+  {% endfor%}
+</ol>
+</section>
+{%endif%}
+
+<section class="citation"><h4>Cite this as</h4>
+{% with cite_authors=thepage.author_list_abbreviated_link %}
+<p>{%if cite_authors%}{{cite_authors|safe}}, {%endif%}&ldquo;{{ thepage.title_with_period }}&rdquo; From <i>Math Insight</i>. 
+  <a href="http://mathinsight.org{{thepage.get_absolute_url}}" class="normaltext">http://mathinsight.org<wbr>{{thepage.get_absolute_url}}</a></p>
+{%endwith%}</section>
+
+{% if thepage.keywords.all %}<section class="keywords"><p>Keywords:
+{% for keyword in thepage.keywords.all %}{{ keyword }}{%if not forloop.last%}, {%endif%}{%endfor%}
+</p></section>{%endif%}
+<a id="sendmessage" class="anchor"></a>
+<section id="messageform">
+<h4 class="commentheading">Send us a message about &ldquo;{{thepage.title}}&rdquo;</h4>
+{% if credit_possible_deadline %}<p class="comment_deadline">To receive credit for {{ credit_group}}, post message by: {{ credit_possible_deadline }}.</p>{%endif%}
+{% if comment_credit_progress == 1 %}<p class="comment_credit_pending">Already posted message in attempt to receive credit for {{ credit_group}}.</p>{%endif%}
+{% if comment_credit_progress == 2 %}<p class="comment_credit_achieved">Already received credit for posting a message for {{ credit_group}}.</p>{%endif%}
+{% render_comment_form for thepage %}
+</section>
+{% if thepage.author_copyright %}
+<section id="copyright">
+{% with credit_authors=thepage.author_list_full %}
+<div id="copyright_image"><h4><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="{{STATIC_URL}}image/somerights20.png"/></a></h4></div>
+<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">{{thepage.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{{thepage.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/" class="external">Creative Commons Attribution-Noncommercial-ShareAlike 3.0 License</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
+{%endwith%}
+</section>
+{%endif%}
+
+{% if thepage.additional_credits %}
+<section id="credits">
+<h4>Credits</h4>
+{{ thepage.additional_credits|safe }}
+</section>
+{% endif %}
+
+{%comment%}{{ thepage.template_modified|date:"M d, Y" }}{%endcomment%}
+{% endblock %}
+{% endif %}

@@ -87,8 +87,6 @@ def pageview(request, page_code):
         manual_links=False
     
     
-    thetemplate = 'midocs/pages/%s/%s.html' % (thepage.template_dir, thepage.code)
-
     # turn off google analytics for localhost or hidden page
     noanalytics=False
     if settings.SITE_ID==2 or thepage.hidden:
@@ -190,31 +188,21 @@ def pageview(request, page_code):
     
 
 
-    try:
-        return render_to_response \
-            (thetemplate, {'thepage': thepage, 'related_pages': related_pages,
-                           'manual_links': manual_links,
-                           'notation_system': notation_system,
-                           'notation_config': notation_config,
-                           'notation_system_form': notation_system_form,
-                           'credit_possible_deadline': credit_possible_deadline,
-                           'comment_credit_progress': comment_credit_progress,
-                           'credit_group': credit_group,
-                           'noanalytics': noanalytics,
-                           },
-             context_instance=RequestContext(request))
-    except TemplateDoesNotExist:
-        raise Http404()
+    return render_to_response \
+        ("midocs/page_detail.html", 
+         {'thepage': thepage, 'related_pages': related_pages,
+          'manual_links': manual_links,
+          'notation_system': notation_system,
+          'notation_config': notation_config,
+          'notation_system_form': notation_system_form,
+          'credit_possible_deadline': credit_possible_deadline,
+          'comment_credit_progress': comment_credit_progress,
+          'credit_group': credit_group,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
 
 
-# def similarview(request, page_code):
-    
-#     thepage = get_object_or_404(Page, code=page_code)
-
-#     return render_to_response \
-#         ("midocs/similar_page_list.html", {'thepage': thepage, 
-#                                            },
-#          context_instance=RequestContext(request))
 
 
 # calculate date of image as the date_modified 

@@ -206,19 +206,21 @@ class PageAuthorInline(admin.TabularInline):
                 **kwargs)
 
 
+class IndexEntryInline(admin.TabularInline):
+    model = IndexEntry
     
 class PageAdmin(reversion.VersionAdmin):
     list_display = ('code','title', 'level')
-    inlines = [PageAuthorInline,PageRelationshipInline]
+    inlines = [IndexEntryInline,PageAuthorInline,PageRelationshipInline]
     search_fields = ['code', 'title']
     filter_horizontal = ['keywords','subjects']
     #exclude = ('objectives','subjects','content_types')
-    readonly_fields = ('title','description','template_modified',)
+    readonly_fields = ('template_modified',)
     fieldsets = (
         (None, {
                 'fields': ('code', 
                            ('template_dir','template_modified'),
-                           'title', 'description', 'keywords',
+                           'title', 'description', 'text', 'keywords',
                            'subjects',)
                 }),
         ('Optional', {
