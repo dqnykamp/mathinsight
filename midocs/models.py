@@ -14,6 +14,10 @@ import random
 from math import *
 from storage import OverwriteStorage
 import os
+from PIL import Image as PILImage
+from cStringIO import StringIO
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 # from django.contrib.comments.moderation import moderator
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
 
@@ -845,13 +849,39 @@ class Image(models.Model):
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
 
-        # check if changed code
-        # if so, may need to change file names after save
+        # check if changed code or changed image file
+        # if changed code, may need to change file names after save
+        # if changed image, then generate thumbnail
         changed_code=False
+        changed_image=False
         if self.pk is not None:
             orig = Image.objects.get(pk=self.pk)
             if orig.code != self.code:
                 changed_code = True
+            if orig.imagefile != self.imagefile:
+                changed_image = True
+
+        # create thumbnail
+        # adapted from http://djangosnippets.org/snippets/2094/
+        # only do this for new file or if have changed the imagefile
+        if self.pk is None or changed_image:
+            image = PILImage.open(self.imagefile)
+        
+            thumb_size = (200,200)
+
+            image.thumbnail(thumb_size, PILImage.ANTIALIAS)
+        
+            # save the thumbnail to memory
+            temp_handle = StringIO()
+            image.save(temp_handle, 'png')
+            temp_handle.seek(0) # rewind the file
+        
+            # save to the thumbnail field
+            suf = SimpleUploadedFile(os.path.split(self.imagefile.name)[-1],
+                                     temp_handle.read(),
+                                     content_type='image/png')
+            self.thumbnail.save(suf.name+'.png', suf, save=False)
+
 
 
         super(Image, self).save(*args, **kwargs) 
