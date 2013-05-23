@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to single autonomous differential equation problems" %}
-{% description "Solutions to sample problems involving analysis of a single autonomous differential equation." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink single_autonomous_differential_equation_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -216,4 +210,3 @@ The Foward Euler suolution is matching the previous result.  Both solutions are 
 </ol>
 
 
-{% endblock %}

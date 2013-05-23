@@ -1,9 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "configuration model"  %}
-{% index_entry "network" "configuration model"  %}
-{% index_entry "degree" "distribution" %}
-{% title "Generating networks with a desired degree distribution" %}
-{% description "Overview of algorithms that allow one to generate networks with a prescribed degree distribution" %}
 
 {% navigation_tag "motivation" "Motivation" %}
 <h4>Motivation</h4>
@@ -34,4 +28,3 @@
 
 <p>We described both above algorithms in terms of {% intlink "undirected_graph_definition" %}undirected graphs{%endintlink%}, but they can be simply extended to {% intlink "directed_graph_definition" %}directed graphs{%endintlink%}. In this case, specifying the model is a little more complicated as one needs to specify the full {% intlink "degree_distribution" anchor="directed" %}two-dimensional degree distribution{%endintlink%} in terms of in- and out-degree.</p> 
 
-{% endblock %}

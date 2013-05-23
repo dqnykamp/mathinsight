@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "discrete dynamical system" "problems" %}
-{% title "Elementary discrete dynamical systems problems, part 2" %}
-{% description "More sample problems illustrating discrete dynamical systems." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -115,4 +108,3 @@ where $b$ is a positive parameter.
 
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "discrete_dynamical_system_elementary_problem_solutions_2" %}ones we came up with{%endintlink%}.</p>
 
-{% endblock %}

@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "random network"  %}
-{% index_entry "network" "random"  %}
-{% title "Random networks" %}
-{% description "We can view a random network as a member of an ensemble of networks determined by a probability distribution." %}
 
 <p>When analyzing a {% intlink "network_introduction" %}network{%endintlink%}, one approach is look at the network as a single fixed entity.  But sometimes, it is useful to think of the {% intlink "network_edge_definition" %}edges{%endintlink%} as {% intlink "random_variable_definition" %}random variables{%endintlink%}.  With this random network perspective, a given network is more than a single object.  Instead, we can view the random network as a {% intlink "random_variable_sample_definition" %}sample{%endintlink%} from a {% intlink "probability_distribution_idea" %}probability distribution{%endintlink%}.  We can then study the whole probability distribution to gain insight into the network.</p>
 
@@ -23,4 +18,3 @@
 <p>Without any restrictions, a random network model is {% intlink "absurd_high_dimensionality_random_graphs" %}very high-dimensional{%endintlink%}, but one can make tractable random network models through various simplifcations.  The simplest random network model is the {% intlink "simplest_type_of_network" %}Erdös-Rényi random network{%endintlink%} (ER random network), where all edges are independent.  Other random networks models are the {% intlink "generating_networks_desired_degree_distribution" %}configuration model{%endintlink%}, the {% intlink "small_world_network" %}small world network{%endintlink%}, the {% intlink "scale_free_network" %}scale free network{%endintlink%}, and the {% intlink "generating_networks_second_order_motif_frequency" %}SONET model{%endintlink%}.</p>
 
 
-{% endblock%}

@@ -1,9 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "probability" "distribution" %}
-{% index_entry "probability distribution" "idea" %}
-{% index_entry "distribution" "probability" %}
-{% title "The idea of a probability distribution" %}
-{% description "A probability distribution is a function that describes the possible values of a random variable and their associated probabilities." %}
 
 {% navigation_tag "overview" "Overview" %}
 <h4>Overview</h4>
@@ -17,7 +11,6 @@
 
 <p>A discrete random variable is a random variable that can take on any value from a discrete set of values.  The set of possible values could be finite, such as in the case of rolling a six-sided die, where the values lie in the set $\{1,2,3,4,5,6\}$.  However, the set of possible values could also be {% intlink "countably_infinite_definition" %}countably infinite{%endintlink%}, such as the set of integers $\{0, 1, -1, 2, -2, 3, -3, \ldots \}$.  The requirement for a discrete random variable is that we can enumerate all the values in the set of its possible values, as we will need to sum over all these possibilities.</p>
 
-{% index_entry "probability mass function" "" "mass_function" %}
 <p>For a discrete random variable $X$, we form its probability distribution function by assigning a probability that $X$ is equal to each of its possible values.  For example, for a six-sided die, we would assign a probability of $1/6$ to each of the six options.  In the context of discrete random variables, we can refer to the probability distribution function as a <em>probability mass function</em>.  The probability mass function $P(x)$ for a random variable $X$ is defined so that for any number $x$, the value of $P(x)$ is the probability that the random variable $X$ equals the given number $x$, i.e., 
 \begin{align*}
   P(x) = \Pr(X = x).
@@ -67,7 +60,6 @@ $P(x)$ is plotted as a bar graph in the following figure.
 
 <p>A continuous random variable is a random variable that can take on any value from a continuum, such as the set of all real numbers or an interval.  We cannot form a sum over such a set of numbers.  (There are too many, since such a continuum is {% intlink "uncountable_definition" %}uncountable{%endintlink%}.)  Instead, we replace the sum used for discrete random variables with an integral over the set of possible values.</p>
 
-{% index_entry "probability density function" "" "density_function" %}
 <p>For a continuous random variable $X$, we cannot form its probability distribution function by assigning a probability that $X$ is exactly equal to each value.  The probability distribution function we must use in the case is called a <em>probability density function</em>, which essentially assigns the probability that $X$ is near each value.  For intuition behind why we must use such a density rather than assigning individual probabilities, see the page that describes the {% intlink "probability_density_function_idea" %}idea behind the probability density function{%endintlink%}.</p>
 
 <p>Given the probability density function $\rho(x)$ for $X$, we determine the probability that $X$ is in any set $A$ (i.e., that $X \in A$ {% confusedlink "set_membership_symbol_definition" %}) by integrating $\rho(x)$ over the set $A$, i.e.,
@@ -93,4 +85,3 @@ where the integral is implicitly over all possible values of $X$.</p>
 
 
 
-{% endblock%}

@@ -1,15 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "minimization" "problems" %}
-{% index_entry "maximization" "problems" %}
-{% title "Minimization and maximization problems" %}
-{% description "Sample problems illustrating minimization and maximization." %}
 
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
@@ -104,6 +96,5 @@ ol ol {list-style-type: lower-roman;}
 
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "minimization_maximization_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
-{%endblock%}
 
  

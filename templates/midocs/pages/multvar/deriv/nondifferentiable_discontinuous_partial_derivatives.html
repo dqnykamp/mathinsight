@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "differentiability" "theorem"%}
-{% title "Non-differentiable functions must have discontinuous partial derivatives" %}
-{% description "A visual tour demonstrating discontinuous partial derivatives of a non-differentiable function, as required by the differentiability theorem."%}
 
 
 <p>According to the {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%}, any {% intlink "differentiability_multivariable_subtleties" %}non-differentiable function with partial derivatives{%endintlink%} must have discontinuous partial derivatives.  (Otherwise, by {% intlink "differentiability_multivariable_theorem" %}the theorem{%endintlink%}, the function must be differentiable.)
@@ -78,4 +74,3 @@ We've obtained different values for the limit of $\pdiff{f}{x}(x,y)$ along paths
 <p>It's a good thing that the partial derivatives of $f(x,y)$ are discontinuous at the origin.  Otherwise, since $f(x,y)$ is {% intlink "differentiability_multivariable_subtleties" anchor="examplefunction" %}non-differentiable{%endintlink%} at the origin, it would have contradicted the {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%}.  Be sure to keep your logic straight, though, as the differentiability theorem does <b>not</b> imply that all differentiable functions have continuous partial derivatives, as shown by {% intlink "differentiable_function_discontinuous_partial_derivatives" %}this example{%endintlink%}.</p>
 
 
-{%endblock%}

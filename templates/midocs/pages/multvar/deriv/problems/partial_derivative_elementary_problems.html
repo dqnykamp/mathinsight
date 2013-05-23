@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "partial derivative" "problems" %}
-{% title "Elementary partial derivative problems" %}
-{% description "Sample problems illustrating the partial derivative." %}
 
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
@@ -59,4 +52,3 @@ ol ol {list-style-type: lower-roman;}
 
 
 
-{% endblock %}

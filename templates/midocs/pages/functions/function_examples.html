@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "function" "examples" %}
-{% title "Function examples" "Overview" %}
-{% description "Basic examples of functions illustrating the definition of a function." %}
 
 <p>A function is a mapping from a set of inputs (the {% intlink "domain_definition" %}domain{%endintlink%}) to a set of possible outputs (the {% intlink "codomain_definition" %}codomain{%endintlink%}).  The {% intlink "function_definition" %}definition of a function{%endintlink%} is based on a set of ordered pairs, where the first element in each pair is from the domain  and the second is from the codomain.  But, a metaphor that makes the idea of a function easier to understand is the {% intlink "function_machine" %}function machine{%endintlink%}, where an input $x$ from the domain $X$ is fed into the machine and the machine spits out the element $y=f(x)$ from the codomain $Y$. Below, the domain is visualized as a set of spheres and the codomain as a set of cubes, so that the function machine transforms spheres into cubes.</p>
 
@@ -15,7 +11,7 @@
 <p>Let the set $X$ of possible inputs to a function (the domain) be the set of all people.  For the purpose of making this example simple, we will assume all people have exactly one mother (i.e., we'll ignore the problem of the origin of our species and not worry about folks such as Adam and Eve).  We are going to create a function $m$ from people to people, so let the set of possible outputs of our function (the codomain) also be the set $X$ of people. (We can write this using {% intlink "function_notation" %}function notation{%endintlink%} as $m: X \to X$.)  We define the function $m$ so that $m(x)$ is the mother of the person $x$ for all people $x \in X$ {% confusedlink "set_membership_symbol_definition" %}.</p>
 
 <p>If, for example, we put Martin Luther King, Jr. into our mother function, we would get $$m(\text{Martin Luther King, Jr.})=\text{Alberta Williams King}.$$  Or if we put in Madame Curie, we'd get
-$$m(\text{Marie Skłodowska-Curie})=\text{Bronisława Skłodowski}.$$</p>
+$$m(\text{Marie Sklodowska-Curie})=\text{Bronislawa Sklodowski}.$$</p>
 
 <p>This function is a well-defined function, since we assume every element $x \in X$  is mapped via the function machine to a unique element $y \in X$, i.e., every person $x$ has exactly one mother $y$.  Although the codomain is the set of all people $X$, it's clear that it will be impossible for this function to output certain people.  There's no way the mother function $m$ could output any males, nor could it output any childless females.  In other words, the {% intlink "range_definition" %}range{%endintlink%} of the function $m$ is the set of female people who have had children, which is a {% intlink "proper_subset_definition" %}proper subset{%endintlink%} of the set $X$ of all people.</p>
 
@@ -28,7 +24,7 @@ $$m(\text{Marie Skłodowska-Curie})=\text{Bronisława Skłodowski}.$$</p>
 
 <p>Putting in the same people into the child number function, we'd obtain
 $c(\text{Martin Luther King, Jr.})=4$ and
-$c(\text{Marie Skłodowska-Curie})=2.$</p>
+$c(\text{Marie Sklodowska-Curie})=2.$</p>
 
 
 {% navigation_tag "symbols" "Examples" "Symbols"%}
@@ -78,4 +74,3 @@ to define a function from the real numbers to the real numbers.  For any input r
 <p>The input or output objects could even be sets containing many subparts.  For example, one could make a function machine that requires both an integer $i$ and a person $p$ as inputs, adds the number $i$ to the number of children of person $p$, and spits out the result as its output.  Or one could make a function machine that takes a person $p$ as its input and outputs two numbers: the number of male children and the number of female children of person $p$.</p>
 
 
-{% endblock %}

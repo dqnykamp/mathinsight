@@ -1,6 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% title "Discrete dynamical systems worksheet 1" %}
-{% description "A worksheet for one-dimensional discrete dynamical systems." %}
 
 <p>A one-dimensional {% intlink "discrete_dynamical_system_introduction" %}discrete dynamical system{% endintlink %} has a single {% intlink "state_variable_definition" %}state variable{% endintlink %} that evolves in discrete time steps.  If  use the variable $x$ for this state variable and the variable $n$ to index the time steps, then we write the value of the state variable at time step $n$ as $x_n$.</p>
 
@@ -24,7 +21,7 @@ day of construction.</li>
 
 <li>A colony of bacteria doubles in population every hour.  The population initially contains $10^5$ bacteria.</li>
 
-<li>After an injection of penicillin, its concentration in your blood decreases by 20% every 5 minutes.  Immediately after the injection, the penicillin concentration is 200 μg/ml.</li>
+<li>After an injection of penicillin, its concentration in your blood decreases by 20% every 5 minutes.  Immediately after the injection, the penicillin concentration is 200 $\mu$g/ml.</li>
 </ol>
 
 <p>Once you have set up the dynamical system, the next step is to compute the future values.  For each of the three systems you created, compute the value of the state variable for the next four time steps.  (The length of each time step, of course, is different for the different problems.  However, in your notation, you should still have numbered them 0, 1, 2, 3, etc.)</p>
@@ -38,4 +35,3 @@ day of construction.</li>
 
 
 
-{% endblock %}

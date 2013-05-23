@@ -1,13 +1,4 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">p.small {font-size:90%;}</style>
-{% endblock %}
-{% block content %}
-{% index_entry "bacterial growth" "logistic model" %}
-{% index_entry "discrete dynamical system" "example" %}
-{% index_entry "logistic growth" %}
-{% title "Developing a logistic model to describe bacteria growth" %}
-{% description "Modeling the slowing growth rate caused by environmental carrying capacity in bacteria growth data." %}
 
 {% navigation_tag "introduction" "Introduction" %}
 <h4>Introduction</h4>
@@ -133,4 +124,3 @@ The data should lie along a line of with slope $-r/M$ and vertical intercept $r$
 
 <p>The {% intlink "bacteria_growth_logistic_model_worksheet" class="assessment" %}worksheet on developing a logistic model to describe bacteria growth{%endintlink%} includes the main questions posed above and added a few more questions.</p>
 
-{% endblock %}

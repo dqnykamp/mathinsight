@@ -1,9 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "discrete dynamical system" "cobwebbing" %}
-{% index_entry "cobwebbing" %}
-{% index_entry "linear approximation" %}
-{% title "Determining stability by cobwebbing linear approximations around equilibria" %}
-{% description "By cobwebbing the linear approximation to a discrete dynamical around an equilibrium, one can determine a criterion for the stability of the equilibrium." %}
 
 {% boxedvideo "determining_stability_cobwebbing_linear_approximation_equilibrium" %}
 
@@ -89,7 +83,7 @@ Such nonlinear discrete dynamical systems can exhibit very complicated behavior 
 
 <p>Now, you have all the pieces to determine the stability of the equilibrium of a nonlinear discrete dynamical system.  You simply need to put together three pieces of information.  The first is your result for the stability of an equilibrium of a linear dynamical system.  The second is the fact that stability of an equilibria is defined in terms of points that are very close to the equilibrium.  The third piece of information is the fact that the linear approximation calculated by the applet is a good approximation to the function $f$ for points close to the equilibrium.</p>
 
-<p>To come up with the criteria and test if it really works, you'll need to test many different functions $f(x)$.  Feel free to come up with your own functions to test.  If you like, here are some examples to try: $f(x)=1.5x(1-x)$, $f(x) = x+0.3x(x−1)(x−3)$, $f(x) = x−0.05(x−1)(x−3)(x−5)$, $f(x)= (x-1)^2$. It's also a good idea to try a whole family of functions that vary by changing a parameter.  That way you can quantitatively test your criteria.  For example, the function $f(x)=1.5x(1-x)$ is one member of the family of functions $f(x)=rx(1-x)$ for parameter $r$.  Try this function not only for $r=1.5$, but for other values of $r$, like $r=2$, $r=2.8$, or $r=3.2$ (and values in between).  If you are really brave, try this function with $r=4$.  With these tests, you should be able to convince yourself whether or not you've come up with the right criteria for the stability of a nonlinear discrete dynamical system.</p>
+<p>To come up with the criteria and test if it really works, you'll need to test many different functions $f(x)$.  Feel free to come up with your own functions to test.  If you like, here are some examples to try: $f(x)=1.5x(1-x)$, $f(x) = x+0.3x(x-1)(x-3)$, $f(x) = x-0.05(x-1))(x-3)(x-5)$, $f(x)= (x-1)^2$. It's also a good idea to try a whole family of functions that vary by changing a parameter.  That way you can quantitatively test your criteria.  For example, the function $f(x)=1.5x(1-x)$ is one member of the family of functions $f(x)=rx(1-x)$ for parameter $r$.  Try this function not only for $r=1.5$, but for other values of $r$, like $r=2$, $r=2.8$, or $r=3.2$ (and values in between).  If you are really brave, try this function with $r=4$.  With these tests, you should be able to convince yourself whether or not you've come up with the right criteria for the stability of a nonlinear discrete dynamical system.</p>
 
 {% comment %}
 
@@ -135,4 +129,3 @@ Such nonlinear discrete dynamical systems can exhibit very complicated behavior 
 
 </ol>
 {% endcomment %}
-{% endblock %}

@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "network" "synchrony"  %}
-{% title "The stability of the asynchronous state as function of largest eigenvalue" %}
-{% description "The network influences the stability of the asynchronous state through the largest eigenvalue of the adjacency matrix." %}
 
 <p>One approach for determining a {% intlink "connecting_network_structure_dynamics" anchor="synchronizability_index" %}synchronizability index{% endintlink%} for the influence of a network on synchrony is by looking at the stability of the completely synchronous state.  One can also look at the opposite end and look at the stability of the completely asynchronous, or incoherent, state. </p>
 
@@ -34,4 +30,3 @@ where $\xi_i(t)$ is a noise term  and the model is specified by the functions $\
 
 <p>Unfortunately, it's harder to analyze the effect of the connectivity on intermediate levels of synchrony.  However, we can combine the two measures to get a fuller picture of the influence of network topology on synchrony.</p>
 
-{% endblock %}

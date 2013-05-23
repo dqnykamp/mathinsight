@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "derivative" "problems" %}
-{% title "Elementary derivative problems" %}
-{% description "Sample problems illustrating the ordinary derivative." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -174,4 +167,3 @@ ol ol {list-style-type: lower-roman;}
 
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "derivative_elementary_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
-{% endblock %}

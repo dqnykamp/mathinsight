@@ -1,11 +1,6 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "determinant" "area and volume"%}
-{% title "The relationship between determinants and area or volume" "Overview" %}
-{% description "The properties of the cross product and the scalar triple product give links between determinants and area or volume. " %}
 
 <p>From the properties of the {% intlink "cross_product" %}geometric definition of the cross product{%endintlink%} and the {% intlink "scalar_triple_product" %}scalar triple product{%endintlink%}, we can discover a link between $2 \times 2$ determinants and area, and a link between $3 \times 3$ determinants and volume.</p>
 
-{% index_entry "area" "parallelogram" "area2d" %}{% index_entry "parallelogram" "area"  "area2d1" %}{% navigation_tag "area2d2" "Area" %}
 <h4>2 $\times$ 2 determinants and area</h4>
 
 <p>{% intlink "cross_product" %}The area of the parallelogram{%endintlink%}
@@ -69,7 +64,6 @@ b_2\vc{j}$ is
 </p>
 
 
-{% index_entry "volume" "parallelepiped" "volume3d" %}{% index_entry "parallelepiped" "volume" "volume3d1" %}{% navigation_tag "volume3d2" "Volume" %}
 <h4>3 $\times$ 3 determinants and volume</h4>
 
 <p>The {% intlink "scalar_triple_product" %}volume of a parallelepiped{%endintlink%}
@@ -107,4 +101,3 @@ and $\vc{c}$ is
 \end{align*}
 </p>
 
-{%endblock%}

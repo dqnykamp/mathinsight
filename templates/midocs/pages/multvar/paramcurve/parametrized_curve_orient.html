@@ -1,9 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "parametrized curve" "orient"%}
-{% index_entry "orient" "curve"%}
-{% index_entry "tangent vector" "parametrized curve" %}
-{% title "Orienting curves" %}
-{% description "Orienting curves by choosing a tangent vector." %}
 
 <p>Given a curve $\dlc$ from the point $\vc{p}$ to point $\vc{q}$, 
 {% intlink "parametrized_curve_introduction" %}we can parametrize{%endintlink%} $\dlc$ by a function $\dllp(t)$, for $a \le t \le b$.  In
@@ -34,4 +28,3 @@ parametrization.  Choosing an orientation of a curve is equivalent to choosing
 one of the two unit tangent vectors.  
 </p>
 
-{%endblock%}

@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "network" "correlations"  %}
-{% title "The influence of network structure on correlations" %}
-{% description "If a network is operating in a linear regime, one can piece together the influence of network motifs on correlations." %}
 
 <p>Pernice et al. have developed an approach to analyze the influence of different network motifs on correlations between the activity of a pair of nodes.{% citation "pernice_et_al_pcb_2011" %}</p>
 
@@ -40,4 +36,3 @@ $$\frac{C}{c_0} = \sum_{i,j=0}^\infty w^{i+j} A^i(A^T)^i.$$
 {% image "network_chain_motif" %}
 {% endtwocolumns %}
 
-{% endblock %}

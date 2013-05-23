@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "degree" "definition" %}
-{% title "Node degree definition" %}
-{% description "The degree of a node is the number of edges connected to the node." %}
 
 <p>The degree of a node is the number of edges connected to the node.  In terms of the {% intlink "adjacency_matrix_definition" %}adjacency matrix{%endintlink%} $A$, the degree for a node indexed by $i$ in an {% intlink "undirected_graph_definition" %}undirected network{%endintlink%} is
 \begin{gather*}
@@ -33,4 +29,3 @@ k_i^{\text{tot}} = k_i^{\text{in}} +  k_i^{\text{out}}.
 
 <p>For more information about networks, see the {% intlink "network_introduction" %}network introduction{%endintlink%}.</p>
 
-{% endblock%}

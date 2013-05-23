@@ -1,13 +1,5 @@
-{% extends "midocs/page_base.html" %}
 
-{% load mi_tags %}
 
-{% block content %}
-{% index_entry "parametrization" "curve"%}
-{% index_entry "parametrized curve" "derivative"%}
-{% index_entry "derivative" "parametrized curve"%}
-{% title "Parametrized curve and derivative as location and velocity" %}
-{% description "Description of a parametrization of a curve as the position of a particle and the derivative as the particle's velocity. Illustrated with animated graphics." %}
 
 <p>A vector-valued function of a single variable
 $\dllp: \R^n \to \R$ {% confusedlink "function_notation" %} can be viewed as a 
@@ -68,4 +60,3 @@ itself, or by watching the length of the tangent vector grow.
 the particle!) Find the velocity of this particle and see if you can
 explain what you're seeing.</p>
 
-{%endblock%}

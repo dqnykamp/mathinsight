@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "range" "definition" %}
-{% title "Range definition" %}
-{% description "The range of a function is the set of outputs the function achieves when it is applied to its whole set of outputs." %}
 
 <p>The range of a {% intlink "function_definition" %}function{%endintlink%} is the set of outputs the function achieves when it is applied to its whole set of outputs.  In the {% intlink "function_machine" %}function machine{%endintlink%} metaphor, the range is the set of objects that actually come out of the machine when you feed it all the inputs.</p>
 
@@ -10,4 +6,3 @@
 <p>For example, we could define a function $f: \R \to \R$ as $f(x)=x^2$.  Since $f(x)$ will always be non-negative, the number $-3$ is in the codomain of $f$, but it is not in the range, as there is no input of $x$ for which $f(x)=-3$.  For this $f$, the range is the set of non-negative real numbers while the codomain is the set of all real numbers.</p>
 
 
-{% endblock %}

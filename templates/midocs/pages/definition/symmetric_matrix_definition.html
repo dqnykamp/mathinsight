@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "symmetric matrix" "definition" %}
-{% index_entry "matrix" "symmetric" %}
-{% title "Symmetric matrix definition" %}
-{% description "A matrix A is symmetric if it is equal to its transpose, i.e.,  $A=A^T$." %}
 
 <p>A matrix $A$ is symmetric if it is equal to its {% intlink "matrix_transpose" %}transpose{%endintlink%}, i.e.,  $A=A^T$.  A matrix $A$ is symmetric if and only if swapping indices doesn't change its components, i.e., $a_{ij} = a_{ji}$.<p>
 
@@ -30,4 +25,3 @@ is symmetric while the matrix
 \end{gather*}
 is not symmetric as $2=a_{12} \ne a_{21}=12$.</p>
 
-{% endblock%}

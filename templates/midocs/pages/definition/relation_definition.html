@@ -1,11 +1,6 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "relation" "definition" %}
-{% title "Relation definition" %}
-{% description "A relation between two sets is a collection of ordered pairs containing one object from each set. " %}
 
 <p>A relation between two sets is a collection of ordered pairs containing one object from each set.  If the object $x$ is from the first set and the object $y$ is from the second set, then the objects are said to be related if the ordered pair $(x,y)$ is in the relation.</p>
 
 <p>A {% intlink "function_definition" %}function{%endintlink%} is a type of relation.  But, a relation is allowed to have the object $x$ in the first set to be related to more than one object in the second set.  So a relation may not be represented by a {% intlink "function_machine" %}function machine{%endintlink%}, because, given the object $x$ to the input of the machine, the machine couldn't spit out a unique output object that is paired to $x$.</p>
 
 
-{%endblock%}

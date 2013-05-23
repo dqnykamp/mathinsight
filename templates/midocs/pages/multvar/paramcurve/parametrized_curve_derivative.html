@@ -1,15 +1,5 @@
-{% extends "midocs/page_base.html" %}
 
-{% load mi_tags %}
 
-{% block content %}
-{% index_entry "parametrization" "curve"%}
-{% index_entry "parametrized curve" "derivative"%}
-{% index_entry "derivative" "parametrized curve"%}
-{% index_entry "parametrized curve" "tangent vector"%}
-{% index_entry "tangent vector" "parametrized curve" %}
-{% title "Derivatives of parameterized curves" %}
-{% description "The derivative of the vector-valued function parameterizing a curve is shown to be a vector tangent to the curve." %}
 
 <p>The derivative of a vector-valued function is the
 {% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%}.
@@ -89,4 +79,3 @@ curve{%endintlink%}.</p>
 
 
 
-{%endblock%}

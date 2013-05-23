@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "domain" "definition" %}
-{% title "Domain definition" %}
-{% description "The domain of a function is the set of its possible inputs." %}
 
 <p>The domain of a  {% intlink "function_definition" %}function{%endintlink%} is the set of its possible inputs, i.e., the set of input values where for which the function is defined.  In the {% intlink "function_machine" %}function machine{%endintlink%} metaphor, the domain is the set of objects that the machine will accept as inputs.</p>
 
@@ -9,4 +5,3 @@
 
 <p>If we just define a function such as $f(x)=\sqrt{x-1}$ and don't explicitly state its domain, we typically assume that the domain is the largest subset of real numbers where $f$ could be define.  In this example, we'd implicitly understand that the domain is the set of real numbers greater than or equal to 1: $\{ x \,|\, x \ge 1 \}$.</p>
 
-{% endblock %}

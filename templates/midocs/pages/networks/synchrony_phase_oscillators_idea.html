@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "synchrony" "phase oscillators"  %}
-{% index_entry "phase oscillator" "synchrony"  %}
-{% title "The idea of synchrony of phase oscillators" %}
-{% description "The concepts of a phase oscillator and synchronization of a collection of phase oscillators are introduced through interactive applets." %}
 
 <p>An oscillator model is a {% intlink "dynamical_system_idea" %}dynamical system{%endintlink%} in which the {% intlink "state_variable_definition" %}state variables{%endintlink%} evolve through a periodic {% intlink "trajectory_dynamical_systems_definition" %}trajectory{%endintlink%} or orbit in {% intlink "state_space_definition" %}state space{%endintlink%} (also called {% intlink "phase_space_definition" %}phase space{%endintlink%}).  This periodic orbit is a loop through state space, as the state of the system returns to where it started after some time $T$, called the period of the oscillator.</p>
 
@@ -25,7 +20,6 @@ where $i=\sqrt{-1}$ and $\theta$ is the counterclockwise angle between the posit
 
 
 {% navigation_tag "order_parameters" "Synchrony" "Order parameters" %}
-{% index_entry "order parameters" "Kuramoto" "kuramoto_order_parameters" %}
 <h5>The Kuramoto order parameters</h5>
 
 <p>We can use a measure of synchrony to capture the level of synchrony of a collection of phase oscillators.  One measure of synchrony is the Kuramoto order parameter.  Actually, there are two Kuramoto order parameters, but we will be primarily concerned with the measure $r$ that indicates the level of synchrony.  The second order parameter $\psi$ gives the average phase of the collection of oscillators.</p>
@@ -57,4 +51,3 @@ $$z = r e^{i\psi}.$$</p>
 
 {% boxedapplet "desynchronizing_oscillators" caption="A group of $N=100$ phase oscillators represented just as in the previous applet, only this group of oscillators tends to desynchronize.  At time $t=0$, all oscillators start at exactly the same phase.  However, as time evolves, the oscillators tend to spread out across the whole circle of phases, i.e., the system tends toward asynchrony.   You can control how they desynchronize by changing the parameter $\sigma$, which controls the spread of oscillator speeds.  When $\sigma=0$, the oscillators will stay synchronized forever." %}
 
-{% endblock%}

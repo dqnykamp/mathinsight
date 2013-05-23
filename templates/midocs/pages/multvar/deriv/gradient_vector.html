@@ -1,9 +1,4 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "gradient"%}
-{% index_entry "derivative" "gradient"%}
 
-{% title "The gradient vector" %}
-{% description "The gradient vector is the matrix of partial derivatives of a scalar valued function viewed as a vector." %}
 
 <p>The {% intlink "derivative_matrix" %}matrix of partial derivatives{%endintlink%} of a scalar-valued function, $f: \R^n \to \R$ {% confusedlink "function_notation" %}, is a $1 \times n$ row matrix:
 \begin{gather*}
@@ -25,4 +20,3 @@ When one takes {% intlink "line_integral_vector_field_introduction" %}line integ
 {% intlink "conservative_vector_field_introduction" %}path-independent{%endintlink%}, the central idea of the {% intlink "gradient_theorem_line_integrals" %}gradient theorem for line integrals{%endintlink%}.</p>
 </div>
 
-{%endblock%}

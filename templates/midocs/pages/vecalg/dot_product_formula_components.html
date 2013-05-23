@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "dot product" %}
-{% index_entry "dot product" "formula" %}
-{% title "The formula for the dot product in terms of vector components" %}
-{% description "Derivation of the component formula for the dot product, starting with its geometric definition based on projection of vectors." %}
 
 <p>The {% intlink "dot_product" %}geometric definition of the dot product{%endintlink%} says that the dot product between two vectors $\vc{a}$ and $\vc{b}$ is
 $$\vc{a} \cdot \vc{b} = \|\vc{a}\| \|\vc{b}\| \cos \theta,$$
@@ -72,4 +67,3 @@ we can use the same formula, but with $a_3=b_3=0$,
 <p>Armed with equations \eqref{dot_product_formula_3d} and  \eqref{dot_product_formula_2d}, 
 you can make short work of calculating dot products, as shown in {% intlink "dot_product_examples" %}these examples{%endintlink%}.</p>
 
-{%endblock%}

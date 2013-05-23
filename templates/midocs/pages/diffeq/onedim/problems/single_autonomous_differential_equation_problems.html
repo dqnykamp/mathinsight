@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "differential equation" "autonomous" %}
-{% title "Single autonomous differential equation problems" %}
-{% description "Sample problems involving analysis of a single autonomous differential equation." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -143,4 +136,3 @@ using the Forward Euler algorithm.  Use a time step $\Delta t= 0.5$ to estimate 
 
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "single_autonomous_differential_equation_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
-{% endblock %}

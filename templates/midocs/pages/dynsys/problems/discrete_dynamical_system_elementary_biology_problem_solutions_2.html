@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to elementary discrete dynamical systems biology problems, part 2" %}
-{% description "Solutions to more sample problems illustrating discrete dynamical systems in the context of biology." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink discrete_dynamical_system_elementary_biology_problems_2 problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -158,4 +152,3 @@ where $f(s) = s+rs(1-s/N)$.  Since $f(s)$ is the updating function, we just need
   <li>There are no stable equilibria, so the strategy will not succeed in bringing the number of locusts to a stable small population </li>
 </ol>
 
-{%endblock%}

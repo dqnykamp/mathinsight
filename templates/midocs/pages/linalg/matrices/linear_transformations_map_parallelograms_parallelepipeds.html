@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "linear transformation" "parallelograms" %}
-{% index_entry "linear transformation" "parallelepipeds" %}
-{% title "How linear transformations map parallelograms and parallelepipeds" "Overview" %}
-{% description "Why linear transformations map parallelograms onto parallelograms and parallelepipeds onto parallelepipeds." %}
 
 <p>The notion of linearity plays an important role in calculus because any {% intlink "differentiability_multivariable_introduction" %}differentiable function{% endintlink%} is locally linear, i.e., looks linear if you zoom in enough.  In fact, the {% intlink "differentiability_multivariable_definition" %}definition of differentiability{% endintlink%} is based on the ability to {% intlink "linear_approximation_multivariable" %}approximate{%endintlink%} a function $\vc{f}(\vc{x})$ by a {% intlink "linear_transformation_definition_euclidean" %}linear transformation{%endintlink%} $\vc{T}(\vc{x})$.</p>
 
@@ -58,4 +53,3 @@ The components $a_{ij}$ of $A$ define the linear transformation.</p>
 
 <p>We don't need to do any additional work to demonstrate that linear transformations in three-dimensions map parallelepipeds onto parallelepipeds.  Since the above calculations were not specific to two dimensions, they demonstrate that three-dimensional linear transformations map parallelograms onto parallelograms.  Therefore, $\vc{T}$ maps the six parallelogram faces of a parallelepiped onto six other parallelograms.  This result means that $\vc{T}$ maps the parallelepiped onto a three-dimensional geometric solid with six faces that are parallelograms, which is the definition of a parallelepiped.  We can conclude that linear transformations map parallelepipeds onto parallelepipeds.</p>
 
-{%endblock%}

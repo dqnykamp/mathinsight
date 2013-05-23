@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "network" "dynamics"  %}
-{% title "Connecting network structure to dynamical properties" %}
-{% description "An exploration of the influence of network structure on the properties of dynamical processes taking place on networks." %}
 
 <p>In fields from biology to engineering, one encounters dynamical processes that take place on networks.  A prototypical example is a network of interacting neurons that is performing some computation in the brain.  One would like to understand how the structural properties of the network shape the desired computations.</p>
 
@@ -28,7 +24,6 @@ where $i = \sqrt{-1}$.  The order parameter $r$ is the magnitude of $z$, $r=|z|$
 
 <p>The structure of a network can strongly influence whether or not a network of oscillators will synchronize and to what degree they will synchronize.  The dynamics of the individual oscillators and the form of their coupling will also have a large influence on the resulting synchrony.  Some oscillator models won't synchronize no matter the network topology; other oscillator models will tend to synchronize easily.  Therefore, if one looks at the synchrony for a particular model of oscillators connected via a particular network, it's difficult to separate the roles the network and oscillator models are playing in determining the synchrony.</p>
 
-{% index_entry "synchronizability index" "" "synchronizability_index" %}
 
 <p>If one wants to look at the influence of network structure on synchrony without regard to oscillator model, the best one can do is develop a notion of the <em>synchronizability</em> of a network.  One could imagine a <em>synchronizability index</em> that indicates how likely a given network will synchronize, ranking networks independent of oscillator model.  For example, if network A had a higher synchronizability index than network B, and one used the same oscillator model on both networks, one wouldn't be able to deduce if either network would synchronize. Yet, in this idealized view, one could deduce that, if network B synchronized for a particular oscillator model, then network A must also synchronize for that model.  On the other hand, one might find a oscillator models for which network A would synchronize but not network B.  However, even if such a synchronizability index could be assigned to each network, it seems unlikely that it would consist of a single number and allow one to rank all networks in this way.  If a synchronizability index had multiple dimensions, then it would be possible that network A could synchronize better than network B for some oscillator models but that network B could synchronize better for other oscillator models.</p>
 
@@ -44,4 +39,3 @@ The influence of complex structure on synchrony has recently be reviewed by Aren
 
 
 
-{% endblock %}

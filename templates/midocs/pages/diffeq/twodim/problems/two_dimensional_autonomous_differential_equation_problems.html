@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "differential equation" "autonomous" %}
-{% title "Two dimensional autonomous differential equation problems" %}
-{% description "Sample problems involving analysis of a two coupled autonomous differential equations." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -139,4 +132,3 @@ Plot direction arrows and a plausible solution in the phase plane for the initia
 
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "two_dimensional_autonomous_differential_equation_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
-{% endblock %}

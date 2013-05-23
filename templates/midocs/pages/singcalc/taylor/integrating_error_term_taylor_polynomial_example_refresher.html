@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "Taylor polynomial" "integrating"  %}
-{% index_entry "Taylor polynomial" "error"  %}
-{% title "Integrating the error term of a Taylor polynomial: example" %}
-{% description "An example showing how to integrate the error term of Taylor polynomial and interpret the result." %}
 
 <p>Being a little more careful than for the {% intlink "integrating_taylor_polynomials_first_example_refresher" %}previous example{%endintlink%}, let's keep track of the error
 term in the example we've been doing: we have
@@ -45,4 +40,3 @@ $$\left|-\log(1-T)-\left[T+{T^2\over 2}+\ldots+{T^n\over n}\right]\right|\le
 { 2^{n+1}T^{n+2} \over 2(n+1)(n+2) }$$
 and the latter expression shrinks rapidly as $T$ approaches $0$.</p>
 
-{%endblock%}

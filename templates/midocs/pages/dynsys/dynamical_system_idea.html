@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "dynamical system" "idea" %}
-{% title "The idea of a dynamical system" %}
-{% description "The basic concept of a dynamical system as the evolution of something over time.  The fundamental ideas of the state space and temporal evolution rules are illustrated with examples featuring interactive graphics." %}
 
 {% navigation_tag "whatis" "What is" %}
 <h4>What is a dynamical system?</h4>
@@ -78,4 +74,3 @@
 
 <p>It may be slightly confusing that we have mentioned two different velocities.  One velocity is the angular velocity $\omega(t)$, which tells us how fast the angle $\omega(t)$ is changing and in which direction.  The second velocity is the velocity (speed and direction) of the point $(\theta(t),\omega(t))$ through state space, i.e., the velocity of the red point in the left panel, above.  These two velocities are related, as the left and right movement of the red point is due to changes in $\theta(t)$.  In fact, the velocity of this left and right movement is exactly given by the angular velocity.  The up and down movement of the red point is given by changes in the angular velocity $\omega(t)$, or the acceleration of the pendulum.  How $\omega(t)$ changes with time depends on a little physics, and a discussion of this mechanism is outside the scope of this introductory page.</p>
 
-{% endblock %}

@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to two dimensional autonomous differential equation problems" %}
-{% description "Solutions to sample problems involving analysis of a two coupled autonomous differential equations." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink two_dimensional_autonomous_differential_equation_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -214,4 +208,3 @@ must be satisfied (so that $\diff{q}{t}=0$).  We need to find all combinations $
 {% image "phase_plane_example_8_solution" %}
 
 
-{% endblock %}

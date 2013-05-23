@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to elementary partial derivative problems" %}
-{% description "Solutions to sample problems illustrating the partial derivative." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink partial_derivative_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -83,4 +77,3 @@ ol ol {list-style-type: lower-roman;}
   <li><p>$\pdiff{h}{v}$ and $\pdiff{h}{g}$ must be negative, while $\pdiff{h}{c}$ and $\pdiff{h}{s}$ must be positive.</p></li>
 </ol>
 
-{% endblock %}

@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to elementary integral problems" %}
-{% description "Solutions to sample problems illustrating the indefinite and definite integral." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>{% intlink integral_elementary_problems problem{{probnum}} normaltext %}Problem {{probnum}}{%endintlink%}</h4>
@@ -153,4 +147,3 @@ $$r(t) = \frac{1}{2}t^4 - 2t^3 +t^2/2-t +11.$$</p>
 \end{align*}
 </p>
 
-{% endblock %}

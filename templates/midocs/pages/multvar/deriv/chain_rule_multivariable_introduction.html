@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "chain rule" "multivariable"%}
-{% index_entry "derivative" "chain rule"%}
-{% title "Introduction to the multivariable chain rule" %}
-{% description "Introduction to the multivariable chain rule. The basic concepts are illustrated through a simple example." %}
 
 {% navigation_tag "example1d" "1D example" %}
 <h4>One-variable example</h4>
@@ -28,8 +23,6 @@ to give your height at time $t$.  It is
 \end{align*}
 </p>
 
-{% index_entry "function" "composition" "composition" %}
-{% index_entry  "composition" "of functions" "composition1" %}
 <p>
 The function $h(t)$ is an example of a <i>{% intlink "composition_definition" %}composition{%endintlink%}</i> of
 functions, meaning it is the result of using function $g$ and then
@@ -249,4 +242,3 @@ Or, if you prefer, you can look a number of {% intlink "chain_rule_multivariable
 chain rule examples.
 </p>
 
-{% endblock %}

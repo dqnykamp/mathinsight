@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "matrix" "introduction"%}
-{% title "Introduction to matrices" "Introduction" %}
-{% description "A brief introduction to matrices." %}
 
 <p>You can view a matrix simply as a generalization of a {% intlink "vectors_arbitrary_dimensions" %}vector{%endintlink%}, where we
 arrange numbers in both rows and columns.  Let's keep the number of
@@ -52,7 +48,6 @@ that transform vectors into other vectors.
 (A simple example of a linear transformation is the rotation a vector.)
 Other uses of matrices involve {% intlink "matrices_determinants_multivariable_calculus" %}calculating their determinant{%endintlink%}.
 
-{% index_entry "vector" "as matrix" "vectors_as_matrices"%}
 {% navigation_tag "asmatrices" "As matrices" %}
 <h4>Vectors as matrices</h4>
 
@@ -89,4 +84,3 @@ The vector $\vc{x}=(1,5,3)$ written as a $3 \times 1$ column vector would be
 </p>
 
 
-{%endblock%}

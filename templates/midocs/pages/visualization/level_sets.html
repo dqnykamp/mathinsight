@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "level set"%}
-{% index_entry "visualization" "level set"%}
-{% title "Level sets" %}
-{% description "A introduction to level sets. Illustrates level curves and level surfaces with interactive graphics." %}
 
 {% navigation_tag "graphing" "Graphing" %}
 <h4>Graphing functions</h4>
@@ -36,7 +31,6 @@ A level set of a function of three variables $f(x,y,z)$ is a surface in three-di
 
 
 
-{% index_entry "level curve" "" "level_curves" %}
 {% navigation_tag "level_curves_nav" "Level curves" %}
 <h4>Level curves</h4>
 
@@ -82,7 +76,6 @@ The closer the contour lines are together, the steeper the slope of the land.
 Not surprisingly, the steepest slopes seem to be very near the summits of Eagle Mountain and Moose Mountain.</p>
 
 
-{% index_entry "level surface" "" "level_surfaces" %}
 {% navigation_tag "level_surfaces_nav" "Level surfaces" %}
 <h4>Level surfaces</h4>
 
@@ -148,4 +141,3 @@ won't let $c$ get all the way down to 0; the lowest $c$ goes is about
 You can look at a 
 {% intlink "level_set_examples" %}couple more examples{%endintlink%}.
 
-{%endblock%}

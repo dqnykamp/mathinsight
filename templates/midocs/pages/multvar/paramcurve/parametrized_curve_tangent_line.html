@@ -1,12 +1,5 @@
-{% extends "midocs/page_base.html" %}
 
-{% load mi_tags %}
 
-{% block content %}
-{% index_entry "parametrized curve" "tangent line"%}
-{% index_entry "tangent line" "parametrized curve"%}
-{% title "Tangent lines to parametrized curves" %}
-{% description "The tangent vector given by the derivative of a parametrized curve forms the basis for the equation of a line tangent to the curve." %}
 
 <p>For a {% intlink "parametrized_curve_introduction" %}curve parametrized
 by{%endintlink%} $\dllp(t)$, the derivative $\dllp'(t)$ is 
@@ -37,5 +30,4 @@ parametrization slightly to
 <p>You can see some examples
 {% intlink "parametrized_curve_tangent_line_examples" %}here{%endintlink%}.
 
-{%endblock%}
 

@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "triple integral" "cross-section method" %}
-{% index_entry "cross section method" "triple integral" %}
-{% title "The cross section method for determining triple integral bounds" %}
-{% description "Explanation of the cross section method for turning a triple integral into a double integral combined with a single integral in order to compute the limits of integration." %}
 
 {% navigation_tag "overview" "Overview" %}
 <p>One tricky part of calculating {% intlink "triple_integral_introduction" %}define triple integrals{%endintlink%} is determining the bounds of integration.  To help you in this endeavor, we outline a couple methods for reducing the task of finding these bounds to the simpler task of finding bounds on a double integral combined with a single integral.  One such method is one we call the &ldquo;shadow method,&rdquo; which we describe {% intlink "triple_integral_shadow_method" %}another page{%endintlink%}.  Here we describe a method we call the &ldquo;cross section method.&rdquo;</p>
@@ -72,4 +67,3 @@ $$\int_{\text{bottom}}^{\text{top}} \cdots dz = \int_0^2 \cdots dz.$$
 
 
 
-{%endblock%}

@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "integral" "problems" %}
-{% title "Elementary integral problems" %}
-{% description "Sample problems illustrating the indefinite and definite integral." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -150,4 +143,3 @@ using a left Riemann sum.  Use a interval width of $\Delta t = 0.5$.</p>
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "integral_elementary_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
 
-{% endblock %}

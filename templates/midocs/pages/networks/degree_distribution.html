@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "degree" "distribution" %}
-{% index_entry "network" "degree distribution" %}
-{% title "The degree distribution of a network" %}
-{% description "The degree distribution is introduced as a simplified measure that characterizes one aspect of a network's structure." %}
 
 <p>A {% intlink "network_introduction" %}network{%endintlink%} can be an exceedingly complex structure, as the {% intlink "network_edge_definition" %}connections{%endintlink%} among the {% intlink "network_node_definition" %}nodes{%endintlink%} can exhibit complicated patterns.  One challenge in studying complex networks is to develop simplified measures that capture some elements of the structure in an understandable way.</p>
 
@@ -116,4 +111,3 @@ k_i^{\text{tot}} = k_i^{\text{in}} +  k_i^{\text{out}}.
 <p>The strong influence of the correlation between in- and out-degree can be seen by the fact that it determines the largest eigenvalue of the adjacency matrix.{% citation "restrepo_ott_hunt_pre_2007" %}  This eigenvalue, in turn, influences the properties of {% intlink "dynamical_system_idea" %}dynamical systems{%endintlink%} that evolve on the network, such as the synchronization of networked oscillators.{% citation "restrepo_ott_hunt_prl_2006" "zhao_et_al_fcn_2011" %} </p>
 
 
-{% endblock %}

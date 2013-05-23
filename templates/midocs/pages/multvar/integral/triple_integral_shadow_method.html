@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "triple integral" "shadow method" %}
-{% index_entry "shadow method" "triple integral" %}
-{% title "The shadow method for determining triple integral bounds" %}
-{% description "Explanation of the shadow method for turning a triple integral into a double integral combined with a single integral in order to compute the limits of integration." %}
 
 {% navigation_tag "overview" "Overview" %}
 <p>Although we {% intlink "triple_integral_introduction" anchor="tripleriemann" %}define triple integrals{%endintlink%} using a Riemann sum, we usually evaluate triple integrals by turning them into {% intlink "triple_integral_introduction" anchor="tripleiterated" %}iterated integrals{%endintlink%} involving three single integrals.  One tricky part of triple integrals is describing the three-dimensional regions of integration and the resulting bounds on the iterated integrals.  Forming {% intlink "double_integral_iterated" %}double iterated integrals{%endintlink%} is easier because one can draw the domain and label all the edges and corners, which makes determining the bounds more tractable.  Three-dimensional regions are much more difficult to visualize or draw, which can make the prospect of determining integration bounds a formidable task.</p>
@@ -120,4 +115,3 @@ The maximum range of $z$ is $-2 \le z \le 2$, so the integration limits for the 
 \end{align*}
 </p>
 
-{%endblock%}

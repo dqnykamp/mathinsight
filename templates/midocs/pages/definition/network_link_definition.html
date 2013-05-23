@@ -1,8 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "link" "definition" %}
-{% index_entry "network link" "definition" %}
-{% title "Link definition" %}
-{% description "An link of a network is one of the connections between the nodes (or vertices) of the network." %}
 
 <p>A link (or {% intlink "network_edge_definition" %}edge{%endintlink%}) of a {% intlink "network_definition" %}network{%endintlink%} (or {% intlink "graph_definition" %}graph{%endintlink%}) is one of the connections between the {% intlink "network_node_definition" %}nodes{% endintlink%} (or {% intlink "graph_vertex_definition" %}vertices{%endintlink%}) of the network.  Links can be  {% intlink "directed_graph_definition" %}directed{%endintlink%}, meaning they point from one node to the next, as illustrated by the arrows in the first figure below.  Links can also be {% intlink "undirected_graph_definition" %}undirected{%endintlink%}, in which case they are bidirectional, as illustrated by the lines in the second figure, below.</p>
 
@@ -16,4 +11,3 @@
 
 <p>For more information about network links, see the {% intlink "network_introduction" %}network introduction{%endintlink%}.</p>
 
-{% endblock %}

@@ -1,11 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "Green's theorem" %}
-{% index_entry "Green's theorem" "idea"%}
-{% index_entry "circulation" "microscopic"%}
-{% index_entry "circulation" "macroscopic"%}
-{% index_entry "fundamental theorems of vector calculus" "Green's theorem" %}
-{% title "The idea behind Green's theorem" %}
-{% description "Introduction to Green's theorem, based on the intuition of microscopic and macroscopic circulation of a vector field." %}
 <p>When $\dlc$ is an 
 {% intlink "oriented_curve_definition" %}oriented{%endintlink%}
 {% intlink "simple_curve_definition" %}simple{%endintlink%}
@@ -112,8 +104,6 @@ in the $z$-direction is given by the formula
   (\curl \dlvf) \cdot \vc{k} = \pdiff{\dlvfc_2}{x} -
   \pdiff{\dlvfc_1}{y}.
 \end{align*}
-{% index_entry "scalar curl" "" "scalar_curl" %}
-{% index_entry "curl" "scalar" "scalar_curl1" %}
 This $z$-component of the curl is often termed the <i>scalar curl</i> of a two-dimensional
 vector field.
 You can {% intlink "curl_components" %}get intuition{%endintlink%}
@@ -184,4 +174,3 @@ it applies to more general
 {% intlink "greens_theorem_multiple_boundary_components" %}regions 
 with holes{%endintlink%}. </p>
 
-{% endblock %}

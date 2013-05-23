@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "parameter" "definition" %}
-{% title "Parameter definition" %}
-{% description "A parameter is a quantity that influences the output or behavior of a mathematical object but is viewed as being held constant." %}
 
 <p>A parameter is a quantity that influences the output or behavior of a mathematical object but is viewed as being held constant.  Parameters are closely related to {% intlink "variable_definition" %}variables{%endintlink%}, and the difference is sometimes just a matter of perspective.  Variables are viewed as changing while parameters typically either don't change or change more slowly. In some contexts, one can imagine performing multiple experiments, where the variables are changing through each experiment, but the parameters are held fixed during each experiment and only change between experiments.</p>
 
@@ -11,4 +7,3 @@
 \end{align*}
 Here, the variable $x$ is regarded as the input to the function.  The symbols $a$, $b$, and $c$ are parameters that determine the behavior of the function $f$.  For each value of the parameters, we get a different function.  The influence of parameters on a function is captureed by the metaphor of {% intlink "function_machine_parameters" %}dials on a function machine{%endintlink%}.</p>
 
-{% endblock %}

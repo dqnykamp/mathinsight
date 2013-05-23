@@ -1,6 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% title "Controlling a rabbit population worksheet" %}
-{% description "A worksheet on determining a strategy for maintaining a stable population of rabbits in an environment without predators." %}
 
 {% navigation_tag "fixednumber"  "Fixed" %}
 <h4>1. Removing a fixed number</h5>
@@ -59,4 +56,3 @@ where you must choose the form for the function $h(p_t)$.
 <p class="question medspacebelow">One might view the step of introducing parameters as optional, as one could have a rabbit growth model with any parameters (such as $p_{t+1}-p_t=0.2p_t$).  Yet, the introduction of parameters such as $r$, $h$, and $p_0$ were crucial to the analysis of the model.  Explain the role these parameters played in the model analysis.  What questions would have been difficult, if not impossible, to answer without introducing parameters?</p>
 
 <p class="question medspacebelow">When you introduced a new form for $h(p_t)$ did you include any parameters?  If you did, what role did the parameters play?  If you didn't, what numbers in your $h(p_t)$ could you change to parameters?  How can parameters help you understand how your control strategy works?</p>
-{% endblock %}

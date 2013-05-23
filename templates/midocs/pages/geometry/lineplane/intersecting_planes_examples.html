@@ -1,13 +1,5 @@
-{% extends "midocs/page_base.html" %}
 
-{% load mi_tags %}
 
-{% block content %}
-{% index_entry "plane" "intersecting"%}
-{% index_entry "line" "parametrization"%}
-{% index_entry "parametrization" "line"%}
-{% title "Intersecting planes example" %}
-{% description "Example showing how to find the solution of two intersecting planes and write the result as a parametrization of the line." %}
 
 <p>Find intersection of planes given by 
 $x+y+z+1=0$ and $x + 2y + 3z +4=0$.</p>
@@ -60,4 +52,3 @@ We can write our parametrization of the line as
 \end{align*}
 </p>
 
-{%endblock%}

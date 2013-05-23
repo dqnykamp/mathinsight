@@ -1,14 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% index_entry "Taylor polynomial" "problems" %}
-{% title "Linear and quadratic Taylor polynomial problems" %}
-{% description "Sample problems involving first and second order Taylor polynomials." %}
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
 <h4>Problem {{probnum}}</h4>
@@ -62,4 +55,3 @@ ol ol {list-style-type: lower-roman;}
 <p>One you have worked on a few problems, you can compare your solutions to the {% intlink "linear_quadratic_taylor_polynomial_problem_solutions" %}ones we came up with{%endintlink%}.</p>
 
 
-{% endblock %}

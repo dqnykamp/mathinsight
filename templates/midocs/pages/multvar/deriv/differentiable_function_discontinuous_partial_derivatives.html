@@ -1,7 +1,3 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}{% block content %}
-{% index_entry "differentiability" "discontinuous partial derivatives"%}
-{% title "A differentiable function with discontinuous partial derivatives" %}
-{% description "Illustration that discontinuous partial derivatives need not exclude a function from being differentiable."%}
 
 <p>The {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%} states that continuous partial derivatives are sufficient for a function to be {% intlink "differentiability_multivariable_introduction" %}differentiable{%endintlink%}.
 It's important to recognize, however, that the differentiability theorem does <b>not</b> allow you to make any conclusions just from the fact that a function has discontinuous partial derivatives. 
@@ -55,4 +51,3 @@ In the same way, one can show that $\pdiff{f}{y}$ has wild oscillations and is d
 Although counterexamples such as these are strange functions, studying them can help you understand more precisely what your mathematics is telling you.
 This function should prevent you from misinterpreting the {% intlink "differentiability_multivariable_theorem" %}differentiability theorem{%endintlink%}, as you now know that continuous partial derivatives imply differentiability but not vice-versa.</p>
 
-{%endblock%}

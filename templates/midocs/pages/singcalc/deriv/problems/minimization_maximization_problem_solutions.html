@@ -1,13 +1,7 @@
-{% extends "midocs/page_base.html" %}{% load mi_tags %}
-{% block extrastyle2 %}
 <style type="text/css">
 ol {list-style-type: lower-alpha;}
 ol ol {list-style-type: lower-roman;}
 </style>
-{% endblock %}
-{% block content %}
-{% title "Solutions to minimization and maximization problems" %}
-{% description "Solutions to sample problems illustrating minimization and maximization." %}
 
 
 {% counter probnum %}{% navigation_tag "problem{{ probnum }}" "Problems" "Problem {{ probnum }}" %}
@@ -198,6 +192,5 @@ Then, the derivative is simply
 \end{align*}
 The maximum occurs at $k=1/3$.  One-third of the fish should be harvested each year ot maximize the first harvest.  The average number of fish in the lake is $p(1/3)=4c/9$.  The number of fish harvested is $g(1/3) = 4c/27$.</p>
 
-{%endblock%}
 
  

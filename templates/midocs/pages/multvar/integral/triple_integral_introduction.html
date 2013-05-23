@@ -1,19 +1,9 @@
-{% extends "midocs/page_base.html" %}
-{% load mi_tags %}
-{% block extrastyle2 %}
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
   TeX: { extensions: ["cancel.js"] }
 });
 </script>
-{% endblock %}
 
-{% block content %}
-{% index_entry "integral" "triple"%}
-{% index_entry "triple integral" %}
-{% index_entry "triple integral" "definition"%}
-{% title "Introduction to triple integrals" %}
-{% description "An introduction to the definition of triple integrals as well as their formulation as iterated integrals." %}
 
 <p>Remember how {% intlink "double_integral_introduction" %}double 
 integrals{%endintlink%} can be written as
@@ -158,6 +148,5 @@ integral limits depend on $x$.</p>
 <p>A tricky part of triple integrals is determining the limits of integration (or bounds).  Two methods for determining bounds are the {% intlink "triple_integral_shadow_method" %}shadow method{%endintlink%} and the {% intlink "triple_integral_cross_section_method" %}cross section method{%endintlink%}.  Nothing beats practice in learning to compute triple integrals, and you can try your hand on some of these
  {% intlink "triple_integral_examples" %}triple integral examples{%endintlink%}.</p>
 
-{%endblock%}
 
 
