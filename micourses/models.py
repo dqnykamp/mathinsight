@@ -84,7 +84,14 @@ class ModuleAssessment(models.Model):
     
 
 class StudentAssessmentAttempt(models.Model):
-    user = models.ForeignKey(User)
+    student = models.ForeignKey(User)
     module_assessment = models.ForeignKey(ModuleAssessment)
-    date = models.DateTimeField()
+    datetime = models.DateTimeField()
     score = models.IntegerField()
+
+    # find maximum score for all attempts 
+    # of this student on this moduleassesment
+    def maximum_score(self):
+        pass
+        
+        
