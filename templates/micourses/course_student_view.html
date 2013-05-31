@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Main page for {{course}}{%endblock%}
+
+{% block content %}
+<h3>{{course}}</h3>
+
+{% if course.associated_thread %}
+<p>Thread: <a href="{% url 'mithreads-thread' course.associated_thread.code %}">{{course.associated_thread}}</a></p>
+{% endif%}
+
+{% if course.track_attendance %}
+<p>To-date attendance: <a href="{% url 'mic-attendancedisplay' %}">{{ student.percent_attendance|floatformat:"0" }}%</a></p>
+{% endif %}
+
+{% if upcoming_assessments %}
+<h4>Upcoming assessments</h4>
+<table class="basic">
+<tr><th>Assessment</th><th>Initial due date</th><th>Adjusted due date</th><th>Score</th></tr>
+{% for assessment in upcoming_assessments %}
+<tr><td>{% assessment_user_can_view assessment.1.assessment student.user as canview %}{% if canview %}{% intlink assessment.1.assessment %}{%endintlink%}{%else%}{{assessment.1.assessment.annotated_title}}{%endif%}</td><td>{{assessment.1.initial_due_date}}</td><td><a href='{% url 'mic-adjustedduedatecalculation' module_code=assessment.1.module.code assessment_code=assessment.1.assessment.code %}'>{{assessment.0}}</a></td><td><a href='{% url 'mic-assessmentattempts' module_code=assessment.1.module.code assessment_code=assessment.1.assessment.code %}'>{% assessment_student_score assessment.1 student %}</a></td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% for module in course.module_set.all %}
+<h4>{{module}}</h4>
+<table class="basic">
+<tr><th>Assessment</th><th>Score</th></tr>
+{% for assessment in module.moduleassessment_set.all %}
+<tr><td>{% assessment_user_can_view assessment.assessment student.user as canview %}{% if canview %}{% intlink assessment.assessment %}{%endintlink%}{%else%}{{assessment.assessment.annotated_title}}{%endif%}</td><td><a href='{% url 'mic-assessmentattempts' module_code=module.code assessment_code=assessment.assessment.code %}'>{% assessment_student_score assessment student %}</a></td></tr>
+{% endfor %}
+</table>
+
+
+{% endfor %}
+
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Select course for {{request.user.courseuser.get_full_name}}{%endblock%}
+
+{% block content %}
+<p>{{request.user.courseuser.get_full_name}} is enrolled in more than one active course on Math Insight.</p>
+
+<p>Select a course to continue.</p>
+{% for course in request.user.courseuser.active_courses %}
+<p>{{ course }}<br/>
+<form action="{% url 'mic-coursemain' %}" method="post">{% csrf_token %}
+<input type="hidden" id="id_course" name="course" value="{{course.code}}">
+<input type="submit" value="Select course" />
+</form>
+{% endfor %}
+
+{% endblock %}

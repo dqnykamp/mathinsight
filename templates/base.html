@@ -94,7 +94,13 @@
       <input type="button" value="x" class="unstick" onclick="unstick(document.getElementById('pagenav'))"/>
 </nav>
 {% endblock %}
-
+<div id="login">
+  <div class="ym-wrapper">
+    <div class="ym-wbox" style="text-align: right; padding-top:0; padding-bottom: 0;">
+      {% if user.is_authenticated %}logged in as {{ user}}  (<a href="{% url 'mi-logout' %}">log out</a>){%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
+  </div>
+  </div>
+</div>
 <div id="main">
   <div class="ym-wrapper">
     <div class="ym-wbox">

@@ -72,7 +72,7 @@ def pluralize_word(parser, token):
     # check if word has a filter, if so add "_plural" before |
     word_string = bits[2]
     if "|" in word_string:
-        word_string = word_string.replace("|","_plural",1)
+        word_string = word_string.replace("|","_plural|",1)
     else:
         word_string = word_string.rstrip() + "_plural"
     word_plural=parser.compile_filter(word_string)
@@ -858,3 +858,39 @@ def answer_blank(parser, token):
 
 
     return AnswerBlankNode(answer_expression, answer_expression_string, kwargs)
+
+
+class AssessmentUserCanViewNode(Node):
+    def __init__(self, assessment, user, asvar):
+        self.assessment = assessment
+        self.user = user
+        self.asvar = asvar
+    def render(self, context):
+        assessment = self.assessment.resolve(context)
+        user = self.user.resolve(context)
+        try:
+            can_view=assessment.user_can_view(user)
+        except:
+            can_view= False
+
+        if self.asvar:
+            context[self.asvar]=can_view
+            return ""
+        else:
+            return can_view
+
+
+@register.tag
+def assessment_user_can_view(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 3:
+        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+    assessment = parser.compile_filter(bits[1])
+    user = parser.compile_filter(bits[2])
+    
+    if len(bits)==5 and bits[3]=='as':
+        asvar=bits[4]
+    else:
+        asvar=None
+
+    return AssessmentUserCanViewNode(assessment, user, asvar)

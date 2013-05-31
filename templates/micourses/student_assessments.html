@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Assessments of {{ student.first_name }} {{ student.last_name }}{%endblock%}
+
+{% block content %}
+
+{% for course in student.course_set.all %}
+<h3>{{course}}</h3>
+
+{% for module in course.module_set.all %}
+<h4>{{module}}</h4>
+<table class="basic">
+<tr><th>Assessment</th><th>Score</th></tr>
+{% for assessment in module.moduleassessment_set.all %}
+<tr><td>{% assessment_user_can_view assessment.assessment student.user as canview %}{% if canview %}{% intlink assessment.assessment %}{%endintlink%}{%else%}{{assessment.assessment.annotated_title}}{%endif%}</td><td><a href='{% url 'mic-assessmentattempts' course_code=course.code module_code=module.code assessment_code=assessment.assessment.code %}'>{% assessment_student_score assessment student %}</a></td></tr>
+{% endfor %}
+</table>
+
+
+{% endfor %}
+
+{% endfor %}
+
+{% endblock %}

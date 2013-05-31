@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Adjusted due date calculation for: {{module_assessment.assessment}}{%endblock%}
+
+{% block content %}
+<h3>Adjusted due date calculation for: {{module_assessment.assessment}}</h3>
+
+<p>Initial due date: {{ module_assessment.initial_due_date }}<br/>
+Latest possible due date: {{module_assessment.final_due_date}}<br/>
+Date of latest attendance data: {{ course.last_attendance_date }}<br/>
+Attendance threshold: {{ course.attendance_threshold_percent }}%<br/>
+Resulting due date: <b>{{adjusted_due_date}}</b></p>
+
+<h4>Details of calculation</h4>
+
+{% if calculation_list %}
+<table class="basic">
+<tr><th>Initial due date</th><th>End of previous week</th><th>Have data</th><th>Attendance percent</th><th>Reached threshold</th><th>New due date</th><th>At latest due date</th></tr>
+{% for calculation in calculation_list %}
+<tr><td>{{calculation.initial_date}}</td><td>{{calculation.previous_week_end}}</td><td>{% if calculation.attendance_data %}Y{%else%}N{%endif%}</td><td>{{calculation.attendance_percent}}</td><td>{% if calculation.reached_threshold %}Y{%else%}N{%endif%}</td><td>{{calculation.resulting_date}}</td><td>{% if calculation.reached_latest %}Y{% else %}N{% endif %}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No data (yet)</p>
+{% endif %}
+
+{% endblock %}

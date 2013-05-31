@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Update attendance for {{course}}{%endblock%}
+
+{% block content %}
+{% if message %}
+<p class="info">{{ message}}</p>
+{%endif %}
+<p>Update attendance of individual for {{course}}.</p>
+
+<form action="{% url 'mic-updateindividualattendance' %}" method="get">
+{{select_student_form.as_p}}
+<input type="submit" value="Select student" />
+</form>
+
+{% if student %}
+<form action="{% url 'mic-updateindividualattendance' %}" method="post">{% csrf_token %}
+<ul>
+{{attendance_dates_form.as_ul}}
+</ul>
+
+{% comment %}
+<input type="hidden" name="student" value={{student}}>
+  <ul>
+    {% for date in attendance %}
+    <li><label for="id_attendance_date_{{forloop.counter}}"><input id="id_attendance_date_{{forloop.counter}}" name="attendance_dates" type="checkbox" value="{{date.date}}" {% if date.present %}checked{%endif%} />{{date.date}}</label></li>
+{% endfor %}
+</ul>
+{% endcomment %}
+
+ <input type="submit" value="Update attendance" />
+ 
+</form>
+{% endif %}
+
+{% endblock %}
