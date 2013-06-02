@@ -1,10 +1,11 @@
 from dajaxice.decorators import dajaxice_register
 from dajax.core import Dajax
+from django.core.exceptions import ObjectDoesNotExist
 #from dajaxice.utils import deserialize_form
 from mitesting.forms import MultipleChoiceQuestionForm, MathWriteInForm
 from mitesting.models import Question
 from midocs.models import Page
-from micourses.models import QuestionStudentAnswer
+from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser
 from mithreads.models import Thread, ThreadSection, ThreadContent
 from mithreads.forms import ThreadSectionForm, ThreadContentForm
 from django.contrib.contenttypes.models import ContentType
@@ -1148,6 +1149,40 @@ def cancel_edit_content(request, threadcontent_id):
         thread_content=ThreadContent.objects.get(id=threadcontent_id)
         dajax.assign('#thread_content_%s' % threadcontent_id, 'innerHTML', \
                          thread_content.return_html_innerstring(True))
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+
+
+@dajaxice_register
+def record_course_content_completion(request, course_thread_content_id, 
+                                     student_id, complete=True, skip=False):
+    dajax = Dajax()
+
+    try:
+        content=CourseThreadContent.objects.get(id=course_thread_content_id)
+
+        student=CourseUser.objects.get(id=student_id)
+
+        # if content complete record exists, modify record
+        try:
+            scc=student.studentcontentcompletion_set.get(content=content)
+            scc.complete=complete
+            scc.skip=skip
+            scc.save()
+
+         # if content complete record exists, add record
+        except ObjectDoesNotExist:
+            student.studentcontentcompletion_set.create \
+                (content=content, complete=complete, skip=skip)
+            
+        # update html to show complete
+        dajax.assign("#id_course_completion_%s" % course_thread_content_id,
+                     'innerHTML', content.complete_skip_button_html(student))
+
+ 
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
 

@@ -9,6 +9,10 @@ var Dajaxice = {
     
     midocs: {
     
+    record_course_content_completion: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.record_course_content_completion', 'POST', callback_function, argv, custom_settings);
+    },
+
     confirm_delete_content: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.confirm_delete_content', 'POST', callback_function, argv, custom_settings);
     },

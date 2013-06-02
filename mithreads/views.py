@@ -20,13 +20,28 @@ def thread_view(request, thread_code):
     else:
         include_edit_link = False
 
+    # if user is logged in and has active a course associated with thread
+    # show course completion buttons
+    show_course_completetion_buttons = False
+    course = None
+    student = None
+    if request.user.is_authenticated():
+        try:
+            student = request.user.courseuser
+            course = student.return_selected_course()
+            if course not in thread.course_set.all():
+                course = None
+        except:
+            pass
 
     return render_to_response \
-        ('mithreads/thread_detail.html', {'thread': thread, 
-                                          'include_edit_link': include_edit_link,
-                                          'thread_list': Thread.objects.all(),
-                                          'noanalytics': noanalytics,
-                                          },
+        ('mithreads/thread_detail.html', \
+             {'thread': thread, 
+              'include_edit_link': include_edit_link,
+              'thread_list': Thread.objects.all(),
+              'student': student, 'course': course,              
+              'noanalytics': noanalytics,
+              },
          context_instance=RequestContext(request))
 
 

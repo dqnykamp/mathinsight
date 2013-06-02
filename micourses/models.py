@@ -3,7 +3,7 @@ from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 import datetime
-
+import settings
 
 def day_of_week_to_python(day_of_week):
     if day_of_week.upper() == 'S':
@@ -120,206 +120,6 @@ class CourseAssessmentCategory(models.Model):
     class Meta:
         verbose_name_plural = 'Course assessment categories'
 
-class Module(models.Model):
-    code = models.SlugField(max_length=50)
-    name = models.CharField(max_length=50)
-    description = models.CharField(max_length=400,blank=True)
-    course = models.ForeignKey('Course')
-    assessments = models.ManyToManyField('mitesting.Assessment', through='ModuleAssessment')
-    sort_order = models.FloatField(default=0.0)
-    
-    def __unicode__(self):
-        return self.name
-
-    class Meta:
-        unique_together = ("course","code")
-
-
-
-class ModuleAssessment(models.Model):
-
-    AGGREGATE_CHOICES = (
-        ('Max', 'Maximum'),
-        ('Avg', 'Average'),
-        ('Las', 'Last'),
-    )
-
-    module=models.ForeignKey(Module)
-    assessment=models.ForeignKey('mitesting.Assessment')
-    initial_due_date=models.DateField()
-    final_due_date=models.DateField()
-    assessment_category = models.ForeignKey(AssessmentCategory, blank=True, null=True)
-    points = models.IntegerField(default=0)
-    required_for_grade = models.ForeignKey(GradeLevel, blank=True, null=True)
-    required_to_pass = models.BooleanField()
-    max_number_attempts = models.IntegerField(default=1)
-    attempt_aggregation = models.CharField(max_length=3,
-                                           choices = AGGREGATE_CHOICES,
-                                           default = 'Max')
-    sort_order = models.FloatField(default=0.0)
-    
-    def __unicode__(self):
-        return "%s for %s" % (self.assessment, self.module)
-
-    class Meta:
-        unique_together = ("module","assessment")
-
-    def student_score(self, student):
-        # return maximum or score of all student's assessment attempts, 
-        # depending on attempt_aggregation
-        # or zero if no attempt
-        if self.attempt_aggregation=='Avg':
-            score = self.studentassessmentattempt_set.filter(student=student).aggregate(score = Avg('score'))['score']
-        elif self.attempt_aggregation=='Las':
-            score = self.studentassessmentattempt_set.filter(student=student).latest('datetime').score
-        else:
-            score = self.studentassessmentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
-        if score:
-            return score
-        else:
-            return 0
-
-
-    def attempt_aggregation_string(self):
-        if self.attempt_aggregation=='Avg':
-            return "Average"
-        elif self.attempt_aggregation=='Las':
-            return "Last"
-        else:
-            return "Maximum"
-
-
-    def get_initial_due_date(self, student=None):
-        if not student:
-            return self.initial_due_date
-        try:
-            return self.manualduedateadjustment_set.get(student=student)\
-                .initial_due_date
-        except:
-            return self.initial_due_date
-
-    def get_final_due_date(self, student=None):
-        if not student:
-            return self.final_due_date
-        try:
-            return self.manualduedateadjustment_set.get(student=student)\
-                .final_due_date
-        except:
-            return self.final_due_date
-
-    def adjusted_due_date(self, student):
-        # adjust due date in increments of weeks
-        # based on percent attendance at end of each previous week
-
-        today = datetime.date.today()
-        
-        due_date = self.get_initial_due_date(student)
-        final_due_date = self.get_final_due_date(student)
-        course = self.module.course        
-        while due_date < today + datetime.timedelta(7):
-            previous_week_end = \
-                course.previous_week_end(due_date)
-
-            # only update if have attendance through previous_week_end
-            if not course.last_attendance_date \
-                    or course.last_attendance_date < previous_week_end:
-                break
-
-            if student.percent_attendance \
-                    (course=course, date=previous_week_end) \
-                    < course.attendance_threshold_percent:
-                break
-            
-            due_date += datetime.timedelta(7)
-            if due_date >= final_due_date:
-                due_date = final_due_date
-                break
-
-        return due_date
-
-
-
-    def adjusted_due_date_calculation(self, student):
-        # return data for calculation of adjust due date
-        # adjust due date in increments of weeks
-        # based on percent attendance at end of each previous week
-
-        today = datetime.date.today()
-        
-        due_date = self.get_initial_due_date(student)
-        final_due_date = self.get_final_due_date(student)
-        course = self.module.course        
-        
-        calculation_list = []
-        while due_date < today + datetime.timedelta(7):
-
-            previous_week_end = \
-                course.previous_week_end(due_date)
-
-            calculation = {'initial_date': due_date,
-                           'previous_week_end': previous_week_end,
-                           'attendance_data': False,
-                           'attendance_percent': 'NA',
-                           'reached_threshold': False,
-                           'resulting_date': due_date,
-                           'reached_latest': False,
-                           }
-
-            # only update if have attendance through previous_week_end
-            if not course.last_attendance_date \
-                    or course.last_attendance_date < previous_week_end:
-                calculation_list.append(calculation)
-                break
-
-            calculation['attendance_data']=True
-
-            attendance_percent = student.percent_attendance \
-                    (course=course, date=previous_week_end)
-            calculation['attendance_percent'] = round(attendance_percent,1)
-
-            if attendance_percent < course.attendance_threshold_percent:
-                calculation_list.append(calculation)
-                break
-
-            calculation['reached_threshold'] = True
-            
-            due_date += datetime.timedelta(7)
-            if due_date >= final_due_date:
-                due_date = final_due_date
-                calculation['resulting_date'] = due_date
-                calculation['reached_latest'] = True
-                calculation_list.append(calculation)
-                break
-
-            calculation['resulting_date'] = due_date
-            calculation_list.append(calculation)
-
-        return calculation_list
-
-
-class ManualDueDateAdjustment(models.Model):
-    module_assessment = models.ForeignKey(ModuleAssessment)
-    student = models.ForeignKey(CourseUser)
-    initial_due_date=models.DateField()
-    final_due_date=models.DateField()
-    
-    class Meta:
-        unique_together = ("module_assessment","student")
- 
-
-
-class StudentAssessmentAttempt(models.Model):
-    student = models.ForeignKey(CourseUser)
-    module_assessment = models.ForeignKey(ModuleAssessment)
-    datetime = models.DateTimeField()
-    score = models.IntegerField()
-        
-    def __unicode__(self):
-        return "%s attempt on %s" % (self.student, self.module_assessment)
-
-    class Meta:
-        ordering = ['datetime']
-
 
 class AttendanceDate(models.Model):
     course = models.ForeignKey('Course')
@@ -344,12 +144,13 @@ class Course(models.Model):
     description = models.CharField(max_length=400,blank=True)
     assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory')
     enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment')
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
-    active = models.BooleanField()
+    active = models.BooleanField(default=False)
     thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
-    track_attendance = models.BooleanField()
+    track_attendance = models.BooleanField(default=False)
+    adjust_due_date_attendance = models.BooleanField(default=False)
     last_attendance_date = models.DateField(blank=True, null=True)
     attendance_end_of_week = models.CharField(max_length = 2, 
                                               default='F')
@@ -366,35 +167,31 @@ class Course(models.Model):
         )
 
     def points_for_assessment_category(self, assessment_category):
-        return self.module_set.filter(moduleassessment__assessment_category=assessment_category).aggregate(total_points=Sum('moduleassessment__points'))['total_points']
+        return self.coursethreadcontent_set\
+            .filter(assessment_category=assessment_category)\
+            .aggregate(total_points=Sum('points'))['total_points']
         
     def total_points(self):
-        return self.module_set.aggregate(total_points=Sum('moduleassessment__points'))['total_points']
+        return self.coursethreadcontent_set\
+            .aggregate(total_points=Sum('points'))['total_points']
         
     def points_for_grade_level(self, grade_level):
-        return self.module_set.filter(moduleassessment__required_for_grade=grade_level).aggregate(total_points=Sum('moduleassessment__points'))['total_points']
+        return self.coursethreadcontent_set\
+            .filter(required_for_grade=grade_level)\
+            .aggregate(total_points=Sum('points'))['total_points']
       
-    def points_for_assessment_category_grade_level(self, assessment_category, grade_level):
-        return self.module_set.filter(moduleassessment__assessment_category=assessment_category, moduleassessment__required_for_grade=grade_level).aggregate(total_points=Sum('moduleassessment__points'))['total_points']
+    def points_for_assessment_category_grade_level(self, assessment_category, 
+                                                   grade_level):
+        return self.coursethreadcontent_set\
+            .filter(assessment_category=assessment_category, \
+                        required_for_grade=grade_level) \
+                        .aggregate(total_points=Sum('points'))['total_points']
  
-    # def assessment_category_points(self):
-    #     point_dict={}
-    #     for gc in self.assessment_categories.all():
-            
-    #         assessment_category_list = self.module_set.values('moduleassessment__assessment_category__name').annotate(totalpoints=Sum('moduleassessment__points'))
-        
-        
-    #     for gc in assessment_category_list:
-    #         point_dict[gc['moduleassessment__assessment_category__name']] = gc['totalpoints']
-        
-    #     return point_dict
 
-    def moduleassessments_for_assessment_category(self, assessment_category):
-        return ModuleAssessment.objects.filter(module__course=self).filter(assessment_category=assessment_category)
+    def content_for_assessment_category(self, assessment_category):
+        return self.coursethreadcontent_set\
+            .filter(assessment_category=assessment_category)
 
-    # def current_assessments(self):
-    #     return ModuleAssessments.objects.filter(module__course=self).filter(publish_date__lte=datetime.date.today(),)
-    
 
     def generate_attendance_dates(self):
         
@@ -440,12 +237,6 @@ class Course(models.Model):
         
         return self.attendancedate_set.count()
 
-    def return_attendencedate_string(self):
-        string_list = []
-        for attendancedate in self.attendancedate_set.all():
-            string_list.append(str(attendancedate.date))
-        return ", ".join(string_list)
-            
 
     def find_next_attendance_date(self, last_attendance_date=None):
         if not last_attendance_date:
@@ -518,15 +309,16 @@ class Course(models.Model):
 
         week_later = date+datetime.timedelta(7)
 
-        # create list of module assessments with 
+        # create list of incomplete assessments with 
         # initial due dates within a week and current final due dates
         # (this initial filter doesn't account for any 
         # manual due date adjustments)
-        upcoming_assessments= ModuleAssessment.objects\
-            .filter(module__course=self)\
+        upcoming_assessments= self.coursethreadcontent_set\
             .filter(initial_due_date__lt = week_later)\
-            .filter(final_due_date__gte = date)
-        
+            .filter(final_due_date__gte = date) \
+            .exclude(studentcontentcompletion__student=student,\
+                         studentcontentcompletion__complete=True)
+
         # for each of this assessments, calculate adjusted due dates
         adjusted_due_date_assessments = []
         for assessment in upcoming_assessments:
@@ -543,15 +335,20 @@ class Course(models.Model):
             else:
                 break
 
-        # return up to five
-        return adjusted_due_date_assessments[:5]
+        return adjusted_due_date_assessments
 
-    
+    def next_items(self, student):
+        return self.coursethreadcontent_set\
+            .exclude(studentcontentcompletion__student=student,\
+                     studentcontentcompletion__complete=True)\
+            .exclude(studentcontentcompletion__student=student,\
+                     studentcontentcompletion__skip=True)[:5]
+
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
     date_enrolled = models.DateField()
-    withdrew = models.BooleanField()
+    withdrew = models.BooleanField(default=False)
     
     def __unicode__(self):
         return "%s enrolled in %s" % (self.student, self.course)
@@ -569,17 +366,18 @@ class CourseThreadContent(models.Model):
 
     course = models.ForeignKey(Course)
     thread_content = models.ForeignKey('mithreads.ThreadContent')
+    instructions = models.TextField(blank=True, null=True)
     initial_due_date=models.DateField(blank=True, null=True)
     final_due_date=models.DateField(blank=True, null=True)
     assessment_category = models.ForeignKey(AssessmentCategory, blank=True, null=True)
     points = models.IntegerField(default=0)
     required_for_grade = models.ForeignKey(GradeLevel, blank=True, null=True)
-    required_to_pass = models.BooleanField()
+    required_to_pass = models.BooleanField(default=False)
     max_number_attempts = models.IntegerField(default=1)
     attempt_aggregation = models.CharField(max_length=3,
                                            choices = AGGREGATE_CHOICES,
                                            default = 'Max')
-    optional = models.BooleanField()
+    optional = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0.0)
     
     class Meta:
@@ -598,20 +396,265 @@ class CourseThreadContent(models.Model):
                 % self.course.thread
 
 
-class StudentContentCompletion(models.Model):
+    def student_score(self, student):
+        # return maximum or score of all student's assessment attempts, 
+        # depending on attempt_aggregation
+        # or zero if no attempt
+        if self.attempt_aggregation=='Avg':
+            score = self.studentcontentattempt_set.filter(student=student).aggregate(score = Avg('score'))['score']
+        elif self.attempt_aggregation=='Las':
+            score = self.studentcontentattempt_set.filter(student=student).latest('datetime').score
+        else:
+            score = self.studentcontentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
+        if score:
+            return score
+        else:
+            return 0
+
+
+    def attempt_aggregation_string(self):
+        if self.attempt_aggregation=='Avg':
+            return "Average"
+        elif self.attempt_aggregation=='Las':
+            return "Last"
+        else:
+            return "Maximum"
+
+
+    def get_initial_due_date(self, student=None):
+        if not student:
+            return self.initial_due_date
+        try:
+            return self.manualduedateadjustment_set.get(student=student)\
+                .initial_due_date
+        except:
+            return self.initial_due_date
+
+    def get_final_due_date(self, student=None):
+        if not student:
+            return self.final_due_date
+        try:
+            return self.manualduedateadjustment_set.get(student=student)\
+                .final_due_date
+        except:
+            return self.final_due_date
+
+    def adjusted_due_date(self, student):
+        # adjust due date in increments of weeks
+        # based on percent attendance at end of each previous week
+
+        due_date = self.get_initial_due_date(student)
+        final_due_date = self.get_final_due_date(student)
+
+        if not due_date or not final_due_date:
+            return None
+        
+        today = datetime.date.today()
+        
+        course = self.course        
+        while due_date < today + datetime.timedelta(7):
+            previous_week_end = \
+                course.previous_week_end(due_date)
+
+            # only update if have attendance through previous_week_end
+            if not course.last_attendance_date \
+                    or course.last_attendance_date < previous_week_end:
+                break
+
+            if student.percent_attendance \
+                    (course=course, date=previous_week_end) \
+                    < course.attendance_threshold_percent:
+                break
+            
+            due_date += datetime.timedelta(7)
+            if due_date >= final_due_date:
+                due_date = final_due_date
+                break
+
+        return due_date
+
+
+
+    def adjusted_due_date_calculation(self, student):
+        # return data for calculation of adjust due date
+        # adjust due date in increments of weeks
+        # based on percent attendance at end of each previous week
+
+        due_date = self.get_initial_due_date(student)
+        final_due_date = self.get_final_due_date(student)
+        
+        if not due_date or not final_due_date:
+            return []
+
+        today = datetime.date.today()
+
+        course = self.course        
+        
+        calculation_list = []
+        while due_date < today + datetime.timedelta(7):
+
+            previous_week_end = \
+                course.previous_week_end(due_date)
+
+            calculation = {'initial_date': due_date,
+                           'previous_week_end': previous_week_end,
+                           'attendance_data': False,
+                           'attendance_percent': 'NA',
+                           'reached_threshold': False,
+                           'resulting_date': due_date,
+                           'reached_latest': False,
+                           }
+
+            # only update if have attendance through previous_week_end
+            if not course.last_attendance_date \
+                    or course.last_attendance_date < previous_week_end:
+                calculation_list.append(calculation)
+                break
+
+            calculation['attendance_data']=True
+
+            attendance_percent = student.percent_attendance \
+                    (course=course, date=previous_week_end)
+            calculation['attendance_percent'] = round(attendance_percent,1)
+
+            if attendance_percent < course.attendance_threshold_percent:
+                calculation_list.append(calculation)
+                break
+
+            calculation['reached_threshold'] = True
+            
+            due_date += datetime.timedelta(7)
+            if due_date >= final_due_date:
+                due_date = final_due_date
+                calculation['resulting_date'] = due_date
+                calculation['reached_latest'] = True
+                calculation_list.append(calculation)
+                break
+
+            calculation['resulting_date'] = due_date
+            calculation_list.append(calculation)
+
+        return calculation_list
+
+
+    def complete_skip_button_html(self, student, full_html=False):
+        if not self.course in student.course_set.all():
+            return ""
+        
+        html_string = ""
+
+        # check if student already completed content
+        try:
+            completed = self.studentcontentcompletion_set\
+                .get(student=student).complete
+        except:
+            completed = False
+
+            
+        # if completed, show checkmark
+        if completed:
+            html_string += \
+                '<img src="%sadmin/img/icon-yes.gif" alt="Complete" />' \
+                % settings.STATIC_URL
+
+        else:
+            # if not completed, check if skipped
+            try:
+                skipped = self.studentcontentcompletion_set\
+                    .get(student=student).skip
+            except:
+                skipped = False
+
+            # if skipped, give option to remove skip
+            if skipped:
+                click_command = "Dajaxice.midocs.record_course_content_completion"\
+                    + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': false })" \
+                    % (self.id, student.id)
+            
+                html_string += '[skipped] ' + \
+                    '<input type="button" class="coursecontentbutton" value="Remove skip" onclick="%s;">' \
+                    % (click_command)
+
+            # if not complete or skipped, 
+            # give option to mark assessment as complete or skip
+            # or to mark other content as done
+            else:
+            
+                if self.initial_due_date:
+                    is_assessment = True
+                else:
+                    is_assessment = False
+
+                if is_assessment:
+                    click_command = "Dajaxice.midocs.record_course_content_completion"\
+                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
+                        % (self.id, student.id)
+            
+                    html_string += \
+                        '<input type="button" class="coursecontentbutton" value="Complete" onclick="%s;">' \
+                        % (click_command)
+
+                    click_command = "Dajaxice.midocs.record_course_content_completion"\
+                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': true })" \
+                        % (self.id, student.id)
+            
+                    html_string += \
+                        ' <input type="button" class="coursecontentbutton" value="Skip" onclick="%s;">' \
+                        % (click_command)
+
+                else:
+                    click_command = "Dajaxice.midocs.record_course_content_completion"\
+                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
+                        % (self.id, student.id)
+            
+                    html_string += \
+                        '<input type="button" class="coursecontentbutton" value="Done" onclick="%s;">' \
+                        % (click_command)
+
+            
+        # if full_html, mark section for later ajax changes
+        if full_html:
+            html_string = '<span id="id_course_completion_%s">%s</span>' \
+                % (self.id, html_string)
+        
+        return html_string
+
+
+class ManualDueDateAdjustment(models.Model):
+    content = models.ForeignKey(CourseThreadContent)
+    student = models.ForeignKey(CourseUser)
+    initial_due_date=models.DateField()
+    final_due_date=models.DateField()
+    
+    class Meta:
+        unique_together = ("content","student")
+
+
+class StudentContentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
     content = models.ForeignKey(CourseThreadContent)
     datetime = models.DateTimeField(auto_now_add=True)
-    score = models.IntegerField()
-    complete = models.BooleanField()
-    skip = models.BooleanField()
+    score = models.IntegerField(null=True, blank=True)
 
     def __unicode__(self):
-        return "%s attempt on %s" % (self.student, self.module_assessment)
+        return "%s attempt on %s" % (self.student, self.content)
 
     class Meta:
         ordering = ['datetime']
 
+
+class StudentContentCompletion(models.Model):
+    student = models.ForeignKey(CourseUser)
+    content = models.ForeignKey(CourseThreadContent)
+    complete = models.BooleanField(default=False)
+    skip = models.BooleanField(default=False)
+    datetime = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return "%s attempt on %s" % (self.student, self.content)
+
+    class Meta:
+        unique_together = ['student', 'content']
 
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
@@ -620,8 +663,8 @@ class QuestionStudentAnswer(models.Model):
     seed = models.CharField(max_length=50, blank=True, null=True)
     credit = models.FloatField()
     datetime =  models.DateTimeField(auto_now_add=True)
-    course_content = models.ForeignKey(StudentContentCompletion, blank=True,
-                                       null=True)
+    course_content_attempt = models.ForeignKey(StudentContentAttempt,
+                                               blank=True, null=True)
 
     def __unicode__(self):
         return  "%s" % self.answer

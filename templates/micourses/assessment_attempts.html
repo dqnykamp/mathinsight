@@ -5,13 +5,12 @@
 
 {% block content %}
 
-<h4>Assessment: {{module_assessment.assessment}}</h4>
+<h4>Assessment: {{content.thread_content.content_object}}</h4>
 
-<p>Module: {{module}}</p>
 
 <table class="basic">
 <thead><tr><th>Date</th><th>Score</th></tr></thead>
-<tfoot><tr><td>Assessment score (based on {{module_assessment.attempt_aggregation_string}})</td><td>{% assessment_student_score module_assessment user %}</td></tr></tfoot>
+<tfoot><tr><td>Assessment score (based on {{content.attempt_aggregation_string}})</td><td>{% assessment_student_score content user %}</td></tr></tfoot>
 {% for attempt in assessment_attempts %}
 <tr><td>{{attempt.datetime}}</td><td>{{attempt.score}}</td></tr>
 {% endfor %}

@@ -587,8 +587,9 @@ class Assessment(models.Model):
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view_solution")
-    allow_solution_buttons = models.BooleanField()
+    allow_solution_buttons = models.BooleanField(default=False)
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
+    hand_graded_component = models.BooleanField(default=True)
 
     def __unicode__(self):
         return  self.name
@@ -993,8 +994,8 @@ class RandomWord(models.Model):
     option_list = models.CharField(max_length=400)
     plural_list = models.CharField(max_length=400, blank=True, null=True)
     group = models.CharField(max_length=50, blank=True, null=True)
-    sympy_parse = models.BooleanField()
-    treat_as_function = models.BooleanField()
+    sympy_parse = models.BooleanField(default=False)
+    treat_as_function = models.BooleanField(default=False)
 
     def __unicode__(self):
         return  self.name
@@ -1037,18 +1038,18 @@ class Expression(models.Model):
     name = models.SlugField(max_length=50)
     expression = models.CharField(max_length=200)
     required_condition = models.BooleanField(default=False)
-    expand = models.BooleanField()
+    expand = models.BooleanField(default=False)
     doit = models.BooleanField(default=True)
     n_digits = models.IntegerField(blank=True, null=True)
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
-    use_ln = models.BooleanField()
-    expand_on_compare = models.BooleanField()
-    tuple_is_ordered = models.BooleanField()
-    collapse_equal_tuple_elements=models.BooleanField()
-    output_no_delimiters = models.BooleanField()
-    sort_list = models.BooleanField()
+    use_ln = models.BooleanField(default=False)
+    expand_on_compare = models.BooleanField(default=False)
+    tuple_is_ordered = models.BooleanField(default=False)
+    collapse_equal_tuple_elements=models.BooleanField(default=False)
+    output_no_delimiters = models.BooleanField(default=False)
+    sort_list = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
     class Meta:
         ordering = ['sort_order','id']
@@ -1112,7 +1113,7 @@ class PlotFunction(models.Model):
     linewidth = models.IntegerField(blank=True, null=True)
     xmin = models.CharField(max_length=200, blank=True, null=True)
     xmax = models.CharField(max_length=200, blank=True, null=True)
-    invert = models.BooleanField()
+    invert = models.BooleanField(default=False)
     condition_to_show = models.CharField(max_length=200, blank=True, null=True)
     
 

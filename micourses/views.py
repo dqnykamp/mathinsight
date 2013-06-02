@@ -1,4 +1,4 @@
-from micourses.models import Course, Module, ModuleAssessment, StudentAssessmentAttempt, CourseUser
+from micourses.models import Course, CourseUser, CourseThreadContent
 from mitesting.models import Assessment
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponseRedirect
@@ -40,13 +40,15 @@ def course_main_view(request):
 
     upcoming_assessments = course.upcoming_assessments(courseuser)
 
-
+    next_items = course.next_items(courseuser)
+    
     if courseuser.role == 'S':
         return render_to_response \
             ('micourses/course_student_view.html', 
              {'student': courseuser,
               'course': course,
               'upcoming_assessments': upcoming_assessments,
+              'next_items': next_items,
               'noanalytics': noanalytics,
               },
              context_instance=RequestContext(request))
@@ -55,7 +57,7 @@ def course_main_view(request):
 
 
 @login_required
-def assessment_attempts_view(request, module_code, assessment_code):
+def assessment_attempts_view(request, id):
     courseuser = request.user.courseuser
     
     try:
@@ -69,11 +71,11 @@ def assessment_attempts_view(request, module_code, assessment_code):
         # redirect to not enrolled page
         return HttpResponseRedirect(reverse('mic-notenrolled'))
 
-    module = get_object_or_404(Module, code=module_code, course=course)
-    assessment = get_object_or_404(Assessment, code=assessment_code)
-    module_assessment = get_object_or_404(ModuleAssessment, module=module, assessment=assessment)
+    
+    content = get_object_or_404(CourseThreadContent, id=id)
 
-    assessment_attempts = courseuser.studentassessmentattempt_set.filter(module_assessment=module_assessment)
+    assessment_attempts = courseuser.studentcontentcompletion_set\
+        .filter(content=content)
 
     # no Google analytics for course
     noanalytics=True
@@ -81,8 +83,7 @@ def assessment_attempts_view(request, module_code, assessment_code):
     return render_to_response \
         ('micourses/assessment_attempts.html', 
          {'student': courseuser,
-          'module': module,
-          'module_assessment': module_assessment,
+          'content': content,
           'assessment_attempts': assessment_attempts,
           'noanalytics': noanalytics,
           },
@@ -414,7 +415,7 @@ def attendance_display_view(request):
 
 
 @login_required
-def adjusted_due_date_calculation_view(request, module_code, assessment_code):
+def adjusted_due_date_calculation_view(request, id):
     courseuser = request.user.courseuser
     
     try:
@@ -428,14 +429,12 @@ def adjusted_due_date_calculation_view(request, module_code, assessment_code):
         # redirect to not enrolled page
         return HttpResponseRedirect(reverse('mic-notenrolled'))
 
-    module = get_object_or_404(Module, code=module_code, course=course)
-    assessment = get_object_or_404(Assessment, code=assessment_code)
-    module_assessment = get_object_or_404(ModuleAssessment, module=module, assessment=assessment)
+    content = get_object_or_404(CourseThreadContent, id=id)
 
-    initial_due_date = module_assessment.get_initial_due_date(courseuser)
-    final_due_date = module_assessment.get_final_due_date(courseuser)
+    initial_due_date = content.get_initial_due_date(courseuser)
+    final_due_date = content.get_final_due_date(courseuser)
     
-    calculation_list = module_assessment.adjusted_due_date_calculation(courseuser)
+    calculation_list = content.adjusted_due_date_calculation(courseuser)
     if calculation_list:
         adjusted_due_date=calculation_list[-1]['resulting_date']
     else:
@@ -447,7 +446,7 @@ def adjusted_due_date_calculation_view(request, module_code, assessment_code):
     return render_to_response \
         ('micourses/adjusted_due_date_calculation.html', 
          {'course': course,
-          'module_assessment': module_assessment,
+          'content': content,
           'student': courseuser, 
           'calculation_list': calculation_list,
           'adjusted_due_date': adjusted_due_date,

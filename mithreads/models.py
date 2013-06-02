@@ -2,8 +2,8 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from mithreads.utils import HTMLOutliner
-from django.db import IntegrityError
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.safestring import mark_safe
 
 
 class Thread(models.Model):
@@ -34,7 +34,8 @@ class Thread(models.Model):
                 % (click_command)
         return html_string
 
-    def render_html_string(self, edit=False):
+    def render_html_string(self, student=None, course=None, edit=False):
+
         html_string=""
         if edit:
             html_string = '%s <p style="margin-top: 2em;"><span id="top_section_insert">%s</span></p>' \
@@ -44,10 +45,11 @@ class Thread(models.Model):
         
         for thread_section in self.thread_sections.all():
             html_string = html_string + \
-                thread_section.return_html_transition_string(outliner,edit)
+                thread_section.return_html_transition_string\
+                (outliner, student, course, edit)
 
         html_string = html_string + outliner.return_html_close_string()
-        return html_string
+        return mark_safe(html_string)
 
     def render_html_edit_string(self):
         return self.render_html_string(edit=True)
@@ -73,20 +75,6 @@ class Thread(models.Model):
             sort_order = thread_section.save_to_course(course, sort_order)
         return sort_order
     
-    def save_new_content_to_course(self, course):
-        sort_order = 0
-        for thread_section in self.thread_sections.all():
-            sort_order = thread_section.save_new_content_to_course\
-                (course, sort_order)
-        
-        # reorder
-        sort_order = 0
-        for course_thread_content in course.coursethreadcontent_set.all():
-            sort_order +=1
-            course_thread_content.sort_order = sort_order
-            course_thread_content.save()
-
-        return sort_order
     
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=100, db_index=True)
@@ -125,26 +113,14 @@ class ThreadSection(models.Model):
         for thread_content in self.threadcontent_set.all():
             sort_order += 1
             try:
-                course.coursethreadcontent_set.create\
-                    (thread_content=thread_content, sort_order=sort_order)
-
-            except IntegrityError:
-                # if already in course, ignore
-                pass
-        return sort_order
-
-    def save_new_content_to_course(self, course, sort_order):
-
-        for thread_content in self.threadcontent_set.all():
-            try:
                 # see if content exists
                 ctc = course.coursethreadcontent_set.get\
                     (thread_content=thread_content)
-                sort_order = ctc.sort_order
+                ctc.sort_order=sort_order
+                ctc.save()
 
             except ObjectDoesNotExist:
-                # if not already in course, add with slight larger sort order
-                sort_order = sort_order+0.001
+                # if not already in course, add
                 course.coursethreadcontent_set.create\
                     (thread_content=thread_content, sort_order=sort_order)
 
@@ -211,7 +187,8 @@ class ThreadSection(models.Model):
         return  '<a onclick="%s;" class="edit_link">[insert content]</a>' \
                 % (click_command)
 
-    def return_html_transition_string(self, outliner, edit=False):
+    def return_html_transition_string(self, outliner, student=None, 
+                                      course=None, edit=False):
 
         html_string=outliner.return_html_transition_string(self.level)
             
@@ -224,7 +201,7 @@ class ThreadSection(models.Model):
                 
         # now add content links
         html_string += '\n<ul class="threadcontent" id = "threadcontent_%s">\n' % self.code
-        html_string += self.return_content_html_string(edit)
+        html_string += self.return_content_html_string(student, course, edit)
         html_string += "</ul>\n"
 
         if edit:
@@ -235,10 +212,10 @@ class ThreadSection(models.Model):
                 % (html_string, self.code, self.section_insert_below_html())
         return html_string
 
-    def return_content_html_string(self, edit=False):
+    def return_content_html_string(self, student=None, course=None, edit=False):
         html_string=''
         for content in self.threadcontent_set.all():
-            html_string += content.return_html_string(edit)
+            html_string += content.return_html_string(student, course, edit)
         return html_string
 
     def return_html_innerstring(self, edit=False):
@@ -382,17 +359,26 @@ class ThreadContent(models.Model):
         return ''
 
 
-    def return_html_string(self, edit=False):
+    def return_html_string(self, student=None, course=None, edit=False):
         if self.content_object or edit:
             return "<li><div id='thread_content_%s'>%s</div></li>\n" \
-                % (self.id, self.return_html_innerstring(edit))
+                % (self.id, self.return_html_innerstring(student, course, edit))
             
         else: 
             return ""
 
-    def return_html_innerstring(self, edit=False):
+    def return_html_innerstring(self, student=None, course=None, edit=False):
         html_string = self.return_link()
-                    
+
+
+        if not edit and course:
+            try:
+                ctc = self.coursethreadcontent_set.get(course=course)
+                html_string += " " + ctc.complete_skip_button_html\
+                    (student=student, full_html=True)
+            except:
+                pass
+
         if edit:
             click_command_base = self.get_click_command_base()
             if self.find_previous_in_section() or \

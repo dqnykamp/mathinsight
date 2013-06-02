@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from micourses.models import CommentForCredit, QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory, Module, ModuleAssessment, StudentAssessmentAttempt, CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent
+from micourses.models import CommentForCredit, QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory,CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent
 from mithreads.models import ThreadContent
 import settings
 import reversion
@@ -11,13 +11,6 @@ class QuestionStudentAnswerAdmin(reversion.VersionAdmin):
 
 class CommentForCreditAdmin(reversion.VersionAdmin):
     pass
-
-
-class ModuleAssessmentInline(admin.TabularInline):
-    model = ModuleAssessment
-
-class ModuleAdmin(admin.ModelAdmin):
-    inlines=[ModuleAssessmentInline]
     
 class CourseAssessmentCategoryInline(admin.TabularInline):
     model = CourseAssessmentCategory
@@ -58,6 +51,7 @@ class CourseAdmin(admin.ModelAdmin):
             "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
         ]
 
+    save_on_top=True
 
 admin.site.register(CommentForCredit,CommentForCreditAdmin)
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
@@ -66,5 +60,3 @@ admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 admin.site.register(Course, CourseAdmin)
 admin.site.register(GradeLevel)
 admin.site.register(AssessmentCategory)
-admin.site.register(Module,ModuleAdmin)
-admin.site.register(StudentAssessmentAttempt)

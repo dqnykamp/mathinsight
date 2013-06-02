@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load mi_tags %}{% load url from future %}
+{% extends "base.html" %}{% load mi_tags thread_tags %}
 {% load dajaxice_templatetags %}
 {% block title %}Math Insight thread: {{thread}}{% endblock %}
 {% block threadmenu %}class="active"{% endblock %}
@@ -20,7 +20,7 @@
 <p>{{ thread.description|safe }} </p>
 
 <div id="thread_contents">
-{{ thread.render_html_edit_string|safe }}
+{% render_thread_html_string thread student course 1 %}
 </div>
 <p><a href="{% url 'mithreads-thread' thread.code %}">Finish editing</a></p>
 
