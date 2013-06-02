@@ -368,12 +368,30 @@ def delete_section(request, section_code, thread_code):
         
         thread_content = thread_section.threadcontent_set.all()
         if thread_content:
+            course_set=[]
             delete_prompt += '<p>Deleting will also delete the following from the thread:</p><ul>'
             
             for content in thread_content:
                 delete_prompt += '<li>%s</li>' % content.get_title()
+
+                course_thread_content = \
+                    content.coursethreadcontent_set.all()
+                if course_thread_content:
+                    for course_content in course_thread_content:
+                        course_name = course_content.course.name
+                        if course_name not in course_set:
+                            course_set.append(course_name)
+
             delete_prompt += '</ul>'
-    
+
+            if course_set:
+                delete_prompt += '<p>Deleting will also delete content from the following courses:</p><ul>'
+            
+                for course_name in course_set:
+                    delete_prompt += '<li>%s</li>' % course_name
+                delete_prompt += '</ul>'
+
+
         click_command_base = thread_section.get_click_command_base()
         
         click_command = click_command_base % 'confirm_delete_section'
@@ -802,6 +820,14 @@ def delete_content(request, threadcontent_id):
         thread_content=ThreadContent.objects.get(id=threadcontent_id)
         delete_prompt = '<h5>Confirm Delete</h5><p>Are you sure you want to delete this thread content: %s?</p>' % thread_content.get_title()
     
+        course_thread_content = thread_content.coursethreadcontent_set.all()
+        if course_thread_content:
+            delete_prompt += '<p>Deleting will also delete content from the following courses:</p><ul>'
+            
+            for content in course_thread_content:
+                delete_prompt += '<li>%s</li>' % content.course.name
+            delete_prompt += '</ul>'
+
         click_command_base = thread_content.get_click_command_base()
         
         click_command = click_command_base % 'confirm_delete_content'

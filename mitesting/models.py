@@ -577,6 +577,7 @@ class Assessment(models.Model):
     short_name = models.CharField(max_length=30, blank=True)
     assessment_type = models.ForeignKey(AssessmentType)
     description = models.CharField(max_length=400,blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True)
     questions = models.ManyToManyField(Question, through='QuestionAssigned')
     fixed_order = models.BooleanField(default=False)
     instructions = models.TextField(blank=True, null=True)
@@ -587,6 +588,7 @@ class Assessment(models.Model):
     groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view_solution")
     allow_solution_buttons = models.BooleanField()
+    background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
 
     def __unicode__(self):
         return  self.name
@@ -607,15 +609,23 @@ class Assessment(models.Model):
         link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "assessment")
-        link_url = self.get_absolute_url()
+
+        direct = kwargs.get("direct")
+        if direct:
+            link_url = self.get_absolute_url()
         
-        seed = kwargs.get("seed","1")
-        link_url += "?seed=%s" % seed
+            seed = kwargs.get("seed","1")
+            link_url += "?seed=%s" % seed
+        else:
+            link_url = self.get_overview_url()
 
         return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
                              (link_url, link_class,  link_title, link_text))
 
 
+    def return_direct_link(self, **kwargs):
+        kwargs['direct']=True
+        return self.return_link(**kwargs)
 
     def user_can_view(self, user, solution=True):
         permission_level=return_user_assessment_permission_level(user, solution)
@@ -647,6 +657,10 @@ class Assessment(models.Model):
     @models.permalink
     def get_absolute_url(self):
         return('mit-assessment', (), {'assessment_code': self.code})
+
+    @models.permalink
+    def get_overview_url(self):
+        return('mit-assessmentoverview', (), {'assessment_code': self.code})
 
     @models.permalink
     def get_solution_url(self):
@@ -888,6 +902,14 @@ class Assessment(models.Model):
 
         return seed_min_disallowed
                     
+
+class AssessmentBackgroundPage(models.Model):
+    assessment = models.ForeignKey(Assessment)
+    page = models.ForeignKey('midocs.Page')
+    sort_order = models.FloatField(default = 0.0)
+
+    class Meta:
+        ordering = ['sort_order']
 
 class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)

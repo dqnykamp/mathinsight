@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from mithreads.utils import HTMLOutliner
+from django.db import IntegrityError
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class Thread(models.Model):
@@ -10,6 +12,7 @@ class Thread(models.Model):
     description = models.CharField(max_length=400)
     sort_order = models.SmallIntegerField(default=0)
     numbered = models.BooleanField(default=True)
+
     def __unicode__(self):
         return self.name
     class Meta:
@@ -64,7 +67,26 @@ class Thread(models.Model):
         for thread_section in original_thread.thread_sections.all():
             thread_section.save_to_new_thread(new_thread)
 
+    def save_to_course(self, course):
+        sort_order = 0
+        for thread_section in self.thread_sections.all():
+            sort_order = thread_section.save_to_course(course, sort_order)
+        return sort_order
+    
+    def save_new_content_to_course(self, course):
+        sort_order = 0
+        for thread_section in self.thread_sections.all():
+            sort_order = thread_section.save_new_content_to_course\
+                (course, sort_order)
         
+        # reorder
+        sort_order = 0
+        for course_thread_content in course.coursethreadcontent_set.all():
+            sort_order +=1
+            course_thread_content.sort_order = sort_order
+            course_thread_content.save()
+
+        return sort_order
     
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=100, db_index=True)
@@ -98,7 +120,36 @@ class ThreadSection(models.Model):
         for threadcontent in original_thread_section.threadcontent_set.all():
             threadcontent.save_to_new_thread_section(new_thread_section)
         
-    
+    def save_to_course(self, course, sort_order):
+
+        for thread_content in self.threadcontent_set.all():
+            sort_order += 1
+            try:
+                course.coursethreadcontent_set.create\
+                    (thread_content=thread_content, sort_order=sort_order)
+
+            except IntegrityError:
+                # if already in course, ignore
+                pass
+        return sort_order
+
+    def save_new_content_to_course(self, course, sort_order):
+
+        for thread_content in self.threadcontent_set.all():
+            try:
+                # see if content exists
+                ctc = course.coursethreadcontent_set.get\
+                    (thread_content=thread_content)
+                sort_order = ctc.sort_order
+
+            except ObjectDoesNotExist:
+                # if not already in course, add with slight larger sort order
+                sort_order = sort_order+0.001
+                course.coursethreadcontent_set.create\
+                    (thread_content=thread_content, sort_order=sort_order)
+
+        return sort_order
+
 
     def first_content_title(self):
         try:
@@ -246,7 +297,6 @@ class ThreadContent(models.Model):
         new_threadcontent.pk = None
         new_threadcontent.section = thread_section
         new_threadcontent.save()
-
 
     def get_title(self):
         if(self.substitute_title):

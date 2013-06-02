@@ -1339,7 +1339,6 @@ class AppletParameter(models.Model):
     class Meta:
         unique_together = ("applet", "parameter")
 
-    # need to figure out why this breaks for moebius strip with unicode error
     def __unicode__(self):
         return "%s for %s" % (self.parameter, self.applet)
 

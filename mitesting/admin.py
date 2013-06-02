@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
 import settings
 import reversion
 
@@ -9,9 +9,10 @@ class QuestionAssignedInline(admin.TabularInline):
     model = QuestionAssigned
 class QuestionSetDeatilInline(admin.TabularInline):
     model = QuestionSetDetail
-
+class AssessmentBackgroundPageInline(admin.TabularInline):
+    model = AssessmentBackgroundPage
 class AssessmentAdmin(reversion.VersionAdmin):
-    inlines = [QuestionAssignedInline,QuestionSetDeatilInline]
+    inlines = [QuestionAssignedInline,QuestionSetDeatilInline,AssessmentBackgroundPageInline]
     list_display = ("code","name")
     search_fields = ['code', 'name']
     formfield_overrides = {

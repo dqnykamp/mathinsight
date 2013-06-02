@@ -283,6 +283,29 @@ def assessment_avoid_question_view(request, assessment_code):
 
     return HttpResponseRedirect(new_url)
 
+
+def assessment_overview_view(request, assessment_code):
+    the_assessment = get_object_or_404(Assessment, code=assessment_code)
+
+    # make link to assessment if 
+    # user has permission to view the assessment, given privacy level
+    assessment_link = the_assessment.user_can_view(request.user, solution=False)
+
+    # turn off google analytics for localhost
+    noanalytics=False
+    if settings.SITE_ID==2:
+        noanalytics=True
+
+    return render_to_response \
+        ('mitesting/assessment_overview.html', 
+         {'assessment': the_assessment,
+          'assessment_link': assessment_link,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
+    
+    
+
 @user_has_given_assessment_permission_level_decorator(2, solution=False)
 def assessment_list_view(request):
 

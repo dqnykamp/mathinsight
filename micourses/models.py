@@ -1,10 +1,9 @@
 from django.db import models
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
-from midocs.models import Page, Video
-from mitesting.models import Question
-from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 import datetime
+
 
 def day_of_week_to_python(day_of_week):
     if day_of_week.upper() == 'S':
@@ -24,7 +23,7 @@ def day_of_week_to_python(day_of_week):
 
 
 class CommentForCredit(models.Model):
-    page = models.ForeignKey(Page)
+    page = models.ForeignKey('midocs.Page')
     group = models.ForeignKey(Group)
     opendate = models.DateTimeField()
     deadline = models.DateTimeField()
@@ -63,6 +62,7 @@ class CourseUser(models.Model):
         # if found just one active course, make it be the selected course
         self.selected_course = enrolled_course
         self.save()
+        return enrolled_course
 
     def active_courses(self):
         return self.course_set.filter(active=True)
@@ -85,20 +85,12 @@ class CourseUser(models.Model):
         days_attended = self.studentattendance_set.filter(course=course)\
             .filter(date__lte = date).filter(date__gte = date_enrolled).count()
         
-        return 100.0*days_attended/float(course_days)
-
+        if course_days:
+            return 100.0*days_attended/float(course_days)
+        else:
+            return 0
     
 
-class QuestionStudentAnswer(models.Model):
-    user = models.ForeignKey(User)
-    question = models.ForeignKey(Question)
-    answer = models.CharField(max_length=400)
-    seed = models.CharField(max_length=50, blank=True, null=True)
-    credit = models.FloatField()
-    datetime =  models.DateTimeField(auto_now_add=True)
-
-    def __unicode__(self):
-        return  "%s" % self.answer
 
 
 class GradeLevel(models.Model):
@@ -141,6 +133,7 @@ class Module(models.Model):
 
     class Meta:
         unique_together = ("course","code")
+
 
 
 class ModuleAssessment(models.Model):
@@ -196,13 +189,32 @@ class ModuleAssessment(models.Model):
             return "Maximum"
 
 
+    def get_initial_due_date(self, student=None):
+        if not student:
+            return self.initial_due_date
+        try:
+            return self.manualduedateadjustment_set.get(student=student)\
+                .initial_due_date
+        except:
+            return self.initial_due_date
+
+    def get_final_due_date(self, student=None):
+        if not student:
+            return self.final_due_date
+        try:
+            return self.manualduedateadjustment_set.get(student=student)\
+                .final_due_date
+        except:
+            return self.final_due_date
+
     def adjusted_due_date(self, student):
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
 
         today = datetime.date.today()
         
-        due_date = self.initial_due_date
+        due_date = self.get_initial_due_date(student)
+        final_due_date = self.get_final_due_date(student)
         course = self.module.course        
         while due_date < today + datetime.timedelta(7):
             previous_week_end = \
@@ -219,8 +231,8 @@ class ModuleAssessment(models.Model):
                 break
             
             due_date += datetime.timedelta(7)
-            if due_date >= self.final_due_date:
-                due_date = self.final_due_date
+            if due_date >= final_due_date:
+                due_date = final_due_date
                 break
 
         return due_date
@@ -234,7 +246,8 @@ class ModuleAssessment(models.Model):
 
         today = datetime.date.today()
         
-        due_date = self.initial_due_date
+        due_date = self.get_initial_due_date(student)
+        final_due_date = self.get_final_due_date(student)
         course = self.module.course        
         
         calculation_list = []
@@ -271,8 +284,8 @@ class ModuleAssessment(models.Model):
             calculation['reached_threshold'] = True
             
             due_date += datetime.timedelta(7)
-            if due_date >= self.final_due_date:
-                due_date = self.final_due_date
+            if due_date >= final_due_date:
+                due_date = final_due_date
                 calculation['resulting_date'] = due_date
                 calculation['reached_latest'] = True
                 calculation_list.append(calculation)
@@ -284,19 +297,22 @@ class ModuleAssessment(models.Model):
         return calculation_list
 
 
+class ManualDueDateAdjustment(models.Model):
+    module_assessment = models.ForeignKey(ModuleAssessment)
+    student = models.ForeignKey(CourseUser)
+    initial_due_date=models.DateField()
+    final_due_date=models.DateField()
+    
+    class Meta:
+        unique_together = ("module_assessment","student")
+ 
+
+
 class StudentAssessmentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
     module_assessment = models.ForeignKey(ModuleAssessment)
     datetime = models.DateTimeField()
     score = models.IntegerField()
-
-    # find maximum score for all attempts 
-    # of this student on this moduleassesment
-    def maximum_score(self):
-        from django.db.models import Max
-        return StudentAssessmentAttempt.objects.filter \
-            (student=self.student, module_assessment=self.module_assessment)\
-            .aggregate(Max('score'))
         
     def __unicode__(self):
         return "%s attempt on %s" % (self.student, self.module_assessment)
@@ -332,7 +348,7 @@ class Course(models.Model):
     end_date = models.DateField(blank=True, null=True)
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
     active = models.BooleanField()
-    associated_thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
+    thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
     track_attendance = models.BooleanField()
     last_attendance_date = models.DateField(blank=True, null=True)
     attendance_end_of_week = models.CharField(max_length = 2, 
@@ -456,7 +472,18 @@ class Course(models.Model):
         # offset is number of days since previous week_end
         offset = (date.weekday()-1-week_end_day) % 7 +1
         previous_week_end = date - datetime.timedelta(offset)
-            
+        
+        # find last attendance day at or before previous_week_end
+        if self.days_of_week:
+            weekday_list =[item.strip() for item in self.days_of_week.split(",")]
+            min_offset = 7
+            for wd in weekday_list:
+                min_offset = min((week_end_day-day_of_week_to_python(wd)) % 7,
+                                 min_offset)
+                
+
+            previous_week_end -= datetime.timedelta(min_offset)
+
         return previous_week_end
         
     def last_attendance_day_previous_week(self, date=None):
@@ -493,6 +520,8 @@ class Course(models.Model):
 
         # create list of module assessments with 
         # initial due dates within a week and current final due dates
+        # (this initial filter doesn't account for any 
+        # manual due date adjustments)
         upcoming_assessments= ModuleAssessment.objects\
             .filter(module__course=self)\
             .filter(initial_due_date__lt = week_later)\
@@ -517,8 +546,6 @@ class Course(models.Model):
         # return up to five
         return adjusted_due_date_assessments[:5]
 
-
-        
     
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
@@ -533,7 +560,68 @@ class CourseEnrollment(models.Model):
         unique_together = ("course","student")
 
 
-class CourseLoggedIn(models.Model):
-    student = models.ForeignKey(CourseUser, unique=True)
-    course = models.ForeignKey(Course)
+class CourseThreadContent(models.Model):
+    AGGREGATE_CHOICES = (
+        ('Max', 'Maximum'),
+        ('Avg', 'Average'),
+        ('Las', 'Last'),
+    )
 
+    course = models.ForeignKey(Course)
+    thread_content = models.ForeignKey('mithreads.ThreadContent')
+    initial_due_date=models.DateField(blank=True, null=True)
+    final_due_date=models.DateField(blank=True, null=True)
+    assessment_category = models.ForeignKey(AssessmentCategory, blank=True, null=True)
+    points = models.IntegerField(default=0)
+    required_for_grade = models.ForeignKey(GradeLevel, blank=True, null=True)
+    required_to_pass = models.BooleanField()
+    max_number_attempts = models.IntegerField(default=1)
+    attempt_aggregation = models.CharField(max_length=3,
+                                           choices = AGGREGATE_CHOICES,
+                                           default = 'Max')
+    optional = models.BooleanField()
+    sort_order = models.FloatField(default=0.0)
+    
+    class Meta:
+        ordering = ['sort_order', 'id']
+        unique_together = ['course', 'thread_content']
+
+    def __unicode__(self):
+        return "%s for %s" % (self.thread_content, self.course)
+
+    def clean(self):
+
+        # check if thread_content is for the thread associated with course
+        # If not, raise exception
+        if self.course.thread != self.thread_content.section.thread:
+            raise ValidationError, "Thread content is not from course thread: %s"\
+                % self.course.thread
+
+
+class StudentContentCompletion(models.Model):
+    student = models.ForeignKey(CourseUser)
+    content = models.ForeignKey(CourseThreadContent)
+    datetime = models.DateTimeField(auto_now_add=True)
+    score = models.IntegerField()
+    complete = models.BooleanField()
+    skip = models.BooleanField()
+
+    def __unicode__(self):
+        return "%s attempt on %s" % (self.student, self.module_assessment)
+
+    class Meta:
+        ordering = ['datetime']
+
+
+class QuestionStudentAnswer(models.Model):
+    user = models.ForeignKey(User)
+    question = models.ForeignKey('mitesting.Question')
+    answer = models.CharField(max_length=400)
+    seed = models.CharField(max_length=50, blank=True, null=True)
+    credit = models.FloatField()
+    datetime =  models.DateTimeField(auto_now_add=True)
+    course_content = models.ForeignKey(StudentContentCompletion, blank=True,
+                                       null=True)
+
+    def __unicode__(self):
+        return  "%s" % self.answer

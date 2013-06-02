@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Overview of: {{assessment.name}} - Math Insight{%endblock%}
+
+{% block content %}
+
+<h3>Overview of: {{assessment.name}}</h3>
+
+{% process_mi_tags assessment.detailed_description %}
+
+{% if assessment.assessmentbackgroundpage_set.all %}
+<h4>Background pages</h4>
+<ul>
+{% for background_page in assessment.assessmentbackgroundpage_set.all %}
+<li>{% intlink background_page.page %}{%endintlink%}
+{% endfor %}
+</ul>
+{% endif %}
+
+
+{% if assessment_link %}
+<p>Go to: {{assessment.return_direct_link}}</p>
+{% endif %}
+
+{% endblock %}

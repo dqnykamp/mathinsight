@@ -391,7 +391,7 @@ def attendance_display_view(request):
                 number_present += 1
             except ObjectDoesNotExist:
                 present = 'N'
-
+                
             percent = 100.0*number_present/float(number_days)
             
             attendance.append({'date': date.date, 'present': present, \
@@ -432,12 +432,14 @@ def adjusted_due_date_calculation_view(request, module_code, assessment_code):
     assessment = get_object_or_404(Assessment, code=assessment_code)
     module_assessment = get_object_or_404(ModuleAssessment, module=module, assessment=assessment)
 
+    initial_due_date = module_assessment.get_initial_due_date(courseuser)
+    final_due_date = module_assessment.get_final_due_date(courseuser)
+    
     calculation_list = module_assessment.adjusted_due_date_calculation(courseuser)
     if calculation_list:
         adjusted_due_date=calculation_list[-1]['resulting_date']
     else:
-        adjusted_due_date=module_assessment.initial_due_date
-
+        adjusted_due_date= initial_due_date
 
     # no Google analytics for course
     noanalytics=True
@@ -449,6 +451,8 @@ def adjusted_due_date_calculation_view(request, module_code, assessment_code):
           'student': courseuser, 
           'calculation_list': calculation_list,
           'adjusted_due_date': adjusted_due_date,
+          'initial_due_date': initial_due_date,
+          'final_due_date': final_due_date,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
