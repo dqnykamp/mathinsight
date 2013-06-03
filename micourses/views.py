@@ -34,7 +34,12 @@ def course_main_view(request):
             # courseuser is not in an active course
             # redirect to not enrolled page
             return HttpResponseRedirect(reverse('mic-notenrolled'))
-        
+
+    if courseuser.course_set.count() > 1:
+        multiple_courses = True
+    else:
+        multiple_courses = False
+
     # no Google analytics for course
     noanalytics=True
 
@@ -49,6 +54,7 @@ def course_main_view(request):
               'course': course,
               'upcoming_assessments': upcoming_assessments,
               'next_items': next_items,
+              'multiple_courses': multiple_courses,
               'noanalytics': noanalytics,
               },
              context_instance=RequestContext(request))

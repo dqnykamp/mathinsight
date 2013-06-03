@@ -22,6 +22,10 @@
 <div id="thread_contents">
 {% render_thread_html_string thread student course 1 %}
 </div>
+{% if course %}
+<p>{% save_changes_to_course_button thread course %}</p>
+{% endif %}
+
 <p><a href="{% url 'mithreads-thread' thread.code %}">Finish editing</a></p>
 
 {% endblock %}

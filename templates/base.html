@@ -96,9 +96,20 @@
 {% endblock %}
 <div id="login">
   <div class="ym-wrapper">
-    <div class="ym-wbox" style="text-align: right; padding-top:0; padding-bottom: 0;">
-      {% if user.is_authenticated %}logged in as {{ user}}  (<a href="{% url 'mi-logout' %}">log out</a>){%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
-  </div>
+    <div class="ym-wbox" style="padding-top:0; padding-bottom: 0;">
+      <div class="ym-grid linearize-level-1">
+	<div class="ym-g66 ym-gl">
+	  <div class="ym-gbox-left">
+	    {% if user.courseuser.selected_course %}<a href="{% url 'mic-coursemain' %}">{{user.courseuser.selected_course}}</a> {% block coursebreadcrumb %}{%endblock%}{%endif%}
+	  </div>
+	</div>
+	<div class="ym-g33 ym-gr"> 
+	  <div class="ym-gbox-left" style="text-align: right;">
+	    {% if user.is_authenticated %}logged in as {{ user}}  (<a href="{% url 'mi-logout' %}">log out</a>){%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
+	  </div>
+	</div>
+      </div>
+    </div>
   </div>
 </div>
 <div id="main">

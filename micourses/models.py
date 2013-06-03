@@ -148,7 +148,7 @@ class Course(models.Model):
     end_date = models.DateField()
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
     active = models.BooleanField(default=False)
-    thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
+    thread = models.ForeignKey('mithreads.Thread')
     track_attendance = models.BooleanField(default=False)
     adjust_due_date_attendance = models.BooleanField(default=False)
     last_attendance_date = models.DateField(blank=True, null=True)
@@ -634,13 +634,46 @@ class StudentContentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
     content = models.ForeignKey(CourseThreadContent)
     datetime = models.DateTimeField(auto_now_add=True)
-    score = models.IntegerField(null=True, blank=True)
+    score = models.FloatField(null=True, blank=True)
 
     def __unicode__(self):
         return "%s attempt on %s" % (self.student, self.content)
 
     class Meta:
         ordering = ['datetime']
+
+    def get_score(self):
+        # if a score is entered in, it overrides any question answers
+        if self.score is not None:
+            return self.score
+        
+        assessment=self.content.thread_content.content_object
+        # must be an assessment 
+        from mitesting.models import Assessment
+        if not isinstance(assessment,Assessment):
+            return None
+        
+        score = 0.0
+        for question_set_detail in assessment.questionsetdetail_set.all():
+            question_answers = self.questionstudentanswer_set\
+                .filter(question_set=question_set_detail.question_set)
+
+            if question_answers:
+
+                if self.content.attempt_aggregation=='Avg':
+                    credit = question_answers.aggregate(credit=Avg('credit'))['credit']
+                elif self.content.attempt_aggregation=='Las':
+                    credit = question_answers.latest('datetime').credit
+                else:
+                    credit = question_answers.aggregate(credit=Max('credit'))['credit']
+                
+                print credit
+                print question_set_detail.points
+
+                score += question_set_detail.points*credit
+                print score
+
+        return score
 
 
 class StudentContentCompletion(models.Model):
@@ -659,7 +692,8 @@ class StudentContentCompletion(models.Model):
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
-    answer = models.CharField(max_length=400)
+    question_set = models.SmallIntegerField(blank=True, null=True)
+    answer = models.CharField(max_length=400, blank=True, null=True)
     seed = models.CharField(max_length=50, blank=True, null=True)
     credit = models.FloatField()
     datetime =  models.DateTimeField(auto_now_add=True)

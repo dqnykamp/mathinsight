@@ -14,6 +14,8 @@
 {% block content %}
 <h3>{{course}}</h3>
 
+{% if multiple_courses %}<p><a href= "{% url 'mic-selectcourse' %}">Select other course</a></p>{% endif %}
+
 <h4>Next items</h4>
 <p>(See entire list organized by topic on <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a>.)</p>
 

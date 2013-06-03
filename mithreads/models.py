@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from mithreads.utils import HTMLOutliner
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils.safestring import mark_safe
 
 
@@ -75,7 +75,20 @@ class Thread(models.Model):
             sort_order = thread_section.save_to_course(course, sort_order)
         return sort_order
     
-    
+    def render_save_changes_course_button_html_string(self, course):
+        click_command = "Dajaxice.midocs.save_thread_changes_to_course"\
+            + "(Dajax.process,{'thread_code': '%s', 'course_code': '%s' })" \
+            % (self.code, course.code)
+        
+        html_string =  \
+            '<input type="button" value="Save changes to course: %s" onclick="%s;">' \
+            % (course, click_command)
+        html_string += '<div class="info" id="message_save_changes_%s_%s"></div>' \
+            % (self.code, course.code)
+        
+        return html_string
+
+
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=100, db_index=True)
     code = models.SlugField(max_length=50)
@@ -302,6 +315,18 @@ class ThreadContent(models.Model):
             self.content_object.update_links()
         except:
             pass
+
+    def validate_unique(self, exclude=None):
+        # check to make sure that the same content object 
+        # is not in the same thread twice
+        if 'section' not in exclude:
+            if ThreadContent.objects.exclude(id = self.id)\
+                    .filter(content_type=self.content_type, \
+                                object_id = self.object_id,\
+                                section__thread=self.section.thread).exists():
+                raise ValidationError, "Duplicate entries of %s in thread %s" \
+                    % (self.content_object, self.section.thread)
+
 
 
     def get_thread(self):

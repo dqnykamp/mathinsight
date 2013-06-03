@@ -34,3 +34,24 @@ def render_thread_html_string(parser, token):
         edit = False
     
     return RenderThreadHtmlStringNode(thread, student, course, edit)
+
+class SaveChangeToCourseButtonNode(Node):
+    def __init__(self, thread,  course):
+        self.thread=thread
+        self.course=course
+    def render(self, context):
+        thread = self.thread.resolve(context)
+        course = self.course.resolve(context)
+        
+        return thread.render_save_changes_course_button_html_string(course)
+
+
+@register.tag
+def save_changes_to_course_button(parser, token):
+    bits = token.split_contents()
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
+    thread = parser.compile_filter(bits[1])
+    course = parser.compile_filter(bits[2])
+
+    return SaveChangeToCourseButtonNode(thread, course)

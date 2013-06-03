@@ -1,11 +1,11 @@
 from dajaxice.decorators import dajaxice_register
 from dajax.core import Dajax
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 #from dajaxice.utils import deserialize_form
 from mitesting.forms import MultipleChoiceQuestionForm, MathWriteInForm
 from mitesting.models import Question
 from midocs.models import Page
-from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser
+from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser, Course
 from mithreads.models import Thread, ThreadSection, ThreadContent
 from mithreads.forms import ThreadSectionForm, ThreadContentForm
 from django.contrib.contenttypes.models import ContentType
@@ -514,7 +514,7 @@ def cancel_edit_section(request, section_code, thread_code):
     try:
         thread_section = ThreadSection.objects.get(code=section_code, thread__code=thread_code)
         dajax.assign('#thread_section_%s' % section_code, 'innerHTML', \
-                         thread_section.return_html_innerstring(True))
+                         thread_section.return_html_innerstring(edit=True))
 
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
@@ -719,7 +719,7 @@ def move_content_up(request, threadcontent_id):
             # rewrite just thread content of section
             dajax.assign('#threadcontent_%s' % this_section.code, \
                              'innerHTML', \
-                             this_section.return_content_html_string(True))
+                             this_section.return_content_html_string(edit=True))
 
 
         # if content is first in section, move to end of previous section
@@ -739,10 +739,10 @@ def move_content_up(request, threadcontent_id):
                 # rewrite just thread content of section and previous
                 dajax.assign('#threadcontent_%s' % this_section.code, \
                                  'innerHTML', \
-                                 this_section.return_content_html_string(True))
+                                 this_section.return_content_html_string(edit=True))
                 dajax.assign('#threadcontent_%s' % previous_section.code, \
                                  'innerHTML', \
-                                 previous_section.return_content_html_string(True))
+                                 previous_section.return_content_html_string(edit=True))
             
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
@@ -781,7 +781,7 @@ def move_content_down(request, threadcontent_id):
             # rewrite just thread content of section
             dajax.assign('#threadcontent_%s' % this_section.code, \
                              'innerHTML', \
-                             this_section.return_content_html_string(True))
+                             this_section.return_content_html_string(edit=True))
 
         # if content is last in section, move to beginning of next section
         else:
@@ -801,10 +801,10 @@ def move_content_down(request, threadcontent_id):
                 # rewrite just thread content of section and next_section
                 dajax.assign('#threadcontent_%s' % this_section.code, \
                                  'innerHTML', \
-                                 this_section.return_content_html_string(True))
+                                 this_section.return_content_html_string(edit=True))
                 dajax.assign('#threadcontent_%s' % next_section.code, \
                                  'innerHTML', \
-                                 next_section.return_content_html_string(True))
+                                 next_section.return_content_html_string(edit=True))
                 
 
             
@@ -988,17 +988,26 @@ def insert_content_below_section(request, section_code, thread_code, form):
                 sort_order = last_sort_order+1
             else:
                 sort_order = 0
-                
+
             thread_content = ThreadContent(section=thread_section,
                                            content_type=content_type,
                                            object_id=object_id,
                                            sort_order=sort_order,
                                            substitute_title=substitute_title)
-            thread_content.save()
 
-            dajax.assign('#thread_contents', 'innerHTML', \
-                             thread_section.thread.render_html_edit_string())
+            # since added section after form, need to validate again
+            # to see if have duplicate content for thread
+            try:
+                thread_content.full_clean()
+            except ValidationError as ve:
+                dajax.assign('#%s_object_id_errors' % section_code,
+                             'innerHTML',
+                             ve.messages)
+            else:
+                thread_content.save()
 
+                dajax.assign('#thread_contents', 'innerHTML', \
+                                 thread_section.thread.render_html_edit_string())
         # if form is not valid
         else:
             dajax.assign('#%s_content_type_errors' % section_code,
@@ -1119,10 +1128,19 @@ def confirm_edit_content(request, threadcontent_id, form):
             thread_content.content_type=content_type
             thread_content.object_id=object_id
             thread_content.substitute_title =substitute_title
-            
-            thread_content.save()
-            dajax.assign('#thread_contents', 'innerHTML', \
-                             thread_content.section.thread.render_html_edit_string())
+
+            # since form didn't include section, need to validate again
+            # to see if have duplicate content for thread
+            try:
+                thread_content.full_clean()
+            except ValidationError as ve:
+                dajax.assign('#threadcontent_%s_object_id_errors' % threadcontent_id,
+                             'innerHTML',
+                             ve.messages)
+            else:
+                thread_content.save()
+                dajax.assign('#thread_contents', 'innerHTML', \
+                                 thread_content.section.thread.render_html_edit_string())
 
         # if form is not valid
         else:
@@ -1148,7 +1166,7 @@ def cancel_edit_content(request, threadcontent_id):
     try:
         thread_content=ThreadContent.objects.get(id=threadcontent_id)
         dajax.assign('#thread_content_%s' % threadcontent_id, 'innerHTML', \
-                         thread_content.return_html_innerstring(True))
+                         thread_content.return_html_innerstring(edit=True))
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
 
@@ -1181,6 +1199,28 @@ def record_course_content_completion(request, course_thread_content_id,
         # update html to show complete
         dajax.assign("#id_course_completion_%s" % course_thread_content_id,
                      'innerHTML', content.complete_skip_button_html(student))
+
+ 
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+
+@dajaxice_register
+def save_thread_changes_to_course(request, thread_code, course_code):
+
+    dajax = Dajax()
+
+    try:
+        thread = Thread.objects.get(code=thread_code)
+        course = Course.objects.get(code=course_code)
+        
+        thread.save_to_course(course)
+            
+        # update html to show complete
+        dajax.assign("#message_save_changes_%s_%s" % (thread_code, course_code),
+                     'innerHTML', "Changes saved to %s" % course)
 
  
     except Exception as e:

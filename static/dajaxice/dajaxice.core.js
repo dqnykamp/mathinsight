@@ -113,6 +113,10 @@ var Dajaxice = {
         return Dajaxice.call('midocs.update_combo_edit_content', 'POST', callback_function, argv, custom_settings);
     },
 
+    save_thread_changes_to_course: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.save_thread_changes_to_course', 'POST', callback_function, argv, custom_settings);
+    },
+
     cancel_insert_section_below: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.cancel_insert_section_below', 'POST', callback_function, argv, custom_settings);
     },
