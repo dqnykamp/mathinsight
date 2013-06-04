@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load mi_tags testing_tags course_tags %}
 {% block nolinksection %}{% endblock %}
-{% block title %}Attempts of {{ user.get_full_name }} on {{module_assessment.assessment}}{%endblock%}
+{% block title %}Attempts of {{ user.get_full_name }} on {{content.thread_content.content_object}}{%endblock%}
 
 {% block content %}
 
@@ -9,12 +9,11 @@
 
 
 <table class="basic">
-<thead><tr><th>Date</th><th>Score</th></tr></thead>
-<tfoot><tr><td>Assessment score (based on {{content.attempt_aggregation_string}})</td><td>{% assessment_student_score content user %}</td></tr></tfoot>
+<thead><tr><th>Attempt</th><th>Date</th><th>Score</th></tr></thead>
+{% if assessment_attempts.count > 1 %}<tfoot><tr><td></td><td><b>Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b>{% assessment_student_score content user %}</b></td></tr></tfoot>{%endif%}
 {% for attempt in assessment_attempts %}
-<tr><td>{{attempt.datetime}}</td><td>{{attempt.score}}</td></tr>
+<tr><td>{{forloop.counter}}</td><td>{{attempt.datetime}}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestionsets' content.id forloop.counter %}">{{attempt.get_score}}</a>{%else%}{{attempt.get_score}}{%endif%}</td></tr>
 {% endfor %}
 </table>
-
 
 {% endblock %}

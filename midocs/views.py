@@ -6,7 +6,6 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader, TemplateDoesNotExist, Template, Context
 from django.db.models import Count, Q
 from django.conf import settings
-from django.http import Http404
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage
 from django.contrib import auth

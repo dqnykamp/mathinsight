@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required
 from django.template import RequestContext
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.http import Http404
 from django.contrib.auth.decorators import permission_required
 from django import forms
 import datetime
@@ -60,8 +61,6 @@ def course_main_view(request):
              context_instance=RequestContext(request))
 
 
-
-
 @login_required
 def assessment_attempts_view(request, id):
     courseuser = request.user.courseuser
@@ -80,8 +79,8 @@ def assessment_attempts_view(request, id):
     
     content = get_object_or_404(CourseThreadContent, id=id)
 
-    assessment_attempts = courseuser.studentcontentcompletion_set\
-        .filter(content=content)
+    assessment_attempts = courseuser.studentcontentattempt_set\
+            .filter(content=content)
 
     # no Google analytics for course
     noanalytics=True
@@ -94,6 +93,71 @@ def assessment_attempts_view(request, id):
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
+
+@login_required
+def assessment_attempt_question_sets_view(request, id, attempt_number):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+    
+    content = get_object_or_404(CourseThreadContent, id=id)
+
+    assessment_attempts = courseuser.studentcontentattempt_set\
+        .filter(content=content)
+
+    # don't pad attempt_number with zeros
+    if attempt_number[0]=='0':
+        raise  Http404('Assessment attempt %s not found.' % attempt_number)
+
+    try:
+        attempt = assessment_attempts[int(attempt_number)-1]
+    except IndexError:
+        raise Http404('Assessment attempt %s not found.' % attempt_number)
+
+
+    assessment=content.thread_content.content_object
+    # must be an assessment 
+    if not isinstance(assessment,Assessment):
+        raise Http404('Thread content %s is not an assessment' % assessment)
+
+    if attempt.score is not None and attempt.score != attempt.get_score():
+        score_overridden = True
+    else:
+        score_overridden = False
+  
+    question_sets=[]
+    for question_set_detail in assessment.questionsetdetail_set.all():
+        question_set_dict={'question_set': question_set_detail.question_set}
+        question_set_dict['score'] = \
+            attempt.get_score_question_set(question_set_detail)
+        question_sets.append(question_set_dict)
+
+
+    # no Google analytics for course
+    noanalytics=True
+
+    return render_to_response \
+        ('micourses/assessment_attempt_question_sets.html', 
+         {'student': courseuser,
+          'content': content,
+          'attempt': attempt,
+          'attempt_number': attempt_number,
+          'question_sets': question_sets,
+          'score_overridden': score_overridden,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
+
 
 @permission_required("micourse.update_attendance")
 def update_attendance_view(request):

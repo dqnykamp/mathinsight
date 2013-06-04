@@ -3,12 +3,13 @@ from dajax.core import Dajax
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 #from dajaxice.utils import deserialize_form
 from mitesting.forms import MultipleChoiceQuestionForm, MathWriteInForm
-from mitesting.models import Question
+from mitesting.models import Question, Assessment
 from midocs.models import Page
 from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser, Course
 from mithreads.models import Thread, ThreadSection, ThreadContent
 from mithreads.forms import ThreadSectionForm, ThreadContentForm
 from django.contrib.contenttypes.models import ContentType
+from django.core.urlresolvers import reverse
 import re
 
 @dajaxice_register
@@ -87,7 +88,8 @@ def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
 
 
 @dajaxice_register
-def check_math_write_in(request, answer, question_id, seed, identifier):
+def check_math_write_in(request, answer, question_id, seed, identifier,
+                        assessment_code, question_set ):
     
     dajax = Dajax()
 
@@ -234,8 +236,56 @@ def check_math_write_in(request, answer, question_id, seed, identifier):
         try:
             if request.user.is_authenticated():
                 the_answer_string = "%s" % the_answers
-                QuestionStudentAnswer.objects.create(user=request.user, question=the_question, answer=the_answers, seed=seed, credit=credit)
-                dajax.append(feedback_selector, 'innerHTML', '<p><i>Answer recorded for %s.</i></p>' % request.user)
+
+                if assessment_code:
+                    assessment = Assessment.objects.get(code=assessment_code)
+                else:
+                    assessment = None
+                    question_set = None
+
+                try:
+                    student = request.user.courseuser
+                    course = student.return_selected_course()
+                except:
+                    student = None
+                    course = None
+                    
+                # check if assessment given by assessment_code is in course
+                # if so, will link to latest attempt
+                latest_attempt=None
+                if course and assessment_code:
+                        
+                    assessment_content_type = ContentType.objects.get\
+                        (model='assessment')
+                        
+                    try:
+                        content=course.coursethreadcontent_set.get\
+                            (thread_content__object_id=assessment.id,\
+                                 thread_content__content_type=assessment_content_type)
+                    except ObjectDoesNotExist:
+                        content=None
+
+                    # if found course content, look for latest attempt by student
+                    if content:
+                        try:
+                            latest_attempt = content.studentcontentattempt_set\
+                                .filter(student=student, score=None).latest()
+                        except ObjectDoesNotExist:
+                            latest_attempt = content.studentcontentattempt_set\
+                                .create(student=student)
+                
+                # record attempt, possibling linking to latest content attempt
+                QuestionStudentAnswer.objects.create\
+                    (user=request.user, question=the_question, \
+                         assessment=assessment, question_set=question_set,\
+                         answer=the_answers, seed=seed, credit=credit,\
+                         course_content_attempt=latest_attempt)
+
+                feedback_message = "Answer recorded for %s" % request.user
+                if latest_attempt:
+                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a><br/><a href=\"%s\">%s</a>" % (reverse('mic-coursemain'), course, reverse('mic-assessmentattempts', kwargs={'id': content.id} ), assessment)
+
+                dajax.append(feedback_selector, 'innerHTML', '<p><i>%s</i></p>' % feedback_message)
         except Exception as e:
             pass
         

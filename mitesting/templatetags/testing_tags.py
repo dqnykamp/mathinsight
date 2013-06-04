@@ -146,9 +146,8 @@ def expr(parser, token):
 def new_exam_page(context):
     return {
         'course': context['course'],
-        'semester': context['semester'],
         'assessment_date': context['assessment_date'],
-        'the_assessment_short_name': context['the_assessment_short_name'],
+        'ssessment_short_name': context['assessment_short_name'],
         'version': context['version'],
         }
 

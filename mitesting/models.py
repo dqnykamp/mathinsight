@@ -52,16 +52,21 @@ class QuestionSpacing(models.Model):
 
 class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    def __unicode__(self):
+        return  self.name
+   
+class QuestionPermission(models.Model):
+    name = models.CharField(max_length=50, unique=True)
     privacy_level=models.SmallIntegerField(default=0)
     privacy_level_solution=models.SmallIntegerField(default=0)
     def __unicode__(self):
         return  self.name
-   
+    
 
 class Question(models.Model):
-    #code = models.SlugField(max_length=200, blank=True, null=True)
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
+    question_permission = models.ForeignKey(QuestionPermission)
     description = models.CharField(max_length=400,blank=True, null=True)
     question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
     css_class = models.CharField(max_length=100,blank=True, null=True)
@@ -69,8 +74,6 @@ class Question(models.Model):
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    question_javascript = models.TextField(blank=True, null=True)
-    solution_javascript = models.TextField(blank=True, null=True)
     video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
@@ -109,9 +112,9 @@ class Question(models.Model):
     def return_privacy_level(self, solution=True):
         # privacy level is just that of the question type
         if solution:
-            return self.question_type.privacy_level_solution
+            return self.question_permission.privacy_level_solution
         else:
-            return self.question_type.privacy_level
+            return self.question_permission.privacy_level
 
     def need_help_html_string(self, identifier, user=None, seed_used=None):
         
@@ -319,20 +322,20 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
-    def render_question(self, context, user=None, show_help=True, identifier=""):
+    def render_question(self, context, user=None, show_help=True, identifier="", assessment=None, question_set=None):
         identifier = "%s_%s" % (identifier, self.id)
         
         context['identifier'] = identifier
 
         seed_used = context['question_%s_seed' % identifier]
         if self.question_type.name=="Multiple choice":
-            return self.render_multiple_choice_question(context,
-                                                        identifier=identifier,
-                                                        seed_used=seed_used)
+            return self.render_multiple_choice_question\
+                (context, identifier=identifier, seed_used=seed_used,
+                 assessment=assessment, question_set=question_set)
         elif self.question_type.name=="Math write in":
-            return self.render_math_write_in_question(context,
-                                                      seed_used=seed_used,
-                                                      identifier=identifier)
+            return self.render_math_write_in_question\
+                (context, identifier=identifier, seed_used=seed_used,
+                 assessment=assessment, question_set=question_set)
         else:
             return self.render_text(context,identifier=identifier, user=user, 
                                     solution=False, 
@@ -350,8 +353,9 @@ class Question(models.Model):
                                     solution=True, seed_used=seed_used)
 
 
-    def render_multiple_choice_question(self, context,identifier, 
-                                        seed_used=None):
+    def render_multiple_choice_question(self, context, identifier, 
+                                        seed_used=None, assessment=None,
+                                        question_set=None):
         html_string = '<p>%s</p>' % self.render_text(context, identifier, 
                                                      show_help=False)
         
@@ -386,13 +390,22 @@ class Question(models.Model):
 
         return mark_safe(html_string)
 
-    def render_math_write_in_question(self, context, seed_used,
-                                      identifier):
+    def render_math_write_in_question(self, context, identifier, seed_used,
+                                      assessment=None, question_set=None):
         
         # render question text at the beginning so that have answer_list in context
         question_text = '<div id=question_text_%s>%s</div>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
 
-        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier)
+        if assessment:
+            assessment_code = assessment.code
+        else:
+            assessment_code = ""
+        
+        if question_set is None:
+            question_set = ""
+            
+
+        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'question_set': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, question_set)
 
         the_correct_answers = context.get('answer_list',[])
         answer_feedback_strings=""
@@ -403,7 +416,7 @@ class Question(models.Model):
             break
 
 
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
+        #callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
         callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]);}</script>' % (identifier, identifier)
 
 
@@ -706,7 +719,7 @@ class Assessment(models.Model):
             return "Error in instructions2 template: %s" % e
 
 
-    def render_question_list(self, seed=None, user=None):
+    def render_question_list(self, seed=None, user=None, latest_attempt=None):
         if seed is not None:
             random.seed(seed)
             
@@ -715,14 +728,15 @@ class Assessment(models.Model):
         rendered_question_list = []
         
         previous_context=Context({})
-        for (i, question) in enumerate(question_list):
+        for (i, question_dict) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
             identifier="qa%s" % i
 
-            the_question = question['question']
-            question_context = the_question.setup_context\
-                (seed=question['seed'], identifier=identifier, \
+            question = question_dict['question']
+            question_set = question_dict['question_set']
+            question_context = question.setup_context\
+                (seed=question_dict['seed'], identifier=identifier, \
                      allow_solution_buttons = self.allow_solution_buttons,\
                      previous_context = previous_context)
             
@@ -732,17 +746,27 @@ class Assessment(models.Model):
                 question_text = question_context
                 geogebra_oninit_commands=""
             else:
-                question_text = the_question.render_question(question_context, user=user, identifier=identifier)
+                question_text = question.render_question(question_context, user=user, identifier=identifier, assessment=self, question_set=question_set)
                 geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
-                #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=False)
+                #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=False)
                 previous_context = question_context
 
 
+            # if have a latest attempt, look for maximum score on question_set
+            if latest_attempt:
+                question_set_detail = self.questionsetdetail_set.get\
+                    (question_set=question_set)
+                latest_score =latest_attempt.get_score_question_set\
+                    (question_set_detail)
+            else:
+                latest_score = None
+
             rendered_question_list.append({'question_text': question_text,
-                                           'question': the_question,
-                                           'points': question['points'],
-                                           'seed': question['seed'],
-                                           'question_set': question['question_set'],
+                                           'question': question,
+                                           'points': question_dict['points'],
+                                           'seed': question_dict['seed'],
+                                           'question_set': question_set,
+                                           'latest_score': latest_score,
                                            'geogebra_oninit_commands': geogebra_oninit_commands})
 
 
@@ -761,16 +785,14 @@ class Assessment(models.Model):
         rendered_solution_list = []
 
         previous_context = Context({})
-        for (i, question) in enumerate(question_list):
+        for (i, solution_dict) in enumerate(question_list):
 
             # use qa for identifier since coming from assessment
             identifier="qa%s" % i
 
-            solution_dict = question
-
-            the_question = question['question']
-            question_context = the_question.setup_context\
-                (seed=question['seed'], identifier=identifier, \
+            question = solution_dict['question']
+            question_context = question.setup_context\
+                (seed=solution_dict['seed'], identifier=identifier, \
                      allow_solution_buttons = self.allow_solution_buttons, \
                      previous_context = previous_context )
 
@@ -781,12 +803,12 @@ class Assessment(models.Model):
                 solution_text = question_context
                 geogebra_oninit_commands=""
             else:
-                question_text = the_question.render_question(question_context,
+                question_text = question.render_question(question_context,
                                                           identifier=identifier)
-                solution_text = the_question.render_solution(question_context,
+                solution_text = question.render_solution(question_context,
                                                           identifier=identifier)
                 geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
-                #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+                #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=True)
                 
                 previous_context = question_context
 

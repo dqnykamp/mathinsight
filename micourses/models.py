@@ -141,6 +141,8 @@ class StudentAttendance(models.Model):
 class Course(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
+    short_name = models.CharField(max_length=50)
+    semester = models.CharField(max_length=50)
     description = models.CharField(max_length=400,blank=True)
     assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory')
     enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment')
@@ -401,11 +403,14 @@ class CourseThreadContent(models.Model):
         # depending on attempt_aggregation
         # or zero if no attempt
         if self.attempt_aggregation=='Avg':
-            score = self.studentcontentattempt_set.filter(student=student).aggregate(score = Avg('score'))['score']
+            from numpy import mean
+            score = mean([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
+            #score = self.studentcontentattempt_set.filter(student=student).aggregate(score = Avg('score'))['score']
         elif self.attempt_aggregation=='Las':
-            score = self.studentcontentattempt_set.filter(student=student).latest('datetime').score
+            score = self.studentcontentattempt_set.filter(student=student).latest('datetime').get_score()
         else:
-            score = self.studentcontentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
+            score = max([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
+            #score = self.studentcontentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
         if score:
             return score
         else:
@@ -641,6 +646,7 @@ class StudentContentAttempt(models.Model):
 
     class Meta:
         ordering = ['datetime']
+        get_latest_by = "datetime"
 
     def get_score(self):
         # if a score is entered in, it overrides any question answers
@@ -655,25 +661,28 @@ class StudentContentAttempt(models.Model):
         
         score = 0.0
         for question_set_detail in assessment.questionsetdetail_set.all():
-            question_answers = self.questionstudentanswer_set\
-                .filter(question_set=question_set_detail.question_set)
-
-            if question_answers:
-
-                if self.content.attempt_aggregation=='Avg':
-                    credit = question_answers.aggregate(credit=Avg('credit'))['credit']
-                elif self.content.attempt_aggregation=='Las':
-                    credit = question_answers.latest('datetime').credit
-                else:
-                    credit = question_answers.aggregate(credit=Max('credit'))['credit']
-                
-                print credit
-                print question_set_detail.points
-
-                score += question_set_detail.points*credit
-                print score
+            score += self.get_score_question_set(question_set_detail)
 
         return score
+
+
+    def get_score_question_set(self, question_set_detail):
+        question_answers = self.questionstudentanswer_set\
+            .filter(question_set=question_set_detail.question_set)
+
+        if question_answers:
+
+            if self.content.attempt_aggregation=='Avg':
+                credit = question_answers.aggregate(credit=Avg('credit'))['credit']
+            elif self.content.attempt_aggregation=='Las':
+                credit = question_answers.latest('datetime').credit
+            else:
+                credit = question_answers.aggregate(credit=Max('credit'))['credit']
+                
+            return question_set_detail.points*credit
+        else:
+            return 0
+
 
 
 class StudentContentCompletion(models.Model):
@@ -692,6 +701,8 @@ class StudentContentCompletion(models.Model):
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
+    assessment = models.ForeignKey('mitesting.Assessment', 
+                                   blank=True, null=True)
     question_set = models.SmallIntegerField(blank=True, null=True)
     answer = models.CharField(max_length=400, blank=True, null=True)
     seed = models.CharField(max_length=50, blank=True, null=True)

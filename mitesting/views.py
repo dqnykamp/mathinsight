@@ -7,8 +7,7 @@ from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
 from django.utils.safestring import mark_safe
 import random
-from numpy import arccos, arcsin, arctan, arctan2, ceil, cos, cosh, degrees, e, exp, fabs, floor, fmod, frexp, hypot, ldexp, log, log10, modf, pi, radians, sin, sinh, sqrt, tan, tanh, piecewise
-
+from django.contrib.contenttypes.models import ContentType
 import datetime
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
 
@@ -133,10 +132,10 @@ def question_solution_view(request, question_id):
 
 def assessment_view(request, assessment_code, solution=False):
     
-    the_assessment = get_object_or_404(Assessment, code=assessment_code)
+    assessment = get_object_or_404(Assessment, code=assessment_code)
     
     # determine if user has permission to view, given privacy level
-    if not the_assessment.user_can_view(request.user, solution):
+    if not assessment.user_can_view(request.user, solution):
         path = request.build_absolute_uri()
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
@@ -151,20 +150,37 @@ def assessment_view(request, assessment_code, solution=False):
         assessment_date = request.REQUEST['date']
     except:
         assessment_date = datetime.date.today().strftime("%B %d, %Y")
-    try: 
-        course = request.REQUEST['course']
-    except:
-        course = ""
-    try: 
-        semester = request.REQUEST['semester']
-    except:
-        semester = ""
 
+    try:
+        student = request.user.courseuser
+        course = student.return_selected_course()
+    except:
+        student = None
+        course = None
+
+    latest_attempt=None
+    if course:
+        assessment_content_type = ContentType.objects.get\
+            (model='assessment')
+                        
+        try:
+            course_thread_content=course.coursethreadcontent_set.get\
+                (thread_content__object_id=assessment.id,\
+                     thread_content__content_type=assessment_content_type)
+        except ObjectDoesNotExist:
+            course_thread_content=None
+
+        if course_thread_content:
+            try:
+                latest_attempt = course_thread_content.studentcontentattempt_set\
+                    .filter(student=student, score=None).latest()
+            except:
+                latest_attempt = None
 
     rendered_question_list=[]
     rendered_solution_list=[]
     if solution:
-        rendered_solution_list=the_assessment.render_solution_list(seed)
+        rendered_solution_list=assessment.render_solution_list(seed)
         geogebra_oninit_commands=""
         for sol in rendered_solution_list:
             if geogebra_oninit_commands:
@@ -172,7 +188,7 @@ def assessment_view(request, assessment_code, solution=False):
             if sol['geogebra_oninit_commands']:
                 geogebra_oninit_commands += sol['geogebra_oninit_commands']
     else:
-        rendered_question_list=the_assessment.render_question_list(seed, user=request.user)
+        rendered_question_list=assessment.render_question_list(seed, user=request.user, latest_attempt=latest_attempt)
         geogebra_oninit_commands=""
         for ques in rendered_question_list:
             if geogebra_oninit_commands:
@@ -211,29 +227,29 @@ def assessment_view(request, assessment_code, solution=False):
     if solution:
         solution_postfix="_solution"
     template="mitesting/assessment"+solution_postfix+".html"
-    if the_assessment.assessment_type.code=='in_class_exam':
+    if assessment.assessment_type.code=='in_class_exam':
         template="mitesting/exam"+solution_postfix+".html"
-    elif the_assessment.assessment_type.code=='in_class_quiz':
+    elif assessment.assessment_type.code=='in_class_quiz':
         template="mitesting/quiz"+solution_postfix+".html"
 
-    the_assessment_name = the_assessment.name
+    assessment_name = assessment.name
     if solution:
-        the_assessment_name = the_assessment_name + " solution"
-    the_assessment_short_name = the_assessment.return_short_name()
+        assessment_name = assessment_name + " solution"
+    assessment_short_name = assessment.return_short_name()
     if solution:
-        the_assessment_short_name = the_assessment_short_name + " sol."
+        assessment_short_name = assessment_short_name + " sol."
 
     return render_to_response \
         (template, 
-         {'the_assessment': the_assessment, 
-          'the_assessment_name': the_assessment_name, 
-          'the_assessment_short_name': the_assessment_short_name, 
+         {'assessment': assessment, 
+          'assessment_name': assessment_name, 
+          'assessment_short_name': assessment_short_name, 
           'question_list': rendered_question_list,
           'solution_list': rendered_solution_list,
           'seed': seed, 'version': version,
           'assessment_date': assessment_date,
           'course': course,
-          'semester': semester,
+          'course_thread_content': course_thread_content,
           'question_numbers': question_numbers,
           'generate_assessment_link': generate_assessment_link,
           'geogebra_oninit_commands': geogebra_oninit_commands,
@@ -244,10 +260,10 @@ def assessment_view(request, assessment_code, solution=False):
 
 def assessment_avoid_question_view(request, assessment_code):
     
-    the_assessment = get_object_or_404(Assessment, code=assessment_code)
+    assessment = get_object_or_404(Assessment, code=assessment_code)
     
     # determine if user has permission to view, given privacy level
-    if not the_assessment.user_can_view(request.user, solution=True):
+    if not assessment.user_can_view(request.user, solution=True):
         path = request.build_absolute_uri()
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
@@ -274,7 +290,7 @@ def assessment_avoid_question_view(request, assessment_code):
         semester = ""
 
     if avoid_list:
-        new_seed = the_assessment.avoid_question_seed(avoid_list, start_seed=seed)
+        new_seed = assessment.avoid_question_seed(avoid_list, start_seed=seed)
     else:
         new_seed=seed
     
@@ -285,11 +301,11 @@ def assessment_avoid_question_view(request, assessment_code):
 
 
 def assessment_overview_view(request, assessment_code):
-    the_assessment = get_object_or_404(Assessment, code=assessment_code)
+    assessment = get_object_or_404(Assessment, code=assessment_code)
 
     # make link to assessment if 
     # user has permission to view the assessment, given privacy level
-    assessment_link = the_assessment.user_can_view(request.user, solution=False)
+    assessment_link = assessment.user_can_view(request.user, solution=False)
 
     # turn off google analytics for localhost
     noanalytics=False
@@ -298,7 +314,7 @@ def assessment_overview_view(request, assessment_code):
 
     return render_to_response \
         ('mitesting/assessment_overview.html', 
-         {'assessment': the_assessment,
+         {'assessment': assessment,
           'assessment_link': assessment_link,
           'noanalytics': noanalytics,
           },

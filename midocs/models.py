@@ -110,7 +110,7 @@ class Author(models.Model):
     institution = models.CharField(max_length=200,blank=True, null=True)
     web_address = models.URLField(blank=True, null=True)
     email_address = models.EmailField(blank=True, null=True)
-    display_email = models.BooleanField()
+    display_email = models.BooleanField(default=False)
     # 1 if page author, 2 if on list, 3 if core contributor
     mi_contributor = models.SmallIntegerField(db_index=True, default=0)
     contribution_summary = models.TextField(blank=True, null=True)
@@ -255,7 +255,7 @@ class Page(models.Model):
     template_modified = models.DateTimeField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     highlight = models.BooleanField(db_index=True)
-    worksheet = models.BooleanField()
+    worksheet = models.BooleanField(default=False)
     author_copyright = models.BooleanField(default=True)
     hidden = models.BooleanField(db_index=True)
     additional_credits = models.TextField(blank=True, null=True)
@@ -1355,7 +1355,7 @@ class AppletObject(models.Model):
     object_type = models.ForeignKey(AppletObjectType)
     name = models.CharField(max_length=100)
     change_from_javascript = models.BooleanField(default=True)
-    capture_changes = models.BooleanField()
+    capture_changes = models.BooleanField(default=False)
     related_objects = models.CharField(max_length=200, blank=True, null=True)
 
     def __unicode__(self):

@@ -1,23 +1,23 @@
 {% extends "mitesting/assessment_base.html" %}{% load testing_tags %}
 
 {% block content %}
-<h3>{{ the_assessment }}</h3>
+<h3>{{ assessment }}</h3>
 <h5>{{ course }} {{ semester }}</h5>
 
 <section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>
 
 <section class="quiz_main">
-{% if the_assessment.instructions %}{{ the_assessment.render_instructions }}{% endif %}
+{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
 
 <ol class="quiz_questions">
 {% for question in question_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.latest_score %} (latest score: <a href="{% url 'mic-assessmentattempts' course_thread_content.id %}">{{question.latest_score}}</a>){%endif%}{%endif%}{{ question.question_text }}</li>
 {% endfor %}
 </ol>
 </section>
 
 <section id="more_questions_link">
-  <a href="{{the_assessment.get_absolute_url}}?seed={{ the_assessment.get_new_seed }}" rel="nofollow">Generate another sample of the questions</a>
+  <a href="{{assessment.get_absolute_url}}?seed={{ assessment.get_new_seed }}" rel="nofollow">Generate another sample of the questions</a>
 </section>
 
 {% endblock %}
