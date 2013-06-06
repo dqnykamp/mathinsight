@@ -786,7 +786,11 @@ class Assessment(models.Model):
                 try:
                     current_credit =current_attempt\
                         .get_percent_credit_question_set(question_set)
-                    current_score = current_credit*question_dict['points']/100
+                    if question_dict['points']:
+                        current_score = current_credit\
+                            *question_dict['points']/100
+                    else:
+                        current_score=0
                 except ObjectDoesNotExist:
                     current_credit = None
             else:
