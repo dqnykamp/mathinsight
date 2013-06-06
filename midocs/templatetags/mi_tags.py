@@ -939,9 +939,18 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             except:
                 return ""
 
-            javascript = 'document.%s.setCoords("%s", "%s", "%s");\n' % \
+            # try to x and y values from point
+            try:
+                value_x = value.x
+                value_y = value.y
+            except AttributeError:
+                # else try as a Tuple
+                value_x = value[0]
+                value_y = value[1]
+            
+            javascript = 'document.%s.setCoords("%s", %s, %s);\n' % \
                 (applet_identifier, appletobject.name,
-                  value[0], value[1])
+                  value_x, value_y)
         elif object_type=='Number' or object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", %s);\n' % \
                 (applet_identifier, appletobject.name,
@@ -1255,6 +1264,18 @@ class AppletNode(template.Node):
             # return broken applet text
             return '<p>[Broken applet]</p>'
 
+        pre_answers = context.get('pre_answers')
+        if pre_answers:
+            identifier_in_answer = pre_answers['identifier']
+        else:
+            identifier_in_answer = None
+        #     value_string = ' value="%s"' % \
+        #         pre_answers['answer_%s_%s' % (self.answer_expression_string,
+        #                                      identifier_in_answer)]
+        # else:
+        #     value_string = ''
+
+
         # check if any applet objects are specified 
         # to be changed with javascript
         appletobjects=applet.appletobject_set.filter \
@@ -1263,6 +1284,22 @@ class AppletNode(template.Node):
         for appletobject in appletobjects:
             objectvalue = kwargs.get(appletobject.name)
             objectvalue_string = kwargs_string.get(appletobject.name)
+            
+            # check if object is in pre_answers
+            # if so, overwrite and use that value instead
+            if pre_answers:
+                # check if applet object is set to be captured
+                the_kw = "answer_blank_%s" % appletobject.name
+                expression_for_object = kwargs.get(the_kw)
+                if expression_for_object is not None:
+                    expression_string =  kwargs_string.get(the_kw)
+                    # target as it would have been in pre_answer
+                    pre_answer_target = "answer_%s_%s" % (expression_string, 
+                                                          identifier_in_answer)
+                    pre_answer = pre_answers.get(pre_answer_target)
+                    if pre_answer:
+                        objectvalue = pre_answer
+
             if objectvalue is not None:
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
@@ -1287,7 +1324,19 @@ class AppletNode(template.Node):
 
                 target = "answer_%s_%s" % (expression_string, identifier)
                 target_id = "id_" + target
-                inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20" />\n' % (target_id, target)
+
+                # check if object is in pre_answers
+                # if so, use that value for input box
+                value_string = ""
+                if pre_answers:
+                    # target as it would have been in pre_answer
+                    pre_answer_target = "answer_%s_%s" % (expression_string, 
+                                                          identifier_in_answer)
+                    pre_answer = pre_answers.get(pre_answer_target)
+                    if pre_answer:
+                        value_string = ' value="%s"' % pre_answer
+
+                inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20"%s />\n' % (target_id, target, value_string)
                     
                 related_objects=[]
                 if appletobject.related_objects:
@@ -1300,11 +1349,13 @@ class AppletNode(template.Node):
                         except:
                             pass
 
-                if applet.applet_type.code == "Geogebra" \
-                        or applet.applet_type.code == "GeogebraWeb":
-                    capture_javascript += Geogebra_capture_object_javascript \
-                        (context, appletobject, applet_identifier, 
-                         target_id, related_objects)
+                # capture value only if not pre_answers
+                if not pre_answers:
+                    if applet.applet_type.code == "Geogebra" \
+                            or applet.applet_type.code == "GeogebraWeb":
+                        capture_javascript += Geogebra_capture_object_javascript \
+                            (context, appletobject, applet_identifier, 
+                             target_id, related_objects)
 
                 try:
                     points = int(kwargs['points_'+the_kw])

@@ -3,6 +3,8 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Overview of: {{assessment.name}} - Math Insight{%endblock%}
 
+{% if course_thread_content %}{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempts' course_thread_content.id %}">{{ assessment.name }}</a> ► overview{% endblock %}{%endif%}
+
 {% block content %}
 
 <h3>Overview of: {{assessment.name}}</h3>
@@ -20,7 +22,32 @@
 
 
 {% if assessment_link %}
-<p>Go to: {{assessment.return_direct_link}}</p>
+<p>Go to: {% if course %}{{assessment.return_direct_link_no_seed}}{%else%}{{assessment.return_direct_link}}{%endif%}</p>
 {% endif %}
 
 {% endblock %}
+ 
+{% block rightcolumn %}
+{% if assessment.thread_content_set.all %}
+<a id="threads" class="anchor"></a>
+<section class="box threadbox">
+<h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
+{% for thread_content in assessment.thread_content_set.all %}
+<a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
+<ul class="linklist">
+  {% with thread_content.find_previous as previous_in_thread %}
+  {% if previous_in_thread %}
+  <li> Previous: {{ previous_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+  {% with thread_content.find_next as next_in_thread %}
+  {% if next_in_thread %}
+  <li> Next: {{ next_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+</ul>
+{% endfor %}
+</section>
+{% endif %}
+{%endblock%}

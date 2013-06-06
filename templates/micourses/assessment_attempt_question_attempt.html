@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}{% load dajaxice_templatetags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
+
+{% block extrastyle %}
+<script src="{{ STATIC_URL }}js/jquery.dajax.core.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% dajaxice_js_import %} 
+{% endblock %}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempts' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattemptquestions' content.id attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestiondetail' content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
+
+
+{% block content %}
+
+<h4>Question {{question_number}} of attempt {{attempt_number}} on: {{content.thread_content.content_object}}</h4>
+
+<h5>As answered on {{answer_dict.datetime}}</h5>
+
+
+
+{{ rendered_question }}
+
+<p>Points: {{ answer_dict.points}}<br/>
+Percent: {{ answer_dict.credit_percent }}%{% if answer_dict.credit_percent = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%}<br/>
+Score: {{answer_dict.score }}</p>
+
+
+{% endblock %}

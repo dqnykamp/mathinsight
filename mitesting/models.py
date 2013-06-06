@@ -4,6 +4,7 @@ from midocs.models import Video, Page
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
 from django.contrib.contenttypes import generic
 from django.utils.safestring import mark_safe
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
 import random 
 from mitesting.permissions import return_user_assessment_permission_level
@@ -322,20 +323,29 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
-    def render_question(self, context, user=None, show_help=True, identifier="", assessment=None, question_set=None):
+    def render_question(self, context, user=None, show_help=True,
+                        identifier="", assessment=None, question_set=None, 
+                        assessment_seed=None, pre_answers=None, readonly=False,
+                        precheck=False):
         identifier = "%s_%s" % (identifier, self.id)
         
         context['identifier'] = identifier
+        context['readonly'] = readonly
+        if pre_answers:
+            context['pre_answers'] = pre_answers
 
         seed_used = context['question_%s_seed' % identifier]
         if self.question_type.name=="Multiple choice":
             return self.render_multiple_choice_question\
                 (context, identifier=identifier, seed_used=seed_used,
-                 assessment=assessment, question_set=question_set)
+                 assessment=assessment,
+                 assessment_seed=assessment_seed, question_set=question_set)
         elif self.question_type.name=="Math write in":
             return self.render_math_write_in_question\
                 (context, identifier=identifier, seed_used=seed_used,
-                 assessment=assessment, question_set=question_set)
+                 assessment=assessment,
+                 assessment_seed=assessment_seed, question_set=question_set,
+                 precheck=precheck)
         else:
             return self.render_text(context,identifier=identifier, user=user, 
                                     solution=False, 
@@ -355,7 +365,7 @@ class Question(models.Model):
 
     def render_multiple_choice_question(self, context, identifier, 
                                         seed_used=None, assessment=None,
-                                        question_set=None):
+                                        assessment_seed=None, question_set=None):
         html_string = '<p>%s</p>' % self.render_text(context, identifier, 
                                                      show_help=False)
         
@@ -391,7 +401,9 @@ class Question(models.Model):
         return mark_safe(html_string)
 
     def render_math_write_in_question(self, context, identifier, seed_used,
-                                      assessment=None, question_set=None):
+                                      assessment=None,
+                                      assessment_seed=None, question_set=None,
+                                      precheck=False):
         
         # render question text at the beginning so that have answer_list in context
         question_text = '<div id=question_text_%s>%s</div>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
@@ -400,12 +412,17 @@ class Question(models.Model):
             assessment_code = assessment.code
         else:
             assessment_code = ""
+            assessment_seed = None
         
         if question_set is None:
             question_set = ""
-            
+        
+        if precheck:
+            record = 'false'
+        else:
+            record = 'true'
 
-        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'question_set': '%s' });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, question_set)
+        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, assessment_seed, question_set, record)
 
         the_correct_answers = context.get('answer_list',[])
         answer_feedback_strings=""
@@ -425,7 +442,7 @@ class Question(models.Model):
         html_string += question_text
 
         asb_string = 0
-        if context['allow_solution_buttons']:
+        if context['allow_solution_buttons'] and not precheck:
             asb_string = 1
 
         html_string += '<input type="hidden" id="id_number_attempts_%s" maxlength="5" name="number_attempts_%s" size="5" value = "0" /><input type="hidden" id="id_asb_%s" maxlength="5" name="asb_%s" size="5" value = "%s">' % (identifier, identifier, identifier, identifier, asb_string)
@@ -434,7 +451,11 @@ class Question(models.Model):
 
         # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
-        html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
+        if not precheck:
+            html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
+        else:
+            html_string += '<div id="question_%s_feedback" class="info"></div> </div></form><script type="text/javascript">%s</script>'  % (identifier, send_command)
+
         return mark_safe(html_string)
 
     def render_javascript_commands(self, context, question=True, solution=False):
@@ -603,7 +624,7 @@ class Assessment(models.Model):
     allow_solution_buttons = models.BooleanField(default=False)
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
     hand_graded_component = models.BooleanField(default=True)
-
+    
     def __unicode__(self):
         return  self.name
 
@@ -628,8 +649,9 @@ class Assessment(models.Model):
         if direct:
             link_url = self.get_absolute_url()
         
-            seed = kwargs.get("seed","1")
-            link_url += "?seed=%s" % seed
+            seed = kwargs.get("seed",None)
+            if seed is not None:
+                link_url += "?seed=%s" % seed
         else:
             link_url = self.get_overview_url()
 
@@ -639,6 +661,12 @@ class Assessment(models.Model):
 
     def return_direct_link(self, **kwargs):
         kwargs['direct']=True
+        kwargs['seed']=1
+        return self.return_link(**kwargs)
+
+    def return_direct_link_no_seed(self, **kwargs):
+        kwargs['direct']=True
+        kwargs['seed']=None
         return self.return_link(**kwargs)
 
     def user_can_view(self, user, solution=True):
@@ -719,7 +747,7 @@ class Assessment(models.Model):
             return "Error in instructions2 template: %s" % e
 
 
-    def render_question_list(self, seed=None, user=None, latest_attempt=None):
+    def render_question_list(self, seed=None, user=None, current_attempt=None):
         if seed is not None:
             random.seed(seed)
             
@@ -746,28 +774,33 @@ class Assessment(models.Model):
                 question_text = question_context
                 geogebra_oninit_commands=""
             else:
-                question_text = question.render_question(question_context, user=user, identifier=identifier, assessment=self, question_set=question_set)
+                question_text = question.render_question(question_context, user=user, identifier=identifier, assessment=self, assessment_seed = seed, question_set=question_set)
                 geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
                 #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=False)
                 previous_context = question_context
 
 
             # if have a latest attempt, look for maximum score on question_set
-            if latest_attempt:
-                question_set_detail = self.questionsetdetail_set.get\
-                    (question_set=question_set)
-                latest_score =latest_attempt.get_score_question_set\
-                    (question_set_detail)
+            current_score=None
+            if current_attempt:
+                try:
+                    current_credit =current_attempt\
+                        .get_percent_credit_question_set(question_set)
+                    current_score = current_credit*question_dict['points']/100
+                except ObjectDoesNotExist:
+                    current_credit = None
             else:
-                latest_score = None
+                current_credit = None
 
             rendered_question_list.append({'question_text': question_text,
                                            'question': question,
                                            'points': question_dict['points'],
                                            'seed': question_dict['seed'],
                                            'question_set': question_set,
-                                           'latest_score': latest_score,
-                                           'geogebra_oninit_commands': geogebra_oninit_commands})
+                                           'current_credit': current_credit,
+                                           'current_score': current_score,
+                                           'geogebra_oninit_commands':\
+                                               geogebra_oninit_commands})
 
 
         if not self.fixed_order:

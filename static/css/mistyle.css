@@ -1783,6 +1783,18 @@ table caption {
     margin-bottom: 10px;
 }
 
+
+
+table.rowclick tr td {
+    padding: 0;
+}
+
+table.rowclick tr td a {
+    display:inline-block;
+    height:100%;
+    width:100%;
+}
+
 /* the index */
 .indexlink 
 {

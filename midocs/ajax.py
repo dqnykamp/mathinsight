@@ -11,6 +11,7 @@ from mithreads.forms import ThreadSectionForm, ThreadContentForm
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 import re
+import json
 
 @dajaxice_register
 def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
@@ -88,12 +89,15 @@ def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
 
 
 @dajaxice_register
-def check_math_write_in(request, answer, question_id, seed, identifier,
-                        assessment_code, question_set ):
+def check_math_write_in(request, answer_serialized, question_id, seed, 
+                        identifier,
+                        assessment_code, assessment_seed, question_set,
+                        record=True):
     
     dajax = Dajax()
 
     try: 
+
         feedback_selector = "#question_%s_feedback" % identifier
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
@@ -123,7 +127,8 @@ def check_math_write_in(request, answer, question_id, seed, identifier,
 
         the_answers={}
         answer_dict = {}
-        for  obj in answer:
+
+        for  obj in answer_serialized:
             answer_dict[obj['name']]=obj['value']
             
         for answer_tuple in the_correct_answers:
@@ -234,14 +239,15 @@ def check_math_write_in(request, answer, question_id, seed, identifier,
 
         # record answer by user
         try:
-            if request.user.is_authenticated():
-                the_answer_string = "%s" % the_answers
+            if record and request.user.is_authenticated():
+                
 
                 if assessment_code:
                     assessment = Assessment.objects.get(code=assessment_code)
                 else:
                     assessment = None
                     question_set = None
+                    assessment_seed = None
 
                 try:
                     student = request.user.courseuser
@@ -252,7 +258,7 @@ def check_math_write_in(request, answer, question_id, seed, identifier,
                     
                 # check if assessment given by assessment_code is in course
                 # if so, will link to latest attempt
-                latest_attempt=None
+                current_attempt = None
                 if course and assessment_code:
                         
                     assessment_content_type = ContentType.objects.get\
@@ -265,29 +271,41 @@ def check_math_write_in(request, answer, question_id, seed, identifier,
                     except ObjectDoesNotExist:
                         content=None
 
-                    # if found course content, look for latest attempt by student
+                    
+                    # if found course content, get attempt by student
+                    # with same assessment_seed
                     if content:
-                        try:
-                            latest_attempt = content.studentcontentattempt_set\
-                                .filter(student=student, score=None).latest()
-                        except ObjectDoesNotExist:
-                            latest_attempt = content.studentcontentattempt_set\
-                                .create(student=student)
-                
-                # record attempt, possibling linking to latest content attempt
+                        current_attempt = content.studentcontentattempt_set\
+                                .get(student=student, seed=assessment_seed)
+
+
+                # if have current_attempt, don't record assessment,
+                # as it would be redundant information
+                if current_attempt:
+                    assessment=None
+                    assessment_seed = None
+
+                # record attempt, possibly linking to latest content attempt
+                import json
                 QuestionStudentAnswer.objects.create\
                     (user=request.user, question=the_question, \
-                         assessment=assessment, question_set=question_set,\
-                         answer=the_answers, seed=seed, credit=credit,\
-                         course_content_attempt=latest_attempt)
+                         question_set=question_set,\
+                         answer=json.dumps(answer_dict),\
+                         identifier_in_answer = identifier, \
+                         seed=seed, credit=credit,\
+                         course_content_attempt=current_attempt,\
+                         assessment=assessment, \
+                         assessment_seed=assessment_seed)
 
                 feedback_message = "Answer recorded for %s" % request.user
-                if latest_attempt:
-                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a><br/><a href=\"%s\">%s</a>" % (reverse('mic-coursemain'), course, reverse('mic-assessmentattempts', kwargs={'id': content.id} ), assessment)
+                if current_attempt:
+                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempts', kwargs={'id': content.id} ), course)
 
-                dajax.append(feedback_selector, 'innerHTML', '<p><i>%s</i></p>' % feedback_message)
+                dajax.append(feedback_selector, 'innerHTML', 
+                             '<p><i>%s</i></p>' % feedback_message)
+
         except Exception as e:
-            pass
+            raise #pass
         
 
     except Exception as e:

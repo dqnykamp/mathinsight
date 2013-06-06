@@ -6,6 +6,7 @@ from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.core.exceptions import ObjectDoesNotExist
 import random
 from django.contrib.contenttypes.models import ContentType
 import datetime
@@ -140,26 +141,32 @@ def assessment_view(request, assessment_code, solution=False):
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
     
-    try:
-        seed = request.REQUEST['seed']
+    if request.method == 'POST':
+        new_attempt = request.POST['new_attempt']
+    else:
+        new_attempt = False
+        seed = request.REQUEST.get('seed', None)
         version = seed
-    except:
-        seed = None
-        version = 'random'
-    try: 
-        assessment_date = request.REQUEST['date']
-    except:
-        assessment_date = datetime.date.today().strftime("%B %d, %Y")
+        if not version:
+            version='random'
+
+    assessment_date = request.REQUEST.get\
+        ('date', datetime.date.today().strftime("%B %d, %Y"))
+
 
     try:
-        student = request.user.courseuser
-        course = student.return_selected_course()
+        courseuser = request.user.courseuser
+        course = courseuser.return_selected_course()
     except:
-        student = None
+        courseuser = None
         course = None
 
-    latest_attempt=None
-    if course:
+    current_attempt=None
+    attempt_number=0
+    course_thread_content=None
+
+    # if student in the course
+    if course and courseuser.role=='S':
         assessment_content_type = ContentType.objects.get\
             (model='assessment')
                         
@@ -168,14 +175,47 @@ def assessment_view(request, assessment_code, solution=False):
                 (thread_content__object_id=assessment.id,\
                      thread_content__content_type=assessment_content_type)
         except ObjectDoesNotExist:
-            course_thread_content=None
+            course=None
 
         if course_thread_content:
-            try:
-                latest_attempt = course_thread_content.studentcontentattempt_set\
-                    .filter(student=student, score=None).latest()
-            except:
-                latest_attempt = None
+            attempts = course_thread_content.studentcontentattempt_set\
+                .filter(student=courseuser, score=None)
+            attempt_number = attempts.count()
+            if new_attempt:
+                # if new_attempt, create another attempt
+                attempt_number += 1
+                version = str(attempt_number)
+                if course_thread_content.individualize_by_student:
+                    version= "%s_%s" % (courseuser, version)
+                seed = "%s_%s_%s" % (course.code, assessment.id, version)
+
+                current_attempt = \
+                    course_thread_content.studentcontentattempt_set\
+                    .create(student=courseuser, seed=seed)
+            else:
+                # else try to find latest attempt
+                try:
+                    current_attempt = attempts.latest()
+                    seed = current_attempt.seed
+                    version = str(attempt_number)
+                    if course_thread_content.individualize_by_student:
+                        version= "%s_%s" % (courseuser, version)
+
+                except ObjectDoesNotExist:
+                    # if not current attempt, create attempt
+                    # for seed use course_code, assessment_id, 
+                    # and possibly student
+
+                    # if individualize_by_student, add username
+                    version = "1"
+                    if course_thread_content.individualize_by_student:
+                        version= "%s_%s" % (courseuser, version)
+                    seed = "%s_%s_%s" % (course.code, assessment.id, version)
+
+                    current_attempt = \
+                        course_thread_content.studentcontentattempt_set\
+                        .create(student=courseuser, seed=seed)
+                
 
     rendered_question_list=[]
     rendered_solution_list=[]
@@ -188,7 +228,7 @@ def assessment_view(request, assessment_code, solution=False):
             if sol['geogebra_oninit_commands']:
                 geogebra_oninit_commands += sol['geogebra_oninit_commands']
     else:
-        rendered_question_list=assessment.render_question_list(seed, user=request.user, latest_attempt=latest_attempt)
+        rendered_question_list=assessment.render_question_list(seed, user=request.user, current_attempt=current_attempt)
         geogebra_oninit_commands=""
         for ques in rendered_question_list:
             if geogebra_oninit_commands:
@@ -250,6 +290,7 @@ def assessment_view(request, assessment_code, solution=False):
           'assessment_date': assessment_date,
           'course': course,
           'course_thread_content': course_thread_content,
+          'attempt_number': attempt_number,
           'question_numbers': question_numbers,
           'generate_assessment_link': generate_assessment_link,
           'geogebra_oninit_commands': geogebra_oninit_commands,
@@ -307,6 +348,30 @@ def assessment_overview_view(request, assessment_code):
     # user has permission to view the assessment, given privacy level
     assessment_link = assessment.user_can_view(request.user, solution=False)
 
+    try:
+        courseuser = request.user.courseuser
+        course = courseuser.return_selected_course()
+    except:
+        courseuser = None
+        course = None
+
+    course_thread_content=None
+    # if student in the course
+    if course and courseuser.role=='S':
+        assessment_content_type = ContentType.objects.get\
+            (model='assessment')
+                        
+        try:
+            course_thread_content=course.coursethreadcontent_set.get\
+                (thread_content__object_id=assessment.id,\
+                     thread_content__content_type=assessment_content_type)
+        except ObjectDoesNotExist:
+            course_thread_content=None
+            course = None
+
+
+
+
     # turn off google analytics for localhost
     noanalytics=False
     if settings.SITE_ID==2:
@@ -316,6 +381,8 @@ def assessment_overview_view(request, assessment_code):
         ('mitesting/assessment_overview.html', 
          {'assessment': assessment,
           'assessment_link': assessment_link,
+          'course': course,
+          'course_thread_content': course_thread_content,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))

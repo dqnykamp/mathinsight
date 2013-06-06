@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 import datetime
 import settings
 
@@ -168,26 +168,26 @@ class Course(models.Model):
             ("update_attendance","Can update attendance"),
         )
 
-    def points_for_assessment_category(self, assessment_category):
-        return self.coursethreadcontent_set\
-            .filter(assessment_category=assessment_category)\
-            .aggregate(total_points=Sum('points'))['total_points']
+    # def points_for_assessment_category(self, assessment_category):
+    #     return self.coursethreadcontent_set\
+    #         .filter(assessment_category=assessment_category)\
+    #         .aggregate(total_points=Sum('points'))['total_points']
         
-    def total_points(self):
-        return self.coursethreadcontent_set\
-            .aggregate(total_points=Sum('points'))['total_points']
+    # def total_points(self):
+    #     return self.coursethreadcontent_set\
+    #         .aggregate(total_points=Sum('points'))['total_points']
         
-    def points_for_grade_level(self, grade_level):
-        return self.coursethreadcontent_set\
-            .filter(required_for_grade=grade_level)\
-            .aggregate(total_points=Sum('points'))['total_points']
+    # def points_for_grade_level(self, grade_level):
+    #     return self.coursethreadcontent_set\
+    #         .filter(required_for_grade=grade_level)\
+    #         .aggregate(total_points=Sum('points'))['total_points']
       
-    def points_for_assessment_category_grade_level(self, assessment_category, 
-                                                   grade_level):
-        return self.coursethreadcontent_set\
-            .filter(assessment_category=assessment_category, \
-                        required_for_grade=grade_level) \
-                        .aggregate(total_points=Sum('points'))['total_points']
+    # def points_for_assessment_category_grade_level(self, assessment_category, 
+    #                                                grade_level):
+    #     return self.coursethreadcontent_set\
+    #         .filter(assessment_category=assessment_category, \
+    #                     required_for_grade=grade_level) \
+    #                     .aggregate(total_points=Sum('points'))['total_points']
  
 
     def content_for_assessment_category(self, assessment_category):
@@ -371,8 +371,9 @@ class CourseThreadContent(models.Model):
     instructions = models.TextField(blank=True, null=True)
     initial_due_date=models.DateField(blank=True, null=True)
     final_due_date=models.DateField(blank=True, null=True)
-    assessment_category = models.ForeignKey(AssessmentCategory, blank=True, null=True)
-    points = models.IntegerField(default=0)
+    assessment_category = models.ForeignKey(AssessmentCategory, 
+                                            blank=True, null=True)
+    individualize_by_student = models.BooleanField(default=True)
     required_for_grade = models.ForeignKey(GradeLevel, blank=True, null=True)
     required_to_pass = models.BooleanField(default=False)
     max_number_attempts = models.IntegerField(default=1)
@@ -394,8 +395,15 @@ class CourseThreadContent(models.Model):
         # check if thread_content is for the thread associated with course
         # If not, raise exception
         if self.course.thread != self.thread_content.section.thread:
-            raise ValidationError, "Thread content is not from course thread: %s"\
+            raise ValidationError, \
+                "Thread content is not from course thread: %s"\
                 % self.course.thread
+
+    def total_points(self):
+        try:
+            return self.thread_content.content_object.total_points()
+        except AttributeError:
+            return None
 
 
     def student_score(self, student):
@@ -640,6 +648,7 @@ class StudentContentAttempt(models.Model):
     content = models.ForeignKey(CourseThreadContent)
     datetime = models.DateTimeField(auto_now_add=True)
     score = models.FloatField(null=True, blank=True)
+    seed = models.CharField(max_length=50, blank=True, null=True)
 
     def __unicode__(self):
         return "%s attempt on %s" % (self.student, self.content)
@@ -647,6 +656,13 @@ class StudentContentAttempt(models.Model):
     class Meta:
         ordering = ['datetime']
         get_latest_by = "datetime"
+        
+    def get_percent_credit(self):
+         score = self.get_score()
+         points = self.content.total_points()
+         if score is None or points is None:
+             return None
+         return int(score*100.0/points)
 
     def get_score(self):
         # if a score is entered in, it overrides any question answers
@@ -683,7 +699,44 @@ class StudentContentAttempt(models.Model):
         else:
             return 0
 
+    def get_percent_credit_question_set(self, question_set):
+        question_answers = self.questionstudentanswer_set\
+            .filter(question_set=question_set)
 
+        if question_answers:
+
+            if self.content.attempt_aggregation=='Avg':
+                credit = question_answers.aggregate(credit=Avg('credit'))['credit']
+            elif self.content.attempt_aggregation=='Las':
+                credit = question_answers.latest('datetime').credit
+            else:
+                credit = question_answers.aggregate(credit=Max('credit'))['credit']
+                
+            return int(credit*100)
+        else:
+            return 0
+
+
+    def get_latest_datetime(self):
+        assessment=self.content.thread_content.content_object
+        # must be an assessment 
+        from mitesting.models import Assessment
+        if not isinstance(assessment,Assessment):
+            return None
+        
+
+        try:
+            return self.questionstudentanswer_set.all()\
+                .latest('datetime').datetime
+        except ObjectDoesNotExist:
+            return self.datetime
+
+    def have_datetime_interval(self):
+        # true if difference between earliest and latest datetimes
+        # is at least a minue
+        return self.get_latest_datetime() - self.datetime \
+            >= datetime.timedelta(0,60)
+            
 
 class StudentContentCompletion(models.Model):
     student = models.ForeignKey(CourseUser)
@@ -701,15 +754,23 @@ class StudentContentCompletion(models.Model):
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
-    assessment = models.ForeignKey('mitesting.Assessment', 
-                                   blank=True, null=True)
+    seed = models.CharField(max_length=50, blank=True, null=True)
     question_set = models.SmallIntegerField(blank=True, null=True)
     answer = models.CharField(max_length=400, blank=True, null=True)
-    seed = models.CharField(max_length=50, blank=True, null=True)
+    identifier_in_answer = models.CharField(max_length=50, blank=True,
+                                            null=True)
     credit = models.FloatField()
     datetime =  models.DateTimeField(auto_now_add=True)
     course_content_attempt = models.ForeignKey(StudentContentAttempt,
                                                blank=True, null=True)
 
+    # only if don't have a course_content_attempt:
+    assessment = models.ForeignKey('mitesting.Assessment', 
+                                   blank=True, null=True)
+    assessment_seed = models.CharField(max_length=50, blank=True, null=True)
+
     def __unicode__(self):
         return  "%s" % self.answer
+
+    class Meta:
+        get_latest_by = "datetime"

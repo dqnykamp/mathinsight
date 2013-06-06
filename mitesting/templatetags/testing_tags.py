@@ -827,10 +827,26 @@ class AnswerBlankNode(template.Node):
 
         identifier = context['identifier']
         
-        return '<span style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i" /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
+        if context.get('readonly', False):
+            readonly_string = ' readonly'
+        else:
+            readonly_string = ''
+        pre_answers = context.get('pre_answers')
+        if pre_answers:
+            identifier_in_answer = pre_answers['identifier']
+            value_string = ' value="%s"' % \
+                pre_answers['answer_%s_%s' % (self.answer_expression_string,
+                                             identifier_in_answer)]
+        else:
+            value_string = ''
+            #{u'asb_qa5_240': u'1', u'answer_answer_qa5_240': u'hello', u'number_attempts_qa5_240': u'0'}
+
+        return '<span style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
             (self.answer_expression_string, identifier,  
              self.answer_expression_string,
-             identifier, size, self.answer_expression_string, identifier )
+             identifier, size, readonly_string, value_string, 
+             self.answer_expression_string, 
+             identifier )
     
 
 @register.tag
