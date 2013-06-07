@@ -202,7 +202,6 @@ def assessment_view(request, assessment_code, solution=False):
                         version= "%s_%s" % (courseuser, version)
 
                 except ObjectDoesNotExist:
-                    # if not current attempt, create attempt
                     # for seed use course_code, assessment_id, 
                     # and possibly student
 
@@ -212,9 +211,6 @@ def assessment_view(request, assessment_code, solution=False):
                         version= "%s_%s" % (courseuser, version)
                     seed = "%s_%s_%s" % (course.code, assessment.id, version)
 
-                    current_attempt = \
-                        course_thread_content.studentcontentattempt_set\
-                        .create(student=courseuser, seed=seed)
                 
 
     rendered_question_list=[]

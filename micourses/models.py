@@ -417,12 +417,12 @@ class CourseThreadContent(models.Model):
         elif self.attempt_aggregation=='Las':
             score = self.studentcontentattempt_set.filter(student=student).latest('datetime').get_score()
         else:
-            score = max([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
+            try:
+                score = max([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
+            except ValueError:
+                score = None
             #score = self.studentcontentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
-        if score:
-            return score
-        else:
-            return 0
+        return score
 
 
     def attempt_aggregation_string(self):
@@ -675,9 +675,13 @@ class StudentContentAttempt(models.Model):
         if not isinstance(assessment,Assessment):
             return None
         
-        score = 0.0
-        for question_set_detail in assessment.questionsetdetail_set.all():
-            score += self.get_score_question_set(question_set_detail)
+        question_set_details = assessment.questionsetdetail_set.all()
+        if question_set_details:
+            score = 0.0
+            for question_set_detail in question_set_details:
+                score += self.get_score_question_set(question_set_detail)
+        else: 
+            score = None
 
         return score
 

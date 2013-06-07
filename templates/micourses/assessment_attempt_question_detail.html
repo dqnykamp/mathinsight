@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "micourses/course_base.html" %}
 {% load mi_tags testing_tags course_tags %}
 {% block nolinksection %}{% endblock %}
 {% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
@@ -16,9 +16,9 @@
 
 <table class="basic rowclick">
 <thead><tr><th>Date and time</th><th>Percent</th><th>Score</th></tr></thead>
-<tfoot><tr><td ><b>&nbsp;Question score</b> (based on {{content.attempt_aggregation_string}})</b></td><td><b>&nbsp;{{current_credit}}%{% if current_credit == 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%}&nbsp;</b></td><td><b>&nbsp;{{ score|floatformat:"1" }}&nbsp;</b></td></tr></tfoot>
+<tfoot><tr><td ><b>&nbsp;Question score</b> (based on {{content.attempt_aggregation_string}})</b></td><td><b>&nbsp;{{current_credit|percent_checked_100 }}&nbsp;</b></td><td><b>&nbsp;{{ score|floatformat_or_NA:"1" }}&nbsp;</b></td></tr></tfoot>
 {% for answer in answers %}
-<tr><td> <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.datetime}}&nbsp;</a></td><td><a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.credit_percent}}%{% if answer.credit_percent = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%}&nbsp;</a></td><td><a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.score|floatformat:"1"}}&nbsp;</a></td></tr>
+<tr><td> <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.datetime}}&nbsp;</a></td><td><a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.credit_percent|percent_checked_100 }}&nbsp;</a></td><td><a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number forloop.counter %}">&nbsp;{{answer.score|floatformat_or_NA:"1"}}&nbsp;</a></td></tr>
 {% endfor %}
 </table>
 

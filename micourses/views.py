@@ -89,7 +89,7 @@ def assessment_attempts_view(request, id):
 
     return render_to_response \
         ('micourses/assessment_attempts.html', 
-         {'student': courseuser,
+         {'student': courseuser, 'course': course,
           'content': content,
           'score': score,
           'assessment_attempts': assessment_attempts,
@@ -158,7 +158,7 @@ def assessment_attempt_questions_view(request, id, attempt_number):
 
     return render_to_response \
         ('micourses/assessment_attempt_questions.html', 
-         {'student': courseuser,
+         {'student': courseuser, 'course': course,
           'content': content,
           'attempt': attempt,
           'attempt_number': attempt_number,
@@ -240,7 +240,7 @@ def assessment_attempt_question_detail_view(request, id, attempt_number,
 
     return render_to_response \
         ('micourses/assessment_attempt_question_detail.html', 
-         {'student': courseuser,
+         {'student': courseuser, 'course': course, 
           'content': content,
           'attempt': attempt,
           'attempt_number': attempt_number,
@@ -363,7 +363,8 @@ def assessment_attempt_question_attempt_view(request, id, attempt_number,
         ('micourses/assessment_attempt_question_attempt.html', 
          {'question': question, 'rendered_question': rendered_question,
           'geogebra_oninit_commands': geogebra_oninit_commands,
-          'student': courseuser, 'content': content,
+          'student': courseuser, 'course': course,
+          'content': content,
           'attempt': attempt,
           'attempt_number': attempt_number,
           'question': question,

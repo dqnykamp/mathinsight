@@ -272,11 +272,15 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                         content=None
 
                     
-                    # if found course content, get attempt by student
+                    # if found course content, get or create attempt by student
                     # with same assessment_seed
                     if content:
-                        current_attempt = content.studentcontentattempt_set\
+                        try:
+                            current_attempt = content.studentcontentattempt_set\
                                 .get(student=student, seed=assessment_seed)
+                        except ObjectDoesNotExist:
+                            current_attempt = content.studentcontentattempt_set\
+                                .create(student=student, seed=assessment_seed)
 
 
                 # if have current_attempt, don't record assessment,
@@ -1264,6 +1268,14 @@ def record_course_content_completion(request, course_thread_content_id,
             student.studentcontentcompletion_set.create \
                 (content=content, complete=complete, skip=skip)
             
+        
+        # if marking as complete, create attempt record if one doesn't exist
+        if complete:
+            if not student.studentcontentattempt_set.filter(content=content)\
+                    .exists():
+                student.studentcontentattempt_set.create(content=content)
+
+
         # update html to show complete
         dajax.assign("#id_course_completion_%s" % course_thread_content_id,
                      'innerHTML', content.complete_skip_button_html(student))

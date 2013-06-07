@@ -1,30 +1,73 @@
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
+from django.template.defaultfilters import floatformat
+from django.utils.html import conditional_escape
+from django.utils.safestring import mark_safe
+import settings
 
 register=Library()
 
+@register.tag
+def complete_skip_button(parser, token):
+    bits = token.split_contents()
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
+    course_thread_content = parser.compile_filter(bits[1])
+    student = parser.compile_filter(bits[2])
+    
+    return CompleteSkipButtonNode(course_thread_content, student)
+
+@register.filter(is_safe=True)
+def floatformat_or_NA(text,arg=1):
+    if text is None:
+        return "NA"
+    else:
+        return floatformat(text,arg)
+
+@register.filter(needs_autoescape=True)
+def percent_checked_100(text, autoescape=None):
+    checked=False
+    if text==100:
+        checked = True
+    if autoescape:
+        escaped_text = conditional_escape(text)
+    else:
+        escaped_text = text
+    escaped_text = '%s%%' % escaped_text
+    if checked:
+        
+        escaped_text += ' <img src="%sadmin/img/icon-yes.gif" alt="Full credit" />'\
+            % (settings.STATIC_URL)
+
+    return mark_safe(escaped_text)
+
 class AssessmentStudentScoreNode(Node):
-    def __init__(self, module_assessment, student):
-        self.module_assessment = module_assessment
+    def __init__(self, course_thread_content, student, float_format):
+        self.course_thread_content = course_thread_content
         self.student = student
+        self.float_format = float_format
     def render(self, context):
-        module_assessment = self.module_assessment.resolve(context)
+        course_thread_content = self.course_thread_content.resolve(context)
         student = self.student.resolve(context)
-        try:
-            return module_assessment.student_score(student)
-        except:
-            return ""
+        float_format = self.float_format.resolve(context)
+        score = course_thread_content.student_score(student)
+        return floatformat_or_NA(score)
 
 
 @register.tag
 def assessment_student_score(parser, token):
     bits = token.split_contents()
-    if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
-    module_assessment = parser.compile_filter(bits[1])
+    if len(bits) < 3:
+        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+    course_thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
+    float_format = "1"
+    if len(bits) > 3:
+        float_format = bits[3]
+    float_format = parser.compile_filter(float_format)
     
-    return AssessmentStudentScoreNode(module_assessment, student)
+    return AssessmentStudentScoreNode(course_thread_content, student,
+                                      float_format)
 
 
 class InitialDueDateNode(Node):
@@ -109,14 +152,4 @@ class CompleteSkipButtonNode(Node):
 
         return course_thread_content.complete_skip_button_html(student,
                                                                full_html=True)
-
-@register.tag
-def complete_skip_button(parser, token):
-    bits = token.split_contents()
-    if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
-    course_thread_content = parser.compile_filter(bits[1])
-    student = parser.compile_filter(bits[2])
-    
-    return CompleteSkipButtonNode(course_thread_content, student)
 
