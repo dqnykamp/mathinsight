@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from micourses.models import CommentForCredit, QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory,CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent
+from micourses.models import QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory,CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent
 from mithreads.models import ThreadContent
 import settings
 import reversion
@@ -9,9 +9,6 @@ import reversion
 class QuestionStudentAnswerAdmin(reversion.VersionAdmin):
     pass
 
-class CommentForCreditAdmin(reversion.VersionAdmin):
-    pass
-    
 class CourseAssessmentCategoryInline(admin.TabularInline):
     model = CourseAssessmentCategory
 class CourseEnrollmentInline(admin.TabularInline):
@@ -68,7 +65,6 @@ class CourseAdmin(admin.ModelAdmin):
 
     save_on_top=True
 
-admin.site.register(CommentForCredit,CommentForCreditAdmin)
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 
 # not use reversion yet

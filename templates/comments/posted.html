@@ -5,8 +5,6 @@
 {% block content %}
 <h3>Thank you for sending us a message.</h3>
 
-<p>{%if comment.credit_eligible %}Message eligible for credit for {{ comment.credit_group }}.  We will review to see if it qualifies.  Status of the credit is available on your <a href="{% url 'mi-profile' %}">profile page</a>. {%endif%}</p>
-
 {% if comment.content_type.model != "author" %}<p>Return to {%intlink comment.content_object %}{%endintlink%}.</p>{%endif%}
 
 {% endblock %}

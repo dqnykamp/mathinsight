@@ -19,8 +19,6 @@ from haystack.views import SearchView
 import datetime
 import re
 import random
-from micourses.models import CommentForCredit
-from micomments.models import MiComment
 #import numpy
 
 
@@ -91,56 +89,11 @@ def pageview(request, page_code):
     if settings.SITE_ID==2 or thepage.hidden:
         noanalytics=True
         
-    
         
     if request.method == 'GET':
         if "logout" in request.GET:
             auth.logout(request)
-    
-    # check for comment for credit posts/deadlines if have authenticated user
-    credit_possible_deadline = None
-    comment_credit_progress=0
-    credit_group=None
-    if request.user.is_authenticated():
-        theuser=request.user
-        
-        # check to see if user posted a comment for credit already
-        thecomments = MiComment.objects.filter(content_type__model='page',
-                                         object_pk=thepage.id,
-                                         user=theuser, credit_eligible=True)
 
-        if thecomments:
-            
-            # at least have a credit eligble comment
-            comment_credit_progress=1
-            
-            # check if got credit for any comments
-            for comment in thecomments:
-                # if no actual credit, group will be last one encountered
-                credit_group = comment.credit_group
-                if comment.credit:
-                    comment_credit_progress=2
-                    break;
- 
-                
-        #if didn't already post comment for credit, look for upcoming deadline
-        # to post such a comment
-        else:
-
-            for thegroup in theuser.groups.all():
-                try:
-                    cfc = CommentForCredit.objects.get(page=thepage,
-                                                       group=thegroup)
-                    if datetime.datetime.now() < cfc.deadline and \
-                            datetime.datetime.now() > cfc.opendate:
-                        credit_possible_deadline = cfc.deadline
-                        credit_group = thegroup
-                        break
-                except ObjectDoesNotExist:
-                    pass
-
-
-        
     
     notation_system=None
     notation_config=None
@@ -194,9 +147,6 @@ def pageview(request, page_code):
           'notation_system': notation_system,
           'notation_config': notation_config,
           'notation_system_form': notation_system_form,
-          'credit_possible_deadline': credit_possible_deadline,
-          'comment_credit_progress': comment_credit_progress,
-          'credit_group': credit_group,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
