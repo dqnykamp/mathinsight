@@ -22,15 +22,6 @@ def day_of_week_to_python(day_of_week):
         return 5
 
 
-class CommentForCredit(models.Model):
-    page = models.ForeignKey('midocs.Page')
-    group = models.ForeignKey(Group)
-    opendate = models.DateTimeField()
-    deadline = models.DateTimeField()
-    
-    def __unicode__(self):
-        return "%s deadline" % self.page.code
-
 class CourseUser(models.Model):
     ROLE_CHOICES = (
         ('S', 'Student'),

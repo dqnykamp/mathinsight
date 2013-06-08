@@ -187,9 +187,6 @@
 <a id="sendmessage" class="anchor"></a>
 <section id="messageform">
 <h4 class="commentheading">Send us a message about &ldquo;{{thepage.title}}&rdquo;</h4>
-{% if credit_possible_deadline %}<p class="comment_deadline">To receive credit for {{ credit_group}}, post message by: {{ credit_possible_deadline }}.</p>{%endif%}
-{% if comment_credit_progress == 1 %}<p class="comment_credit_pending">Already posted message in attempt to receive credit for {{ credit_group}}.</p>{%endif%}
-{% if comment_credit_progress == 2 %}<p class="comment_credit_achieved">Already received credit for posting a message for {{ credit_group}}.</p>{%endif%}
 {% render_comment_form for thepage %}
 </section>
 {% if thepage.author_copyright %}

@@ -24,7 +24,7 @@
         <div>{{ field }}</div>
     {% else %}
 	{% if not field.name == "url" %}<div class="ym-fbox-text{% if field.errors %} ym-error{% endif %}"{% ifequal field.name "honeypot" %} style="display:none;"{% endifequal %}>{% if field.errors %}<p class="ym-message">{{ field.errors }}</p>{% endif %}
-{{ field.label_tag }}{% if field.name == "name" and user.is_authenticated %}<p class="commentloggedin">{{ user.first_name }} {{user.last_name}} (<a href="{% url 'mi-profile' %}">view profile</a>) (<a href="?logout#messageform">this isn't me</a>)</p>{%else%}{% if field.name == "email" and user.is_authenticated and user.email %}<p class="commentloggedin">{{user.email}}</p>{%else%}{{ field }}{%endif%}{%endif%}</div>{% endif %}{% endif %}{% endfor %}
+{{ field.label_tag }}{% if field.name == "name" and user.is_authenticated %}<p class="commentloggedin">{{ user.first_name }} {{user.last_name}} (<a href="?logout#messageform">this isn't me</a>)</p>{%else%}{% if field.name == "email" and user.is_authenticated and user.email %}<p class="commentloggedin">{{user.email}}</p>{%else%}{{ field }}{%endif%}{%endif%}</div>{% endif %}{% endif %}{% endfor %}
 <div class="ym-fbox-button">
  <input type="submit" name="post" class="ym-button" value="Send message" />
 </div>
