@@ -18,8 +18,8 @@ class CourseEnrollmentInline(admin.TabularInline):
     model = CourseEnrollment
 class CourseSkipDate(admin.TabularInline):
     model = CourseSkipDate
-class AttendanceDateInline(admin.TabularInline):
-    model = AttendanceDate
+# class AttendanceDateInline(admin.TabularInline):
+#     model = AttendanceDate
 
 def course_thread_content_form_factory(thread):
     class RuntimeCourseThreadContentForm(forms.ModelForm):
@@ -43,7 +43,22 @@ class CourseThreadContentInline(admin.StackedInline):
                 **kwargs)
 
 class CourseAdmin(admin.ModelAdmin):
-    inlines=[CourseAssessmentCategoryInline, CourseEnrollmentInline, CourseSkipDate, AttendanceDateInline, CourseThreadContentInline]
+    inlines=[CourseAssessmentCategoryInline, CourseThreadContentInline, CourseEnrollmentInline, CourseSkipDate]
+    fieldsets = (
+        (None, {
+                'fields': ('code', 'name',  'short_name', 'semester',
+                           'description', 'thread', 'active')
+                }),
+        ('Dates and attendance', {
+                'classes': ('collapse',),
+                'fields': ('start_date', 'end_date',
+                           'days_of_week', 
+                           ('track_attendance', 'adjust_due_date_attendance'),
+                           ('last_attendance_date', 'attendance_end_of_week',
+                            'attendance_threshold_percent'),
+                           )
+                }),
+        )
     
     class Media:
         js = [

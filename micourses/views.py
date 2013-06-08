@@ -44,9 +44,10 @@ def course_main_view(request):
     # no Google analytics for course
     noanalytics=True
 
-    upcoming_assessments = course.upcoming_assessments(courseuser)
+    upcoming_assessments = course.upcoming_assessments(courseuser, 
+                                                       days_future=14)
 
-    next_items = course.next_items(courseuser)
+    next_items = course.next_items(courseuser, number=5)
     
     if courseuser.role == 'S':
         return render_to_response \
@@ -78,6 +79,7 @@ def assessment_attempts_view(request, id):
 
     
     content = get_object_or_404(CourseThreadContent, id=id)
+    adjusted_due_date = content.adjusted_due_date(courseuser)
 
     assessment_attempts = courseuser.studentcontentattempt_set\
             .filter(content=content)
@@ -93,6 +95,7 @@ def assessment_attempts_view(request, id):
           'content': content,
           'score': score,
           'assessment_attempts': assessment_attempts,
+          'adjusted_due_date': adjusted_due_date,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
@@ -376,6 +379,39 @@ def assessment_attempt_question_attempt_view(request, id, attempt_number,
          context_instance=RequestContext(request))
 
 
+@login_required
+def upcoming_assessments_view(request):
+    courseuser = request.user.courseuser
+
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+    # no Google analytics for course
+    noanalytics=True
+
+    upcoming_assessments = course.upcoming_assessments(courseuser)
+
+    
+    if courseuser.role == 'S':
+        return render_to_response \
+            ('micourses/upcoming_assessments.html', 
+             {'student': courseuser,
+              'course': course,
+              'upcoming_assessments': upcoming_assessments,
+              'noanalytics': noanalytics,
+              },
+             context_instance=RequestContext(request))
+
+
+
 @permission_required("micourse.update_attendance")
 def update_attendance_view(request):
     
@@ -511,7 +547,7 @@ def update_individual_attendance_view(request):
                 if name.startswith('date_'):
                     yield (self.fields[name].label, value)
 
-    attendance_dates_form = AttendanceDatesForm()
+
 
     if student:
         # get list of attendance up to last_attendance_date
@@ -536,14 +572,12 @@ def update_individual_attendance_view(request):
                     present = False
 
                 attendance.append({'date': date.date, 'present': present})
-                
-                
-
-            attendance_dates_form = AttendanceDatesForm(dates=attendance)
 
     
+                
+    
 
-    # if POST, then update attendance, assuming date is valid
+    # if POST, then update attendance, assuming data is valid
     if request.method == 'POST':
 
          attendance_dates_form = AttendanceDatesForm(request.POST or None, dates=attendance)
@@ -557,74 +591,13 @@ def update_individual_attendance_view(request):
                          (course=course, date=date)
              message = "Updated attendance of %s." % student
 
-
-        # valid_day = False
-        # if date_form.is_valid():
-        #     attendance_date = date_form.cleaned_data['date']
-            
-        #     # check if date is a class day
-        #     for class_day in course.attendancedate_set.all():
-        #         if attendance_date == class_day.date:
-        #             valid_day = True
-        #             break
-            
-        # else:
-        #     attendance_date = None
-
-        # if valid_day:
-        #     students_present = request.POST.getlist('students_present')
-            
-        #     # delete previous attendance data for the day
-        #     course.studentattendance_set.filter(date=attendance_date).delete()
-        #     for student_id in students_present:
-        #         student = CourseUser.objects.get(id=student_id)
-        #         course.studentattendance_set.create(student=student, date=attendance_date)
-            
-        #     if not course.last_attendance_date \
-        #             or attendance_date > course.last_attendance_date:
-        #         course.last_attendance_date = attendance_date
-        #         course.save()
-
-        #     message = "Attendance updated for %s" % \
-        #         attendance_date.strftime("%B %d, %Y")
-
-        # else:
-        #     message = "Attendance not updated.  " \
-        #         + "%s is not a valid course day" % \
-        #         request.POST['attendance_date'] 
-
-    # if GET
+    # if get
     else:
-        pass
-        # # check if student is in GET parameters
-        # student_id = request.GET.get('student')
-        # try:
-        #     student = CourseUser.objects.get(id=student_id)
-        #     select_student_form = SelectStudentForm(request.GET)
-        # except ObjectDoesNotExist:
-        #     student = None
-        #     select_student_form = SelectStudentForm()
+        if student:
+            attendance_dates_form = AttendanceDatesForm(dates=attendance)
+        else:            
+            attendance_dates_form = AttendanceDatesForm()
 
-        
-        # if student:
-        #     # get list of attendance up to last_attendance_date
-
-        #     last_attendance_date = course.last_attendance_date
-        #     if last_attendance_date:
-        #         attendance_dates = course.attendancedate_set.filter\
-        #             (date__lte = last_attendance_date)
-        #         days_attended = student.studentattendance_set.filter \
-        #             (course=course).filter(date__lte = last_attendance_date)
-
-        #         for date in attendance_dates:
-        #             try:
-        #                 attended = days_attended.get(date=date.date)
-        #                 present = True
-        #             except ObjectDoesNotExist:
-        #                 present = False
-
-        #             attendance.append({'date': date.date, 'present': present})
-                
 
     # no Google analytics for course
     noanalytics=True

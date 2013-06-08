@@ -232,7 +232,7 @@ class AuxiliaryFile(models.Model):
 
 class Page(models.Model):
     code = models.SlugField(max_length=200, unique=True)
-    title = models.CharField(max_length=200, blank=True, null=True)
+    title = models.CharField(max_length=200)
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
@@ -248,11 +248,9 @@ class Page(models.Model):
     similar_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageSimilar', 
                                            related_name='pages_similar_from')
-    template_dir = models.CharField(max_length=200)
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True,db_index=True)
-    template_modified = models.DateTimeField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     highlight = models.BooleanField(db_index=True)
     worksheet = models.BooleanField(default=False)

@@ -3,6 +3,8 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Adjusted due date calculation for: {{content.thread_content.content_object }}{%endblock%}
 
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempts' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-adjustedduedatecalculation' content.id  %}">Adjusted due date calculation</a>{% endblock %}
+
 {% block content %}
 <h3>Adjusted due date calculation for: {{content.thread_content.content_object }}</h3>
 
@@ -18,7 +20,7 @@ Resulting due date: <b>{{adjusted_due_date}}</b></p>
 <table class="basic">
 <tr><th>Initial due date</th><th>End of previous week</th><th>Have data</th><th>Attendance percent</th><th>Reached threshold</th><th>New due date</th><th>At latest due date</th></tr>
 {% for calculation in calculation_list %}
-<tr><td>{{calculation.initial_date}}</td><td>{{calculation.previous_week_end}}</td><td>{% if calculation.attendance_data %}Y{%else%}N{%endif%}</td><td><a href="{% url 'mic-attendancedisplay' %}" >{{calculation.attendance_percent}}</a></td><td>{% if calculation.reached_threshold %}Y{%else%}N{%endif%}</td><td>{{calculation.resulting_date}}</td><td>{% if calculation.reached_latest %}Y{% else %}N{% endif %}</td></tr>
+<tr><td>{{calculation.initial_date}}</td><td>{{calculation.previous_week_end}}</td><td>{% if calculation.attendance_data %}Y{%else%}N{%endif%}</td><td><a href="{% url 'mic-attendancedisplay' %}" >{{calculation.attendance_percent|floatformat:"1"}}%</a></td><td>{% if calculation.reached_threshold %}Y{%else%}N{%endif%}</td><td>{{calculation.resulting_date}}</td><td>{% if calculation.reached_latest %}Y{% else %}N{% endif %}</td></tr>
 {% endfor %}
 </table>
 {% else %}

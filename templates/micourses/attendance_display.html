@@ -1,4 +1,4 @@
-{% extends "micoureses/course_base.html" %}
+{% extends "micourses/course_base.html" %}
 {% load mi_tags testing_tags course_tags %}
 {% block nolinksection %}{% endblock %}
 {% block title %}Attendance for {{course}}{%endblock%}
@@ -6,14 +6,14 @@
 {% block content %}
 <h3>To-date attendance for {{course}}</h3>
 
-<p>Attendance through {{course.last_attendance_day_previous_week}}: {{ student.percent_attendance|floatformat:"0" }}%<br/>
+<p>Attendance through {{course.last_attendance_day_previous_week}}: {{ student.percent_attendance|floatformat:"1" }}%<br/>
 Date enrolled: {{date_enrolled}}<br/>
 Course start date: {{course.start_date}}</p>
 
 <table>
 <tr><th>Date</th><th>Present</th><th>Cumulative attendance</th></tr>
 {% for date in attendance %}
-<tr><td>{{date.date}}</td><td>{{date.present}}</td><td>{{date.percent|floatformat:"0" }}%</td><tr>
+<tr><td>{{date.date}}</td><td>{{date.present}}</td><td>{{date.percent|floatformat:"1" }}%</td><tr>
 {% endfor %}
 </table>
 

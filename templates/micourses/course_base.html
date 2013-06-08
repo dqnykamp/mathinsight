@@ -12,5 +12,6 @@
 
 
 {% block rightcolumn %}
- <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a>
+ <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a><br/>
+<a href="{% url 'mic-upcomingassessments' %}">All upcoming due dates</a>
 {% endblock %}

@@ -10,7 +10,8 @@
 <h4>{{content.thread_content.content_object}}</h4>
 
 <p>Points: {{content.total_points}}<br/>
-Score: {{score|floatformat_or_NA:"1"}} {% if assessment_attempts.count > 1 %}(based on {{content.attempt_aggregation_string}} over attempts){%endif%}</p>
+Score: {{score|floatformat_or_NA:"1"}} {% if assessment_attempts.count > 1 %}(based on {{content.attempt_aggregation_string}} over attempts){%endif%}<br/>
+Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
 
 {% if assessment_attempts %}
 <table class="basic rowclick">

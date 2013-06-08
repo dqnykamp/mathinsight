@@ -305,21 +305,27 @@ class Course(models.Model):
             .filter(date__gte = start_date).count()
 
 
-    def upcoming_assessments(self, student, date=None):
+    def upcoming_assessments(self, student, date=None, days_future=None):
         if not date:
             date = datetime.date.today()
 
-        week_later = date+datetime.timedelta(7)
+        later_date = None
+        if days_future:
+            later_date = date+datetime.timedelta(days_future)
 
         # create list of incomplete assessments with 
-        # initial due dates within a week and current final due dates
+        # initial due dates before later_date (if set)
+        # and current final due dates
         # (this initial filter doesn't account for any 
         # manual due date adjustments)
         upcoming_assessments= self.coursethreadcontent_set\
-            .filter(initial_due_date__lt = week_later)\
             .filter(final_due_date__gte = date) \
             .exclude(studentcontentcompletion__student=student,\
                          studentcontentcompletion__complete=True)
+        if later_date:
+            upcoming_assessment=upcoming_assessments\
+                .filter(initial_due_date__lt = later_date)\
+
 
         # for each of this assessments, calculate adjusted due dates
         adjusted_due_date_assessments = []
@@ -330,21 +336,25 @@ class Course(models.Model):
         # sort by adjusted due date
         adjusted_due_date_assessments.sort()
         
-        # remove past due assessments
-        while len(adjusted_due_date_assessments)>0:
-            if adjusted_due_date_assessments[0][0] < date:
-                adjusted_due_date_assessments=adjusted_due_date_assessments[1:]
+        #remove past due assessments
+        last_past_due_index=-1
+        for (i, assessment) in enumerate(adjusted_due_date_assessments):
+            if adjusted_due_date_assessments[i][0] < date:
+                last_past_due_index=i
             else:
                 break
+        
+        adjusted_due_date_assessments=adjusted_due_date_assessments\
+           [last_past_due_index+1:]
 
         return adjusted_due_date_assessments
 
-    def next_items(self, student):
+    def next_items(self, student, number=5):
         return self.coursethreadcontent_set\
             .exclude(studentcontentcompletion__student=student,\
                      studentcontentcompletion__complete=True)\
             .exclude(studentcontentcompletion__student=student,\
-                     studentcontentcompletion__skip=True)[:5]
+                     studentcontentcompletion__skip=True)[:number]
 
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
