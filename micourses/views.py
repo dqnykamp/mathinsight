@@ -15,8 +15,13 @@ import datetime
 
 @login_required
 def course_main_view(request):
-    courseuser = request.user.courseuser
 
+    try:
+        courseuser = request.user.courseuser
+    # if courseusere does not exist, create
+    except ObjectDoesNotExist:
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+        
     # if POST, then set selected_course
     if request.method == 'POST':
         course_code = request.POST['course']
