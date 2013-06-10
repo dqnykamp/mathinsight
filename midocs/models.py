@@ -17,72 +17,10 @@ import os
 from PIL import Image as PILImage
 from cStringIO import StringIO
 from django.core.files.uploadedfile import SimpleUploadedFile
+from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
 
 # from django.contrib.comments.moderation import moderator
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
-
-
-def return_extended_link(obj, **kwargs):
-    
-    link_url = obj.get_absolute_url()
-
-    # in extended mode, include thumbnail, if exists
-    icon_size = kwargs.get("icon_size","small")
-    try:
-        thumbnail = obj.thumbnail
-    except AttributeError:
-        thumbnail = None
-
-    if thumbnail:
-        if icon_size == 'large':
-            thumbnail_width_buffer = obj.thumbnail_large_width_buffer()
-            thumbnail_width=obj.thumbnail_large_width()
-            thumbnail_height=obj.thumbnail_large_height()
-        elif icon_size == 'small':
-            thumbnail_width_buffer = obj.thumbnail_small_width_buffer()
-            thumbnail_width=obj.thumbnail_small_width()
-            thumbnail_height=obj.thumbnail_small_height()
-        else:
-            thumbnail_width_buffer = obj.thumbnail_medium_width_buffer()
-            thumbnail_width=obj.thumbnail_medium_width()
-            thumbnail_height=obj.thumbnail_medium_height()
-
-
-        html_thumbnail = '<div style="width: %spx; float: left;"><a href="%s"><img src="%s" alt="%s" width ="%s" height="%s" /></a></div>' % \
-            (thumbnail_width_buffer, link_url, thumbnail.url, \
-                 obj.title, thumbnail_width,thumbnail_height)
-    else:
-        html_thumbnail = ""
-        
-
-    html_link = obj.return_link(**kwargs)
-
-    try:
-        html_link += ' %s' % obj.feature_list()
-    except AttributeError:
-        pass
-
-    html_link += '<br/>%s' % obj.description
-        
-    if kwargs.get("added"):
-        html_link += "<br/>Added "
-        author_list = obj.author_list_full(include_link = True)
-        if author_list:
-            html_link += "by %s " % author_list
-        html_link += "on %s" % obj.publish_date
-
-    if thumbnail and icon_size != 'small':
-        html_link = '<div style="width: 75%%; float: left;">%s</div>' % \
-            html_link
-
-    if  thumbnail:
-        html_string = '<div class="ym-clearfix">%s%s</div>' % \
-        (html_thumbnail, html_link)
-    else:
-        html_string = html_link
-
-    return mark_safe(html_string)
-
 
 class NotationSystem(models.Model):
     code = models.SlugField(max_length=50, unique=True)
@@ -331,66 +269,20 @@ class Page(models.Model):
             return self.title+'.'
 
     def author_list_abbreviated_link(self):
-        return self.author_list_abbreviated(1)
+        return author_list_abbreviated(self.pageauthor_set.all(), 
+                                       include_link=True)
 
-    def author_list_abbreviated(self, include_link=0):
-        the_authors=self.pageauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = "%s %s%s" % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if include_link and the_author.author.mi_contributor >= 2:
-                author_name_abbreviated = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_abbreviated)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.pageauthor_set.all(), 
+                                       include_link=include_link)
 
     def author_list_full_link(self):
-        return self.author_list_full(1)
+        return author_list_full(self.pageauthor_set.all(), 
+                                include_link=True)
 
-    def author_list_full(self, include_link=0):
-        the_authors=self.pageauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_full = "%s %s %s" % \
-                (the_author.author.first_name, the_author.author.middle_name, \
-                     the_author.author.last_name) 
-            if include_link and the_author.author.mi_contributor >= 2:
-                author_name_full = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_full)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list = "%s%s%s" % (author_list, conjunction, author_name_full)
-        return author_list
-
-    # def thread_pages(self):
-    #     thelist=list(self.threadsectionpage_set.all())
-    #     thelist.extend(list(self.threadsubsectionpage_set.all()))
-    #     thelist.extend(list(self.threadsubsubsectionpage_set.all()))
-    #     return thelist
-    
-        
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.pageauthor_set.all(), 
+                                include_link=include_link)
 
     def save(self, *args, **kwargs):
 
@@ -842,6 +734,22 @@ class Image(models.Model):
         else:
             return self.title+'.'
 
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.imageauthor_set.all(), 
+                                       include_link=True)
+
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.imageauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.imageauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.imageauthor_set.all(), 
+                                include_link=include_link)
+
     def save(self, *args, **kwargs):
         # if publish_date is empty, set it to be today
         if self.publish_date is None:
@@ -915,62 +823,6 @@ class Image(models.Model):
             if resave_needed:
                 super(Image, self).save(*args, **kwargs) 
                 
-
-    def author_list_abbreviated_link(self):
-        return self.author_list_abbreviated(1)
-
-    def author_list_abbreviated(self, include_link=0):
-        the_authors=self.imageauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = "%s %s%s" % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_abbreviated = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_abbreviated)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
-
-    def author_list_full_link(self):
-        return self.author_list_full(1)
-
-    def author_list_full(self,include_link=0):
-        the_authors=self.imageauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_full = "%s %s %s" % \
-                (the_author.author.first_name, the_author.author.middle_name, \
-                     the_author.author.last_name) 
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_full = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_full)
-
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list = "%s%s%s" % (author_list, conjunction, author_name_full)
-        return author_list
-
 
 class ImageAuthor(models.Model):
     image= models.ForeignKey(Image)
@@ -1175,6 +1027,22 @@ class Applet(models.Model):
         else:
             return self.title+'.'
 
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.appletauthor_set.all(), 
+                                       include_link=True)
+
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.appletauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.appletauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.appletauthor_set.all(), 
+                                include_link=include_link)
+
     def feature_list(self):
         the_list="";
         the_features = self.features.all()
@@ -1268,65 +1136,6 @@ class Applet(models.Model):
 
             if resave_needed:
                 super(Applet, self).save(*args, **kwargs) 
-
-
-
-
-
-    def author_list_abbreviated_link(self):
-        return self.author_list_abbreviated(1)
-
-    def author_list_abbreviated(self, include_link=0):
-        the_authors=self.appletauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = '%s %s%s' % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_abbreviated = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_abbreviated)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
-
-    def author_list_full_link(self):
-        return self.author_list_full(1)
-
-    def author_list_full(self,include_link=0):
-        the_authors=self.appletauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_full = "%s %s %s" % \
-                (the_author.author.first_name, the_author.author.middle_name, \
-                     the_author.author.last_name) 
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_full = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_full)
-
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list = "%s%s%s" % (author_list, conjunction, author_name_full)
-        return author_list
 
 
 class AppletParameter(models.Model):
@@ -1507,6 +1316,21 @@ class Video(models.Model):
         else:
             return self.title+'.'
 
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.videoauthor_set.all(), 
+                                       include_link=True)
+
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.videoauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.videoauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.videoauthor_set.all(), 
+                                include_link=include_link)
 
     def save(self, *args, **kwargs):
         # if publish_date is empty, set it to be today
@@ -1537,62 +1361,6 @@ class Video(models.Model):
 
             if resave_needed:
                 super(Video, self).save(*args, **kwargs) 
-                
-
-    def author_list_abbreviated_link(self):
-        return self.author_list_abbreviated(1)
-
-    def author_list_abbreviated(self, include_link=0):
-        the_authors=self.videoauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = '%s %s%s' % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_abbreviated = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_abbreviated)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
-
-    def author_list_full_link(self):
-        return self.author_list_full(1)
-
-    def author_list_full(self,include_link=0):
-        the_authors=self.videoauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_full = "%s %s %s" % \
-                (the_author.author.first_name, the_author.author.middle_name, \
-                     the_author.author.last_name) 
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_full = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_full)
-
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list = "%s%s%s" % (author_list, conjunction, author_name_full)
-        return author_list
 
 
 class VideoParameter(models.Model):
@@ -1649,67 +1417,28 @@ class NewsItem(models.Model):
     def get_absolute_url(self):
         return('mi-news', (), {'news_code': self.code})
 
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.newsauthor_set.all(), 
+                                       include_link=True)
+
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.newsauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.newsauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.newsauthor_set.all(), 
+                                include_link=include_link)
+
     def save(self, *args, **kwargs):
         # if publish_date is empty, set it to be today
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
         super(NewsItem, self).save(*args, **kwargs) 
         
-    def author_list_abbreviated_link(self):
-        return self.author_list_abbreviated(1)
-
-    def author_list_abbreviated(self, include_link=0):
-        the_authors=self.newsauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = "%s %s%s" % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_abbreviated = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_abbreviated)
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
-
-    def author_list_full_link(self):
-        return self.author_list_full(1)
-
-    def author_list_full(self,include_link=0):
-        the_authors=self.newsauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
-
-        for i, the_author in enumerate(the_authors):
-            author_name_full = "%s %s %s" % \
-                (the_author.author.first_name, the_author.author.middle_name, \
-                     the_author.author.last_name)
-            if include_link and the_author.author.mi_contributor >=2:
-                author_name_full = '<a href="%s" class="normaltext">%s</a>' % (the_author.author.get_absolute_url(), author_name_full)
-
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list = "%s%s%s" % (author_list, conjunction, author_name_full)
-        return author_list
-
 
 class NewsAuthor(models.Model):
     newsitem = models.ForeignKey(NewsItem)
@@ -1799,28 +1528,22 @@ class Reference(models.Model):
     def __unicode__(self):
         return self.code
 
-    def author_list_abbreviated(self):
-        the_authors=self.referenceauthor_set.all()
-        n_authors = len(the_authors)
-        author_list="";
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.referenceauthor_set.all(), 
+                                       include_link=True)
 
-        for i, the_author in enumerate(the_authors):
-            author_name_abbreviated = "%s %s%s" % \
-                (the_author.author.last_name, \
-                     the_author.author.first_name[:1], \
-                     the_author.author.middle_name[:1])
-            if(i==0):
-                conjunction = ""
-            elif(i==n_authors-1):
-                if(i==1):
-                    conjunction = " and "
-                else:
-                    conjunction = ", and "
-            else:
-                conjunction = ", "
-            author_list= "%s%s%s" % (author_list, conjunction, 
-                                     author_name_abbreviated)
-        return author_list
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.referenceauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.referenceauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.referenceauthor_set.all(), 
+                                include_link=include_link)
+
 
     def compiled_reference(self):
         reference_text='??'
