@@ -10,7 +10,7 @@ class Thread(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=100, db_index=True, unique=True)
     description = models.CharField(max_length=400)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
     numbered = models.BooleanField(default=True)
 
     def __unicode__(self):

@@ -526,7 +526,7 @@ class Page(models.Model):
 class PageAuthor(models.Model):
     page = models.ForeignKey(Page)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("page","author")
@@ -538,7 +538,7 @@ class PageRelationship(models.Model):
     origin = models.ForeignKey(Page, related_name='relationships')
     related = models.ForeignKey(Page, related_name = 'reverse_relationships')
     relationship_type = models.ForeignKey(RelationshipType)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("origin","related", "relationship_type")
@@ -827,7 +827,7 @@ class Image(models.Model):
 class ImageAuthor(models.Model):
     image= models.ForeignKey(Image)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("image","author")
@@ -1171,7 +1171,7 @@ class AppletObject(models.Model):
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("applet","author")
@@ -1401,7 +1401,7 @@ class VideoQuestion(models.Model):
 class VideoAuthor(models.Model):
     video= models.ForeignKey(Video)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("video","author")
@@ -1458,7 +1458,7 @@ class NewsItem(models.Model):
 class NewsAuthor(models.Model):
     newsitem = models.ForeignKey(NewsItem)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("newsitem","author")
@@ -1598,7 +1598,7 @@ class Reference(models.Model):
 class ReferenceAuthor(models.Model):
     reference = models.ForeignKey(Reference)
     author = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("reference","author")
@@ -1610,7 +1610,7 @@ class ReferenceAuthor(models.Model):
 class ReferenceEditor(models.Model):
     reference = models.ForeignKey(Reference)
     editor = models.ForeignKey(Author)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("reference","editor")
