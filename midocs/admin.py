@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject
+from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject
 import reversion
 
 class AppletTypeParameterInline(admin.TabularInline):
@@ -124,9 +124,12 @@ class VideoParameterInline(admin.TabularInline):
 class VideoAuthorInline(admin.TabularInline):
     model = VideoAuthor
 
+class VideoQuestionInline(admin.TabularInline):
+    model = VideoQuestion
+
 
 class VideoAdmin(reversion.VersionAdmin):
-    inlines = [VideoParameterInline, VideoAuthorInline]
+    inlines = [VideoParameterInline, VideoAuthorInline, VideoQuestionInline]
     # inlines = [VideoParameterInline, VideoInPagesInline]
     exclude = ('in_pages',)
     list_display = ("code","title","video_type")

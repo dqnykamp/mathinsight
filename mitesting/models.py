@@ -42,7 +42,7 @@ def try_round(number, ndigits=0):
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
     css_code = models.SlugField(max_length=50, unique=True)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
 
     def __unicode__(self):
         return  self.name
@@ -75,12 +75,12 @@ class Question(models.Model):
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    video = models.ForeignKey(Video, blank=True,null=True)
     reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
     show_solution_button_after_attempts=models.IntegerField(default=0)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
     subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
+    authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor')
 
 
     def __unicode__(self):
@@ -116,6 +116,22 @@ class Question(models.Model):
             return self.question_permission.privacy_level_solution
         else:
             return self.question_permission.privacy_level
+
+    def author_list_abbreviated_link(self):
+        return author_list_abbreviated(self.questionauthor_set.all(), 
+                                       include_link=True)
+
+    def author_list_abbreviated(self, include_link=False):
+        return author_list_abbreviated(self.questionauthor_set.all(), 
+                                       include_link=include_link)
+
+    def author_list_full_link(self):
+        return author_list_full(self.questionauthor_set.all(), 
+                                include_link=True)
+
+    def author_list_full(self, include_link=False):
+        return author_list_full(self.questionauthor_set.all(), 
+                                include_link=include_link)
 
     def need_help_html_string(self, identifier, user=None, seed_used=None):
         
@@ -482,12 +498,23 @@ class Question(models.Model):
             return ""
 
   
+class QuestionAuthor(models.Model):
+    question = models.ForeignKey(Question)
+    author = models.ForeignKey('midocs.Author')
+    sort_order = models.FloatField(default=0)
+
+    class Meta:
+        unique_together = ("question","author")
+        ordering = ['sort_order','id']
+    def __unicode__(self):
+        return "%s" % self.author
+
 
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
     question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
     css_class = models.CharField(max_length=100,blank=True, null=True)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
@@ -556,7 +583,7 @@ class QuestionSubpart(models.Model):
 class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
     page = models.ForeignKey(Page)
-    sort_order = models.SmallIntegerField(default=0)
+    sort_order = models.FloatField(default=0)
     question_subpart = models.CharField(max_length=1, blank=True,null=True)
     
     class Meta:

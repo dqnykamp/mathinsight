@@ -764,7 +764,8 @@ class VideoQuestionsNode(template.Node):
         if seed is not None:
             random.seed(seed)
 
-        for question in thevideo.question_set.all():
+        for videoquestion in thevideo.videoquestion_set.all():
+            question = videoquestion.question
             question_seed = question.get_new_seed()
             html_string += _render_question(question, seed, context)
 

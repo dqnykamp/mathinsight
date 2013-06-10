@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
 import settings
 import reversion
 
@@ -49,9 +49,11 @@ class QuestionReferencePageInline(admin.TabularInline):
 class QuestionAnswerInline(admin.StackedInline):
     model = QuestionAnswerOption
 
+class QuestionAuthorInline(admin.TabularInline):
+    model = QuestionAuthor
 
 class QuestionAdmin(reversion.VersionAdmin):
-    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline]
+    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
     search_fields = ['id', 'name']
     formfield_overrides = {
@@ -61,7 +63,7 @@ class QuestionAdmin(reversion.VersionAdmin):
     fieldsets = (
         (None, {
                 'fields': ('name', 'question_type', 'question_permission',
-                           'description', 'video', 'question_spacing', 'css_class',
+                           'description', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
                            'hint_text', 'notes',
                            'show_solution_button_after_attempts',
