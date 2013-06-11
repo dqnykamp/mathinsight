@@ -1248,8 +1248,11 @@ class AppletNode(template.Node):
         # html for applet inclusion
         # add html for applet embedding based on applet_type
         identifier = context.get('identifier','')
-        applet_identifier = "%s00%s" % (applet.code_camel(), 
-                                        underscore_to_camel(identifier))
+        applet_counter = context.get('applet_counter', 0)+1
+        context['applet_counter']=applet_counter
+        applet_identifier = "%s0%s0%s" % (applet.code_camel(), 
+                                          applet_counter,
+                                          underscore_to_camel(identifier))
 
         if applet.applet_type.code == "LiveGraphics3D":
             applet_link = LiveGraphics3D_link(context, applet, applet_identifier, width, height)

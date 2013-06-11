@@ -761,7 +761,7 @@ class QuestionStudentAnswer(models.Model):
     question = models.ForeignKey('mitesting.Question')
     seed = models.CharField(max_length=50, blank=True, null=True)
     question_set = models.SmallIntegerField(blank=True, null=True)
-    answer = models.CharField(max_length=400, blank=True, null=True)
+    answer = models.TextField(blank=True, null=True)
     identifier_in_answer = models.CharField(max_length=50, blank=True,
                                             null=True)
     credit = models.FloatField()

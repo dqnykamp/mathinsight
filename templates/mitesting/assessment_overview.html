@@ -3,7 +3,7 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Overview of: {{assessment.name}} - Math Insight{%endblock%}
 
-{% if course_thread_content %}{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempts' course_thread_content.id %}">{{ assessment.name }}</a> ► overview{% endblock %}{%endif%}
+{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempts' course_thread_content.id %}">{{ assessment.name }}</a> ► overview{%endif%}{% endblock %}
 
 {% block content %}
 
