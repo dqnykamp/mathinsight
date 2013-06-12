@@ -720,3 +720,33 @@ def adjusted_due_date_calculation_view(request, id):
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
+
+@login_required
+def student_gradebook_view(request):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+        
+    category_scores=course.student_scores_by_assessment_category(courseuser)
+    
+    # no Google analytics for course
+    noanalytics=True
+
+    return render_to_response \
+        ('micourses/student_gradebook.html', 
+         {'course': course,
+          'student': courseuser, 
+          'category_scores': category_scores,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))

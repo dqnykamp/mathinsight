@@ -112,6 +112,8 @@ class CourseAssessmentCategory(models.Model):
         verbose_name_plural = 'Course assessment categories'
 
 
+    
+
 class AttendanceDate(models.Model):
     course = models.ForeignKey('Course')
     date = models.DateField()
@@ -159,14 +161,98 @@ class Course(models.Model):
             ("update_attendance","Can update attendance"),
         )
 
-    # def points_for_assessment_category(self, assessment_category):
-    #     return self.coursethreadcontent_set\
-    #         .filter(assessment_category=assessment_category)\
-    #         .aggregate(total_points=Sum('points'))['total_points']
+    def points_for_assessment_category(self, assessment_category):
+        try:
+            cac=self.courseassessmentcategory_set.get\
+                (assessment_category=assessment_category)
+        except ObjectDoesNotExist:
+            return 0
         
-    # def total_points(self):
-    #     return self.coursethreadcontent_set\
-    #         .aggregate(total_points=Sum('points'))['total_points']
+
+        point_list = []
+        for ctc in self.coursethreadcontent_set\
+                .filter(assessment_category=assessment_category):
+            total_points = ctc.total_points()
+            if total_points:
+                point_list.append(total_points)
+
+        point_list.sort()
+        
+        n = cac.number_count_for_grade
+        if n < len(point_list):
+            point_list = point_list[-n:]
+        return sum(point_list)
+ 
+    def student_score_for_assessment_category(self, assessment_category,
+                                              student):
+        try:
+            cac=self.courseassessmentcategory_set.get\
+                (assessment_category=assessment_category)
+        except ObjectDoesNotExist:
+            return 0
+        
+        score_list = []
+        for ctc in self.coursethreadcontent_set\
+                .filter(assessment_category=assessment_category):
+            total_score = ctc.student_score(student)
+            if total_score:
+                score_list.append(total_score)
+
+        score_list.sort()
+        
+        n = cac.number_count_for_grade
+        if n < len(score_list):
+            score_list = score_list[-n:]
+        return sum(score_list)
+ 
+
+    def student_scores_by_assessment_category(self, student):
+        scores_by_category = []
+        for cac in self.courseassessmentcategory_set.all():
+
+            cac_assessments = []
+            for ctc in self.coursethreadcontent_set\
+                    .filter(assessment_category=cac.assessment_category):
+                ctc_points = ctc.total_points()
+                if ctc_points:
+                    student_score = ctc.student_score(student)
+                    assessment_results = {'assessment':\
+                                              ctc.thread_content.content_object,
+                                          'points': ctc_points,
+                                          'student_score': student_score,
+                                          }
+                    cac_assessments.append(assessment_results)
+            cac_results = {'category': cac.assessment_category,
+                           'points': self.points_for_assessment_category \
+                               (cac.assessment_category),
+                           'student_score':
+                               self.student_score_for_assessment_category \
+                               (cac.assessment_category, student),
+                           'number_count': cac.number_count_for_grade,
+                           'assessments': cac_assessments,
+                           }
+            scores_by_category.append(cac_results)
+        total_points = self.total_points()
+        total_student_score = self.total_student_score(student)
+        return {'scores': scores_by_category,
+                'total_points': total_points,
+                'total_student_score': total_student_score,
+                }
+                    
+                    
+    def total_points(self):
+        total_points=0
+        for cac in self.courseassessmentcategory_set.all():
+            total_points += self.points_for_assessment_category\
+                (cac.assessment_category)
+        return total_points
+
+    def total_student_score(self, student):
+        total_score=0
+        for cac in self.courseassessmentcategory_set.all():
+            total_score += self.student_score_for_assessment_category\
+                (cac.assessment_category, student)
+        return total_score
         
     # def points_for_grade_level(self, grade_level):
     #     return self.coursethreadcontent_set\

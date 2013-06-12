@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Assessments of {{ student.first_name }} {{ student.last_name }}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-studentgradebook' %}"> Grades</a>{% endblock %}
+
+{% block content %}
+
+<h3>Grades</h3>
+
+{% for category in category_scores.scores %}
+<h4>{{category.category}}</h4>
+<ul>
+{% for assessment in category.assessments %}
+<li>{{ assessment.assessment}} (out of {{assessment.total_points}} points): {{assessment.student_score}}</li>
+{% endfor %}
+</ul>
+Subtotal for {{category.category}} ({{category.points}} points possible based on top {{category.number_count}} scores): {{category.student_score}}
+{% endfor %}
+
+<p><b>Total for course {{course}} (out of {{category_scores.total_points}} points): {{category_scores.total_student_score}}</b></p>
+
+{% endblock %}
