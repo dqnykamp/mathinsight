@@ -8,17 +8,15 @@
 {% block content %}
 
 <h3>Grades</h3>
-
+<table>
+<thead><tr><th>Grade item</th><th>Possible points</th><th>Score</th><th>Percentage</th></tr></thead>
+<tfoot><tr><td><b>Course Total</b></td><td>{{category_scores.total_points}}</td><td><b>{{category_scores.total_student_score}}</b></td><td></td></tr></tfoot>
 {% for category in category_scores.scores %}
-<h4>{{category.category}}</h4>
-<ul>
+<tr><td colspan=4>{{category.category}}</td></tr>
 {% for assessment in category.assessments %}
-<li>{{ assessment.assessment}} (out of {{assessment.total_points}} points): {{assessment.student_score}}</li>
+<tr><td>{{ assessment.assessment}}</td><td>{{assessment.total_points}}</td><td>{{assessment.student_score}}</td><td></td></tr>
 {% endfor %}
-</ul>
-Subtotal for {{category.category}} ({{category.points}} points possible based on top {{category.number_count}} scores): {{category.student_score}}
+<tr><td>Subtotal for {{category.category}} (based on top {{category.number_count}} scores)</td><td>{{category.points}}</td><td>{{category.student_score}}</td><td></td></tr>
 {% endfor %}
-
-<p><b>Total for course {{course}} (out of {{category_scores.total_points}} points): {{category_scores.total_student_score}}</b></p>
-
+</table>
 {% endblock %}
