@@ -6,7 +6,7 @@ from mithreads.models import ThreadContent
 import settings
 import reversion
 
-class QuestionStudentAnswerAdmin(admin.ModelAdmin):
+class QuestionStudentAnswerAdmin(reversion.VersionAdmin):
     pass
 
 class CourseAssessmentCategoryInline(admin.TabularInline):
