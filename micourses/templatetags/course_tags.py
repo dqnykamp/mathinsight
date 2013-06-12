@@ -25,10 +25,11 @@ def floatformat_or_NA(text,arg=1):
         return floatformat(text,arg)
 
 @register.filter(needs_autoescape=True)
-def percent_checked_100(text, autoescape=None):
+def percent_checked_100(text, arg=0, autoescape=None):
     checked=False
     if text==100:
         checked = True
+    text = floatformat(text,arg)
     if autoescape:
         escaped_text = conditional_escape(text)
     else:

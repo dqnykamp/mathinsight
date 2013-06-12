@@ -1769,6 +1769,13 @@ table.centertext td, table.centertext th {
     text-align: center;
 }
 
+table td.right, table th.right { 
+    text-align: right;
+}
+table td.center, table th.center { 
+    text-align: center;
+}
+
 table.compact th {
     font-size: 11pt;
     padding: 5px 8px;
@@ -1794,6 +1801,7 @@ table.rowclick tr td a {
     height:100%;
     width:100%;
 }
+
 
 /* the index */
 .indexlink 

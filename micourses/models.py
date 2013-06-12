@@ -103,7 +103,7 @@ class AssessmentCategory(models.Model):
 class CourseAssessmentCategory(models.Model):
     course = models.ForeignKey('Course')
     assessment_category = models.ForeignKey(AssessmentCategory)
-    number_count_for_grade = models.IntegerField(default=9999)
+    number_count_for_grade = models.IntegerField(blank=True, null=True)
     sort_order = models.FloatField(default=0.0)
 
     def __unicode__(self):
@@ -179,7 +179,7 @@ class Course(models.Model):
         point_list.sort()
         
         n = cac.number_count_for_grade
-        if n < len(point_list):
+        if n is not None and n < len(point_list):
             point_list = point_list[-n:]
         return sum(point_list)
  
@@ -201,7 +201,7 @@ class Course(models.Model):
         score_list.sort()
         
         n = cac.number_count_for_grade
-        if n < len(score_list):
+        if n is not None and n < len(score_list):
             score_list = score_list[-n:]
         return sum(score_list)
  
@@ -216,27 +216,45 @@ class Course(models.Model):
                 ctc_points = ctc.total_points()
                 if ctc_points:
                     student_score = ctc.student_score(student)
-                    assessment_results = {'assessment':\
-                                              ctc.thread_content.content_object,
-                                          'points': ctc_points,
-                                          'student_score': student_score,
-                                          }
+                    if student_score:
+                        percent = student_score/ctc_points*100
+                    else:
+                        percent = 0
+                    assessment_results =  \
+                    {'content': ctc,
+                     'assessment': ctc.thread_content.content_object,
+                     'points': ctc_points,
+                     'student_score': student_score,
+                     'percent': percent,
+                     }
                     cac_assessments.append(assessment_results)
+            category_points = self.points_for_assessment_category \
+                               (cac.assessment_category)
+            category_student_score = \
+                self.student_score_for_assessment_category \
+                (cac.assessment_category, student)
+            if category_student_score and category_points:
+                category_percent = category_student_score/category_points*100
+            else:
+                category_percent = 0
             cac_results = {'category': cac.assessment_category,
-                           'points': self.points_for_assessment_category \
-                               (cac.assessment_category),
-                           'student_score':
-                               self.student_score_for_assessment_category \
-                               (cac.assessment_category, student),
+                           'points': category_points,
+                           'student_score': category_student_score,
+                           'percent': category_percent,
                            'number_count': cac.number_count_for_grade,
                            'assessments': cac_assessments,
                            }
             scores_by_category.append(cac_results)
         total_points = self.total_points()
         total_student_score = self.total_student_score(student)
+        if total_points and total_student_score:
+            total_percent = total_student_score/total_points*100
+        else:
+            total_percent = 0
         return {'scores': scores_by_category,
                 'total_points': total_points,
                 'total_student_score': total_student_score,
+                'total_percent': total_percent,
                 }
                     
                     
