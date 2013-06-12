@@ -18,9 +18,9 @@ def complete_skip_button(parser, token):
     return CompleteSkipButtonNode(course_thread_content, student)
 
 @register.filter(is_safe=True)
-def floatformat_or_NA(text,arg=1):
+def floatformat_or_dash(text,arg=1):
     if text is None:
-        return "NA"
+        return "--"
     else:
         return floatformat(text,arg)
 
@@ -52,7 +52,7 @@ class AssessmentStudentScoreNode(Node):
         student = self.student.resolve(context)
         float_format = self.float_format.resolve(context)
         score = course_thread_content.student_score(student)
-        return floatformat_or_NA(score)
+        return floatformat_or_dash(score)
 
 
 @register.tag

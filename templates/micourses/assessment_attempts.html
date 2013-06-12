@@ -10,15 +10,15 @@
 <h4>{{content.thread_content.content_object}}</h4>
 
 <p>Points: {{content.total_points}}<br/>
-Score: {{score|floatformat_or_NA:"1"}} {% if assessment_attempts.count > 1 %}(based on {{content.attempt_aggregation_string}} over attempts){%endif%}<br/>
+Score: {{score|floatformat_or_dash:"1"}} {% if assessment_attempts.count > 1 %}(based on {{content.attempt_aggregation_string}} over attempts){%endif%}<br/>
 Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
 
 {% if assessment_attempts %}
 <table class="basic rowclick">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th></tr></thead>
-{% if assessment_attempts.count > 1 %}<tfoot><tr><td></td><td><b>Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b>{{ score|floatformat_or_NA:"1"}}</b></td></tr></tfoot>{%endif%}
+{% if assessment_attempts.count > 1 %}<tfoot><tr><td></td><td><b>Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b>{{ score|floatformat_or_dash:"1"}}</b></td></tr></tfoot>{%endif%}
 {% for attempt in assessment_attempts %}
-<tr><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{{forloop.counter}}&nbsp;{%else%}&nbsp;{{forloop.counter}}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;</a>{%else%}&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{{attempt.get_score|floatformat_or_NA:"1"}}&nbsp;</a>{%else%}&nbsp;{{attempt.get_score|floatformat_or_NA:"1"}}&nbsp;{%endif%}</td></tr>
+<tr><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{{forloop.counter}}&nbsp;{%else%}&nbsp;{{forloop.counter}}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;</a>{%else%}&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptquestions' content.id forloop.counter %}">&nbsp;{{attempt.get_score|floatformat_or_dash:"1"}}&nbsp;</a>{%else%}&nbsp;{{attempt.get_score|floatformat_or_dash:"1"}}&nbsp;{%endif%}</td></tr>
 {% endfor %}
 </table>
 {% else %}

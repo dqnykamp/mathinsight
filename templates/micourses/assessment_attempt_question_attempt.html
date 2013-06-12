@@ -19,7 +19,7 @@
 
 <p>Points: {{ answer_dict.points}}<br/>
 Percent: {{ answer_dict.credit_percent|percent_checked_100 }}<br/>
-Score: {{answer_dict.score|floatformat_or_NA:"1" }}</p>
+Score: {{answer_dict.score|floatformat_or_dash:"1" }}</p>
 
 
 {% endblock %}
