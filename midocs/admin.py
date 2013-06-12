@@ -8,7 +8,7 @@ class AppletTypeParameterInline(admin.TabularInline):
     model = AppletTypeParameter
     extra = 3
 
-class AppletTypeAdmin(reversion.VersionAdmin):
+class AppletTypeAdmin(admin.ModelAdmin):
     inlines = [AppletTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -50,7 +50,7 @@ class AppletAuthorInline(admin.TabularInline):
 class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
-class AppletAdmin(reversion.VersionAdmin):
+class AppletAdmin(admin.ModelAdmin):
     inlines = [AppletParameterInline, AppletObjectInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
@@ -88,7 +88,7 @@ class VideoTypeParameterInline(admin.TabularInline):
     model = VideoTypeParameter
     extra = 3
 
-class VideoTypeAdmin(reversion.VersionAdmin):
+class VideoTypeAdmin(admin.ModelAdmin):
     inlines = [VideoTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -128,7 +128,7 @@ class VideoQuestionInline(admin.TabularInline):
     model = VideoQuestion
 
 
-class VideoAdmin(reversion.VersionAdmin):
+class VideoAdmin(admin.ModelAdmin):
     inlines = [VideoParameterInline, VideoAuthorInline, VideoQuestionInline]
     # inlines = [VideoParameterInline, VideoInPagesInline]
     exclude = ('in_pages',)
@@ -172,7 +172,7 @@ class ImageAuthorInline(admin.TabularInline):
 class ImageNotationSystemInline(admin.TabularInline):
     model = ImageNotationSystem
 
-class ImageAdmin(reversion.VersionAdmin):
+class ImageAdmin(admin.ModelAdmin):
     inlines = [ImageAuthorInline,ImageNotationSystemInline]
     exclude = ('in_pages',)
     list_display = ("code", "title", "imagefile")
@@ -212,7 +212,7 @@ class PageAuthorInline(admin.TabularInline):
 class IndexEntryInline(admin.TabularInline):
     model = IndexEntry
 
-class PageAdmin(reversion.VersionAdmin):
+class PageAdmin(admin.ModelAdmin):
     list_display = ('code','title', 'level')
     inlines = [IndexEntryInline,PageAuthorInline,PageRelationshipInline]
     search_fields = ['code', 'title']
@@ -283,7 +283,7 @@ class PageHighlightAdmin(admin.ModelAdmin):
 class ReferenceAuthorInline(admin.TabularInline):
     model = ReferenceAuthor
 
-class ReferenceAdmin(reversion.VersionAdmin):
+class ReferenceAdmin(admin.ModelAdmin):
     inlines = [ReferenceAuthorInline,]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -294,42 +294,42 @@ class ReferenceAdmin(reversion.VersionAdmin):
 class NewsAuthorInline(admin.TabularInline):
     model = NewsAuthor
 
-class NewsAdmin(reversion.VersionAdmin):
+class NewsAdmin(admin.ModelAdmin):
     inlines = [NewsAuthorInline]
     list_display = ("code","title")
     save_on_top=True
     prepopulated_fields = {"code": ("title",)}
 
 
-class NotationSystemAdmin(reversion.VersionAdmin):
+class NotationSystemAdmin(admin.ModelAdmin):
     pass
-class AuthorAdmin(reversion.VersionAdmin):
+class AuthorAdmin(admin.ModelAdmin):
     pass
-class LevelAdmin(reversion.VersionAdmin):
+class LevelAdmin(admin.ModelAdmin):
     pass
-class ObjectiveAdmin(reversion.VersionAdmin):
+class ObjectiveAdmin(admin.ModelAdmin):
     pass
-class SubjectAdmin(reversion.VersionAdmin):
+class SubjectAdmin(admin.ModelAdmin):
     pass
-class KeywordAdmin(reversion.VersionAdmin):
+class KeywordAdmin(admin.ModelAdmin):
     pass
-class RelationshipTypeAdmin(reversion.VersionAdmin):
+class RelationshipTypeAdmin(admin.ModelAdmin):
     pass
-class IndexTypeAdmin(reversion.VersionAdmin):
+class IndexTypeAdmin(admin.ModelAdmin):
     pass
-class IndexEntryAdmin(reversion.VersionAdmin):
+class IndexEntryAdmin(admin.ModelAdmin):
     pass
-class ImageTypeAdmin(reversion.VersionAdmin):
+class ImageTypeAdmin(admin.ModelAdmin):
     pass
-class AppletFeatureAdmin(reversion.VersionAdmin):
+class AppletFeatureAdmin(admin.ModelAdmin):
     pass
-class AppletObjectTypeAdmin(reversion.VersionAdmin):
+class AppletObjectTypeAdmin(admin.ModelAdmin):
     pass
-class ReferenceTypeAdmin(reversion.VersionAdmin):
+class ReferenceTypeAdmin(admin.ModelAdmin):
     pass
-class AuxiliaryFileTypeAdmin(reversion.VersionAdmin):
+class AuxiliaryFileTypeAdmin(admin.ModelAdmin):
     pass
-class AuxiliaryFileAdmin(reversion.VersionAdmin):
+class AuxiliaryFileAdmin(admin.ModelAdmin):
     pass
 
 

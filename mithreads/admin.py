@@ -8,7 +8,7 @@ import reversion
 class ThreadSectionInline(admin.TabularInline):
     model = ThreadSection
 
-class ThreadAdmin(reversion.VersionAdmin):
+class ThreadAdmin(admin.ModelAdmin):
     inlines=[ThreadSectionInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -17,7 +17,7 @@ class ThreadAdmin(reversion.VersionAdmin):
 class ThreadContentInline(admin.TabularInline):
     model = ThreadContent
 
-class ThreadSectionAdmin(reversion.VersionAdmin):
+class ThreadSectionAdmin(admin.ModelAdmin):
     inlines=[ThreadContentInline]
     list_display = ('__unicode__', 'thread', 'first_content_title')
     list_filter = ('thread',)

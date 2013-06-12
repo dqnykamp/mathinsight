@@ -11,7 +11,7 @@ class QuestionSetDeatilInline(admin.TabularInline):
     model = QuestionSetDetail
 class AssessmentBackgroundPageInline(admin.TabularInline):
     model = AssessmentBackgroundPage
-class AssessmentAdmin(reversion.VersionAdmin):
+class AssessmentAdmin(admin.ModelAdmin):
     inlines = [QuestionAssignedInline,QuestionSetDeatilInline,AssessmentBackgroundPageInline]
     list_display = ("code","name")
     search_fields = ['code', 'name']
@@ -52,7 +52,7 @@ class QuestionAnswerInline(admin.StackedInline):
 class QuestionAuthorInline(admin.TabularInline):
     model = QuestionAuthor
 
-class QuestionAdmin(reversion.VersionAdmin):
+class QuestionAdmin(admin.ModelAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
     search_fields = ['id', 'name']
@@ -86,19 +86,19 @@ class QuestionAdmin(reversion.VersionAdmin):
         ]
 
 
-class QuestionTypeAdmin(reversion.VersionAdmin):
+class QuestionTypeAdmin(admin.ModelAdmin):
     pass
 
-class QuestionPermissionAdmin(reversion.VersionAdmin):
+class QuestionPermissionAdmin(admin.ModelAdmin):
     pass
 
-class AssessmentTypeAdmin(reversion.VersionAdmin):
+class AssessmentTypeAdmin(admin.ModelAdmin):
     pass
 
-class QuestionSpacingAdmin(reversion.VersionAdmin):
+class QuestionSpacingAdmin(admin.ModelAdmin):
     pass
 
-class SympyCommandSetAdmin(reversion.VersionAdmin):
+class SympyCommandSetAdmin(admin.ModelAdmin):
     pass
 
 
