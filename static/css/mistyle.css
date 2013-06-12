@@ -1769,10 +1769,10 @@ table.centertext td, table.centertext th {
     text-align: center;
 }
 
-table td.right, table th.right { 
+table td.righttext, table th.righttext { 
     text-align: right;
 }
-table td.center, table th.center { 
+table td.centertext, table th.centertext { 
     text-align: center;
 }
 
