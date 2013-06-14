@@ -22,7 +22,7 @@ def course_thread_content_form_factory(thread):
     class RuntimeCourseThreadContentForm(forms.ModelForm):
         
         thread_content = forms.ModelChoiceField\
-            (label="ThreadContent", queryset=ThreadContent.objects\
+            (label="Thread content", queryset=ThreadContent.objects\
                  .filter(section__thread=thread)\
                  .order_by('section__sort_order','sort_order'))
  

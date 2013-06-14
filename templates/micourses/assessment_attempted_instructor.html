@@ -1,0 +1,31 @@
+{% extends "micourses/course_base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Attempts of {{ student.get_full_name }} on {{content.thread_content.content_object}}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'mic-assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+
+{% block content %}
+<h3>Student: {{student.get_full_name}}</h3>
+
+<h4>{{content.thread_content.content_object}}</h4>
+
+<p>Points: {{content.total_points}}<br/>
+Score: {{score|floatformat_or_dash:"1"}} {% if assessment_attempts.count > 1 %}(based on {{content.attempt_aggregation_string}} over attempts){%endif%}<br/>
+Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
+
+{% if assessment_attempts %}
+<table class="basic rowclick">
+<thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th></tr></thead>
+{% if assessment_attempts.count > 1 %}<tfoot><tr><td></td><td><b>Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b>{{ score|floatformat_or_dash:"1"}}</b></td></tr></tfoot>{%endif%}
+{% for attempt in assessment_attempts %}
+<tr><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptinstructor' student_id=student.id pk=content.id attempt_number=forloop.counter %}">&nbsp;{{forloop.counter}}&nbsp;{%else%}&nbsp;{{forloop.counter}}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptinstructor' student_id=student.id pk=content.id attempt_number=forloop.counter %}">&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;</a>{%else%}&nbsp;{% if attempt.have_datetime_interval %}{{attempt.datetime}} - {{attempt.get_latest_datetime}}{%else%}{{attempt.datetime}}{%endif%}&nbsp;{%endif%}</td><td>{% if attempt.questionstudentanswer_set.all %}<a href="{% url 'mic-assessmentattemptinstructor' student_id=student.id pk=content.id attempt_number=forloop.counter %}">&nbsp;{{attempt.get_score|floatformat_or_dash:"1"}}&nbsp;</a>{%else%}&nbsp;{{attempt.get_score|floatformat_or_dash:"1"}}&nbsp;{%endif%}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No attempts recorded</p>
+{% endif %}
+
+<p>Go to {{content.thread_content.content_object.return_link}}.</p>
+
+{% endblock %}

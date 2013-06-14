@@ -4,7 +4,7 @@
 {% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
 
 
-{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempts' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattemptquestions' content.id attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestiondetail' content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempted' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattempt' content.id attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestion' content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
 
 
 {% block content %}

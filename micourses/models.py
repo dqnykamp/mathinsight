@@ -21,7 +21,6 @@ def day_of_week_to_python(day_of_week):
     elif day_of_week.upper() == 'SA':
         return 5
 
-
 class CourseUser(models.Model):
     ROLE_CHOICES = (
         ('S', 'Student'),
@@ -58,6 +57,8 @@ class CourseUser(models.Model):
     def active_courses(self):
         return self.course_set.filter(active=True)
     
+    def get_current_role(self):
+        return self.role
     
     def percent_attendance(self, course=None, date=None):
         if not course:
@@ -182,6 +183,36 @@ class Course(models.Model):
         if n is not None and n < len(point_list):
             point_list = point_list[-n:]
         return sum(point_list)
+
+
+    def all_assessments_by_category(self):
+        assessment_categories=[]
+        for cac in self.courseassessmentcategory_set.all():
+
+            cac_assessments = []
+            for ctc in self.coursethreadcontent_set\
+                    .filter(assessment_category=cac.assessment_category):
+                ctc_points = ctc.total_points()
+                if ctc_points:
+                    assessment_results =  \
+                    {'content': ctc,
+                     'assessment': ctc.thread_content.content_object,
+                     'points': ctc_points,
+                     }
+                    cac_assessments.append(assessment_results)
+
+            category_points = self.points_for_assessment_category \
+                               (cac.assessment_category)
+            cac_results = {'category': cac.assessment_category,
+                           'points': category_points,
+                           'number_count': cac.number_count_for_grade,
+                           'assessments': cac_assessments,
+                           'number_assessments_plus_one': len(cac_assessments)+1,
+                           }
+            assessment_categories.append(cac_results)
+
+        return assessment_categories
+    
  
     def student_score_for_assessment_category(self, assessment_category,
                                               student):
@@ -256,7 +287,36 @@ class Course(models.Model):
                 'total_student_score': total_student_score,
                 'total_percent': total_percent,
                 }
-                    
+    
+    def all_student_scores_by_assessment_category(self):
+        student_scores = []
+        for student in self.enrolled_students.all():
+            student_categories = []
+            for cac in self.courseassessmentcategory_set.all():
+                category_scores = []
+                for ctc in self.coursethreadcontent_set\
+                    .filter(assessment_category=cac.assessment_category):
+                    ctc_points = ctc.total_points()
+                    if ctc_points:
+                        student_score = ctc.student_score(student)
+                        assessment_results =  \
+                            {'content': ctc,
+                             'assessment': ctc.thread_content.content_object,
+                             'score': student_score,}
+                        category_scores.append(assessment_results)
+                category_student_score = \
+                    self.student_score_for_assessment_category \
+                    (cac.assessment_category, student)
+                student_categories.append({'category': cac.assessment_category,
+                                           'category_score': \
+                                               category_student_score,
+                                           'scores': category_scores})
+
+            student_scores.append({'student': student,
+                                   'total_score': \
+                                       self.total_student_score(student),
+                                   'categories': student_categories})
+        return student_scores    
                     
     def total_points(self):
         total_points=0

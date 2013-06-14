@@ -4,13 +4,65 @@ from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User, Group
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, Context
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.views.generic import DetailView
 from django.http import Http404
-from django.contrib.auth.decorators import permission_required
+from django.shortcuts import redirect
+from django.utils.decorators import method_decorator
 from django import forms
 import datetime
+
+class CourseUserAuthenticationMixin(object):
+    """
+    Requires user to be logged in user enrolled in a course
+    before being able to access the post/get methods.
+    Adds course, courseuser, and noanalytics to context
+    """
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+
+        try:
+            self.courseuser = request.user.courseuser
+        # if courseuser does not exist, redirect to not enrolled page
+        except ObjectDoesNotExist:
+            return redirect('mic-notenrolled')
+        try:
+            self.course = self.courseuser.return_selected_course()
+        except MultipleObjectsReturned:
+            # courseuser is in multple active courses and hasn't selected one
+            # redirect to select course page
+            return redirect('mic-selectcourse')
+        except ObjectDoesNotExist:
+            # courseuser is not in an active course
+            # redirect to not enrolled page
+            return redirect('mic-notenrolled')
+
+        return super(CourseUserAuthenticationMixin, self)\
+            .dispatch(request, *args, **kwargs) 
+
+    def get_student(self):
+        return self.courseuser
+
+    def get_context_data(self, **kwargs):
+        context = super(CourseUserAuthenticationMixin, self)\
+            .get_context_data(**kwargs)
+        
+        context['courseuser'] = self.courseuser
+        context['course'] = self.course
+        context['student'] = self.get_student()
+
+        # no Google analytics for course
+        context['noanalytics']=True
+        
+        context.update(self.extra_course_context())
+
+        return context
+
+    def extra_course_context(self):
+        return {}
 
 
 @login_required
@@ -18,7 +70,7 @@ def course_main_view(request):
 
     try:
         courseuser = request.user.courseuser
-    # if courseusere does not exist, create
+    # if courseuser does not exist, redirect to not enrolled page
     except ObjectDoesNotExist:
         return HttpResponseRedirect(reverse('mic-notenrolled'))
         
@@ -54,7 +106,18 @@ def course_main_view(request):
 
     next_items = course.next_items(courseuser, number=5)
     
-    if courseuser.role == 'S':
+    if courseuser.role == 'I':
+        return render_to_response \
+            ('micourses/course_instructor_view.html', 
+             {'student': courseuser,
+              'course': course,
+              'upcoming_assessments': upcoming_assessments,
+              'next_items': next_items,
+              'multiple_courses': multiple_courses,
+              'noanalytics': noanalytics,
+              },
+             context_instance=RequestContext(request))
+    else:
         return render_to_response \
             ('micourses/course_student_view.html', 
              {'student': courseuser,
@@ -67,322 +130,262 @@ def course_main_view(request):
              context_instance=RequestContext(request))
 
 
-@login_required
-def assessment_attempts_view(request, id):
-    courseuser = request.user.courseuser
+class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
     
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('mic-selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('mic-notenrolled'))
+    model = CourseThreadContent
+    context_object_name = 'content'
+    template_name = 'micourses/assessment_attempted.html'
 
-    
-    content = get_object_or_404(CourseThreadContent, id=id)
-    adjusted_due_date = content.adjusted_due_date(courseuser)
-
-    assessment_attempts = courseuser.studentcontentattempt_set\
+    def get_object(self):
+        content = super(AssessmentAttempted, self).get_object()
+        self.student = self.get_student()
+        self.assessment=content.thread_content.content_object
+        self.assessment_attempts = self.student.studentcontentattempt_set\
             .filter(content=content)
+        return content
 
-    score = content.student_score(courseuser)
+    def extra_course_context(self):
+        return {'adjusted_due_date': self.object\
+                    .adjusted_due_date(self.student),
+                'assessment_attempts': self.assessment_attempts,
+                'score': self.object.student_score(self.student),
+                }
 
-    # no Google analytics for course
-    noanalytics=True
 
-    return render_to_response \
-        ('micourses/assessment_attempts.html', 
-         {'student': courseuser, 'course': course,
-          'content': content,
-          'score': score,
-          'assessment_attempts': assessment_attempts,
-          'adjusted_due_date': adjusted_due_date,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
+class AssessmentAttemptedInstructor(AssessmentAttempted):
+    template_name = 'micourses/assessment_attempted_instructor.html'
 
-@login_required
-def assessment_attempt_questions_view(request, id, attempt_number):
-    courseuser = request.user.courseuser
+    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AssessmentAttemptedInstructor, self)\
+            .dispatch(request, *args, **kwargs) 
     
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('mic-selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('mic-notenrolled'))
+    def get_student(self):
+        return get_object_or_404(self.course.enrolled_students,
+                                 id=self.kwargs['student_id'])
 
+
+class AssessmentAttempt(AssessmentAttempted):
     
-    content = get_object_or_404(CourseThreadContent, id=id)
+    template_name = 'micourses/assessment_attempt.html'
 
-    assessment_attempts = courseuser.studentcontentattempt_set\
-        .filter(content=content)
+    def get_object(self):
+        content = super(AssessmentAttempt, self).get_object()
+        
+        # don't pad attempt_number with zeros
+        self.attempt_number = self.kwargs['attempt_number']
+        if self.attempt_number[0]=='0':
+            raise  Http404('Assessment attempt %s not found.' \
+                               % self.attempt_number)
 
-    # don't pad attempt_number with zeros
-    if attempt_number[0]=='0':
-        raise  Http404('Assessment attempt %s not found.' % attempt_number)
+        try:
+            self.attempt = self.assessment_attempts[int(self.attempt_number)-1]
+        except IndexError:
+            raise Http404('Assessment attempt %s not found.' \
+                              % self.attempt_number)
+        
+        return content
 
-    try:
-        attempt = assessment_attempts[int(attempt_number)-1]
-    except IndexError:
-        raise Http404('Assessment attempt %s not found.' % attempt_number)
+    def extra_course_context(self):
+        
+        context={}
+        context['attempt'] = self.attempt
+        context['attempt_number'] = self.attempt_number
+
+        if self.attempt.score is not None and \
+                self.attempt.score != self.attempt.get_score():
+            context['score_overridden'] = True
+        else:
+            context['score_overridden'] = False
+
+        rendered_question_list=self.assessment.render_question_list\
+            (self.attempt.seed, current_attempt=self.attempt)
+
+        question_list = []
+        for qd in rendered_question_list:
+            question_dict={'points': qd['points'],
+                           'current_credit': qd['current_credit'],
+                           'current_score': qd['current_score'],
+                           }
+            
+            question_dict['answers_available'] = \
+                self.attempt.questionstudentanswer_set \
+                .filter(question_set=qd['question_set']).exists()
+            
+            question_list.append(question_dict)
+
+        context['question_list'] =question_list
+
+        return context
 
 
-    assessment=content.thread_content.content_object
-    # must be an assessment 
-    if not isinstance(assessment,Assessment):
-        raise Http404('Thread content %s is not an assessment' % assessment)
+class AssessmentAttemptInstructor(AssessmentAttempt):
+    template_name = 'micourses/assessment_attempt_instructor.html'
 
-    if attempt.score is not None and attempt.score != attempt.get_score():
-        score_overridden = True
-    else:
-        score_overridden = False
-  
-    rendered_question_list=assessment.render_question_list\
-        (attempt.seed, current_attempt=attempt)
-
-    question_list = []
-    for qd in rendered_question_list:
-        question_dict={'points': qd['points'],
-                       'current_credit': qd['current_credit'],
-                       'current_score': qd['current_score'],
-                       }
-
-        question_dict['answers_available'] = attempt.questionstudentanswer_set\
-            .filter(question_set=qd['question_set']).exists()
-
-        question_list.append(question_dict)
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/assessment_attempt_questions.html', 
-         {'student': courseuser, 'course': course,
-          'content': content,
-          'attempt': attempt,
-          'attempt_number': attempt_number,
-          'question_list': question_list,
-          'score_overridden': score_overridden,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-@login_required
-def assessment_attempt_question_detail_view(request, id, attempt_number, 
-                                            question_number):
-    courseuser = request.user.courseuser
+    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AssessmentAttemptInstructor, self)\
+            .dispatch(request, *args, **kwargs) 
     
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('mic-selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('mic-notenrolled'))
+    def get_student(self):
+        return get_object_or_404(self.course.enrolled_students,
+                                 id=self.kwargs['student_id'])
 
+
+class AssessmentAttemptQuestion(AssessmentAttempt):
     
-    content = get_object_or_404(CourseThreadContent, id=id)
+    model = CourseThreadContent
+    context_object_name = 'content'
+    template_name = 'micourses/assessment_attempt_question.html'
 
-    assessment=content.thread_content.content_object
-    # must be an assessment 
-    if not isinstance(assessment,Assessment):
-        raise Http404('Thread content %s is not an assessment' % assessment)
+    def get_object(self):
+        content = super(AssessmentAttemptQuestion, self).get_object()
+        
+        # don't pad question_number with zeros
+        self.question_number = self.kwargs['question_number']
+        if self.question_number[0]=='0':
+            raise  Http404('Question %s not found.' % self.question_number)
 
-    assessment_attempts = courseuser.studentcontentattempt_set\
-        .filter(content=content)
+        self.question_number = int(self.question_number)
 
-    # don't pad attempt_number with zeros
-    if attempt_number[0]=='0':
-        raise  Http404('Assessment attempt %s not found.' % attempt_number)
+        try:
+            self.question_dict = self.assessment.render_question_list\
+                (self.attempt.seed, current_attempt=self.attempt)\
+                [self.question_number-1]
+        except IndexError:
+            raise  Http404('Question %s not found.' % self.question_number)
 
-    try:
-        attempt = assessment_attempts[int(attempt_number)-1]
-    except IndexError:
-        raise Http404('Assessment attempt %s not found.' % attempt_number)
+        question_set = self.question_dict['question_set']
 
+        self.answers=self.attempt.questionstudentanswer_set.filter\
+            (question_set=question_set)
+        
+        if not self.answers:
+            raise Http404('Question %s not found.' % self.question_number)
 
-    # don't pad question_number with zeros
-    if question_number[0]=='0':
-        raise  Http404('Question %s not found.' % question_number)
+        return content
 
-    question_number = int(question_number)
+    def extra_course_context(self):
+        
+        context={}
+        context['attempt'] = self.attempt
+        context['attempt_number'] = self.attempt_number
+        context['points'] = self.question_dict['points']
+        context['score'] = self. question_dict['current_score']
+        context['current_credit'] = self.question_dict['current_credit']
+        context['question_number'] = self.question_number
 
-    try:
-        question_dict = assessment.render_question_list\
-            (attempt.seed, current_attempt=attempt)[question_number-1]
-    except IndexError:
-        raise  Http404('Question %s not found.' % question_number)
+        answer_list=[]
+        for answer in self.answers:
+            answer_dict = {'datetime': answer.datetime, }
+            answer_dict['score'] = answer.credit*self.question_dict['points']
+            answer_dict['credit_percent'] = int(answer.credit*100)
+            answer_list.append(answer_dict)
+        context['answers'] = answer_list
 
-    question_set = question_dict['question_set']
-
-    answers=attempt.questionstudentanswer_set.filter\
-        (question_set=question_set)
-
-    if not answers:
-        raise Http404('Question %s not found.' % question_number)
-
-    answer_list=[]
-    for answer in answers:
-        answer_dict = {'datetime': answer.datetime, }
-        answer_dict['score'] = answer.credit*question_dict['points']
-        answer_dict['credit_percent'] = int(answer.credit*100)
-        answer_list.append(answer_dict)
-
-
-
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/assessment_attempt_question_detail.html', 
-         {'student': courseuser, 'course': course, 
-          'content': content,
-          'attempt': attempt,
-          'attempt_number': attempt_number,
-          'answers': answer_list,
-          'points': question_dict['points'],
-          'score': question_dict['current_score'],
-          'current_credit': question_dict['current_credit'],
-          'question_number': question_number,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
+        return context
 
 
-def assessment_attempt_question_attempt_view(request, id, attempt_number, 
-                                             question_number, 
-                                             question_attempt_number):
-    courseuser = request.user.courseuser
+class AssessmentAttemptQuestionInstructor(AssessmentAttemptQuestion):
+    template_name = 'micourses/assessment_attempt_question_instructor.html'
+
+    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AssessmentAttemptQuestionInstructor, self)\
+            .dispatch(request, *args, **kwargs) 
     
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('mic-selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('mic-notenrolled'))
+    def get_student(self):
+        return get_object_or_404(self.course.enrolled_students,
+                                 id=self.kwargs['student_id'])
 
+
+class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
     
-    content = get_object_or_404(CourseThreadContent, id=id)
-
-    assessment=content.thread_content.content_object
-    # must be an assessment 
-    if not isinstance(assessment,Assessment):
-        raise Http404('Thread content %s is not an assessment' % assessment)
-
-    assessment_attempts = courseuser.studentcontentattempt_set\
-        .filter(content=content)
-
-    # don't pad attempt_number with zeros
-    if attempt_number[0]=='0':
-        raise  Http404('Assessment attempt %s not found.' % attempt_number)
-
-    try:
-        attempt = assessment_attempts[int(attempt_number)-1]
-    except IndexError:
-        raise Http404('Assessment attempt %s not found.' % attempt_number)
+    template_name = 'micourses/assessment_attempt_question_attempt.html'
 
 
-    # don't pad question_number with zeros
-    if question_number[0]=='0':
-        raise  Http404('Question %s not found.' % question_number)
+    def get_object(self):
+        content = super(AssessmentAttemptQuestionAttempt, self).get_object()
+        
 
-    question_number = int(question_number)
+        # don't pad question_attempt_number with zeros
+        self.question_attempt_number = self.kwargs['question_attempt_number']
+        if self.question_attempt_number[0]=='0':
+            raise  Http404('Question attempt %s not found.'\
+                               % self.question_attempt_number)
 
-    try:
-        question_dict = assessment.render_question_list\
-            (attempt.seed, current_attempt=attempt)[question_number-1]
-    except IndexError:
-        raise  Http404('Question %s not found.' % question_number)
+        try:
+            self.answer = self.answers[int(self.question_attempt_number)-1]
 
-    question_set = question_dict['question_set']
+        except IndexError:
+            raise Http404('Question attempt %s not found.' \
+                              % self.question_attempt_number)
 
-    # don't pad question_attempt_number with zeros
-    if question_attempt_number[0]=='0':
-        raise  Http404('Question attempt %s not found.'\
-                           % question_attempt_number)
-
-    try:
-        answer = attempt.questionstudentanswer_set.filter\
-            (question_set=question_set)[int(question_attempt_number)-1]
-    except IndexError:
-        raise Http404('Question attempt %s not found.' \
-                          % question_attempt_number)
-
-    answer_dict = {'datetime': answer.datetime, 'answer': answer.answer  }
-    answer_dict['score'] = answer.credit*question_dict['points']
-    answer_dict['points'] = question_dict['points']
-    answer_dict['credit_percent'] = int(answer.credit*100)
-    answer_dict['attempt_number'] = question_attempt_number
-
-    # determine if user has permission to view assessment, given privacy level
-    if not assessment.user_can_view(request.user, solution=False):
-        path = request.build_absolute_uri()
-        from django.contrib.auth.views import redirect_to_login
-        return redirect_to_login(path)
+        return content
 
 
-    # construct question
-    question = answer.question
+    def render_to_response(self, *args, **kwargs):
+        # determine if user has permission to view assessment,
+        # given privacy level
+        if not self.assessment.user_can_view(self.request.user, solution=False):
+            path = self.request.build_absolute_uri()
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(path)
+        else:
+            return super(AssessmentAttemptQuestionAttempt, self)\
+                .render_to_response(*args, **kwargs)
+        
 
-    # use aaqav in identifier since coming from
-    # assessment attempt question attempt view
-    identifier = "aaqav"
-    question_context = question.setup_context(identifier=identifier,
-                                              seed=answer.seed, 
-                                              allow_solution_buttons=False)
+    def extra_course_context(self):
+        
+        answer_dict = {'datetime': self.answer.datetime,
+                       'answer': self.answer.answer  }
+        answer_dict['score'] = self.answer.credit*self.question_dict['points']
+        answer_dict['points'] = self.question_dict['points']
+        answer_dict['credit_percent'] = int(self.answer.credit*100)
+        answer_dict['attempt_number'] = self.question_attempt_number
+        
 
-    # if there was an error, question_context is a string 
-    # so just make rendered question text be that string
-    if not isinstance(question_context, Context):
-        rendered_question = question_context
-        geogebra_oninit_commands=""
-    else:
-        pre_answers = {'identifier': answer.identifier_in_answer }
-        import json
-        pre_answers.update(json.loads(answer.answer))
-        rendered_question = question.render_question\
-            (question_context, identifier=identifier,user=request.user,\
-                 show_help=False, pre_answers=pre_answers, readonly=True, \
-                 precheck=True)
 
-        geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
+        # construct question
+        question = self.answer.question
 
-    # no Google analytics for course
-    noanalytics=True
+        # use aaqav in identifier since coming from
+        # assessment attempt question attempt view
+        identifier = "aaqav"
+        question_context = question.setup_context(identifier=identifier,
+                                                  seed=self.answer.seed, 
+                                                  allow_solution_buttons=False)
 
-    return render_to_response \
-        ('micourses/assessment_attempt_question_attempt.html', 
-         {'question': question, 'rendered_question': rendered_question,
-          'geogebra_oninit_commands': geogebra_oninit_commands,
-          'student': courseuser, 'course': course,
-          'content': content,
-          'attempt': attempt,
-          'attempt_number': attempt_number,
-          'question': question,
-          'question_number': question_number,
-          'answer_dict': answer_dict,
-          'rendered_question': rendered_question,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
+        # if there was an error, question_context is a string 
+        # so just make rendered question text be that string
+        if not isinstance(question_context, Context):
+            rendered_question = question_context
+            geogebra_oninit_commands=""
+        else:
+            pre_answers = {'identifier': self.answer.identifier_in_answer }
+            import json
+            pre_answers.update(json.loads(self.answer.answer))
+            rendered_question = question.render_question\
+                (question_context, identifier=identifier,\
+                     user=self.request.user,\
+                     show_help=False, pre_answers=pre_answers, readonly=True, \
+                     precheck=True)
 
+            geogebra_oninit_commands=question_context\
+                .get('geogebra_oninit_commands')
+
+            context= {'question': question, 
+                      'rendered_question': rendered_question,
+                      'geogebra_oninit_commands': geogebra_oninit_commands,
+                      'attempt': self.attempt,
+                      'attempt_number': self.attempt_number,
+                      'question_number': self.question_number,
+                      'answer_dict': answer_dict,
+                      'rendered_question': rendered_question,
+                      }
+
+            return context
 
 @login_required
 def upcoming_assessments_view(request):
@@ -750,3 +753,35 @@ def student_gradebook_view(request):
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
+
+
+@user_passes_test(lambda u: u.courseuser.get_current_role()=='I')
+def instructor_gradebook_view(request):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+    assessment_categories = course.all_assessments_by_category()
+    student_scores = course.all_student_scores_by_assessment_category()
+    # no Google analytics for course
+    noanalytics=True
+
+    return render_to_response \
+        ('micourses/instructor_gradebook.html', 
+         {'course': course,
+          'courseuser': courseuser, 
+          'assessment_categories': assessment_categories,
+          'student_scores': student_scores,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
+

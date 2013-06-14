@@ -1,0 +1,23 @@
+{% extends "micourses/course_base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Grades for {{course}}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-studentgradebook' %}"> Grades</a>{% endblock %}
+
+{% block main_columns %}
+
+<h4>Gradebook</h4>
+<div style="overflow: auto;">
+<table class="bordertable rowclick">
+<thead><tr><th style="min-width: 80px;"></th>{% for ac in assessment_categories %}<th colspan = {{ac.number_assessments_plus_one}}>{{ac.category}}</th>{%endfor%}<th style="min-width: 80px;"></th></tr>
+<tr><th>Name</th>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<th style="min-width: 80px;">{{assessment.assessment.return_short_name}}</th>{%endfor %}<th style="min-width: 80px;">Total {{ac.category}}</th>{%endfor%}<th>Course Total</th></tr></thead>
+<tbody>
+  {% for student in student_scores %}
+  <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.student.get_full_name}}</td>{% for ac in student.categories%}{% for score in ac.scores %}<td><a href="{% url 'mic-assessmentattemptedinstructor' student_id=student.student.id pk=score.content.id%}" title="{{student.student.get_full_name}}&#10;{{score.assessment}}">{{score.score|floatformat_or_dash:"1"}}</a></td>{%endfor%}<td>{{ac.category_score}}</td>{%endfor%}<td>{{student.total_score}}</td></tr>
+  {% endfor %}
+</tbody>
+</table>
+</div>
+{% endblock %}
+
