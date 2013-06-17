@@ -242,25 +242,27 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
 
             edit_attempt_form = StudentContentAttemptForm\
                 ({'score': attempt.get_score(), 'content': attempt.content.id,
-                  'student': attempt.student.id, 'seed': attempt.seed })
+                  'student': attempt.student.id, 'seed': attempt.seed, 
+                  'datetime': attempt.datetime })
             edit_content_command = "Dajaxice.midocs.edit_student_content_attempt(Dajax.process,{'form':$('#edit_student_content_attempt_%i_form').serializeArray(), attempt_id: %i, attempt_number: %i })" % (attempt_number, attempt.id, attempt_number)
             toggle_command = 'toggleEditForm(%i)' % attempt_number
 
-            score_or_edit = '<span id="edit_attempt_%i_score" hidden><form id="edit_student_content_attempt_%i_form"><span id ="edit_student_content_attempt_%i_form_inner" >%s</span><input type="button" value="Change" onclick="%s"><input type="button" value="Cancel" onclick="%s"></form></span><span id="attempt_%i_score"><span id="attempt_%i_score_inner">%s</span><input type="button" value="Edit" onclick="%s"></span><div id="edit_attempt_%i_errors" class="error"></div>' \
+            score_or_edit = '<span id="edit_attempt_%i_score" hidden><form id="edit_student_content_attempt_%i_form"><span id ="edit_student_content_attempt_%i_form_inner" >%s</span><div id="edit_attempt_%i_errors" class="error"></div><input type="button" value="Change" onclick="%s"><input type="button" value="Cancel" onclick="%s"></form></span><span id="attempt_%i_score"><span id="attempt_%i_score_inner">%s</span><input type="button" value="Edit" onclick="%s"></span>' \
                 % (attempt_number, attempt_number, attempt_number, \
-                       edit_attempt_form.as_p(), \
+                       edit_attempt_form.as_p(), attempt_number, \
                        edit_content_command, toggle_command, attempt_number,\
                        attempt_number,\
-                       attempt_dict['formatted_score'], toggle_command,\
-                       attempt_number)
+                       attempt_dict['formatted_score'], toggle_command)
             attempt_dict['score_or_edit'] = mark_safe(score_or_edit)
 
             attempt_list.append(attempt_dict)
                 
-            new_attempt_form = StudentContentAttemptForm({
-                    'content': self.object.id,
-                    'student': self.student.id
-                    })
+        new_attempt_form = StudentContentAttemptForm({
+                'content': self.object.id,
+                'student': self.student.id,
+                'datetime': datetime.datetime.now()\
+                    .strftime('%Y-%m-%d %H:%M'),
+                })
 
 
         return {'adjusted_due_date': self.object\
@@ -297,12 +299,7 @@ class AssessmentAttempt(AssessmentAttempted):
         context={}
         context['attempt'] = self.attempt
         context['attempt_number'] = self.attempt_number
-
-        if self.attempt.score is not None and \
-                self.attempt.score != self.attempt.get_score():
-            context['score_overridden'] = True
-        else:
-            context['score_overridden'] = False
+        context['score_overridden'] = self.attempt.score_overridden()
 
         rendered_question_list=self.assessment.render_question_list\
             (self.attempt.seed, current_attempt=self.attempt)
@@ -903,4 +900,34 @@ def instructor_gradebook_view(request):
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
+
+class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
+    
+    model = CourseThreadContent
+    context_object_name = 'content'
+    template_name = 'micourses/edit_assessment_attempt.html'
+
+    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditAssessmentAttempt, self)\
+            .dispatch(request, *args, **kwargs) 
+
+    def get_object(self):
+        content = super(EditAssessmentAttempt, self).get_object()
+        self.assessment=content.thread_content.content_object
+        self.latest_attempts = content.latest_student_attempts()
+        return content
+
+    def extra_course_context(self):
+        latest_attempts_present=False
+        for attempt in self.latest_attempts:
+            if attempt['attempt']:
+                latest_attempts_present = True
+                break
+        return {'latest_attempts': self.latest_attempts,
+                'assessment': self.assessment,
+                'latest_attempts_present': latest_attempts_present,
+                'default_datetime': datetime.datetime.now()\
+                    .strftime('%Y-%m-%d %H:%M')
+                }
 

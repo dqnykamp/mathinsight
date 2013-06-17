@@ -41,8 +41,8 @@ var Dajaxice = {
         return Dajaxice.call('midocs.move_content_up', 'POST', callback_function, argv, custom_settings);
     },
 
-    dec_section_level: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.dec_section_level', 'POST', callback_function, argv, custom_settings);
+    insert_section_top: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.insert_section_top', 'POST', callback_function, argv, custom_settings);
     },
 
     move_section_down: function(callback_function, argv, custom_settings){
@@ -61,8 +61,8 @@ var Dajaxice = {
         return Dajaxice.call('midocs.cancel_insert_section_top', 'POST', callback_function, argv, custom_settings);
     },
 
-    insert_section_top: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.insert_section_top', 'POST', callback_function, argv, custom_settings);
+    move_section_up: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.move_section_up', 'POST', callback_function, argv, custom_settings);
     },
 
     cancel_insert_content_below_section: function(callback_function, argv, custom_settings){
@@ -113,12 +113,20 @@ var Dajaxice = {
         return Dajaxice.call('midocs.delete_section', 'POST', callback_function, argv, custom_settings);
     },
 
-    move_section_up: function(callback_function, argv, custom_settings){
-        return Dajaxice.call('midocs.move_section_up', 'POST', callback_function, argv, custom_settings);
+    add_new_student_content_attempts: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.add_new_student_content_attempts', 'POST', callback_function, argv, custom_settings);
+    },
+
+    dec_section_level: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.dec_section_level', 'POST', callback_function, argv, custom_settings);
     },
 
     update_combo_edit_content: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.update_combo_edit_content', 'POST', callback_function, argv, custom_settings);
+    },
+
+    edit_latest_student_content_attempts: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.edit_latest_student_content_attempts', 'POST', callback_function, argv, custom_settings);
     },
 
     save_thread_changes_to_course: function(callback_function, argv, custom_settings){

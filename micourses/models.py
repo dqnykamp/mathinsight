@@ -590,6 +590,24 @@ class CourseThreadContent(models.Model):
         return score
 
 
+    def get_student_latest_attempt(self, student):
+        try:
+            return self.studentcontentattempt_set.filter(student=student)\
+                .latest()
+        except ObjectDoesNotExist:
+            return None
+    
+    def latest_student_attempts(self):
+        latest_attempts=[]
+        for student in self.course.enrolled_students.all():
+            latest_attempts.append({
+                    'student': student,
+                    'attempt': self.get_student_latest_attempt(student),
+                    'current_score': self.student_score(student),
+                    })
+        return latest_attempts
+        
+
     def attempt_aggregation_string(self):
         if self.attempt_aggregation=='Avg':
             return "Average"
@@ -811,7 +829,8 @@ class ManualDueDateAdjustment(models.Model):
 class StudentContentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
     content = models.ForeignKey(CourseThreadContent)
-    datetime = models.DateTimeField(auto_now_add=True)
+    datetime_added = models.DateTimeField(auto_now_add=True)
+    datetime = models.DateTimeField(blank=True)
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=50, blank=True, null=True)
 
@@ -822,6 +841,13 @@ class StudentContentAttempt(models.Model):
         ordering = ['datetime']
         get_latest_by = "datetime"
         
+    def save(self, *args, **kwargs):
+        if self.datetime is None:
+            self.datetime = datetime.datetime.now()
+
+        super(StudentContentAttempt, self).save(*args, **kwargs) 
+
+
     def get_percent_credit(self):
          score = self.get_score()
          points = self.content.total_points()
@@ -829,9 +855,10 @@ class StudentContentAttempt(models.Model):
              return None
          return int(score*100.0/points)
 
-    def get_score(self):
+    def get_score(self, ignore_manual_score = False):
         # if a score is entered in, it overrides any question answers
-        if self.score is not None:
+        # as long as not ignoring manual score
+        if self.score is not None and not ignore_manual_score:
             return self.score
         
         assessment=self.content.thread_content.content_object
@@ -849,6 +876,15 @@ class StudentContentAttempt(models.Model):
             score = None
 
         return score
+
+
+    def score_overridden(self):
+        # determine if a score from questions is overridden by manual score
+        
+        if self.get_score() != self.get_score(ignore_manual_score=True):
+            return True
+        else:
+            return False
 
 
     def get_score_question_set(self, question_set_detail):
@@ -903,9 +939,12 @@ class StudentContentAttempt(models.Model):
     def have_datetime_interval(self):
         # true if difference between earliest and latest datetimes
         # is at least a minue
-        return self.get_latest_datetime() - self.datetime \
-            >= datetime.timedelta(0,60)
-            
+        latest_datetime = self.get_latest_datetime()
+        if latest_datetime and latest_datetime -self.datetime \
+                >= datetime.timedelta(0,60):
+            return True
+        else:
+            return False
 
 class StudentContentCompletion(models.Model):
     student = models.ForeignKey(CourseUser)

@@ -29,8 +29,8 @@ Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %
 
 <div id="add_attempt_section" hidden>
 <h4>Add attempt</h4>
-<form id="add_student_content_attempt_form">{{new_attempt_form.as_p }}<input type="button" value="Save" onclick="Dajaxice.midocs.add_student_content_attempt(Dajax.process,{'form':$('#add_student_content_attempt_form').serializeArray()})"><input type="button" value="Cancel" onclick="toggleAttemptForm();"></p>
-</form><div id="add_attempt_errors" class="error"></div></div><input type="button" id="show_add_attempt_button" value="Add attempt" onclick="toggleAttemptForm();">
+<form id="add_student_content_attempt_form">{{new_attempt_form.as_p }}<div id="add_attempt_errors" class="error"></div><input type="button" value="Save" onclick="Dajaxice.midocs.add_student_content_attempt(Dajax.process,{'form':$('#add_student_content_attempt_form').serializeArray()})"><input type="button" value="Cancel" onclick="toggleAttemptForm();"></p>
+</form></div><input type="button" id="show_add_attempt_button" value="Add attempt" onclick="toggleAttemptForm();">
 <script type="text/javascript">
   function toggleAttemptForm() {
       $('#add_attempt_section').toggle();

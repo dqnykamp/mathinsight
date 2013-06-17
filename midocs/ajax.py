@@ -8,10 +8,12 @@ from midocs.models import Page
 from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser, Course, StudentContentAttempt
 from mithreads.models import Thread, ThreadSection, ThreadContent
 from mithreads.forms import ThreadSectionForm, ThreadContentForm
-from micourses.forms import StudentContentAttemptForm
+from micourses.forms import StudentContentAttemptRequiredScoreForm
+from micourses.templatetags.course_tags import floatformat_or_dash
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.utils import formats
+from django import forms
 import re
 import json
 
@@ -1323,12 +1325,13 @@ def add_student_content_attempt(request, form):
         form_dict={}
         for  obj in form:
             form_dict[obj['name']]=obj['value']
-        form = StudentContentAttemptForm(form_dict)
+        form = StudentContentAttemptRequiredScoreForm(form_dict)
 
         try:
             sca=form.save()
         except ValueError:
-            dajax.assign('#add_attempt_errors','innerHTML', form['score'].errors)
+            dajax.assign('#add_attempt_errors','innerHTML', "%s" % form['score'].errors)
+            dajax.append('#add_attempt_errors','innerHTML', " %s" % form['datetime'].errors)
         else:
             total_score=sca.content.student_score(sca.student)
             number_attempts = len(sca.content.studentcontentattempt_set.filter(student=sca.student))
@@ -1338,7 +1341,7 @@ def add_student_content_attempt(request, form):
             dajax.assign('#assessment_score_table', 'innerHTML', total_score)
             dajax.assign('#assessment_score', 'innerHTML', total_score)
             dajax.script('toggleAttemptForm();')
-            
+            dajax.clear('#add_attempt_errors','innerHTML')
             
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
@@ -1357,16 +1360,18 @@ def edit_student_content_attempt(request, form, attempt_id, attempt_number):
         form_dict={}
         for  obj in form:
             form_dict[obj['name']]=obj['value']
-        form = StudentContentAttemptForm(form_dict, instance=sca)
+        form = StudentContentAttemptRequiredScoreForm(form_dict, instance=sca)
 
         try:
             sca=form.save()
         except ValueError:
             dajax.assign('#edit_attempt_%i_errors' % attempt_number,
-                         'innerHTML', form['score'].errors)
+                         'innerHTML', "%s" % form['score'].errors)
+            dajax.append('#edit_attempt_%i_errors' % attempt_number,
+                         'innerHTML', " %s" % form['datetime'].errors)
         else:
             total_score=sca.content.student_score(sca.student)
-            new_form = StudentContentAttemptForm(instance=sca)
+            new_form = StudentContentAttemptRequiredScoreForm(instance=sca)
             dajax.assign('#edit_student_content_attempt_%i_form_inner' % \
                              attempt_number,\
                              'innerHTML', new_form.as_p())
@@ -1376,6 +1381,91 @@ def edit_student_content_attempt(request, form, attempt_id, attempt_number):
             dajax.assign('#assessment_score', 'innerHTML', total_score)
             dajax.script('toggleEditForm(%i);' % attempt_number)
             
+            
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+@dajaxice_register
+def edit_latest_student_content_attempts(request, form):
+    dajax = Dajax()
+    try:
+
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+
+        content = CourseThreadContent.objects.get(id=form_dict['content_id'])
+        for student in content.course.enrolled_students.all():
+            latest_attempt=content.get_student_latest_attempt(student)
+            new_latest_score = form_dict['%i_latest' % student.id]
+            latest_attempt.score = new_latest_score
+            try:
+                latest_attempt.save()
+                dajax.assign('#%i_latest_status' % student.id,
+                             'innerHTML', "New score saved")
+                dajax.clear('#%i_latest_errors' % student.id,
+                             'innerHTML')
+                dajax.assign('#%i_current_score' % student.id,
+                             'innerHTML', floatformat_or_dash(content.student_score(student),1))
+            except ValueError:
+                dajax.assign('#%i_latest_errors' % student.id,
+                             'innerHTML', "Enter a number")
+                dajax.clear('#%i_latest_status' % student.id,
+                             'innerHTML')
+
+            
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+
+@dajaxice_register
+def add_new_student_content_attempts(request, form):
+    dajax = Dajax()
+    try:
+        class DateTimeForm(forms.Form):
+            datetime = forms.DateTimeField()
+            
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+
+        content = CourseThreadContent.objects.get(id=form_dict['content_id'])
+        
+        datetime_form = DateTimeForm({'datetime': form_dict['new_datetime']})
+        if datetime_form.is_valid():
+            datetime = datetime_form.cleaned_data.get('datetime')
+            dajax.clear('#datetime_errors', 'innerHTML')
+           
+            for student in content.course.enrolled_students.all():
+                new_score = form_dict['%i_new' % student.id]
+
+                try:
+                    content.studentcontentattempt_set.create \
+                        (student = student, datetime=datetime, score=new_score)
+                    dajax.assign('#%i_new_status' % student.id,
+                                 'innerHTML', "New score saved")
+                    dajax.clear('#%i_new_errors' % student.id,
+                                'innerHTML')
+                    dajax.assign('#%i_current_score' % student.id,
+                                 'innerHTML', floatformat_or_dash(content.student_score(student),1))
+                    dajax.assign('#id_%i_latest' % student.id, 'innerHTML',
+                                 '<input type="text" name="%i_latest" value="%s" size="1">' % (student.id,  new_score))
+                    dajax.clear('#id_%i_new' % student.id, 'value')
+                    dajax.script("$('#modify_latest_attempts_button').show();")
+
+                except ValueError:
+                    dajax.assign('#%i_new_errors' % student.id,
+                                 'innerHTML', "Enter a number")
+                    dajax.clear('#%i_new_status' % student.id,
+                                'innerHTML')
+                    
+        else:
+            dajax.assign('#datetime_errors', 'innerHTML', datetime_form['datetime'].errors)
+
             
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
