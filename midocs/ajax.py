@@ -5,13 +5,18 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from mitesting.forms import MultipleChoiceQuestionForm, MathWriteInForm
 from mitesting.models import Question, Assessment
 from midocs.models import Page
-from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser, Course
+from micourses.models import QuestionStudentAnswer, CourseThreadContent, CourseUser, Course, StudentContentAttempt
 from mithreads.models import Thread, ThreadSection, ThreadContent
 from mithreads.forms import ThreadSectionForm, ThreadContentForm
+from micourses.forms import StudentContentAttemptForm
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.utils import formats
 import re
 import json
+
+def format_datetime(value):
+    return "%s, %s" % (formats.date_format(value), formats.time_format(value))
 
 @dajaxice_register
 def send_multiple_choice_question_form(request, form, prefix, seed, identifier):
@@ -303,7 +308,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
                 feedback_message = "Answer recorded for %s" % request.user
                 if current_attempt:
-                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempts', kwargs={'id': content.id} ), course)
+                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
                 dajax.append(feedback_selector, 'innerHTML', 
                              '<p><i>%s</i></p>' % feedback_message)
@@ -1303,6 +1308,75 @@ def save_thread_changes_to_course(request, thread_code, course_code):
                      'innerHTML', "Changes saved to %s" % course)
 
  
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+
+@dajaxice_register
+def add_student_content_attempt(request, form):
+    dajax = Dajax()
+
+    try:
+
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = StudentContentAttemptForm(form_dict)
+
+        try:
+            sca=form.save()
+        except ValueError:
+            dajax.assign('#add_attempt_errors','innerHTML', form['score'].errors)
+        else:
+            total_score=sca.content.student_score(sca.student)
+            number_attempts = len(sca.content.studentcontentattempt_set.filter(student=sca.student))
+            table_row = "<tr><td>&nbsp;%s</td><td>&nbsp;%s</td><td>&nbsp%s</td></tr>" % \
+                (number_attempts, format_datetime(sca.datetime), sca.score)
+            dajax.append('#attempt_table', 'innerHTML', table_row)
+            dajax.assign('#assessment_score_table', 'innerHTML', total_score)
+            dajax.assign('#assessment_score', 'innerHTML', total_score)
+            dajax.script('toggleAttemptForm();')
+            
+            
+    except Exception as e:
+        dajax.alert("something wrong: %s" % e)
+
+    return dajax.json()
+
+
+@dajaxice_register
+def edit_student_content_attempt(request, form, attempt_id, attempt_number):
+    dajax = Dajax()
+
+    try:
+
+        sca = StudentContentAttempt.objects.get(id=attempt_id)
+
+        form_dict={}
+        for  obj in form:
+            form_dict[obj['name']]=obj['value']
+        form = StudentContentAttemptForm(form_dict, instance=sca)
+
+        try:
+            sca=form.save()
+        except ValueError:
+            dajax.assign('#edit_attempt_%i_errors' % attempt_number,
+                         'innerHTML', form['score'].errors)
+        else:
+            total_score=sca.content.student_score(sca.student)
+            new_form = StudentContentAttemptForm(instance=sca)
+            dajax.assign('#edit_student_content_attempt_%i_form_inner' % \
+                             attempt_number,\
+                             'innerHTML', new_form.as_p())
+            dajax.assign('#attempt_%i_score_inner' % attempt_number,\
+                             'innerHTML', sca.score)
+            dajax.assign('#assessment_score_table', 'innerHTML', total_score)
+            dajax.assign('#assessment_score', 'innerHTML', total_score)
+            dajax.script('toggleEditForm(%i);' % attempt_number)
+            
+            
     except Exception as e:
         dajax.alert("something wrong: %s" % e)
 

@@ -1,0 +1,24 @@
+{% extends "micourses/course_base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'mic-instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'mic-assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattemptinstructor' student_id=student.id pk=content.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestioninstructor' student.id content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattemptinstructor' student.id content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
+
+
+{% block content %}
+
+<h3>Student: {{student.get_full_name}}</h3>
+
+<h4>Question {{question_number}} of attempt {{attempt_number}} on: {{content.thread_content.content_object}}</h4>
+
+<h5>As answered on {{answer_dict.datetime}}</h5>
+
+{{ rendered_question }}
+
+<p>Points: {{ answer_dict.points}}<br/>
+Percent: {{ answer_dict.credit_percent|percent_checked_100 }}<br/>
+Score: {{answer_dict.score|floatformat_or_dash:"1" }}</p>
+
+
+{% endblock %}

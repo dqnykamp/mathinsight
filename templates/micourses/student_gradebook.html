@@ -15,7 +15,7 @@ Course: {{course}}</p>
 <tbody>{% for category in category_scores.scores %}
 <tr class="subheading"><th colspan=4 scope="row">{{category.category}}</th></tr>
 {% for assessment in category.assessments %}
-<tr><td>{{ assessment.assessment.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'mic-assessmentattempts' assessment.content.id %}">{{assessment.student_score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
+<tr><td>{{ assessment.assessment.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'mic-assessmentattempted' assessment.content.id %}">{{assessment.student_score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}
 <tr class="subtotal"><td>Subtotal for {{category.category}}{% if category.number_count %}<br/><small>(based on top {{category.number_count}} scores)</small>{%endif%}</td><td class="righttext">{{category.points}}</td><td class="righttext">{{category.student_score}}</td><td class="righttext">{{category.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}

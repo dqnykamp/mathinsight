@@ -1,5 +1,6 @@
 from micourses.models import Course, CourseUser, CourseThreadContent
 from mitesting.models import Assessment
+from micourses.forms import StudentContentAttemptForm
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -11,8 +12,14 @@ from django.views.generic import DetailView
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
+from django.utils import formats
+from django.utils.safestring import mark_safe
 from django import forms
 import datetime
+from micourses.templatetags.course_tags import floatformat_or_dash
+
+def format_datetime(value):
+    return "%s, %s" % (formats.date_format(value), formats.time_format(value))
 
 class CourseUserAuthenticationMixin(object):
     """
@@ -145,9 +152,44 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
         return content
 
     def extra_course_context(self):
+        attempt_list = []
+        for (i,attempt) in enumerate(self.assessment_attempts):
+            datetime_text = format_datetime(attempt.datetime)
+            if attempt.have_datetime_interval():
+                datetime_text += " - " \
+                    + format_datetime(attempt.get_latest_datetime())
+            score_text = floatformat_or_dash(attempt.get_score(), 1)
+            attempt_dict = {}
+            attempt_number = i+1
+            attempt_dict['attempt'] = attempt
+            attempt_dict['score'] = attempt.get_score()
+            attempt_dict['attempt_number']  = attempt_number
+            attempt_dict['formatted_attempt_number'] = \
+                mark_safe('&nbsp;%i&nbsp;' % attempt_number)
+            attempt_dict['datetime'] = \
+                mark_safe('&nbsp;%s&nbsp;' % datetime_text)
+            attempt_dict['formatted_score'] = \
+                mark_safe('&nbsp;%s&nbsp;' % score_text)
+
+            if attempt.questionstudentanswer_set.exists():
+                attempt_url = reverse('mic-assessmentattempt', 
+                                      kwargs={'pk': self.object.id,
+                                              'attempt_number': attempt_number})
+                attempt_dict['formatted_attempt_number'] = mark_safe \
+                ('<a href="%s">%s</a>' % \
+                     (attempt_url, attempt_dict['formatted_attempt_number']))
+                attempt_dict['datetime'] = \
+                    mark_safe('<a href="%s">%s</a>' % \
+                                  (attempt_url, attempt_dict['datetime']))
+                attempt_dict['formatted_score'] = mark_safe\
+                    ('<a href="%s">%s</a>' \
+                         % (attempt_url, attempt_dict['formatted_score']))
+
+            attempt_list.append(attempt_dict)
+                
         return {'adjusted_due_date': self.object\
                     .adjusted_due_date(self.student),
-                'assessment_attempts': self.assessment_attempts,
+                'attempts': attempt_list,
                 'score': self.object.student_score(self.student),
                 }
 
@@ -163,6 +205,70 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
     def get_student(self):
         return get_object_or_404(self.course.enrolled_students,
                                  id=self.kwargs['student_id'])
+    def extra_course_context(self):
+        attempt_list = []
+        for (i,attempt) in enumerate(self.assessment_attempts):
+            datetime_text = format_datetime(attempt.datetime)
+            if attempt.have_datetime_interval():
+                datetime_text += " - " \
+                    + format_datetime(attempt.get_latest_datetime())
+            score_text = floatformat_or_dash(attempt.get_score(), 1)
+            attempt_dict = {}
+            attempt_number = i+1
+            attempt_dict['attempt'] = attempt
+            attempt_dict['score'] = attempt.get_score()
+            attempt_dict['attempt_number']  = attempt_number
+            attempt_dict['formatted_attempt_number'] = \
+                mark_safe('&nbsp;%i&nbsp;' % attempt_number)
+            attempt_dict['datetime'] = \
+                mark_safe('&nbsp;%s&nbsp;' % datetime_text)
+            attempt_dict['formatted_score'] = \
+                mark_safe('&nbsp;%s&nbsp;' % score_text)
+
+            if attempt.questionstudentanswer_set.exists():
+                attempt_url = reverse('mic-assessmentattemptinstructor', 
+                                      kwargs={'pk': self.object.id,
+                                              'attempt_number': attempt_number,
+                                              'student_id': self.student.id})
+                attempt_dict['formatted_attempt_number'] = mark_safe \
+                ('<a href="%s">%s</a>' % \
+                     (attempt_url, attempt_dict['formatted_attempt_number']))
+                attempt_dict['datetime'] = \
+                    mark_safe('<a href="%s">%s</a>' % \
+                                  (attempt_url, attempt_dict['datetime']))
+                attempt_dict['formatted_score'] = mark_safe\
+                    ('<a href="%s">%s</a>' \
+                         % (attempt_url, attempt_dict['formatted_score']))
+
+            edit_attempt_form = StudentContentAttemptForm\
+                ({'score': attempt.get_score(), 'content': attempt.content.id,
+                  'student': attempt.student.id, 'seed': attempt.seed })
+            edit_content_command = "Dajaxice.midocs.edit_student_content_attempt(Dajax.process,{'form':$('#edit_student_content_attempt_%i_form').serializeArray(), attempt_id: %i, attempt_number: %i })" % (attempt_number, attempt.id, attempt_number)
+            toggle_command = 'toggleEditForm(%i)' % attempt_number
+
+            score_or_edit = '<span id="edit_attempt_%i_score" hidden><form id="edit_student_content_attempt_%i_form"><span id ="edit_student_content_attempt_%i_form_inner" >%s</span><input type="button" value="Change" onclick="%s"><input type="button" value="Cancel" onclick="%s"></form></span><span id="attempt_%i_score"><span id="attempt_%i_score_inner">%s</span><input type="button" value="Edit" onclick="%s"></span><div id="edit_attempt_%i_errors" class="error"></div>' \
+                % (attempt_number, attempt_number, attempt_number, \
+                       edit_attempt_form.as_p(), \
+                       edit_content_command, toggle_command, attempt_number,\
+                       attempt_number,\
+                       attempt_dict['formatted_score'], toggle_command,\
+                       attempt_number)
+            attempt_dict['score_or_edit'] = mark_safe(score_or_edit)
+
+            attempt_list.append(attempt_dict)
+                
+            new_attempt_form = StudentContentAttemptForm({
+                    'content': self.object.id,
+                    'student': self.student.id
+                    })
+
+
+        return {'adjusted_due_date': self.object\
+                    .adjusted_due_date(self.student),
+                'attempts': attempt_list,
+                'score': self.object.student_score(self.student),
+                'new_attempt_form': new_attempt_form,
+                }
 
 
 class AssessmentAttempt(AssessmentAttempted):
@@ -386,6 +492,19 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
                       }
 
             return context
+
+class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttempt):
+    template_name = 'micourses/assessment_attempt_question_attempt_instructor.html'
+
+    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    def dispatch(self, request, *args, **kwargs):
+        return super(AssessmentAttemptQuestionAttemptInstructor, self)\
+            .dispatch(request, *args, **kwargs) 
+    
+    def get_student(self):
+        return get_object_or_404(self.course.enrolled_students,
+                                 id=self.kwargs['student_id'])
+
 
 @login_required
 def upcoming_assessments_view(request):

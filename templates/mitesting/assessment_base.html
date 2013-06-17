@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% load mi_tags testing_tags %}{% load dajaxice_templatetags %}
 
 
-{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempts' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
+{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
 
 {% block title %}{{ assessment_name }}, version {{ version }} - Math Insight{%endblock%}
 

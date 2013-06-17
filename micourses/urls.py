@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import TemplateView, ListView, DetailView
-from micourses.views import AssessmentAttempted, AssessmentAttemptedInstructor, AssessmentAttempt, AssessmentAttemptInstructor, AssessmentAttemptQuestion, AssessmentAttemptQuestionInstructor, AssessmentAttemptQuestionAttempt
+from micourses.views import AssessmentAttempted, AssessmentAttemptedInstructor, AssessmentAttempt, AssessmentAttemptInstructor, AssessmentAttemptQuestion, AssessmentAttemptQuestionInstructor, AssessmentAttemptQuestionAttempt, AssessmentAttemptQuestionAttemptInstructor
 
 urlpatterns = patterns \
     ('micourses.views',
@@ -22,5 +22,6 @@ urlpatterns = patterns \
      url(r'^gradebook/(?P<student_id>\w+)/(?P<pk>\w+)$',AssessmentAttemptedInstructor.as_view(), name='mic-assessmentattemptedinstructor'),
      url(r'^gradebook/(?P<student_id>\w+)/(?P<pk>\w+)/(?P<attempt_number>\d+)$',AssessmentAttemptInstructor.as_view(), name='mic-assessmentattemptinstructor'),
      url(r'^gradebook/(?P<student_id>\w+)/(?P<pk>\w+)/(?P<attempt_number>\d+)/(?P<question_number>\d+)$',AssessmentAttemptQuestionInstructor.as_view(), name='mic-assessmentattemptquestioninstructor'),
+     url(r'^gradebook/(?P<student_id>\w+)/(?P<pk>\w+)/(?P<attempt_number>\d+)/(?P<question_number>\d+)/(?P<question_attempt_number>\d+)$',AssessmentAttemptQuestionAttemptInstructor.as_view(), name='mic-assessmentattemptquestionattemptinstructor'),
 
 )

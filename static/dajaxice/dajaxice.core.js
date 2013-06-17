@@ -13,6 +13,10 @@ var Dajaxice = {
         return Dajaxice.call('midocs.record_course_content_completion', 'POST', callback_function, argv, custom_settings);
     },
 
+    add_student_content_attempt: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.add_student_content_attempt', 'POST', callback_function, argv, custom_settings);
+    },
+
     confirm_delete_content: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.confirm_delete_content', 'POST', callback_function, argv, custom_settings);
     },
@@ -47,6 +51,10 @@ var Dajaxice = {
 
     insert_section_form_below: function(callback_function, argv, custom_settings){
         return Dajaxice.call('midocs.insert_section_form_below', 'POST', callback_function, argv, custom_settings);
+    },
+
+    edit_student_content_attempt: function(callback_function, argv, custom_settings){
+        return Dajaxice.call('midocs.edit_student_content_attempt', 'POST', callback_function, argv, custom_settings);
     },
 
     cancel_insert_section_top: function(callback_function, argv, custom_settings){
