@@ -22,7 +22,7 @@
 
 
 {% if assessment_link %}
-<p>Go to: {% if course %}{{assessment.return_direct_link_no_seed}}{%else%}{{assessment.return_direct_link}}{%endif%}</p>
+<p>Go to: {% if course_thread_content %}{{assessment.return_direct_link_no_seed}}{%else%}{{assessment.return_direct_link}}{%endif%}</p>
 {% endif %}
 
 {% endblock %}

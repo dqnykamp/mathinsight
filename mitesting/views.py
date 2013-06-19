@@ -148,7 +148,10 @@ def assessment_view(request, assessment_code, solution=False):
         seed = request.REQUEST.get('seed', None)
         version = seed
         if not version:
-            version='random'
+            if assessment.nothing_random:
+                version = ''
+            else:
+                version='random'
 
     assessment_date = request.REQUEST.get\
         ('date', datetime.date.today().strftime("%B %d, %Y"))
@@ -166,7 +169,7 @@ def assessment_view(request, assessment_code, solution=False):
     course_thread_content=None
 
     # if student in the course
-    if course and courseuser.role=='S':
+    if course:
         assessment_content_type = ContentType.objects.get\
             (model='assessment')
                         
@@ -275,6 +278,10 @@ def assessment_view(request, assessment_code, solution=False):
     if solution:
         assessment_short_name = assessment_short_name + " sol."
 
+    if version:
+        version_string = ', version %s' % version
+    else:
+        version_string = ''
     return render_to_response \
         (template, 
          {'assessment': assessment, 
@@ -282,7 +289,7 @@ def assessment_view(request, assessment_code, solution=False):
           'assessment_short_name': assessment_short_name, 
           'question_list': rendered_question_list,
           'solution_list': rendered_solution_list,
-          'seed': seed, 'version': version,
+          'seed': seed, 'version_string': version_string,
           'assessment_date': assessment_date,
           'course': course,
           'course_thread_content': course_thread_content,
@@ -352,8 +359,8 @@ def assessment_overview_view(request, assessment_code):
         course = None
 
     course_thread_content=None
-    # if student in the course
-    if course and courseuser.role=='S':
+    # if in the course
+    if course:
         assessment_content_type = ContentType.objects.get\
             (model='assessment')
                         
@@ -364,8 +371,6 @@ def assessment_overview_view(request, assessment_code):
         except ObjectDoesNotExist:
             course_thread_content=None
             course = None
-
-
 
 
     # turn off google analytics for localhost

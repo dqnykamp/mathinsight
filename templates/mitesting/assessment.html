@@ -18,6 +18,7 @@
 </ol>
 </section>
 
+{% if not assessment.nothing_random %}
 <section id="more_questions_link">
   {% if course_thread_content %}
   <form action="{{assessment.get_absolute_url}}" method="post">{% csrf_token %}
@@ -31,6 +32,7 @@
   </form>
   {%endif%}
 </section>
+{% endif%}
 
 {% endblock %}
 

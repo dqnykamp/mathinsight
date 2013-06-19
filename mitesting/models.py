@@ -651,7 +651,8 @@ class Assessment(models.Model):
     allow_solution_buttons = models.BooleanField(default=False)
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
     hand_graded_component = models.BooleanField(default=True)
-    
+    nothing_random = models.BooleanField(default=False)
+
     def __unicode__(self):
         return  self.name
 
@@ -688,7 +689,8 @@ class Assessment(models.Model):
 
     def return_direct_link(self, **kwargs):
         kwargs['direct']=True
-        kwargs['seed']=1
+        if not self.nothing_random:
+            kwargs['seed']=1
         return self.return_link(**kwargs)
 
     def return_direct_link_no_seed(self, **kwargs):
