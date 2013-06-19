@@ -16,6 +16,7 @@ from django.utils import formats
 from django import forms
 import re
 import json
+import datetime
 
 def format_datetime(value):
     return "%s, %s" % (formats.date_format(value), formats.time_format(value))
@@ -262,10 +263,12 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 except:
                     student = None
                     course = None
-                    
+                   
                 # check if assessment given by assessment_code is in course
                 # if so, will link to latest attempt
                 current_attempt = None
+                past_due = False
+                due_date = None
                 if course and assessment_code:
                         
                     assessment_content_type = ContentType.objects.get\
@@ -278,10 +281,14 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     except ObjectDoesNotExist:
                         content=None
 
+                    due_date = content.adjusted_due_date(student)
+                    today = datetime.date.today()
+                    if today > due_date:
+                        past_due = True
                     
                     # if found course content, get or create attempt by student
                     # with same assessment_seed
-                    if content:
+                    if content and not past_due:
                         try:
                             current_attempt = content.studentcontentattempt_set\
                                 .get(student=student, seed=assessment_seed)
@@ -308,7 +315,10 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                          assessment=assessment, \
                          assessment_seed=assessment_seed)
 
-                feedback_message = "Answer recorded for %s" % request.user
+                if past_due:
+                    feedback_message = "Due date %s of %s is past.\nAnswer not recorded." % (due_date, assessment)
+                else:
+                    feedback_message = "Answer recorded for %s" % request.user
                 if current_attempt:
                     feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
@@ -1437,7 +1447,7 @@ def add_new_student_content_attempts(request, form):
         
         datetime_form = DateTimeForm({'datetime': form_dict['new_datetime']})
         if datetime_form.is_valid():
-            datetime = datetime_form.cleaned_data.get('datetime')
+            attempt_datetime = datetime_form.cleaned_data.get('datetime')
             dajax.clear('#datetime_errors', 'innerHTML')
            
             for student in content.course.enrolled_students.all():
@@ -1445,7 +1455,8 @@ def add_new_student_content_attempts(request, form):
 
                 try:
                     content.studentcontentattempt_set.create \
-                        (student = student, datetime=datetime, score=new_score)
+                        (student = student, datetime=attempt_datetime, 
+                         score=new_score)
                     dajax.assign('#%i_new_status' % student.id,
                                  'innerHTML', "New score saved")
                     dajax.clear('#%i_new_errors' % student.id,

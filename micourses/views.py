@@ -117,6 +117,7 @@ def course_main_view(request):
         return render_to_response \
             ('micourses/course_instructor_view.html', 
              {'student': courseuser,
+              'courseuser': courseuser,
               'course': course,
               'upcoming_assessments': upcoming_assessments,
               'next_items': next_items,
@@ -128,6 +129,7 @@ def course_main_view(request):
         return render_to_response \
             ('micourses/course_student_view.html', 
              {'student': courseuser,
+              'courseuser': courseuser,
               'course': course,
               'upcoming_assessments': upcoming_assessments,
               'next_items': next_items,
@@ -197,7 +199,7 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
 class AssessmentAttemptedInstructor(AssessmentAttempted):
     template_name = 'micourses/assessment_attempted_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptedInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -325,7 +327,7 @@ class AssessmentAttempt(AssessmentAttempted):
 class AssessmentAttemptInstructor(AssessmentAttempt):
     template_name = 'micourses/assessment_attempt_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -392,7 +394,7 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
 class AssessmentAttemptQuestionInstructor(AssessmentAttemptQuestion):
     template_name = 'micourses/assessment_attempt_question_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptQuestionInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -493,7 +495,7 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
 class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttempt):
     template_name = 'micourses/assessment_attempt_question_attempt_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptQuestionAttemptInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -524,15 +526,15 @@ def upcoming_assessments_view(request):
     upcoming_assessments = course.upcoming_assessments(courseuser)
 
     
-    if courseuser.role == 'S':
-        return render_to_response \
-            ('micourses/upcoming_assessments.html', 
-             {'student': courseuser,
-              'course': course,
-              'upcoming_assessments': upcoming_assessments,
-              'noanalytics': noanalytics,
-              },
-             context_instance=RequestContext(request))
+    return render_to_response \
+        ('micourses/upcoming_assessments.html', 
+         {'student': courseuser,
+          'courseuser': courseuser,
+          'course': course,
+          'upcoming_assessments': upcoming_assessments,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
 
 
 
@@ -871,7 +873,7 @@ def student_gradebook_view(request):
          context_instance=RequestContext(request))
 
 
-@user_passes_test(lambda u: u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
 def instructor_gradebook_view(request):
     courseuser = request.user.courseuser
     
@@ -907,7 +909,7 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
     context_object_name = 'content'
     template_name = 'micourses/edit_assessment_attempt.html'
 
-    @method_decorator(user_passes_test(lambda u: u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
     def dispatch(self, request, *args, **kwargs):
         return super(EditAssessmentAttempt, self)\
             .dispatch(request, *args, **kwargs) 
