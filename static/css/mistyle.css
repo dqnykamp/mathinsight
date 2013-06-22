@@ -1887,6 +1887,22 @@ ul.answerlist {
     box-shadow: 3px 3px 4px rgba(0,0,0,.3);
 }
 
+.sidenotelabeled {
+    border: solid 4px #101010;
+    padding-left: 2%;
+    padding-right: 35px;
+    padding-bottom: 1em;
+    padding-top: 0.2em;
+    background: #f2f2f2 url('images/sidenote.png') right top repeat-y;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    margin-right: 4px;
+    border:0 solid rgba(0,0,0,0);
+    -webkit-box-shadow: 6px 3px 4px rgba(0,0,0,.3);
+    -moz-box-shadow: 6px 3px 4px rgba(0,0,0,.3);
+    box-shadow: 3px 3px 4px rgba(0,0,0,.3);
+}
+
 .thoughtexperiment {
     border: solid 4px #101010;
     background-color: #ffffdd;
