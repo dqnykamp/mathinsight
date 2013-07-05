@@ -18,6 +18,7 @@ from PIL import Image as PILImage
 from cStringIO import StringIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
+from mitesting.models import Question
 
 # from django.contrib.comments.moderation import moderator
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
@@ -1255,7 +1256,7 @@ class Video(models.Model):
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True, db_index=True)
-    questions = models.ManyToManyField('mitesting.Question',
+    questions = models.ManyToManyField(Question,
                                        through = 'VideoQuestion',
                                        blank=True, null=True)
 
@@ -1388,7 +1389,7 @@ class VideoParameter(models.Model):
         
 class VideoQuestion(models.Model):
     video = models.ForeignKey(Video)
-    question = models.ForeignKey('mitesting.Question')
+    question = models.ForeignKey(Question)
     sort_order = models.FloatField(default=0)
     
     class Meta:

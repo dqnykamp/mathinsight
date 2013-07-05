@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import Group
-from midocs.models import Video, Page
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
 from django.contrib.contenttypes import generic
 from django.utils.safestring import mark_safe
@@ -75,7 +74,7 @@ class Question(models.Model):
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    reference_pages = models.ManyToManyField(Page, through='QuestionReferencePage')
+    reference_pages = models.ManyToManyField('midocs.Page', through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
     show_solution_button_after_attempts=models.IntegerField(default=0)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
@@ -582,7 +581,7 @@ class QuestionSubpart(models.Model):
 
 class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
-    page = models.ForeignKey(Page)
+    page = models.ForeignKey('midocs.Page')
     sort_order = models.FloatField(default=0)
     question_subpart = models.CharField(max_length=1, blank=True,null=True)
     
