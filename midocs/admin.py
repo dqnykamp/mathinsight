@@ -2,14 +2,13 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject
-import settings
 import reversion
 
 class AppletTypeParameterInline(admin.TabularInline):
     model = AppletTypeParameter
     extra = 3
 
-class AppletTypeAdmin(admin.ModelAdmin):
+class AppletTypeAdmin(reversion.VersionAdmin):
     inlines = [AppletTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -51,7 +50,7 @@ class AppletAuthorInline(admin.TabularInline):
 class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
-class AppletAdmin(admin.ModelAdmin):
+class AppletAdmin(reversion.VersionAdmin):
     inlines = [AppletParameterInline, AppletObjectInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
@@ -89,7 +88,7 @@ class VideoTypeParameterInline(admin.TabularInline):
     model = VideoTypeParameter
     extra = 3
 
-class VideoTypeAdmin(admin.ModelAdmin):
+class VideoTypeAdmin(reversion.VersionAdmin):
     inlines = [VideoTypeParameterInline]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
@@ -129,7 +128,7 @@ class VideoQuestionInline(admin.TabularInline):
     model = VideoQuestion
 
 
-class VideoAdmin(admin.ModelAdmin):
+class VideoAdmin(reversion.VersionAdmin):
     inlines = [VideoParameterInline, VideoAuthorInline, VideoQuestionInline]
     # inlines = [VideoParameterInline, VideoInPagesInline]
     exclude = ('in_pages',)
@@ -173,7 +172,7 @@ class ImageAuthorInline(admin.TabularInline):
 class ImageNotationSystemInline(admin.TabularInline):
     model = ImageNotationSystem
 
-class ImageAdmin(admin.ModelAdmin):
+class ImageAdmin(reversion.VersionAdmin):
     inlines = [ImageAuthorInline,ImageNotationSystemInline]
     exclude = ('in_pages',)
     list_display = ("code", "title", "imagefile")
@@ -213,7 +212,7 @@ class PageAuthorInline(admin.TabularInline):
 class IndexEntryInline(admin.TabularInline):
     model = IndexEntry
 
-class PageAdmin(admin.ModelAdmin):
+class PageAdmin(reversion.VersionAdmin):
     list_display = ('code','title', 'level')
     inlines = [IndexEntryInline,PageAuthorInline,PageRelationshipInline]
     search_fields = ['code', 'title']
@@ -232,15 +231,8 @@ class PageAdmin(admin.ModelAdmin):
         )
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-        models.TextField: {'widget': forms.Textarea(attrs={'cols': 90, 'rows': 18})},
         }
     save_on_top=True
-
-    class Media:
-        js = [
-            "%sjs/save_me_genie.js" % settings.STATIC_URL,
-        ]
-
 
 class PageWithNotes(Page):
     class Meta:
@@ -288,33 +280,10 @@ class PageHighlightAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
     
-class PageText(Page):
-    class Meta:
-        proxy = True
-
-
-class PageTextAdmin(admin.ModelAdmin):
-    list_display = ('code','title')
-    search_fields = ['code', 'title']
-    fields=('text',)
-    formfield_overrides = {
-        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-        models.TextField: {'widget': forms.Textarea(attrs={'cols': 90, 'rows': 18})},
-        }
-
-    def has_add_permission(self, request):
-        return False
-
-    class Media:
-        js = [
-            "%sjs/save_me_genie.js" % settings.STATIC_URL,
-        ]
-    
-
 class ReferenceAuthorInline(admin.TabularInline):
     model = ReferenceAuthor
 
-class ReferenceAdmin(admin.ModelAdmin):
+class ReferenceAdmin(reversion.VersionAdmin):
     inlines = [ReferenceAuthorInline,]
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -325,42 +294,42 @@ class ReferenceAdmin(admin.ModelAdmin):
 class NewsAuthorInline(admin.TabularInline):
     model = NewsAuthor
 
-class NewsAdmin(admin.ModelAdmin):
+class NewsAdmin(reversion.VersionAdmin):
     inlines = [NewsAuthorInline]
     list_display = ("code","title")
     save_on_top=True
     prepopulated_fields = {"code": ("title",)}
 
 
-class NotationSystemAdmin(admin.ModelAdmin):
+class NotationSystemAdmin(reversion.VersionAdmin):
     pass
-class AuthorAdmin(admin.ModelAdmin):
+class AuthorAdmin(reversion.VersionAdmin):
     pass
-class LevelAdmin(admin.ModelAdmin):
+class LevelAdmin(reversion.VersionAdmin):
     pass
-class ObjectiveAdmin(admin.ModelAdmin):
+class ObjectiveAdmin(reversion.VersionAdmin):
     pass
-class SubjectAdmin(admin.ModelAdmin):
+class SubjectAdmin(reversion.VersionAdmin):
     pass
-class KeywordAdmin(admin.ModelAdmin):
+class KeywordAdmin(reversion.VersionAdmin):
     pass
-class RelationshipTypeAdmin(admin.ModelAdmin):
+class RelationshipTypeAdmin(reversion.VersionAdmin):
     pass
-class IndexTypeAdmin(admin.ModelAdmin):
+class IndexTypeAdmin(reversion.VersionAdmin):
     pass
-class IndexEntryAdmin(admin.ModelAdmin):
+class IndexEntryAdmin(reversion.VersionAdmin):
     pass
-class ImageTypeAdmin(admin.ModelAdmin):
+class ImageTypeAdmin(reversion.VersionAdmin):
     pass
-class AppletFeatureAdmin(admin.ModelAdmin):
+class AppletFeatureAdmin(reversion.VersionAdmin):
     pass
-class AppletObjectTypeAdmin(admin.ModelAdmin):
+class AppletObjectTypeAdmin(reversion.VersionAdmin):
     pass
-class ReferenceTypeAdmin(admin.ModelAdmin):
+class ReferenceTypeAdmin(reversion.VersionAdmin):
     pass
-class AuxiliaryFileTypeAdmin(admin.ModelAdmin):
+class AuxiliaryFileTypeAdmin(reversion.VersionAdmin):
     pass
-class AuxiliaryFileAdmin(admin.ModelAdmin):
+class AuxiliaryFileAdmin(reversion.VersionAdmin):
     pass
 
 
@@ -374,7 +343,6 @@ admin.site.register(RelationshipType,RelationshipTypeAdmin)
 admin.site.register(Page,PageAdmin)
 admin.site.register(PageWithNotes,PageWithNotesAdmin)
 admin.site.register(PageHighlight,PageHighlightAdmin)
-admin.site.register(PageText,PageTextAdmin)
 admin.site.register(IndexType,IndexTypeAdmin)
 admin.site.register(IndexEntry,IndexEntryAdmin)
 admin.site.register(ImageType,ImageTypeAdmin)
