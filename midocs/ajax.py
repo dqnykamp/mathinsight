@@ -281,10 +281,11 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     except ObjectDoesNotExist:
                         content=None
 
-                    due_date = content.adjusted_due_date(student)
-                    today = datetime.date.today()
-                    if due_date and today > due_date:
-                        past_due = True
+                    if content:
+                        due_date = content.adjusted_due_date(student)
+                        today = datetime.date.today()
+                        if due_date and today > due_date:
+                            past_due = True
                     
                     # if found course content, get or create attempt by student
                     # with same assessment_seed
