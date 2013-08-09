@@ -1,5 +1,5 @@
 from sympy import *
-from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan, Float
+from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan, Float, Symbol, Rational, Integer
 from sympy.core.relational import Relational
 from sympy.printing import latex
 import sympy
@@ -17,9 +17,26 @@ def parse_expr(s, global_dict=None, local_dict=None):
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
     from sympy import sympify
 
+    # Create new global dictionary so modifications don't affect original
+    new_global_dict = {}
+    new_global_dict.update(global_dict)
+
+    # Since Symbol could be added by auto_symbol
+    # and Integer, Float, or Rational could be added by auto_number
+    # add them to the global dict if not present
+    if 'Integer' not in new_global_dict:
+        new_global_dict['Integer'] = Integer
+    if 'Float' not in new_global_dict:
+        new_global_dict['Float'] = Float
+    if 'Rational' not in new_global_dict:
+        new_global_dict['Rational'] = Rational
+    if 'Symbol' not in new_global_dict:
+        new_global_dict['Symbol'] = Symbol
+
+
     transformations=standard_transformations+(convert_xor,implicit_multiplication)
     
-    return sympify(sympy_parse_expr(s, global_dict=global_dict, local_dict=local_dict, transformations=transformations))
+    return sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
 
 def parse_and_process(s, global_dict=None, local_dict=None, doit=True):
     expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict)
