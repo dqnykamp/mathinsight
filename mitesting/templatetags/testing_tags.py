@@ -145,10 +145,10 @@ def expr(parser, token):
 @register.inclusion_tag("mitesting/exam_header.html", takes_context=True)
 def new_exam_page(context):
     return {
-        'course': context['course'],
-        'assessment_date': context['assessment_date'],
-        'ssessment_short_name': context['assessment_short_name'],
-        'version': context['version'],
+        'course': context.get('course'),
+        'assessment_date': context.get('assessment_date'),
+        'ssessment_short_name': context.get('assessment_short_name'),
+        'version': context.get('version'),
         }
 
 
