@@ -19,7 +19,8 @@ def parse_expr(s, global_dict=None, local_dict=None):
 
     # Create new global dictionary so modifications don't affect original
     new_global_dict = {}
-    new_global_dict.update(global_dict)
+    if global_dict:
+        new_global_dict.update(global_dict)
 
     # Since Symbol could be added by auto_symbol
     # and Integer, Float, or Rational could be added by auto_number
@@ -104,6 +105,8 @@ def try_expand_expr(expr):
                     expr_expand_list.append(ex)
             if isinstance(expr,Tuple):    
                 expr_expand = Tuple(*expr_expand_list)
+            else:
+                expr_expand = expr_expand_list
         else:
             expr_expand = expr.expand()
     except:

@@ -1154,6 +1154,11 @@ class Expression(models.Model):
         if self.sort_list and isinstance(expression,list):
             expression.sort()
 
+        if self.sort_list and isinstance(expression,Tuple):
+            expression_list = list(expression)
+            expression_list.sort()
+            expression = Tuple(*expression_list)
+
         if self.function_inputs:
             input_list = [str(item.strip()) for item in self.function_inputs.split(",")]
             # if any input variables are in global_dict, need to remove
