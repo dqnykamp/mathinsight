@@ -644,7 +644,7 @@ def update_individual_attendance_view(request):
     try:
         student = CourseUser.objects.get(id=student_id)
         select_student_form = SelectStudentForm(request.REQUEST)
-    except ObjectDoesNotExist:
+    except (ObjectDoesNotExist, ValueError):
         student = None
         select_student_form = SelectStudentForm()
 
@@ -709,13 +709,16 @@ def update_individual_attendance_view(request):
          attendance_dates_form = AttendanceDatesForm(request.POST or None, dates=attendance)
 
          if attendance_dates_form.is_valid():
-             student.studentattendance_set.filter(course=course)\
-                 .filter(date__lte = last_attendance_date).delete()
-             for (date, present) in attendance_dates_form.date_attendance():
-                 if present:
-                     student.studentattendance_set.create\
-                         (course=course, date=date)
-             message = "Updated attendance of %s." % student
+             if last_attendance_date:
+                 student.studentattendance_set.filter(course=course)\
+                     .filter(date__lte = last_attendance_date).delete()
+                 for (date, present) in attendance_dates_form.date_attendance():
+                     if present:
+                         student.studentattendance_set.create\
+                             (course=course, date=date)
+                 message = "Updated attendance of %s." % student
+             else:
+                 message = "Last attendance date for course not set.  Cannot update attendance."
 
     # if get
     else:
