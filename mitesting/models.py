@@ -1151,13 +1151,19 @@ class Expression(models.Model):
         if self.expand:
             expression=expression.expand()
 
+        # sort_list means sort list or Tuple
         if self.sort_list and isinstance(expression,list):
             expression.sort()
 
+        # for Tuple, must turn to list in order to sort
         if self.sort_list and isinstance(expression,Tuple):
-            expression_list = list(expression)
-            expression_list.sort()
-            expression = Tuple(*expression_list)
+            expression = list(expression)
+            expression.sort()
+            expression = Tuple(*expression)
+
+        # turn list to Tuple
+        if isinstance(expression,list):
+            expression = Tuple(*expression)
 
         if self.function_inputs:
             input_list = [str(item.strip()) for item in self.function_inputs.split(",")]
@@ -1187,11 +1193,7 @@ class Expression(models.Model):
             
         # if not function, just add expression to global dict
         else:
-            # if expression is a list, add it to global_dict as a Tuple
-            if isinstance(expression, list):
-                global_dict[str(self.name)] = Tuple(*expression)
-            else:
-                global_dict[str(self.name)] = expression
+            global_dict[str(self.name)] = expression
 
 
         return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
