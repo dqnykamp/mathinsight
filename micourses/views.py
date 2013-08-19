@@ -678,6 +678,7 @@ def update_individual_attendance_view(request):
     if student:
         # get list of attendance up to last_attendance_date
 
+        attendance=[]
         last_attendance_date = course.last_attendance_date
         if last_attendance_date:
             date_enrolled = student.courseenrollment_set.get(course=course)\
@@ -689,7 +690,6 @@ def update_individual_attendance_view(request):
                 (course=course).filter(date__lte = last_attendance_date)\
                 .filter(date__gte = date_enrolled)
             
-            attendance=[]
             for date in attendance_dates:
                 try:
                     attended = days_attended.get(date=date.date)
