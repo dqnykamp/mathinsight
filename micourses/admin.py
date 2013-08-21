@@ -40,7 +40,7 @@ class CourseThreadContentInline(admin.StackedInline):
                 **kwargs)
 
 class CourseAdmin(admin.ModelAdmin):
-    inlines=[CourseAssessmentCategoryInline, CourseThreadContentInline, CourseEnrollmentInline, CourseSkipDate]
+    inlines=[CourseAssessmentCategoryInline, CourseEnrollmentInline, CourseSkipDate]
     fieldsets = (
         (None, {
                 'fields': ('code', 'name',  'short_name', 'semester',
@@ -65,9 +65,45 @@ class CourseAdmin(admin.ModelAdmin):
 
     save_on_top=True
 
+
+
+class CourseWithThreadContent(Course):
+    class Meta:
+        proxy = True
+        verbose_name_plural = "Courses with thread content"
+
+
+class CourseWithThreadContentAdmin(admin.ModelAdmin):
+    inlines=[CourseThreadContentInline,]
+    fieldsets = (
+        (None, {
+                'fields': ('code', 'name',  'short_name', 'semester',
+                           'description', 'thread', 'active')
+                }),
+        ('Dates and attendance', {
+                'classes': ('collapse',),
+                'fields': ('start_date', 'end_date',
+                           'days_of_week', 
+                           ('track_attendance', 'adjust_due_date_attendance'),
+                           ('last_attendance_date', 'attendance_end_of_week',
+                            'attendance_threshold_percent'),
+                           )
+                }),
+        )
+    
+    class Media:
+        js = [
+            "%sjs/jquery-latest.js" % settings.STATIC_URL,
+            "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
+        ]
+
+    save_on_top=True
+
+
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 
 # not use reversion yet
 admin.site.register(Course, CourseAdmin)
+admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 admin.site.register(GradeLevel)
 admin.site.register(AssessmentCategory)
