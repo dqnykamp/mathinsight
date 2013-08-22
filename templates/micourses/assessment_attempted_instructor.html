@@ -14,7 +14,6 @@
 Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} over attempts)<br/>
 Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
 
-{% if attempts %}
 <table id="attempt_table" class="basic rowclick">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th></tr></thead>
 <tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
@@ -22,10 +21,6 @@ Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %
 <tr><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td><td class="righttext">{{attempt.score_or_edit}}</td></tr>
 {% endfor %}
 </table>
-{% else %}
-<p>No attempts recorded</p>
-{% endif %}
-
 
 <div id="add_attempt_section" hidden>
 <h4>Add attempt</h4>
