@@ -199,10 +199,12 @@ class Course(models.Model):
         for cac in self.courseassessmentcategory_set.all():
 
             cac_assessments = []
+            number_assessments = 0
             for ctc in self.coursethreadcontent_set\
                     .filter(assessment_category=cac.assessment_category):
                 ctc_points = ctc.total_points()
                 if ctc_points:
+                    number_assessments += 1
                     assessment_results =  \
                     {'content': ctc,
                      'assessment': ctc.thread_content.content_object,
@@ -215,6 +217,7 @@ class Course(models.Model):
             cac_results = {'category': cac.assessment_category,
                            'points': category_points,
                            'number_count': cac.number_count_for_grade,
+                           'number_assessments': number_assessments,
                            'assessments': cac_assessments,
                            'number_assessments_plus_one': len(cac_assessments)+1,
                            }

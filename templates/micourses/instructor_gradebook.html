@@ -10,7 +10,7 @@
 <div style="overflow: auto;">
 <table class="bordertable rowclick">
 <thead><tr><th style="min-width: 80px;"></th>{% for ac in assessment_categories %}<th colspan = {{ac.number_assessments_plus_one}}>{{ac.category}}</th>{%endfor%}<th style="min-width: 80px;"></th></tr>
-<tr><th>Name</th>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<th style="min-width: 80px;">{{assessment.assessment.return_short_name}} <br/><a href="{% url 'mic-editassessmentattempt' assessment.content.id%}" style="font-size: x-small; font-weight: normal;">Edit scores</a></th>{%endfor %}<th style="min-width: 80px;">Total {{ac.category}}</th>{%endfor%}<th>Course Total</th></tr>
+<tr><th>Name</th>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<th style="min-width: 80px;">{{assessment.assessment.return_short_name}} <br/><a href="{% url 'mic-editassessmentattempt' assessment.content.id%}" style="font-size: x-small; font-weight: normal;">Edit scores</a></th>{%endfor %}<th style="min-width: 80px;">Total {{ac.category}} {% if ac.number_count %}<small>(based on top {{ac.number_count}} scores)</small>{%endif%}</th>{%endfor%}<th>Course Total</th></tr>
   <tr><td><i>Possible points</i></td>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<td><i>{{assessment.points}}</i> </td>{%endfor %}<td><i>{{ac.points}}</i></td>{%endfor%}<td><i>{{total_points}}</i></td></tr>
 </thead>
 <tbody>
