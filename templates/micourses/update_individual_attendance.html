@@ -7,18 +7,30 @@
 {% if message %}
 <p class="info">{{ message}}</p>
 {%endif %}
-<p>Update attendance of individual for {{course}}.</p>
+<h4>Update attendance of individual for {{course}}</h4>
 
 <form action="{% url 'mic-updateindividualattendance' %}" method="get">
-{{select_student_form.as_p}}
+{{select_student_form.student.label_tag}}: {{select_student_form.student}}
 <input type="submit" value="Select student" />
 </form>
 
 {% if student %}
 <form action="{% url 'mic-updateindividualattendance' %}" method="post">{% csrf_token %}
-<ul>
-{{attendance_dates_form.as_ul}}
-</ul>
+<p>Attendance for {{student.get_full_name}}</p>
+<table class="narrow" style="width:10%">
+<tr><td>1</td><td>&frac12;</td><td>0</td></tr>
+{% for field in attendance_dates_form %}
+  {% if field.is_hidden %}{{ field}}
+  {% else %}
+    <tr>
+    {% for radio in field %}<td>{{radio.tag}}</td>{%endfor%}
+    <td> {{ field.label_tag }}</td>
+   </tr>
+   {% endif %}
+{%endfor%}
+</table>
+
+
 
 {% comment %}
 <input type="hidden" name="student" value={{student}}>

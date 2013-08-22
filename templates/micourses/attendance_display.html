@@ -6,7 +6,7 @@
 {% block content %}
 <h3>To-date attendance for {{course}}</h3>
 
-<p>Attendance through {{course.last_attendance_day_previous_week}}: {{ student.percent_attendance|floatformat:"1" }}%<br/>
+<p>Attendance through {{last_attendance_date}}: {{ final_attendance_percent|floatformat:"1" }}%<br/>
 Date enrolled: {{date_enrolled}}<br/>
 Course start date: {{course.start_date}}</p>
 

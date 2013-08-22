@@ -575,13 +575,19 @@ def update_attendance_view(request):
             attendance_date = None
 
         if valid_day:
-            students_present = request.POST.getlist('students_present')
-            
             # delete previous attendance data for the day
             course.studentattendance_set.filter(date=attendance_date).delete()
-            for student_id in students_present:
-                student = CourseUser.objects.get(id=student_id)
-                course.studentattendance_set.create(student=student, date=attendance_date)
+            
+            for student in course.enrolled_students.all():
+                present=request.POST.get('student_%s' % student.id, 0)
+                try:
+                    present = float(present)
+                except ValueError:
+                    present = 0.0
+                course.studentattendance_set.create(student=student, 
+                                                    date=attendance_date,
+                                                    present=present)
+
             
             if not course.last_attendance_date \
                     or attendance_date > course.last_attendance_date:
@@ -593,8 +599,8 @@ def update_attendance_view(request):
 
         else:
             message = "Attendance not updated.  " \
-                + "%s is not a valid course day" % \
-                request.POST['attendance_date'] 
+                + "%s is not a valid course day: %s" % \
+                (request.POST['attendance_date'], attendance_date)
 
             
     else:
@@ -611,6 +617,7 @@ def update_attendance_view(request):
     return render_to_response \
         ('micourses/update_attendance.html', 
          {'course': course,
+          'courseuser': courseuser,
           'message': message,
           'next_attendance_date': next_attendance_date,
           'noanalytics': noanalytics,
@@ -663,10 +670,12 @@ def update_individual_attendance_view(request):
             super(AttendanceDatesForm, self).__init__(*args, **kwargs)
 
             for i, attendance_date in enumerate(dates):
-                self.fields['date_%s' % i] = forms.BooleanField\
+                self.fields['date_%s' % i] = forms.ChoiceField\
                     (label=attendance_date['date'],\
                          initial=attendance_date['present'],\
-                         required=False)
+                         choices=((1,1),(0.5,0.5),(0,0)),\
+                         widget=forms.RadioSelect,
+                     )
                 
         def date_attendance(self):
             for name, value in self.cleaned_data.items():
@@ -693,9 +702,15 @@ def update_individual_attendance_view(request):
             for date in attendance_dates:
                 try:
                     attended = days_attended.get(date=date.date)
-                    present = True
+
+                    # for integer values, present must be integer
+                    # so that radio button shows initial value
+                    if attended.present==1 or attended.present==0:
+                        present=int(attended.present)
+                    else:
+                        present = attended.present
                 except ObjectDoesNotExist:
-                    present = False
+                    present = 0
 
                 attendance.append({'date': date.date, 'present': present})
 
@@ -715,7 +730,7 @@ def update_individual_attendance_view(request):
                  for (date, present) in attendance_dates_form.date_attendance():
                      if present:
                          student.studentattendance_set.create\
-                             (course=course, date=date)
+                             (course=course, date=date, present=present)
                  message = "Updated attendance of %s." % student
              else:
                  message = "Last attendance date for course not set.  Cannot update attendance."
@@ -734,6 +749,7 @@ def update_individual_attendance_view(request):
     return render_to_response \
         ('micourses/update_individual_attendance.html', 
          {'course': course,
+          'courseuser': courseuser,
           'select_student_form': select_student_form,
           'student': student,
           'attendance_dates_form': attendance_dates_form,
@@ -761,7 +777,7 @@ def attendance_display_view(request):
     date_enrolled = courseuser.courseenrollment_set.get(course=course)\
         .date_enrolled
 
-    last_attendance_date = course.last_attendance_day_previous_week()
+    last_attendance_date = course.last_attendance_date
     if last_attendance_date:
 
         attendance_dates = course.attendancedate_set\
@@ -777,8 +793,18 @@ def attendance_display_view(request):
             number_days += 1
             try:
                 attended = days_attended.get(date=date.date)
-                present = 'Y'
-                number_present += 1
+                if attended.present==1:
+                    present = 'Y'
+                elif attended.present==0:
+                    present = 'N'
+                elif attended.present==0.5:
+                    present = mark_safe('&frac12;')
+                else:
+                    present = '%.0f%%' % (attended.present*100)
+
+                number_present += attended.present
+                    
+                    
             except ObjectDoesNotExist:
                 present = 'N'
                 
@@ -787,7 +813,7 @@ def attendance_display_view(request):
             attendance.append({'date': date.date, 'present': present, \
                                    'percent': percent })
     
-
+        final_percent = percent
 
     # no Google analytics for course
     noanalytics=True
@@ -795,10 +821,13 @@ def attendance_display_view(request):
     return render_to_response \
         ('micourses/attendance_display.html', 
          {'course': course,
+          'courseuser': courseuser,
           'student': courseuser, 
           'attendance': attendance,
           'date_enrolled': date_enrolled,
           'noanalytics': noanalytics,
+          'last_attendance_date': last_attendance_date,
+          'final_attendance_percent': percent,
           },
          context_instance=RequestContext(request))
 
@@ -836,6 +865,7 @@ def adjusted_due_date_calculation_view(request, id):
         ('micourses/adjusted_due_date_calculation.html', 
          {'course': course,
           'content': content,
+          'courseuser': courseuser,
           'student': courseuser, 
           'calculation_list': calculation_list,
           'adjusted_due_date': adjusted_due_date,
@@ -869,6 +899,7 @@ def student_gradebook_view(request):
     return render_to_response \
         ('micourses/student_gradebook.html', 
          {'course': course,
+          'courseuser': courseuser,
           'student': courseuser, 
           'category_scores': category_scores,
           'noanalytics': noanalytics,

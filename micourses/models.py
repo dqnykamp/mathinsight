@@ -75,10 +75,14 @@ class CourseUser(models.Model):
         
 
         days_attended = self.studentattendance_set.filter(course=course)\
-            .filter(date__lte = date).filter(date__gte = date_enrolled).count()
-        
+            .filter(date__lte = date).filter(date__gte = date_enrolled)\
+            .aggregate(Sum('present'))['present__sum']
+
         if course_days:
-            return 100.0*days_attended/float(course_days)
+            try:
+                return 100.0*days_attended/float(course_days)
+            except TypeError:
+                return 0
         else:
             return 0
     
@@ -130,6 +134,7 @@ class StudentAttendance(models.Model):
     course = models.ForeignKey('Course')
     student = models.ForeignKey(CourseUser)
     date = models.DateField()
+    present = models.FloatField(default=1.0)
 
 # should this be a group instead?
 class Course(models.Model):
@@ -161,6 +166,10 @@ class Course(models.Model):
         permissions = (
             ("update_attendance","Can update attendance"),
         )
+
+
+    def enrolled_students_ordered(self):
+        return self.enrolled_students.order_by('user__last_name', 'user__first_name')
 
     def points_for_assessment_category(self, assessment_category):
         try:
