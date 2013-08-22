@@ -643,7 +643,7 @@ def update_individual_attendance_view(request):
     message=''
 
     class SelectStudentForm(forms.Form):
-        student = forms.ModelChoiceField(queryset=course.enrolled_students.all())           
+        student = forms.ModelChoiceField(queryset=course.enrolled_students_ordered())           
     
 
     # get student from request
@@ -658,7 +658,7 @@ def update_individual_attendance_view(request):
     thestudent=student
     class AttendanceDatesForm(forms.Form):
         student = forms.ModelChoiceField\
-            (queryset=course.enrolled_students.all(), \
+            (queryset=course.enrolled_students_ordered(), \
                  widget=forms.HiddenInput,\
                  initial=thestudent)
         
@@ -924,6 +924,8 @@ def instructor_gradebook_view(request):
 
     assessment_categories = course.all_assessments_by_category()
     student_scores = course.all_student_scores_by_assessment_category()
+    total_points = course.total_points()
+
     # no Google analytics for course
     noanalytics=True
 
@@ -933,6 +935,7 @@ def instructor_gradebook_view(request):
           'courseuser': courseuser, 
           'assessment_categories': assessment_categories,
           'student_scores': student_scores,
+          'total_points': total_points,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))

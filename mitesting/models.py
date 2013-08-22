@@ -651,6 +651,7 @@ class Assessment(models.Model):
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
     hand_graded_component = models.BooleanField(default=True)
     nothing_random = models.BooleanField(default=False)
+    total_points = models.FloatField(blank=True, null=True)
 
     def __unicode__(self):
         return  self.name
@@ -932,13 +933,16 @@ class Assessment(models.Model):
         except:
             return None
 
-    def total_points(self):
-        total_points=0
-        for question_set in self.question_sets():
-            the_points = self.points_of_question_set(question_set)
-            if the_points:
-                total_points += the_points
-        return total_points
+    def get_total_points(self):
+        if self.total_points is None:
+            total_points=0
+            for question_set in self.question_sets():
+                the_points = self.points_of_question_set(question_set)
+                if the_points:
+                    total_points += the_points
+            return total_points
+        else:
+            return self.total_points
 
 
     def avoid_question_seed(self, avoid_list, start_seed=0):
@@ -1002,7 +1006,7 @@ class AssessmentBackgroundPage(models.Model):
 class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
     question_set = models.SmallIntegerField(default=0,db_index=True)
-    points = models.IntegerField(default=0)
+    points = models.FloatField(default=0)
 
     class Meta:
         unique_together = ("assessment", "question_set")

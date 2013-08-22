@@ -34,7 +34,7 @@ class CourseUser(models.Model):
     
 
     def __unicode__(self):
-        return self.user.__unicode__()
+        return "%s, %s" % (self.user.last_name, self.user.first_name)
     
     def get_full_name(self):
         return self.user.get_full_name()
@@ -299,7 +299,7 @@ class Course(models.Model):
     
     def all_student_scores_by_assessment_category(self):
         student_scores = []
-        for student in self.enrolled_students.all():
+        for student in self.enrolled_students_ordered():
             student_categories = []
             for cac in self.courseassessmentcategory_set.all():
                 category_scores = []
@@ -575,7 +575,7 @@ class CourseThreadContent(models.Model):
 
     def total_points(self):
         try:
-            return self.thread_content.content_object.total_points()
+            return self.thread_content.content_object.get_total_points()
         except AttributeError:
             return None
 
@@ -608,7 +608,7 @@ class CourseThreadContent(models.Model):
     
     def latest_student_attempts(self):
         latest_attempts=[]
-        for student in self.course.enrolled_students.all():
+        for student in self.course.enrolled_students_ordered():
             latest_attempts.append({
                     'student': student,
                     'attempt': self.get_student_latest_attempt(student),
@@ -859,7 +859,7 @@ class StudentContentAttempt(models.Model):
 
     def get_percent_credit(self):
          score = self.get_score()
-         points = self.content.total_points()
+         points = self.content.get_total_points()
          if score is None or points is None:
              return None
          return int(score*100.0/points)
