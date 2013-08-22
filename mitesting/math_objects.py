@@ -307,6 +307,7 @@ class math_object(object):
             # in this case, only modify atoms that are Floats
             n_digits=14
             from sympy.simplify.simplify import bottom_up
+            # have turned all lists to Tuples so can get rid of this condition?
             if isinstance(expression, list):
                 new_expr=[]
                 for expr in expression:
@@ -339,20 +340,25 @@ class math_object(object):
 
         if self._round_decimals is not None:
             try:
-                if isinstance(expression,Tuple) or isinstance(expression, list):
+                def round_or_int(w):
+                    if not w.is_Float:
+                        return w
+                    w = w.round(self._round_decimals)
+                    if self._round_decimals==0:
+                        return int(w)
+                    else:
+                        return w
 
-                    expression = [expr.round(self._round_decimals) for expr in expression]
-                    if self._round_decimals == 0:
-                        expression =[int(expr) for expr in expression]
-                    if isinstance(expression,Tuple):
-                        expression = Tuple(*expression)
-                else:
-                    expression = expression.round(self._round_decimals)
-                    if self._round_decimals == 0:
-                        expression = int(expression)
-            except:
+                from sympy.simplify.simplify import bottom_up
+                expression =  bottom_up(expression,
+                                        round_or_int,
+                                        atoms=True)
+                
+            except TypeError:
                 pass
+
         return expression
+
     def __unicode__(self):
         from sympy.geometry.line import LinearEntity
         expression = self.convert_expression()
