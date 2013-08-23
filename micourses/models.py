@@ -862,7 +862,7 @@ class StudentContentAttempt(models.Model):
 
     def get_percent_credit(self):
          score = self.get_score()
-         points = self.content.get_total_points()
+         points = self.content.total_points()
          if score is None or points is None:
              return None
          return int(score*100.0/points)

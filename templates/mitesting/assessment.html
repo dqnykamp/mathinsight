@@ -13,7 +13,7 @@
 
 <ol class="quiz_questions">
 {% for question in question_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestions' course_thread_content.id attempt_number %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{{ question.question_text }}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{{ question.question_text }}</li>
 {% endfor %}
 </ol>
 </section>
