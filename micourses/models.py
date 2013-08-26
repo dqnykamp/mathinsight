@@ -526,6 +526,7 @@ class Course(models.Model):
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
+    section = models.IntegerField()
     date_enrolled = models.DateField()
     withdrew = models.BooleanField(default=False)
     
