@@ -958,7 +958,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
         elif object_type=='Text':
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
                 (applet_identifier, appletobject.name,
-                 value)
+                 value.replace('\\','\\\\'))  # escape \ for javascript
         elif object_type=='Function':
             from sympy import Symbol
             global_dict=context["sympy_global_dict"]
