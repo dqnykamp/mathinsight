@@ -16,12 +16,14 @@ class Migration(DataMigration):
         
         public_question_types = ['Worksheet', 'Short answer']
         for qt in public_question_types:
-            question_type = orm.QuestionType.objects.get(name=qt)
-            for question in orm.Question.objects\
-                    .filter(question_type = question_type):
-                question.question_permission=public
-                question.save()
-        
+            try:
+                question_type = orm.QuestionType.objects.get(name=qt)
+                for question in orm.Question.objects\
+                        .filter(question_type = question_type):
+                    question.question_permission=public
+                    question.save()
+            except ObjectDoesNotExist:
+                pass
         try:
             public_private=orm.QuestionPermission.objects.get(name="Public with private solution")
         except ObjectDoesNotExist:
@@ -30,12 +32,14 @@ class Migration(DataMigration):
         
         public_private_question_types = ['Math write in', 'Multiple choice']
         for qt in public_private_question_types:
-            question_type = orm.QuestionType.objects.get(name=qt)
-            for question in orm.Question.objects\
-                    .filter(question_type = question_type):
-                question.question_permission=public_private
-                question.save()
-        
+            try:
+                question_type = orm.QuestionType.objects.get(name=qt)
+                for question in orm.Question.objects\
+                        .filter(question_type = question_type):
+                    question.question_permission=public_private
+                    question.save()
+            except ObjectDoesNotExist:
+                pass
         try:
             private=orm.QuestionPermission.objects.get(name="Private")
         except ObjectDoesNotExist:
@@ -44,11 +48,15 @@ class Migration(DataMigration):
         
         private_question_types = ['Exam free response question',]
         for qt in private_question_types:
-            question_type = orm.QuestionType.objects.get(name=qt)
-            for question in orm.Question.objects\
-                    .filter(question_type = question_type):
-                question.question_permission=private
-                question.save()
+            try:
+                question_type = orm.QuestionType.objects.get(name=qt)
+                for question in orm.Question.objects\
+                        .filter(question_type = question_type):
+                    question.question_permission=private
+                    question.save()
+            except ObjectDoesNotExist:
+                pass
+
 
     def backwards(self, orm):
         pass
