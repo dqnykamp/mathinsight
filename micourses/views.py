@@ -673,7 +673,7 @@ def update_individual_attendance_view(request):
                 self.fields['date_%s' % i] = forms.ChoiceField\
                     (label=attendance_date['date'],\
                          initial=attendance_date['present'],\
-                         choices=((1,1),(0.5,0.5),(0,0)),\
+                         choices=((1,1),(0.5,0.5),(0,0),(-1,-1)),\
                          widget=forms.RadioSelect,
                      )
                 
@@ -705,7 +705,7 @@ def update_individual_attendance_view(request):
 
                     # for integer values, present must be integer
                     # so that radio button shows initial value
-                    if attended.present==1 or attended.present==0:
+                    if attended.present==1 or attended.present==0 or attended.present==-1:
                         present=int(attended.present)
                     else:
                         present = attended.present
@@ -777,6 +777,8 @@ def attendance_display_view(request):
     date_enrolled = courseuser.courseenrollment_set.get(course=course)\
         .date_enrolled
 
+    percent = 0
+
     last_attendance_date = course.last_attendance_date
     if last_attendance_date:
 
@@ -797,19 +799,27 @@ def attendance_display_view(request):
                     present = 'Y'
                 elif attended.present==0:
                     present = 'N'
+                elif attended.present==-1:
+                    present = 'E'
                 elif attended.present==0.5:
                     present = mark_safe('&frac12;')
                 else:
                     present = '%.0f%%' % (attended.present*100)
 
-                number_present += attended.present
+                if attended.present==-1:
+                    number_days -= 1
+                else:
+                    number_present += attended.present
                     
                     
             except ObjectDoesNotExist:
                 present = 'N'
                 
-            percent = 100.0*number_present/float(number_days)
-            
+            try:
+                percent = 100.0*number_present/float(number_days)
+            except ZeroDivisionError:
+                percent = 0
+
             attendance.append({'date': date.date, 'present': present, \
                                    'percent': percent })
     

@@ -18,7 +18,7 @@
 <form action="{% url 'mic-updateindividualattendance' %}" method="post">{% csrf_token %}
 <p>Attendance for {{student.get_full_name}}</p>
 <table class="narrow" style="width:10%">
-<tr><td>1</td><td>&frac12;</td><td>0</td></tr>
+<tr><td>1</td><td>&frac12;</td><td>0</td><td>E</td></tr>
 {% for field in attendance_dates_form %}
   {% if field.is_hidden %}{{ field}}
   {% else %}

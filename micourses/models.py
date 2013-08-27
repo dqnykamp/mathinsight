@@ -73,15 +73,18 @@ class CourseUser(models.Model):
         course_days = course.to_date_attendance_days(date, 
                                                      start_date=date_enrolled)
         
-
-        days_attended = self.studentattendance_set.filter(course=course)\
-            .filter(date__lte = date).filter(date__gte = date_enrolled)\
+        attendance_data = self.studentattendance_set.filter(course=course)\
+            .filter(date__lte = date).filter(date__gte = date_enrolled)
+        
+        n_excused_absenses = attendance_data.filter(present = -1).count()
+        
+        days_attended = attendance_data.exclude(present = -1)\
             .aggregate(Sum('present'))['present__sum']
 
         if course_days:
             try:
-                return 100.0*days_attended/float(course_days)
-            except TypeError:
+                return 100.0*days_attended/float(course_days-n_excused_absenses)
+            except (TypeError, ZeroDivisionError):
                 return 0
         else:
             return 0
@@ -134,6 +137,7 @@ class StudentAttendance(models.Model):
     course = models.ForeignKey('Course')
     student = models.ForeignKey(CourseUser)
     date = models.DateField()
+    # 0: absent, 1: present, 0.5: half-present, -1: excused absense
     present = models.FloatField(default=1.0)
 
 # should this be a group instead?
