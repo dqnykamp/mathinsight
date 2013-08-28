@@ -233,15 +233,28 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 number_attempts >= the_question.show_solution_button_after_attempts \
                 and solution_exists and \
                 the_question.user_can_view(request.user, solution=True):
-
             
-            #show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{ 'seed':'%s', 'question_id': '%s', 'identifier': '%s' });" % ( identifier, seed, question_id, identifier)
-            from django.template import Template
-            csrftoken=request.COOKIES.get('csrftoken') 
-            question_context['csrf_token']=csrftoken
-            show_solution_string = '<form action="%s" method="post" target="_blank">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
-            show_solution_string = Template(show_solution_string).render(question_context)
-            dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
+            solution_inline = True
+            # solution inline doesn't yet work for geogebra web applets
+            # but it allows control over seeing the solution
+            # enabling recording when user views it
+            # since it doesn't reveal question url
+            if solution_inline:
+                show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed, question_id, identifier, assessment_code, assessment_seed, question_set, str(record).lower())
+
+                form_html = '<input type="button" value="Show solution" onclick="%s;">' % (show_solution_command)
+        
+                dajax.assign('#extra_buttons_%s' % identifier, 'innerHTML', \
+                         form_html)
+
+                
+            else:
+                from django.template import Template
+                csrftoken=request.COOKIES.get('csrftoken') 
+                question_context['csrf_token']=csrftoken
+                show_solution_string = '<form action="%s" method="post" target="_blank">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
+                show_solution_string = Template(show_solution_string).render(question_context)
+                dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
         
 
 
@@ -269,6 +282,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 current_attempt = None
                 past_due = False
                 due_date = None
+                solution_viewed = False
+
                 if course and assessment_code:
                         
                     assessment_content_type = ContentType.objects.get\
@@ -298,6 +313,14 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                                 .create(student=student, seed=assessment_seed)
 
 
+                        # check if student already viewed the solution
+                        # if so, clear attempt so not recorded for course
+                        if current_attempt.studentcontentattemptsolutionview_set\
+                                .filter(question_set=question_set).exists():
+                            solution_viewed = True
+                            current_attempt = None
+
+
                 # if have current_attempt, don't record assessment,
                 # as it would be redundant information
                 if current_attempt:
@@ -318,6 +341,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
                 if past_due:
                     feedback_message = "Due date %s of %s is past.\nAnswer not recorded." % (due_date, assessment)
+                elif solution_viewed:
+                    feedback_message = "Solution for question already viewed for this attempt.\nAnswer not recorded." 
                 else:
                     feedback_message = "Answer recorded for %s" % request.user
                 if current_attempt:
@@ -337,7 +362,11 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
 
 @dajaxice_register
-def show_math_write_in_solution(request, question_id, seed, identifier):
+def show_math_write_in_solution(request, answer_serialized, question_id, seed, 
+                                identifier,
+                                assessment_code, assessment_seed, question_set,
+                                record=True):
+    
     
     dajax = Dajax()
 
@@ -356,6 +385,51 @@ def show_math_write_in_solution(request, question_id, seed, identifier):
 
         solution_selector = "#question_%s_solution" % identifier
         dajax.assign(solution_selector, 'innerHTML', rendered_solution)
+
+        # record fact that user viewed solution
+        if record and request.user.is_authenticated():
+            
+            if assessment_code:
+                assessment = Assessment.objects.get(code=assessment_code)
+            else:
+                assessment = None
+
+            try:
+                student = request.user.courseuser
+                course = student.return_selected_course()
+            except:
+                course = None
+                    
+            # check if assessment given by assessment_code is in course
+            # if so, will link to latest attempt
+            if course and assessment_code:
+                    
+                assessment_content_type = ContentType.objects.get\
+                    (model='assessment')
+                    
+                try:
+                    content=course.coursethreadcontent_set.get\
+                        (thread_content__object_id=assessment.id,\
+                             thread_content__content_type=assessment_content_type)
+                except ObjectDoesNotExist:
+                    content=None
+
+                # if found course content, get or create attempt by student
+                # with same assessment_seed
+                if content:
+                    try:
+                        current_attempt = content.studentcontentattempt_set\
+                            .get(student=student, seed=assessment_seed)
+                    except ObjectDoesNotExist:
+                        current_attempt = content.studentcontentattempt_set\
+                            .create(student=student, seed=assessment_seed)
+                        
+                    # record fact that viewed solution
+                    # for this content attempt
+                    # and this question set
+                    current_attempt.studentcontentattemptsolutionview_set\
+                        .create(question_set=question_set)
+
 
     except Exception as e:
         dajax.alert("not sure what is wrong: %s" % e )

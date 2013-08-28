@@ -976,6 +976,13 @@ class StudentContentCompletion(models.Model):
     class Meta:
         unique_together = ['student', 'content']
 
+
+class StudentContentAttemptSolutionView(models.Model):
+    content_attempt = models.ForeignKey(StudentContentAttempt)
+    question_set = models.SmallIntegerField()
+    datetime = models.DateTimeField(auto_now_add=True)
+
+
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
