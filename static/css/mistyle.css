@@ -2211,7 +2211,22 @@ a.assessment
     {
 	display: none;
     }
-    
+    input.mi_answer_blank
+    {
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+	border-bottom: 2px solid;
+	border-radius: 0px;
+    }
+
+    input.mi_answer_submit {
+	display: none;
+    }
+
+    input.mi_show_solution {
+	display: none;
+    }
 }
 
 

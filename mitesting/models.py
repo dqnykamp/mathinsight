@@ -411,7 +411,7 @@ class Question(models.Model):
                 (html_string, answer_field_name, answer['answer_id'])
         html_string = html_string + "</ul>"
 
-        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" value="Submit" onclick="%s"></p></form>'  % (html_string, identifier, send_command)
+        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"></p></form>'  % (html_string, identifier, send_command)
 
         return mark_safe(html_string)
 
@@ -467,7 +467,7 @@ class Question(models.Model):
         # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
         if not precheck:
-            html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
+            html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
         else:
             html_string += '<div id="question_%s_feedback" class="info"></div> </div></form><script type="text/javascript">%s</script>'  % (identifier, send_command)
 

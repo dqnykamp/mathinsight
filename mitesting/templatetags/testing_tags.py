@@ -842,7 +842,7 @@ class AnswerBlankNode(template.Node):
             value_string = ''
             #{u'asb_qa5_240': u'1', u'answer_answer_qa5_240': u'hello', u'number_attempts_qa5_240': u'0'}
 
-        return '<span style="vertical-align: middle; display: inline-block;"><input type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
+        return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer_blank" type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
             (self.answer_expression_string, identifier,  
              self.answer_expression_string,
              identifier, size, readonly_string, value_string, 

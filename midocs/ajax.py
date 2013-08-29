@@ -242,7 +242,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
             if solution_inline:
                 show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed, question_id, identifier, assessment_code, assessment_seed, question_set, str(record).lower())
 
-                form_html = '<input type="button" value="Show solution" onclick="%s;">' % (show_solution_command)
+                form_html = '<input type="button" class="mi_show_solution" value="Show solution" onclick="%s;">' % (show_solution_command)
         
                 dajax.assign('#extra_buttons_%s' % identifier, 'innerHTML', \
                          form_html)
