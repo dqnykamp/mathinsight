@@ -2227,6 +2227,11 @@ a.assessment
     input.mi_show_solution {
 	display: none;
     }
+    
+    #breadcrumbs_login {
+	display: none;
+    }
+
 }
 
 
