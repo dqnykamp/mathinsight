@@ -290,14 +290,14 @@ class math_object(object):
                 for expr in expression:
                     new_expr.append(bottom_up(expr,
                                     lambda w: w.evalf(n_digits)
-                                    if not w.is_Float 
+                                    if not w.is_Number 
                                     else Float(str(w.evalf(n_digits))),
                                     atoms=True))
                 expression=new_expr
             else:
                 expression =  bottom_up(expression,
                                         lambda w: w.evalf(n_digits)
-                                        if not w.is_Float 
+                                        if not w.is_Number 
                                         else Float(str(w.evalf(n_digits))),
                                         atoms=True)
                 
@@ -403,7 +403,9 @@ class math_object(object):
         expression_expand = self.eval_to_precision(try_expand_expr(self._expression))
 
         new_expr = self.eval_to_precision(new_expr)
+        print new_expr
         expression=self.eval_to_precision(self._expression)
+        print expression
 
         expressions_equal=False
         equal_if_expand=False
