@@ -340,9 +340,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                          assessment_seed=assessment_seed)
 
                 if past_due:
-                    feedback_message = "Due date %s of %s is past.\nAnswer not recorded." % (due_date, assessment)
+                    feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
                 elif solution_viewed:
-                    feedback_message = "Solution for question already viewed for this attempt.\nAnswer not recorded." 
+                    feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
                 else:
                     feedback_message = "Answer recorded for %s" % request.user
                 if current_attempt:
