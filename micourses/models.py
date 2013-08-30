@@ -765,7 +765,7 @@ class CourseThreadContent(models.Model):
             completed = False
 
             
-        # if completed, show checkmark
+        # if completed, show checkmark, click to give option to remove complete
         if completed:
             html_string += \
                 '<img src="%sadmin/img/icon-yes.gif" alt="Complete"  onclick="$(\'#undo_complete_%s\').toggle();"/>' \
@@ -789,15 +789,19 @@ class CourseThreadContent(models.Model):
             except:
                 skipped = False
 
-            # if skipped, give option to remove skip
+            # if skipped, show icon, click to give option to remove skip
             if skipped:
+                html_string += \
+                    '<img src="%sadmin/img/icon-no.gif" alt="Complete"  onclick="$(\'#undo_skip_%s\').toggle();"/>' \
+                    % (settings.STATIC_URL, self.id)
+
+                # add hidden undo skip button
                 click_command = "Dajaxice.midocs.record_course_content_completion"\
                     + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': false })" \
                     % (self.id, student.id)
-            
-                html_string += '[skipped] ' + \
-                    '<input type="button" class="coursecontentbutton" value="Remove skip" onclick="%s;">' \
-                    % (click_command)
+
+                html_string += '<span id ="undo_skip_%s" hidden> <input type="button" class="coursecontentbutton" value="Remove skip" onclick="%s;"></span>' % (self.id, click_command)
+
 
             # if not complete or skipped, 
             # give option to mark assessment as complete or skip
