@@ -521,12 +521,19 @@ class Course(models.Model):
         return adjusted_due_date_assessments
 
     def next_items(self, student, number=5):
+        # use subqueries with filter rather than exclude
+        # to work around django bug 
+        # https://code.djangoproject.com/ticket/14645
+        # as suggested in
+        # http://stackoverflow.com/questions/16704560/django-queryset-exclude-with-multiple-related-field-clauses
         return self.coursethreadcontent_set\
             .exclude(optional=True)\
-            .exclude(studentcontentcompletion__student=student,\
-                     studentcontentcompletion__complete=True)\
-            .exclude(studentcontentcompletion__student=student,\
-                     studentcontentcompletion__skip=True)[:number]
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,
+                          studentcontentcompletion__complete=True))\
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,\
+                              studentcontentcompletion__skip=True))[:number]
 
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
