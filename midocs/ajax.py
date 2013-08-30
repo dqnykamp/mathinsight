@@ -244,7 +244,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
                 form_html = '<input type="button" class="mi_show_solution" value="Show solution" onclick="%s;">' % (show_solution_command)
         
-                dajax.assign('#extra_buttons_%s' % identifier, 'innerHTML', \
+                dajax.assign('#solution_button_%s' % identifier, 'innerHTML', \
                          form_html)
 
                 
@@ -254,7 +254,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 question_context['csrf_token']=csrftoken
                 show_solution_string = '<form action="%s" method="post" target="_blank">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
                 show_solution_string = Template(show_solution_string).render(question_context)
-                dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
+                dajax.assign("#solution_button_%s" % identifier, 'innerHTML', show_solution_string)
         
 
 
@@ -385,6 +385,9 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
 
         solution_selector = "#question_%s_solution" % identifier
         dajax.assign(solution_selector, 'innerHTML', rendered_solution)
+
+        # remove show solution button
+        dajax.remove('#solution_button_%s' % identifier)
 
         # record fact that user viewed solution
         if record and request.user.is_authenticated():
