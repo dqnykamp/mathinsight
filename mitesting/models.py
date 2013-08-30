@@ -629,7 +629,8 @@ class AssessmentType(models.Model):
     privacy_level = models.SmallIntegerField(default=0)
     privacy_level_solution = models.SmallIntegerField(default=0)
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
-
+    record_online_attempts = models.BooleanField(default=True)
+    
     def __unicode__(self):
         return  self.name
 

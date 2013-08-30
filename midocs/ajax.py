@@ -294,8 +294,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                             (thread_content__object_id=assessment.id,\
                                  thread_content__content_type=assessment_content_type)
 
-                        # if assessment is a gateway, don't record answer
-                        if assessment.assessment_type.code == 'gateway':
+                        # record answer only if assessment_type 
+                        # specifies recoding online attempts
+                        if not assessment.assessment_type.record_online_attempts:
                             content=None
 
                     except ObjectDoesNotExist:
