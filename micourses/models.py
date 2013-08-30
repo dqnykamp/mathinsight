@@ -522,6 +522,7 @@ class Course(models.Model):
 
     def next_items(self, student, number=5):
         return self.coursethreadcontent_set\
+            .exclude(optional=True)\
             .exclude(studentcontentcompletion__student=student,\
                      studentcontentcompletion__complete=True)\
             .exclude(studentcontentcompletion__student=student,\
@@ -770,7 +771,8 @@ class CourseThreadContent(models.Model):
                 '<img src="%sadmin/img/icon-yes.gif" alt="Complete" />' \
                 % settings.STATIC_URL
 
-        else:
+        # only show buttons if not optional
+        elif not self.optional:
             # if not completed, check if skipped
             try:
                 skipped = self.studentcontentcompletion_set\
