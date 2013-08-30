@@ -768,7 +768,7 @@ class CourseThreadContent(models.Model):
         # if completed, show checkmark
         if completed:
             html_string += \
-                '<img src="%sadmin/img/icon-yes.gif" alt="Complete"  onclick="$(\'#undo_complete_%s\').toggle();toggleAttemptForm();"/>' \
+                '<img src="%sadmin/img/icon-yes.gif" alt="Complete"  onclick="$(\'#undo_complete_%s\').toggle();"/>' \
                 % (settings.STATIC_URL, self.id)
             
             # add hidden undo completion button
