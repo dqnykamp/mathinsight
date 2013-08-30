@@ -768,8 +768,17 @@ class CourseThreadContent(models.Model):
         # if completed, show checkmark
         if completed:
             html_string += \
-                '<img src="%sadmin/img/icon-yes.gif" alt="Complete" />' \
-                % settings.STATIC_URL
+                '<img src="%sadmin/img/icon-yes.gif" alt="Complete"  onclick="$(\'#undo_complete_%s\').toggle();toggleAttemptForm();"/>' \
+                % (settings.STATIC_URL, self.id)
+            
+            # add hidden undo completion button
+            click_command = "Dajaxice.midocs.record_course_content_completion"\
+                + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': false })" \
+                % (self.id, student.id)
+
+            html_string += '<span id ="undo_complete_%s" hidden> <input type="button" class="coursecontentbutton" value="Undo completion" onclick="%s;"></span>' % (self.id, click_command)
+
+
 
         # only show buttons if not optional
         elif not self.optional:
