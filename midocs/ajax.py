@@ -293,6 +293,11 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                         content=course.coursethreadcontent_set.get\
                             (thread_content__object_id=assessment.id,\
                                  thread_content__content_type=assessment_content_type)
+
+                        # if assessment is a gateway, don't record answer
+                        if assessment.assessment_type.code == 'gateway':
+                            content=None
+
                     except ObjectDoesNotExist:
                         content=None
 
@@ -344,9 +349,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 elif solution_viewed:
                     feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
                 else:
-                    feedback_message = "Answer recorded for %s" % request.user
+                    feedback_message = "" #Answer recorded for %s" % request.user
                 if current_attempt:
-                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
+                    feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
                 dajax.append(feedback_selector, 'innerHTML', 
                              '<p><i>%s</i></p>' % feedback_message)
