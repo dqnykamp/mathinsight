@@ -244,7 +244,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
                 form_html = '<input type="button" class="mi_show_solution" value="Show solution" onclick="%s;">' % (show_solution_command)
         
-                dajax.assign('#extra_buttons_%s' % identifier, 'innerHTML', \
+                dajax.assign('#solution_button_%s' % identifier, 'innerHTML', \
                          form_html)
 
                 
@@ -254,7 +254,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 question_context['csrf_token']=csrftoken
                 show_solution_string = '<form action="%s" method="post" target="_blank">{%% csrf_token%%}<input type="hidden" id="id_seed_%s" name="seed" value="%s"><input type="submit" value="Show solution"></form>' % (the_question.get_solution_url(), identifier, seed)
                 show_solution_string = Template(show_solution_string).render(question_context)
-                dajax.assign("#extra_buttons_%s" % identifier, 'innerHTML', show_solution_string)
+                dajax.assign("#solution_button_%s" % identifier, 'innerHTML', show_solution_string)
         
 
 
@@ -293,6 +293,12 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                         content=course.coursethreadcontent_set.get\
                             (thread_content__object_id=assessment.id,\
                                  thread_content__content_type=assessment_content_type)
+
+                        # record answer only if assessment_type 
+                        # specifies recoding online attempts
+                        if not assessment.assessment_type.record_online_attempts:
+                            content=None
+
                     except ObjectDoesNotExist:
                         content=None
 
@@ -344,9 +350,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 elif solution_viewed:
                     feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
                 else:
-                    feedback_message = "Answer recorded for %s" % request.user
+                    feedback_message = "" #Answer recorded for %s" % request.user
                 if current_attempt:
-                    feedback_message += "<br/>Course: <a href=\"%s\">%s</a>" % (reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
+                    feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
                 dajax.append(feedback_selector, 'innerHTML', 
                              '<p><i>%s</i></p>' % feedback_message)
@@ -385,6 +391,9 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
 
         solution_selector = "#question_%s_solution" % identifier
         dajax.assign(solution_selector, 'innerHTML', rendered_solution)
+
+        # remove show solution button
+        dajax.remove('#solution_button_%s' % identifier)
 
         # record fact that user viewed solution
         if record and request.user.is_authenticated():

@@ -40,7 +40,7 @@
 {% for question in question_list %}
 <tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
 {% endfor %}
- <tr><td class="examlabel">Total</td><td class="points">{{ assessment.total_points }} pts</td><td class="blank"></td></tr>
+ <tr><td class="examlabel">Total</td><td class="points">{{ assessment.get_total_points }} pts</td><td class="blank"></td></tr>
 </table>
    </div>
   </div>

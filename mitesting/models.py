@@ -449,7 +449,7 @@ class Question(models.Model):
 
 
         #callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]);}</script>' % (identifier, identifier)
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);}</script>' % (identifier, identifier, identifier)
 
 
         html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" ><div id="the_question_%s">' %  (callback_script, identifier, identifier)
@@ -464,10 +464,10 @@ class Question(models.Model):
         # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
         #     (identifier, identifier, identifier)
 
-        # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="extra_buttons_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
+        # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="solution_button_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
         if not precheck:
-            html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"> </div></form><span id="extra_buttons_%s"></span>'  % (identifier, identifier, send_command, identifier,)
+            html_string += '<div id="question_%s_feedback" class="info"></div><br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"> </div></form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>'  % (identifier, send_command, identifier, identifier,)
         else:
             html_string += '<div id="question_%s_feedback" class="info"></div> </div></form><script type="text/javascript">%s</script>'  % (identifier, send_command)
 
@@ -628,6 +628,9 @@ class AssessmentType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     privacy_level = models.SmallIntegerField(default=0)
     privacy_level_solution = models.SmallIntegerField(default=0)
+    template_base_name = models.CharField(max_length=50, blank=True, null=True)
+    record_online_attempts = models.BooleanField(default=True)
+    
     def __unicode__(self):
         return  self.name
 

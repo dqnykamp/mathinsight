@@ -2204,7 +2204,7 @@ a.assessment
 	border-radius: 0px;
     }
 
-    input.mi_answer_submit {
+    input.mi_answer_submit, input.mi_submit {
 	display: none;
     }
 
