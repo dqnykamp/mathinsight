@@ -491,10 +491,12 @@ class Course(models.Model):
         # manual due date adjustments)
         upcoming_assessments= self.coursethreadcontent_set\
             .filter(final_due_date__gte = date) \
-            .exclude(studentcontentcompletion__student=student,\
-                         studentcontentcompletion__complete=True)
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,
+                          studentcontentcompletion__complete=True))
+        print later_date
         if later_date:
-            upcoming_assessment=upcoming_assessments\
+            upcoming_assessments=upcoming_assessments\
                 .filter(initial_due_date__lt = later_date)\
 
 
@@ -815,12 +817,17 @@ class CourseThreadContent(models.Model):
             # or to mark other content as done
             else:
             
-                if self.initial_due_date:
-                    is_assessment = True
-                else:
-                    is_assessment = False
+                # since haven't implement "Complete" doing anything special
+                # (like notifying instructors)
+                # don't use Complete/Skip buttons for now
 
-                if is_assessment:
+                # if self.initial_due_date:
+                #     use_complete_skip_buttons = True
+                # else:
+                #     use_complete_skip_buttons = False
+                use_complete_skip_buttons=False
+
+                if use_complete_skip_buttons:
                     click_command = "Dajaxice.midocs.record_course_content_completion"\
                         + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
                         % (self.id, student.id)
