@@ -66,7 +66,7 @@ class CourseAssessmentThreadContentInline(admin.StackedInline):
             .get_formset(request, obj, **kwargs)
 
 
-class CourseAdmin(admin.ModelAdmin):
+class CourseAdmin(reversion.VersionAdmin):
     inlines=[CourseAssessmentCategoryInline, CourseEnrollmentInline, CourseSkipDate]
     fieldsets = (
         (None, {
@@ -151,11 +151,16 @@ class CourseWithAssessmentThreadContentAdmin(admin.ModelAdmin):
     save_on_top=True
 
 
-admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
+class AssessmentCategoryAdmin(reversion.VersionAdmin):
+    pass
 
-# not use reversion yet
+class GradeLevelAdmin(reversion.VersionAdmin):
+    pass
+
+
+admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 admin.site.register(Course, CourseAdmin)
 admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
-admin.site.register(GradeLevel)
-admin.site.register(AssessmentCategory)
+admin.site.register(GradeLevel,GradeLevelAdmin)
+admin.site.register(AssessmentCategory,AssessmentCategoryAdmin)
