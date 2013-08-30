@@ -628,6 +628,8 @@ class AssessmentType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     privacy_level = models.SmallIntegerField(default=0)
     privacy_level_solution = models.SmallIntegerField(default=0)
+    template_base_name = models.CharField(max_length=50, blank=True, null=True)
+
     def __unicode__(self):
         return  self.name
 

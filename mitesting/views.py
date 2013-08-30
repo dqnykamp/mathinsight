@@ -265,11 +265,10 @@ def assessment_view(request, assessment_code, solution=False):
     solution_postfix=""
     if solution:
         solution_postfix="_solution"
-    template="mitesting/assessment"+solution_postfix+".html"
-    if assessment.assessment_type.code=='in_class_exam':
-        template="mitesting/exam"+solution_postfix+".html"
-    elif assessment.assessment_type.code=='in_class_quiz':
-        template="mitesting/quiz"+solution_postfix+".html"
+    template_base_name = assessment.assessment_type.template_base_name
+    if not template_base_name:
+        template_base_name = 'assessment'
+    template = "mitesting/%s%s.html" % (template_base_name, solution_postfix)
 
     assessment_name = assessment.name
     if solution:
