@@ -491,10 +491,12 @@ class Course(models.Model):
         # manual due date adjustments)
         upcoming_assessments= self.coursethreadcontent_set\
             .filter(final_due_date__gte = date) \
-            .exclude(studentcontentcompletion__student=student,\
-                         studentcontentcompletion__complete=True)
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,
+                          studentcontentcompletion__complete=True))
+        print later_date
         if later_date:
-            upcoming_assessment=upcoming_assessments\
+            upcoming_assessments=upcoming_assessments\
                 .filter(initial_due_date__lt = later_date)\
 
 
@@ -521,12 +523,19 @@ class Course(models.Model):
         return adjusted_due_date_assessments
 
     def next_items(self, student, number=5):
+        # use subqueries with filter rather than exclude
+        # to work around django bug 
+        # https://code.djangoproject.com/ticket/14645
+        # as suggested in
+        # http://stackoverflow.com/questions/16704560/django-queryset-exclude-with-multiple-related-field-clauses
         return self.coursethreadcontent_set\
             .exclude(optional=True)\
-            .exclude(studentcontentcompletion__student=student,\
-                     studentcontentcompletion__complete=True)\
-            .exclude(studentcontentcompletion__student=student,\
-                     studentcontentcompletion__skip=True)[:number]
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,
+                          studentcontentcompletion__complete=True))\
+            .exclude(id__in=self.coursethreadcontent_set.filter \
+                         (studentcontentcompletion__student=student,\
+                              studentcontentcompletion__skip=True))[:number]
 
 class CourseEnrollment(models.Model):
     course = models.ForeignKey(Course)
@@ -564,6 +573,7 @@ class CourseThreadContent(models.Model):
                                            choices = AGGREGATE_CHOICES,
                                            default = 'Max')
     optional = models.BooleanField(default=False)
+    record_scores = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0.0)
     
     class Meta:
@@ -808,12 +818,17 @@ class CourseThreadContent(models.Model):
             # or to mark other content as done
             else:
             
-                if self.initial_due_date:
-                    is_assessment = True
-                else:
-                    is_assessment = False
+                # since haven't implement "Complete" doing anything special
+                # (like notifying instructors)
+                # don't use Complete/Skip buttons for now
 
-                if is_assessment:
+                # if self.initial_due_date:
+                #     use_complete_skip_buttons = True
+                # else:
+                #     use_complete_skip_buttons = False
+                use_complete_skip_buttons=False
+
+                if use_complete_skip_buttons:
                     click_command = "Dajaxice.midocs.record_course_content_completion"\
                         + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
                         % (self.id, student.id)
