@@ -283,7 +283,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 past_due = False
                 due_date = None
                 solution_viewed = False
-
+                record_scores = True
+                
                 if course and assessment_code:
                         
                     assessment_content_type = ContentType.objects.get\
@@ -297,20 +298,25 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                         # record answer only if assessment_type 
                         # specifies recoding online attempts
                         if not assessment.assessment_type.record_online_attempts:
-                            content=None
+                            record_scores = False
+
+                        if not content.record_scores:
+                            record_scores = False
 
                     except ObjectDoesNotExist:
                         content=None
+                        record_scores = False
 
-                    if content:
+                    if record_scores:
                         due_date = content.adjusted_due_date(student)
                         today = datetime.date.today()
                         if due_date and today > due_date:
                             past_due = True
+                            record_scores = False
                     
-                    # if found course content, get or create attempt by student
+                    # if record scores, get or create attempt by student
                     # with same assessment_seed
-                    if content and not past_due and content.record_scores:
+                    if record_scores:
                         try:
                             current_attempt = content.studentcontentattempt_set\
                                 .get(student=student, seed=assessment_seed)
@@ -325,6 +331,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                                 .filter(question_set=question_set).exists():
                             solution_viewed = True
                             current_attempt = None
+                            record_scores = False
 
 
                 # if have current_attempt, don't record assessment,
@@ -334,6 +341,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     assessment_seed = None
 
                 # record attempt, possibly linking to latest content attempt
+                # even if record_scores is False, create QuestionStudentAnswer
+                # record (just in case), but don't associate it with course
                 import json
                 QuestionStudentAnswer.objects.create\
                     (user=request.user, question=the_question, \
@@ -349,10 +358,11 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
                 elif solution_viewed:
                     feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
-                elif not content.record_scores:
+                elif not record_scores:
                     feedback_message = "Assessment not set up for recording answers"
                 else:
-                    feedback_message = "" #Answer recorded for %s" % request.user
+                    feedback_message = ""
+
                 if current_attempt:
                     feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
