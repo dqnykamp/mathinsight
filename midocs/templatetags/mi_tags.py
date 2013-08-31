@@ -1020,7 +1020,7 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
     n_geogebra_web_applets=context.get('n_geogebra_web_applets', 0)
 
     if n_geogebra_web_applets==0:
-        html_string+='<script type="text/javascript" language="javascript" src="http://www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
+        html_string+='<script type="text/javascript" language="javascript" src="//www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
 
     n_geogebra_web_applets += 1
     context['n_geogebra_web_applets']=n_geogebra_web_applets
@@ -1467,7 +1467,7 @@ def youtube_link(context, video, width, height):
     except ObjectDoesNotExist:
         return "[Broken video]"
 
-    html_string='<div class="video"><iframe width="%s" height="%s" src="http://www.youtube-nocookie.com/embed/%s?rel=0" frameborder="0" allowfullscreen></iframe></div>' % \
+    html_string='<div class="video"><iframe width="%s" height="%s" src="//www.youtube-nocookie.com/embed/%s?rel=0" frameborder="0" allowfullscreen></iframe></div>' % \
         (width, height, youtubecode )
 
     return html_string
