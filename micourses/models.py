@@ -573,6 +573,7 @@ class CourseThreadContent(models.Model):
                                            choices = AGGREGATE_CHOICES,
                                            default = 'Max')
     optional = models.BooleanField(default=False)
+    record_scores = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0.0)
     
     class Meta:

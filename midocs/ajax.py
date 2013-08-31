@@ -310,7 +310,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     
                     # if found course content, get or create attempt by student
                     # with same assessment_seed
-                    if content and not past_due:
+                    if content and not past_due and content.record_scores:
                         try:
                             current_attempt = content.studentcontentattempt_set\
                                 .get(student=student, seed=assessment_seed)
@@ -349,6 +349,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
                 elif solution_viewed:
                     feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
+                elif not content.record_scores:
+                    feedback_message = "Assessment not set up for recording answers"
                 else:
                     feedback_message = "" #Answer recorded for %s" % request.user
                 if current_attempt:
