@@ -288,14 +288,14 @@ class math_object(object):
             if isinstance(expression, list):
                 new_expr=[]
                 for expr in expression:
-                    new_expr.append(bottom_up(expr,
+                    new_expr.append(bottom_up(expr.evalf(),
                                     lambda w: w.evalf(n_digits)
                                     if not w.is_Number 
                                     else Float(str(w.evalf(n_digits))),
                                     atoms=True))
                 expression=new_expr
             else:
-                expression =  bottom_up(expression,
+                expression =  bottom_up(expression.evalf(),
                                         lambda w: w.evalf(n_digits)
                                         if not w.is_Number 
                                         else Float(str(w.evalf(n_digits))),
