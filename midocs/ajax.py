@@ -366,8 +366,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 if current_attempt:
                     feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
-                dajax.append(feedback_selector, 'innerHTML', 
-                             '<p><i>%s</i></p>' % feedback_message)
+                if feedback_message:
+                    dajax.append(feedback_selector, 'innerHTML', 
+                                 '<p><i>%s</i></p>' % feedback_message)
 
         except Exception as e:
             raise #pass
