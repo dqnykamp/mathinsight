@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from micourses.models import QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory,CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent
+from micourses.models import QuestionStudentAnswer, Course, GradeLevel, AssessmentCategory, CourseAssessmentCategory,CourseEnrollment, AttendanceDate, CourseSkipDate, CourseThreadContent, CourseUser
 from mithreads.models import ThreadContent
 import settings
 import reversion
@@ -157,6 +157,9 @@ class AssessmentCategoryAdmin(reversion.VersionAdmin):
 class GradeLevelAdmin(reversion.VersionAdmin):
     pass
 
+class CourseUserAdmin(reversion.VersionAdmin):
+    pass
+
 
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 admin.site.register(Course, CourseAdmin)
@@ -164,3 +167,4 @@ admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
 admin.site.register(GradeLevel,GradeLevelAdmin)
 admin.site.register(AssessmentCategory,AssessmentCategoryAdmin)
+admin.site.register(CourseUser,CourseUserAdmin)
