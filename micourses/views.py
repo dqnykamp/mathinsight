@@ -538,7 +538,7 @@ def upcoming_assessments_view(request):
 
 
 
-@permission_required("micourse.update_attendance")
+@permission_required("micourses.update_attendance")
 def update_attendance_view(request):
     
     courseuser = request.user.courseuser
@@ -624,7 +624,7 @@ def update_attendance_view(request):
           },
          context_instance=RequestContext(request))
 
-@permission_required("micourse.update_attendance")
+@permission_required("micourses.update_attendance")
 def update_individual_attendance_view(request):
     
     courseuser = request.user.courseuser
