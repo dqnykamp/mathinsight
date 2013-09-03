@@ -879,6 +879,42 @@ def return_applet_parameter_string(applet):
     
     return the_string
 
+
+
+def return_applet_parameter_dictionary(applet):
+    applet_parameters = {}
+
+    # loop through all applet parameters of applet type
+    for possible_param in applet.applet_type.valid_parameters.all():
+        parameter_name=possible_param.parameter_name
+        # skip DEFAULT_WIDTH and DEFAULT_HEIGHT
+        if parameter_name != "DEFAULT_WIDTH" and \
+                parameter_name != "DEFAULT_HEIGHT" and \
+                parameter_name != "code":
+ 
+            parameter_value=""
+            # check to see if parameter defined for particular applet
+            try:
+                app_param=applet.appletparameter_set.get(parameter=possible_param)
+                parameter_name = possible_param.parameter_name
+                parameter_value = app_param.value
+                
+            # if not in particular applet, use default value
+            except ObjectDoesNotExist:
+                parameter_value=possible_param.default_value
+
+            # if applet parameter is defined twice just take one of the values
+            except MultipleObjectsReturned:
+                app_param=applet.appletparameter_set.filter(parameter=possible_param)[0]
+                parameter_name = possible_param.parameter_name
+                parameter_value = app_param.value
+
+            # if found a value, add to dictionary
+            if parameter_value:
+                applet_parameters[parameter_name] = parameter_value
+    
+    return applet_parameters
+
 def return_applet_error_string(applet, panel=0):
 
     the_string='<div class="appleterror">'
@@ -1013,6 +1049,26 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
                 
     return javascript
     
+
+def GeogebraTube_link(context, applet, applet_identifier, width, height):
+
+    try:
+        geogebracode=applet.appletparameter_set.get(parameter__parameter_name ="code").value
+    except ObjectDoesNotExist:
+        return "[Broken applet]"
+
+    applet_parameters = return_applet_parameter_dictionary(applet)
+
+    applet_parameter_string = ""
+    for par in applet_parameters.keys():
+        applet_parameter_string += "/%s/%s" % (par,applet_parameters[par])
+
+    html_string = '<iframe scrolling="no" src="//www.geogebratube.org/material/iframe/id/%s/width/%s/height/%s/border/888888%s/at/preferjava" width="%spx" height="%spx" style="border:0px;"> </iframe>' %\
+        (geogebracode, width, height, applet_parameter_string, width, height)
+
+    return html_string
+    
+
 def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
     html_string=""
@@ -1024,7 +1080,6 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
     n_geogebra_web_applets += 1
     context['n_geogebra_web_applets']=n_geogebra_web_applets
-
 
     html_string += '<div class="javascriptapplet"><article class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-ggbbase64="%s"></article></div>\n' % \
         (width, height, applet_identifier, applet.encoded_content)
@@ -1262,6 +1317,8 @@ class AppletNode(template.Node):
            applet_link = Geogebra_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "GeogebraWeb":
            applet_link = GeogebraWeb_link(context, applet, applet_identifier, width, height)
+        elif applet.applet_type.code == "GeogebraTube":
+           applet_link = GeogebraTube_link(context, applet, applet_identifier, width, height)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text
