@@ -222,6 +222,10 @@ def assessment_view(request, assessment_code, solution=False):
                         version= "%s_%s" % (courseuser, version)
                     seed = "%s_%s_%s" % (course.code, assessment.id, version)
 
+                    # create the attempt
+                    current_attempt = \
+                        course_thread_content.studentcontentattempt_set\
+                        .create(student=courseuser, seed=seed)
                 
 
     rendered_question_list=[]
