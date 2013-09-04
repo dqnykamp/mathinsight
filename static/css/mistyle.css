@@ -1996,6 +1996,12 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
     text-align: center;
 }
 
+
+.applet iframe {
+    max-width: 100%;
+}
+
+
 .video {
     text-align: center;
 }
