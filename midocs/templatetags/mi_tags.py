@@ -1063,7 +1063,7 @@ def GeogebraTube_link(context, applet, applet_identifier, width, height):
     for par in applet_parameters.keys():
         applet_parameter_string += "/%s/%s" % (par,applet_parameters[par])
 
-    html_string = '<iframe scrolling="no" src="//www.geogebratube.org/material/iframe/id/%s/width/%s/height/%s/border/888888%s/at/preferjava" width="%spx" height="%spx" style="border:0px;"> </iframe>' %\
+    html_string = '<div class="applet"><iframe scrolling="no" src="//www.geogebratube.org/material/iframe/id/%s/width/%s/height/%s/border/888888%s/at/preferjava" width="%spx" height="%spx" style="border:0px;"> </iframe></div>' %\
         (geogebracode, width, height, applet_parameter_string, width, height)
 
     return html_string
