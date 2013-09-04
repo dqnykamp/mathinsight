@@ -140,6 +140,9 @@ def assessment_view(request, assessment_code, solution=False):
         path = request.build_absolute_uri()
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
+
+    seed = None
+    version = ''
     
     if request.method == 'POST':
         new_attempt = request.POST['new_attempt']
@@ -195,7 +198,12 @@ def assessment_view(request, assessment_code, solution=False):
                 current_attempt = \
                     course_thread_content.studentcontentattempt_set\
                     .create(student=courseuser, seed=seed)
-            else:
+
+            # if instructor and seed is set (from GET)
+            # then use that seed and don't link to attempt
+            # (i.e., skip this processing)
+            elif not (courseuser.role == 'I' and seed is not None):
+                
                 # else try to find latest attempt
                 try:
                     current_attempt = attempts.latest()

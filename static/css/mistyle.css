@@ -2171,7 +2171,25 @@ a.assessment
     text-decoration: underline;
 }
 
+.visible_print_only {
+    visibility: hidden;
+}
+
+.invisible_print_only {
+    visibility: visible;
+}
+
+
+
 @media print {
+
+    .visible_print_only {
+	visibility: visible;
+    }
+
+    .invisible_print_only {
+	visibility: hidden;
+    }
 
     #messageform
     {  
