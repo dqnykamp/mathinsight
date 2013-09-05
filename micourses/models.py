@@ -506,10 +506,11 @@ class Course(models.Model):
         adjusted_due_date_assessments = []
         for assessment in upcoming_assessments:
             adjusted_due_date = assessment.adjusted_due_date(student)
-            adjusted_due_date_assessments.append((adjusted_due_date,assessment))
+            adjusted_due_date_assessments.append((adjusted_due_date,assessment, assessment.sort_order))
 
-        # sort by adjusted due date
-        adjusted_due_date_assessments.sort()
+        # sort by adjusted due date, then by assessment
+        from operator import itemgetter
+        adjusted_due_date_assessments.sort(key=itemgetter(0,2))
         
         #remove past due assessments
         last_past_due_index=-1
