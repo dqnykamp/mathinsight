@@ -31,7 +31,9 @@ class CourseUser(models.Model):
     role = models.CharField(max_length=1,
                             choices = ROLE_CHOICES,
                             default = 'S')
-    
+
+    class Meta:
+        ordering = ['user__last_name', 'user__first_name']
 
     def __unicode__(self):
         return "%s, %s" % (self.user.last_name, self.user.first_name)
@@ -549,8 +551,8 @@ class CourseEnrollment(models.Model):
 
     class Meta:
         unique_together = ("course","student")
-
-
+        ordering = ['student']
+        
 class CourseThreadContent(models.Model):
     AGGREGATE_CHOICES = (
         ('Max', 'Maximum'),
