@@ -1506,7 +1506,11 @@ def edit_latest_student_content_attempts(request, form):
         content = CourseThreadContent.objects.get(id=form_dict['content_id'])
         for student in content.course.enrolled_students.all():
             latest_attempt=content.get_student_latest_attempt(student)
-            new_latest_score = form_dict['%i_latest' % student.id]
+            try:
+                new_latest_score = form_dict['%i_latest' % student.id]
+            except KeyError:
+                continue
+
             latest_attempt.score = new_latest_score
             try:
                 latest_attempt.save()
