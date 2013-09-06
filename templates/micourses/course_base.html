@@ -15,6 +15,7 @@
  <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a><br/>
 {% if courseuser.role == 'I' %}
 <a href="{% url 'mic-instructorgradebook' %}">Gradebook</a><br/>
+<a href="{% url 'mic-instructorlistassessments' %}">List assessments</a><br/>
 <a href="{% url 'mic-updateattendance' %}">Update attendance</a><br/>
 <a href = "{% url 'mic-updateindividualattendance' %}">Update individual attendance</a>
 {%else%}

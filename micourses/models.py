@@ -231,6 +231,22 @@ class Course(models.Model):
 
         return assessment_categories
     
+    def all_assessments_with_points(self):
+        assessments = []
+        number_assessments = 0
+        for ctc in self.coursethreadcontent_set.all():
+            ctc_points = ctc.total_points()
+            if ctc_points:
+                number_assessments += 1
+                assessment_results =  \
+                    {'content': ctc, \
+                         'assessment': ctc.thread_content.content_object, \
+                         'points': ctc_points, \
+                         }
+                assessments.append(assessment_results)
+
+
+        return assessments
  
     def student_score_for_assessment_category(self, assessment_category,
                                               student):
