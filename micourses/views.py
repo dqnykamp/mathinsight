@@ -950,6 +950,7 @@ def instructor_gradebook_view(request):
           },
          context_instance=RequestContext(request))
 
+
 class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
     
     model = CourseThreadContent
@@ -979,4 +980,38 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
                 'default_datetime': datetime.datetime.now()\
                     .strftime('%Y-%m-%d %H:%M')
                 }
+
+
+# temporary view while gradebook view is so slow
+# and while don't have a way to have asseessment that don't contribute
+# to course score show up in gradebook
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+def instructor_list_assessments_view(request):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+
+    assessments_with_points = course.all_assessments_with_points()
+
+    # no Google analytics for course
+    noanalytics=True
+
+    return render_to_response \
+        ('micourses/instructor_list_assessments.html', 
+         {'course': course,
+          'courseuser': courseuser, 
+          'assessments': assessments_with_points,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
 
