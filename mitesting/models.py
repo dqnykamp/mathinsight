@@ -132,7 +132,8 @@ class Question(models.Model):
         return author_list_full(self.questionauthor_set.all(), 
                                 include_link=include_link)
 
-    def need_help_html_string(self, identifier, user=None, seed_used=None):
+    def need_help_html_string(self, identifier, user=None, seed_used=None,
+                              assessment=None):
         
         html_string=""
         question_subparts = self.questionsubpart_set.exists()
@@ -141,10 +142,14 @@ class Question(models.Model):
         else:
             reference_pages = self.questionreferencepage_set.all()
             
+        include_solution_link=False
         if self.solution_text and user and self.user_can_view(user,solution=True):
-            include_solution_link=True
-        else:
-            include_solution_link=False
+            if assessment:
+                if assessment.user_can_view(user, solution=True):
+                    include_solution_link=True
+            else:
+                include_solution_link=True
+
 
         if self.hint_text or reference_pages or include_solution_link:
             html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (identifier, identifier)
@@ -296,7 +301,7 @@ class Question(models.Model):
         return the_context
 
     def render_text(self, context, identifier, user=None, solution=False, 
-                    show_help=True, seed_used=None):
+                    show_help=True, seed_used=None, assessment=None):
 
         template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base
@@ -305,7 +310,7 @@ class Question(models.Model):
         else:
             template_string += self.question_text
             if show_help:
-                template_string += self.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used)
+                template_string += self.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used, assessment=assessment)
         try:
             t = Template(template_string)
             html_string = t.render(context)
@@ -321,7 +326,7 @@ class Question(models.Model):
                 else:
                     template_string += subpart.question_text
                     if show_help:
-                        template_string += subpart.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used)
+                        template_string += subpart.need_help_html_string(identifier=identifier, user=user, seed_used=seed_used, assessment=assessment)
                     
                 html_string += "<li class='question"
                 if not solution and subpart.spacing_css():
@@ -364,7 +369,8 @@ class Question(models.Model):
         else:
             return self.render_text(context,identifier=identifier, user=user, 
                                     solution=False, 
-                                    show_help=show_help, seed_used=seed_used)
+                                    show_help=show_help, seed_used=seed_used,
+                                    assessment=assessment)
 
     def render_solution(self, context, user=None, identifier=""):
         
@@ -541,7 +547,8 @@ class QuestionSubpart(models.Model):
             return self.question_spacing.css_code
 
 
-    def need_help_html_string(self, identifier, user=None, seed_used=None):
+    def need_help_html_string(self, identifier, user=None, seed_used=None,
+                              assessment=None):
         
         identifier="%s_%s" % (identifier, self.id)
 
@@ -549,10 +556,15 @@ class QuestionSubpart(models.Model):
 
         reference_pages = self.question.questionreferencepage_set.filter(question_subpart=self.get_subpart_letter())
         
+        include_solution_link=False
+        
         if self.solution_text and user and self.question.user_can_view(user,solution=True):
-            include_solution_link=True
-        else:
-            include_solution_link=False
+            if assessment:
+                if assessment.user_can_view(user, solution=True):
+                    include_solution_link=True
+            else:
+                include_solution_link=True
+
 
         if self.hint_text or reference_pages or include_solution_link:
             html_string += '<div class="question_help_container"><p><a id="%s_help_show" class="show_help" onclick="showHide(\'%s_help\');">Need help?</a></p>' % (identifier, identifier)

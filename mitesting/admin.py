@@ -21,6 +21,11 @@ class AssessmentAdmin(reversion.VersionAdmin):
     save_on_top=True
     save_as = True
 
+    class Media:
+        js = [
+            "%sjs/save_me_genie.js" % settings.STATIC_URL,
+        ]
+
 
 class RandomNumberInline(admin.TabularInline):
     model = RandomNumber
@@ -83,6 +88,7 @@ class QuestionAdmin(reversion.VersionAdmin):
         js = [
             "%sjs/jquery-latest.js" % settings.STATIC_URL,
             "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
+            "%sjs/save_me_genie.js" % settings.STATIC_URL,
         ]
 
 

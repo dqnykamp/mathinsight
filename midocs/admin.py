@@ -63,6 +63,10 @@ class AppletAdmin(reversion.VersionAdmin):
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
         }
 
+    class Media:
+        js = [
+            "%sjs/save_me_genie.js" % settings.STATIC_URL,
+        ]
 
 class AppletHighlight(Applet):
     class Meta:
@@ -141,6 +145,10 @@ class VideoAdmin(reversion.VersionAdmin):
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
         }
 
+    class Media:
+        js = [
+            "%sjs/save_me_genie.js" % settings.STATIC_URL,
+        ]
 
 class VideoHighlight(Video):
     class Meta:
@@ -183,6 +191,11 @@ class ImageAdmin(reversion.VersionAdmin):
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
         }
+
+    class Media:
+        js = [
+            "%sjs/save_me_genie.js" % settings.STATIC_URL,
+        ]
 
 class PageRelationshipInline(admin.TabularInline):
     model = PageRelationship
