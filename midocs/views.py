@@ -86,7 +86,7 @@ def pageview(request, page_code):
     
     # turn off google analytics for localhost or hidden page
     noanalytics=False
-    if settings.SITE_ID==2 or thepage.hidden:
+    if settings.SITE_ID==2 or settings.SITE_ID==3 or thepage.hidden:
         noanalytics=True
         
         
@@ -170,7 +170,7 @@ def imageview(request, image_code):
 
     # turn off google analytics for localhost or hidden
     noanalytics=False
-    if settings.SITE_ID==2 or theimage.hidden:
+    if settings.SITE_ID==2 or settings.SITE_ID==3 or theimage.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -273,7 +273,7 @@ def appletview(request, applet_code):
 
     # turn off google analytics for localhost or hidden applet
     noanalytics=False
-    if settings.SITE_ID==2 or theapplet.hidden:
+    if settings.SITE_ID==2 or settings.SITE_ID==3 or theapplet.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -357,7 +357,7 @@ def videoview(request, video_code):
 
     # turn off google analytics for localhost or hidden video
     noanalytics=False
-    if settings.SITE_ID==2 or thevideo.hidden:
+    if settings.SITE_ID==2 or settings.SITE_ID==3 or thevideo.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -380,7 +380,7 @@ def indexview(request, index_code):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
     return render_to_response("midocs/index_detail.html", 
@@ -397,7 +397,7 @@ def newsview(request, news_code):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
     return render_to_response("midocs/news_detail.html", 
@@ -477,7 +477,7 @@ def whatsnewview(request, items):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
     return render_to_response(the_template, 
@@ -524,7 +524,7 @@ def home(request):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
     return render_to_response("home.html", 

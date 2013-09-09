@@ -13,6 +13,8 @@
 
 {% block rightcolumn %}
  <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a><br/>
+<a href="http://math.umn.edu/~nykamp/m1241/fall13/syllabus.html">Course syllabus</a><br/>
+<a href="http://math.umn.edu/~nykamp/m1241/fall13/instructors.html">Instructors and office hours</a><br/>
 {% if courseuser.role == 'I' %}
 <a href="{% url 'mic-instructorgradebook' %}">Gradebook</a><br/>
 <a href="{% url 'mic-instructorlistassessments' %}">List assessments</a><br/>
