@@ -271,7 +271,7 @@ def assessment_view(request, assessment_code, solution=False):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
     
     solution_postfix=""
@@ -386,7 +386,7 @@ def assessment_overview_view(request, assessment_code):
 
     # turn off google analytics for localhost
     noanalytics=False
-    if settings.SITE_ID==2:
+    if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
     return render_to_response \
