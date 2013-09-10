@@ -192,7 +192,7 @@ def assessment_view(request, assessment_code, solution=False):
                 attempt_number += 1
                 version = str(attempt_number)
                 if course_thread_content.individualize_by_student:
-                    version= "%s_%s" % (courseuser, version)
+                    version= "%s_%s" % (courseuser.user.username, version)
                 seed = "%s_%s_%s" % (course.code, assessment.id, version)
 
                 current_attempt = \
@@ -210,7 +210,7 @@ def assessment_view(request, assessment_code, solution=False):
                     seed = current_attempt.seed
                     version = str(attempt_number)
                     if course_thread_content.individualize_by_student:
-                        version= "%s_%s" % (courseuser, version)
+                        version= "%s_%s" % (courseuser.user.username, version)
 
                 except ObjectDoesNotExist:
                     # for seed use course_code, assessment_id, 
@@ -219,7 +219,7 @@ def assessment_view(request, assessment_code, solution=False):
                     # if individualize_by_student, add username
                     version = "1"
                     if course_thread_content.individualize_by_student:
-                        version= "%s_%s" % (courseuser, version)
+                        version= "%s_%s" % (courseuser.user.username, version)
                     seed = "%s_%s_%s" % (course.code, assessment.id, version)
 
                     # create the attempt
