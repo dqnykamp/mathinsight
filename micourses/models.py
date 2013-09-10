@@ -898,7 +898,7 @@ class StudentContentAttempt(models.Model):
     datetime_added = models.DateTimeField(auto_now_add=True)
     datetime = models.DateTimeField(blank=True)
     score = models.FloatField(null=True, blank=True)
-    seed = models.CharField(max_length=50, blank=True, null=True)
+    seed = models.CharField(max_length=150, blank=True, null=True)
 
     def __unicode__(self):
         return "%s attempt on %s" % (self.student, self.content)
@@ -1035,7 +1035,7 @@ class StudentContentAttemptSolutionView(models.Model):
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
-    seed = models.CharField(max_length=50, blank=True, null=True)
+    seed = models.CharField(max_length=150, blank=True, null=True)
     question_set = models.SmallIntegerField(blank=True, null=True)
     answer = models.TextField(blank=True, null=True)
     identifier_in_answer = models.CharField(max_length=50, blank=True,
@@ -1048,7 +1048,7 @@ class QuestionStudentAnswer(models.Model):
     # only if don't have a course_content_attempt:
     assessment = models.ForeignKey('mitesting.Assessment', 
                                    blank=True, null=True)
-    assessment_seed = models.CharField(max_length=50, blank=True, null=True)
+    assessment_seed = models.CharField(max_length=150, blank=True, null=True)
 
     def __unicode__(self):
         return  "%s" % self.answer
