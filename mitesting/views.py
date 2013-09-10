@@ -1,4 +1,5 @@
 from mitesting.models import Question, Assessment
+from django.db import IntegrityError
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
@@ -149,6 +150,11 @@ def assessment_view(request, assessment_code, solution=False):
     else:
         new_attempt = False
         seed = request.REQUEST.get('seed', None)
+        """
+        This is possibly not a correct comment.
+        If the user is anonymous, the seed is available in _GET.
+        However, users in courses have seeds passed through the database and this will be set to None, to be overwritten later.
+        """
         version = seed
         if not version:
             if assessment.nothing_random:
@@ -180,13 +186,16 @@ def assessment_view(request, assessment_code, solution=False):
             course_thread_content=course.coursethreadcontent_set.get\
                 (thread_content__object_id=assessment.id,\
                      thread_content__content_type=assessment_content_type)
+            # Finds the course version of the specific assessment
         except ObjectDoesNotExist:
             course=None
 
         if course_thread_content:
             attempts = course_thread_content.studentcontentattempt_set\
-                .filter(student=courseuser, score=None)
+                .filter(student=courseuser) 
             attempt_number = attempts.count()
+            # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
+            
             if new_attempt:
                 # if new_attempt, create another attempt
                 attempt_number += 1
@@ -195,9 +204,13 @@ def assessment_view(request, assessment_code, solution=False):
                     version= "%s_%s" % (courseuser.user.username, version)
                 seed = "%s_%s_%s" % (course.code, assessment.id, version)
 
-                current_attempt = \
-                    course_thread_content.studentcontentattempt_set\
-                    .create(student=courseuser, seed=seed)
+                try:
+                    current_attempt = \
+                        course_thread_content.studentcontentattempt_set\
+                        .create(student=courseuser, seed=seed)
+                except IntegrityError:
+                    raise 
+                    
 
             # if instructor and seed is set (from GET)
             # then use that seed and don't link to attempt
