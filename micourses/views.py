@@ -383,7 +383,10 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
         answer_list=[]
         for answer in self.answers:
             answer_dict = {'datetime': answer.datetime, }
-            answer_dict['score'] = answer.credit*self.question_dict['points']
+            try:
+                answer_dict['score'] = answer.credit*self.question_dict['points']
+            except TypeError:
+                answer_dict['score'] = 0
             answer_dict['credit_percent'] = int(answer.credit*100)
             answer_list.append(answer_dict)
         context['answers'] = answer_list
@@ -445,7 +448,10 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         
         answer_dict = {'datetime': self.answer.datetime,
                        'answer': self.answer.answer  }
-        answer_dict['score'] = self.answer.credit*self.question_dict['points']
+        try:
+            answer_dict['score'] = self.answer.credit*self.question_dict['points']
+        except TypeError:
+            answer_dict['score'] = 0
         answer_dict['points'] = self.question_dict['points']
         answer_dict['credit_percent'] = int(self.answer.credit*100)
         answer_dict['attempt_number'] = self.question_attempt_number
