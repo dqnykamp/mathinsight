@@ -1071,8 +1071,10 @@ class RandomNumber(models.Model):
         min_value = parse_and_process(self.min_value, global_dict=global_dict)
         
         increment = parse_and_process(self.increment, global_dict=global_dict)
-           
-        num_possibilities = 1+int(ceil((max_value-min_value)/increment))
+  
+        # multiply by 1+1E-10 before rounding down to integer
+        # so small floating point errors don't bring it down to next integer
+        num_possibilities = 1+int(floor((max_value-min_value)/increment)*(1+1E-10))
         choices=(min_value+n*increment for n in range(num_possibilities))
         the_num = random.choice(list(choices))
 
