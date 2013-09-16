@@ -1,0 +1,38 @@
+{% extends "mitesting/assessment_base.html" %}{% load testing_tags %}
+
+
+{% block content %}
+<h3>{{ assessment }}</h3>
+{% if course %}<h5>{{ course }}</h5>{%endif%}
+
+
+<section class="namesection"><div class="nameblank">Name:<br/>ID #:</div><div class="sectionblank">Table/group #:<br/>Group members:</div></section>
+
+<section class="quiz_main">
+{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+
+<ol class="quiz_questions">
+{% for question in question_list %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{{ question.question_text }}</li>
+{% endfor %}
+</ol>
+</section>
+
+{% if not assessment.nothing_random %}
+<section id="more_questions_link">
+  {% if course_thread_content %}
+  <form action="{{assessment.get_absolute_url}}" method="post">{% csrf_token %}
+    <input type="hidden" name="new_attempt" value="1">
+    <input type="submit" value="Generate new assessment attempt" />
+  </form>
+  {% else %}
+  <form action="{{assessment.get_absolute_url}}" method="get">
+    <input type="hidden" name="seed" value="{{ assessment.get_new_seed }}">
+    <input type="submit" value="Generate another sample of the questions" />
+  </form>
+  {%endif%}
+</section>
+{% endif%}
+
+{% endblock %}
+
