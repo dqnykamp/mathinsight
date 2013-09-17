@@ -139,7 +139,7 @@ def pageview(request, page_code):
             notation_config=None
     
     # render page text with extra template tags
-    context=Context({})
+    context=RequestContext(request)
     rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
         
     # get any geogebra javascript init commands from rendering tags in text
