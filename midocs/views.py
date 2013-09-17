@@ -138,7 +138,12 @@ def pageview(request, page_code):
         if(notation_config=='midefault'):
             notation_config=None
     
-
+    # render page text with extra template tags
+    context=Context({})
+    rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
+        
+    # get any geogebra javascript init commands from rendering tags in text
+    geogebra_oninit_commands=context.dicts[0].get('geogebra_oninit_commands')
 
     return render_to_response \
         ("midocs/page_detail.html", 
@@ -148,6 +153,8 @@ def pageview(request, page_code):
           'notation_config': notation_config,
           'notation_system_form': notation_system_form,
           'noanalytics': noanalytics,
+          'geogebra_oninit_commands': geogebra_oninit_commands,
+          'rendered_text': rendered_text,
           },
          context_instance=RequestContext(request))
 
