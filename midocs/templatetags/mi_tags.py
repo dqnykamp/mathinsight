@@ -1077,8 +1077,9 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
     geogebra_javascript_included=context.get('geogebra_javascript_included',False)
     n_geogebra_web_applets=context.get('n_geogebra_web_applets', 0)
 
-    if n_geogebra_web_applets==0:
-        html_string+='<script type="text/javascript" language="javascript" src="//www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
+    # now put this base.html, so it is loaded with every page
+    # if n_geogebra_web_applets==0:
+    #     html_string+='<script type="text/javascript" language="javascript" src="//www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
 
     n_geogebra_web_applets += 1
     context['n_geogebra_web_applets']=n_geogebra_web_applets

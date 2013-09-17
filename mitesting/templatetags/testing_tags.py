@@ -670,9 +670,18 @@ def _render_question(question, seed, context):
     
     question_context = question.setup_context(identifier=identifier,
                                               seed=seed)
-
+    
     html_string = '<div class="question">%s</div>' % \
         question.render_question(question_context, identifier = identifier)
+
+    # check to see if any geogebra javascript commands were added from question
+    # if so, add them to the context
+    new_commands = question_context.dicts[0].get('geogebra_oninit_commands')
+    if new_commands:
+        geogebra_oninit_commands = context.dicts[0].get('geogebra_oninit_commands','')
+        geogebra_oninit_commands += new_commands
+        context.dicts[0]['geogebra_oninit_commands'] = geogebra_oninit_commands
+
     return html_string
 
 
