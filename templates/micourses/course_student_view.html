@@ -19,14 +19,18 @@
 </ul>
 
 <h4>Due dates in the coming weeks</h4>
+<p>From {{begin_date}} through {{end_date}}
+(<a href="{% url 'mic-contentlist' %}?{{previous_period_parameters}}">previous week</a>) (<a href="{% url 'mic-contentlist' %}?{{next_period_parameters}}">next week</a>) (<a href="{% url 'mic-contentlist' %}?exclude_completed">all</a>)
+</p>
+<p>Excluding items marked as completed (<a href="{% url 'mic-contentlist' %}?{{include_completed_parameters}}">include</a>)</p>
+
+
 <table class="basic">
 <tr><th>Material</th><th>{% if course.adjust_due_date_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_date_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
-{% for assessment in upcoming_assessments %}
-<tr><td>{% intlink assessment.1.thread_content.content_object %}{%endintlink%}</td><td>{% get_initial_due_date assessment.1 student as idd %}{{idd}}</td>{% if course.adjust_due_date_attendance %}<td><a href='{% url 'mic-adjustedduedatecalculation' assessment.1.id %}'>{{assessment.0}}</a></td>{%endif%}<td>{% if assessment.1.total_points %}<a href='{% url 'mic-assessmentattempted' assessment.1.id %}'>{% assessment_student_score assessment.1 student %}</a>{% else %}NA{%endif%}</td></tr>
+{% for content in upcoming_content %}
+<tr><td>{% intlink content.1.thread_content.content_object %}{%endintlink%}</td><td>{% get_initial_due_date content.1 student as idd %}{{idd}}</td>{% if course.adjust_due_date_attendance %}<td><a href='{% url 'mic-adjustedduedatecalculation' content.1.id %}'>{{content.0}}</a></td>{%endif%}<td>{% if content.1.total_points %}<a href='{% url 'mic-assessmentattempted' content.1.id %}'>{% assessment_student_score content.1 student %}</a>{% else %}NA{%endif%}</td></tr>
 {% endfor %}
 </table>
-
-<p><a href="{% url 'mic-upcomingassessments' %}">All upcoming due dates</a></p>
 
 
 {% endblock %}

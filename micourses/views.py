@@ -61,6 +61,16 @@ class CourseUserAuthenticationMixin(object):
         context['course'] = self.course
         context['student'] = self.get_student()
 
+
+        # find begining/end of week
+        today= datetime.date.today()
+        day_of_week = (today.weekday()+1) % 7
+        to_beginning_of_week = datetime.timedelta(days=day_of_week)
+        beginning_of_week = today - to_beginning_of_week
+        end_of_week = begin_date + datetime.timedelta(13)
+        context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
+            % (beginning_of_week, end_of_week)
+        
         # no Google analytics for course
         context['noanalytics']=True
         
@@ -108,8 +118,36 @@ def course_main_view(request):
     # no Google analytics for course
     noanalytics=True
 
-    upcoming_assessments = course.upcoming_assessments(courseuser, 
-                                                       days_future=14)
+    # find begining/end of week
+    today= datetime.date.today()
+    day_of_week = (today.weekday()+1) % 7
+    to_beginning_of_week = datetime.timedelta(days=day_of_week)
+    beginning_of_week = today - to_beginning_of_week
+    end_of_week = beginning_of_week + datetime.timedelta(6)
+    week_date_parameters = "begin_date=%s&end_date=%s" \
+        % (beginning_of_week, end_of_week)
+
+    begin_date = beginning_of_week
+    end_date = begin_date + datetime.timedelta(13)
+
+
+    upcoming_content = course.course_content_by_adjusted_due_date \
+        (courseuser, begin_date=begin_date, \
+             end_date=end_date)
+    
+    date_parameters = "begin_date=%s&end_date=%s" % (begin_date,
+                                                     end_date)
+
+    next_begin_date = end_date + datetime.timedelta(1)
+    next_end_date = next_begin_date+datetime.timedelta(6)
+    next_period_parameters = "begin_date=%s&end_date=%s" \
+        % (next_begin_date, next_end_date)
+    previous_end_date = begin_date - datetime.timedelta(1)
+    previous_begin_date = previous_end_date-datetime.timedelta(6)
+    previous_period_parameters = "begin_date=%s&end_date=%s" \
+        % (previous_begin_date, previous_end_date)
+    previous_period_parameters += "&exclude_completed"
+    next_period_parameters += "&exclude_completed"
 
     next_items = course.next_items(courseuser, number=5)
     
@@ -119,9 +157,15 @@ def course_main_view(request):
              {'student': courseuser,
               'courseuser': courseuser,
               'course': course,
-              'upcoming_assessments': upcoming_assessments,
+              'upcoming_content': upcoming_content,
               'next_items': next_items,
               'multiple_courses': multiple_courses,
+              'week_date_parameters': week_date_parameters,
+              'begin_date': begin_date,
+              'end_date': end_date,
+              'previous_period_parameters': previous_period_parameters,
+              'next_period_parameters': next_period_parameters,
+              'include_completed_parameters': date_parameters,
               'noanalytics': noanalytics,
               },
              context_instance=RequestContext(request))
@@ -131,9 +175,15 @@ def course_main_view(request):
              {'student': courseuser,
               'courseuser': courseuser,
               'course': course,
-              'upcoming_assessments': upcoming_assessments,
+              'upcoming_content': upcoming_content,
               'next_items': next_items,
               'multiple_courses': multiple_courses,
+              'week_date_parameters': week_date_parameters,
+              'begin_date': begin_date,
+              'end_date': end_date,
+              'previous_period_parameters': previous_period_parameters,
+              'next_period_parameters': next_period_parameters,
+              'include_completed_parameters': date_parameters,
               'noanalytics': noanalytics,
               },
              context_instance=RequestContext(request))
@@ -512,7 +562,7 @@ class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttemp
 
 
 @login_required
-def upcoming_assessments_view(request):
+def content_list_view(request):
     courseuser = request.user.courseuser
 
     try:
@@ -529,15 +579,77 @@ def upcoming_assessments_view(request):
     # no Google analytics for course
     noanalytics=True
 
-    upcoming_assessments = course.upcoming_assessments(courseuser)
+    # find begining/end of week
+    today= datetime.date.today()
+    day_of_week = (today.weekday()+1) % 7
+    to_beginning_of_week = datetime.timedelta(days=day_of_week)
+    beginning_of_week = today - to_beginning_of_week
+    end_of_week = beginning_of_week + datetime.timedelta(6)
+    week_date_parameters = "begin_date=%s&end_date=%s" \
+        % (beginning_of_week, end_of_week)
 
+
+    exclude_completed='exclude_completed' in request.GET
+    exclude_past_due='exclude_past_due' in request.GET
+    try:
+        begin_date = datetime.datetime.strptime(request.GET.get('begin_date'),"%Y-%m-%d").date()
+    except:
+        begin_date = None
+    try:
+        end_date = datetime.datetime.strptime(request.GET.get('end_date'),"%Y-%m-%d").date()
+    except:
+        end_date = None
+
+    content_list = course.course_content_by_adjusted_due_date\
+        (courseuser, exclude_completed=exclude_completed, \
+             begin_date=begin_date, end_date=end_date)
+
+    if begin_date and end_date:
+        next_begin_date = end_date + datetime.timedelta(1)
+        next_end_date = next_begin_date+(end_date-begin_date)
+        next_period_parameters = "begin_date=%s&end_date=%s" \
+            % (next_begin_date, next_end_date)
+        previous_end_date = begin_date - datetime.timedelta(1)
+        previous_begin_date = previous_end_date+(begin_date-end_date)
+        previous_period_parameters = "begin_date=%s&end_date=%s" \
+            % (previous_begin_date, previous_end_date)
+        if exclude_completed:
+            previous_period_parameters += "&exclude_completed"
+            next_period_parameters += "&exclude_completed"
+    else:
+        previous_period_parameters=None
+        next_period_parameters=None
+
+    all_dates_parameters = ""
+    if exclude_completed:
+        all_dates_parameters = "exclude_completed"
+
+    date_parameters=""
+    if begin_date:
+        date_parameters += "begin_date=%s" % begin_date
+    if end_date:
+        if date_parameters:
+            date_parameters += "&"
+        date_parameters += "end_date=%s" % end_date
+
+    exclude_completed_parameters="exclude_completed"
+    if date_parameters:
+        exclude_completed_parameters += "&" + date_parameters
     
     return render_to_response \
-        ('micourses/upcoming_assessments.html', 
+        ('micourses/content_list.html', 
          {'student': courseuser,
           'courseuser': courseuser,
           'course': course,
-          'upcoming_assessments': upcoming_assessments,
+          'content_list': content_list,
+          'exclude_completed': exclude_completed,
+          'week_date_parameters': week_date_parameters,
+          'begin_date': begin_date, 'end_date': end_date,
+          'previous_period_parameters': previous_period_parameters,
+          'next_period_parameters': next_period_parameters,
+          'exclude_completed_parameters': exclude_completed_parameters,
+          'include_completed_parameters': date_parameters,
+          'all_dates_parameters': all_dates_parameters,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))

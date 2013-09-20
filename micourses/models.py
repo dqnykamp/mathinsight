@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.contrib.contenttypes.models import ContentType
 import datetime
 import settings
 
@@ -494,52 +495,65 @@ class Course(models.Model):
             .filter(date__gte = start_date).count()
 
 
-    def upcoming_assessments(self, student, date=None, days_future=None):
-        if not date:
-            date = datetime.date.today()
+    def course_content_by_adjusted_due_date \
+            (self, student, begin_date=None, end_date=None, \
+                 exclude_completed=True, \
+                 assessments_only=False):
+        
+        # create list of course content for student sorted by adjusted due date
+        # if begin_date and/or end_date, then show only those with 
+        # adjusted due date from begin_date until end_date
+        # if exclude_completed, then exclude those a student marked complete
+        # if assessments_only, then show only those with contenttype=assessment
 
-        later_date = None
-        if days_future:
-            later_date = date+datetime.timedelta(days_future)
+        content_list= self.coursethreadcontent_set.all()
 
-        # create list of incomplete assessments with 
-        # initial due dates before later_date (if set)
-        # and current final due dates
-        # (this initial filter doesn't account for any 
-        # manual due date adjustments)
-        upcoming_assessments= self.coursethreadcontent_set\
-            .filter(final_due_date__gte = date) \
-            .exclude(id__in=self.coursethreadcontent_set.filter \
-                         (studentcontentcompletion__student=student,
-                          studentcontentcompletion__complete=True))
-        print later_date
-        if later_date:
-            upcoming_assessments=upcoming_assessments\
-                .filter(initial_due_date__lt = later_date)\
+        if assessments_only:
+            assessment_content_type = ContentType.objects.get\
+                (model='assessment')
+            content_list = content_list.filter \
+                (thread_content__content_type=assessment_content_type)
+    
+        # exclude content without an initial or final due date
+        # since those cannot have an adjusted due date
+        content_list = content_list.exclude(final_due_date=None)\
+            .exclude(initial_due_date=None)
 
+        if exclude_completed:
+            content_list = content_list.exclude \
+                (id__in=self.coursethreadcontent_set.filter \
+                     (studentcontentcompletion__student=student,
+                      studentcontentcompletion__complete=True))
 
-        # for each of this assessments, calculate adjusted due dates
-        adjusted_due_date_assessments = []
-        for assessment in upcoming_assessments:
-            adjusted_due_date = assessment.adjusted_due_date(student)
-            adjusted_due_date_assessments.append((adjusted_due_date,assessment, assessment.sort_order))
+        # for each of content, calculate adjusted due date
+        adjusted_due_date_content = []
+        for coursecontent in content_list:
+            adjusted_due_date = coursecontent.adjusted_due_date(student)
+            adjusted_due_date_content.append((adjusted_due_date,coursecontent, coursecontent.sort_order))
 
-        # sort by adjusted due date, then by assessment
+        # sort by adjusted due date, then by coursecontent
         from operator import itemgetter
-        adjusted_due_date_assessments.sort(key=itemgetter(0,2))
+        adjusted_due_date_content.sort(key=itemgetter(0,2))
         
-        #remove past due assessments
-        last_past_due_index=-1
-        for (i, assessment) in enumerate(adjusted_due_date_assessments):
-            if adjusted_due_date_assessments[i][0] < date:
-                last_past_due_index=i
-            else:
-                break
+        #remove content outside dates
+        if begin_date:
+            last_too_early_index=-1
+            for (i, coursecontent) in enumerate(adjusted_due_date_content):
+                if adjusted_due_date_content[i][0] < begin_date:
+                    last_too_early_index=i
+                else:
+                    break
         
-        adjusted_due_date_assessments=adjusted_due_date_assessments\
-           [last_past_due_index+1:]
+            adjusted_due_date_content=adjusted_due_date_content\
+                [last_too_early_index+1:]
+            
+        if end_date:
+            for (i, coursecontent) in enumerate(adjusted_due_date_content):
+                if adjusted_due_date_content[i][0] > end_date:
+                    adjusted_due_date_content=adjusted_due_date_content[:i]
+                    break
 
-        return adjusted_due_date_assessments
+        return adjusted_due_date_content
 
     def next_items(self, student, number=5):
         # use subqueries with filter rather than exclude
