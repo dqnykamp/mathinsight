@@ -67,7 +67,7 @@ class CourseUserAuthenticationMixin(object):
         day_of_week = (today.weekday()+1) % 7
         to_beginning_of_week = datetime.timedelta(days=day_of_week)
         beginning_of_week = today - to_beginning_of_week
-        end_of_week = begin_date + datetime.timedelta(13)
+        end_of_week = beginning_of_week + datetime.timedelta(13)
         context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
             % (beginning_of_week, end_of_week)
         
