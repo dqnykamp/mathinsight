@@ -1380,7 +1380,7 @@ class AppletNode(template.Node):
             (capture_changes=True)
         inputboxlist=''
         capture_javascript=''
-        answer_list = context.get('answer_list',[])
+        answer_list = context.get('_math_writein_answer_list',[])
 
         for appletobject in appletobjects:
             the_kw = "answer_blank_%s" % appletobject.name
@@ -1431,7 +1431,7 @@ class AppletNode(template.Node):
                 answer_list.append((expression_string, expression_for_object,
                                     points))
         
-        context['answer_list'] = answer_list
+        context['_math_writein_answer_list'] = answer_list
 
 
                         

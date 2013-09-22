@@ -122,7 +122,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
             # render question text to add answer_list to question_context
             the_question.render_text(question_context, identifier='hmm', show_help=False)
 
-            the_correct_answers = question_context.get('answer_list',[])
+            the_correct_answers = question_context.get('_math_writein_answer_list',[])
             
         except Exception as e:
             dajax.alert("Something wrong with solution: %s" % e )
