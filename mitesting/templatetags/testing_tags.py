@@ -817,7 +817,7 @@ class AnswerBlankNode(template.Node):
         except:
             points=1
 
-        answer_list = context.get('answer_list',[])
+        answer_list = context.get('_math_writein_answer_list',[])
 
         # answer expression should refer to an expression that is
         # defined in the question context
@@ -832,7 +832,7 @@ class AnswerBlankNode(template.Node):
         answer_list.append((self.answer_expression_string, answer_expression, 
                             points))
         
-        context['answer_list'] = answer_list
+        context['_math_writein_answer_list'] = answer_list
 
 
         identifier = context['identifier']

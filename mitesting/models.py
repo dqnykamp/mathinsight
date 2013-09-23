@@ -445,7 +445,7 @@ class Question(models.Model):
 
         send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, assessment_seed, question_set, record)
 
-        the_correct_answers = context.get('answer_list',[])
+        the_correct_answers = context.get('_math_writein_answer_list',[])
         answer_feedback_strings=""
         for answer_tuple in the_correct_answers:
             answer_string = answer_tuple[0]

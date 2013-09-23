@@ -992,9 +992,12 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 (applet_identifier, appletobject.name,
                  value)
         elif object_type=='Text':
+            value_string = "%s" % value
+            # escape \ for javascript
+            value_string = value_string.replace('\\','\\\\')
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
                 (applet_identifier, appletobject.name,
-                 value.replace('\\','\\\\'))  # escape \ for javascript
+                 value_string)  
         elif object_type=='Function':
             from sympy import Symbol
             global_dict=context["sympy_global_dict"]
@@ -1377,7 +1380,7 @@ class AppletNode(template.Node):
             (capture_changes=True)
         inputboxlist=''
         capture_javascript=''
-        answer_list = context.get('answer_list',[])
+        answer_list = context.get('_math_writein_answer_list',[])
 
         for appletobject in appletobjects:
             the_kw = "answer_blank_%s" % appletobject.name
@@ -1428,7 +1431,7 @@ class AppletNode(template.Node):
                 answer_list.append((expression_string, expression_for_object,
                                     points))
         
-        context['answer_list'] = answer_list
+        context['_math_writein_answer_list'] = answer_list
 
 
                         
