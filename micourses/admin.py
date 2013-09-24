@@ -160,6 +160,8 @@ class GradeLevelAdmin(reversion.VersionAdmin):
 class CourseUserAdmin(reversion.VersionAdmin):
     pass
 
+class ManualDueDateAdjustmentAdmin(reversion.VersionAdmin):
+    pass
 
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 admin.site.register(Course, CourseAdmin)
@@ -168,6 +170,7 @@ admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThrea
 admin.site.register(GradeLevel,GradeLevelAdmin)
 admin.site.register(AssessmentCategory,AssessmentCategoryAdmin)
 admin.site.register(CourseUser,CourseUserAdmin)
+admin.site.register(ManualDueDateAdjustment, ManualDueDateAdjustmentAdmin)
 
 admin.site.register(StudentContentAttempt)
 admin.site.register(StudentContentCompletion)

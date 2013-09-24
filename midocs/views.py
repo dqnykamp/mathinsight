@@ -140,8 +140,12 @@ def pageview(request, page_code):
     
     # render page text with extra template tags
     context=RequestContext(request)
-    rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
-        
+    try:
+        rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
+    except Exception as e:
+        rendered_text = "Template error in text (TMPLERR): %s" % e
+
+
     # get any geogebra javascript init commands from rendering tags in text
     geogebra_oninit_commands=context.dicts[0].get('geogebra_oninit_commands')
 
