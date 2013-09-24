@@ -59,6 +59,7 @@ class AppletAdmin(reversion.VersionAdmin):
     filter_horizontal = ['features','keywords','subjects']
     search_fields = ['code', 'title','applet_type__code']
     save_on_top=True
+    save_as=True
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 100})},
         }
