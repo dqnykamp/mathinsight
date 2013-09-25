@@ -3,10 +3,9 @@
 
 {% block content %}
 <h3>{{ assessment }}</h3>
-{% if course %}<h5>{{ course }}</h5>{%endif%}
 
-
-<section class="namesection"><div class="nameblank">Name:<br/>ID #:</div><div class="sectionblank">Table/group #:<br/>Group members:</div></section>
+<section class="namesection"><div class="nameblank">{% if course %}{{ course }}<br/>{%endif%}
+Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due date: {{course_thread_content.initial_due_date}}<br/>{%endif%}Table/group #:<br/>Group members:</div></section>
 
 <section class="quiz_main">
 {% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
