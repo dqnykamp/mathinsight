@@ -11,12 +11,12 @@
 <h4>{{content.thread_content.content_object}}</h4>
 
 <p>Points: {{content.total_points}}<br/>
-Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} over attempts)<br/>
+Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} score achieved)<br/>
 Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
 
 <table id="attempt_table" class="basic rowclick">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th></tr></thead>
-<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{content.attempt_aggregation_string}})</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
+<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{content.attempt_aggregation_string}} score achieved)</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
 {% for attempt in attempts %}
 <tr><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td><td class="righttext">{{attempt.score_or_edit}}</td></tr>
 {% endfor %}
