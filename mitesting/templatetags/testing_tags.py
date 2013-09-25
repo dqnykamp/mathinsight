@@ -147,8 +147,8 @@ def new_exam_page(context):
     return {
         'course': context.get('course'),
         'assessment_date': context.get('assessment_date'),
-        'ssessment_short_name': context.get('assessment_short_name'),
-        'version': context.get('version'),
+        'assessment_short_name': context.get('assessment_short_name'),
+        'version_string': context.get('version_string'),
         }
 
 
