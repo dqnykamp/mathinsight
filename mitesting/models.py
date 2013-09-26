@@ -250,6 +250,7 @@ class Question(models.Model):
             # select random words and add to context
             # if two words have the same group, use the same random index
             groups = self.randomword_set.values('group').distinct()
+            function_dict = {}
             for group_dict in groups:
                 group = group_dict['group']
                 random_words =self.randomword_set.filter(group=group)
@@ -257,7 +258,7 @@ class Question(models.Model):
                     if ind==0 or group=='' or group is None:
                         word_index=None
                     try:
-                        (the_word, the_plural, word_index) = random_word.get_sample(word_index)
+                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, function_dict=function_dict)
                     except Exception as e:
                         return "Error in random word %s: %s" % (random_word.name, e)
                     the_context[random_word.name] = the_word
@@ -267,7 +268,7 @@ class Question(models.Model):
                     else:
                         # sympy can't handle spaces
                         word_text=re.sub(' ', '_', the_word)
-                        sympy_word = Symbol(str(the_word))
+                        sympy_word = Symbol(str(word_text))
                         
                     global_dict[str(random_word.name)]=sympy_word
 
@@ -297,6 +298,7 @@ class Question(models.Model):
 
         
         the_context['sympy_global_dict']=global_dict
+        the_context['sympy_function_dict'] = function_dict
         the_context['question_%s_seed' % identifier] = seed
         return the_context
 
@@ -1108,7 +1110,7 @@ class RandomWord(models.Model):
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self, index=None, global_dict=None):
+    def get_sample(self, index=None, global_dict=None, function_dict=None):
 
         # turn comma separated list to python list. 
         # strip off leading/trailing whitespace
@@ -1128,6 +1130,8 @@ class RandomWord(models.Model):
                 temp_global_dict.update(global_dict)
                 if self.treat_as_function:
                     temp_global_dict[str(the_word)] = Function(str(the_word))
+                    if function_dict is not None:
+                        function_dict[str(the_word)] = Function(str(the_word))
                 the_word = math_object(parse_expr(the_word, global_dict=temp_global_dict))
             except:
                 pass
