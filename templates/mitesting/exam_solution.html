@@ -4,13 +4,12 @@
 {% block extrastyle2 %}
 <link href="{{ STATIC_URL }}css/miexam.css" rel="stylesheet" type="text/css"/>
 {% endblock %}
-{% block title %}{{ the_assessment_name }}, version {{ version }} - Math Insight{%endblock%}
+{% block title %}{{ assessment_name }}{{ version_string }} - Math Insight{%endblock%}
 
 {% block content %}
 
 <table class="examinfo"><tr><td>{{ course }}</td></tr>
-<tr><td>{{ semester }}</td></tr>
-<tr><td>{{ the_assessment_name }}, version {{ version }}</td></tr>
+<tr><td>{{ assessment_name }}{{ version_string }}</td></tr>
 <tr><td>{{ assessment_date }}</td></tr>
 </table>
 <section class="exam_main">

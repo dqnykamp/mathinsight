@@ -1,8 +1,8 @@
 {% extends "mitesting/assessment_base.html" %}{% load testing_tags %}
 
 {% block content %}
-<h3>{{ the_assessment }}</h3>
-<h5>{{ course }} {{ semester }}</h5>
+<h3>{{ assessment_name }}{{version_string}}</h3>
+<h5>{{ course }}</h5>
 
 <section class="quiz_main">
 <ol class="quiz_questions">
