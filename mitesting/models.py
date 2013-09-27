@@ -37,6 +37,13 @@ def try_round(number, ndigits=0):
     except TypeError:
         return number
 
+def evalf(expr, n=15):
+    if expr.is_Number:
+        from sympy import Float
+        return Float(str(expr.evalf(n)))
+    else:
+        return number.evalf(n)
+
     
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -187,7 +194,9 @@ class Question(models.Model):
                               'e': all_sympy_commands['E'], 
                               'max': all_sympy_commands['Max'], 
                               'min': all_sympy_commands['Min'],
-                              'abs': all_sympy_commands['Abs'], }
+                              'abs': all_sympy_commands['Abs'], 
+                              'evalf': evalf,
+                              }
   
         # obtain list of allowed commands from database
         allowed_commands = set()
