@@ -209,9 +209,16 @@ class Question(models.Model):
             
         return global_dict
     
-    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False, previous_context = None):
+    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False, previous_context = None, question_set=None):
 
-        identifier = "%s_%s" % (identifier, self.id)
+        # attempt to set identifier to be unique for each question that
+        # occurs in a page
+        # if question set is specified, that should make it unique
+        # if question set is not specified 
+        # (meaning, either question was embedded directly with tag in page
+        # or we are at a question page), then assume question id will
+        # make it unique
+        identifier = "%s_%s_qs%s" % (identifier, self.id, question_set)
 
         if seed is None:
             seed=self.get_new_seed()
@@ -349,34 +356,70 @@ class Question(models.Model):
                         identifier="", assessment=None, question_set=None, 
                         assessment_seed=None, pre_answers=None, readonly=False,
                         precheck=False):
-        identifier = "%s_%s" % (identifier, self.id)
+
+        # attempt to set identifier to be unique for each question that
+        # occurs in a page
+        # if question set is specified, that should make it unique
+        # if question set is not specified 
+        # (meaning, either question was embedded directly with tag in page
+        # or we are at a question page), then assume question id will
+        # make it unique
+        identifier_base = "%s_%s_qs%s" % (identifier, self.id, question_set)
         
-        context['identifier'] = identifier
         context['readonly'] = readonly
         if pre_answers:
             context['pre_answers'] = pre_answers
 
-        seed_used = context['question_%s_seed' % identifier]
+        seed_used = context['question_%s_seed' % identifier_base]
+
+
+        # set applet counter to zero
+        context['_applet_counter'] = 0
+        identifier = identifier_base + "_sol"
+        context['identifier'] = identifier
+        # render solution so that obtain geogebra_oninit_commands
+        # into context.  Throw away actual text
+        self.render_text(context,identifier=identifier, user=user, 
+                         solution=True, 
+                         seed_used=seed_used,
+                         assessment=assessment)
+
+        identifier = identifier_base
+        context['identifier'] = identifier
+        context['_applet_counter'] = 0
         if self.question_type.name=="Multiple choice":
-            return self.render_multiple_choice_question\
+            rendered_text = self.render_multiple_choice_question\
                 (context, identifier=identifier, seed_used=seed_used,
                  assessment=assessment,
                  assessment_seed=assessment_seed, question_set=question_set)
         elif self.question_type.name=="Math write in":
-            return self.render_math_write_in_question\
+            rendered_text= self.render_math_write_in_question\
                 (context, identifier=identifier, seed_used=seed_used,
                  assessment=assessment,
                  assessment_seed=assessment_seed, question_set=question_set,
                  precheck=precheck)
         else:
-            return self.render_text(context,identifier=identifier, user=user, 
-                                    solution=False, 
-                                    show_help=show_help, seed_used=seed_used,
-                                    assessment=assessment)
-
-    def render_solution(self, context, user=None, identifier=""):
+            rendered_text= self.render_text\
+                (context,identifier=identifier, user=user, 
+                 solution=False, 
+                 show_help=show_help, seed_used=seed_used,
+                 assessment=assessment)
+                
         
-        identifier = "%s_%s" % (identifier, self.id)
+        return rendered_text
+        
+
+    def render_solution(self, context, user=None, identifier="",
+                        question_set=None):
+        
+        # attempt to set identifier to be unique for each question that
+        # occurs in a page
+        # if question set is specified, that should make it unique
+        # if question set is not specified 
+        # (meaning, either question was embedded directly with tag in page
+        # or we are at a question page), then assume question id will
+        # make it unique
+        identifier = "%s_%s_qs%s" % (identifier, self.id, question_set)
 
         context['identifier'] = identifier
 
@@ -457,10 +500,21 @@ class Question(models.Model):
 
 
         #callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);}</script>' % (identifier, identifier, identifier)
+
+        # for callback script, process question with Mathjax
+        # after processing ajax
+        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]); }</script>' % (identifier, identifier)
+
+        # for solution callback script, process solution with Mathjax
+        # after processing ajax,
+        # then call web (defined in GeoGebraWeb .js file) to process any
+        # new geogebra web applet
+        # ajax removed class geogebraweb from any previous applets so that
+        # don't get applets duplicated by web()
+        callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);web();}</script>' % (identifier, identifier)
 
 
-        html_string = '%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" ><div id="the_question_%s">' %  (callback_script, identifier, identifier)
+        html_string = '%s%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" ><div id="the_question_%s">' %  (callback_script, callback_solution_script, identifier, identifier)
 
         html_string += question_text
 
@@ -812,7 +866,8 @@ class Assessment(models.Model):
             question_context = question.setup_context\
                 (seed=question_dict['seed'], identifier=identifier, \
                      allow_solution_buttons = self.allow_solution_buttons,\
-                     previous_context = previous_context)
+                     previous_context = previous_context, \
+                     question_set = question_set)
             
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -874,10 +929,12 @@ class Assessment(models.Model):
             identifier="qa%s" % i
 
             question = solution_dict['question']
+            question_set = solution_dict['question_set']
             question_context = question.setup_context\
                 (seed=solution_dict['seed'], identifier=identifier, \
                      allow_solution_buttons = self.allow_solution_buttons, \
-                     previous_context = previous_context )
+                     previous_context = previous_context,\
+                     question_set = question_set)
 
             # if there was an error, question_context is a string string,
             # so just make rendered question text be that string
@@ -886,10 +943,12 @@ class Assessment(models.Model):
                 solution_text = question_context
                 geogebra_oninit_commands=""
             else:
-                question_text = question.render_question(question_context,
-                                                          identifier=identifier)
-                solution_text = question.render_solution(question_context,
-                                                          identifier=identifier)
+                question_text = question.render_question\
+                    (question_context, identifier=identifier,\
+                         question_set=question_set)
+                solution_text = question.render_solution\
+                    (question_context, identifier=identifier, \
+                         question_set=question_set)
                 geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
                 #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=True)
                 
