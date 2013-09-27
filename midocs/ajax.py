@@ -116,7 +116,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
 
         try:
 
-            question_context = the_question.setup_context(seed=seed, identifier=identifier)
+            question_context = the_question.setup_context(seed=seed, identifier=identifier, question_set=question_set)
             question_context['identifier'] = identifier
 
             # render question text to add answer_list to question_context
@@ -243,7 +243,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
             # enabling recording when user views it
             # since it doesn't reveal question url
             if solution_inline:
-                show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed, question_id, identifier, assessment_code, assessment_seed, question_set, str(record).lower())
+
+                show_solution_command = "Dajaxice.midocs.show_math_write_in_solution(callback_solution_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed, question_id, identifier, assessment_code, assessment_seed, question_set, str(record).lower())
 
                 form_html = '<input type="button" class="mi_show_solution" value="Show solution" onclick="%s;">' % (show_solution_command)
         
@@ -393,15 +394,31 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
     dajax = Dajax()
 
     try: 
+
+
+        # so that current geogebra applets are not regenerated
+        # by call to web() in callback function
+        # remove css class geogebraweb from any applets
+        # already in page
+        dajax.remove_css_class('article .geogebraweb', 'geogebraweb')
+
         the_question = Question.objects.get(id=question_id)
+        
+        question_context = the_question.setup_context(seed=seed, identifier=identifier, question_set=question_set)
+        question_context['identifier'] = identifier + "_sol"
 
-        question_context = the_question.setup_context(seed=seed, identifier=identifier)
-        question_context['identifier'] = identifier
-
-        # render question text to add answer_list to question_context
+        # render solution
         rendered_solution = the_question.render_text \
             (question_context, identifier='hmm', \
                  show_help=False, solution=True, seed_used=seed)
+
+        
+        # # run any geogebra_oninit_commands
+        # init_javascript = question_context.get('geogebra_oninit_commands','')
+        # if init_javascript:
+        #     dajax.script('function ggbOnInit(arg) {\n%s}' % init_javascript)
+        #     #dajax.assign("#geogebra_onit", "innerHTML", 'function ggbOnInit(arg) {\n%s}' % init_javascript)
+        # dajax.alert('function ggbOnInit(arg) {\n%s}' % init_javascript)
 
         rendered_solution = "<h5>Solution</h5><p>%s</p>"  % rendered_solution
 

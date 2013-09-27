@@ -1309,8 +1309,8 @@ class AppletNode(template.Node):
         # html for applet inclusion
         # add html for applet embedding based on applet_type
         identifier = context.get('identifier','')
-        applet_counter = context.get('applet_counter', 0)+1
-        context['applet_counter']=applet_counter
+        applet_counter = context.get('_applet_counter', 0)+1
+        context['_applet_counter']=applet_counter
         applet_identifier = "%s0%s0%s" % (applet.code_camel(), 
                                           applet_counter,
                                           underscore_to_camel(identifier))
@@ -1876,7 +1876,7 @@ class AccumulatedJavascriptNode(template.Node):
         # return any geogebra_init_javascript
         init_javascript = context.get('geogebra_oninit_commands','')
         if init_javascript:
-            return '<script type="text/javascript">\nfunction ggbOnInit(arg) {\n%s}\n</script>' % init_javascript
+            return '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\n%s}\n</script></div>' % init_javascript
         else:
             return ''
 
