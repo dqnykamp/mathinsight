@@ -276,10 +276,12 @@ def assessment_view(request, assessment_code, solution=False):
         question_numbers=None
 
 
+    generate_assessment_link = False
+    show_solution_link = False
     if request.user.has_perm("mitesting.administer_assessment"):
         generate_assessment_link = True
-    else:
-        generate_assessment_link = False
+        if not solution:
+            show_solution_link = True
 
 
     # turn off google analytics for localhost
@@ -320,6 +322,7 @@ def assessment_view(request, assessment_code, solution=False):
           'attempt_number': attempt_number,
           'question_numbers': question_numbers,
           'generate_assessment_link': generate_assessment_link,
+          'show_solution_link': show_solution_link,
           'geogebra_oninit_commands': geogebra_oninit_commands,
           'noanalytics': noanalytics,
           },
@@ -396,6 +399,10 @@ def assessment_overview_view(request, assessment_code):
             course_thread_content=None
             course = None
 
+    if request.user.has_perm("mitesting.administer_assessment"):
+        generate_assessment_link = True
+    else:
+        generate_assessment_link = False
 
     # turn off google analytics for localhost
     noanalytics=False
@@ -408,6 +415,7 @@ def assessment_overview_view(request, assessment_code):
           'assessment_link': assessment_link,
           'course': course,
           'course_thread_content': course_thread_content,
+          'generate_assessment_link': generate_assessment_link,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
