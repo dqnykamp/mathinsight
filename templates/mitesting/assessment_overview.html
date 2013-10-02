@@ -50,4 +50,7 @@
 {% endfor %}
 </section>
 {% endif %}
+
+{% if generate_assessment_link %}<p><a href="{% url 'mit-assessmentgenerate' assessment.code %}">Generate assessment</a></p>{%endif%}
+
 {%endblock%}
