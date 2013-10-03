@@ -1001,7 +1001,10 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
         elif object_type=='Function':
             from sympy import Symbol
             global_dict=context["sympy_global_dict"]
-            the_fun = global_dict[str(objectvalue_string)]
+            try:
+                the_fun = global_dict[str(objectvalue_string)]
+            except KeyError:
+                return ""
             try:
                 javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
                     (applet_identifier, appletobject.name,
