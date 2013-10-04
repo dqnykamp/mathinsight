@@ -288,14 +288,16 @@ def assessment_view(request, assessment_code, solution=False):
     noanalytics=False
     if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
-    
+
+    template_names = []
     solution_postfix=""
     if solution:
         solution_postfix="_solution"
     template_base_name = assessment.assessment_type.template_base_name
-    if not template_base_name:
-        template_base_name = 'assessment'
-    template = "mitesting/%s%s.html" % (template_base_name, solution_postfix)
+    if template_base_name:
+        template_names.append("mitesting/%s%s.html" % (template_base_name, solution_postfix))
+    template_names.append("mitesting/assessment%s.html" % solution_postfix)
+
 
     assessment_name = assessment.name
     if solution:
@@ -309,7 +311,7 @@ def assessment_view(request, assessment_code, solution=False):
     else:
         version_string = ''
     return render_to_response \
-        (template, 
+        (template_names, 
          {'assessment': assessment, 
           'assessment_name': assessment_name, 
           'assessment_short_name': assessment_short_name, 
