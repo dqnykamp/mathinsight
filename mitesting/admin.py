@@ -13,7 +13,8 @@ class AssessmentBackgroundPageInline(admin.TabularInline):
     model = AssessmentBackgroundPage
 class AssessmentAdmin(reversion.VersionAdmin):
     inlines = [QuestionAssignedInline,QuestionSetDeatilInline,AssessmentBackgroundPageInline]
-    list_display = ("code","name")
+    list_display = ("code","name", "assessment_type")
+    list_filter = ("assessment_type",)
     search_fields = ['code', 'name']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
@@ -60,6 +61,8 @@ class QuestionAuthorInline(admin.TabularInline):
 class QuestionAdmin(reversion.VersionAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
+    list_display = ("name","question_type", "question_permission")
+    list_filter = ("question_type", "question_permission",)
     search_fields = ['id', 'name']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
