@@ -1266,6 +1266,9 @@ class Expression(models.Model):
 
             expr2= parse_and_process(self.expression,
                                      global_dict=global_dict_sub)
+
+            if self.expand:
+                expr2 = expr2.expand()
             
             class parsed_function(Function):
                 the_input_list = input_list
