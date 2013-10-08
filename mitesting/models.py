@@ -1231,7 +1231,7 @@ class Expression(models.Model):
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
     use_ln = models.BooleanField(default=False)
-    expand_on_compare = models.BooleanField(default=False)
+    normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
     tuple_is_ordered = models.BooleanField(default=False)
     collapse_equal_tuple_elements=models.BooleanField(default=False)
@@ -1299,7 +1299,7 @@ class Expression(models.Model):
             global_dict[str(self.name)] = expression
 
 
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
 
 
 class PlotFunction(models.Model):
