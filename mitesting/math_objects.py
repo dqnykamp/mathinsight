@@ -101,25 +101,26 @@ def create_symbol_name_dict():
 
     return symbol_name_dict
 
-def try_expand_expr(expr):
+def try_normalize_expr(expr):
+    # normalize means expand and then ratsimp
     try:
         if isinstance(expr, Tuple) or isinstance(expr,list):
-            # if is tuple or list, try to expand each element separately
-            expr_expand_list = []
+            # if is tuple or list, try to normalize each element separately
+            expr_normalize_list = []
             for ex in expr:
                 try:
-                    expr_expand_list.append(ex.expand())
+                    expr_normalize_list.append(ex.expand().ratsimp())
                 except:
-                    expr_expand_list.append(ex)
+                    expr_normalize_list.append(ex)
             if isinstance(expr,Tuple):    
-                expr_expand = Tuple(*expr_expand_list)
+                expr_normalize = Tuple(*expr_normalize_list)
             else:
-                expr_expand = expr_expand_list
+                expr_normalize = expr_normalize_list
         else:
-            expr_expand = expr.expand()
+            expr_normalize = expr.expand().ratsimp()
     except:
-        expr_expand = expr
-    return expr_expand
+        expr_normalize = expr
+    return expr_normalize
         
 
 def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_ordered=True):
@@ -197,12 +198,12 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, split_symbols_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, normalize_on_compare=False, split_symbols_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
         self._use_ln=use_ln
-        self._expand_on_compare = expand_on_compare
+        self._normalize_on_compare = normalize_on_compare
         self._split_symbols_on_compare = split_symbols_on_compare
         self._tuple_is_ordered = tuple_is_ordered
         self._kwargs = kwargs
@@ -228,7 +229,7 @@ class math_object(object):
             except:
                 pass
             try:
-                self._expand_on_compare = copy_properties_from._expand_on_compare
+                self._normalize_on_compare = copy_properties_from._normalize_on_compare
             except:
                 pass
             try:
@@ -414,9 +415,9 @@ class math_object(object):
     def compare_with_expression(self, new_expr):
         from sympy.geometry.line import LinearEntity
 
-        new_expr_expand=self.eval_to_precision(try_expand_expr(new_expr))
+        new_expr_normalize=self.eval_to_precision(try_normalize_expr(new_expr))
 
-        expression_expand = self.eval_to_precision(try_expand_expr(self._expression))
+        expression_normalize = self.eval_to_precision(try_normalize_expr(self._expression))
 
         new_expr = self.eval_to_precision(new_expr)
         print new_expr
@@ -424,54 +425,54 @@ class math_object(object):
         print expression
 
         expressions_equal=False
-        equal_if_expand=False
-        if self._expand_on_compare:
+        equal_if_normalize=False
+        if self._normalize_on_compare:
             if isinstance(expression, Tuple):
                 expressions_equal = check_tuple_equality \
-                    (expression_expand, new_expr_expand, 
+                    (expression_normalize, new_expr_normalize, 
                      tuple_is_ordered=self._tuple_is_ordered)
             elif isinstance(expression, Relational):
                 expressions_equal = check_relational_equality \
-                    (expression_expand, new_expr_expand)
+                    (expression_normalize, new_expr_normalize)
             elif isinstance(expression, LinearEntity):
                 try:
-                    expressions_equal = expression_expand.is_similar(new_expr_expand)
+                    expressions_equal = expression_normalize.is_similar(new_expr_normalize)
                 except AttributeError:
                     expressions_equal = False
             else:
-                if expression_expand == new_expr_expand:
+                if expression_normalize == new_expr_normalize:
                     expressions_equal=True
         else:
             if isinstance(expression, Tuple):
                 if check_tuple_equality(expression, new_expr, 
                                         tuple_is_ordered=self._tuple_is_ordered):
                     expressions_equal = True
-                elif check_tuple_equality(expression_expand, new_expr_expand, 
+                elif check_tuple_equality(expression_normalize, new_expr_normalize, 
                                         tuple_is_ordered=self._tuple_is_ordered):
-                    equal_if_expand=True
+                    equal_if_normalize=True
             elif isinstance(expression, Relational):
                 if check_relational_equality(expression, new_expr):
                     expressions_equal = True
                 elif check_relational_equality \
-                    (expression_expand, new_expr_expand):
-                    equal_if_expand=True
+                    (expression_normalize, new_expr_normalize):
+                    equal_if_normalize=True
             elif isinstance(expression, LinearEntity):
                 try:
                     expressions_equal = expression.is_similar(new_expr)
                 except AttributeError:
                     expressions_equal = False
                 try:
-                    equal_if_expand = expression_expand.is_similar(new_expr_expand)
+                    equal_if_normalize = expression_normalize.is_similar(new_expr_normalize)
                 except AttributeError:
-                    equal_if_expand = False
+                    equal_if_normalize = False
             else:
                 if expression==new_expr:
                     expressions_equal=True
-                elif  expression_expand == new_expr_expand:
-                    equal_if_expand=True
+                elif  expression_normalize == new_expr_normalize:
+                    equal_if_normalize=True
 
         if expressions_equal:
             return 1
-        if equal_if_expand:
+        if equal_if_normalize:
             return -1
         return 0
