@@ -137,7 +137,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
         answer_dict = {}
         
         function_dict = question_context.get('sympy_function_dict',{})
-
+        
         for  obj in answer_serialized:
             answer_dict[obj['name']]=obj['value']
             
@@ -159,8 +159,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 the_answer = re.sub('\.[a-zA-Z]+', '', the_answer)
                 global_dict = the_question.return_sympy_global_dict()
                 global_dict.update(function_dict)
-                the_answer_parsed = parse_and_process(the_answer, 
-                                                      global_dict=global_dict)
+                split_symbols=the_correct_answer.return_split_symbols_on_compare()
+                the_answer_parsed = parse_and_process \
+                    (the_answer, global_dict=global_dict, split_symbols=split_symbols)
                 
                 the_answer_parsed=math_object(the_answer_parsed,
                                               tuple_is_ordered=the_correct_answer.return_if_ordered())
