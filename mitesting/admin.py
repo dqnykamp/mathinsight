@@ -61,7 +61,7 @@ class QuestionAuthorInline(admin.TabularInline):
 class QuestionAdmin(reversion.VersionAdmin):
     inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
-    list_display = ("__unicode__","question_type", "question_permission")
+    list_display = ("question_with_number","question_type", "question_permission")
     list_filter = ("question_type", "question_permission",)
     search_fields = ['id', 'name']
     formfield_overrides = {

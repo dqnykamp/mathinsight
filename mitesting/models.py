@@ -92,6 +92,12 @@ class Question(models.Model):
     def __unicode__(self):
         return "%s: %s" % (self.id, self.name)
 
+    def question_with_number(self):
+        return "%s: %s" % (self.id, self.name)
+
+    question_with_number.admin_order_field = 'id'
+    question_with_number.short_description = "Question"
+
     def user_can_view(self, user, solution=True):
         permission_level=return_user_assessment_permission_level(user, solution)
         privacy_level=self.return_privacy_level(solution)
