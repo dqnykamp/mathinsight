@@ -92,6 +92,12 @@ class Question(models.Model):
     def __unicode__(self):
         return "%s: %s" % (self.id, self.name)
 
+    def question_with_number(self):
+        return "%s: %s" % (self.id, self.name)
+
+    question_with_number.admin_order_field = 'id'
+    question_with_number.short_description = "Question"
+
     def user_can_view(self, user, solution=True):
         permission_level=return_user_assessment_permission_level(user, solution)
         privacy_level=self.return_privacy_level(solution)
@@ -1226,6 +1232,7 @@ class Expression(models.Model):
     function_inputs = models.CharField(max_length=50, blank=True, null=True)
     use_ln = models.BooleanField(default=False)
     expand_on_compare = models.BooleanField(default=False)
+    split_symbols_on_compare = models.BooleanField(default=True)
     tuple_is_ordered = models.BooleanField(default=False)
     collapse_equal_tuple_elements=models.BooleanField(default=False)
     output_no_delimiters = models.BooleanField(default=False)
@@ -1292,7 +1299,7 @@ class Expression(models.Model):
             global_dict[str(self.name)] = expression
 
 
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, expand_on_compare=self.expand_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
 
 
 class PlotFunction(models.Model):
