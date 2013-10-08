@@ -8,12 +8,15 @@ import re
 def underscore_to_camel(word):
     return ''.join(x.capitalize() for x in  word.split('_'))
 
-def parse_expr(s, global_dict=None, local_dict=None):
+def parse_expr(s, global_dict=None, local_dict=None, 
+               split_symbols=False):
+    
     # until bug is fixed, call sympify after parse_expr
     # so that tuples are changed to Sympy Tuples
     from sympy.parsing.sympy_parser import \
         (standard_transformations, convert_xor, \
              implicit_multiplication)
+    from sympy.parsing.sympy_parser import split_symbols as split_symbols_trans
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
     from sympy import sympify
 
@@ -35,12 +38,17 @@ def parse_expr(s, global_dict=None, local_dict=None):
         new_global_dict['Symbol'] = Symbol
 
 
-    transformations=standard_transformations+(convert_xor,implicit_multiplication)
+    if split_symbols:
+        transformations=standard_transformations+(convert_xor, split_symbols_trans, implicit_multiplication)
+    else:
+        transformations=standard_transformations+(convert_xor, implicit_multiplication)
     
     return sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
 
-def parse_and_process(s, global_dict=None, local_dict=None, doit=True):
-    expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict)
+def parse_and_process(s, global_dict=None, local_dict=None, doit=True,
+                      split_symbols=False):
+    expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict,
+                            split_symbols=split_symbols)
     if doit:
         try: 
             expression=expression.doit()
@@ -189,12 +197,13 @@ def check_relational_equality(the_relational1, the_relational2):
 
  
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
+    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, expand_on_compare=False, split_symbols_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
         self._expression=sympify(expression)
         self._n_digits=n_digits
         self._round_decimals=round_decimals
         self._use_ln=use_ln
         self._expand_on_compare = expand_on_compare
+        self._split_symbols_on_compare = split_symbols_on_compare
         self._tuple_is_ordered = tuple_is_ordered
         self._kwargs = kwargs
 
@@ -222,6 +231,11 @@ class math_object(object):
                 self._expand_on_compare = copy_properties_from._expand_on_compare
             except:
                 pass
+            try:
+                self._split_symbols_on_compare = copy_properties_from._split_symbols_on_compare
+            except:
+                pass
+
             try:
                 self._tuple_is_ordered = copy_properties_from._tuple_is_ordered
             except:
@@ -275,6 +289,8 @@ class math_object(object):
         return self._expression
     def return_if_ordered(self):
         return self._tuple_is_ordered
+    def return_split_symbols_on_compare(self):
+        return self._split_symbols_on_compare
 
     def eval_to_precision(self, expression):
         if self._n_digits:
