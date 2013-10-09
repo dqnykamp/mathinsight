@@ -15,12 +15,12 @@
 <div style="overflow: auto;">
 <form id="edit_student_content_attempts_form"><input type="hidden" name="content_id" value="{{content.id}}">
 <table class="bordertable">
-<thead><tr><th>Name</th><th>Score</th><th>Latest Attempt</th><th>New Attempt</th></tr></thead>
+<thead><tr><th>Name</th><th>Score</th><th>Number Attempts</th><th>New Attempt</th><th>Due Date</th></tr></thead>
 <tbody>
   {% for attempt in latest_attempts %}
-  <tr><td style="white-space: nowrap; padding-right: 1em;">{{attempt.student.get_full_name}} (<a href="{% url 'mic-assessmentattemptedinstructor' attempt.student.id content.id %}">edit all attempts</a>)</td><td id="{{attempt.student.id}}_current_score">{{attempt.current_score|floatformat_or_dash:"1"}}</td><td><div id="id_{{attempt.student.id}}_latest">{% if attempt.attempt %}<input type="text" name="{{attempt.student.id}}_latest" value="{{attempt.attempt.get_score}}" size="1">{%else%}--{%endif %}</div><div id="{{attempt.student.id}}_latest_status"></div><div id="{{attempt.student.id}}_latest_errors" class="error"></div></td><td><input type="text" name="{{attempt.student.id}}_new" id="id_{{attempt.student.id}}_new" size="1"><div id="{{attempt.student.id}}_new_status"></div><div id="{{attempt.student.id}}_new_errors" class="error"></div></td></tr>
+  <tr><td style="white-space: nowrap; padding-right: 1em;">{{attempt.student.get_full_name}} (<a href="{% url 'mic-assessmentattemptedinstructor' attempt.student.id content.id %}">edit all attempts</a>)</td><td id="{{attempt.student.id}}_current_score">{{attempt.current_score|floatformat_or_dash:"1"}}</td><td>{{attempt.number_attempts}}</td><td><input type="text" name="{{attempt.student.id}}_new" id="id_{{attempt.student.id}}_new" size="1"><div id="{{attempt.student.id}}_new_status"></div><div id="{{attempt.student.id}}_new_errors" class="error"></div></td><td>{{attempt.adjusted_due_date}}</td></tr>
   {% endfor %}
-<tr><td></td><td></td><td><input type="button" id="modify_latest_attempts_button" value="Modify latest attempts" onclick="Dajaxice.midocs.edit_latest_student_content_attempts(Dajax.process,{'form':$('#edit_student_content_attempts_form').serializeArray() })" {% if not latest_attempts_present %}hidden{%endif%}></td><td>Date/time: <input type="text" name="new_datetime" size="10" value="{{default_datetime}}"><div id="datetime_errors" class="error"></div><input type="button" id="add_new_attempts_button" value="Add new attempts" onclick="Dajaxice.midocs.add_new_student_content_attempts(Dajax.process,{'form':$('#edit_student_content_attempts_form').serializeArray() })"></td></tr>
+<tr><td></td><td></td><td></td><td>Date/time: <input type="text" name="new_datetime" size="10" value="{{default_datetime}}"><div id="datetime_errors" class="error"></div><input type="button" id="add_new_attempts_button" value="Add new attempts" onclick="Dajaxice.midocs.add_new_student_content_attempts(Dajax.process,{'form':$('#edit_student_content_attempts_form').serializeArray() })"></td></tr>
 </tbody>
 </table>
 </form>

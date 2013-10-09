@@ -1515,43 +1515,43 @@ def edit_student_content_attempt(request, form, attempt_id, attempt_number):
 
     return dajax.json()
 
-@dajaxice_register
-def edit_latest_student_content_attempts(request, form):
-    dajax = Dajax()
-    try:
+# @dajaxice_register
+# def edit_latest_student_content_attempts(request, form):
+#     dajax = Dajax()
+#     try:
 
-        form_dict={}
-        for  obj in form:
-            form_dict[obj['name']]=obj['value']
+#         form_dict={}
+#         for  obj in form:
+#             form_dict[obj['name']]=obj['value']
 
-        content = CourseThreadContent.objects.get(id=form_dict['content_id'])
-        for student in content.course.enrolled_students.all():
-            latest_attempt=content.get_student_latest_attempt(student)
-            try:
-                new_latest_score = form_dict['%i_latest' % student.id]
-            except KeyError:
-                continue
+#         content = CourseThreadContent.objects.get(id=form_dict['content_id'])
+#         for student in content.course.enrolled_students.all():
+#             latest_attempt=content.get_student_latest_attempt(student)
+#             try:
+#                 new_latest_score = form_dict['%i_latest' % student.id]
+#             except KeyError:
+#                 continue
 
-            latest_attempt.score = new_latest_score
-            try:
-                latest_attempt.save()
-                dajax.assign('#%i_latest_status' % student.id,
-                             'innerHTML', "New score saved")
-                dajax.clear('#%i_latest_errors' % student.id,
-                             'innerHTML')
-                dajax.assign('#%i_current_score' % student.id,
-                             'innerHTML', floatformat_or_dash(content.student_score(student),1))
-            except ValueError:
-                dajax.assign('#%i_latest_errors' % student.id,
-                             'innerHTML', "Enter a number")
-                dajax.clear('#%i_latest_status' % student.id,
-                             'innerHTML')
+#             latest_attempt.score = new_latest_score
+#             try:
+#                 latest_attempt.save()
+#                 dajax.assign('#%i_latest_status' % student.id,
+#                              'innerHTML', "New score saved")
+#                 dajax.clear('#%i_latest_errors' % student.id,
+#                              'innerHTML')
+#                 dajax.assign('#%i_current_score' % student.id,
+#                              'innerHTML', floatformat_or_dash(content.student_score(student),1))
+#             except ValueError:
+#                 dajax.assign('#%i_latest_errors' % student.id,
+#                              'innerHTML', "Enter a number")
+#                 dajax.clear('#%i_latest_status' % student.id,
+#                              'innerHTML')
 
             
-    except Exception as e:
-        dajax.alert("something wrong: %s" % e)
+#     except Exception as e:
+#         dajax.alert("something wrong: %s" % e)
 
-    return dajax.json()
+#     return dajax.json()
 
 
 @dajaxice_register
