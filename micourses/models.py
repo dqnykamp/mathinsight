@@ -665,6 +665,8 @@ class CourseThreadContent(models.Model):
                     'student': student,
                     'attempt': self.get_student_latest_attempt(student),
                     'current_score': self.student_score(student),
+                    'adjusted_due_date': self.adjusted_due_date(student),
+                    'number_attempts': self.studentcontentattempt_set.filter(student=student).count(),
                     })
         return latest_attempts
         
