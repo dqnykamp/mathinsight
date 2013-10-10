@@ -46,7 +46,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
     expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
 
     # kludge to fix fact that 'e' isn't parsed correctly when splitting symbols
-    if 'e' in global_dict:
+    if split_symbols and 'e' in global_dict:
         from sympy import E
         if isinstance(expr, Tuple) or isinstance(expr,list):
             expr_list = []
