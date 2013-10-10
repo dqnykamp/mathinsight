@@ -43,7 +43,26 @@ def parse_expr(s, global_dict=None, local_dict=None,
     else:
         transformations=standard_transformations+(convert_xor, implicit_multiplication)
     
-    return sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
+    expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
+
+    # kludge to fix fact that 'e' isn't parsed correctly when splitting symbols
+    if 'e' in global_dict:
+        from sympy import E
+        if isinstance(expr, Tuple) or isinstance(expr,list):
+            expr_list = []
+            for ex in expr:
+                try:
+                    expr_list.append(ex.replace(Symbol('e'), E))
+                except:
+                    expr_list.append(ex)
+            if isinstance(expr,Tuple):    
+                expr = Tuple(*expr_list)
+            else:
+                expr= expr_list
+                                     
+        else:
+            expr = expr.replace(Symbol('e'), E)
+    return expr
 
 def parse_and_process(s, global_dict=None, local_dict=None, doit=True,
                       split_symbols=False):
