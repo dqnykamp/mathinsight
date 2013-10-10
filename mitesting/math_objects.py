@@ -61,7 +61,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
                 expr= expr_list
                                      
         else:
-            expr = expr.replace(Symbol('e'), E)
+            try:
+                expr = expr.replace(Symbol('e'), E)
+            except:
+                pass
     return expr
 
 def parse_and_process(s, global_dict=None, local_dict=None, doit=True,
