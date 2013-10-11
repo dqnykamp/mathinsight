@@ -131,7 +131,7 @@ def try_normalize_expr(expr):
             expr_normalize_list = []
             for ex in expr:
                 try:
-                    expr_normalize_list.append(ex.expand().ratsimp())
+                    expr_normalize_list.append(ex.expand().ratsimp().expand())
                 except:
                     expr_normalize_list.append(ex)
             if isinstance(expr,Tuple):    
@@ -139,7 +139,7 @@ def try_normalize_expr(expr):
             else:
                 expr_normalize = expr_normalize_list
         else:
-            expr_normalize = expr.expand().ratsimp()
+            expr_normalize = expr.expand().ratsimp().expand()
     except:
         expr_normalize = expr
     return expr_normalize
