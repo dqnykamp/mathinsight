@@ -44,6 +44,20 @@ def evalf(expr, n=15):
     else:
         return number.evalf(n)
 
+def index(expr, n):
+    if isinstance(expr, Tuple):
+        expr_list = list(expr)
+        try:
+            return expr_list.index(n)
+        except:
+            return ""
+    if isinstance(expr, list):
+        try:
+            return expr.index(n)
+        except:
+            return ""
+    return ""
+        
     
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -202,6 +216,7 @@ class Question(models.Model):
                               'min': all_sympy_commands['Min'],
                               'abs': all_sympy_commands['Abs'], 
                               'evalf': evalf,
+                              'index': index,
                               }
   
         # obtain list of allowed commands from database
@@ -1237,6 +1252,7 @@ class Expression(models.Model):
     collapse_equal_tuple_elements=models.BooleanField(default=False)
     output_no_delimiters = models.BooleanField(default=False)
     sort_list = models.BooleanField(default=False)
+    randomize_list = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
     class Meta:
         ordering = ['sort_order','id']
@@ -1250,6 +1266,16 @@ class Expression(models.Model):
         
         if self.expand:
             expression=expression.expand()
+
+        # randomize_list means randomize list or Tuple
+        if self.randomize_list and isinstance(expression,list):
+            random.shuffle(expression)
+
+        # for Tuple, must turn to list in order to randomize
+        if self.randomize_list and isinstance(expression,Tuple):
+            expression = list(expression)
+            random.shuffle(expression)
+            expression = Tuple(*expression)
 
         # sort_list means sort list or Tuple
         if self.sort_list and isinstance(expression,list):
