@@ -933,6 +933,9 @@ class Assessment(models.Model):
             else:
                 current_credit = None
 
+            question_group = self.questionsetdetail_set.get\
+                (question_set=question_set).group
+
             rendered_question_list.append({'question_text': question_text,
                                            'question': question,
                                            'points': question_dict['points'],
@@ -940,15 +943,62 @@ class Assessment(models.Model):
                                            'question_set': question_set,
                                            'current_credit': current_credit,
                                            'current_score': current_score,
+                                           'group': question_group,
+                                           'previous_same_group': False,
                                            'geogebra_oninit_commands':\
                                                geogebra_oninit_commands})
 
 
-        if not self.fixed_order:
-            random.shuffle(rendered_question_list)
-        
+        if self.fixed_order:
+            return rendered_question_list
 
-        return rendered_question_list
+        # if not fixed order randomly shuffle questions
+        # keep questions with same group together
+        # i.e., first random shuffle groups, 
+        # then randomly shuffle questions within each group
+        # set 'previous_same_group' if previous question is from the same group
+
+        # create list of the groups, 
+        # adding unique groups to questions with no group
+        question_set_groups = {}
+        for (ind,q) in enumerate(rendered_question_list):
+            question_group = q['group']
+            if question_group in question_set_groups:
+                question_set_groups[question_group].append(ind)
+            elif question_group:
+                question_set_groups[question_group] = [ind]
+            else:
+                question_set_groups['_no_group_%s' % ind] = [ind]
+                
+        # create list of randomly shuffled groups
+        groups = question_set_groups.keys()
+        random.shuffle(groups)
+            
+        # for each group, shuffle questions,
+        # creating cummulative list of the resulting question index order
+        question_order =[]
+        for group in groups:
+            group_indices=question_set_groups[group]
+            random.shuffle(group_indices)
+            question_order += group_indices
+        
+        # shuffle questions based on that order
+        # also check if previous question is from same group
+        rendered_question_list_shuffled =[]
+        previous_group = 0
+        for i in question_order:
+            q=rendered_question_list[i]
+            this_group = q['group']
+            if this_group == previous_group:
+                previous_same_group = True
+            else:
+                previous_same_group = False
+            q['previous_same_group'] = previous_same_group
+            previous_group = this_group
+            rendered_question_list_shuffled.append(q)
+
+        return rendered_question_list_shuffled
+
 
     def render_solution_list(self, seed=None):
         if seed is not None:
@@ -1119,6 +1169,7 @@ class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
     question_set = models.SmallIntegerField(default=0,db_index=True)
     points = models.FloatField(default=0)
+    group = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         unique_together = ("assessment", "question_set")

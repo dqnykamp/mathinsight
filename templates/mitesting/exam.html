@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="yma-grid">
-  <div class="yma-g50 yma-gl">
+  <div class="yma-g45 yma-gl">
     <div class="yma-gbox-left">
       <table class="examinfo"><tr><td>{{ course.short_name }}</td></tr>
 	<tr><td>{{ course.semester }}</td></tr>
@@ -13,7 +13,7 @@
       </table>
     </div>
   </div>
-  <div class="yma-g50 yma-gr">
+  <div class="yma-g55 yma-gr">
     <div class="yma-gbox-right">
       <table class="examstudentinfo">
 	<tr><td class="examlabel">Name (print):</td><td class="blank"></td></tr>
@@ -47,8 +47,8 @@
 <section class="exam_main">
 <ol class="exam_questions">
 {% for question in question_list %}
-{% new_exam_page %}
-<li class="question{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
+{% if not question.previous_same_group %}{% new_exam_page %}{% endif %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
 {% endfor %}
 </ol>
 </section>
