@@ -502,7 +502,7 @@ class Question(models.Model):
                                       precheck=False):
         
         # render question text at the beginning so that have answer_list in context
-        question_text = '<div id=question_text_%s>%s</div>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
+        question_text = '<span id=question_text_%s>%s</span>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
 
         if assessment:
             assessment_code = assessment.code
@@ -544,9 +544,8 @@ class Question(models.Model):
         callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);web();}</script>' % (identifier, identifier)
 
 
-        html_string = '%s%s<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" ><div id="the_question_%s">' %  (callback_script, callback_solution_script, identifier, identifier)
 
-        html_string += question_text
+        html_string = question_text
 
         asb_string = 0
         if context['allow_solution_buttons'] and not precheck:
@@ -558,10 +557,17 @@ class Question(models.Model):
 
         # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="solution_button_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
         
+        html_string = '<span id="the_question_%s">%s</span><div id="question_%s_feedback" class="info"></div>' % (identifier, html_string, identifier)
+        
+
         if not precheck:
-            html_string += '<div id="question_%s_feedback" class="info"></div><br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"> </div></form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>'  % (identifier, send_command, identifier, identifier,)
+            html_string += '<br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s">' % send_command
         else:
-            html_string += '<div id="question_%s_feedback" class="info"></div> </div></form><script type="text/javascript">%s</script>'  % (identifier, send_command)
+            html_string += '<script type="text/javascript">%s</script>' % (send_command)
+
+        html_string = '<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" class="writein" >%s</form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>' % (identifier, html_string,  identifier, identifier)
+
+        html_string = "%s%s%s" % (callback_script, callback_solution_script,html_string)
 
         return mark_safe(html_string)
 
