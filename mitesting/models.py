@@ -933,8 +933,11 @@ class Assessment(models.Model):
             else:
                 current_credit = None
 
-            question_group = self.questionsetdetail_set.get\
-                (question_set=question_set).group
+            try:
+                question_group = self.questionsetdetail_set.get\
+                    (question_set=question_set).group
+            except:
+                question_group = ''
 
             rendered_question_list.append({'question_text': question_text,
                                            'question': question,
