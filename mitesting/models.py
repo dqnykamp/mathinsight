@@ -985,7 +985,7 @@ class Assessment(models.Model):
         # shuffle questions based on that order
         # also check if previous question is from same group
         rendered_question_list_shuffled =[]
-        previous_group = ''
+        previous_group = 0
         for i in question_order:
             q=rendered_question_list[i]
             this_group = q['group']
