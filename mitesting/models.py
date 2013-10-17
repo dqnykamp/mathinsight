@@ -1048,13 +1048,65 @@ class Assessment(models.Model):
             solution_dict['solution_text'] = solution_text
             solution_dict['geogebra_oninit_commands'] = geogebra_oninit_commands
 
+            try:
+                question_group = self.questionsetdetail_set.get\
+                    (question_set=question_set).group
+            except:
+                question_group = ''
+                
+            solution_dict['group']=question_group
+
             rendered_solution_list.append(solution_dict)
 
+        if self.fixed_order:
+            return rendered_solution_list
 
-        if not self.fixed_order:
-            random.shuffle(rendered_solution_list)
+        # if not fixed order randomly shuffle questions
+        # keep questions with same group together
+        # i.e., first random shuffle groups, 
+        # then randomly shuffle questions within each group
+        # set 'previous_same_group' if previous question is from the same group
 
-        return rendered_solution_list
+        # create list of the groups, 
+        # adding unique groups to questions with no group
+        question_set_groups = {}
+        for (ind,q) in enumerate(rendered_solution_list):
+            question_group = q['group']
+            if question_group in question_set_groups:
+                question_set_groups[question_group].append(ind)
+            elif question_group:
+                question_set_groups[question_group] = [ind]
+            else:
+                question_set_groups['_no_group_%s' % ind] = [ind]
+                
+        # create list of randomly shuffled groups
+        groups = question_set_groups.keys()
+        random.shuffle(groups)
+            
+        # for each group, shuffle questions,
+        # creating cummulative list of the resulting question index order
+        question_order =[]
+        for group in groups:
+            group_indices=question_set_groups[group]
+            random.shuffle(group_indices)
+            question_order += group_indices
+        
+        # shuffle questions based on that order
+        # also check if previous question is from same group
+        rendered_solution_list_shuffled =[]
+        previous_group = 0
+        for i in question_order:
+            q=rendered_solution_list[i]
+            this_group = q['group']
+            if this_group == previous_group:
+                previous_same_group = True
+            else:
+                previous_same_group = False
+            q['previous_same_group'] = previous_same_group
+            previous_group = this_group
+            rendered_solution_list_shuffled.append(q)
+
+        return rendered_solution_list_shuffled
 
 
     def get_question_list(self, seed=None):
