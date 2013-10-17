@@ -103,7 +103,7 @@ class ExprNode(Node):
         expression = parse_and_process(expression,
                                        global_dict=global_dict)
 
-        expression=math_object(expression, args, kwargs)
+        expression=math_object(expression, args, **kwargs)
 
         if self.asvar:
             context[self.asvar] = expression
