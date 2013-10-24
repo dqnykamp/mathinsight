@@ -57,7 +57,42 @@ def index(expr, n):
         except:
             return ""
     return ""
-        
+  
+def smallest_factor(expr):
+    try:
+        if expr.is_Integer:
+            from sympy import factorint, Abs
+            factors = factorint(Abs(expr), limit=10000)
+            factorlist=factors.keys()
+            factorlist.sort()
+            return factorlist[0]
+        else:
+            return ""
+    except:
+        return ""
+
+def max_including_tuples(expr):
+    from sympy import Max as sympy_Max
+    try:
+        if isinstance(expr,Tuple):
+            return sympy_Max(*expr)
+        else:
+            return sympy_Max(expr)
+    except:
+        return expr
+
+def min_including_tuples(expr):
+    from sympy import Min as sympy_Min
+    try:
+        if isinstance(expr,Tuple):
+            return sympy_Min(*expr)
+        else:
+            return sympy_Min(expr)
+    except:
+        return expr
+
+            
+      
     
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -211,12 +246,16 @@ class Question(models.Model):
                               'real_roots': real_roots,
                               'real_roots_tuple': real_roots_tuple, 
                               'round': try_round,
+                              'smallest_factor': smallest_factor,
                               'e': all_sympy_commands['E'], 
-                              'max': all_sympy_commands['Max'], 
-                              'min': all_sympy_commands['Min'],
+                              'max': max_including_tuples,
+                              'Max': max_including_tuples,
+                              'min': min_including_tuples,
+                              'Min': min_including_tuples,
                               'abs': all_sympy_commands['Abs'], 
                               'evalf': evalf,
                               'index': index,
+                              'sum': sum,
                               }
   
         # obtain list of allowed commands from database
