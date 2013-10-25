@@ -312,6 +312,8 @@ class math_object(object):
         return self._expression
     def return_if_ordered(self):
         return self._tuple_is_ordered
+    def return_if_use_ln(self):
+        return self._use_ln
     def return_if_output_no_delimiters(self):
         return self._output_no_delimiters
     def return_split_symbols_on_compare(self):
@@ -326,7 +328,7 @@ class math_object(object):
             #               for orig_float in expression.atoms(Float))) 
                 
             from sympy.simplify.simplify import bottom_up
-            if isinstance(expression, list):
+            if isinstance(expression, list) or isinstance(expression, Tuple):
                 new_expr=[]
                 for expr in expression:
                     new_expr.append(bottom_up(expr.evalf(),
@@ -334,7 +336,10 @@ class math_object(object):
                                     if not w.is_Number 
                                     else Float(str(w.evalf(n_digits))),
                                     atoms=True))
-                expression=new_expr
+                if isinstance(expression, Tuple):
+                    expression=Tuple(*new_expr)
+                else:
+                    expression=new_expr
             else:
                 expression =  bottom_up(expression.evalf(),
                                         lambda w: w.evalf(n_digits)
