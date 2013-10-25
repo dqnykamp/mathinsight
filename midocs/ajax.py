@@ -165,7 +165,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 
                 the_answer_parsed=math_object(the_answer_parsed,
                                               tuple_is_ordered=the_correct_answer.return_if_ordered(),
-                                              output_no_delimiters=the_correct_answer.return_if_output_no_delimiters())
+                                              output_no_delimiters=the_correct_answer.return_if_output_no_delimiters(),
+                                              use_ln=the_correct_answer.return_if_use_ln())
 
                 the_answers[answer_string] = the_answer_parsed.return_expression()
             except Exception as e:
