@@ -312,6 +312,8 @@ class math_object(object):
         return self._expression
     def return_if_ordered(self):
         return self._tuple_is_ordered
+    def return_if_output_no_delimiters(self):
+        return self._output_no_delimiters
     def return_split_symbols_on_compare(self):
         return self._split_symbols_on_compare
 

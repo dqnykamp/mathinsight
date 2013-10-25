@@ -71,25 +71,25 @@ def smallest_factor(expr):
     except:
         return ""
 
-def max_including_tuples(expr):
+def max_including_tuples(*args):
     from sympy import Max as sympy_Max
     try:
-        if isinstance(expr,Tuple):
-            return sympy_Max(*expr)
+        if len(args)==1 and isinstance(args[0],Tuple):
+            return sympy_Max(*args[0])
         else:
-            return sympy_Max(expr)
+            return sympy_Max(*args)
     except:
-        return expr
+        return ""
 
-def min_including_tuples(expr):
+def min_including_tuples(*args):
     from sympy import Min as sympy_Min
     try:
-        if isinstance(expr,Tuple):
-            return sympy_Min(*expr)
+        if len(args)==1 and isinstance(args[0],Tuple):
+            return sympy_Min(*args[0])
         else:
-            return sympy_Min(expr)
+            return sympy_Min(*args)
     except:
-        return expr
+        return ""
 
             
       
