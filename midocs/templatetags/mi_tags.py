@@ -955,6 +955,14 @@ def return_print_image_string(applet, panel=0):
 
     return the_string
 
+# Geogebra doesn't understand e in scientific notation but needs E
+# so replace all e's with E's in scientific notation
+def e_to_E_in_scientific_notation(string):
+    return re.sub('([0-9]+.[0-9]+)e([+-]?[0-9]+)',
+                  '\g<1>E\g<2>',
+                  string)
+
+
 def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                                       objectvalue, objectvalue_string):
     
@@ -984,10 +992,14 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 value_x = value[0]
                 value_y = value[1]
             
-            javascript = 'document.%s.setCoords("%s", %s, %s);\n' % \
+            javascript = 'document.%s.setCoords("%s", %E, %E);\n' % \
                 (applet_identifier, appletobject.name,
                   value_x, value_y)
-        elif object_type=='Number' or object_type=='Boolean':
+        elif object_type=='Number':
+            javascript = 'document.%s.setValue("%s", %E);\n' % \
+                (applet_identifier, appletobject.name,
+                 value)
+        elif object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", %s);\n' % \
                 (applet_identifier, appletobject.name,
                  value)
@@ -1008,7 +1020,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             try:
                 javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
                     (applet_identifier, appletobject.name,
-                     str(the_fun(Symbol('x'))))
+                     e_to_E_in_scientific_notation(str(the_fun(Symbol('x')))))
             except TypeError:
                 return ""
             
