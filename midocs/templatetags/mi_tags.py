@@ -11,6 +11,7 @@ import random
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from mitesting.math_objects import underscore_to_camel
+from sympy.printing import StrPrinter
 
 register=template.Library()
 
@@ -955,12 +956,50 @@ def return_print_image_string(applet, panel=0):
 
     return the_string
 
-# Geogebra doesn't understand e in scientific notation but needs E
-# so replace all e's with E's in scientific notation
-def e_to_E_in_scientific_notation(string):
-    return re.sub('([0-9]+.[0-9]+)e([+-]?[0-9]+)',
-                  '\g<1>E\g<2>',
-                  string)
+# Geogebra doesn't understand e in scientific notation but needs E,
+# so created a StrPrinterE and function sstrE which uses E
+# when printing scientific notation
+
+class StrPrinterE(StrPrinter):
+    """
+    StrPrinter where Floats in scientific notation are printed
+    with an E rather than an e
+    """
+
+    def _print_Float(self, expr):
+        import sympy.mpmath.libmp as mlib
+        from sympy.mpmath.libmp import prec_to_dps
+
+        prec = expr._prec
+        if prec < 5:
+            dps = 0
+        else:
+            dps = prec_to_dps(expr._prec)
+        if self._settings["full_prec"] is True:
+            strip = False
+        elif self._settings["full_prec"] is False:
+            strip = True
+        elif self._settings["full_prec"] == "auto":
+            strip = self._print_level > 1
+        rv = mlib.to_str(expr._mpf_, dps, strip_zeros=strip)
+        if rv.startswith('-.0'):
+            rv = '-0.' + rv[3:]
+        elif rv.startswith('.0'):
+            rv = '0.' + rv[2:]
+
+        # only change from standard StrPrinter is addition of this line
+        rv=rv.replace('e','E')
+        return rv
+
+def sstrE(expr, **settings):
+    """
+    Returns the expression as a string, using E in scientific notaiton
+    """
+
+    p = StrPrinterE(settings)
+    s = p.doprint(expr)
+
+    return s
 
 
 def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
@@ -992,13 +1031,13 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 value_x = value[0]
                 value_y = value[1]
             
-            javascript = 'document.%s.setCoords("%s", %E, %E);\n' % \
+            javascript = 'document.%s.setCoords("%s", %s, %s);\n' % \
                 (applet_identifier, appletobject.name,
-                  value_x, value_y)
+                 sstrE(value_x), sstrE(value_y))
         elif object_type=='Number':
-            javascript = 'document.%s.setValue("%s", %E);\n' % \
+            javascript = 'document.%s.setValue("%s", %s);\n' % \
                 (applet_identifier, appletobject.name,
-                 value)
+                 sstrE(value))
         elif object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", %s);\n' % \
                 (applet_identifier, appletobject.name,
@@ -1020,7 +1059,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             try:
                 javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
                     (applet_identifier, appletobject.name,
-                     e_to_E_in_scientific_notation(str(the_fun(Symbol('x')))))
+                    sstrE(the_fun(Symbol('x'))))
             except TypeError:
                 return ""
             
