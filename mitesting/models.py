@@ -91,7 +91,14 @@ def min_including_tuples(*args):
     except:
         return ""
 
-            
+def iif(cond, result_if_true, result_if_false):
+    try:
+        if(cond):
+            return result_if_true
+        else:
+            return result_if_false
+    except:
+        return ""
       
     
 class QuestionSpacing(models.Model):
@@ -256,6 +263,7 @@ class Question(models.Model):
                               'evalf': evalf,
                               'index': index,
                               'sum': sum,
+                              'iif': iif,
                               }
   
         # obtain list of allowed commands from database
@@ -1472,7 +1480,12 @@ class Expression(models.Model):
             
         # if not function, just add expression to global dict
         else:
-            global_dict[str(self.name)] = expression
+            # for boolean, convert to sympy integer
+            if isinstance(expression,bool):
+                from sympy import S
+                global_dict[str(self.name)] = S(int(expression))
+            else:
+                global_dict[str(self.name)] = expression
 
 
         return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
