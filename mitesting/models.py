@@ -1017,7 +1017,9 @@ class Assessment(models.Model):
             elif question_group:
                 question_set_groups[question_group] = [ind]
             else:
-                question_set_groups['_no_group_%s' % ind] = [ind]
+                unique_no_group_name = '_no_group_%s' % ind
+                question_set_groups[unique_no_group_name] = [ind]
+                q['group']=unique_no_group_name
                 
         # create list of randomly shuffled groups
         groups = question_set_groups.keys()
@@ -1123,7 +1125,9 @@ class Assessment(models.Model):
             elif question_group:
                 question_set_groups[question_group] = [ind]
             else:
-                question_set_groups['_no_group_%s' % ind] = [ind]
+                unique_no_group_name = '_no_group_%s' % ind
+                question_set_groups[unique_no_group_name] = [ind]
+                q['group']=unique_no_group_name
                 
         # create list of randomly shuffled groups
         groups = question_set_groups.keys()
