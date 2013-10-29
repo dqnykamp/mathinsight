@@ -91,7 +91,14 @@ def min_including_tuples(*args):
     except:
         return ""
 
-            
+def iif(cond, result_if_true, result_if_false):
+    try:
+        if(cond):
+            return result_if_true
+        else:
+            return result_if_false
+    except:
+        return ""
       
     
 class QuestionSpacing(models.Model):
@@ -256,6 +263,7 @@ class Question(models.Model):
                               'evalf': evalf,
                               'index': index,
                               'sum': sum,
+                              'iif': iif,
                               }
   
         # obtain list of allowed commands from database
@@ -785,7 +793,6 @@ class Assessment(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     questions = models.ManyToManyField(Question, through='QuestionAssigned')
-    fixed_order = models.BooleanField(default=False)
     instructions = models.TextField(blank=True, null=True)
     instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
@@ -793,9 +800,9 @@ class Assessment(models.Model):
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view_solution")
-    allow_solution_buttons = models.BooleanField(default=False)
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
-    hand_graded_component = models.BooleanField(default=True)
+    allow_solution_buttons = models.BooleanField(default=True)
+    fixed_order = models.BooleanField(default=False)
     nothing_random = models.BooleanField(default=False)
     total_points = models.FloatField(blank=True, null=True)
 
@@ -1473,7 +1480,12 @@ class Expression(models.Model):
             
         # if not function, just add expression to global dict
         else:
-            global_dict[str(self.name)] = expression
+            # for boolean, convert to sympy integer
+            if isinstance(expression,bool):
+                from sympy import S
+                global_dict[str(self.name)] = S(int(expression))
+            else:
+                global_dict[str(self.name)] = expression
 
 
         return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)

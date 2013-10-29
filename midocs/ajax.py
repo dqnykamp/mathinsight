@@ -222,7 +222,10 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
             the_feedback += "% correct</p>"
             dajax.append(feedback_selector, 'innerHTML', the_feedback)
 
-        allow_solution_buttons = answer_dict['asb_%s' % identifier]
+        try:
+            allow_solution_buttons = int(answer_dict['asb_%s' % identifier])
+        except:
+            allow_solution_buttons = 0
 
         # check if question or subpart has something written in for solution
         solution_exists = False
