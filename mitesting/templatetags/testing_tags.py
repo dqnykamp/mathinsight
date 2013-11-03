@@ -400,6 +400,11 @@ class FigureNode(Node):
             ymax=float(kwargs['ymax'])
         except:
             ymax=None
+        try:
+            grid=bool(kwargs['grid'])
+        except:
+            grid=False
+
 
         identifier = context['identifier']
 
@@ -556,7 +561,7 @@ class FigureNode(Node):
 
         plot_options['axesDefaults']=dict()
         plot_options['axesDefaults']['tickOptions']=dict()
-        plot_options['axesDefaults']['tickOptions']['showGridline']=False
+        plot_options['axesDefaults']['tickOptions']['showGridline']=grid
 
         xaxis_options['pad']=0
         xaxis_options['min']=xmin
