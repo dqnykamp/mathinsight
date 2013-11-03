@@ -1030,14 +1030,19 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 # else try as a Tuple
                 value_x = value[0]
                 value_y = value[1]
-            
-            javascript = 'document.%s.setCoords("%s", %s, %s);\n' % \
-                (applet_identifier, appletobject.name,
-                 sstrE(value_x), sstrE(value_y))
+            try:
+                javascript = 'document.%s.setCoords("%s", %E, %E);\n' % \
+                    (applet_identifier, appletobject.name,
+                     value_x, value_y)
+            except:
+                return ""
         elif object_type=='Number':
-            javascript = 'document.%s.setValue("%s", %s);\n' % \
-                (applet_identifier, appletobject.name,
-                 sstrE(value))
+            try:
+                javascript = 'document.%s.setValue("%s", %E);\n' % \
+                    (applet_identifier, appletobject.name,
+                     value)
+            except:
+                return ""
         elif object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", %s);\n' % \
                 (applet_identifier, appletobject.name,
@@ -1060,7 +1065,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
                     (applet_identifier, appletobject.name,
                     sstrE(the_fun(Symbol('x'))))
-            except TypeError:
+            except:
                 return ""
             
         return javascript
