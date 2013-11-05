@@ -190,7 +190,9 @@ def course_main_view(request):
 
 
 class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
-    
+    """
+    should be: AssessmentAttemptList
+    """
     model = CourseThreadContent
     context_object_name = 'content'
     template_name = 'micourses/assessment_attempted.html'
@@ -222,7 +224,6 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
                 mark_safe('&nbsp;%s&nbsp;' % datetime_text)
             attempt_dict['formatted_score'] = \
                 mark_safe('&nbsp;%s&nbsp;' % score_text)
-
             if attempt.questionstudentanswer_set.exists():
                 attempt_url = reverse('mic-assessmentattempt', 
                                       kwargs={'pk': self.object.id,
@@ -247,6 +248,10 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
 
 
 class AssessmentAttemptedInstructor(AssessmentAttempted):
+    """
+    should be: AssessmentAttemptListInstructor
+    """
+
     template_name = 'micourses/assessment_attempted_instructor.html'
 
     @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
@@ -276,6 +281,7 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
                 mark_safe('&nbsp;%s&nbsp;' % datetime_text)
             attempt_dict['formatted_score'] = \
                 mark_safe('&nbsp;%s&nbsp;' % score_text)
+            attempt_dict['direct_link'] = attempt.content.thread_content.content_object.return_link(direct=True, link_text=" try it",seed=attempt.seed)
 
             if attempt.questionstudentanswer_set.exists():
                 attempt_url = reverse('mic-assessmentattemptinstructor', 
@@ -361,6 +367,9 @@ class AssessmentAttempt(AssessmentAttempted):
             question_dict={'points': qd['points'],
                            'current_credit': qd['current_credit'],
                            'current_score': qd['current_score'],
+                           'direct_link':\
+                               mark_safe('<a href="%s?seed=%s" class="assessment">try it</a>' \
+                                             % (qd['question'].get_absolute_url(), qd['seed']))
                            }
             
             question_dict['answers_available'] = \
