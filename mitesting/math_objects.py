@@ -146,16 +146,18 @@ def try_normalize_expr(expr):
         
 
 def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_ordered=True):
+
+    # if either isn't a tuple, replace with a tuple of length 1
+    if not isinstance(the_tuple1, Tuple):
+        the_tuple1 = Tuple(the_tuple1)
+    if not isinstance(the_tuple2, Tuple):
+        the_tuple2 = Tuple(the_tuple2)
     
     if tuple_is_ordered:
         return the_tuple1 == the_tuple2
 
     # if not ordered, check if match with any order
-    try:
-        if len(the_tuple1) != len(the_tuple2):
-            return False
-    except TypeError:
-        # if one or other isn't tuple, return False
+    if len(the_tuple1) != len(the_tuple2):
         return False
 
     tuple2_indices_used=[]
