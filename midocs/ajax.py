@@ -17,6 +17,7 @@ from django import forms
 import re
 import json
 import datetime
+import settings
 
 def format_datetime(value):
     return "%s, %s" % (formats.date_format(value), formats.time_format(value))
@@ -107,6 +108,11 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
     try: 
 
         feedback_selector = "#question_%s_feedback" % identifier
+        binary_feedback_correct = ' <img src="%sadmin/img/icon-yes.gif" alt="correct" />'\
+            % (settings.STATIC_URL)
+        binary_feedback_incorrect = ' <img src="%sadmin/img/icon-no.gif" alt="incorrect" />'\
+            % (settings.STATIC_URL)
+
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
 
@@ -151,8 +157,9 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 the_correct_answer = answer_tuple[1]
                 answer_points = answer_tuple[2]
                 total_points += answer_points
-
+                
                 answer_feedback_selector = "#answer_%s_%s_feedback" % (answer_string, identifier)
+                answer_binary_feedback_selector = "#answer_%s_%s_feedback_binary" % (answer_string, identifier)
 
                 # get rid of any .methods, so can't call commands like
                 # .expand() or .factor()
@@ -177,6 +184,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
                 #dajax.alert("%s" % e)
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback_message)
+                dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
 
             else:
 
@@ -190,15 +198,18 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     feedback='Yes, $%s$ is correct.' % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'error')
                     dajax.add_css_class(answer_feedback_selector, 'success')
+                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_correct)
 
                 elif correctness_of_answer == -1:
                     feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'success')
                     dajax.add_css_class(answer_feedback_selector, 'error')
+                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
                 else:
                     feedback='No, $%s$ is incorrect.  Try again.' % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'success')
                     dajax.add_css_class(answer_feedback_selector, 'error')
+                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
 
 
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback)

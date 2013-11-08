@@ -1462,6 +1462,7 @@ class AppletNode(template.Node):
                         value_string = ' value="%s"' % pre_answer
 
                 inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20"%s />\n' % (target_id, target, value_string)
+                inputboxlist += '<span id="%s_feedback_binary"></span>\n' % target
                     
                 related_objects=[]
                 if appletobject.related_objects:
@@ -1493,7 +1494,6 @@ class AppletNode(template.Node):
         context['_math_writein_answer_list'] = answer_list
 
 
-                        
         applet_link += inputboxlist
         if applet.applet_type.code == "Geogebra" \
                 or applet.applet_type.code == "GeogebraWeb":
