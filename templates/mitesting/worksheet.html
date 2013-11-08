@@ -1,4 +1,7 @@
 {% extends "mitesting/assessment_base.html" %}{% load testing_tags %}
+{% block extrastyle2 %}
+<link href="{{ STATIC_URL }}css/narrowmargin.css" rel="stylesheet" type="text/css"/>
+{% endblock %}
 
 
 {% block content %}
@@ -7,10 +10,10 @@
 <section class="namesection"><div class="nameblank">{% if course %}{{ course }}<br/>{%endif%}
 Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due date: {{course_thread_content.initial_due_date}}<br/>{%endif%}Table/group #:<br/>Group members:</div></section>
 
-<section class="quiz_main">
+<section class="assessment_main">
 {% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
 
-<ol class="quiz_questions">
+<ol class="assessment_questions">
 {% for question in question_list %}
 <li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{{ question.question_text }}</li>
 {% endfor %}
