@@ -1165,6 +1165,7 @@ class AppletObject(models.Model):
     change_from_javascript = models.BooleanField(default=True)
     capture_changes = models.BooleanField(default=False)
     related_objects = models.CharField(max_length=200, blank=True, null=True)
+    name_for_changes = models.CharField(max_length=100, blank=True, null=True)
 
     def __unicode__(self):
         return "%s: %s" % (self.object_type, self.name)

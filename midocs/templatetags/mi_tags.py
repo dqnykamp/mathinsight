@@ -1006,7 +1006,12 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                                       objectvalue, objectvalue_string):
     
     object_type = appletobject.object_type.object_type
-    
+
+    if appletobject.name_for_changes:
+        object_name = appletobject.name_for_changes
+    else:
+        object_name = appletobject.name
+
     # if objectvalue is math_object, use expression
     try:
         value=objectvalue.return_expression()
@@ -1032,27 +1037,27 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 value_y = value[1]
             try:
                 javascript = 'document.%s.setCoords("%s", %E, %E);\n' % \
-                    (applet_identifier, appletobject.name,
-                     value_x, value_y)
+                    (applet_identifier, object_name,
+                     float(value_x), float(value_y))
             except:
                 return ""
         elif object_type=='Number':
             try:
                 javascript = 'document.%s.setValue("%s", %E);\n' % \
-                    (applet_identifier, appletobject.name,
-                     value)
+                    (applet_identifier, object_name,
+                     float(value))
             except:
                 return ""
         elif object_type=='Boolean':
             javascript = 'document.%s.setValue("%s", %s);\n' % \
-                (applet_identifier, appletobject.name,
+                (applet_identifier, object_name,
                  value)
         elif object_type=='Text':
             value_string = "%s" % value
             # escape \ for javascript
             value_string = value_string.replace('\\','\\\\')
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
-                (applet_identifier, appletobject.name,
+                (applet_identifier, object_name,
                  value_string)  
         elif object_type=='Function':
             from sympy import Symbol
@@ -1063,7 +1068,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 return ""
             try:
                 javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
-                    (applet_identifier, appletobject.name,
+                    (applet_identifier, object_name,
                     sstrE(the_fun(Symbol('x'))))
             except:
                 return ""
