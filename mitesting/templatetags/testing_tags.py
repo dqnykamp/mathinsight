@@ -821,7 +821,7 @@ class AnswerBlankNode(template.Node):
         except:
             size=20
         try:
-            points=int(kwargs['points'])
+            points=float(kwargs['points'])
         except:
             points=1
 
