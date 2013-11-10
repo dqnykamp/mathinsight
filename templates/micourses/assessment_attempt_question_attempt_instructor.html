@@ -3,6 +3,22 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
 
+{% block extrastyle2 %}
+<link href="{{ STATIC_URL }}css/miassessment.css" rel="stylesheet" type="text/css"/>
+ <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/excanvas.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/jquery.jqplot.css" />
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+{% endblock %}
+
 {% block coursebreadcrumb %} ► <a href="{% url 'mic-instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'mic-assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattemptinstructor' student_id=student.id pk=content.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestioninstructor' student.id content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattemptinstructor' student.id content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
 
 
