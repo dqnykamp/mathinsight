@@ -184,7 +184,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                 #feedback_message += '<a id="error_show_info_%s">(Show computer error message)</a>' % identifier
                 #dajax.alert("%s" % e)
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback_message)
-                dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
+                if answer_points:
+                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
 
             else:
 
@@ -198,18 +199,21 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     feedback='Yes, $%s$ is correct.' % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'error')
                     dajax.add_css_class(answer_feedback_selector, 'success')
-                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_correct)
+                    if answer_points:
+                        dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_correct)
 
                 elif correctness_of_answer == -1:
                     feedback="No, $%s$ is not correct.  You are close as your answer is mathematically equivalent to the correct answer, but this question requires you to write your answer in a different form." % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'success')
                     dajax.add_css_class(answer_feedback_selector, 'error')
-                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
+                    if answer_points:
+                        dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
                 else:
                     feedback='No, $%s$ is incorrect.  Try again.' % the_answer_parsed
                     dajax.remove_css_class(answer_feedback_selector, 'success')
                     dajax.add_css_class(answer_feedback_selector, 'error')
-                    dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
+                    if answer_points:
+                        dajax.assign(answer_binary_feedback_selector, 'innerHTML', binary_feedback_incorrect)
 
 
                 dajax.assign(answer_feedback_selector, 'innerHTML', feedback)
