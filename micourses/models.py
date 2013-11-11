@@ -3,6 +3,7 @@ from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
+from django.utils.safestring import mark_safe
 import datetime
 import settings
 
@@ -115,6 +116,7 @@ class CourseAssessmentCategory(models.Model):
     course = models.ForeignKey('Course')
     assessment_category = models.ForeignKey(AssessmentCategory)
     number_count_for_grade = models.IntegerField(blank=True, null=True)
+    rescale_factor = models.FloatField(default=1.0)
     sort_order = models.FloatField(default=0.0)
 
     def __unicode__(self):
@@ -198,7 +200,8 @@ class Course(models.Model):
         n = cac.number_count_for_grade
         if n is not None and n < len(point_list):
             point_list = point_list[-n:]
-        return sum(point_list)
+        
+        return sum(point_list)*cac.rescale_factor
 
 
     def all_assessments_by_category(self):
@@ -221,9 +224,24 @@ class Course(models.Model):
 
             category_points = self.points_for_assessment_category \
                                (cac.assessment_category)
+
+            score_comment = ""
+            if cac.number_count_for_grade:
+                score_comment = "top %s scores" % cac.number_count_for_grade
+            if cac.rescale_factor != 1.0:
+                if score_comment:
+                    score_comment += " and "
+                score_comment += "rescaling by %s%%" % \
+                    (round(cac.rescale_factor*1000)/10)
+            if score_comment:
+                score_comment = mark_safe("<br/><small>(based on %s)</small>"\
+                                              % score_comment)
+
             cac_results = {'category': cac.assessment_category,
                            'points': category_points,
                            'number_count': cac.number_count_for_grade,
+                           'rescale_factor': cac.rescale_factor,
+                           'score_comment': score_comment,
                            'number_assessments': number_assessments,
                            'assessments': cac_assessments,
                            'number_assessments_plus_one': len(cac_assessments)+1,
@@ -269,7 +287,7 @@ class Course(models.Model):
         n = cac.number_count_for_grade
         if n is not None and n < len(score_list):
             score_list = score_list[-n:]
-        return sum(score_list)
+        return sum(score_list)*cac.rescale_factor
  
 
     def student_scores_by_assessment_category(self, student):
@@ -303,11 +321,26 @@ class Course(models.Model):
                 category_percent = category_student_score/category_points*100
             else:
                 category_percent = 0
+
+            score_comment = ""
+            if cac.number_count_for_grade:
+                score_comment = "top %s scores" % cac.number_count_for_grade
+            if cac.rescale_factor != 1.0:
+                if score_comment:
+                    score_comment += " and "
+                score_comment += "rescaling by %s%%" % \
+                    (round(cac.rescale_factor*1000)/10)
+            if score_comment:
+                score_comment = mark_safe("<br/><small>(based on %s)</small>"\
+                                              % score_comment)
+
             cac_results = {'category': cac.assessment_category,
                            'points': category_points,
                            'student_score': category_student_score,
                            'percent': category_percent,
                            'number_count': cac.number_count_for_grade,
+                           'rescale_factor': cac.rescale_factor,
+                           'score_comment': score_comment,
                            'assessments': cac_assessments,
                            }
             scores_by_category.append(cac_results)
