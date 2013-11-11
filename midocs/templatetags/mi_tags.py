@@ -1489,7 +1489,7 @@ class AppletNode(template.Node):
                              target_id, related_objects)
 
                 try:
-                    points = int(kwargs['points_'+the_kw])
+                    points = float(kwargs['points_'+the_kw])
                 except:
                     points = 1
 

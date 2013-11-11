@@ -139,7 +139,7 @@ class Question(models.Model):
     notes = models.TextField(blank=True, null=True)
     reference_pages = models.ManyToManyField('midocs.Page', through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
-    show_solution_button_after_attempts=models.IntegerField(default=0)
+    show_solution_button_after_attempts=models.IntegerField(default=3)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
     subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
     authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor')
