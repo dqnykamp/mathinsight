@@ -1072,7 +1072,30 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                     sstrE(the_fun(Symbol('x'))))
             except:
                 return ""
-            
+        elif object_type=='List':
+            # sympify to turn strings into tuple (or list if in brackets)
+            try:
+                from sympy import sympify
+                value=sympify(value)
+            except:
+                return ""
+
+            try:
+                the_list = ""
+                for element in value:
+                    if the_list:
+                        the_list += ", "
+                    if element.is_Float:
+                        the_list += "%E" % element
+                    else:
+                        the_list += "%s" % element
+            except:
+                return ""
+
+            javascript = 'document.%s.evalCommand(\'%s={%s}\');\n' % \
+                (applet_identifier, object_name,
+                 the_list)
+
         return javascript
     except:
         raise #return ""
