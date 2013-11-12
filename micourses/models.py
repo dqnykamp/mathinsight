@@ -178,7 +178,7 @@ class Course(models.Model):
 
 
     def enrolled_students_ordered(self):
-        return self.enrolled_students.order_by('user__last_name', 'user__first_name')
+        return self.enrolled_students.filter(role='S').order_by('user__last_name', 'user__first_name')
 
     def points_for_assessment_category(self, assessment_category):
         try:
