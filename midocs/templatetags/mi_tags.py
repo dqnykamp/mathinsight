@@ -1191,7 +1191,7 @@ def Geogebra_link(context, applet, applet_identifier, width, height):
   
     html_string='%s%s' % (html_string, return_applet_parameter_string(applet))
 
-    html_string= '%s<param name="ggbOnInitParam" value="%s" />' \
+    html_string= '%s<param name="codebase_lookup" value="false"><param name="ggbOnInitParam" value="%s" />' \
         % (html_string,applet.code)
     if applet.applet_file:
         html_string= '%s<param name="filename" value="%s" />' \
