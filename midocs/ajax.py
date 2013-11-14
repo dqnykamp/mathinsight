@@ -1545,7 +1545,7 @@ def edit_student_content_attempt(request, form, attempt_id, attempt_number):
 #             form_dict[obj['name']]=obj['value']
 
 #         content = CourseThreadContent.objects.get(id=form_dict['content_id'])
-#         for student in content.course.enrolled_students.all():
+#         for student in content.course.enrolled_students_ordered():
 #             latest_attempt=content.get_student_latest_attempt(student)
 #             try:
 #                 new_latest_score = form_dict['%i_latest' % student.id]
@@ -1592,7 +1592,7 @@ def add_new_student_content_attempts(request, form):
             attempt_datetime = datetime_form.cleaned_data.get('datetime')
             dajax.clear('#datetime_errors', 'innerHTML')
            
-            for student in content.course.enrolled_students.all():
+            for student in content.course.enrolled_students_ordered():
                 new_score = form_dict['%i_new' % student.id]
 
                 try:
