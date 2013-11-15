@@ -937,6 +937,9 @@ class ManualDueDateAdjustment(models.Model):
     initial_due_date=models.DateField()
     final_due_date=models.DateField()
     
+    def __unicode__(self):
+        return "Adjustment for %s on %s" % (self.student, self.content)
+
     class Meta:
         unique_together = ("content","student")
 
