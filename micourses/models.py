@@ -226,15 +226,17 @@ class Course(models.Model):
                                (cac.assessment_category)
 
             score_comment = ""
-            if cac.number_count_for_grade:
-                score_comment = "top %s scores" % cac.number_count_for_grade
+            if cac.number_count_for_grade and \
+                    cac.number_count_for_grade < number_assessments:
+                score_comment = "top %s of %s" % \
+                    (cac.number_count_for_grade, number_assessments)
             if cac.rescale_factor != 1.0:
                 if score_comment:
-                    score_comment += " and "
-                score_comment += "rescaling by %s%%" % \
+                    score_comment += ", "
+                score_comment += "rescaled by %s%%" % \
                     (round(cac.rescale_factor*1000)/10)
             if score_comment:
-                score_comment = mark_safe("<br/><small>(based on %s)</small>"\
+                score_comment = mark_safe("<br/><small>(%s)</small>"\
                                               % score_comment)
 
             cac_results = {'category': cac.assessment_category,
@@ -252,11 +254,11 @@ class Course(models.Model):
     
     def all_assessments_with_points(self):
         assessments = []
-        number_assessments = 0
+        # number_assessments = 0
         for ctc in self.coursethreadcontent_set.all():
             ctc_points = ctc.total_points()
             if ctc_points:
-                number_assessments += 1
+                # number_assessments += 1
                 assessment_results =  \
                     {'content': ctc, \
                          'assessment': ctc.thread_content.content_object, \
@@ -295,10 +297,12 @@ class Course(models.Model):
         for cac in self.courseassessmentcategory_set.all():
 
             cac_assessments = []
+            number_assessments=0
             for ctc in self.coursethreadcontent_set\
                     .filter(assessment_category=cac.assessment_category):
                 ctc_points = ctc.total_points()
                 if ctc_points:
+                    number_assessments+=1
                     student_score = ctc.student_score(student)
                     if student_score:
                         percent = student_score/ctc_points*100
@@ -323,8 +327,10 @@ class Course(models.Model):
                 category_percent = 0
 
             score_comment = ""
-            if cac.number_count_for_grade:
-                score_comment = "top %s scores" % cac.number_count_for_grade
+            if cac.number_count_for_grade and \
+                    cac.number_count_for_grade < number_assessments:
+                score_comment = "top %s scores out of %s" % \
+                    (cac.number_count_for_grade, number_assessments)
             if cac.rescale_factor != 1.0:
                 if score_comment:
                     score_comment += " and "
