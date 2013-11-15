@@ -233,10 +233,10 @@ class Course(models.Model):
             if cac.rescale_factor != 1.0:
                 if score_comment:
                     score_comment += ", "
-                score_comment += "rescaled by %s%%" % \
+                score_comment += "rescale %s%%" % \
                     (round(cac.rescale_factor*1000)/10)
             if score_comment:
-                score_comment = mark_safe("<br/><small>(%s)</small>"\
+                score_comment = mark_safe("<br/><small style='font-weight:normal'>(%s)</small>"\
                                               % score_comment)
 
             cac_results = {'category': cac.assessment_category,
