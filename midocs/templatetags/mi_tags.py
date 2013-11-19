@@ -1102,8 +1102,13 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                         the_list += "%E" % element
                     else:
                         the_list += "%s" % element
-            except:
-                return ""
+            except TypeError:
+                # if value is not list, just return single value
+                if value.is_Float:
+                    the_list = "%E" % value
+                else:
+                    the_list = "%s" % value
+
 
             javascript = 'document.%s.evalCommand(\'%s={%s}\');\n' % \
                 (applet_identifier, object_name,
