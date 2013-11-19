@@ -1072,6 +1072,19 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                     sstrE(the_fun(Symbol('x'))))
             except:
                 return ""
+        elif object_type=='Function2D':
+            from sympy import Symbol
+            global_dict=context["sympy_global_dict"]
+            try:
+                the_fun = global_dict[str(objectvalue_string)]
+            except KeyError:
+                return ""
+            try:
+                javascript = 'document.%s.evalCommand(\'%s(x,y)=%s\');\n' % \
+                    (applet_identifier, object_name, \
+                    sstrE(the_fun(Symbol('x'),Symbol('y'))))
+            except:
+                return ""
         elif object_type=='List':
             # sympify to turn strings into tuple (or list if in brackets)
             try:
@@ -1089,8 +1102,13 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                         the_list += "%E" % element
                     else:
                         the_list += "%s" % element
-            except:
-                return ""
+            except TypeError:
+                # if value is not list, just return single value
+                if value.is_Float:
+                    the_list = "%E" % value
+                else:
+                    the_list = "%s" % value
+
 
             javascript = 'document.%s.evalCommand(\'%s={%s}\');\n' % \
                 (applet_identifier, object_name,
