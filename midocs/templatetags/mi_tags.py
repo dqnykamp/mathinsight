@@ -1139,6 +1139,12 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
         value = 'document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
         javascript='$("#%s").val(%s);\n' % (target, value)
+    elif object_type=='List':
+        value = 'document.%s.getValueString("%s")' % \
+            (applet_identifier, appletobject.name)
+        # extract the list within the braces returned by getValueString
+        value = "/{(.*)}/.exec(%s)[1]" % value
+        javascript='$("#%s").val(%s);\n' % (target, value)
     elif object_type=='Line':
         if len(related_objects)==2:
             point1=related_objects[0]
