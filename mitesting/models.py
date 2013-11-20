@@ -264,6 +264,7 @@ class Question(models.Model):
                               'index': index,
                               'sum': sum,
                               'iif': iif,
+                              'len': len,
                               }
   
         # obtain list of allowed commands from database
