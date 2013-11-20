@@ -132,8 +132,12 @@ def question_solution_view(request, question_id):
 
 
 
-def assessment_view(request, assessment_code, solution=False):
+def assessment_view(request, assessment_code, solution=False, question_only=None):
     
+    # if question_only is set, then view only that question
+    if question_only:
+        question_only = int(question_only)
+
     assessment = get_object_or_404(Assessment, code=assessment_code)
     
     # determine if user has permission to view, given privacy level
@@ -245,14 +249,28 @@ def assessment_view(request, assessment_code, solution=False):
     rendered_solution_list=[]
     if solution:
         rendered_solution_list=assessment.render_solution_list(seed)
+        if question_only:
+            try:
+                rendered_solution_list=rendered_solution_list[question_only-1:question_only]
+            except:
+                pass
+
         geogebra_oninit_commands=""
         for sol in rendered_solution_list:
             if geogebra_oninit_commands:
                 geogebra_oninit_commands += "\n"
             if sol['geogebra_oninit_commands']:
                 geogebra_oninit_commands += sol['geogebra_oninit_commands']
+
+                        
     else:
         rendered_question_list=assessment.render_question_list(seed, user=request.user, current_attempt=current_attempt)
+        if question_only:
+            try:
+                rendered_question_list = rendered_question_list[question_only-1:question_only]
+            except:
+                raise#  pass
+
         geogebra_oninit_commands=""
         for ques in rendered_question_list:
             if geogebra_oninit_commands:
@@ -260,6 +278,8 @@ def assessment_view(request, assessment_code, solution=False):
             if ques['geogebra_oninit_commands']:
                 geogebra_oninit_commands += ques['geogebra_oninit_commands']
 
+        
+        
     geogebra_oninit_commands = mark_safe(geogebra_oninit_commands)
 
     if "question_numbers" in request.REQUEST:
@@ -325,6 +345,7 @@ def assessment_view(request, assessment_code, solution=False):
           'question_numbers': question_numbers,
           'generate_assessment_link': generate_assessment_link,
           'show_solution_link': show_solution_link,
+          'question_only': question_only,
           'geogebra_oninit_commands': geogebra_oninit_commands,
           'noanalytics': noanalytics,
           },
