@@ -333,7 +333,13 @@ class math_object(object):
             if isinstance(expression, list) or isinstance(expression, Tuple):
                 new_expr=[]
                 for expr in expression:
-                    new_expr.append(bottom_up(expr.evalf(),
+                    # in case of Tuple of Tuples, expr could be a Tuple
+                    # which doesn't have an evalf attribute
+                    try:
+                        expr_evalf=expr.evalf()
+                    except:
+                        expr_evalf=expr
+                    new_expr.append(bottom_up(expr_evalf,
                                     lambda w: w.evalf(n_digits)
                                     if not w.is_Number 
                                     else Float(str(w.evalf(n_digits))),
