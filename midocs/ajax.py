@@ -142,6 +142,10 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
         the_answers={}
         answer_dict = {}
         
+        # reveal hidden_feedback css from applet feedback block
+        dajax.remove_css_class('.applet_feedback_%s' % identifier, 'hidden_feedback')
+        
+
         function_dict = question_context.get('sympy_function_dict',{})
         
         for  obj in answer_serialized:
