@@ -506,6 +506,43 @@ class Course(models.Model):
 
             previous_week_end -= datetime.timedelta(min_offset)
 
+            # if previous_week_end is a course skip day, 
+            # find previous day of class, up to one week in past
+            skipdate=False
+            try:
+                self.courseskipdate_set.get(date=previous_week_end)
+                original_previous_week_end=previous_week_end
+                skipdate=True
+            except ObjectDoesNotExist:
+                pass
+
+            
+            while skipdate:
+                
+                # find previous day of class before previous_week_end
+                previous_week_end -= datetime.timedelta(1)
+                previous_week_end_day = previous_week_end.weekday()
+                
+                min_offset = 7
+                for wd in weekday_list:
+                    min_offset = min((previous_week_end_day
+                                      -day_of_week_to_python(wd)) % 7,
+                                     min_offset)
+                previous_week_end -= datetime.timedelta(min_offset)
+
+                # if a week or more before original previous week end
+                # then return result regardless of it being a skip day
+                if original_previous_week_end - previous_week_end >= \
+                        datetime.timedelta(7):
+                    break
+                
+                # determine if is a skip date
+                try:
+                    self.courseskipdate_set.get(date=previous_week_end)
+                except ObjectDoesNotExist:
+                    skipdate=False
+                
+
         return previous_week_end
         
     def last_attendance_day_previous_week(self, date=None):
