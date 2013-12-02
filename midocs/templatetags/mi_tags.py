@@ -1488,10 +1488,11 @@ class AppletNode(template.Node):
         # check if any applet objects are specified 
         # to be captured with javascript
         appletobjects=applet.appletobject_set.filter \
-            (capture_changes=True)
+            (capture_changes=True).order_by("category_for_capture")
         inputboxlist=''
         capture_javascript=''
         answer_list = context.get('_math_writein_answer_list',[])
+        previous_category=None
 
         for appletobject in appletobjects:
             the_kw = "answer_blank_%s" % appletobject.name
@@ -1514,6 +1515,11 @@ class AppletNode(template.Node):
                         value_string = ' value="%s"' % pre_answer
 
                 inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20"%s />\n' % (target_id, target, value_string)
+                if appletobject.category_for_capture != previous_category:
+                    the_category = appletobject.category_for_capture
+                    if the_category:
+                        inputboxlist += '<br/>%s:' % the_category
+                    previous_category=the_category
                 inputboxlist += '<span id="%s_feedback_binary"></span>\n' % target
                     
                 related_objects=[]
@@ -1546,6 +1552,8 @@ class AppletNode(template.Node):
         context['_math_writein_answer_list'] = answer_list
 
 
+        if inputboxlist:
+            inputboxlist = '<div class="hidden_feedback applet_feedback_%s info"><b>Feedback from applet</b>%s</div>' % (identifier, inputboxlist)
         applet_link += inputboxlist
         if applet.applet_type.code == "Geogebra" \
                 or applet.applet_type.code == "GeogebraWeb":
