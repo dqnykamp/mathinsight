@@ -1164,6 +1164,7 @@ class AppletObject(models.Model):
     name = models.CharField(max_length=100)
     change_from_javascript = models.BooleanField(default=True)
     capture_changes = models.BooleanField(default=False)
+    state_variable = models.BooleanField(default=False)
     related_objects = models.CharField(max_length=200, blank=True, null=True)
     name_for_changes = models.CharField(max_length=100, blank=True, null=True)
     category_for_capture = models.CharField(max_length=100, blank=True, null=True)
