@@ -348,7 +348,7 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
                     if record_scores:
                         try:
                             current_attempt = content.studentcontentattempt_set\
-                                .get(student=student, seed=assessment_seed)
+                                .filter(student=student, seed=assessment_seed).latest()
                         except ObjectDoesNotExist:
                             current_attempt = content.studentcontentattempt_set\
                                 .create(student=student, seed=assessment_seed)
@@ -486,7 +486,7 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
                 if content:
                     try:
                         current_attempt = content.studentcontentattempt_set\
-                            .get(student=student, seed=assessment_seed)
+                            .filter(student=student, seed=assessment_seed).latest()
                     except ObjectDoesNotExist:
                         current_attempt = content.studentcontentattempt_set\
                             .create(student=student, seed=assessment_seed)
