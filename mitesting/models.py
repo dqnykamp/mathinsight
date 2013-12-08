@@ -10,9 +10,18 @@ from mitesting.permissions import return_user_assessment_permission_level
 import re
 import sympy
 from sympy import Symbol, Function, Tuple
+from sympy import Abs as sympy_Abs
 from sympy.printing import latex
 from django.db.models import Max
 from mitesting.math_objects import math_object, parse_expr, parse_and_process
+
+class Abs(sympy_Abs):
+    # evaluate the derivative assuming that the argument is real
+    def _eval_derivative(self, x):
+        from sympy.core.function import Derivative
+        from sympy.functions import sign
+        return Derivative(self.args[0], x, **{'evaluate': True}) \
+            * sign(self.args[0])
 
 
 def roots_tuple(f, *gens, **flags):
@@ -61,7 +70,7 @@ def index(expr, n):
 def smallest_factor(expr):
     try:
         if expr.is_Integer:
-            from sympy import factorint, Abs
+            from sympy import factorint
             factors = factorint(Abs(expr), limit=10000)
             factorlist=factors.keys()
             factorlist.sort()
@@ -100,7 +109,8 @@ def iif(cond, result_if_true, result_if_false):
     except:
         return ""
       
-    
+
+
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
     css_code = models.SlugField(max_length=50, unique=True)
@@ -259,7 +269,7 @@ class Question(models.Model):
                               'Max': max_including_tuples,
                               'min': min_including_tuples,
                               'Min': min_including_tuples,
-                              'abs': all_sympy_commands['Abs'], 
+                              'abs': Abs,
                               'evalf': evalf,
                               'index': index,
                               'sum': sum,
