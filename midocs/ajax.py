@@ -420,13 +420,6 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
 
     try: 
 
-
-        # so that current geogebra applets are not regenerated
-        # by call to web() in callback function
-        # remove css class geogebraweb from any applets
-        # already in page
-        dajax.remove_css_class('article .geogebraweb', 'geogebraweb')
-
         the_question = Question.objects.get(id=question_id)
         
         question_context = the_question.setup_context(seed=seed, identifier=identifier, question_set=question_set)
@@ -449,6 +442,14 @@ def show_math_write_in_solution(request, answer_serialized, question_id, seed,
 
         solution_selector = "#question_%s_solution" % identifier
         dajax.assign(solution_selector, 'innerHTML', rendered_solution)
+
+        # if any geogebra web applets in solution, 
+        # then call javascript to render them
+        geogebra_web_applet_list= \
+            question_context.get('geogebra_web_applet_list',[])
+        for applet in geogebra_web_applet_list:
+            dajax.script("renderGGBElement(document.getElementById('%s'));" \
+                             % applet)
 
         # remove show solution button
         dajax.remove('#solution_button_%s' % identifier)

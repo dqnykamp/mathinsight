@@ -599,7 +599,7 @@ class Question(models.Model):
         # new geogebra web applet
         # ajax removed class geogebraweb from any previous applets so that
         # don't get applets duplicated by web()
-        callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);web();}</script>' % (identifier, identifier)
+        callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);}</script>' % (identifier, identifier)
 
 
 
