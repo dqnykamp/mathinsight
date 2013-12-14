@@ -33,6 +33,18 @@ def course_thread_content_form_factory(thread):
  
 class CourseThreadContentInline(admin.StackedInline):
     model = CourseThreadContent
+
+# Tweak from
+# http://blog.ionelmc.ro/2012/01/19/tweaks-for-making-django-admin-faster/
+# so that don't reload choice options for every record
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(CourseThreadContentInline, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'thread_content' or db_field.name == 'assessment_category' or db_field.name == 'required_for_grade':
+            # dirty trick so queryset is evaluated and cached in .choices
+            formfield.choices = formfield.choices
+        return formfield
+
+
     def get_formset(self, request, obj=None, **kwargs):
         if obj is not None:
             self.form = course_thread_content_form_factory(obj.thread) # obj is a Course
@@ -58,6 +70,16 @@ class CourseAssessmentThreadContentInline(admin.StackedInline):
     def queryset(self, request):
         qs = super(CourseAssessmentThreadContentInline, self).queryset(request)
         return qs.filter(thread_content__content_type__model='assessment')
+
+# Tweak from
+# http://blog.ionelmc.ro/2012/01/19/tweaks-for-making-django-admin-faster/
+# so that don't reload choice options for every record
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(CourseAssessmentThreadContentInline, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'thread_content' or db_field.name == 'assessment_category' or db_field.name == 'required_for_grade':
+            # dirty trick so queryset is evaluated and cached in .choices
+            formfield.choices = formfield.choices
+        return formfield
 
     def get_formset(self, request, obj=None, **kwargs):
         if obj is not None:
