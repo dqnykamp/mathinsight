@@ -387,6 +387,7 @@ class Course(models.Model):
                                            'scores': category_scores})
 
             student_scores.append({'student': student,
+                                   'section': self.courseenrollment_set.get(student=student).section,
                                    'total_score': \
                                        self.total_student_score(student),
                                    'categories': student_categories})
