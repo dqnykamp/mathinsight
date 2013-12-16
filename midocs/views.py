@@ -13,7 +13,6 @@ import django.contrib.auth.views
 from django.contrib.auth.decorators import permission_required
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from midocs.search_functions import midocsSearchQuerySet
 from itertools import chain
 from haystack.views import SearchView
 import datetime
