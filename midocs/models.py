@@ -335,28 +335,6 @@ class Page(models.Model):
         except:
             pass
 
-    def find_template(self):
-        full_template_name = 'midocs/pages/%s/%s.html' % (self.template_dir, self.code)
-        found_template=0
-        for template_dir in settings.TEMPLATE_DIRS:
-            if(template_dir[-1] == '/'):
-                template_filename = "%s%s" % \
-                    (template_dir, full_template_name)
-            else:
-                template_filename = "%s/%s" % \
-                    (template_dir, full_template_name)
-            try:
-                template_mtime=datetime.datetime.fromtimestamp \
-                    (os.path.getmtime(template_filename))
-            except:
-                continue
-            found_template=1
-            break
-        if found_template:
-            return template_filename
-        else:
-            return ""
-
 
     @classmethod
     def update_all_similar(theclass):

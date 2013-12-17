@@ -308,13 +308,13 @@ class ThreadContent(models.Model):
             return self.get_title()
         
 
-    def save(self, *args, **kwargs):
-        super(ThreadContent, self).save(*args, **kwargs) 
-        # try running update_links on object, if such a function exists
-        try:
-            self.content_object.update_links()
-        except:
-            pass
+    # def save(self, *args, **kwargs):
+    #     super(ThreadContent, self).save(*args, **kwargs) 
+    #     # try running update_links on object, if such a function exists
+    #     try:
+    #         self.content_object.update_links()
+    #     except:
+    #         pass
 
     def validate_unique(self, exclude=None):
         # check to make sure that the same content object 
