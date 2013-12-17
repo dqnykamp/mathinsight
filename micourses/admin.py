@@ -3,7 +3,7 @@ from django import forms
 from django.db import models
 from micourses.models import *
 from mithreads.models import ThreadContent
-import settings
+from django.conf import settings
 import reversion
 
 class QuestionStudentAnswerAdmin(reversion.VersionAdmin):

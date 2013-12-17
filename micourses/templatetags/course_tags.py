@@ -3,7 +3,7 @@ from django.template.base import (Node, NodeList, Template, Context, Library, Va
 from django.template.defaultfilters import floatformat
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
-import settings
+from django.conf import settings
 
 register=Library()
 

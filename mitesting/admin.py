@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
-import settings
+from django.conf import settings
 import reversion
 
 class QuestionAssignedInline(admin.TabularInline):

@@ -1,0 +1,98 @@
+#MJ_PrintWarning
+{
+    display: block;
+    border: 2px solid #800;
+    color: #800;
+    padding: 1em;
+    margin: .5em 2em 1em 2em;
+    text-align: center;
+    font-size: small;
+}
+
+#printtitle
+{
+display: inline;
+}
+
+#printtitle h1
+{
+color: #FFE766;
+font-size: 2.6em;
+margin-bottom: 0.5em;
+text-align:center;
+}
+
+
+
+#header
+{
+    display: none;
+}
+
+#main
+{
+background-image: none;
+}
+
+#main_inner
+{
+position: static;
+width: 100%;
+padding-top: 0;
+}
+
+
+#messageform
+{  
+    display: none;
+}
+
+#linksection
+{
+    display: none;
+}
+
+applet 
+{ 
+    display: none;
+}
+
+.appletprintimage 
+{
+    display: block;
+}
+
+
+
+/* LAYOUT - 2 COLUMNS */
+
+	/* Primary content */
+	
+	#primaryContent_2columns
+	{
+	position: static;
+	width: 100%;
+	margin-right: 0em;
+	}
+	
+	#columnA_2columns
+	{
+	position: static;
+	float: none;
+	width: 100%;
+	margin-right: 0em;
+	padding-right: 0em;
+	}
+	
+	/* Secondary Content */
+	
+	#secondaryContent_2columns
+	{
+	    display: none;
+	}
+	
+	#columnC_2columns
+	{
+	    display: none;
+	}
+
