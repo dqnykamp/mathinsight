@@ -4,4 +4,4 @@
 /mathinsight/settings.py
 *.bak
 *~
-
+/mathinsight/mathinsight.log

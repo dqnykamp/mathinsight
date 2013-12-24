@@ -17,7 +17,7 @@ import micomments.admin
 from dajaxice.core import dajaxice_autodiscover, dajaxice_config
 dajaxice_autodiscover()
 
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf.urls.static import static
 
 import datetime
 
@@ -54,5 +54,6 @@ urlpatterns = patterns('',
     (r'^assess/', include('mitesting.urls')),
     (r'^thread/', include('mithreads.urls')),
     (r'^course/', include('micourses.urls')),
- )
+ ) \
++ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
