@@ -42,9 +42,7 @@
 		{
 			return 'You have unsaved changes on the page. Are you sure you want'
 			       + ' to navigate away?';
-		} else {
-			return null;
-		}
+		} 
 	});
 
 })})(jQuery || django.jQuery)
