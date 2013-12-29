@@ -1058,13 +1058,34 @@ class Applet(models.Model):
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
 
-        # check if changed code
-        # if so, may need to change file names after save
+        # check if changed code or applet file
+        # if changed code, may need to change file names after save
+        # if changed file, and Geogebra web, then generated encoded content
         changed_code=False
+        changed_applet=False
         if self.pk is not None:
             orig = Applet.objects.get(pk=self.pk)
             if orig.code != self.code:
                 changed_code = True
+            if orig.applet_file != self.applet_file:
+                changed_applet = True
+
+        # create encoded content if applet_file exists
+        # only do this for new file or if have changed the applet_file
+        # and if is GeogebraWeb applet
+        if (self.pk is None or changed_applet or not self.encoded_content)\
+                and self.applet_file:
+            # check if GeogebraWeb applet
+            gw_type=AppletType.objects.get(code="GeogebraWeb")
+            if(self.applet_type == gw_type):
+                try:
+                    self.applet_file.open()
+                    import base64
+                    self.encoded_content = base64.b64encode\
+                        (self.applet_file.read())
+                    self.applet_file.close()
+                except:
+                    raise
 
         super(Applet, self).save(*args, **kwargs) 
 
