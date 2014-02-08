@@ -1241,6 +1241,26 @@ def Geogebra_link(context, applet, applet_identifier, width, height):
 
 
 
+
+def Three_link(context, applet, applet_identifier, width, height):
+
+    applet_id = "three_applet_%s" % applet_identifier
+
+    html_string = '</p><div class="applet"><div class="threeapplet" id="%s"></div></div>' % applet_id
+
+    script_string="var static_url='%s'; var media_url='%s'; var clock = new THREE.Clock(); var scene = new THREE.Scene(); var width = %s; var height = %s; var renderer = new THREE.WebGLRenderer( {antialias:true, alpha:true} ); renderer.setSize(width, height); var container = document.getElementById('%s'); container.appendChild( renderer.domElement ); var camera, control; function update() {}\n%s\nanimate(); function animate() { requestAnimationFrame( animate ); render(); update(); controls.update(); } function render() { renderer.render( scene, camera ); } " % \
+        (context.get("STATIC_URL",""), context.get("MEDIA_URL",""),  width, height, applet_id, applet.javascript)
+
+    script_string = "run_three_%s();function run_three_%s() { %s }\n" % (applet_id, applet_id, script_string)
+    
+    three_javascript=context.dicts[0].get('three_javascript', '')
+    three_javascript += script_string
+    context.dicts[0]['three_javascript'] = three_javascript
+
+    return html_string
+
+
+
 def LiveGraphics3D_link(context, applet, applet_identifier, width, height):
     html_string='<div class="applet"><object class="liveGraphics3D" type="application/x-java-applet" height="%s" width="%s"><param name="code" value="Live.class" /> <param name="archive" value="live.jar" /><param name="codebase" value="%sjar/" />' % \
         (height, width, context.get("STATIC_URL",""))
@@ -1440,6 +1460,8 @@ class AppletNode(template.Node):
            applet_link = GeogebraWeb_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "GeogebraTube":
            applet_link = GeogebraTube_link(context, applet, applet_identifier, width, height)
+        elif applet.applet_type.code == "Three":
+           applet_link = Three_link(context, applet, applet_identifier, width, height)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text
@@ -1996,12 +2018,24 @@ def counter(parser, token):
 
 class AccumulatedJavascriptNode(template.Node):
     def render(self, context):
+
+        script_string = ""
+        static_url = context.get("STATIC_URL","")
+
         # return any geogebra_init_javascript
         init_javascript = context.get('geogebra_oninit_commands','')
         if init_javascript:
-            return '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\n%s}\n</script></div>' % init_javascript
-        else:
-            return ''
+            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nMathJax.Hub.Register.StartupHook("End",function () {function ggbOnInit(arg) {\n%s}\n});</script></div>' % init_javascript
+
+        three_javascript = context.dicts[0].get('three_javascript', '')
+
+        if three_javascript:
+            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/DragObjects.js"></script>' % \
+                (static_url,static_url,static_url,static_url,static_url,static_url)
+            script_string += '<script>MathJax.Hub.Register.StartupHook("End",function () {%s});</script>' % three_javascript
+
+        
+        return script_string
 
 
 @register.tag

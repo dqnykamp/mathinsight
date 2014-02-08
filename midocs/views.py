@@ -159,7 +159,8 @@ def pageview(request, page_code):
           'geogebra_oninit_commands': geogebra_oninit_commands,
           'rendered_text': rendered_text,
           },
-         context_instance=RequestContext(request))
+         context_instance=context  # use to get context from rendered text
+         )
 
 
 
