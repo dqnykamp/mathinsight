@@ -1246,16 +1246,89 @@ def Three_link(context, applet, applet_identifier, width, height):
 
     applet_id = "three_applet_%s" % applet_identifier
 
-    html_string = '</p><div class="applet"><div class="threeapplet" id="%s"></div></div>' % applet_id
-
-    script_string="var static_url='%s'; var media_url='%s'; var clock = new THREE.Clock(); var scene = new THREE.Scene(); var width = %s; var height = %s; var renderer = new THREE.WebGLRenderer( {antialias:true, alpha:true} ); renderer.setSize(width, height); var container = document.getElementById('%s'); container.appendChild( renderer.domElement ); var camera, control; function update() {}\n%s\nanimate(); function animate() { requestAnimationFrame( animate ); render(); update(); controls.update(); } function render() { renderer.render( scene, camera ); } " % \
-        (context.get("STATIC_URL",""), context.get("MEDIA_URL",""),  width, height, applet_id, applet.javascript)
-
-    script_string = "run_three_%s();function run_three_%s() { %s }\n" % (applet_id, applet_id, script_string)
+    if applet.child_applet:
+        child_width = int(width*applet.child_applet_percent_width/100.0)
+        width = int(width*(1.0-applet.child_applet_percent_width/100.0))
     
+
+    html_string = '<div class="threeapplet" id="container_%s"><div style="width:%spx; height:%spx;" >[applet loading]</div></div>' % (applet_id, width, height)
+
+    if applet.child_applet:
+        html_string = '<div class="ym-g50 ym-gl"><div class="ym-gbox-left" style="text-align:right;">%s</div></div>' % html_string
+
+        html_string +='<div class="ym-g50 ym-gr"><div class="ym-gbox-right" style="text-align:left;"><div class="threeapplet" id="container2_%s"><div style="width:%spx; height:%spx;" >[applet loading]</div></div></div></div>' % (applet_id, child_width, height)
+        
+        html_string = '<div class="ym-grid linearize-level-1">%s</div>' % html_string
+        
+    html_string = '<div class="applet">%s</div>' % html_string
+
+    parameters_string = "static_url: '%s', media_url: '%s'" % \
+        (context.get("STATIC_URL",""), context.get("MEDIA_URL",""))
+
+    script_string = "\napplet_%s=new MIAppletThree('container_%s', %s, %s);\n" % (applet_id, applet_id, width, height);
+    script_string += "applet_%s.run = function(parameters) {\n%s\n}\n"  % (applet_id, applet.javascript)
+    
+    run_script_string = "\n$('#container_%s').empty();\napplet_%s.run({ %s });\n" % (applet_id, applet_id, parameters_string)
+    
+    if applet.child_applet:
+        script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s);\n" % (applet_id, applet_id, child_width, height);
+        script_string += "applet2_%s.run = function(parameters) {\n%s\n}\n"  % (applet_id, applet.child_applet.javascript)
+
+        run_script_string += "\n$('#container2_%s').empty();\napplet2_%s.run({ %s });\n" % (applet_id, applet_id, parameters_string)
+
+        # insert javascript to link applet and child objects
+        for object_link in applet.appletchildobjectlink_set.all():
+            # first check if objects exist in applet and child applet
+            # if not, ignore
+            try:
+                applet_object = applet.appletobject_set.get\
+                    (name=object_link.object_name)
+            except ObjectDoesNotExist:
+                continue
+            try:
+                child_applet_object = applet.child_applet.appletobject_set.get\
+                    (name=object_link.child_object_name)
+            except ObjectDoesNotExist:
+                continue
+
+            # look up object types.  Ignore if not same type
+            applet_object_type = applet_object.object_type.object_type
+            child_applet_object_type = \
+                child_applet_object.object_type.object_type
+            if applet_object_type != child_applet_object_type:
+                continue
+            
+            # insert link code, depending on object type
+            if applet_object_type == 'Point':
+                if object_link.applet_to_child_link:
+                    run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setPosition("%s", applet_%s.getObject("%s").position);\n });\n' \
+                        % (applet_id, applet_object.name, applet_id, 
+                           child_applet_object.name, applet_id, 
+                           applet_object.name)
+                if object_link.child_to_applet_link:
+                    run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setPosition("%s", applet2_%s.getObject("%s").position);\n });\n' \
+                        % (applet_id, child_applet_object.name, applet_id, 
+                           applet_object.name, applet_id, 
+                           child_applet_object.name)
+            elif applet_object_type == 'Number':
+                if object_link.applet_to_child_link:
+                    run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setValue("%s", applet_%s.getValue("%s"));\n });\n' \
+                        % (applet_id, applet_object.name, applet_id, 
+                           child_applet_object.name, applet_id, 
+                           applet_object.name)
+                if object_link.child_to_applet_link:
+                    run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setValue("%s", applet2_%s.getValue("%s"));\n });\n' \
+                        % (applet_id, child_applet_object.name, applet_id, 
+                           applet_object.name, applet_id, 
+                           child_applet_object.name)
+                        
+
     three_javascript=context.dicts[0].get('three_javascript', '')
     three_javascript += script_string
     context.dicts[0]['three_javascript'] = three_javascript
+    run_three_javascript=context.dicts[0].get('run_three_javascript', '')
+    run_three_javascript += run_script_string
+    context.dicts[0]['run_three_javascript'] = run_three_javascript
 
     return html_string
 
@@ -1384,13 +1457,13 @@ class AppletNode(template.Node):
 
         if width==0:
             try:
-                width=applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_WIDTH").value
-            except ObjectDoesNotExist:
+                width=int(applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_WIDTH").value)
+            except:
                 pass
         if width==0:
             try:
-                width=applet.applet_type.valid_parameters.get(parameter_name ="DEFAULT_WIDTH").default_value
-            except ObjectDoesNotExist:
+                width=int(applet.applet_type.valid_parameters.get(parameter_name ="DEFAULT_WIDTH").default_value)
+            except:
                 width=default_size
 
         height=0
@@ -1401,14 +1474,14 @@ class AppletNode(template.Node):
 
         if height==0:
             try:
-                height=applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_HEIGHT").value
-            except ObjectDoesNotExist:
+                height=int(applet.appletparameter_set.get(parameter__parameter_name ="DEFAULT_HEIGHT").value)
+            except:
                 pass
 
         if height==0:
             try:
-                height=applet.applet_type.valid_parameters.get(parameter_name ="DEFAULT_HEIGHT").default_value
-            except ObjectDoesNotExist:
+                height=int(applet.applet_type.valid_parameters.get(parameter_name ="DEFAULT_HEIGHT").default_value)
+            except:
                 height=default_size
 
         caption = None
@@ -2028,13 +2101,14 @@ class AccumulatedJavascriptNode(template.Node):
             script_string += '<div id="geogebra_onit"><script type="text/javascript">\nMathJax.Hub.Register.StartupHook("End",function () {function ggbOnInit(arg) {\n%s}\n});</script></div>' % init_javascript
 
         three_javascript = context.dicts[0].get('three_javascript', '')
+        run_three_javascript = context.dicts[0].get('run_three_javascript', '')
 
         if three_javascript:
-            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/DragObjects.js"></script>' % \
-                (static_url,static_url,static_url,static_url,static_url,static_url)
-            script_string += '<script>MathJax.Hub.Register.StartupHook("End",function () {%s});</script>' % three_javascript
-
+            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%s/js/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%s/js/three/TextLabel.js"></script>\n' % \
+                (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
+            script_string += '<script>\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>' % (three_javascript, run_three_javascript )
         
+
         return script_string
 
 

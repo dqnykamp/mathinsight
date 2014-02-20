@@ -915,6 +915,8 @@ class Applet(models.Model):
     notation_systems = models.ManyToManyField(NotationSystem, through='AppletNotationSystem')
     highlight = models.BooleanField(db_index=True)
     javascript = models.TextField(blank=True, null=True)
+    child_applet = models.ForeignKey('self', blank=True, null=True)
+    child_applet_percent_width = models.IntegerField(default=50)
     thumbnail = models.ImageField(max_length=150, upload_to=applet_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
@@ -1170,6 +1172,18 @@ class AppletObject(models.Model):
 
     def __unicode__(self):
         return "%s: %s" % (self.object_type, self.name)
+
+
+class AppletChildObjectLink(models.Model):
+    applet = models.ForeignKey(Applet)
+    object_name = models.CharField(max_length=100)
+    child_object_name = models.CharField(max_length=100)
+    applet_to_child_link = models.BooleanField(default=True)
+    child_to_applet_link = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return "link %s to %s" % (self.object_name, self.child_object_name)
+
 
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)
