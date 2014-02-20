@@ -17,7 +17,9 @@
 
 /* modified to include LineWidth */
 
-Arrow = function ( dir, origin, length, hex, headLength, headWidth, lineWidth, arrowDetail) {
+'use strict';
+
+var Arrow = function ( dir, origin, length, hex, headLength, headWidth, lineWidth, arrowDetail) {
 
     // dir is assumed to be normalized
     
@@ -40,7 +42,6 @@ Arrow = function ( dir, origin, length, hex, headLength, headWidth, lineWidth, a
     this.line.matrixAutoUpdate = false;
     this.add( this.line );
     
-
     var coneGeometry = new THREE.CylinderGeometry( 0, 0.5, 1, arrowDetail, 1 );
     coneGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, - 0.5, 0 ) );
 
@@ -106,6 +107,3 @@ Arrow.prototype.setColor = function ( hex ) {
 	this.cone.material.color.setHex( hex );
 
 };
-
-
-

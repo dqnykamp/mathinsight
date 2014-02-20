@@ -1,5 +1,13 @@
+// create a vector field of arrows
 
-VectorField = function ( F, minx, maxx, dx, miny, maxy, dy, minz, maxz, dz) {
+// code is unfinished, as it needs to determine correct normalization
+// for length of vectors so that they look reasonable without overlapping
+// Will need some way to adjust this length as well, in case particular
+// use needs a different normalization
+
+'use strict';
+
+var VectorField = function ( F, minx, maxx, dx, miny, maxy, dy, minz, maxz, dz) {
 
     THREE.Object3D.call( this );
     

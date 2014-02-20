@@ -5,20 +5,40 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-Axes = function ( size, labels ) {
+// will need to add a "boxed" axes type where have a box around
+// the whole region, possibly with actual values of the coordinates
+// labeled
+
+'use strict';
+
+// three-dimensional axes
+var Axes = function ( size, neg_size, labels ) {
     
-    size = size || 1;
+    if(size ===undefined) {
+	size = new THREE.Vector3(1,1,1);
+    }
+    else if(!(size instanceof THREE.Vector3)) {
+	size = new THREE.Vector3(size,size,size);
+    }
+    if(neg_size===undefined) {
+	neg_size = size.clone().negate();
+    }
+    else if(!(neg_size instanceof THREE.Vector3)) {
+	neg_size = new THREE.Vector3(neg_size,neg_size,neg_size);
+    }
+    
+
     labels = labels || true;
 
     var geometry = new THREE.Geometry();
     
     geometry.vertices.push(
-	new THREE.Vector3(), new THREE.Vector3( size, 0, 0 ),
-	new THREE.Vector3(), new THREE.Vector3( 0, size, 0 ),
-	new THREE.Vector3(), new THREE.Vector3( 0, 0, size ),
-	new THREE.Vector3(), new THREE.Vector3( -size, 0, 0 ),
-	new THREE.Vector3(), new THREE.Vector3( 0, -size, 0 ),
-	new THREE.Vector3(), new THREE.Vector3( 0, 0, -size )
+	new THREE.Vector3(), new THREE.Vector3( size.x, 0, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, size.y, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, 0, size.z ),
+	new THREE.Vector3(), new THREE.Vector3( neg_size.x, 0, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, neg_size.y, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, 0, neg_size.z )
     );
     
     geometry.colors.push(
@@ -35,54 +55,72 @@ Axes = function ( size, labels ) {
     THREE.Line.call( this, geometry, material, THREE.LinePieces );
 
     if(labels) {
-	var spritex = AxesMakeTextSprite( "x",   { fontsize: 120} );
-	spritex.position.set(5.5, 0.2, 0);
+	var spritex = new TextLabel( "x",   { fontsize: 120} );
+	spritex.position.set(size.x*1.1, 0, 0);
 	this.add( spritex );
 	
-	var spritey = AxesMakeTextSprite( "y",   { fontsize: 120} );
-	spritey.position.set(0, 5.5, 0);
+	var spritey = new TextLabel( "y",   { fontsize: 120} );
+	spritey.position.set(0, size.y*1.1, 0);
 	this.add( spritey );
 	
-	var spritez = AxesMakeTextSprite( "z",   { fontsize: 120} );
-	spritez.position.set(0, 0.2, 5.5);
+	var spritez = new TextLabel( "z",   { fontsize: 120} );
+	spritez.position.set(0, 0, size.z*1.1);
 	this.add( spritez );
     }
 };
 
 Axes.prototype = Object.create( THREE.Line.prototype );
 
+// two-dimensional axes
+var Axes2D = function ( size, neg_size, labels ) {
+    
+    if(size ===undefined) {
+	size = new THREE.Vector2(1,1);
+    }
+    else if(!(size instanceof THREE.Vector2)) {
+	size = new THREE.Vector2(size,size);
+    }
+    if(neg_size===undefined) {
+	neg_size = size.clone().negate();
+    }
+    else if(!(neg_size instanceof THREE.Vector2)) {
+	neg_size = new THREE.Vector2(neg_size,neg_size);
+    }
+    
 
-function AxesMakeTextSprite( message, parameters )
-{
-    if ( parameters === undefined ) parameters = {};
-    
-    var fontface = parameters.hasOwnProperty("fontface") ? 
-	parameters["fontface"] : "Arial";
-    
-    var fontsize = parameters.hasOwnProperty("fontsize") ? 
-	parameters["fontsize"] : 172;
-    
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
-    context.font = "Bold " + fontsize + "px " + fontface;
-    
-    // get size data (height depends only on font size)
-    var metrics = context.measureText( message );
-    var textWidth = metrics.width;
-    
-    
-    // text color
-    context.fillStyle = "rgba(0, 0, 0, 1.0)";
+    labels = labels || true;
 
-    context.fillText( message, 0, fontsize);
+    var geometry = new THREE.Geometry();
     
-    // canvas contents will be used for a texture
-    var texture = new THREE.Texture(canvas) 
-    texture.needsUpdate = true;
+    geometry.vertices.push(
+	new THREE.Vector3(), new THREE.Vector3( size.x, 0, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, size.y, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( neg_size.x, 0, 0 ),
+	new THREE.Vector3(), new THREE.Vector3( 0, neg_size.y, 0 )
+    );
+    
+    geometry.colors.push(
+	new THREE.Color( 0x000000 ), new THREE.Color( 0x000000 ),
+	new THREE.Color( 0x000000 ), new THREE.Color( 0x000000 ),
+	new THREE.Color( 0x000000 ), new THREE.Color( 0x000000 ),
+	new THREE.Color( 0x000000 ), new THREE.Color( 0x000000 )
+    );
 
-    var spriteMaterial = new THREE.SpriteMaterial( 
-	{ map: texture, useScreenCoordinates: false} );
-    var sprite = new THREE.Sprite( spriteMaterial );
-    //sprite.scale.set(10,10,10.0);
-    return sprite;	
-}
+    var material = new THREE.LineBasicMaterial( { vertexColors: THREE.VertexColors, linewidth: 5 } );
+    
+    THREE.Line.call( this, geometry, material, THREE.LinePieces );
+
+    if(labels) {
+	var spritex = new TextLabel( "x",   { fontsize: 120} );
+	spritex.position.set(size.x*1.1, 0, 0);
+	this.add( spritex );
+	
+	var spritey = new TextLabel( "y",   { fontsize: 120} );
+	spritey.position.set(0, size.y*1.1, 0);
+	this.add( spritey );
+	
+    }
+};
+
+Axes2D.prototype = Object.create( THREE.Line.prototype );
+
