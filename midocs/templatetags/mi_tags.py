@@ -1298,30 +1298,51 @@ def Three_link(context, applet, applet_identifier, width, height):
             if applet_object_type != child_applet_object_type:
                 continue
             
-            # insert link code, depending on object type
-            if applet_object_type == 'Point':
-                if object_link.applet_to_child_link:
+            if object_link.applet_to_child_link and \
+                    applet_object.capture_changes and \
+                    child_applet_object.change_from_javascript:
+                    
+                if child_applet_object.name_for_changes:
+                    child_applet_object_name = \
+                        child_applet_object.name_for_changes
+                else:
+                    child_applet_object_name = child_applet_object.name
+
+                # insert link code, depending on object type
+                if applet_object_type == 'Point':
+
                     run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setPosition("%s", applet_%s.getObject("%s").position);\n });\n' \
                         % (applet_id, applet_object.name, applet_id, 
-                           child_applet_object.name, applet_id, 
+                           child_applet_object_name, applet_id, 
                            applet_object.name)
-                if object_link.child_to_applet_link:
-                    run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setPosition("%s", applet2_%s.getObject("%s").position);\n });\n' \
-                        % (applet_id, child_applet_object.name, applet_id, 
-                           applet_object.name, applet_id, 
-                           child_applet_object.name)
-            elif applet_object_type == 'Number':
-                if object_link.applet_to_child_link:
+                elif applet_object_type == 'Number':
                     run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setValue("%s", applet_%s.getValue("%s"));\n });\n' \
                         % (applet_id, applet_object.name, applet_id, 
-                           child_applet_object.name, applet_id, 
+                           child_applet_object_name, applet_id, 
                            applet_object.name)
-                if object_link.child_to_applet_link:
+                        
+            if object_link.child_to_applet_link  and \
+                    child_applet_object.capture_changes and \
+                    applet_object.change_from_javascript:
+                    
+                if applet_object.name_for_changes:
+                    applet_object_name = \
+                        applet_object.name_for_changes
+                else:
+                    applet_object_name = applet_object.name
+                        
+                # insert link code, depending on object type
+                if applet_object_type == 'Point':
+                    run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setPosition("%s", applet2_%s.getObject("%s").position);\n });\n' \
+                        % (applet_id, child_applet_object.name, applet_id, 
+                           applet_object_name, applet_id, 
+                           child_applet_object.name)
+                elif applet_object_type == 'Number':
                     run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setValue("%s", applet2_%s.getValue("%s"));\n });\n' \
                         % (applet_id, child_applet_object.name, applet_id, 
-                           applet_object.name, applet_id, 
+                           applet_object_name, applet_id, 
                            child_applet_object.name)
-                        
+                
 
     three_javascript=context.dicts[0].get('three_javascript', '')
     three_javascript += script_string
@@ -2104,7 +2125,7 @@ class AccumulatedJavascriptNode(template.Node):
         run_three_javascript = context.dicts[0].get('run_three_javascript', '')
 
         if three_javascript:
-            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%s/js/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%s/js/three/TextLabel.js"></script>\n' % \
+            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script>\n' % \
                 (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
             script_string += '<script>\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>' % (three_javascript, run_three_javascript )
         
