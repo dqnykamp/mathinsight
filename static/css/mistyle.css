@@ -1987,6 +1987,7 @@ img.displayed {
 }
 .appleterror {
     background-color: #E0A7A7;
+    text-align: left;
 }
 
 object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {

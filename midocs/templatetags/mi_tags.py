@@ -1,5 +1,5 @@
 from django import template
-from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
+from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference
 from mitesting.models import Assessment
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -1242,39 +1242,66 @@ def Geogebra_link(context, applet, applet_identifier, width, height):
 
 
 
-def Three_link(context, applet, applet_identifier, width, height):
+def Three_link(context, applet, applet_identifier, width, height, url_get_parameters):
 
     applet_id = "three_applet_%s" % applet_identifier
 
     if applet.child_applet:
         child_width = int(width*applet.child_applet_percent_width/100.0)
         width = int(width*(1.0-applet.child_applet_percent_width/100.0))
-    
 
-    html_string = '<div class="threeapplet" id="container_%s"><div style="width:%spx; height:%spx;" >[applet loading]</div></div>' % (applet_id, width, height)
+    # display an image while applet is loading
+    # (actually while mathjax is loading)
+    applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+        % (applet.image.url, applet.annotated_title(), width, height)
+    # right align if applet has a child, else center,
+    # to make same position as applet
+    if applet.child_applet:
+        positioning_string = 'margin-left:auto;'
+    else:
+        positioning_string = 'margin-left:auto; margin-right:auto;'
+
+    applet_loading_image = '<div style="width:%spx; height:%spx; position:relative; text-align: center; %s" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (width, height, positioning_string, applet_loading_image, height/2)
+    
+    html_string = '<div class="threeapplet" id="container_%s" >%s</div><div class="appleterror three_load_error"></div>' % (applet_id, applet_loading_image)
 
     if applet.child_applet:
+
         html_string = '<div class="ym-g50 ym-gl"><div class="ym-gbox-left" style="text-align:right;">%s</div></div>' % html_string
 
-        html_string +='<div class="ym-g50 ym-gr"><div class="ym-gbox-right" style="text-align:left;"><div class="threeapplet" id="container2_%s"><div style="width:%spx; height:%spx;" >[applet loading]</div></div></div></div>' % (applet_id, child_width, height)
+        # display an image while applet is loading
+        # (actually while mathjax is loading)
+        applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+            % (applet.child_applet.image.url, \
+                   applet.child_applet.annotated_title(), child_width, height)
+        #  left align since it is a child, to make same position as applet
+        positioning_string = 'margin-right:auto;'
+
+        applet_loading_image = '<div style="width:%spx; height:%spx; position:relative; text-align: center; %s" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (child_width, height, positioning_string, applet_loading_image, height/2)
+
+
+        html_string +='<div class="ym-g50 ym-gr"><div class="ym-gbox-right" style="text-align:left;"><div class="threeapplet" id="container2_%s">%s</div><div class="appleterror three_load_error"></div></div></div>' % (applet_id, applet_loading_image)
         
         html_string = '<div class="ym-grid linearize-level-1">%s</div>' % html_string
         
-    html_string = '<div class="applet">%s</div>' % html_string
+    html_string = '<div class="javascriptapplet">%s</div>' % html_string
 
     parameters_string = "static_url: '%s', media_url: '%s'" % \
         (context.get("STATIC_URL",""), context.get("MEDIA_URL",""))
+    if 'allow_screenshots' in url_get_parameters:
+        parameters_string += ", allow_screenshots: true"
 
-    script_string = "\napplet_%s=new MIAppletThree('container_%s', %s, %s);\n" % (applet_id, applet_id, width, height);
-    script_string += "applet_%s.run = function(parameters) {\n%s\n}\n"  % (applet_id, applet.javascript)
+    script_string = "\napplet_%s=new MIAppletThree('container_%s', %s, %s, { %s });\n" % (applet_id, applet_id, width, height, parameters_string);
+
+    script_string += "applet_%s.run = function() {\nvar renderer=this.renderer, container=this.container, width=this.width, height=this.height, namedObjects=this.namedObjects, parameters=this.parameters;\n%s\n}\n"  % (applet_id, applet.javascript)
     
-    run_script_string = "\n$('#container_%s').empty();\napplet_%s.run({ %s });\n" % (applet_id, applet_id, parameters_string)
+    run_script_string = "\n$('#container_%s').empty();\napplet_%s.run();\n" % (applet_id, applet_id)
     
     if applet.child_applet:
-        script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s);\n" % (applet_id, applet_id, child_width, height);
-        script_string += "applet2_%s.run = function(parameters) {\n%s\n}\n"  % (applet_id, applet.child_applet.javascript)
+        script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s, { %s });\n" % (applet_id, applet_id, child_width, height, parameters_string);
+        script_string += "applet2_%s.run = function() {\nvar renderer=this.renderer, container=this.container, width=this.width, height=this.height, namedObjects=this.namedObjects, parameters=this.parameters;\n%s\n}\n"  % (applet_id, applet.child_applet.javascript)
 
-        run_script_string += "\n$('#container2_%s').empty();\napplet2_%s.run({ %s });\n" % (applet_id, applet_id, parameters_string)
+        run_script_string += "\n$('#container2_%s').empty();\napplet2_%s.run();\n" % (applet_id, applet_id)
 
         # insert javascript to link applet and child objects
         for object_link in applet.appletchildobjectlink_set.all():
@@ -1453,6 +1480,8 @@ class AppletNode(template.Node):
 
         applet = self.applet.resolve(context)
 
+        url_get_parameters = context.get('request').GET
+
         # if applet is not an applet instance
         # try to load applet with that code
         if not isinstance(applet, Applet):
@@ -1555,7 +1584,7 @@ class AppletNode(template.Node):
         elif applet.applet_type.code == "GeogebraTube":
            applet_link = GeogebraTube_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "Three":
-           applet_link = Three_link(context, applet, applet_identifier, width, height)
+           applet_link = Three_link(context, applet, applet_identifier, width, height, url_get_parameters)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text
@@ -2125,9 +2154,18 @@ class AccumulatedJavascriptNode(template.Node):
         run_three_javascript = context.dicts[0].get('run_three_javascript', '')
 
         if three_javascript:
-            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script>\n' % \
-                (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
-            script_string += '<script>\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>' % (three_javascript, run_three_javascript )
+            # load in three libraries
+            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Detector.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script>\n' % \
+                (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
+
+
+            # if webgl is supported, 
+            #    then define applets and start after mathjax is finished
+            # else remove "applet loading" message from images
+            #    and instead add message from three.js error string
+
+            three_error_string = AppletType.objects.get(code="Three").error_string
+            script_string += '<script>\nif(Detector.webgl) {\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n}\nelse {\n $( ".three_applet_loading_message").remove(); $( ".three_load_error" ).append(\'%s<br/> \').append(Detector.getWebGLErrorMessage())\n}\n</script>' % (three_javascript, run_three_javascript, three_error_string )
         
 
         return script_string
