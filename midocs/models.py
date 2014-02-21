@@ -1060,17 +1060,21 @@ class Applet(models.Model):
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
 
-        # check if changed code or applet file
+        # check if changed code, applet file, or image file
         # if changed code, may need to change file names after save
         # if changed file, and Geogebra web, then generated encoded content
+        # if changed image, then generate thumbnail
         changed_code=False
         changed_applet=False
+        changed_image=False
         if self.pk is not None:
             orig = Applet.objects.get(pk=self.pk)
             if orig.code != self.code:
                 changed_code = True
             if orig.applet_file != self.applet_file:
                 changed_applet = True
+            if orig.image != self.image:
+                changed_image = True
 
         # create encoded content if applet_file exists
         # only do this for new file or if have changed the applet_file
@@ -1088,6 +1092,28 @@ class Applet(models.Model):
                     self.applet_file.close()
                 except:
                     raise
+                
+        # create thumbnail from image file, if it exists
+        # adapted from http://djangosnippets.org/snippets/2094/
+        # only do this for new file or if have changed the image
+        if (self.pk is None or changed_image) and self.image:
+
+            image = PILImage.open(self.image)
+        
+            thumb_size = (200,200)
+
+            image.thumbnail(thumb_size, PILImage.ANTIALIAS)
+        
+            # save the thumbnail to memory
+            temp_handle = StringIO()
+            image.save(temp_handle, 'png')
+            temp_handle.seek(0) # rewind the file
+        
+            # save to the thumbnail field
+            suf = SimpleUploadedFile(os.path.split(self.image.name)[-1],
+                                     temp_handle.read(),
+                                     content_type='image/png')
+            self.thumbnail.save(suf.name+'.png', suf, save=False)
 
         super(Applet, self).save(*args, **kwargs) 
 
