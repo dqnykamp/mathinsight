@@ -1271,9 +1271,14 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
 
         # display an image while applet is loading
         # (actually while mathjax is loading)
+        # use image2, if it is exists, else the image from the child applet
+        if applet.image2:
+            image_url = applet.image2.url
+        else:
+            image_url = applet.child_applet.image.url
         applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
-            % (applet.child_applet.image.url, \
-                   applet.child_applet.annotated_title(), child_width, height)
+            % (image_url, applet.child_applet.annotated_title(), \
+                   child_width, height)
         #  left align since it is a child, to make same position as applet
         positioning_string = 'margin-right:auto;'
 
@@ -1298,7 +1303,10 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
     run_script_string = "\n$('#container_%s').empty();\napplet_%s.run();\n" % (applet_id, applet_id)
     
     if applet.child_applet:
-        script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s, { %s });\n" % (applet_id, applet_id, child_width, height, parameters_string);
+        child_parameters = parameters_string
+        if applet.child_applet_parameters:
+            child_parameters += ", " + applet.child_applet_parameters
+        script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s, { %s });\n" % (applet_id, applet_id, child_width, height, child_parameters);
         script_string += "applet2_%s.run = function() {\nvar renderer=this.renderer, container=this.container, width=this.width, height=this.height, namedObjects=this.namedObjects, parameters=this.parameters;\n%s\n}\n"  % (applet_id, applet.child_applet.javascript)
 
         run_script_string += "\n$('#container2_%s').empty();\napplet2_%s.run();\n" % (applet_id, applet_id)

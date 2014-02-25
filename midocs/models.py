@@ -917,6 +917,7 @@ class Applet(models.Model):
     javascript = models.TextField(blank=True, null=True)
     child_applet = models.ForeignKey('self', blank=True, null=True)
     child_applet_percent_width = models.IntegerField(default=50)
+    child_applet_parameters = models.CharField(max_length=100, blank=True, null=True)
     thumbnail = models.ImageField(max_length=150, upload_to=applet_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
