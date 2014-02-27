@@ -1359,7 +1359,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
                         % (applet_id, applet_object.name, applet_id, 
                            child_applet_object_name, applet_id, 
                            applet_object.name)
-                elif applet_object_type == 'Number' or applet_object_type == 'Array':
+                elif applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
                     run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setValue("%s", applet_%s.getValue("%s"));\n });\n' \
                         % (applet_id, applet_object.name, applet_id, 
                            child_applet_object_name, applet_id, 
@@ -1381,7 +1381,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
                         % (applet_id, child_applet_object.name, applet_id, 
                            applet_object_name, applet_id, 
                            child_applet_object.name)
-                elif applet_object_type == 'Number':
+                elif applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
                     run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setValue("%s", applet2_%s.getValue("%s"));\n });\n' \
                         % (applet_id, child_applet_object.name, applet_id, 
                            applet_object_name, applet_id, 
