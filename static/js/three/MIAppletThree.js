@@ -1,3 +1,5 @@
+'use strict';
+
 var MIAppletThree = function(container_id, width, height, parameters) {
 
     if ( parameters === undefined )  {

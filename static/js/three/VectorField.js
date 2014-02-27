@@ -27,7 +27,7 @@ var VectorField = function ( F, minx, maxx, dx, miny, maxy, dy, minz, maxz, dz) 
 		if(Fmag > 0) {
 		    // todo: calculate normalization for vector field
 		    // Fmag/5 works just for sample vector field
-		    this.add(new Arrow(Fdir, Forigin, Fmag/5, Fcolor, Math.min(0.4,0.99*Fmag/5), 0.2, 3,10));
+		    this.add(new Arrow({dir: Fdir, origin:Forigin, length: Fmag/5, hex: Fcolor, headLength: Math.min(0.4,0.99*Fmag/5), headWidth: 0.2, lineWidth: 3,arrowDetail: 10}));
 		}
 		else {
 		    var object = miniSphere.clone();
