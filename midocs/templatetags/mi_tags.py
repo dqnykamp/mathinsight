@@ -1252,8 +1252,11 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
 
     # display an image while applet is loading
     # (actually while mathjax is loading)
-    applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
-        % (applet.image.url, applet.annotated_title(), width, height)
+    applet_loading_image = ""
+    if applet.image:
+        applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+            % (applet.image.url, applet.annotated_title(), width, height)
+        
     # right align if applet has a child, else center,
     # to make same position as applet
     if applet.child_applet:
@@ -1262,7 +1265,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
         positioning_string = 'margin-left:auto; margin-right:auto;'
 
     applet_loading_image = '<div style="width:%spx; height:%spx; position:relative; text-align: center; %s" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (width, height, positioning_string, applet_loading_image, height/2)
-    
+
     html_string = '<div class="threeapplet" id="container_%s" >%s</div><div class="appleterror three_load_error"></div>' % (applet_id, applet_loading_image)
 
     if applet.child_applet:
@@ -1274,11 +1277,17 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
         # use image2, if it is exists, else the image from the child applet
         if applet.image2:
             image_url = applet.image2.url
-        else:
+        elif applet.child_applet.image:
             image_url = applet.child_applet.image.url
-        applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
-            % (image_url, applet.child_applet.annotated_title(), \
-                   child_width, height)
+        else:
+            image_url = ""
+        
+        applet_loading_image=""
+        if image_url:
+            applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+                % (image_url, applet.child_applet.annotated_title(), \
+                       child_width, height)
+            
         #  left align since it is a child, to make same position as applet
         positioning_string = 'margin-right:auto;'
 
