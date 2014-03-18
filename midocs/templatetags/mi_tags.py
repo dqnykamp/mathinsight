@@ -1497,7 +1497,10 @@ class AppletNode(template.Node):
 
         applet = self.applet.resolve(context)
 
-        url_get_parameters = context.get('request').GET
+        try:
+            url_get_parameters = context.get('request').GET
+        except:
+            url_get_parameters = ""
 
         # if applet is not an applet instance
         # try to load applet with that code
