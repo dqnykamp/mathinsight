@@ -120,11 +120,22 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		return function ( pageX, pageY, projection ) {
 
-			mouseOnBall.set(
-				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*.5),
-				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*.5),
-				0.0
-			);
+		    var box = _this.domElement.getBoundingClientRect();
+		    var offsets = {x: window.pageXOffset, y:window.pageYOffset};
+		    var x = box.left + offsets.x; // Convert to document coordinates
+		    var y = box.top + offsets.y;
+
+		    mouseOnBall.set(
+			( pageX - _this.screen.width * 0.5 - x ) / (_this.screen.width*.5),
+			( _this.screen.height * 0.5 + y - pageY ) / (_this.screen.height*.5),
+			0.0
+		    );
+
+			// mouseOnBall.set(
+			// 	( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*.5),
+			// 	( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*.5),
+			// 	0.0
+			// );
 
 			var length = mouseOnBall.length();
 

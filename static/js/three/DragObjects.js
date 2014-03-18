@@ -702,8 +702,8 @@ function cursorPositionInCanvas(canvas, event) {
     var x, y;
     
     var canoffset = $(canvas).offset();
-    x = event.clientX + document.documentElement.scrollLeft - Math.floor(canoffset.left);
-    y = event.clientY + document.documentElement.scrollTop - Math.floor(canoffset.top) + 1;
+    x = event.clientX + $(document).scrollLeft() - Math.floor(canoffset.left);
+    y = event.clientY + $(document).scrollTop() - Math.floor(canoffset.top) + 1;
     
     return [x,y];
 }
