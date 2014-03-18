@@ -2175,8 +2175,8 @@ class AccumulatedJavascriptNode(template.Node):
 
         if three_javascript:
             # load in three libraries
-            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Detector.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script>\n' % \
-                (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
+            script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Detector.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/MIThreeObjects.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script>\n' % \
+                (static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url,static_url)
 
 
             # if webgl is supported, 

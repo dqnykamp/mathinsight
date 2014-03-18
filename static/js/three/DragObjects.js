@@ -11,12 +11,24 @@
 // and that objects in orthographic overlay scene are in front of 
 // regular perspective scene
 
-
-
+/*
+* Parameters: can be null
+* camera2: second camera object for orthographic overlay scenes--doesn't have to be an orthographic camera though?
+* controls: instance of THREE.trackballControls?
+* linePrecision
+* parentLinePrecision
+*
+*
+*/
 'use strict';
+
+// global variable drag so can refer to drag in all listener functions
+
 
 var DragObjects = function (renderer, camera, parameters) {
 
+    var drag = this;
+    
     THREE.Object3D.call( this );
 
     this.renderer = renderer;
@@ -83,10 +95,32 @@ var DragObjects = function (renderer, camera, parameters) {
     this.vector2 = new THREE.Vector3();
     this.orthoCameraUsed = false;
     
+    this.parent_info = null;
+
+    this.mouseMoveWrapper = function(event) {
+	return drag.onContainerMouseMove(event);
+    }
+    this.mouseDownWrapper = function(event) {
+	return drag.onContainerMouseDown(event);
+    }
+    this.mouseUpWrapper = function(event) {
+	return drag.onContainerMouseUp(event);
+    }
+    this.mouseOutWrapper = function(event) {
+	return drag.onContainerMouseOut(event);
+    }
+    this.outsideMouseUpWrapper = function(event) {
+	return drag.outsideContainerMouseUp(event);
+    }
+    this.returnWrapper = function(event) {
+	return drag.returnContainer(event);
+    }
+
     // Register a bunch of event listeners for mouse actions.
-    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove.bind(null, this), false );
-    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown.bind(null, this), false );
-    renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp.bind(null, this), false );
+    renderer.domElement.addEventListener( 'mousemove', this.mouseMoveWrapper, false );
+    renderer.domElement.addEventListener( 'mousedown', this.mouseDownWrapper, false );
+    renderer.domElement.addEventListener( 'mouseup', this.mouseUpWrapper, false );
+    renderer.domElement.addEventListener( 'mouseout', this.mouseOutWrapper, false );
 
 
 }
@@ -94,79 +128,66 @@ var DragObjects = function (renderer, camera, parameters) {
 DragObjects.prototype = Object.create( THREE.Object3D.prototype );
 
 
-
-function cursorPositionInCanvas(canvas, event) {
-    var x, y;
-    
-    var canoffset = $(canvas).offset();
-    x = event.clientX + document.documentElement.scrollLeft - Math.floor(canoffset.left);
-    y = event.clientY + document.documentElement.scrollTop - Math.floor(canoffset.top) + 1;
-    
-    return [x,y];
-}
-
-function onDocumentMouseMove(drag, event ) {
+DragObjects.prototype.onContainerMouseMove = function( event ) {
 
     event.preventDefault();
     
-    drag.mouse.x = (cursorPositionInCanvas( drag.renderer.domElement, event )[0]) / $(drag.renderer.domElement).width() * 2 - 1;
-    drag.mouse.y = - (cursorPositionInCanvas( drag.renderer.domElement, event )[1])/ $(drag.renderer.domElement).height() * 2 + 1;
+    this.mouse.x = (cursorPositionInCanvas( this.renderer.domElement, event )[0]) / $(this.renderer.domElement).width() * 2 - 1;
+    this.mouse.y = - (cursorPositionInCanvas( this.renderer.domElement, event )[1])/ $(this.renderer.domElement).height() * 2 + 1;
     
-    //console.log(drag.mouse.x + ", "+ drag.mouse.y);
 
-
-    drag.vector.set( drag.mouse.x, drag.mouse.y, 0.5 );
+    this.vector.set( this.mouse.x, this.mouse.y, 0.5 );
     // Now get a ray going from the camera into the scene; below we'll check if this
     // ray intersects with anything in dragobjects[], which is an array of points.
     var raycaster;
-    if(drag.cameraIsOrtho) {
+    if(this.cameraIsOrtho) {
 	// for orthographic camera, using picking Ray
-	raycaster = drag.projector.pickingRay(drag.vector, drag.camera);
+	raycaster = this.projector.pickingRay(this.vector, this.camera);
     }
     else {
-	drag.projector.unprojectVector( drag.vector, drag.camera );
-	raycaster = new THREE.Raycaster( drag.camera.position, drag.vector.sub( drag.camera.position ).normalize() );
+	this.projector.unprojectVector( this.vector, this.camera );
+	raycaster = new THREE.Raycaster( this.camera.position, this.vector.sub( this.camera.position ).normalize() );
     }
     
-    if(drag.linePrecision !== null) {
-	raycaster.linePrecision=drag.linePrecision;
+    if(this.linePrecision !== null) {
+	raycaster.linePrecision=this.linePrecision;
     }
 
 
 
     // if have second camera, repeat
     var raycaster2;
-    if(drag.camera2) {
-	drag.vector2.set( drag.mouse.x, drag.mouse.y, 0.5 );
-	if(drag.camera2IsOrtho) {
+    if(this.camera2) {
+	this.vector2.set( this.mouse.x, this.mouse.y, 0.5 );
+	if(this.camera2IsOrtho) {
 	    // for orthographic camera, using picking Ray
-	    raycaster2 = drag.projector.pickingRay(drag.vector2, drag.camera2);
+	    raycaster2 = this.projector.pickingRay(this.vector2, this.camera2);
 	}
 	else {
-	    drag.projector.unprojectVector( drag.vector2, drag.camera2 );
-	    raycaster2 = new THREE.Raycaster( drag.camera2.position, drag.vector2.sub( drag.camera2.position ).normalize() );
+	    this.projector.unprojectVector( this.vector2, this.camera2 );
+	    raycaster2 = new THREE.Raycaster( this.camera2.position, this.vector2.sub( this.camera2.position ).normalize() );
 	}
-	if(drag.linePrecision !== null) {
-	    raycaster2.linePrecision=drag.linePrecision;
+	if(this.linePrecision !== null) {
+	    raycaster2.linePrecision=this.linePrecision;
 	}
     }
 
 
-    if ( drag.SELECTED) {
+    if ( this.SELECTED) {
 	
-	var theparent = drag.SELECTED.parent;
+	var theparent = this.SELECTED.parent;
 	
 	// determine which raycaster used to obtain SELECTED
 	var raycasterUsed, cameraUsed;
-	if(drag.cameraUsed===2) {
+	if(this.cameraUsed===2) {
 	    raycasterUsed = raycaster2;
-	    drag.orthoCameraUsed = drag.camera2IsOrtho;
-	    cameraUsed = drag.camera2;
+	    this.orthoCameraUsed = this.camera2IsOrtho;
+	    cameraUsed = this.camera2;
 	}
 	else {
 	    raycasterUsed = raycaster;
-	    drag.orthoCameraUsed = drag.cameraIsOrtho;
-	    cameraUsed = drag.camera;
+	    this.orthoCameraUsed = this.cameraIsOrtho;
+	    cameraUsed = this.camera;
 	}
 
 	// if SELECTED is constrained to parent
@@ -177,18 +198,18 @@ function onDocumentMouseMove(drag, event ) {
 	// In this way, SELECTED will have the same relationship
 	// to mouse pointer as it is moved along its parent
 
-	if(drag.SELECTED.constrain_to_parent) {
+	if(this.SELECTED.constrain_to_parent) {
 	    // want imprecision for dragging objects along lines
-	    if(drag.parentLinePrecision !== null) {
-		raycasterUsed.linePrecision=drag.parentLinePrecision;
+	    if(this.parentLinePrecision !== null) {
+		raycasterUsed.linePrecision=this.parentLinePrecision;
 	    }
 	    else {
 		raycasterUsed.linePrecision=10; 
 	    }
 
-	    if(drag.orthoCameraUsed) {
-		drag.vector.copy(raycasterUsed.ray.origin).sub(drag.offset);
-		raycasterUsed.set(drag.vector, raycasterUsed.ray.direction);
+	    if(this.orthoCameraUsed) {
+		this.vector.copy(raycasterUsed.ray.origin).sub(this.offset);
+		raycasterUsed.set(this.vector, raycasterUsed.ray.direction);
 
 	    }
 	    else {
@@ -197,10 +218,10 @@ function onDocumentMouseMove(drag, event ) {
 		// of SELECTED will be, intersect ray through drag plane,
 		// adjust by offset calculated on mouse down
 		// then modify ray to go through this offset point
-		var intersects = raycasterUsed.intersectObject(drag.plane);
-		drag.vector.copy(intersects[ 0 ].point).sub(drag.offset);
-		drag.vector.sub( drag.camera.position ).normalize()
-		raycasterUsed.set( drag.camera.position, drag.vector);
+		var intersects = raycasterUsed.intersectObject(this.plane);
+		this.vector.copy(intersects[ 0 ].point).sub(this.offset);
+		this.vector.sub( this.camera.position ).normalize()
+		raycasterUsed.set( this.camera.position, this.vector);
 
 	    }
 	    // now intersect parent with this new ray
@@ -211,14 +232,16 @@ function onDocumentMouseMove(drag, event ) {
 		// to the coordinates local to the parent
 		// this adjusts for rotations and translations
 		// of parent and its parents
-		drag.SELECTED.position.copy( theparent.worldToLocal(intersects[ 0 ].point));
+		this.SELECTED.position.copy( theparent.worldToLocal(intersects[ 0 ].point));
 		// record information about location of parent 
 		// on which SELECTED is now positioned
-		drag.parent_info = intersects[0];
+		this.parent_info = intersects[0];
+
+		this.SELECTED.dispatchEvent( { type: 'moved' } );
 	    }
 	    
 	    // if no intersection with parent, then don't move SELECTED
-	    // and leave drag.parent_info at previous state
+	    // and leave this.parent_info at previous state
 
 	}
 	else {
@@ -227,35 +250,36 @@ function onDocumentMouseMove(drag, event ) {
 	    // position at mouse point
 	    // offset is vector from location at which grabbed object
 	    // to the central position of the object
-	    if(drag.orthoCameraUsed) {
-		drag.vector.set( drag.mouse.x, drag.mouse.y, 0.5 );
-		drag.projector.unprojectVector( drag.vector, cameraUsed );
-		drag.vector.sub(drag.offset);
+	    if(this.orthoCameraUsed) {
+		this.vector.set( this.mouse.x, this.mouse.y, 0.5 );
+		this.projector.unprojectVector( this.vector, cameraUsed );
+		this.vector.sub(this.offset);
 		// adjust for possible transformations of parent
 		if(theparent) {
-		    theparent.worldToLocal(drag.vector);
+		    theparent.worldToLocal(this.vector);
 		}
-		drag.vector.z = drag.SELECTED.position.z;
-		drag.SELECTED.position.copy(drag.vector);
+		this.vector.z = this.SELECTED.position.z;
+		this.SELECTED.position.copy(this.vector);
 		
 	    }
 	    else {
 
 		// if selected is not constrained to parent
-		// move along the invisible drag.plane
+		// move along the invisible this.plane
 		// offset is vector from central position of the object
 		// to location where original ray intersected drag plane
-		var intersects = raycasterUsed.intersectObject(drag.plane);
-		drag.SELECTED.position.copy(intersects[ 0 ].point.sub(drag.offset));
+		var intersects = raycasterUsed.intersectObject(this.plane);
+		this.SELECTED.position.copy(intersects[ 0 ].point.sub(this.offset));
 		
 		// adjust for any transformations of parent
 		if(theparent) {
-		    theparent.worldToLocal(drag.SELECTED.position);
+		    theparent.worldToLocal(this.SELECTED.position);
 		}
 	    }
+
+	    this.SELECTED.dispatchEvent( { type: 'moved' } );
 	}
 	
-	drag.SELECTED.dispatchEvent( { type: 'moved' } );
 	return;
 	
     }
@@ -263,85 +287,86 @@ function onDocumentMouseMove(drag, event ) {
     // if nothing selected then first try intersection with topCamera.
     // if second camera exist, use that next
     var intersects=null;
-    if(drag.topCamera===2) {
-	intersects = raycaster2.intersectObjects( drag.objects2 );
+    if(this.topCamera===2) {
+	intersects = raycaster2.intersectObjects( this.objects2 );
 	if(intersects.length > 0){
-	    drag.cameraUsed=2;
+	    this.cameraUsed=2;
 	}
 	else {
-	    intersects = raycaster.intersectObjects( drag.objects );
-	    drag.cameraUsed=1;
+	    intersects = raycaster.intersectObjects( this.objects );
+	    this.cameraUsed=1;
 	}
     }
     else {
-	intersects = raycaster.intersectObjects( drag.objects );
+	intersects = raycaster.intersectObjects( this.objects );
 	if(intersects.length > 0){
-	    drag.cameraUsed=1;
+	    this.cameraUsed=1;
 	}
 	else if (raycaster2) {
-	    intersects = raycaster2.intersectObjects( drag.objects2 );
-	    drag.cameraUsed=2;
+	    intersects = raycaster2.intersectObjects( this.objects2 );
+	    this.cameraUsed=2;
 	}
     }
 
-    if(drag.cameraUsed === 2) {
-	drag.orthoCameraUsed = drag.camera2IsOrtho;
+    if(this.cameraUsed === 2) {
+	this.orthoCameraUsed = this.camera2IsOrtho;
     }
     else {
-	drag.orthoCameraUsed = drag.cameraIsOrtho;
+	this.orthoCameraUsed = this.cameraIsOrtho;
     }
     
+
     if ( intersects.length > 0  && (intersects[ 0 ].object.draggable ||
 				    intersects[ 0 ].object.highlightOnHover ||
 				    intersects[ 0 ].object.highlightOnClick)) {
 
 	
-	if ( drag.INTERSECTED != intersects[ 0 ].object ) {
+	if ( this.INTERSECTED != intersects[ 0 ].object ) {
 
 	    // if previously had a different INTERSECTED
 	    // restore appearance of former INTERSECTED
-	    if ( drag.INTERSECTED && !drag.INTERSECTED.highlightOnClick) {
-		highlightObject(drag.INTERSECTED, false);
+	    if ( this.INTERSECTED && !this.INTERSECTED.highlightOnClick) {
+		highlightObject(this.INTERSECTED, false);
 	    }
 
 	    // set INTERSECTED to new object
-	    drag.INTERSECTED = intersects[ 0 ].object;
+	    this.INTERSECTED = intersects[ 0 ].object;
 	    
-	    if(drag.INTERSECTED.draggable || drag.INTERSECTED.highlightOnHover) {
-		highlightObject(drag.INTERSECTED);
+	    if(this.INTERSECTED.draggable || this.INTERSECTED.highlightOnHover) {
+		highlightObject(this.INTERSECTED);
 	    }
 
-	    if(drag.INTERSECTED.draggable) {
+	    if(this.INTERSECTED.draggable) {
 		// set drag plane to go through INTERSECTED and
 		// be parallel to camera
 		// (might not be parallel to camera if position (0,0,0) is not 
 		//  in center of screen)
-		drag.plane.position.set(0,0,0);
+		this.plane.position.set(0,0,0);
 		var theCamera;
-		if(drag.cameraUsed===2) {
-		    theCamera=drag.camera2;
+		if(this.cameraUsed===2) {
+		    theCamera=this.camera2;
 		}
 		else {
-		    theCamera=drag.camera;
+		    theCamera=this.camera;
 		}
-		drag.plane.lookAt( theCamera.position );
+		this.plane.lookAt( theCamera.position );
 		
-		// if drag.INTERSECTED has parent, need to adjust position
+		// if this.INTERSECTED has parent, need to adjust position
 		// for possible rotations and translations of parent
-		drag.vector.copy(drag.INTERSECTED.position);
-		if(drag.INTERSECTED.parent) {
-		    drag.plane.position.copy(drag.INTERSECTED.parent.localToWorld(drag.vector));
+		this.vector.copy(this.INTERSECTED.position);
+		if(this.INTERSECTED.parent) {
+		    this.plane.position.copy(this.INTERSECTED.parent.localToWorld(this.vector));
 		}
 		else {
-		    drag.plane.position.copy(drag.vector);
+		    this.plane.position.copy(this.vector);
 		}
 	    }	    
 	}
-	if(drag.INTERSECTED.draggable || drag.INTERSECTED.highlightOnClick) {
-		drag.container.style.cursor = 'pointer';
+	if(this.INTERSECTED.draggable || this.INTERSECTED.highlightOnClick) {
+	    this.container.style.cursor = 'pointer';
 	}
 	else {
-	    drag.container.style.cursor = 'auto';
+	    this.container.style.cursor = 'auto';
 	}
     }	  
     
@@ -350,20 +375,20 @@ function onDocumentMouseMove(drag, event ) {
 	
 	// if previously had a INTERSECTED object
 	// restore appearance of former INTERSECTED
-	if ( drag.INTERSECTED && !drag.INTERSECTED.highlightOnClick) {
-	    highlightObject(drag.INTERSECTED, false);
+	if ( this.INTERSECTED && !this.INTERSECTED.highlightOnClick) {
+	    highlightObject(this.INTERSECTED, false);
 	}	
 
-	drag.INTERSECTED = null;
+	this.INTERSECTED = null;
 	
-	drag.container.style.cursor = 'auto';
+	this.container.style.cursor = 'auto';
 	
     }
     
 }
 
-function onDocumentMouseDown( drag, event ) {
-    
+DragObjects.prototype.onContainerMouseDown = function( event ) {
+
     event.preventDefault();
     
     // Transform the mouse's 2D screen coordinates to a vector in our 
@@ -371,37 +396,37 @@ function onDocumentMouseDown( drag, event ) {
     // with unknown source; even mrdoob says he's not sure about it:
     // http://stackoverflow.com/questions/11036106/three-js-projector-and-ray-objects 
 
-    drag.vector.set( drag.mouse.x, drag.mouse.y, 0.5 );
+    this.vector.set( this.mouse.x, this.mouse.y, 0.5 );
     // Now get a ray going from the camera into the scene; below we'll check if this
     // ray intersects with anything in dragobjects[], which is an array of points.
     var raycaster;
-    if(drag.cameraIsOrtho) {
+    if(this.cameraIsOrtho) {
 	// for orthographic camera, using picking Ray
-	raycaster = drag.projector.pickingRay(drag.vector, drag.camera);
+	raycaster = this.projector.pickingRay(this.vector, this.camera);
     }
     else {
-	drag.projector.unprojectVector( drag.vector, drag.camera );
-	raycaster = new THREE.Raycaster( drag.camera.position, drag.vector.sub( drag.camera.position ).normalize() );
+	this.projector.unprojectVector( this.vector, this.camera );
+	raycaster = new THREE.Raycaster( this.camera.position, this.vector.sub( this.camera.position ).normalize() );
     }
     
-    if(drag.linePrecision !== null) {
-	raycaster.linePrecision=drag.linePrecision;
+    if(this.linePrecision !== null) {
+	raycaster.linePrecision=this.linePrecision;
     }
 
     // if have second camera, repeat
     var raycaster2;
-    if(drag.camera2) {
-	drag.vector2.set( drag.mouse.x, drag.mouse.y, 0.5 );
-	if(drag.camera2IsOrtho) {
+    if(this.camera2) {
+	this.vector2.set( this.mouse.x, this.mouse.y, 0.5 );
+	if(this.camera2IsOrtho) {
 	    // for orthographic camera, using picking Ray
-	    raycaster2 = drag.projector.pickingRay(drag.vector2, drag.camera2);
+	    raycaster2 = this.projector.pickingRay(this.vector2, this.camera2);
 	}
 	else {
-	    drag.projector.unprojectVector( drag.vector2, drag.camera2 );
-	    raycaster2 = new THREE.Raycaster( drag.camera2.position, drag.vector2.sub( drag.camera2.position ).normalize() );
+	    this.projector.unprojectVector( this.vector2, this.camera2 );
+	    raycaster2 = new THREE.Raycaster( this.camera2.position, this.vector2.sub( this.camera2.position ).normalize() );
 	}
-	if(drag.linePrecision !== null) {
-	    raycaster2.linePrecision=drag.linePrecision;
+	if(this.linePrecision !== null) {
+	    raycaster2.linePrecision=this.linePrecision;
 	}
     }
 
@@ -410,37 +435,37 @@ function onDocumentMouseDown( drag, event ) {
     // if second camera exist, use that next
     var intersects=null;
     var raycasterUsed;
-    if(drag.topCamera===2) {
-	intersects = raycaster2.intersectObjects( drag.objects2 );
+    if(this.topCamera===2) {
+	intersects = raycaster2.intersectObjects( this.objects2 );
 	if(intersects.length > 0){
-	    drag.cameraUsed=2;
+	    this.cameraUsed=2;
 	    raycasterUsed = raycaster2;
 	}
 	else {
-	    intersects = raycaster.intersectObjects( drag.objects );
-	    drag.cameraUsed=1;
+	    intersects = raycaster.intersectObjects( this.objects );
+	    this.cameraUsed=1;
 	    raycasterUsed = raycaster;
 	}
     }
     else {
-	intersects = raycaster.intersectObjects( drag.objects );
+	intersects = raycaster.intersectObjects( this.objects );
 	if(intersects.length > 0){
-	    drag.cameraUsed=1;
+	    this.cameraUsed=1;
 	    raycasterUsed = raycaster;
 	}
 	else if (raycaster2) {
-	    intersects = raycaster2.intersectObjects( drag.objects2 );
-	    drag.cameraUsed=2;
+	    intersects = raycaster2.intersectObjects( this.objects2 );
+	    this.cameraUsed=2;
 	    raycasterUsed = raycaster2;
 	}
 
     }
 
-    if(drag.cameraUsed === 2) {
-	drag.orthoCameraUsed = drag.camera2IsOrtho;
+    if(this.cameraUsed === 2) {
+	this.orthoCameraUsed = this.camera2IsOrtho;
     }
     else {
-	drag.orthoCameraUsed = drag.cameraIsOrtho;
+	this.orthoCameraUsed = this.cameraIsOrtho;
     }
 
 
@@ -450,26 +475,26 @@ function onDocumentMouseDown( drag, event ) {
 	// and mark offsets for new positions after mouse move
 	if(intersects[0].object.draggable) {
 	    
-	    if(drag.controls) {
-		drag.controls.enabled = false;
+	    if(this.controls) {
+		this.controls.enabled = false;
 	    }
 
-	    drag.SELECTED = intersects[ 0 ].object;
+	    this.SELECTED = intersects[ 0 ].object;
 	    
-	    if(drag.orthoCameraUsed) {
+	    if(this.orthoCameraUsed) {
 		// for orthographic camera, offset is vector from
 		// actual position of object to intersection point
-		drag.offset.copy(intersects[0].point);
-		drag.vector.copy(drag.SELECTED.position);
+		this.offset.copy(intersects[0].point);
+		this.vector.copy(this.SELECTED.position);
 
 		// adjust for any transformations of parent
-		if(drag.SELECTED.parent) {
-		    drag.SELECTED.parent.localToWorld(drag.vector);
+		if(this.SELECTED.parent) {
+		    this.SELECTED.parent.localToWorld(this.vector);
 		}
-		drag.offset.sub(drag.vector);
+		this.offset.sub(this.vector);
 
 		// for orthographic camera, ignore z direction
-		drag.offset.z=0;
+		this.offset.z=0;
 	    }
 	    else {
 
@@ -479,75 +504,135 @@ function onDocumentMouseDown( drag, event ) {
 		// so that have same position relative to mouse pointer.
 		// Particularly important for spatially extended objects.
 		
-		var intersectsPlane = raycasterUsed.intersectObject( drag.plane );
+		var intersectsPlane = raycasterUsed.intersectObject( this.plane );
 		
-		drag.offset.copy(intersectsPlane[0].point);
-		drag.vector.copy(drag.SELECTED.position);
+		this.offset.copy(intersectsPlane[0].point);
+		this.vector.copy(this.SELECTED.position);
 		
 		// adjust for any transformations of parent
-		if(drag.SELECTED.parent) {
-		    drag.SELECTED.parent.localToWorld(drag.vector);
+		if(this.SELECTED.parent) {
+		    this.SELECTED.parent.localToWorld(this.vector);
 		}
-		drag.offset.sub(drag.vector);
+		this.offset.sub(this.vector);
 
 	    }
-	    drag.container.style.cursor = 'move';
+	    this.container.style.cursor = 'move';
 	}
 
 	// if highlight on click, then mark as an object 
 	// to potentially highlight if still intersect object
 	// on mouse up
 	else if (intersects[0].object.highlightOnClick) {
-	    drag.POTENTIALHIGHLIGHT = intersects[0].object;
+	    this.POTENTIALHIGHLIGHT = intersects[0].object;
 	}
     }
     
 }
 
-function onDocumentMouseUp( drag, event ) {
+DragObjects.prototype.onContainerMouseUp = function( event ) {
     
     event.preventDefault();
-    if(drag.controls) {
-	drag.controls.enabled = true;
+    if(this.controls) {
+	this.controls.enabled = true;
     }
     
-    if ( drag.INTERSECTED ) {
+    if ( this.INTERSECTED ) {
 	
-	if(!drag.orthoCameraUsed) {
-	    drag.vector.copy(drag.INTERSECTED.position);
-	    if(drag.INTERSECTED.parent) {
-		drag.INTERSECTED.parent.localToWorld(drag.vector);
+	if(!this.orthoCameraUsed) {
+	    this.vector.copy(this.INTERSECTED.position);
+	    if(this.INTERSECTED.parent) {
+		this.INTERSECTED.parent.localToWorld(this.vector);
 	    }
-	    drag.plane.position.copy( drag.vector );
+	    this.plane.position.copy( this.vector );
 	}
 
-	drag.SELECTED = null;
-	drag.parent_info = null;
+	if(this.SELECTED) {
+	    this.SELECTED.dispatchEvent({type: 'moveFinished'});
+	}
+
+	this.SELECTED = null;
+	this.parent_info = null;
+
+	if(this.INTERSECTED.draggable || this.INTERSECTED.highlightOnClick) {
+		this.container.style.cursor = 'pointer';
+	}
+	else {
+	    this.container.style.cursor = 'auto';
+	}
 
     }
-    drag.container.style.cursor = 'auto';
+    else {
+	this.container.style.cursor = 'auto';
+    }
     
     // if click on an object that was flagged as highlightOnClick
     // check if mouse is still over that object,
     // in which case toggle the highlight
-    if(drag.POTENTIALHIGHLIGHT) {
-	if( drag.POTENTIALHIGHLIGHT === drag.INTERSECTED) {
-	    toggleHighlightObject(drag.POTENTIALHIGHLIGHT);
+    if(this.POTENTIALHIGHLIGHT) {
+	if( this.POTENTIALHIGHLIGHT === this.INTERSECTED) {
+	    toggleHighlightObject(this.POTENTIALHIGHLIGHT);
 	}
-	drag.POTENTIALHIGHLIGHT = null;
+	this.POTENTIALHIGHLIGHT = null;
     }
 
+}
+
+
+DragObjects.prototype.onContainerMouseOut = function( event ) {
+    
+    event.preventDefault();
+
+    // If have selected element and leave container
+    // add listener to stop moving selected if have 
+    // mouse up outsider container
+    if(this.SELECTED) {
+	document.addEventListener( 'mouseup', this.outsideMouseUpWrapper, false );
+ 
+	// add listener to remove extra mouse up listener
+	// upon returning to container
+	this.renderer.domElement.addEventListener( 'mouseover', this.returnWrapper, false);
+	
+    }
+}
+
+
+DragObjects.prototype.outsideContainerMouseUp = function( event ) {
+
+    event.preventDefault();
+
+    // if have mouse up outside container
+    // deselected selected object
+    if(this.SELECTED) {
+	this.SELECTED.dispatchEvent({type: 'moveFinished'});
+    }
+    this.SELECTED = null;
+    this.parent_info = null;
+
+    this.container.style.cursor = 'auto';
+
+    // remove extra listeners
+    document.removeEventListener( 'mouseup', this.outsideMouseUpWrapper, false );
+    this.renderer.domElement.removeEventListener( 'mouseover', this.returnWrapper, false);
+
+}
+
+DragObjects.prototype.returnContainer = function( event ) {
+
+    // if return to container without a mouse up
+    // remove extra listeners
+    document.removeEventListener( 'mouseup', this.outsideMouseUpWrapper, false );
+ 
+    this.renderer.domElement.removeEventListener( 'mouseover', this.returnWrapper, false);
+    
 }
 
 
 function toggleHighlightObject(object) {
     if(object.highlighted) {
 	highlightObject(object,false);
-	object.highlighted=false
     }
     else {
 	highlightObject(object);
-	object.highlighted=true;
     }
 }
 
@@ -585,7 +670,9 @@ function highlightObject(object, activate) {
 	    else {
 		object.material.color.setHex(newHex);
 	    }
-	}
+	}	    
+	// mark object as highlighted
+	object.highlighted=true;
     }
     // turn off highlighting is activate is false
     else {
@@ -604,5 +691,20 @@ function highlightObject(object, activate) {
 	    object.material.color.setHex( object.currentHex );
 	}
 
+	// mark object as not highlighted
+	object.highlighted=false;
     }
 }
+
+
+// Called on event when mouse moves over canvas--returns absolute world coordinates of the mouse?
+function cursorPositionInCanvas(canvas, event) {
+    var x, y;
+    
+    var canoffset = $(canvas).offset();
+    x = event.clientX + document.documentElement.scrollLeft - Math.floor(canoffset.left);
+    y = event.clientY + document.documentElement.scrollTop - Math.floor(canoffset.top) + 1;
+    
+    return [x,y];
+}
+
