@@ -2007,6 +2007,15 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
     max-width: 100%;
 }
 
+
+.appletimagecontainer {
+    position:relative; 
+    text-align: center; 
+    margin-left: auto;
+    margin-right: auto;
+
+}
+
 .appletchild-left {
     text-align: right;
 }
@@ -2014,6 +2023,17 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
 .appletchild-right {
     text-align: left;
 }
+.appletchild-left .appletimagecontainer {
+    margin-right: 0;
+}
+
+.appletchild-right .appletimagecontainer {
+    margin-left: 0;
+}
+
+
+
+
 @media screen and ( max-width: 760px ) {
 
     .appletchild-left {
@@ -2022,6 +2042,12 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
     
     .appletchild-right {
 	text-align: center;
+    }
+    .appletchild-left .appletimagecontainer {
+	margin-right: auto;
+    }
+    .appletchild-right .appletimagecontainer {
+	margin-left: auto;
     }
 }
 
