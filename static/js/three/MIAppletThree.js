@@ -2,6 +2,7 @@
 
 var MIAppletThree = function(container_id, width, height, parameters) {
 
+    var _this = this;
     if ( parameters === undefined )  {
 	this.parameters = {};
     }
@@ -9,10 +10,16 @@ var MIAppletThree = function(container_id, width, height, parameters) {
 	this.parameters = parameters
     }
 
-    this.container = document.getElementById(container_id);
-    this.width=width;
-    this.height=height;
-    
+    this.container = $('#' + container_id);
+    this.width_original=width;
+    this.height_original=height;
+    this.width=Math.min(this.width_original, this.container.width());
+    this.height = this.height_original;
+    if(this.width < this.width_original) {
+	this.height *= this.width/this.width_original;
+    }
+
+
     this.namedObjects={};
 
     this.render_settings = this.parameters.hasOwnProperty("render_settings") ? 
@@ -52,6 +59,22 @@ var MIAppletThree = function(container_id, width, height, parameters) {
 	    document.body.appendChild(imgNode);
 	});
     }
+
+
+    // listener for window resize
+    window.addEventListener( 'resize', onWindowResize, false );
+
+    function onWindowResize() {
+	_this.width=Math.min(_this.width_original, _this.container.width());
+	_this.height = _this.height_original;
+	if(_this.width < _this.width_original) {
+	    _this.height *= _this.width/_this.width_original;
+	}
+	
+	renderer.setSize(_this.width, _this.height);
+    }
+    
+
 }
     
 
