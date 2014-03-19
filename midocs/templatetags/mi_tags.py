@@ -1270,7 +1270,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
 
     if applet.child_applet:
 
-        html_string = '<div class="ym-g50 ym-gl"><div class="ym-gbox-left" style="text-align:right;">%s</div></div>' % html_string
+        html_string = '<div class="ym-g50 ym-gl"><div class="ym-gbox-left appletchild-left">%s</div></div>' % html_string
 
         # display an image while applet is loading
         # (actually while mathjax is loading)
@@ -1294,7 +1294,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
         applet_loading_image = '<div style="width:%spx; height:%spx; position:relative; text-align: center; %s" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (child_width, height, positioning_string, applet_loading_image, height/2)
 
 
-        html_string +='<div class="ym-g50 ym-gr"><div class="ym-gbox-right" style="text-align:left;"><div class="threeapplet" id="container2_%s">%s</div><div class="appleterror three_load_error"></div></div></div>' % (applet_id, applet_loading_image)
+        html_string +='<div class="ym-g50 ym-gr"><div class="ym-gbox-right appletchild-right"><div class="threeapplet" id="container2_%s">%s</div><div class="appleterror three_load_error"></div></div></div>' % (applet_id, applet_loading_image)
         
         html_string = '<div class="ym-grid linearize-level-1">%s</div>' % html_string
         

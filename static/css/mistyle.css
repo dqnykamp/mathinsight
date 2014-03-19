@@ -2007,6 +2007,23 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
     max-width: 100%;
 }
 
+.appletchild-left {
+    text-align: right;
+}
+
+.appletchild-right {
+    text-align: left;
+}
+@media screen and ( max-width: 760px ) {
+
+    .appletchild-left {
+	text-align: center;
+    }
+    
+    .appletchild-right {
+	text-align: center;
+    }
+}
 
 .video {
     text-align: center;
