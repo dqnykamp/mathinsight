@@ -1353,13 +1353,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
                     child_applet_object_name = child_applet_object.name
 
                 # insert link code, depending on object type
-                if applet_object_type == 'Point':
-
-                    run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setPosition("%s", applet_%s.getObject("%s").position);\n });\n' \
-                        % (applet_id, applet_object.name, applet_id, 
-                           child_applet_object_name, applet_id, 
-                           applet_object.name)
-                elif applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
+                if applet_object_type == 'Point' or applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
                     run_script_string += '\napplet_%s.registerObjectUpdateListener("%s", function(event) {\n   applet2_%s.setValue("%s", applet_%s.getValue("%s"));\n });\n' \
                         % (applet_id, applet_object.name, applet_id, 
                            child_applet_object_name, applet_id, 
@@ -1376,12 +1370,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
                     applet_object_name = applet_object.name
                         
                 # insert link code, depending on object type
-                if applet_object_type == 'Point':
-                    run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setPosition("%s", applet2_%s.getObject("%s").position);\n });\n' \
-                        % (applet_id, child_applet_object.name, applet_id, 
-                           applet_object_name, applet_id, 
-                           child_applet_object.name)
-                elif applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
+                if applet_object_type == 'Point' or applet_object_type == 'Number' or applet_object_type == 'Array' or applet_object_type == 'Vector':
                     run_script_string += '\napplet2_%s.registerObjectUpdateListener("%s", function(event) {\n   applet_%s.setValue("%s", applet2_%s.getValue("%s"));\n });\n' \
                         % (applet_id, child_applet_object.name, applet_id, 
                            applet_object_name, applet_id, 
