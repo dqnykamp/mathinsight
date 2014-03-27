@@ -46,6 +46,9 @@ var Arrow = function ( parameters) {
 
     var color =  parameters.hasOwnProperty("color") ?  parameters["color"] :
 	0xffff00;
+
+    this.addHead = parameters.hasOwnProperty("addHead") ?  
+	parameters["addHead"] :  true;
     this.headLength = parameters.hasOwnProperty("headLength") ?  
 	parameters["headLength"] :  0.2*length;
     this.headWidth = parameters.hasOwnProperty("headWidth") ?  
@@ -72,12 +75,22 @@ var Arrow = function ( parameters) {
     this.tailWidth = parameters.hasOwnProperty("tailWidth") ?  
 	parameters["tailWidth"] :  0.8*this.headWidth;
 
+    var lambertMaterial = parameters.hasOwnProperty("lambertMaterial") ?  
+	parameters["lambertMaterial"] :  false;
 
 
     if(this.cylinderForLine) {
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, cylinderDetail);
 	cylinderGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ) );
-	this.line = new THREE.Mesh( cylinderGeometry, new THREE.MeshBasicMaterial({ color: color}));
+	var lineMaterial;
+	if(lambertMaterial) {
+	    lineMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	}
+	else {
+	    lineMaterial = new THREE.MeshBasicMaterial({color: color});
+	}
+
+	this.line = new THREE.Mesh( cylinderGeometry, lineMaterial);
 	this.line.scale.set(lineWidth,1,lineWidth);
     }
     else {	
@@ -91,17 +104,33 @@ var Arrow = function ( parameters) {
     this.line.matrixAutoUpdate = false;
     this.add( this.line );
     
-    var coneGeometry = new THREE.CylinderGeometry( 0, 0.5, 1, arrowDetail, 1 );
-    //coneGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, - 0.5, 0 ) );
+    if(this.addHead) {
+	var coneGeometry = new THREE.CylinderGeometry( 0, 0.5, 1, arrowDetail, 1 );
+	//coneGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, - 0.5, 0 ) );
 
-    this.cone = new THREE.Mesh( coneGeometry, new THREE.MeshBasicMaterial( { color: color } ) );
-    this.cone.matrixAutoUpdate = false;
-    this.add( this.cone );
+	var coneMaterial;
+	if(lambertMaterial) {
+	    coneMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	}
+	else {
+	    coneMaterial = new THREE.MeshBasicMaterial({color: color});
+	}
+	this.cone = new THREE.Mesh( coneGeometry, coneMaterial);
+	this.cone.matrixAutoUpdate = false;
+	this.add( this.cone );
+    }
     
     if(this.addTail) {
 	var tailGeometry = new THREE.CylinderGeometry( 0.5, 0.5, 1, arrowDetail, 1 );
 	tailGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0.499, 0 ) );
-	this.tail = new THREE.Mesh( tailGeometry, new THREE.MeshBasicMaterial( { color: color } ) );
+	var tailMaterial;
+	if(lambertMaterial) {
+	    tailMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	}
+	else {
+	    tailMaterial = new THREE.MeshBasicMaterial({color: color});
+	}
+	this.tail = new THREE.Mesh( tailGeometry, tailMaterial );
 	this.tail.matrixAutoUpdate = false;
 	this.add(this.tail);
     }
@@ -172,33 +201,35 @@ Arrow.prototype.setLength = function ( length, headLength, headWidth, tailLength
     else {
 	this.headLength = headLength;
     }
-    if ( headWidth === undefined ) {
-	headWidth = this.headWidth;
-    }
-    else {
-	this.headWidth = headWidth;
-    }
-    if ( tailLength === undefined ) {
-	tailLength = this.tailLength;
-    }
-    else {
-	this.tailLength = tailLength;
-    }
-    if ( tailWidth === undefined ) {
-	tailWidth = this.tailWidth;
-    }
-    else {
-	this.tailWidth = tailWidth;
-    }
     
     this.line.scale.y = length-headLength;
     this.line.updateMatrix();
-    
-    this.cone.scale.set( headWidth, headLength, headWidth );
-    this.cone.position.set(0,length-headLength/2,0);
-    this.cone.updateMatrix();
 
+    if(this.addHead) {
+	if ( headWidth === undefined ) {
+	    headWidth = this.headWidth;
+	}
+	else {
+	    this.headWidth = headWidth;
+	}
+	this.cone.scale.set( headWidth, headLength, headWidth );
+	this.cone.position.set(0,length-headLength/2,0);
+	this.cone.updateMatrix();
+    }
+    
     if(this.addTail) {
+	if ( tailLength === undefined ) {
+	    tailLength = this.tailLength;
+	}
+	else {
+	    this.tailLength = tailLength;
+	}
+	if ( tailWidth === undefined ) {
+	    tailWidth = this.tailWidth;
+	}
+	else {
+	    this.tailWidth = tailWidth;
+	}
 	this.tail.scale.set( tailWidth, tailLength, tailWidth );
 	this.tail.position.set(0,0,0);
 	this.tail.updateMatrix();
@@ -210,16 +241,57 @@ Arrow.prototype.setLength = function ( length, headLength, headWidth, tailLength
 Arrow.prototype.setColor = function ( color ) {
 
     this.line.material.color.set( color );
-    this.cone.material.color.set( color );
-
+    if(this.addHead) {
+	this.cone.material.color.set( color );
+    }
+    if(this.addTail) {
+	this.tail.material.color.set( color ) ;
+    }
 };
 
 
+Arrow.prototype.returnLength = function() {
+    return this.line.scale.y + this.headLength;
+}
+
 Arrow.prototype.returnTipPosition = function() {
-    var tipPosition = this.cone.position.clone();
-    tipPosition.y += this.headLength/2.0;
+    var tipPosition = new THREE.Vector3(0, this.line.scale.y+ this.headLength,0);
     this.updateMatrixWorld();
-    return this.localToWorld(tipPosition);
+    this.localToWorld(tipPosition);
+    return tipPosition;
+}
+
+Arrow.prototype.setTipPosition = function(pos, initialize) {
+    
+    // Initialize should be set if called before render has
+    // been called to update matrix world of parent and arrow
+    // to reflect any transformations made to parent of the sphere
+    // or the arrow.  Then localToWorld and worldToLocal
+    // will function as expected.
+    if(initialize) {
+	if(this.parent) {
+	    this.parent.updateMatrixWorld();
+	}
+	else {
+	    this.updateMatrixWorld();
+	}
+    }
+
+    // find position in coordinates of arrow parent
+    var dir = pos.clone();
+    if(this.parent) {
+    	this.parent.worldToLocal(dir);
+    }
+    dir.sub(this.position);
+    var length = dir.length();
+    dir.divideScalar(length);
+	
+    this.setDirection( dir );
+    this.setLength( length );
+
+    if(this.dragTipSphere) {
+	this.dragTipSphere.adjustPosition()
+    }
 }
 
 
@@ -244,10 +316,11 @@ Arrow.prototype.returnDragTipSphere= function() {
     // find position of the cone in coordinates of arrow parent
     // update arrow matrix world since this is probably called before render()
     this.updateMatrixWorld();
-    this.dragTipSphere.position.copy(this.cone.position);
+    this.dragTipSphere.position.set(0, this.line.scale.y+ this.headLength/2.0,0);
     this.localToWorld(this.dragTipSphere.position);
-    this.dragTipSphere.represents = this.cone;
-    
+    if(this.addHead) {
+	this.dragTipSphere.represents = this.cone;
+    }
 
     var dir = new THREE.Vector3();
     var pos = new THREE.Vector3();
@@ -309,7 +382,7 @@ Arrow.prototype.returnDragTipSphere= function() {
 	thearrow.updateMatrixWorld();
 	
     	// find position of the cone in coordinates of sphere parent
-    	pos.copy(thearrow.cone.position);
+	pos.set(0, thearrow.line.scale.y+ thearrow.headLength/2.0,0);
     	thearrow.localToWorld(pos);
 	if(dragTipSphere.parent) {
 	    dragTipSphere.parent.worldToLocal(pos);

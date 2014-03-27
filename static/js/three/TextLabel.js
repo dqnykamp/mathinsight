@@ -19,17 +19,25 @@ var TextLabel = function (message, parameters) {
 
     var scale = parameters.hasOwnProperty("scale") ? 
 	parameters["scale"] : 2;
+	
+	var textColor = parameters.hasOwnProperty("textColor") ? 
+	parameters["textColor"] : '#000000';
+	
+	var fontWeight = parameters.hasOwnProperty("fontWeight") ? 
+	parameters["fontWeight"] : "Bold ";
 
     this.canvas = document.createElement('canvas');
+    this.canvas.width=400;
+    this.canvas.height=350;
     this.context = this.canvas.getContext('2d');
-    this.context.font = "Bold " + fontSize + "px " + fontFace;
+    this.context.font = fontWeight + fontSize + "px " + fontFace;
     
-    // transparaent background
-    this.context.fillStyle = "rgba(0, 0, 0, 1.0)";
+    
+    this.context.fillStyle = textColor;
     
     this.context.textAlign = "center";
     this.context.textBaseline = "middle";
-    this.context.fillText( message, this.canvas.width/2, this.canvas.height/2);
+    this.context.fillText( message, this.canvas.width/2, this.canvas.height/2, this.canvas.width);
 
     // canvas contents will be used for a texture
     this.texture = new THREE.Texture(this.canvas) 
@@ -51,7 +59,7 @@ TextLabel.prototype.set = function(message) {
 
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    this.context.fillText( message, this.canvas.width/2, this.canvas.height/2);
+    this.context.fillText( message, this.canvas.width/2, this.canvas.height/2, this.canvas.width);
     this.texture.needsUpdate = true;
 	    
 }

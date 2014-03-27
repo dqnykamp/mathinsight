@@ -38,6 +38,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.target = new THREE.Vector3();
 
+	var EPS = 0.000001;
+
 	var lastPosition = new THREE.Vector3();
 
 	var _state = STATE.NONE,
@@ -83,11 +85,13 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		} else {
 
-			this.screen = this.domElement.getBoundingClientRect();
+			var box = this.domElement.getBoundingClientRect();
 			// adjustments come from similar code in the jquery offset() function
-			var d = this.domElement.ownerDocument.documentElement
-			this.screen.left += window.pageXOffset - d.clientLeft
-			this.screen.top += window.pageYOffset - d.clientTop
+			var d = this.domElement.ownerDocument.documentElement;
+			this.screen.left = box.left + window.pageXOffset - d.clientLeft;
+			this.screen.top = box.top + window.pageYOffset - d.clientTop;
+			this.screen.width = box.width;
+			this.screen.height = box.height;
 
 		}
 
@@ -120,22 +124,11 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		return function ( pageX, pageY, projection ) {
 
-		    var box = _this.domElement.getBoundingClientRect();
-		    var offsets = {x: window.pageXOffset, y:window.pageYOffset};
-		    var x = box.left + offsets.x; // Convert to document coordinates
-		    var y = box.top + offsets.y;
-
-		    mouseOnBall.set(
-			( pageX - _this.screen.width * 0.5 - x ) / (_this.screen.width*.5),
-			( _this.screen.height * 0.5 + y - pageY ) / (_this.screen.height*.5),
-			0.0
-		    );
-
-			// mouseOnBall.set(
-			// 	( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*.5),
-			// 	( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*.5),
-			// 	0.0
-			// );
+			mouseOnBall.set(
+				( pageX - _this.screen.width * 0.5 - _this.screen.left ) / (_this.screen.width*.5),
+				( _this.screen.height * 0.5 + _this.screen.top - pageY ) / (_this.screen.height*.5),
+				0.0
+			);
 
 			var length = mouseOnBall.length();
 
@@ -326,7 +319,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		_this.object.lookAt( _this.target );
 
-		if ( lastPosition.distanceToSquared( _this.object.position ) > 0 ) {
+		if ( lastPosition.distanceToSquared( _this.object.position ) > EPS ) {
 
 			_this.dispatchEvent( changeEvent );
 
@@ -597,6 +590,9 @@ THREE.TrackballControls = function ( object, domElement ) {
 	window.addEventListener( 'keyup', keyup, false );
 
 	this.handleResize();
+
+	// force an update at start
+	this.update();
 
 };
 
