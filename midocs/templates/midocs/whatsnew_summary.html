@@ -23,7 +23,9 @@
   {% for page in newpages %}
   <li>{% extendedlink page added=True %}</li>
   {% endfor %}
+  {% if newpages %}
   <li><a href="{% url 'mi-newpages'%}">more new pages</a></li>
+  {% endif %}
 </ul>
 
 <a id="applets" class="anchor"></a>
@@ -33,7 +35,9 @@
   {% for applet in newapplets %}
   <li>{% extendedlink applet icon_size="medium" added=True %}</li>
   {% endfor %}
+  {% if newapplets %}
   <li><a href="{% url 'mi-newapplets'%}">more new applets</a></li>
+  {% endif %}
 </ul>
 
 <a id="videos" class="anchor"></a>
@@ -43,7 +47,9 @@
   {% for video in newvideos %}
   <li>{% extendedlink video icon_size="medium" added=True %}</li>
   {% endfor %}
+  {% if newvideos %}
   <li><a href="{% url 'mi-newvideos'%}">more new videos</a></li>
+  {% endif %}
 </ul>
 
 <a id="images" class="anchor"></a>
@@ -53,7 +59,9 @@
   {% for image in newimages %}
   <li>{% extendedlink image icon_size="medium" added=True %}</li>
   {% endfor %}
+  {% if newimages %}
   <li><a href="{% url 'mi-newimages'%}">more new images</a></li>
+  {% endif %}
 </ul>
 
 {%endblock %}

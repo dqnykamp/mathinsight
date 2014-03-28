@@ -17,6 +17,7 @@
 {% block main_columns %}
 {% regroup index_entries by indexed_phrase_first_letter as letter_list %}
 
+{% if index_type %}
 <h3>{{index_type}}</h3>
 
 
@@ -33,7 +34,9 @@
   </div>
 </div>
 
-
+{% else %}
+   <p>No index defined</p>
+{% endif %}
 
 {% endblock %}
 

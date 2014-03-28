@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.template.loader import render_to_string
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.contenttypes import generic
 import datetime, os
 from django.contrib.sites.models import Site
@@ -86,8 +86,38 @@ class Author(models.Model):
 class Level(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.CharField(max_length=400)
+    default = models.BooleanField(default=False)
     def __unicode__(self):
         return self.code
+
+    def save(self, *args, **kwargs):
+
+        # check if newly default
+        newly_default=False
+        if self.default:
+            if self.pk is None:
+                newly_default = True
+            else:
+                orig = Level.objects.get(pk=self.pk)
+                if not orig.default:
+                    newly_default = True
+
+        super(Level, self).save(*args, **kwargs) 
+
+    @classmethod
+    def return_default(theclass):
+        try:
+            return theclass.objects.get(default=True)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            pass
+
+        # if zero or multiple items marked as default
+        # return first level in database (or None if no Levels)
+        try:
+            return theclass.objects.all()[0]
+        except IndexError:
+            return None
+
 
 class Objective(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
@@ -106,12 +136,6 @@ class Keyword(models.Model):
         return self.code
     class Meta:
         ordering = ['code']
-
-# class ContentType(models.Model):
-#     code = models.CharField(max_length=50, db_index=True, unique=True)
-#     description = models.CharField(max_length=400)
-#     def __unicode__(self):
-#         return self.code
 
 class RelationshipType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
@@ -175,11 +199,10 @@ class Page(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
-    level = models.ForeignKey(Level, default="i")
+    level = models.ForeignKey(Level, default=Level.return_default())
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
-    #content_types = models.ManyToManyField(ContentType, blank=True, null=True)
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     related_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageRelationship', 
@@ -191,10 +214,10 @@ class Page(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True,db_index=True)
     notes = models.TextField(blank=True, null=True)
-    highlight = models.BooleanField(db_index=True)
+    highlight = models.BooleanField(db_index=True, default=False)
     worksheet = models.BooleanField(default=False)
     author_copyright = models.BooleanField(default=True)
-    hidden = models.BooleanField(db_index=True)
+    hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
 
