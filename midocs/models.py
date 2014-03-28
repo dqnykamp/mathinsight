@@ -118,6 +118,11 @@ class Level(models.Model):
         except IndexError:
             return None
 
+def return_default_level():
+    try:
+        return Level.return_default();
+    except:
+        return None
 
 class Objective(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
@@ -199,7 +204,7 @@ class Page(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
-    level = models.ForeignKey(Level, default=Level.return_default)
+    level = models.ForeignKey(Level, default=return_default_level)
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
