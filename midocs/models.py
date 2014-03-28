@@ -199,7 +199,7 @@ class Page(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
-    level = models.ForeignKey(Level, default=Level.return_default())
+    level = models.ForeignKey(Level, default=Level.return_default)
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
