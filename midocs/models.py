@@ -93,14 +93,15 @@ class Level(models.Model):
     def save(self, *args, **kwargs):
 
         # check if newly default
-        newly_default=False
         if self.default:
             if self.pk is None:
-                newly_default = True
+                # mark all levels as not default
+                Level.objects.update(default=False)
             else:
                 orig = Level.objects.get(pk=self.pk)
                 if not orig.default:
-                    newly_default = True
+                    # since newly default, set all other levels as not default
+                    Levels.objects.exclude(pk=self.pk).update(default=False)
 
         super(Level, self).save(*args, **kwargs) 
 
@@ -198,6 +199,11 @@ class AuxiliaryFile(models.Model):
                 super(AuxiliaryFile, self).save(*args, **kwargs) 
                 
 
+class ActivePageManager(models.Manager):
+    def get_queryset(self):
+        return super(ActivePageManager, self).get_queryset() \
+            .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
+
 class Page(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     title = models.CharField(max_length=200)
@@ -225,6 +231,10 @@ class Page(models.Model):
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
+    
+    objects = models.Manager()
+    activepages = ActivePageManager()
+
 
     class Meta:
         ordering = ['code']
@@ -641,12 +651,18 @@ def image_source_path(instance, filename):
     extension = os.path.splitext(filename)[1]
     return os.path.join(settings.IMAGE_UPLOAD_TO, 'source', "%s%s" % (instance.code, extension))
 
+class ActiveImageManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveImageManager, self).get_queryset() \
+            .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
+
+
 class Image(models.Model):
     title = models.CharField(max_length=200)
     code = models.SlugField(max_length=100, unique=True)
-    imagefile = models.ImageField(upload_to=image_path, height_field='height', width_field='width', db_index=True, storage=OverwriteStorage())
-    height = models.IntegerField(blank=True)
-    width = models.IntegerField(blank=True)
+    imagefile = models.ImageField(upload_to=image_path, height_field='height', width_field='width', db_index=True, storage=OverwriteStorage(), blank=True, null=True)
+    height = models.IntegerField(blank=True, null=True)
+    width = models.IntegerField(blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     notation_specific = models.BooleanField(default=False)
@@ -661,7 +677,7 @@ class Image(models.Model):
                                      blank=True,null=True, storage=OverwriteStorage())
     original_file_type=models.ForeignKey(ImageType,blank=True,null=True)
     author_copyright = models.BooleanField(default=True)
-    hidden = models.BooleanField(db_index=True)
+    hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     auxiliary_files = models.ManyToManyField(AuxiliaryFile, blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, through='ImageNotationSystem')
@@ -670,6 +686,8 @@ class Image(models.Model):
     publish_date = models.DateField(blank=True,db_index=True)
 #    notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
 
+    objects = models.Manager()
+    activeimages = ActiveImageManager()
 
     class Meta:
         ordering = ["code"]
@@ -761,7 +779,8 @@ class Image(models.Model):
         # if publish_date is empty, set it to be today
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
-
+            
+            
         # check if changed code or changed image file
         # if changed code, may need to change file names after save
         # if changed image, then generate thumbnail
@@ -777,7 +796,7 @@ class Image(models.Model):
         # create thumbnail
         # adapted from http://djangosnippets.org/snippets/2094/
         # only do this for new file or if have changed the imagefile
-        if self.pk is None or changed_image:
+        if self.imagefile and (self.pk is None or changed_image):
             image = PILImage.open(self.imagefile)
         
             thumb_size = (200,200)
@@ -909,6 +928,11 @@ class AppletObjectType(models.Model):
     def __unicode__(self):
         return self.object_type
 
+class ActiveAppletManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveAppletManager, self).get_queryset() \
+            .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
+
 class Applet(models.Model):
     title = models.CharField(max_length=200)
     code = models.SlugField(max_length=100, unique=True)
@@ -961,6 +985,9 @@ class Applet(models.Model):
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True, db_index=True)
+
+    objects = models.Manager()
+    activeapplets = ActiveAppletManager()
 
     class Meta:
         ordering = ["code"]
@@ -1300,6 +1327,11 @@ def video_thumbnail_path(instance, filename):
     extension = os.path.splitext(filename)[1]
     return os.path.join(settings.VIDEO_UPLOAD_TO, "image/small", "%s%s" % (instance.code, extension))
 
+class ActiveVideoManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveVideoManager, self).get_queryset() \
+            .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
+
 class Video(models.Model):
     title = models.CharField(max_length=200)
     code = models.SlugField(max_length=100, unique=True)
@@ -1317,12 +1349,12 @@ class Video(models.Model):
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
     associated_applet = models.ForeignKey(Applet, blank=True, null=True)
-    highlight = models.BooleanField(db_index=True)
+    highlight = models.BooleanField(db_index=True, default=False)
     thumbnail = models.ImageField(max_length=150, upload_to=video_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
     author_copyright = models.BooleanField(default=True)
-    hidden = models.BooleanField(db_index=True)
+    hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
@@ -1331,6 +1363,8 @@ class Video(models.Model):
                                        through = 'VideoQuestion',
                                        blank=True, null=True)
 
+    objects = models.Manager()
+    activevideos = ActiveVideoManager()
 
     class Meta:
         ordering = ["code"]

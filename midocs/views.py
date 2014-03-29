@@ -568,18 +568,17 @@ def home(request):
     max_new_pages=3;
     max_news=2;
 
+    today = datetime.date.today()
 
-    highlighted_pages = Page.objects.filter(highlight=True)
+    highlighted_pages = Page.activepages.filter(highlight=True)
     num_highlights=highlighted_pages.count()
     max_highlights=min(max_highlights,num_highlights)
     highlighted_pages = random.sample(highlighted_pages,max_highlights)
 
-    highlighted_applets=Applet.objects.filter(highlight=True)
+    highlighted_applets=Applet.activeapplets.filter(highlight=True)
     num_highlighted_applets=highlighted_applets.count()
     max_highlighted_applets=min(max_highlighted_applets,num_highlighted_applets)
     highlighted_applets=random.sample(highlighted_applets,max_highlighted_applets)
-
-    today = datetime.date.today()
 
     news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[:max_news]
     newpages=Page.objects.exclude(level__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_new_pages]
