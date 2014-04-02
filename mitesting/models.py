@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+from django.utils.encoding import python_2_unicode_compatible
+
 from django.db import models
 from django.contrib.auth.models import Group
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
@@ -10,106 +16,10 @@ from mitesting.permissions import return_user_assessment_permission_level
 import re
 import sympy
 from sympy import Symbol, Function, Tuple
-from sympy import Abs as sympy_Abs
-from sympy.printing import latex
 from django.db.models import Max
-from mitesting.math_objects import math_object, parse_expr, parse_and_process
-
-class Abs(sympy_Abs):
-    # evaluate the derivative assuming that the argument is real
-    def _eval_derivative(self, x):
-        from sympy.core.function import Derivative
-        from sympy.functions import sign
-        return Derivative(self.args[0], x, **{'evaluate': True}) \
-            * sign(self.args[0])
-
-
-def roots_tuple(f, *gens, **flags):
-    from sympy import roots
-    rootslist = roots(f, *gens, **flags).keys()
-    rootslist.sort()
-    return Tuple(*rootslist)
-
-def real_roots(f, *gens):
-    from sympy import roots
-    return roots(f, *gens, filter='R').keys()
-
-def real_roots_tuple(f, *gens):
-    from sympy import roots
-    rootslist = roots(f, *gens, filter='R').keys()
-    rootslist.sort()
-    return Tuple(*rootslist)
-
-def try_round(number, ndigits=0):
-    try:
-        return round(number, ndigits)
-    except TypeError:
-        return number
-
-def evalf(expr, n=15):
-    if expr.is_Number:
-        from sympy import Float
-        return Float(str(expr.evalf(n)))
-    else:
-        return number.evalf(n)
-
-def index(expr, n):
-    if isinstance(expr, Tuple):
-        expr_list = list(expr)
-        try:
-            return expr_list.index(n)
-        except:
-            return ""
-    if isinstance(expr, list):
-        try:
-            return expr.index(n)
-        except:
-            return ""
-    return ""
-  
-def smallest_factor(expr):
-    try:
-        if expr.is_Integer:
-            from sympy import factorint
-            factors = factorint(Abs(expr), limit=10000)
-            factorlist=factors.keys()
-            factorlist.sort()
-            return factorlist[0]
-        else:
-            return ""
-    except:
-        return ""
-
-def max_including_tuples(*args):
-    from sympy import Max as sympy_Max
-    try:
-        if len(args)==1 and isinstance(args[0],Tuple):
-            return sympy_Max(*args[0])
-        else:
-            return sympy_Max(*args)
-    except:
-        return ""
-
-def min_including_tuples(*args):
-    from sympy import Min as sympy_Min
-    try:
-        if len(args)==1 and isinstance(args[0],Tuple):
-            return sympy_Min(*args[0])
-        else:
-            return sympy_Min(*args)
-    except:
-        return ""
-
-def iif(cond, result_if_true, result_if_false):
-    try:
-        if(cond):
-            return result_if_true
-        else:
-            return result_if_false
-    except:
-        return ""
-      
-
+from mitesting.math_objects import math_object
+from mitesting.sympy_customized import parse_expr, parse_and_process
+from mitesting.customized_commands import *
 
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -260,9 +170,8 @@ class Question(models.Model):
         exec "from sympy import *" in all_sympy_commands
 
         localized_commands = {'roots_tuple': roots_tuple, 
-                              'real_roots': real_roots,
                               'real_roots_tuple': real_roots_tuple, 
-                              'round': try_round,
+                              'round': round_expression,
                               'smallest_factor': smallest_factor,
                               'e': all_sympy_commands['E'], 
                               'max': max_including_tuples,
@@ -270,7 +179,7 @@ class Question(models.Model):
                               'min': min_including_tuples,
                               'Min': min_including_tuples,
                               'abs': Abs,
-                              'evalf': evalf,
+                              'evalf': evalf_expression,
                               'index': index,
                               'sum': sum,
                               'iif': iif,
@@ -283,7 +192,7 @@ class Question(models.Model):
         for clist in command_lists:
             allowed_commands=allowed_commands.union([item.strip() for item in clist.commands.split(",")])
 
-        from mitesting.math_objects import create_greek_dict
+        from mitesting.utils import create_greek_dict
         global_dict = create_greek_dict()
         for command in allowed_commands:
             try:
@@ -1386,7 +1295,7 @@ class RandomWord(models.Model):
         if self.sympy_parse or self.treat_as_function:
             try:
                 if not global_dict:
-                    from mitesting.math_objects import create_greek_dict
+                    from mitesting.utils_objects import create_greek_dict
                     global_dict = create_greek_dict()
                 temp_global_dict = {}
                 temp_global_dict.update(global_dict)
