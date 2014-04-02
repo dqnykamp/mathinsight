@@ -10,10 +10,13 @@ import re
 import random
 from django.contrib.sites.models import Site
 from django.db.models import  Max
-from mitesting.math_objects import underscore_to_camel
 from sympy.printing import StrPrinter
 
+
 register=template.Library()
+
+def underscore_to_camel(word):
+    return ''.join(x.capitalize() for x in  word.split('_'))
 
 def resolve_if_set(variable, context):
     if variable:

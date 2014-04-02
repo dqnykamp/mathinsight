@@ -116,7 +116,8 @@ def check_math_write_in(request, answer_serialized, question_id, seed,
         # clear any previous answer feedback
         dajax.assign(feedback_selector, 'innerHTML', '')
 
-        from mitesting.math_objects import parse_and_process, math_object
+        from mitesting.math_objects import math_object
+        from mitesting.sympy_customized import parse_and_process
 
         the_question = Question.objects.get(id=question_id)
 
