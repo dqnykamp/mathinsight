@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
@@ -98,7 +103,8 @@ class ExprNode(Node):
 
         global_dict = context["sympy_global_dict"]
 
-        from mitesting.math_objects import parse_and_process, math_object
+        from mitesting.math_objects import math_object
+        from mitesting.sympy_customized import parse_and_process
 
         expression = parse_and_process(expression,
                                        global_dict=global_dict)
@@ -446,7 +452,7 @@ class FigureNode(Node):
         series_option_list=[]
 
 
-        from mitesting.math_objects import parse_and_process
+        from mitesting.sympy_customized import parse_and_process
 
         for plotfunction in the_question.plotfunction_set.filter(figure=figure_number):
             # find corresponding expression

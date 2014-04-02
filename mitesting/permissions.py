@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+
 from django.contrib.auth.decorators import permission_required, user_passes_test
 
 def return_user_assessment_permission_level(user, solution=True):
