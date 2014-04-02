@@ -19,7 +19,6 @@ from sympy import Symbol, Function, Tuple
 from django.db.models import Max
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import parse_expr, parse_and_process
-from mitesting.customized_commands import *
 
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -162,49 +161,6 @@ class Question(models.Model):
             
         return html_string
 
-    def return_sympy_global_dict(self):
-
-        # make a whitelist of allowed commands
-
-        all_sympy_commands = {}
-        exec "from sympy import *" in all_sympy_commands
-
-        localized_commands = {'roots_tuple': roots_tuple, 
-                              'real_roots_tuple': real_roots_tuple, 
-                              'round': round_expression,
-                              'smallest_factor': smallest_factor,
-                              'e': all_sympy_commands['E'], 
-                              'max': max_including_tuples,
-                              'Max': max_including_tuples,
-                              'min': min_including_tuples,
-                              'Min': min_including_tuples,
-                              'abs': Abs,
-                              'evalf': evalf_expression,
-                              'index': index,
-                              'sum': sum,
-                              'iif': iif,
-                              'len': len,
-                              }
-  
-        # obtain list of allowed commands from database
-        allowed_commands = set()
-        command_lists = self.allowed_sympy_commands.all()
-        for clist in command_lists:
-            allowed_commands=allowed_commands.union([item.strip() for item in clist.commands.split(",")])
-
-        from mitesting.utils import create_greek_dict
-        global_dict = create_greek_dict()
-        for command in allowed_commands:
-            try:
-                global_dict[str(command)]=localized_commands[command]
-            except KeyError:
-                try:
-                    global_dict[str(command)]=all_sympy_commands[command]
-                except KeyError:
-                    pass
-
-            
-        return global_dict
     
     def setup_context(self, identifier="", seed=None, allow_solution_buttons=False, previous_context = None, question_set=None):
 
@@ -236,9 +192,12 @@ class Question(models.Model):
         max_tries=500
         success=False
 
+        from mitesting.utils import return_sympy_global_dict
+
         for i in range(max_tries):
             # select random numbers and add to context
-            global_dict = self.return_sympy_global_dict()
+            global_dict = return_sympy_global_dict(
+                [a.commands for a in self.allowed_sympy_commands.all()])
 
             for random_number in self.randomnumber_set.all():
                 try:

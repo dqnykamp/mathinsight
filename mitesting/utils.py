@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+from mitesting.customized_commands import *
 
 def create_greek_dict():
     from sympy.abc import (alpha, beta,  delta, epsilon, eta,
@@ -38,3 +39,65 @@ def create_greek_dict():
 
     return greek_dict
     
+
+def return_sympy_global_dict(allowed_sympy_commands=[]):
+    """
+    Make a whitelist of allowed commands sympy and customized commands.
+    Argument allowed_sympy_commands is an iterable containing
+    strings of comma separated commands names.
+    Returns a dictionary where keys are the command names and 
+    values are the corresponding function or sympy expression.
+    The local dictionary contains
+    1.  all greek symbols from create_greek_dict()
+    2.  the allowed sympy_commands that match localized commands
+    3.  the allowed sympy_commands that match standard sympy commands.
+    Command names that don't match either customized or sympy commands
+    are ignored.
+    """
+
+    # create a dictionary containing all sympy commands
+    all_sympy_commands = {}
+    exec "from sympy import *" in all_sympy_commands
+
+    # create a dictionary containing the localized commands
+    localized_commands = {'roots_tuple': roots_tuple, 
+                          'real_roots_tuple': real_roots_tuple, 
+                          'round': round_expression,
+                          'smallest_factor': smallest_factor,
+                          'e': all_sympy_commands['E'], 
+                          'max': max_including_tuples,
+                          'Max': max_including_tuples,
+                          'min': min_including_tuples,
+                          'Min': min_including_tuples,
+                          'abs': Abs,
+                          'evalf': evalf_expression,
+                          'index': index,
+                          'sum': sum,
+                          'iif': iif,
+                          'len': len,
+                          }
+    
+    # create a set of allowed commands containing all comma-separated
+    # strings from allowed_sympy_commands
+    allowed_commands = set()
+    for commandstring in allowed_sympy_commands:
+        allowed_commands=allowed_commands.union(
+            [item.strip() for item in commandstring.split(",")])
+
+    # create the dictionary
+    # First add the greek symbols
+    global_dict = create_greek_dict()
+
+    for command in allowed_commands:
+        try:
+            # attempt to match command with localized command
+            global_dict[str(command)]=localized_commands[command]
+        except KeyError:
+            try:
+                # if command isn't found in localized command
+                # then attempt to match with standard sympy command
+                global_dict[str(command)]=all_sympy_commands[command]
+            except KeyError:
+                pass
+
+    return global_dict
