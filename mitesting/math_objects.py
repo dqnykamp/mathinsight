@@ -1,276 +1,86 @@
-from sympy import *
-from sympy import Tuple, StrictLessThan, LessThan, StrictGreaterThan, GreaterThan, Float, Symbol, Rational, Integer
-from sympy.core.relational import Relational
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+from django.utils.encoding import python_2_unicode_compatible
+
+from sympy import Tuple, Symbol, sympify
+from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
-import sympy
-import re
+from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
 
-def underscore_to_camel(word):
-    return ''.join(x.capitalize() for x in  word.split('_'))
-
-def parse_expr(s, global_dict=None, local_dict=None, 
-               split_symbols=False):
-    
-    # until bug is fixed, call sympify after parse_expr
-    # so that tuples are changed to Sympy Tuples
-    from sympy.parsing.sympy_parser import \
-        (standard_transformations, convert_xor, \
-             implicit_multiplication)
-    from sympy.parsing.sympy_parser import split_symbols as split_symbols_trans
-    from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
-    from sympy import sympify
-
-    # Create new global dictionary so modifications don't affect original
-    new_global_dict = {}
-    if global_dict:
-        new_global_dict.update(global_dict)
-
-    # Since Symbol could be added by auto_symbol
-    # and Integer, Float, or Rational could be added by auto_number
-    # add them to the global dict if not present
-    if 'Integer' not in new_global_dict:
-        new_global_dict['Integer'] = Integer
-    if 'Float' not in new_global_dict:
-        new_global_dict['Float'] = Float
-    if 'Rational' not in new_global_dict:
-        new_global_dict['Rational'] = Rational
-    if 'Symbol' not in new_global_dict:
-        new_global_dict['Symbol'] = Symbol
-
-
-    if split_symbols:
-        transformations=standard_transformations+(convert_xor, split_symbols_trans, implicit_multiplication)
-    else:
-        transformations=standard_transformations+(convert_xor, implicit_multiplication)
-    
-    expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
-
-    # kludge to fix fact that 'e' isn't parsed correctly when splitting symbols
-    if split_symbols and 'e' in global_dict:
-        from sympy import E
-        if isinstance(expr, Tuple) or isinstance(expr,list):
-            expr_list = []
-            for ex in expr:
-                try:
-                    expr_list.append(ex.replace(Symbol('e'), E))
-                except:
-                    expr_list.append(ex)
-            if isinstance(expr,Tuple):    
-                expr = Tuple(*expr_list)
-            else:
-                expr= expr_list
-                                     
-        else:
-            try:
-                expr = expr.replace(Symbol('e'), E)
-            except:
-                pass
-    return expr
-
-def parse_and_process(s, global_dict=None, local_dict=None, doit=True,
-                      split_symbols=False):
-    expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict,
-                            split_symbols=split_symbols)
-    if doit:
-        try: 
-            expression=expression.doit()
-        except (AttributeError, TypeError):
-            pass
-        
-    return expression
-
-
-def create_greek_dict():
-    from sympy.abc import (alpha, beta,  delta, epsilon, eta,
-                           theta, iota, kappa, mu, nu, xi, omicron, pi,
-                           rho, sigma, tau, upsilon, phi, chi, psi, omega)
-    
-    lambda_symbol = Symbol('lambda')
-    gamma_symbol = Symbol('gamma')
-    zeta_symbol = Symbol('zeta')
-    greek_dict = {'alpha': alpha, 'alpha_symbol': alpha, 
-                  'beta': beta,'beta_symbol': beta, 
-                  'gamma_symbol': gamma_symbol, 
-                  'delta': delta, 'delta_symbol': delta, 
-                  'epsilon': epsilon, 'epsilon_symbol': epsilon,
-                  'zeta_symbol': zeta_symbol, 
-                  'eta': eta, 'eta_symbol': eta, 
-                  'theta': theta, 'theta_symbol': theta, 
-                  'iota': iota, 'iota_symbol': iota, 
-                  'kappa': kappa, 'kappa_symbol': kappa, 
-                  'lambda_symbol': lambda_symbol, 
-                  'mu': mu, 'mu_symbol': mu,
-                  'nu': nu, 'nu_symbol': nu,
-                  'xi': xi,'xi_symbol': xi, 
-                  'omicron': omicron,'omicron_symbol': omicron, 
-                  'rho': rho, 'rho_symbol': rho, 
-                  'sigma': sigma, 'sigma_symbol': sigma, 
-                  'tau': tau, 'tau_symbol': tau, 
-                  'upsilon': upsilon,'upsilon_symbol': upsilon,
-                  'phi': phi, 'phi_symbol': phi, 
-                  'chi': chi, 'chi_symbol': chi, 
-                  'psi': psi, 'psi_symbol': psi, 
-                  'omega': omega, 'omega_symbol': omega }
-
-    return greek_dict
-    
-def create_symbol_name_dict():
-
-    symbol_list = 'bigstar bigcirc clubsuit spadesuit heartsuit diamondsuit Diamond bigtriangleup bigtriangledown blacklozenge blacksquare blacktriangle blacktriangledown blacktriangleleft blacktriangleright Box circ lozenge star'.split(' ')
-    symbol_name_dict = {}
-    for symbol in symbol_list:
-        symbol_name_dict[eval("Symbol('%s')" % symbol)] = '\\%s' % symbol
-
-    return symbol_name_dict
-
-def try_normalize_expr(expr):
-    # normalize means expand and then ratsimp
-    try:
-        if isinstance(expr, Tuple) or isinstance(expr,list):
-            # if is tuple or list, try to normalize each element separately
-            expr_normalize_list = []
-            for ex in expr:
-                try:
-                    expr_normalize_list.append(ex.expand().ratsimp().expand())
-                except:
-                    expr_normalize_list.append(ex)
-            if isinstance(expr,Tuple):    
-                expr_normalize = Tuple(*expr_normalize_list)
-            else:
-                expr_normalize = expr_normalize_list
-        else:
-            expr_normalize = expr.expand().ratsimp().expand()
-    except:
-        expr_normalize = expr
-    return expr_normalize
-        
-
-def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_ordered=True):
-
-    # if either isn't a tuple, replace with a tuple of length 1
-    if not isinstance(the_tuple1, Tuple):
-        the_tuple1 = Tuple(the_tuple1)
-    if not isinstance(the_tuple2, Tuple):
-        the_tuple2 = Tuple(the_tuple2)
-    
-    if tuple_is_ordered:
-        return the_tuple1 == the_tuple2
-
-    # if not ordered, check if match with any order
-    if len(the_tuple1) != len(the_tuple2):
-        return False
-
-    tuple2_indices_used=[]
-    for expr1 in the_tuple1:
-        expr1_matches=False
-        for (i, expr2) in enumerate(the_tuple2):
-            if expr1 == expr2 and i not in tuple2_indices_used:
-                tuple2_indices_used.append(i)
-                expr1_matches=True
-                break
-            
-        if not expr1_matches:
-            return False
-    return True
-
-
-def is_strict_inequality(the_relational):
-    if isinstance(the_relational, StrictLessThan):
-        return True
-    if isinstance(the_relational, StrictGreaterThan):
-        return True
-    return False
-
-def is_nonstrict_inequality(the_relational):
-    if isinstance(the_relational, LessThan):
-        return True
-    if isinstance(the_relational, GreaterThan):
-        return True
-    return False
-
-
-
-def check_relational_equality(the_relational1, the_relational2):
-    if the_relational1==the_relational2:
-        return True
-
-    if (is_strict_inequality(the_relational1) and \
-            is_strict_inequality(the_relational2)) or \
-            (is_nonstrict_inequality(the_relational1) and \
-                 is_nonstrict_inequality(the_relational2)):
-        if the_relational1.lts ==  the_relational2.lts and \
-                the_relational1.gts ==  the_relational2.gts:
-            return True
-        else:
-            return False
-    
-    if (isinstance(the_relational1, Equality) and \
-            isinstance(the_relational2, Equality)) or \
-            (isinstance(the_relational1, Unequality) and \
-                 isinstance(the_relational2, Unequality)):
-        # already checked this case above
-        if the_relational1.lhs == the_relational2.lhs and \
-                the_relational1.rhs == the_relational2.rhs:
-            return True
-        elif the_relational1.lhs == the_relational2.rhs and \
-                the_relational1.rhs == the_relational2.lhs:
-            return True
-        else:
-            return False
-
-    return False
-
- 
+@python_2_unicode_compatible
 class math_object(object):
-    def __init__(self, expression, n_digits=None, round_decimals=None, use_ln=False, normalize_on_compare=False, split_symbols_on_compare=False, tuple_is_ordered=True, collapse_equal_tuple_elements=False, copy_properties_from=None, output_no_delimiters=None, **kwargs):
-        self._expression=sympify(expression)
-        self._n_digits=n_digits
-        self._round_decimals=round_decimals
-        self._use_ln=use_ln
-        self._normalize_on_compare = normalize_on_compare
-        self._split_symbols_on_compare = split_symbols_on_compare
-        self._tuple_is_ordered = tuple_is_ordered
-        self._kwargs = kwargs
-
-        if output_no_delimiters is None:
-            if not tuple_is_ordered:
-                output_no_delimiters=True
-            else:
-                output_no_delimiters=False
-        self._output_no_delimiters = output_no_delimiters
+    def __init__(self, expression, **parameters):
+        """
+        parameters implemented
+        n_digits: number of digits of precision to keep for all numerical
+            quantities (including symbols like pi) on display
+            or on comparison.  If neither n_digits or round_decimals
+            is set, then rationals, integers, and numerical
+            symbols are left as is.
+        round_decimals: number of decimals to keep for all numerical
+            quantities (including symbols like pi) on display
+            or on comparison.  
+            If round_decimals < 0, then also convert numbers to integers.
+            If neither n_digits or round_decimals
+            is set, then rationals, integers, and numerical
+            symbols are left as is.
+        use_ln: convert log to ln on display
+        normalize_on_compare: if True, then check for equality based
+            on normalized versions of expressions.  Currently,
+            normalizations involves trying to expand and call
+            ratsimp to simplify rational expressions.
+        split_symbols_on_compare: flag set to indicate that answers
+            to be compared to this object should have symbols split
+            when parsing.  If this flag is true, then only effect on
+            math_object is that return_split_symbols_on_compare()
+            returns True.
+        tuple_is_unordered: if flag set to True, then answer will
+            match expression if entries in tuples match 
+            regardless of order
+        collapse_equal_tuple_elements: if flag set to True, 
+            then duplicate entries of tuple are eliminated.  
+            If resulting tuple has only one element, 
+            the expression is replaced by just that element.
+        output_no_delimiters: if flag set to True, then tuples or lists
+            are printed just with entries separated by commas.
+            If output_no_delimiters is not set to False and
+            tuple_is_unordered, then output_no_delimiters is set to True.
+        copy_parameters_from: objects from which to copy parameters.
+            If set to an object with a dictionary with a _parameters attribute,
+            all parameters are passed into function are ignored 
+            and values from the object are used instead.
+        xvar: string to use in place of x to label equations.
+            Currently, just used for lines.
+        yvar: string to use in place of y to label equations.
+            Currently, just used for lines.
         
-        if copy_properties_from:
+        """
+
+        self._expression=sympify(expression)
+        self._parameters = parameters
+
+        # don't show delimiters for unordered tuples
+        # unless output_no_delimiters was explicitly set
+        if 'output_no_delimiters' not in self._parameters:
+            if self._parameters.get('tuple_is_unordered'):
+                self._parameters['output_no_delimiters']=True
+        
+        # overwrite all parameters from copy_parameters_from object
+        # if it exists
+        copy_parameters_from = self._parameters.get('copy_parameters_from')
+        if copy_parameters_from:
             try:
-                self._n_digits = copy_properties_from._n_digits 
-            except:
-                pass
-            try:
-                self._round_decimals = copy_properties_from._round_decimals
-            except:
-                pass
-            try:
-                self._use_ln = copy_properties_from._use_ln
-            except:
-                pass
-            try:
-                self._normalize_on_compare = copy_properties_from._normalize_on_compare
-            except:
-                pass
-            try:
-                self._split_symbols_on_compare = copy_properties_from._split_symbols_on_compare
+                self._parameters = copy_parameters_from._parameters
             except:
                 pass
 
-            try:
-                self._tuple_is_ordered = copy_properties_from._tuple_is_ordered
-            except:
-                pass
-            try:
-                self._output_list_no_delimiters = copy_properties_from._output_list_no_delimiters
-            except:
-                pass
-
-        if isinstance(self._expression,Tuple) and collapse_equal_tuple_elements:
+        # If have Tuple and collapse_equal_tuple_elements is set
+        # then delete any duplicate Tuple elements.
+        # Order of resulting Tuple is based on first occurrence of each element.
+        if isinstance(self._expression,Tuple) and \
+                self._parameters.get('collapse_equal_tuple_elements'):
             tuple_list = []
             for expr in self._expression:
                 if expr not in tuple_list:
@@ -280,7 +90,8 @@ class math_object(object):
             if len(self._expression)==1:
                 self._expression = self._expression[0]
 
-
+    # define a bunch of comparison operators on math_objects
+    # so they can be treated like expressions
     def __eq__(self, other):
         if isinstance(other, math_object):
             other=other._expression
@@ -312,204 +123,311 @@ class math_object(object):
 
     def return_expression(self):
         return self._expression
-    def return_if_ordered(self):
-        return self._tuple_is_ordered
+    def return_if_unordered(self):
+        return self._parameters.get('tuple_is_unordered',False)
     def return_if_use_ln(self):
-        return self._use_ln
+        return self._parameters.get('use_ln',False)
     def return_if_output_no_delimiters(self):
-        return self._output_no_delimiters
+        return self._parameters.get('output_no_delimiters',False)
     def return_split_symbols_on_compare(self):
-        return self._split_symbols_on_compare
+        return self._parameters.get('split_symbols_on_compare', False)
 
     def eval_to_precision(self, expression):
-        if self._n_digits:
-            n_digits=self._n_digits
-            # expression = expression.xreplace \
-            #     (dict((orig_float, \
-            #                orig_float.evalf(n_digits)) \
-            #               for orig_float in expression.atoms(Float))) 
-                
-            from sympy.simplify.simplify import bottom_up
-            if isinstance(expression, list) or isinstance(expression, Tuple):
-                new_expr=[]
-                for expr in expression:
-                    # in case of Tuple of Tuples, expr could be a Tuple
-                    # which doesn't have an evalf attribute
-                    try:
-                        expr_evalf=expr.evalf()
-                    except:
-                        expr_evalf=expr
-                    new_expr.append(bottom_up(expr_evalf,
-                                    lambda w: w.evalf(n_digits)
-                                    if not w.is_Number 
-                                    else Float(str(w.evalf(n_digits))),
-                                    atoms=True))
-                if isinstance(expression, Tuple):
-                    expression=Tuple(*new_expr)
-                else:
-                    expression=new_expr
-            else:
-                expression =  bottom_up(expression.evalf(),
-                                        lambda w: w.evalf(n_digits)
-                                        if not w.is_Number 
-                                        else Float(str(w.evalf(n_digits))),
-                                        atoms=True)
-                
-        else:
-            # even if not n_digits, find any floats and round to 14 digits
-            # to overcome machine precision errors
-            # in this case, only modify atoms that are Floats
-            n_digits=14
-            from sympy.simplify.simplify import bottom_up
-            # have turned all lists to Tuples so can get rid of this condition?
-            if isinstance(expression, list):
-                new_expr=[]
-                for expr in expression:
-                    try:
-                        new_expr.append(bottom_up(expr,
-                                                  lambda w: w
-                                                  if not w.is_Float 
-                                                  else Float(str(w.evalf(n_digits))),
-                                                  atoms=True))
-                    except TypeError:
-                        new_expr.append(expr)
+        """
+        If parameter n_digits or round_decimals is set, 
+        evaluate all numbers and numbersymbols (like pi) 
+        of expression to floats 
+        with n_digits of precision or round_decimals decimals.
+        Since rounding to decimals is last, it will convert
+        floats to integers is round_decimals <= 0.
+        If neither option is set, 
+        then normalize all floats to 14 digits of precision
+        to increase consistency of floats in presence of roundoff errors.
+        """
 
-                expression=new_expr
-            else:
-                try:
-                    expression =  bottom_up(expression,
-                                            lambda w: w
-                                            if not w.is_Float 
-                                            else Float(str(w.evalf(n_digits))),
-                                            atoms=True)
-                except TypeError:
-                    pass
-                    
+        modified=False
+        n_digits = self._parameters.get('n_digits')
+        if n_digits:
+            expression = evalf_expression(expression, n_digits)
+            modified = True
+        round_decimals = self._parameters.get('round_decimals')
+        if round_decimals is not None:
+            expression = round_expression(expression, 
+                                          round_decimals)
+            modified = True
+        if not modified:
+            expression = normalize_floats(expression)
             
         return expression
 
     def convert_expression(self):
+        """ 
+        Run eval_to_precision on object's expression
+        """
 
         expression=self.eval_to_precision(self._expression)
-
-        if self._round_decimals is not None:
-            try:
-                def round_or_int(w):
-                    if not w.is_Float:
-                        return w
-                    w = w.round(self._round_decimals)
-                    if self._round_decimals==0:
-                        return int(w)
-                    else:
-                        return w
-
-                from sympy.simplify.simplify import bottom_up
-                expression =  bottom_up(expression,
-                                        round_or_int,
-                                        atoms=True)
-                
-            except TypeError:
-                pass
-
+            
         return expression
 
-    def __unicode__(self):
+    def __str__(self):
+        """
+        Return latex version of expression as string
+        Use symbol_name_dict from create_symbol_name_dict to convert
+        some symbols into their corresponding latex expressions.
+        In addition, process the output in the following ways.
+        1. If output_no_delimeters is set, then output tuples and lists
+           just as elements separate by commas
+        2. If expression is a LinearEntity, then display as equation
+           of line set to zero.
+        3. If use_ln is set, then substitute ln for log
+        """
         from sympy.geometry.line import LinearEntity
         expression = self.convert_expression()
         symbol_name_dict = create_symbol_name_dict()
         
-        if self._output_no_delimiters and (isinstance(expression,Tuple)
-                                           or isinstance(expression,list)):
+        if self._parameters.get('output_no_delimiters') \
+                and (isinstance(expression,Tuple) \
+                         or isinstance(expression,list)):
             # just separate entries by commas
-            output_list = [latex(expr, symbol_names=symbol_name_dict) for expr in expression]
+            output_list = [latex(expr, symbol_names=symbol_name_dict) \
+                               for expr in expression]
             output = ",~ ".join(output_list)
         elif isinstance(expression, LinearEntity):
-            xvar=self._kwargs.get('xvar','x')
-            yvar=self._kwargs.get('yvar','y')
+            xvar=self._parameters.get('xvar','x')
+            yvar=self._parameters.get('yvar','y')
             output = "%s = 0" % latex(expression.equation(x=xvar,y=yvar))
-            
-            
         else:
             output = latex(expression, symbol_names=symbol_name_dict)
-        if self._use_ln:
-            output = re.sub('operatorname{log}', 'operatorname{ln}', output)
+
+        if self._parameters.get('use_ln'):
+            import re
             output = re.sub('\\log', 'ln', output)
-        # show one character functions as just normal math
-        output = re.sub('\\\\operatorname\{(\w)\}','\\1',output)
                 
         return output
-    def __str__(self):
-        return self.__unicode__()
+
     def __float__(self):
+        """
+        When outputting float, first convert expression,
+        which rounds expression corresponding to parameters
+        n_digits and/or round_decimals.
+        Attempts to convert expression to a float.
+        """
         expression = self.convert_expression()
-        try:
-            return float(expression)
-        except:
-            return expression
+        return float(expression)
+
     def float(self):
         return self.__float__()
 
     def compare_with_expression(self, new_expr):
-        from sympy.geometry.line import LinearEntity
+        """
+        Compare expression of object with new_expression.
+        Returns:
+        1  if expressions are considered equal.
+           If normalize_on_compare is set, then expressions are considered
+           equal if their normalized expressions to the same.
+           Otherwise, expressions themselves must be the same.
+        -1 if normalize_on compare is not set, the expressions themselves
+           are not the same, but their normalized expressions are the same.
+        0  if the expressions not the same and the normalized expressions
+           are not the same
+        In all determinations of equality, expressions are rounded to
+        the precision determined by n_digits and round_decimals, if set.
+        """
 
+        # Calculate the normalized expressions for both expressions,
+        # rounded to precision as specified by n_digits and round_decimals
         new_expr_normalize=self.eval_to_precision(try_normalize_expr(new_expr))
+        expression_normalize = self.eval_to_precision(\
+            try_normalize_expr(self._expression))
 
-        expression_normalize = self.eval_to_precision(try_normalize_expr(self._expression))
-
+        # evaluate both expressions to precision as specified
+        # by n_digits and round_decimals
         new_expr = self.eval_to_precision(new_expr)
-        print new_expr
         expression=self.eval_to_precision(self._expression)
-        print expression
 
+        tuple_is_unordered = self._parameters.get('tuple_is_unorder',False)
         expressions_equal=False
         equal_if_normalize=False
-        if self._normalize_on_compare:
-            if isinstance(expression, Tuple):
-                expressions_equal = check_tuple_equality \
-                    (expression_normalize, new_expr_normalize, 
-                     tuple_is_ordered=self._tuple_is_ordered)
-            elif isinstance(expression, Relational):
-                expressions_equal = check_relational_equality \
-                    (expression_normalize, new_expr_normalize)
-            elif isinstance(expression, LinearEntity):
-                try:
-                    expressions_equal = expression_normalize.is_similar(new_expr_normalize)
-                except AttributeError:
-                    expressions_equal = False
-            else:
-                if expression_normalize == new_expr_normalize:
-                    expressions_equal=True
+        if self._parameters.get('normalize_on_compare'):
+            expressions_equal = check_equality \
+                (expression_normalize, new_expr_normalize, \
+                     tuple_is_unordered=tuple_is_unordered)
         else:
-            if isinstance(expression, Tuple):
-                if check_tuple_equality(expression, new_expr, 
-                                        tuple_is_ordered=self._tuple_is_ordered):
-                    expressions_equal = True
-                elif check_tuple_equality(expression_normalize, new_expr_normalize, 
-                                        tuple_is_ordered=self._tuple_is_ordered):
-                    equal_if_normalize=True
-            elif isinstance(expression, Relational):
-                if check_relational_equality(expression, new_expr):
-                    expressions_equal = True
-                elif check_relational_equality \
-                    (expression_normalize, new_expr_normalize):
-                    equal_if_normalize=True
-            elif isinstance(expression, LinearEntity):
-                try:
-                    expressions_equal = expression.is_similar(new_expr)
-                except AttributeError:
-                    expressions_equal = False
-                try:
-                    equal_if_normalize = expression_normalize.is_similar(new_expr_normalize)
-                except AttributeError:
-                    equal_if_normalize = False
-            else:
-                if expression==new_expr:
-                    expressions_equal=True
-                elif  expression_normalize == new_expr_normalize:
-                    equal_if_normalize=True
+            expressions_equal = check_equality \
+                (expression, new_expr, \
+                     tuple_is_unordered=tuple_is_unordered)
+            if not expressions_equal:
+                equal_if_normalize = check_equality \
+                    (expression_normalize, new_expr_normalize, \
+                         tuple_is_unordered=tuple_is_unordered)
 
         if expressions_equal:
             return 1
         if equal_if_normalize:
             return -1
         return 0
+
+        
+
+def create_symbol_name_dict():
+    """
+    Create a dictionary used by latex printer to convert symbols to
+    latex expressions.
+    """
+
+    symbol_list = 'bigstar bigcirc clubsuit spadesuit heartsuit diamondsuit Diamond bigtriangleup bigtriangledown blacklozenge blacksquare blacktriangle blacktriangledown blacktriangleleft blacktriangleright Box circ lozenge star'.split(' ')
+    symbol_name_dict = {}
+    for symbol in symbol_list:
+        symbol_name_dict[eval("Symbol('%s')" % symbol)] = '\\%s' % symbol
+
+    return symbol_name_dict
+
+
+def try_normalize_expr(expr):
+    """
+    Attempt to normalized expression.
+    Use expand, then ratsimp to simplify rationals, then expand again
+    """
+    try:
+        if isinstance(expr, Tuple) or isinstance(expr,list):
+            # if is tuple or list, try to normalize each element separately
+            expr_normalize_list = []
+            for ex in expr:
+                try:
+                    expr_normalize_list.append(ex.expand().ratsimp().expand())
+                except:
+                    expr_normalize_list.append(ex)
+            if isinstance(expr,Tuple):    
+                expr_normalize = Tuple(*expr_normalize_list)
+            else:
+                expr_normalize = expr_normalize_list
+        else:
+            expr_normalize = expr.expand().ratsimp().expand()
+    except:
+        expr_normalize = expr
+    return expr_normalize
+
+
+def check_equality(expression1, expression2, tuple_is_unordered=False):
+    """ 
+    Determine if expression1 and expression2 are equal.
+    If tuple_is_unordered is set, then tuples are compared regardless of order.
+    """
+        
+    from sympy.geometry.line import LinearEntity
+
+    if isinstance(expression1, Tuple):
+        return check_tuple_equality(expression1, expression2, 
+                                    tuple_is_unordered=tuple_is_unordered)
+    elif isinstance(expression1, Relational):
+        return check_relational_equality(expression1, expression2)
+    elif isinstance(expression1, LinearEntity):
+        try:
+            return expression1.is_similar(expression2)
+        except AttributeError:
+            return  False
+    else:
+        if expression1 == expression2:
+            return True
+        else:
+            return False
+
+def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False):
+    """
+    Check if two Tuples are equal, converting non-Tuples to length 1 Tuples.
+    If tuple_is_unordered is set, then check if elements match
+    regardless of order.
+    """
+
+    # if either isn't a tuple, replace with a tuple of length 1
+    if not isinstance(the_tuple1, Tuple):
+        the_tuple1 = Tuple(the_tuple1)
+    if not isinstance(the_tuple2, Tuple):
+        the_tuple2 = Tuple(the_tuple2)
+    
+    # if tuple_is_unordered isn't set, demand exact equality
+    if not tuple_is_unordered:
+        return the_tuple1 == the_tuple2
+
+    # if not ordered, check if match with any order
+    
+    # their lengths must be the same
+    if len(the_tuple1) != len(the_tuple2):
+        return False
+
+    # loop through all elements of tuple 1
+    # for each element, look for a matching element of tuple 2
+    # that has not been used yet.
+    tuple2_indices_used=[]
+    for expr1 in the_tuple1:
+        expr1_matches=False
+        for (i, expr2) in enumerate(the_tuple2):
+            if expr1 == expr2 and i not in tuple2_indices_used:
+                tuple2_indices_used.append(i)
+                expr1_matches=True
+                break
+            
+        if not expr1_matches:
+            return False
+    return True
+
+
+# given inheritance structure of sympy
+# have to separate check for greater and less than
+def is_strict_inequality(the_relational):
+    from sympy import StrictLessThan, StrictGreaterThan
+    if isinstance(the_relational, StrictLessThan):
+        return True
+    if isinstance(the_relational, StrictGreaterThan):
+        return True
+    return False
+def is_nonstrict_inequality(the_relational):
+    from sympy import LessThan, GreaterThan
+    if isinstance(the_relational, LessThan):
+        return True
+    if isinstance(the_relational, GreaterThan):
+        return True
+    return False
+
+
+
+def check_relational_equality(the_relational1, the_relational2):
+    """ 
+    Check if two relations are equivalent.
+    """
+
+    # if relations are exactly the same, we're done
+    if the_relational1==the_relational2:
+        return True
+
+    # if relations aren't the same, they could be inequalities
+    # with the sides reversed.
+    # Check if both strict or both not strict
+    # and that the larger and small sides are equal
+    if (is_strict_inequality(the_relational1) and \
+            is_strict_inequality(the_relational2)) or \
+            (is_nonstrict_inequality(the_relational1) and \
+                 is_nonstrict_inequality(the_relational2)):
+        if the_relational1.lts ==  the_relational2.lts and \
+                the_relational1.gts ==  the_relational2.gts:
+            return True
+        else:
+            return False
+    
+    # if both equalities or inequalities, they could be the same
+    # except with sides reversed
+    if (isinstance(the_relational1, Equality) and \
+            isinstance(the_relational2, Equality)) or \
+            (isinstance(the_relational1, Unequality) and \
+                 isinstance(the_relational2, Unequality)):
+        # just need to check if the sides are reversed.
+        # (If the sides were the same, initial check would have shown
+        # them to be equal.)
+        if the_relational1.lhs == the_relational2.rhs and \
+                the_relational1.rhs == the_relational2.lhs:
+            return True
+        else:
+            return False
+
+    # if have different types of relations, they must be unequal
+    return False
