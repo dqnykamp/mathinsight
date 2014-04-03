@@ -76,6 +76,7 @@ class QuestionAdmin(reversion.VersionAdmin):
     fieldsets = (
         (None, {
                 'fields': ('name', 'question_type', 'question_permission',
+                           'computer_graded',
                            'description', 'question_spacing', 'css_class',
                            'question_text', 'solution_text',
                            'hint_text', 'notes',

@@ -14,7 +14,6 @@ from math import *
 import random 
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-import sympy
 from sympy import Symbol, Function, Tuple
 from django.db.models import Max
 from mitesting.math_objects import math_object
@@ -58,6 +57,7 @@ class Question(models.Model):
     notes = models.TextField(blank=True, null=True)
     reference_pages = models.ManyToManyField('midocs.Page', through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
+    computer_graded=models.BooleanField(default=False)
     show_solution_button_after_attempts=models.IntegerField(default=3)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
     subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
@@ -1289,7 +1289,7 @@ class Expression(models.Model):
     use_ln = models.BooleanField(default=False)
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
-    tuple_is_ordered = models.BooleanField(default=False)
+    tuple_is_unordered = models.BooleanField(default=False)
     collapse_equal_tuple_elements=models.BooleanField(default=False)
     output_no_delimiters = models.BooleanField(default=False)
     sort_list = models.BooleanField(default=False)
@@ -1371,7 +1371,7 @@ class Expression(models.Model):
                 global_dict[str(self.name)] = expression
 
 
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_ordered=self.tuple_is_ordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
+        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_unordered=self.tuple_is_unordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
 
 
 class PlotFunction(models.Model):
