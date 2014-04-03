@@ -110,7 +110,7 @@ class Migration(SchemaMigration):
             ('title', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('description', self.gf('django.db.models.fields.CharField')(max_length=400, null=True, blank=True)),
             ('text', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('level', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.Level'])),
+            ('level', self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['midocs.Level'])),
             ('date_created', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
             ('date_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('publish_date', self.gf('django.db.models.fields.DateField')(db_index=True, blank=True)),
@@ -174,8 +174,8 @@ class Migration(SchemaMigration):
         # Adding model 'PageRelationship'
         db.create_table(u'midocs_pagerelationship', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('origin', self.gf('django.db.models.fields.related.ForeignKey')(related_name='relationships', to=orm['midocs.Page'])),
-            ('related', self.gf('django.db.models.fields.related.ForeignKey')(related_name='reverse_relationships', to=orm['midocs.Page'])),
+            ('origin', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'relationships', to=orm['midocs.Page'])),
+            ('related', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'reverse_relationships', to=orm['midocs.Page'])),
             ('relationship_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.RelationshipType'])),
             ('sort_order', self.gf('django.db.models.fields.FloatField')(default=0)),
         ))
@@ -187,8 +187,8 @@ class Migration(SchemaMigration):
         # Adding model 'PageSimilar'
         db.create_table(u'midocs_pagesimilar', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('origin', self.gf('django.db.models.fields.related.ForeignKey')(related_name='similar', to=orm['midocs.Page'])),
-            ('similar', self.gf('django.db.models.fields.related.ForeignKey')(related_name='reverse_similar', to=orm['midocs.Page'])),
+            ('origin', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'similar', to=orm['midocs.Page'])),
+            ('similar', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'reverse_similar', to=orm['midocs.Page'])),
             ('score', self.gf('django.db.models.fields.SmallIntegerField')()),
             ('background_page', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
@@ -234,7 +234,7 @@ class Migration(SchemaMigration):
         db.create_table(u'midocs_indexentry', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('page', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.Page'])),
-            ('index_type', self.gf('django.db.models.fields.related.ForeignKey')(default=1, related_name='entries', to=orm['midocs.IndexType'])),
+            ('index_type', self.gf('django.db.models.fields.related.ForeignKey')(default=1, related_name=u'entries', to=orm['midocs.IndexType'])),
             ('indexed_phrase', self.gf('django.db.models.fields.CharField')(max_length=100, db_index=True)),
             ('indexed_subphrase', self.gf('django.db.models.fields.CharField')(db_index=True, max_length=100, null=True, blank=True)),
             ('page_anchor', self.gf('django.db.models.fields.CharField')(max_length=100, null=True, blank=True)),
@@ -256,8 +256,8 @@ class Migration(SchemaMigration):
             ('title', self.gf('django.db.models.fields.CharField')(max_length=200)),
             ('code', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=100)),
             ('imagefile', self.gf('django.db.models.fields.files.ImageField')(max_length=100, db_index=True)),
-            ('height', self.gf('django.db.models.fields.IntegerField')(blank=True)),
-            ('width', self.gf('django.db.models.fields.IntegerField')(blank=True)),
+            ('height', self.gf('django.db.models.fields.IntegerField')()),
+            ('width', self.gf('django.db.models.fields.IntegerField')()),
             ('description', self.gf('django.db.models.fields.CharField')(max_length=400, null=True, blank=True)),
             ('detailed_description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('notation_specific', self.gf('django.db.models.fields.BooleanField')(default=False)),
@@ -267,7 +267,7 @@ class Migration(SchemaMigration):
             ('original_file', self.gf('django.db.models.fields.files.FileField')(max_length=150, null=True, blank=True)),
             ('original_file_type', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.ImageType'], null=True, blank=True)),
             ('author_copyright', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('hidden', self.gf('django.db.models.fields.BooleanField')(db_index=True)),
+            ('hidden', self.gf('django.db.models.fields.BooleanField')(default=False, db_index=True)),
             ('additional_credits', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('date_created', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
             ('date_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
@@ -351,7 +351,7 @@ class Migration(SchemaMigration):
         # Adding model 'AppletTypeParameter'
         db.create_table(u'midocs_applettypeparameter', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('applet_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='valid_parameters', to=orm['midocs.AppletType'])),
+            ('applet_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'valid_parameters', to=orm['midocs.AppletType'])),
             ('parameter_name', self.gf('django.db.models.fields.CharField')(max_length=50, db_index=True)),
             ('default_value', self.gf('django.db.models.fields.CharField')(max_length=1000, null=True, blank=True)),
         ))
@@ -522,7 +522,7 @@ class Migration(SchemaMigration):
         # Adding model 'VideoTypeParameter'
         db.create_table(u'midocs_videotypeparameter', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('video_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name='valid_parameters', to=orm['midocs.VideoType'])),
+            ('video_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'valid_parameters', to=orm['midocs.VideoType'])),
             ('parameter_name', self.gf('django.db.models.fields.CharField')(max_length=50, db_index=True)),
             ('default_value', self.gf('django.db.models.fields.CharField')(max_length=1000, null=True, blank=True)),
         ))
@@ -542,12 +542,12 @@ class Migration(SchemaMigration):
             ('detailed_description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('transcript', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('associated_applet', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.Applet'], null=True, blank=True)),
-            ('highlight', self.gf('django.db.models.fields.BooleanField')(db_index=True)),
+            ('highlight', self.gf('django.db.models.fields.BooleanField')(default=False, db_index=True)),
             ('thumbnail', self.gf('django.db.models.fields.files.ImageField')(max_length=150, null=True, blank=True)),
             ('thumbnail_width', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('thumbnail_height', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('author_copyright', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('hidden', self.gf('django.db.models.fields.BooleanField')(db_index=True)),
+            ('hidden', self.gf('django.db.models.fields.BooleanField')(default=False, db_index=True)),
             ('additional_credits', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('date_created', self.gf('django.db.models.fields.DateField')(auto_now_add=True, blank=True)),
             ('date_modified', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
@@ -963,7 +963,7 @@ class Migration(SchemaMigration):
 
     models = {
         u'midocs.applet': {
-            'Meta': {'ordering': "['code']", 'object_name': 'Applet'},
+            'Meta': {'ordering': "[u'code']", 'object_name': 'Applet'},
             'additional_credits': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'applet_file': ('django.db.models.fields.files.FileField', [], {'max_length': '150', 'blank': 'True'}),
             'applet_file2': ('django.db.models.fields.files.FileField', [], {'max_length': '150', 'blank': 'True'}),
@@ -1005,7 +1005,7 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
         u'midocs.appletauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('applet', 'author'),)", 'object_name': 'AppletAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'applet', u'author'),)", 'object_name': 'AppletAuthor'},
             'applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']"}),
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -1027,7 +1027,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'midocs.appletnotationsystem': {
-            'Meta': {'unique_together': "(('applet', 'notation_system'),)", 'object_name': 'AppletNotationSystem'},
+            'Meta': {'unique_together': "((u'applet', u'notation_system'),)", 'object_name': 'AppletNotationSystem'},
             'applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']"}),
             'applet_file': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'blank': 'True'}),
             'applet_file2': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'blank': 'True'}),
@@ -1053,7 +1053,7 @@ class Migration(SchemaMigration):
             'object_type': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
         },
         u'midocs.appletparameter': {
-            'Meta': {'unique_together': "(('applet', 'parameter'),)", 'object_name': 'AppletParameter'},
+            'Meta': {'unique_together': "((u'applet', u'parameter'),)", 'object_name': 'AppletParameter'},
             'applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parameter': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.AppletTypeParameter']"}),
@@ -1069,14 +1069,14 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.applettypeparameter': {
-            'Meta': {'unique_together': "(('applet_type', 'parameter_name'),)", 'object_name': 'AppletTypeParameter'},
-            'applet_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'valid_parameters'", 'to': u"orm['midocs.AppletType']"}),
+            'Meta': {'unique_together': "((u'applet_type', u'parameter_name'),)", 'object_name': 'AppletTypeParameter'},
+            'applet_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'valid_parameters'", 'to': u"orm['midocs.AppletType']"}),
             'default_value': ('django.db.models.fields.CharField', [], {'max_length': '1000', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parameter_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'})
         },
         u'midocs.author': {
-            'Meta': {'ordering': "['last_name', 'first_name', 'middle_name']", 'object_name': 'Author'},
+            'Meta': {'ordering': "[u'last_name', u'first_name', u'middle_name']", 'object_name': 'Author'},
             'code': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'}),
             'contribution_summary': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'display_email': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -1120,7 +1120,7 @@ class Migration(SchemaMigration):
             'link_text': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
         u'midocs.image': {
-            'Meta': {'ordering': "['code']", 'object_name': 'Image'},
+            'Meta': {'ordering': "[u'code']", 'object_name': 'Image'},
             'additional_credits': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'author_copyright': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'authors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['midocs.Author']", 'through': u"orm['midocs.ImageAuthor']", 'symmetrical': 'False'}),
@@ -1130,8 +1130,8 @@ class Migration(SchemaMigration):
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'detailed_description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'height': ('django.db.models.fields.IntegerField', [], {'blank': 'True'}),
-            'hidden': ('django.db.models.fields.BooleanField', [], {'db_index': 'True'}),
+            'height': ('django.db.models.fields.IntegerField', [], {}),
+            'hidden': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'imagefile': ('django.db.models.fields.files.ImageField', [], {'max_length': '100', 'db_index': 'True'}),
             'in_pages': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Page']", 'null': 'True', 'blank': 'True'}),
@@ -1146,17 +1146,17 @@ class Migration(SchemaMigration):
             'thumbnail_height': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'thumbnail_width': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'width': ('django.db.models.fields.IntegerField', [], {'blank': 'True'})
+            'width': ('django.db.models.fields.IntegerField', [], {})
         },
         u'midocs.imageauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('image', 'author'),)", 'object_name': 'ImageAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'image', u'author'),)", 'object_name': 'ImageAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Image']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'midocs.imagenotationsystem': {
-            'Meta': {'unique_together': "(('image', 'notation_system'),)", 'object_name': 'ImageNotationSystem'},
+            'Meta': {'unique_together': "((u'image', u'notation_system'),)", 'object_name': 'ImageNotationSystem'},
             'height': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'image': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Image']"}),
@@ -1172,9 +1172,9 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.indexentry': {
-            'Meta': {'ordering': "['indexed_phrase', 'indexed_subphrase']", 'object_name': 'IndexEntry'},
+            'Meta': {'ordering': "[u'indexed_phrase', u'indexed_subphrase']", 'object_name': 'IndexEntry'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'index_type': ('django.db.models.fields.related.ForeignKey', [], {'default': '1', 'related_name': "'entries'", 'to': u"orm['midocs.IndexType']"}),
+            'index_type': ('django.db.models.fields.related.ForeignKey', [], {'default': '1', 'related_name': "u'entries'", 'to': u"orm['midocs.IndexType']"}),
             'indexed_phrase': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
             'indexed_subphrase': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Page']"}),
@@ -1188,7 +1188,7 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.keyword': {
-            'Meta': {'ordering': "['code']", 'object_name': 'Keyword'},
+            'Meta': {'ordering': "[u'code']", 'object_name': 'Keyword'},
             'code': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
@@ -1200,14 +1200,14 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'midocs.newsauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('newsitem', 'author'),)", 'object_name': 'NewsAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'newsitem', u'author'),)", 'object_name': 'NewsAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'newsitem': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.NewsItem']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'midocs.newsitem': {
-            'Meta': {'ordering': "['-date_created']", 'object_name': 'NewsItem'},
+            'Meta': {'ordering': "[u'-date_created']", 'object_name': 'NewsItem'},
             'authors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['midocs.Author']", 'through': u"orm['midocs.NewsAuthor']", 'symmetrical': 'False'}),
             'code': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '100'}),
             'content': ('django.db.models.fields.TextField', [], {}),
@@ -1234,7 +1234,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'midocs.page': {
-            'Meta': {'ordering': "['code']", 'object_name': 'Page'},
+            'Meta': {'ordering': "[u'code']", 'object_name': 'Page'},
             'additional_credits': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'author_copyright': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'authors': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['midocs.Author']", 'through': u"orm['midocs.PageAuthor']", 'symmetrical': 'False'}),
@@ -1246,27 +1246,27 @@ class Migration(SchemaMigration):
             'highlight': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'keywords': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Keyword']", 'null': 'True', 'blank': 'True'}),
-            'level': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Level']"}),
+            'level': ('django.db.models.fields.related.ForeignKey', [], {'default': 'None', 'to': u"orm['midocs.Level']"}),
             'notation_systems': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.NotationSystem']", 'null': 'True', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'objectives': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Objective']", 'null': 'True', 'blank': 'True'}),
             'publish_date': ('django.db.models.fields.DateField', [], {'db_index': 'True', 'blank': 'True'}),
-            'related_pages': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'pages_related_from'", 'symmetrical': 'False', 'through': u"orm['midocs.PageRelationship']", 'to': u"orm['midocs.Page']"}),
-            'similar_pages': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'pages_similar_from'", 'symmetrical': 'False', 'through': u"orm['midocs.PageSimilar']", 'to': u"orm['midocs.Page']"}),
+            'related_pages': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'pages_related_from'", 'symmetrical': 'False', 'through': u"orm['midocs.PageRelationship']", 'to': u"orm['midocs.Page']"}),
+            'similar_pages': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'pages_similar_from'", 'symmetrical': 'False', 'through': u"orm['midocs.PageSimilar']", 'to': u"orm['midocs.Page']"}),
             'subjects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Subject']", 'null': 'True', 'blank': 'True'}),
             'text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'worksheet': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'midocs.pageauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('page', 'author'),)", 'object_name': 'PageAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'page', u'author'),)", 'object_name': 'PageAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Page']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'midocs.pagecitation': {
-            'Meta': {'ordering': "['id']", 'unique_together': "(('page', 'code'),)", 'object_name': 'PageCitation'},
+            'Meta': {'ordering': "[u'id']", 'unique_together': "((u'page', u'code'),)", 'object_name': 'PageCitation'},
             'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'footnote_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -1275,42 +1275,42 @@ class Migration(SchemaMigration):
             'reference_number': ('django.db.models.fields.SmallIntegerField', [], {})
         },
         u'midocs.pagenavigation': {
-            'Meta': {'ordering': "['id']", 'unique_together': "(('page', 'navigation_phrase'),)", 'object_name': 'PageNavigation'},
+            'Meta': {'ordering': "[u'id']", 'unique_together': "((u'page', u'navigation_phrase'),)", 'object_name': 'PageNavigation'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'navigation_phrase': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Page']"}),
             'page_anchor': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.pagenavigationsub': {
-            'Meta': {'ordering': "['id']", 'unique_together': "(('navigation', 'navigation_subphrase'),)", 'object_name': 'PageNavigationSub'},
+            'Meta': {'ordering': "[u'id']", 'unique_together': "((u'navigation', u'navigation_subphrase'),)", 'object_name': 'PageNavigationSub'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'navigation': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.PageNavigation']"}),
             'navigation_subphrase': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'page_anchor': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.pagerelationship': {
-            'Meta': {'ordering': "['relationship_type', 'sort_order', 'id']", 'unique_together': "(('origin', 'related', 'relationship_type'),)", 'object_name': 'PageRelationship'},
+            'Meta': {'ordering': "[u'relationship_type', u'sort_order', u'id']", 'unique_together': "((u'origin', u'related', u'relationship_type'),)", 'object_name': 'PageRelationship'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'origin': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'relationships'", 'to': u"orm['midocs.Page']"}),
-            'related': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'reverse_relationships'", 'to': u"orm['midocs.Page']"}),
+            'origin': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'relationships'", 'to': u"orm['midocs.Page']"}),
+            'related': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'reverse_relationships'", 'to': u"orm['midocs.Page']"}),
             'relationship_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.RelationshipType']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'midocs.pagesimilar': {
-            'Meta': {'ordering': "['-score', 'id']", 'unique_together': "(('origin', 'similar'),)", 'object_name': 'PageSimilar'},
+            'Meta': {'ordering': "[u'-score', u'id']", 'unique_together': "((u'origin', u'similar'),)", 'object_name': 'PageSimilar'},
             'background_page': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'origin': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'similar'", 'to': u"orm['midocs.Page']"}),
+            'origin': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'similar'", 'to': u"orm['midocs.Page']"}),
             'score': ('django.db.models.fields.SmallIntegerField', [], {}),
-            'similar': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'reverse_similar'", 'to': u"orm['midocs.Page']"})
+            'similar': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'reverse_similar'", 'to': u"orm['midocs.Page']"})
         },
         u'midocs.reference': {
             'Meta': {'object_name': 'Reference'},
             'address': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'authors': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'references_authored'", 'to': u"orm['midocs.Author']", 'through': u"orm['midocs.ReferenceAuthor']", 'blank': 'True', 'symmetrical': 'False', 'null': 'True'}),
+            'authors': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'references_authored'", 'to': u"orm['midocs.Author']", 'through': u"orm['midocs.ReferenceAuthor']", 'blank': 'True', 'symmetrical': 'False', 'null': 'True'}),
             'booktitle': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
-            'editors': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "'references_edited'", 'to': u"orm['midocs.Author']", 'through': u"orm['midocs.ReferenceEditor']", 'blank': 'True', 'symmetrical': 'False', 'null': 'True'}),
+            'editors': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'references_edited'", 'to': u"orm['midocs.Author']", 'through': u"orm['midocs.ReferenceEditor']", 'blank': 'True', 'symmetrical': 'False', 'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'journal': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'notes': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
@@ -1325,14 +1325,14 @@ class Migration(SchemaMigration):
             'year': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'})
         },
         u'midocs.referenceauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('reference', 'author'),)", 'object_name': 'ReferenceAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'reference', u'author'),)", 'object_name': 'ReferenceAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'reference': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Reference']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'midocs.referenceeditor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('reference', 'editor'),)", 'object_name': 'ReferenceEditor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'reference', u'editor'),)", 'object_name': 'ReferenceEditor'},
             'editor': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'reference': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Reference']"}),
@@ -1356,7 +1356,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'midocs.video': {
-            'Meta': {'ordering': "['code']", 'object_name': 'Video'},
+            'Meta': {'ordering': "[u'code']", 'object_name': 'Video'},
             'additional_credits': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'associated_applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']", 'null': 'True', 'blank': 'True'}),
             'author_copyright': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
@@ -1367,8 +1367,8 @@ class Migration(SchemaMigration):
             'default_inline_caption': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'detailed_description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'hidden': ('django.db.models.fields.BooleanField', [], {'db_index': 'True'}),
-            'highlight': ('django.db.models.fields.BooleanField', [], {'db_index': 'True'}),
+            'hidden': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
+            'highlight': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'in_pages': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Page']", 'null': 'True', 'blank': 'True'}),
             'keywords': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Keyword']", 'null': 'True', 'blank': 'True'}),
@@ -1384,21 +1384,21 @@ class Migration(SchemaMigration):
             'video_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.VideoType']"})
         },
         u'midocs.videoauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('video', 'author'),)", 'object_name': 'VideoAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'video', u'author'),)", 'object_name': 'VideoAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'}),
             'video': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Video']"})
         },
         u'midocs.videoparameter': {
-            'Meta': {'unique_together': "(('video', 'parameter'),)", 'object_name': 'VideoParameter'},
+            'Meta': {'unique_together': "((u'video', u'parameter'),)", 'object_name': 'VideoParameter'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parameter': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.VideoTypeParameter']"}),
             'value': ('django.db.models.fields.CharField', [], {'max_length': '1000', 'blank': 'True'}),
             'video': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Video']"})
         },
         u'midocs.videoquestion': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('video', 'question'),)", 'object_name': 'VideoQuestion'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'video', u'question'),)", 'object_name': 'VideoQuestion'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'}),
@@ -1412,11 +1412,11 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.videotypeparameter': {
-            'Meta': {'unique_together': "(('video_type', 'parameter_name'),)", 'object_name': 'VideoTypeParameter'},
+            'Meta': {'unique_together': "((u'video_type', u'parameter_name'),)", 'object_name': 'VideoTypeParameter'},
             'default_value': ('django.db.models.fields.CharField', [], {'max_length': '1000', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parameter_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'db_index': 'True'}),
-            'video_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'valid_parameters'", 'to': u"orm['midocs.VideoType']"})
+            'video_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'valid_parameters'", 'to': u"orm['midocs.VideoType']"})
         },
         u'mitesting.question': {
             'Meta': {'object_name': 'Question'},
@@ -1439,7 +1439,7 @@ class Migration(SchemaMigration):
             'subjects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Subject']", 'null': 'True', 'blank': 'True'})
         },
         u'mitesting.questionauthor': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('question', 'author'),)", 'object_name': 'QuestionAuthor'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'question', u'author'),)", 'object_name': 'QuestionAuthor'},
             'author': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Author']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
@@ -1453,7 +1453,7 @@ class Migration(SchemaMigration):
             'privacy_level_solution': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'})
         },
         u'mitesting.questionreferencepage': {
-            'Meta': {'ordering': "['sort_order', 'id']", 'unique_together': "(('question', 'page', 'question_subpart'),)", 'object_name': 'QuestionReferencePage'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'question', u'page', u'question_subpart'),)", 'object_name': 'QuestionReferencePage'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'page': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Page']"}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
@@ -1461,7 +1461,7 @@ class Migration(SchemaMigration):
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
         u'mitesting.questionspacing': {
-            'Meta': {'ordering': "['sort_order', 'name']", 'object_name': 'QuestionSpacing'},
+            'Meta': {'ordering': "[u'sort_order', u'name']", 'object_name': 'QuestionSpacing'},
             'css_code': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),

@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+
 from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem
 from django import http, forms
 from django.views.decorators.csrf import requires_csrf_token

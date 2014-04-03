@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+from __future__ import division
+
 from django.db import models, transaction
 from django.conf import settings
 from django.db.models import Count
@@ -12,7 +17,7 @@ from django.utils.safestring import mark_safe
 import re
 import random
 from math import *
-from storage import OverwriteStorage
+from midocs.storage import OverwriteStorage
 import os
 from PIL import Image as PILImage
 from cStringIO import StringIO
@@ -377,7 +382,7 @@ class Page(models.Model):
     @classmethod
     def update_all_similar(theclass):
         for thepage in theclass.objects.all():
-            print "Updating %s" % thepage.code
+            print("Updating %s" % thepage.code)
             thepage.update_similar()
             
 
@@ -1602,23 +1607,23 @@ class ExternalLink(models.Model):
             except ValidationError, e:
                 if e.code == 'invalid':
                     invalid_links += 1
-                    print "%s is invalid." % the_link.external_url 
+                    print("%s is invalid." % the_link.external_url)
                 elif e.code == 'invalid_link':
                     links_not_found +=1
-                    print "%s was not found." % the_link.external_url
+                    print("%s was not found." % the_link.external_url)
                 else:
                     other_errors +1
-                    print "Other error with %s" % the_link.external.url
+                    print("Other error with %s" % the_link.external.url)
             else:
                 valid_links +=1
-                print "Valid link: %s" % the_link.external_url
+                print("Valid link: %s" % the_link.external_url)
 
-        print "\nFinished validating all external links"
-        print "Valid links: %s" % valid_links
-        print "Invalid links: %s" % invalid_links
-        print "Links not found: %s" % links_not_found
+        print("\nFinished validating all external links")
+        print("Valid links: %s" % valid_links)
+        print("Invalid links: %s" % invalid_links)
+        print("Links not found: %s" % links_not_found)
         if other_errors:
-            print "Other errors : %s" % other_errors
+            print("Other errors : %s" % other_errors)
 
 
 
