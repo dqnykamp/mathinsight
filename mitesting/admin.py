@@ -46,11 +46,10 @@ class ExpressionInline(admin.TabularInline):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,
                                                                     **kwargs)
         if db_field.name == 'name':
-            field.widget.attrs['size'] = 20
+            field.widget.attrs['size'] = 10
             del field.widget.attrs['class']
         if db_field.name == 'expression':
-            field.widget.attrs['size'] = 60
-            del field.widget.attrs['class']
+            field.widget = forms.Textarea(attrs={'rows': 2, 'cols': 30})
         if db_field.name == 'function_inputs':
             field.widget.attrs['size'] = 5
             del field.widget.attrs['class']
@@ -58,7 +57,13 @@ class ExpressionInline(admin.TabularInline):
             field.widget.attrs['size'] = 2
             del field.widget.attrs['class']
         if db_field.name == 'sort_order':
-            field.widget.attrs['size'] = 5
+            field.widget.attrs['size'] = 3
+        if db_field.name == 'n_digits':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
+        if db_field.name == 'round_decimals':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
         return field
 
 class PlotFunctionInline(admin.TabularInline):
@@ -73,8 +78,11 @@ class QuestionSubpartInline(admin.StackedInline):
 class QuestionReferencePageInline(admin.TabularInline):
     model = QuestionReferencePage
 
-class QuestionAnswerInline(admin.StackedInline):
+class QuestionAnswerInline(admin.TabularInline):
     model = QuestionAnswerOption
+    formfield_overrides = {
+        models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 30})},
+        }
 
 class QuestionAuthorInline(admin.TabularInline):
     model = QuestionAuthor
@@ -91,13 +99,33 @@ class QuestionAdmin(reversion.VersionAdmin):
 
     fieldsets = (
         (None, {
-                'fields': ('name', 'question_type', 'question_permission',
-                           'computer_graded',
-                           'description', 'question_spacing', 'css_class',
-                           'question_text', 'solution_text',
-                           'hint_text', 'notes',
-                           'show_solution_button_after_attempts',
-                           'allowed_sympy_commands', 'keywords', 'subjects',)
+                'fields': ('name', 
+                           ('question_type', 'question_permission',),
+                           ('computer_graded',
+                            'show_solution_button_after_attempts',),
+                           'description', 
+                           ('question_spacing', 'css_class',),
+                           'question_text', 
+                           )
+                }),
+        ('Solution', {
+                'classes': ('collapse',),
+                'fields': ('solution_text', )
+                }),
+        ('Hint', {
+                'classes': ('collapse',),
+                'fields': ('hint_text', )
+                }),
+        ('Notes', {
+                'classes': ('collapse',),
+                'fields': ('notes', )
+                }),
+        ('Meta data', {
+                'classes': ('collapse',),
+                'fields': ('keywords', 'subjects',)
+                }),
+        ('Commands', {
+                'fields': ('allowed_sympy_commands',)
                 }),
         # ('Optional', {
         #         'classes': ('collapse',),

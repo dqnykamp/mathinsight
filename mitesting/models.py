@@ -1172,22 +1172,22 @@ class Expression(models.Model):
     EXPRESSION_TYPES = (
         ('General', (
                 (EXPRESSION, "Expression"),
-                (RANDOM_NUMBER, "Random number"),
+                (RANDOM_NUMBER, "Rand number"),
                 (FUNCTION, "Function"),
-                (CONDITION, "Required condition"),
+                (CONDITION, "Required cond"),
                 )
          ),
         ('Random from list', (
-                (RANDOM_WORD, "Random word"),
-                (RANDOM_EXPRESSION, "Random expression"),
-                (RANDOM_FUNCTION_NAME, "Random function name"),
+                (RANDOM_WORD, "Rand word"),
+                (RANDOM_EXPRESSION, "Rand expr"),
+                (RANDOM_FUNCTION_NAME, "Rand fun name"),
                 )
          ),
         ('Tuples', (
                 (ORDERED_TUPLE, "Ordered tuple"),
                 (UNORDERED_TUPLE, "Unordered tuple"),
                 (SORTED_TUPLE, "Sorted tuple"),
-                (RANDOM_ORDER_TUPLE, "Random order tuple"),
+                (RANDOM_ORDER_TUPLE, "Rand order tuple"),
                 )
          ),
         )
@@ -1212,8 +1212,10 @@ class Expression(models.Model):
     expand = models.BooleanField(default=False)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)
-    n_digits = models.IntegerField(blank=True, null=True)
-    round_decimals = models.IntegerField(blank=True, null=True)
+    n_digits = models.IntegerField(blank=True, null=True,
+                                   verbose_name = "signif digits")
+    round_decimals = models.IntegerField(blank=True, null=True,
+                                         verbose_name = "round")
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
@@ -1223,8 +1225,10 @@ class Expression(models.Model):
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
 
-    collapse_equal_tuple_elements=models.BooleanField(default=False)
-    output_no_delimiters = models.BooleanField(default=False)
+    collapse_equal_tuple_elements=models.BooleanField(
+        default=False, verbose_name="elim dup tuple els")
+    output_no_delimiters = models.BooleanField(
+        default=False, verbose_name="no delims")
     group = models.CharField(max_length=50, blank=True, null=True)
     sort_order = models.FloatField(default=0)
     class Meta:
