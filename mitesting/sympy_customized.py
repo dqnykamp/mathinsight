@@ -12,8 +12,10 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
     bottom up. If ``atoms`` is True, apply ``F`` even if there are no args;
     if ``nonbasic`` is True, try to apply ``F`` to non-Basic objects.
 
-    Version customized to always call rv=rv.func(*args) even if
-    args and rv.args evaluate to be equal.
+    Version customized to 
+    1. always call rv=rv.func(*args) even if  args and rv.args
+       evaluate to be equal.
+    2. call bottom_up on elements of tuples and lists
     """
     try:
         if isinstance(rv, list):
@@ -38,7 +40,7 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
 
 
 def parse_expr(s, global_dict=None, local_dict=None, 
-               split_symbols=False):
+               split_symbols=False, evaluate=True):
     """
     Customized version of sympy parse_expr with three modifications.
     1.  Add Integer, Float, Rational, Symbol to global_dict if not 
@@ -75,6 +77,17 @@ def parse_expr(s, global_dict=None, local_dict=None,
     if 'Symbol' not in new_global_dict:
         new_global_dict['Symbol'] = Symbol
 
+    # If evaluate==False, then operators could be included
+    # so must add them to global_dict if not present
+    if evaluate==False:
+        from sympy import Add, Mul, Pow
+        if 'Add' not in new_global_dict:
+            new_global_dict['Add'] = Add
+        if 'Mul' not in new_global_dict:
+            new_global_dict['Mul'] = Mul
+        if 'Pow' not in new_global_dict:
+            new_global_dict['Pow'] = Pow
+
 
     # Always include convert_xor and implicit multiplication
     # transformations so that can use ^ for exponentiation
@@ -87,21 +100,35 @@ def parse_expr(s, global_dict=None, local_dict=None,
         transformations=standard_transformations+(convert_xor, implicit_multiplication)
 
     # call sympify after parse_expr to convert tuples to Tuples
-    expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations))
+    expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations, evaluate=evaluate))
 
     return expr
 
 
 
-def parse_and_process(s, global_dict=None, local_dict=None, doit=True,
-                      split_symbols=False):
+def parse_and_process(s, global_dict=None, local_dict=None,
+                      split_symbols=False, evaluate_level=None):
     """
-    Parse expression and then, if doit is set, call doit()
+    Parse expression and optionally call doit, evaluate_level is full. 
+    If evaluate_level = Expression.EVALUATE_NONE, then parse
+    with evaluate=False set.
+    If evaluate_level = Expression.EVALUATE_FULL or evaluate_level=None,
+    then call doit() after parsing.
     """
+    
+    from mitesting.models import Expression
+    if evaluate_level == Expression.EVALUATE_NONE:
+        evaluate = False
+    else:
+        evaluate = True
 
-    expression = parse_expr(s, global_dict=global_dict, local_dict=local_dict,
-                            split_symbols=split_symbols)
-    if doit:
+    expression = parse_expr(s, global_dict=global_dict,
+                            local_dict=local_dict,
+                            split_symbols=split_symbols,
+                            evaluate=evaluate)
+
+    if evaluate_level == Expression.EVALUATE_FULL \
+            or evaluate_level is None:
         try: 
             expression=expression.doit()
         except (AttributeError, TypeError):

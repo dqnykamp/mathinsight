@@ -157,7 +157,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object("x", split_symbols_on_compare=False)
         self.assertFalse(mobject.return_split_symbols_on_compare())
 
-    def check_tuple_ordering(self):
+    def test_tuple_ordering(self):
         expression = sympify(sympify("(1,x**2,1-z)"))
         expression2 = sympify(sympify("(x**2,1,1-z)"))
         mobject = math_object(expression)
@@ -167,7 +167,6 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expression),1)
         self.assertEqual(mobject.compare_with_expression(expression2),0)
         self.assertFalse(mobject.return_if_unordered())
-        self.assertFalse(mobject.return_if_output_no_delimiters())
 
         mobject = math_object(expression, tuple_is_unordered=True)
         self.assertEqual(mobject,expression)
@@ -176,7 +175,6 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expression),1)
         self.assertEqual(mobject.compare_with_expression(expression2),1)
         self.assertTrue(mobject.return_if_unordered())
-        self.assertTrue(mobject.return_if_output_no_delimiters())
 
         mobject = math_object(expression, tuple_is_unordered=False)
         self.assertEqual(mobject,expression)
@@ -185,7 +183,7 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expression),1)
         self.assertEqual(mobject.compare_with_expression(expression2),0)
         self.assertFalse(mobject.return_if_unordered())
-        self.assertFalse(mobject.return_if_output_no_delimiters())
+
 
     def test_collapse_equal_tuple_elements(self):
         expression = sympify(sympify("(1-z,x**2,1-z)"))
@@ -567,3 +565,26 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expr3),1)
         self.assertEqual(mobject.compare_with_expression(expr4),1)
         self.assertEqual(mobject.compare_with_expression(expr5),0)
+
+    def test_evaluate_false(self):
+        from mitesting.sympy_customized import parse_expr
+        expr_string="x-x+x*x/x"
+        expr_evaluated = sympify(expr_string)
+        expr_unevaluated = parse_expr(expr_string, evaluate=False)
+        mobject = math_object(expr_unevaluated)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
+        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+
+        mobject = math_object(expr_unevaluated, evaluate=False)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated),-1)
+        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+
+    def test_evaluate_normalize_with_doit(self):
+        from sympy import Derivative
+        x=Symbol('x')
+        expr = Derivative(x**2,x)
+        expr2 = 2*x
+        mobject = math_object(expr)
+        self.assertEqual(mobject.compare_with_expression(expr),1)
+        self.assertEqual(mobject.compare_with_expression(expr2),-1)
+

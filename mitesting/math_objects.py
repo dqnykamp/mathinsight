@@ -45,8 +45,8 @@ class math_object(object):
             the expression is replaced by just that element.
         output_no_delimiters: if flag set to True, then tuples or lists
             are printed just with entries separated by commas.
-            If output_no_delimiters is not set to False and
-            tuple_is_unordered, then output_no_delimiters is set to True.
+        evaluate: if False, then don't process the expression before 
+            displaying or comparing with another expression
         copy_parameters_from: objects from which to copy parameters.
             If set to an object with a dictionary with a _parameters attribute,
             all parameters are passed into function are ignored 
@@ -61,12 +61,6 @@ class math_object(object):
         self._expression=sympify(expression)
         self._parameters = parameters
 
-        # don't show delimiters for unordered tuples
-        # unless output_no_delimiters was explicitly set
-        if 'output_no_delimiters' not in self._parameters:
-            if self._parameters.get('tuple_is_unordered'):
-                self._parameters['output_no_delimiters']=True
-        
         # overwrite all parameters from copy_parameters_from object
         # if it exists
         copy_parameters_from = self._parameters.get('copy_parameters_from')
@@ -164,7 +158,7 @@ class math_object(object):
         """ 
         Run eval_to_precision on object's expression
         """
-
+        
         expression=self.eval_to_precision(self._expression)
             
         return expression
@@ -182,7 +176,10 @@ class math_object(object):
         3. If use_ln is set, then substitute ln for log
         """
         from sympy.geometry.line import LinearEntity
-        expression = self.convert_expression()
+        if self._parameters.get('evaluate') is False:
+            expression = self._expression
+        else:
+            expression = self.convert_expression()
         symbol_name_dict = create_symbol_name_dict()
         
         if self._parameters.get('output_no_delimiters') \
@@ -201,7 +198,7 @@ class math_object(object):
 
         if self._parameters.get('use_ln'):
             import re
-            output = re.sub('\\log', 'ln', output)
+            output = re.sub(r'\log', 'ln', output)
                 
         return output
 
@@ -240,12 +237,16 @@ class math_object(object):
         expression_normalize = self.eval_to_precision(\
             try_normalize_expr(self._expression))
 
+        # As long as evaluate is not False
         # evaluate both expressions to precision as specified
         # by n_digits and round_decimals
-        new_expr = self.eval_to_precision(new_expr)
-        expression=self.eval_to_precision(self._expression)
+        if self._parameters.get("evaluate") is False:
+            expression=self._expression
+        else:
+            new_expr = self.eval_to_precision(new_expr)
+            expression=self.eval_to_precision(self._expression)
 
-        tuple_is_unordered = self._parameters.get('tuple_is_unorder',False)
+        tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         expressions_equal=False
         equal_if_normalize=False
         if self._parameters.get('normalize_on_compare'):
@@ -286,26 +287,10 @@ def create_symbol_name_dict():
 def try_normalize_expr(expr):
     """
     Attempt to normalized expression.
-    Use expand, then ratsimp to simplify rationals, then expand again
+    Use, doit, expand, then ratsimp to simplify rationals, then expand again
     """
-    try:
-        if isinstance(expr, Tuple) or isinstance(expr,list):
-            # if is tuple or list, try to normalize each element separately
-            expr_normalize_list = []
-            for ex in expr:
-                try:
-                    expr_normalize_list.append(ex.expand().ratsimp().expand())
-                except:
-                    expr_normalize_list.append(ex)
-            if isinstance(expr,Tuple):    
-                expr_normalize = Tuple(*expr_normalize_list)
-            else:
-                expr_normalize = expr_normalize_list
-        else:
-            expr_normalize = expr.expand().ratsimp().expand()
-    except:
-        expr_normalize = expr
-    return expr_normalize
+    from mitesting.sympy_customized import bottom_up
+    return bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
 
 
 def check_equality(expression1, expression2, tuple_is_unordered=False):

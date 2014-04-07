@@ -14,36 +14,41 @@ from math import *
 import random 
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Symbol, Function, Tuple
+from sympy import Symbol, Function, Tuple, default_sort_key, expand
 from django.db.models import Max
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import parse_expr, parse_and_process
+import six
 
+@python_2_unicode_compatible
 class QuestionSpacing(models.Model):
     name = models.CharField(max_length=50, unique=True)
     css_code = models.SlugField(max_length=50, unique=True)
     sort_order = models.FloatField(default=0)
 
-    def __unicode__(self):
+    def __str__(self):
         return  self.name
 
     class Meta:
         ordering = ['sort_order', 'name']
 
 
+@python_2_unicode_compatible
 class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
-    def __unicode__(self):
+    def __str__(self):
         return  self.name
    
+@python_2_unicode_compatible
 class QuestionPermission(models.Model):
     name = models.CharField(max_length=50, unique=True)
     privacy_level=models.SmallIntegerField(default=0)
     privacy_level_solution=models.SmallIntegerField(default=0)
-    def __unicode__(self):
+    def __str__(self):
         return  self.name
     
 
+@python_2_unicode_compatible
 class Question(models.Model):
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
@@ -64,12 +69,11 @@ class Question(models.Model):
     authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor')
 
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.id, self.name)
 
     def question_with_number(self):
         return "%s: %s" % (self.id, self.name)
-
     question_with_number.admin_order_field = 'id'
     question_with_number.short_description = "Question"
 
@@ -188,80 +192,36 @@ class Question(models.Model):
 
         the_context['the_question'] = self
         the_context['allow_solution_buttons']=allow_solution_buttons
-
+        the_context['_setup_errors'] = []
+        the_context['_random_group_indices'] = {}
         max_tries=500
         success=False
 
         from mitesting.utils import return_sympy_global_dict
 
         for i in range(max_tries):
-            # select random numbers and add to context
-            global_dict = return_sympy_global_dict(
-                [a.commands for a in self.allowed_sympy_commands.all()])
-
-            for random_number in self.randomnumber_set.all():
-                try:
-                    the_sample = random_number.get_sample \
-                        (global_dict=global_dict)
-                    the_context[random_number.name] = the_sample
-                    global_dict[str(random_number.name)] = the_sample.return_expression()
-
-                except Exception as e:
-                    return "Error in random number %s: %s" % (random_number.name, e)
-   
-
-            # select random words and add to context
-            # if two words have the same group, use the same random index
-            groups = self.randomword_set.values('group').distinct()
-            function_dict = {}
-            for group_dict in groups:
-                group = group_dict['group']
-                random_words =self.randomword_set.filter(group=group)
-                for (ind, random_word) in enumerate(random_words):
-                    if ind==0 or group=='' or group is None:
-                        word_index=None
-                    try:
-                        (the_word, the_plural, word_index) = random_word.get_sample(word_index, function_dict=function_dict)
-                    except Exception as e:
-                        return "Error in random word %s: %s" % (random_word.name, e)
-                    the_context[random_word.name] = the_word
-                    the_context[random_word.name+"_plural"] = the_plural
-                    if isinstance(the_word, math_object):
-                        sympy_word = the_word.return_expression()
-                    else:
-                        # sympy can't handle spaces
-                        word_text=re.sub(' ', '_', the_word)
-                        sympy_word = Symbol(str(word_text))
-                        
-                    global_dict[str(random_word.name)]=sympy_word
-
-
-            failed_required_condition = False
+            failed_condition = ""
             for expression in self.expression_set.all():
-                try:
-                    expression_evaluated = expression.evaluate(global_dict=global_dict)
-                except Exception as e:
-                    return "Error in expression %s: %s" % (expression.name, e)
-                the_context[expression.name]=expression_evaluated
+                failed_condition=expression.evaluate_and_add_to_context(
+                    global_dict=global_dict, 
+                    user_function_dict=user_function_dict,
+                    context=context)
+                
+                # if failed condition, then stop processing expressions
+                if failed_condition:
+                    break
 
-                # # add to substitutions only if not list
-                # if not isinstance(expression_evaluated.return_expression(), list):
-                #     global_dict[expression.name] = expression_evaluated.return_expression()
-                if expression.required_condition:
-                    if not expression_evaluated.return_expression():
-                        failed_required_condition=True
-                        break
-
-            if not failed_required_condition:
-                success=True
+            # processed all expressions without failing a condition
+            # then don't try additional random values
+            if not failed_condition:
                 break
 
-        if not success:
-            return "Failed to satisfy question condition"
+        if failed_condition:
+            the_context['_failed_condition'] = True
+            the_context['_failed_condition_message'] = failed_condition
 
-        
         the_context['sympy_global_dict']=global_dict
-        the_context['sympy_function_dict'] = function_dict
+        the_context['user_function_dict'] = user_function_dict
         the_context['question_%s_seed' % identifier] = seed
         return the_context
 
@@ -520,7 +480,7 @@ class Question(models.Model):
         else:
             return ""
 
-  
+@python_2_unicode_compatible
 class QuestionAuthor(models.Model):
     question = models.ForeignKey(Question)
     author = models.ForeignKey('midocs.Author')
@@ -529,10 +489,10 @@ class QuestionAuthor(models.Model):
     class Meta:
         unique_together = ("question","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
 
-
+@python_2_unicode_compatible
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
     question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
@@ -542,7 +502,7 @@ class QuestionSubpart(models.Model):
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "subpart %s" % self.get_subpart_letter()
     
     
@@ -609,6 +569,7 @@ class QuestionSubpart(models.Model):
 
 
 
+@python_2_unicode_compatible
 class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
     page = models.ForeignKey('midocs.Page')
@@ -618,16 +579,17 @@ class QuestionReferencePage(models.Model):
     class Meta:
         unique_together = ("question", "page", "question_subpart")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.page, self.question)
 
+@python_2_unicode_compatible
 class QuestionAnswerOption(models.Model):
     question = models.ForeignKey(Question)
     answer = models.CharField(max_length=400)
     correct = models.BooleanField(default=False)
     feedback = models.TextField(blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return  self.answer
 
     def render_answer(self, context):
@@ -653,6 +615,7 @@ class QuestionAnswerOption(models.Model):
         return mark_safe(html_string)
 
 
+@python_2_unicode_compatible
 class AssessmentType(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
@@ -661,9 +624,10 @@ class AssessmentType(models.Model):
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
     record_online_attempts = models.BooleanField(default=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return  self.name
 
+@python_2_unicode_compatible
 class Assessment(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     name = models.CharField(max_length=200, unique=True)
@@ -685,7 +649,7 @@ class Assessment(models.Model):
     nothing_random = models.BooleanField(default=False)
     total_points = models.FloatField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return  self.name
 
     def return_short_name(self):
@@ -1141,6 +1105,7 @@ class Assessment(models.Model):
         return seed_min_disallowed
                     
 
+@python_2_unicode_compatible
 class AssessmentBackgroundPage(models.Model):
     assessment = models.ForeignKey(Assessment)
     page = models.ForeignKey('midocs.Page')
@@ -1148,7 +1113,10 @@ class AssessmentBackgroundPage(models.Model):
 
     class Meta:
         ordering = ['sort_order']
+    def __str__(self):
+        return "%s for %s" % (self.page, self.assessment)
 
+@python_2_unicode_compatible
 class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
     question_set = models.SmallIntegerField(default=0,db_index=True)
@@ -1157,10 +1125,11 @@ class QuestionSetDetail(models.Model):
 
     class Meta:
         unique_together = ("assessment", "question_set")
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.question_set, self.assessment)
 
 
+@python_2_unicode_compatible
 class QuestionAssigned(models.Model):
     assessment = models.ForeignKey(Assessment)
     question = models.ForeignKey(Question)
@@ -1169,7 +1138,7 @@ class QuestionAssigned(models.Model):
     class Meta:
         verbose_name_plural = "Questions assigned"
         ordering = ['question_set', 'id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.question, self.assessment)
 
     def save(self, *args, **kwargs):
@@ -1186,46 +1155,13 @@ class QuestionAssigned(models.Model):
                 
         super(QuestionAssigned, self).save(*args, **kwargs) 
 
+        
 class RandomNumber(models.Model):
     name = models.SlugField(max_length=50)
     question = models.ForeignKey(Question)
     min_value = models.CharField(max_length=200, default='0')
     max_value = models.CharField(max_length=200, default='10')
     increment = models.CharField(max_length=200, default='1')
-    
-    def __unicode__(self):
-        return  self.name
-
-    def get_sample(self, global_dict=None):
-        
-        max_value = parse_and_process(self.max_value, global_dict=global_dict)
-
-        min_value = parse_and_process(self.min_value, global_dict=global_dict)
-        
-        increment = parse_and_process(self.increment, global_dict=global_dict)
-  
-        # multiply by 1+1E-10 before rounding down to integer
-        # so small floating point errors don't bring it down to next integer
-        num_possibilities = 1+int(floor((max_value-min_value)/increment)*(1+1E-10))
-        choices=(min_value+n*increment for n in range(num_possibilities))
-        the_num = random.choice(list(choices))
-
-        # if the_num is an integer, convert to integer so don't have decimal
-        if int(the_num)==the_num:
-            the_num = int(the_num)
-        else:
-            # try to round the answer to the same number of decimal places
-            # as the input values
-            # seems to help with rounding error with the float arithmetic
-            for i in range(1,11):
-                if(round(min_value*pow(10,i)) == min_value*pow(10,i)
-                   and round(max_value*pow(10,i)) == max_value*pow(10,i)
-                   and round(increment*pow(10,i)) == increment*pow(10,i)):
-                    the_num = round(the_num,i)
-                    break
-                
-        return math_object(the_num)
-    
 
 
 class RandomWord(models.Model):
@@ -1240,52 +1176,70 @@ class RandomWord(models.Model):
     def __unicode__(self):
         return  self.name
 
-    def get_sample(self, index=None, global_dict=None, function_dict=None):
 
-        # turn comma separated list to python list. 
-        # strip off leading/trailing whitespace
-        option_list = [item.strip() for item in self.option_list.split(",")]
-        plural_list = [item.strip() for item in self.plural_list.split(",")]
-        
-        # if index isn't prescribed, generate randomly
-        if index is None:
-            index = random.randrange(len(option_list))
-        the_word=option_list[index]
-        if self.sympy_parse or self.treat_as_function:
-            try:
-                if not global_dict:
-                    from mitesting.utils_objects import create_greek_dict
-                    global_dict = create_greek_dict()
-                temp_global_dict = {}
-                temp_global_dict.update(global_dict)
-                if self.treat_as_function:
-                    temp_global_dict[str(the_word)] = Function(str(the_word))
-                    if function_dict is not None:
-                        function_dict[str(the_word)] = Function(str(the_word))
-                the_word = math_object(parse_expr(the_word, global_dict=temp_global_dict))
-            except:
-                pass
-        try:
-            the_plural = plural_list[index]
-        except:
-            the_plural = ""
-
-        if not the_plural:
-            the_plural = "%ss" % the_word
-            
-        return (the_word, the_plural, index)
- 
-
+@python_2_unicode_compatible
 class Expression(models.Model):
+    RANDOM_NUMBER = "RN"
+    RANDOM_WORD = "RW"
+    RANDOM_EXPRESSION = "RE"
+    RANDOM_FUNCTION_NAME = "RF"
+    FUNCTION = "FN"
+    CONDITION = "CN"
+    EXPRESSION = "EX"
+    ORDERED_TUPLE = "OT"
+    UNORDERED_TUPLE = "UT"
+    SORTED_TUPLE = "ST"
+    RANDOM_ORDER_TUPLE = "RT"
+    EXPRESSION_TYPES = (
+        ('Generic', (
+                (EXPRESSION, "Expression"),
+                )
+         ),
+        ('Random', (
+                (RANDOM_NUMBER, "Random number"),
+                (RANDOM_WORD, "Random word from list"),
+                (RANDOM_EXPRESSION, "Random expression from list"),
+                (RANDOM_FUNCTION_NAME, "Random function name from list"),
+                )
+         ),
+        ('Tuples', (
+                (ORDERED_TUPLE, "Ordered Tuple"),
+                (UNORDERED_TUPLE, "Unordered Tuple"),
+                (SORTED_TUPLE, "Sorted Tuple"),
+                (RANDOM_ORDER_TUPLE, "Random Order Tuple"),
+                )
+         ),
+        (FUNCTION, "Function"),
+        (CONDITION, "Required condition"),
+        )
+
+    
+    EVALUATE_NONE = 0
+    EVALUATE_PARTIAL = 1
+    EVALUATE_FULL = 2
+    EVALUATE_CHOICES = (
+        (EVALUATE_NONE, "None"),
+        (EVALUATE_PARTIAL, "Partial"),
+        (EVALUATE_FULL, "Full")
+        )
+
+    class FailedCondition(Exception):
+        pass
+
     name = models.SlugField(max_length=50)
+    expression_type = models.CharField(
+        max_length=2, choices = EXPRESSION_TYPES, default=EXPRESSION)
     expression = models.CharField(max_length=200)
     required_condition = models.BooleanField(default=False)
     expand = models.BooleanField(default=False)
     doit = models.BooleanField(default=True)
+    evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
+                                         default = EVALUATE_FULL)
     n_digits = models.IntegerField(blank=True, null=True)
     round_decimals = models.IntegerField(blank=True, null=True)
     question = models.ForeignKey(Question)
-    function_inputs = models.CharField(max_length=50, blank=True, null=True)
+    function_inputs = models.CharField(max_length=50, blank=True,
+                                       null=True)
     use_ln = models.BooleanField(default=False)
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
@@ -1294,85 +1248,361 @@ class Expression(models.Model):
     output_no_delimiters = models.BooleanField(default=False)
     sort_list = models.BooleanField(default=False)
     randomize_list = models.BooleanField(default=False)
+    group = models.CharField(max_length=50, blank=True, null=True)
     sort_order = models.FloatField(default=0)
     class Meta:
         ordering = ['sort_order','id']
 
-    def __unicode__(self): 
+    def __str__(self): 
         return  self.name
+    
 
-    def evaluate(self, global_dict):
+    def evaluate(self, global_dict=None, user_function_dict=None,
+                 random_group_indices=None):
+        """
+        Return evaluated expression and add result to dicts.
+        Add sympy version of result to global_dict with key self.name.
+        If result is a function name that user may enter to answer 
+        question, then add function to user_function_dict.
 
-        expression = parse_and_process(self.expression, global_dict=global_dict, doit=self.doit)
+        Result is calculated based on expression_type.
+
+        In all cases, except RANDOM_WORD, the expression is first
+        parsed with sympy, making the substitution from global_dict. 
+        The resulting math_object returned. The sympy expression is
+        added to global_dict[self.name] so that its value will
+        be substituted in following expressions.
         
-        if self.expand:
-            expression=expression.expand()
+        If error occurs, add Symbol("??") to global_dict, 
+        and don't add to user_function_dict.
 
-        # randomize_list means randomize list or Tuple
-        if self.randomize_list and isinstance(expression,list):
-            random.shuffle(expression)
+        For entries selected randomly from lists,
+        (RANDOM_WORD, RANDOM_EXPRESSION, RANDOM_FUNCTION_NAME),
+        the dictionary random_group_indices is used to keep
+        track of indices used for groups so that the same item number
+        is chosen from each list in the group.
 
-        # for Tuple, must turn to list in order to randomize
-        if self.randomize_list and isinstance(expression,Tuple):
-            expression = list(expression)
-            random.shuffle(expression)
-            expression = Tuple(*expression)
-
-        # sort_list means sort list or Tuple
-        if self.sort_list and isinstance(expression,list):
-            expression.sort()
-
-        # for Tuple, must turn to list in order to sort
-        if self.sort_list and isinstance(expression,Tuple):
-            expression = list(expression)
-            expression.sort()
-            expression = Tuple(*expression)
-
-        # turn list to Tuple
-        if isinstance(expression,list):
-            expression = Tuple(*expression)
-
-        if self.function_inputs:
-            input_list = [str(item.strip()) for item in self.function_inputs.split(",")]
-            # if any input variables are in global_dict, need to remove
-            global_dict_sub = dict((key, global_dict[key]) for key in global_dict.keys() if key not in input_list)
-
-
-            expr2= parse_and_process(self.expression,
-                                     global_dict=global_dict_sub)
-
-            if self.expand:
-                expr2 = expr2.expand()
+        The following fields of Expression modify the returned result:
+        expand: if true, call .expand() on the expression or 
+           on each expression in a tuple
+        n_digits: on display or comparison with other expression,
+           round all numbers and number symbols in expression
+           to n_digits significant digits
+        round_decimals: on display or comparison with other expression,
+           round all numbers and number symbols in expression
+           to round_decimals digits to right of decimal or,
+           if negative, |round_digits| to left of decimal.
+           If round_decimals <=0, also convert to integer
+        use_ln: if true, display all logarithms as ln(),
+           otherwise, display all logarithms as log()
+           (Entering logarithms as ln() or log() makes no difference.)
+        collapse_equal_tuple_elements: it true, then
+            when expression is a tuple and multiple elements
+            are equal, remove the duplicates elements.
+            If results is a single element, convert to singleton element.
+        output_no_delimiters: if true, and expression is a tuple,
+            display as comma separated values 
+            rather than with parentheses.
+        evaluate_level: specify to what except the input is processed.
+            Options are
+            EVALUATE_NONE: expression is left as much as possible 
+            in original form. Term and factors are reordered but not combined.
+            EVALUATE_PARTIAL: Expression is simplified using standard sympy
+            conventions.  E.g. like terms are combined, repeated factors
+            are combined to powers.
+            EVALUATE_FULL: .doit() is called on expression to evaluate
+            all commands, such as derivatives and integrals
             
-            class parsed_function(Function):
-                the_input_list = input_list
-                n_args = len(input_list)
-                the_global_dict_sub = global_dict_sub
-                expression = expr2
-                __name__ = self.name
+            
+        expression_type specific information
+        ------------------------------------
+        EXPRESSION
+        The generic expression form.  The expression field
+        must be a mathematical expression.
 
-                @classmethod
-                def eval(cls, *args):
-                    expr_sub=cls.expression
-                    for i in range(len(cls.the_input_list)):
-                        expr_sub=expr_sub.xreplace({Symbol(cls.the_input_list[i]): args[i]})
-                    return expr_sub
+        RANDOM_NUMBER
+        Expression should be in the form (minval, maxvalue [, increment])
+        where minval is the minimum value and maxvalue is the maximum
+        value of the random number.  Random number is sampled uniformly
+        from the values minval + i*increment, for integer i, that are
+        between minval and maxvalue.  If optional value increment
+        is missing it is set to 1.
+        
+        RANDOM_WORD
+        Expression should be in the form: w1, w2, ...
+        where the ws list the possible words, which are sampled
+        from uniformly.  Each word can be either in the form
+        singular_form
+        or in the form
+        (singular_form, plural_form)
+        In the case where just the singular form is specified, 
+        the plural form is created by adding an "s".
+        Each singular_form or plural_form can be either
+        a single word or a quoted phrase.
+        For random words, a tuple is returned of the form
+        (singular form, plural_form).
+        If the singular form can be successfully converted to 
+        a sympy Symbol(), then it is added to global_dict[self.name].
+        
+        RANDOM_EXPRESSION
+        Expression should be a list of expressions of the form
+        e1, e2, ....
+        where each "e" can be any legal mathematical expression.
 
+        RANDOM_FUNCTION_NAME
+        Expression should be a list of expressions of the form
+        f1, f2, ....
+        where each "f" must parse to a single Symbol() 
+        (multiple characters are fine).  
+        
+        FUNCTION
+        The expression field must be a mathematical expression
+        and the function inputs field must be a tuple of symbols.
+        The expression will be then viewed as a function of the
+        function input symbol(s). 
+        A math object containing the evaluated expression 
+        is returned, so it is displayed like a generic EXPRESSION.
+        However, a function with inpues given by function_inputs
+        is added to global_dict.  In this way, when included in 
+        subsequent expressions, the expression
+        will act like a function, with the values of the 
+        function input symbol(s) being replaced by the arguments
+        of the function.  (It cannot be included in other expressions
+        without the arguments being supplied.)
+
+        CONDITION
+        Parsed like a generic EXPRESSION.  If it does not evaluate
+        to true, an Expression.FailedCondition exception is raised.
+        
+        ORDERED_TUPLE
+        Expression should be a tuple of the form e1, e2, ...
+        or (e1, e2, ...)
+        The tuple is considered ordered so that it will
+        compare as equivalent to another tuple only if
+        the elements appear in the same order.
+        ORDERED_TUPLE is treated identical to EXPRESSION
+        except that a list is converted to a Tuple.
+
+        UNORDERED_TUPLE
+        Expression should be a tuple of the form e1, e2, ...
+        or (e1, e2, ...)
+        The tuple is considered unordered so that it will
+        compare as equivalent to another tuple if both tuples
+        contain the same elements regardless of order.
+
+        SORTED_TUPLE
+        Expression should be a tuple of the form e1, e2, ...
+        or (e1, e2, ...)
+        The elements in the tuple are sorted using
+        Sympy conventions for sorting, after which the tuple
+        is treated like an ORDERED_TUPLE
+
+        SORTED_TUPLE
+        Expression should be a tuple of the form e1, e2, ...
+        or (e1, e2, ...)
+        The order of the elements is randomized, after which the tuple
+        is treated like an ORDERED_TUPLE
+
+        """
+    
+        from mitesting.utils import return_random_number_sample, \
+            return_random_expression, return_random_word_and_plural, \
+            return_parsed_function
+        from mitesting.sympy_customized import bottom_up
+        from sympy.parsing.sympy_tokenize import TokenError
+        
+        try:
+            # if randomly selecting from a list,
+            # determine if the index for the group was chosen already
+            if self.expression_type in [self.RANDOM_WORD,
+                                        self.RANDOM_EXPRESSION,
+                                        self.RANDOM_FUNCTION_NAME]:
                 
-            global_dict[str(self.name)] = parsed_function   
-            
-        # if not function, just add expression to global dict
-        else:
-            # for boolean, convert to sympy integer
-            if isinstance(expression,bool):
-                from sympy import S
-                global_dict[str(self.name)] = S(int(expression))
+                if self.group:
+                    try:
+                        group_index = random_group_indices.get(self.group)
+                    except AttributeError:
+                        group_index = None
+                else:
+                    group_index = None
+
+                # treat RANDOM_WORD as special case
+                # as it involves two output and hasn't been
+                # parsed by sympy
+                # Complete all processing and return
+                if self.expression_type == self.RANDOM_WORD:
+                    try:
+                        result = return_random_word_and_plural( 
+                            self.expression, index=group_index)
+                    except IndexError:
+                        raise IndexError("Insufficient entries for group: " \
+                                             + self.group)
+
+                    # record index chosen for group, if group exist
+                    if self.group:
+                        try:
+                            random_group_indices[self.group]=result[2]
+                        except TypeError:
+                            pass
+
+                    # attempt to add word to global dictionary
+                    word_text=re.sub(' ', '_', result[0])
+                    sympy_word = Symbol(word_text)
+                    try:
+                        global_dict[self.name]=sympy_word
+                    except TypeError:
+                        pass
+                    
+                    return (result[0], result[1])
+                
+
+                if self.expression_type == self.RANDOM_FUNCTION_NAME:
+                    try:
+                        (math_expr, index) = return_random_expression(
+                            self.expression, index=group_index,
+                            global_dict=global_dict,
+                            evaluate_level = self.evaluate_level)
+                    except IndexError:
+                        raise IndexError("Insufficient entries for group: " \
+                                             + self.group)
+                    
+                    # turn to function and add to user_function_dict
+                    # should use:
+                    # function_text = six.text_type(math_expr)
+                    # but sympy doesn't yet accept unicode for function name
+                    function_text = str(math_expr)
+                    math_expr = Function(function_text)
+                    try:
+                        user_function_dict[function_text] = math_expr
+                    except TypeError:
+                        pass
+                    
+                # if RANDOM_EXPRESSION
+                else:
+                    try:
+                        (math_expr, index) = return_random_expression(
+                            self.expression, index=group_index,
+                            global_dict=global_dict,
+                            evaluate_level = self.evaluate_level)
+                    except IndexError:
+                        raise IndexError("Insufficient entries for group: " \
+                                             + self.group)
+                            
+                # record index chosen for group, if group exist
+                if self.group:
+                    try:
+                        random_group_indices[self.group]=index
+                    except TypeError:
+                        pass
+
+            elif self.expression_type == self.RANDOM_NUMBER:
+                math_expr = return_random_number_sample(
+                    self.expression, global_dict=global_dict)
+
+            # if not randomly generating
             else:
-                global_dict[str(self.name)] = expression
+                try:
+                    math_expr = parse_and_process(
+                        self.expression, global_dict=global_dict,
+                        evaluate_level = self.evaluate_level)
+                except (TokenError, SyntaxError, TypeError, AttributeError):
+                    if self.expression_type in [
+                        self.RANDOM_ORDER_TUPLE, self.ORDERED_TUPLE, 
+                        self.UNORDERED_TUPLE, self.SORTED_TUPLE]:
+                        et = "tuple"
+                    elif self.expression_type == self.CONDITION:
+                        et = "condition"
+                    elif self.expression_type == self.FUNCTION:
+                        et = "function"
+                    else:
+                        et = "expression"
+                    raise ValueError("Invalid format for %s: %s" \
+                                         % (et, self.expression))
+
+                if self.expand:
+                    math_expr = bottom_up(math_expr, expand)
+
+                # if CONDITION is not met, raise exception
+                if self.expression_type == self.CONDITION:
+                    if not math_expr:
+                        raise self.FailedCondition("Condition %s was not met" \
+                                                       % self.name)
+
+                if self.expression_type == self.RANDOM_ORDER_TUPLE:
+                    if isinstance(math_expr,list):
+                        random.shuffle(math_expr)
+                    elif isinstance(math_expr, Tuple):
+                        math_expr = list(math_expr)
+                        random.shuffle(math_expr)
+                    math_expr = Tuple(*math_expr)
+                elif self.expression_type == self.SORTED_TUPLE:
+                    if isinstance(math_expr,list):
+                        math_expr.sort(key=default_sort_key)
+                    elif isinstance(math_expr, Tuple):
+                        math_expr = list(math_expr)
+                        math_expr.sort(key=default_sort_key)
+                    math_expr = Tuple(*math_expr)
+                elif self.expression_type == self.ORDERED_TUPLE or \
+                        self.expression_type == self.UNORDERED_TUPLE:
+                    if isinstance(math_expr,list):
+                        math_expr = Tuple(*math_expr)
+                    
+
+                    
+                if self.expression_type == self.FUNCTION:
+                    parsed_function = return_parsed_function(
+                        self.expression, self.function_inputs,
+                        name = self.name, global_dict=global_dict,
+                        expand = self.expand)
+
+                    # for FUNCTION, add parsed_function rather than
+                    # math_expr to global dict
+                    try:
+                        global_dict[self.name] = parsed_function   
+                    except TypeError:
+                        pass
+
+            # for all expression_types except FUNCTION (and RANDOM WORD)
+            # add math_expr to global dict
+            if not self.expression_type == self.FUNCTION:
+                try:
+                    # convert list to Tuple
+                    if isinstance(math_expr,list):
+                        global_dict[self.name] = Tuple(*math_expr)
+                    # for boolean, convert to sympy integer
+                    elif isinstance(math_expr,bool):
+                        global_dict[self.name] = sympify(int(math_expr))
+                    else:
+                        global_dict[self.name] = math_expr
+                except TypeError:
+                    pass
+
+            # for all expression_types (except RANDOM WORD)
+            # return math_object of math_expr to context
+            return math_object(
+                math_expr, 
+                n_digits=self.n_digits, 
+                round_decimals=self.round_decimals, 
+                use_ln=self.use_ln, 
+                evaluate = self.evaluate_level != self.EVALUATE_NONE,
+                tuple_is_unordered=self.expression_type==self.UNORDERED_TUPLE,
+                collapse_equal_tuple_elements \
+                    =self.collapse_equal_tuple_elements, 
+                output_no_delimiters=self.output_no_delimiters)
 
 
-        return math_object(expression, n_digits=self.n_digits, round_decimals=self.round_decimals, use_ln=self.use_ln, normalize_on_compare=self.normalize_on_compare, split_symbols_on_compare=self.split_symbols_on_compare, tuple_is_unordered=self.tuple_is_unordered, collapse_equal_tuple_elements=self.collapse_equal_tuple_elements, output_no_delimiters=self.output_no_delimiters)
+        # on exception, add "??" to  global_dict for self.name
+        # add name of expression to error message
+        except Exception as exc:
+            # don't want to raise another exception 
+            # so test if global_dict is a dictionary rather
+            # than just trying to assign
+            if isinstance(global_dict, dict):
+                global_dict[self.name] = Symbol('??')
 
+            import sys
+            raise exc.__class__, "Error in expression %s\n%s" \
+                % (self.name, exc), sys.exc_info()[2]
 
 class PlotFunction(models.Model):
     function = models.SlugField(max_length=50)
