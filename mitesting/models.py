@@ -1156,27 +1156,6 @@ class QuestionAssigned(models.Model):
         super(QuestionAssigned, self).save(*args, **kwargs) 
 
         
-class RandomNumber(models.Model):
-    name = models.SlugField(max_length=50)
-    question = models.ForeignKey(Question)
-    min_value = models.CharField(max_length=200, default='0')
-    max_value = models.CharField(max_length=200, default='10')
-    increment = models.CharField(max_length=200, default='1')
-
-
-class RandomWord(models.Model):
-    name = models.SlugField(max_length=50)
-    question = models.ForeignKey(Question)
-    option_list = models.CharField(max_length=400)
-    plural_list = models.CharField(max_length=400, blank=True, null=True)
-    group = models.CharField(max_length=50, blank=True, null=True)
-    sympy_parse = models.BooleanField(default=False)
-    treat_as_function = models.BooleanField(default=False)
-
-    def __unicode__(self):
-        return  self.name
-
-
 @python_2_unicode_compatible
 class Expression(models.Model):
     RANDOM_NUMBER = "RN"
@@ -1191,26 +1170,26 @@ class Expression(models.Model):
     SORTED_TUPLE = "ST"
     RANDOM_ORDER_TUPLE = "RT"
     EXPRESSION_TYPES = (
-        ('Generic', (
+        ('General', (
                 (EXPRESSION, "Expression"),
+                (RANDOM_NUMBER, "Random number"),
+                (FUNCTION, "Function"),
+                (CONDITION, "Required condition"),
                 )
          ),
-        ('Random', (
-                (RANDOM_NUMBER, "Random number"),
-                (RANDOM_WORD, "Random word from list"),
-                (RANDOM_EXPRESSION, "Random expression from list"),
-                (RANDOM_FUNCTION_NAME, "Random function name from list"),
+        ('Random from list', (
+                (RANDOM_WORD, "Random word"),
+                (RANDOM_EXPRESSION, "Random expression"),
+                (RANDOM_FUNCTION_NAME, "Random function name"),
                 )
          ),
         ('Tuples', (
-                (ORDERED_TUPLE, "Ordered Tuple"),
-                (UNORDERED_TUPLE, "Unordered Tuple"),
-                (SORTED_TUPLE, "Sorted Tuple"),
-                (RANDOM_ORDER_TUPLE, "Random Order Tuple"),
+                (ORDERED_TUPLE, "Ordered tuple"),
+                (UNORDERED_TUPLE, "Unordered tuple"),
+                (SORTED_TUPLE, "Sorted tuple"),
+                (RANDOM_ORDER_TUPLE, "Random order tuple"),
                 )
          ),
-        (FUNCTION, "Function"),
-        (CONDITION, "Required condition"),
         )
 
     
@@ -1230,9 +1209,7 @@ class Expression(models.Model):
     expression_type = models.CharField(
         max_length=2, choices = EXPRESSION_TYPES, default=EXPRESSION)
     expression = models.CharField(max_length=200)
-    required_condition = models.BooleanField(default=False)
     expand = models.BooleanField(default=False)
-    doit = models.BooleanField(default=True)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)
     n_digits = models.IntegerField(blank=True, null=True)
@@ -1241,13 +1218,13 @@ class Expression(models.Model):
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
     use_ln = models.BooleanField(default=False)
+
+    # move next two to an answer table
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
-    tuple_is_unordered = models.BooleanField(default=False)
+
     collapse_equal_tuple_elements=models.BooleanField(default=False)
     output_no_delimiters = models.BooleanField(default=False)
-    sort_list = models.BooleanField(default=False)
-    randomize_list = models.BooleanField(default=False)
     group = models.CharField(max_length=50, blank=True, null=True)
     sort_order = models.FloatField(default=0)
     class Meta:

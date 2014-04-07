@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, RandomNumber, RandomWord, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
 from django.conf import settings
 import reversion
 
@@ -33,17 +33,33 @@ class AssessmentAdmin(reversion.VersionAdmin):
         ]
 
 
-class RandomNumberInline(admin.TabularInline):
-    model = RandomNumber
-
-class RandomWordInline(admin.TabularInline):
-    model = RandomWord
-
 class ExpressionInline(admin.TabularInline):
     model = Expression
-    formfield_overrides = {
-        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-        }
+    fields = ('name', 'expression_type', 'expression', 'expand',
+              'evaluate_level', 'n_digits', 'round_decimals', 
+              'use_ln', 'function_inputs', 'collapse_equal_tuple_elements',
+              'output_no_delimiters', 'group', 'sort_order')
+    # formfield_overrides = {
+    #     models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
+    #     }
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(ExpressionInline, self).formfield_for_dbfield(db_field,
+                                                                    **kwargs)
+        if db_field.name == 'name':
+            field.widget.attrs['size'] = 20
+            del field.widget.attrs['class']
+        if db_field.name == 'expression':
+            field.widget.attrs['size'] = 60
+            del field.widget.attrs['class']
+        if db_field.name == 'function_inputs':
+            field.widget.attrs['size'] = 5
+            del field.widget.attrs['class']
+        if db_field.name == 'group':
+            field.widget.attrs['size'] = 2
+            del field.widget.attrs['class']
+        if db_field.name == 'sort_order':
+            field.widget.attrs['size'] = 5
+        return field
 
 class PlotFunctionInline(admin.TabularInline):
     model = PlotFunction
@@ -64,7 +80,7 @@ class QuestionAuthorInline(admin.TabularInline):
     model = QuestionAuthor
 
 class QuestionAdmin(reversion.VersionAdmin):
-    inlines = [QuestionSubpartInline,RandomNumberInline,RandomWordInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
+    inlines = [QuestionSubpartInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
     list_display = ("question_with_number","question_type", "question_permission")
     list_filter = ("question_type", "question_permission",)
