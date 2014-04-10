@@ -99,6 +99,17 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("x-lambda+y"), -lambda_symbol+x+y)
         self.assertEqual(parse_expr("lambda(x)(y)"), lambda_symbol*x*y)
 
+    def test_lambda_symbol_substitutions(self):
+        x = Symbol('x')
+        y = Symbol('y')
+        lambda_symbol = Symbol('lambda')
+        sub_dict = {'lambda': 2*x*y}
+        self.assertEqual(parse_expr("lambda^2+x+y"), lambda_symbol**2+x+y)
+        self.assertEqual(parse_expr("lambda^2+x+y", global_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+        self.assertEqual(parse_expr("lambda^2+x+y", local_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+
     def test_no_evaluate(self):
         expr_no_evaluate = parse_expr("x + x - lambda + 2*lambda",
                                       evaluate=False)

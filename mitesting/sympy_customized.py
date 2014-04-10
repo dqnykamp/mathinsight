@@ -58,6 +58,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
     3.  In addition, use auto_number, factorial notation, convert_xor
         and implicit_multiplication transformations by default, 
         and add split_symbols transformation if split_symbols is True.
+    4.  If 'lambda' is in global_dict
     4.  Call sympify after parse_expr so that tuples will be 
         converted to Sympy Tuples.  (A bug in parse_expr that this
         doesn't happen automatically?)
@@ -113,6 +114,24 @@ def parse_expr(s, global_dict=None, local_dict=None,
         transformations += (split_symbols_trans, )
     transformations += (implicit_multiplication, )
 
+    # if lambda is in the local or global dictionary, we can't use 
+    # the standard approach to substitute values of lambda,
+    # given that lambda has a special meaning in python.
+    # Instead, we replace lambda with _lambda_ in both the
+    # expression and the global_dict key.
+    if 'lambda' in new_global_dict:
+        new_global_dict['_lambda_'] = new_global_dict['lambda']
+        del new_global_dict['lambda']
+        s = re.sub(r'\blambda\b', '_lambda_', s)
+    if local_dict and 'lambda' in local_dict:
+        local_dict_old=local_dict
+        local_dict = {}
+        local_dict.update(local_dict_old)
+        local_dict['_lambda_'] = local_dict['lambda']
+        del local_dict['lambda']
+        s = re.sub(r'\blambda\b', '_lambda_', s)
+
+    
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
             s, global_dict=new_global_dict, local_dict=local_dict, 
