@@ -588,3 +588,47 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expr),1)
         self.assertEqual(mobject.compare_with_expression(expr2),-1)
 
+    def test_compare_with_sympy_expression(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        expr= x*y-x
+        mobject = math_object(expr)
+        # try both directions so call __eq__ in sympy and in mobject
+        self.assertEqual(mobject, expr)
+        self.assertEqual(expr, mobject)
+        self.assertTrue(mobject == expr)
+        self.assertTrue(expr == mobject)
+
+    def test_combine_with_sympy_expression(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        expr= x*y-x
+        mobject = math_object(expr)
+        self.assertEqual(mobject+x**2, expr + x**2)
+        self.assertEqual(mobject*x**2, expr*x**2)
+        self.assertEqual(mobject**x, expr**x)
+
+
+    def test_operations_with_numbers(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        expr= x*y-x
+        mobject = math_object(expr)
+        self.assertEqual(mobject+1, expr+1)
+        self.assertEqual(1+mobject, 1+expr)
+        self.assertEqual(mobject-1, expr-1)
+        self.assertEqual(1-mobject, 1-expr)
+        self.assertEqual(mobject*2, expr*2)
+        self.assertEqual(2*mobject, 2*expr)
+        self.assertEqual(mobject/2, expr/2)
+        self.assertEqual(2/mobject, 2/expr)
+        self.assertEqual(mobject*2.2, expr*2.2)
+        self.assertEqual(2.2*mobject, 2.2*expr)
+        self.assertEqual(mobject/2.2, expr/2.2)
+        self.assertEqual(2.2/mobject, 2.2/expr)
+        self.assertEqual(mobject**2, expr**2)
+        self.assertEqual(2**mobject, 2**expr)
+        
+        mobject = math_object(3)
+        self.assertEqual(mobject,3)
+        self.assertEqual(3,mobject)

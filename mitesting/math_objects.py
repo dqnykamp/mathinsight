@@ -114,6 +114,53 @@ class math_object(object):
         return bool(self._expression)
     __nonzero__=__bool__
 
+    def __add__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression + other
+    def __radd__(self, other):
+        return self.__add__(other)
+    def __sub__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression - other
+    def __rsub__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return other-self._expression
+    def __mul__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression*other
+    def __rmul__(self, other):
+        return self.__mul__(other)
+    def __div__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression/other
+    def __truediv__(self, other):
+        return self.__div__(other)
+    def __rdiv__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return other/self._expression
+    def __rtruediv__(self, other):
+        return self.__rdiv__(other)
+    def __pow__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return self._expression**other
+    def __rpow__(self, other):
+        if isinstance(other, math_object):
+            other=other._expression
+        return other**self._expression
+
+
+    # when compare or combine with sympy expressions, use expression
+    def _sympy_(self):
+        return self._expression
+
+
 
     def return_expression(self):
         return self._expression
@@ -162,6 +209,11 @@ class math_object(object):
         expression=self.eval_to_precision(self._expression)
             
         return expression
+
+
+    def __repr__(self):
+        return "math_object(%s)" % self._expression
+
 
     def __str__(self):
         """
