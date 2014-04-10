@@ -1,81 +1,63 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
-from mitesting.models import Expression
 
-class Migration(DataMigration):
+
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        for question in orm.Question.objects.all():
-            n=1000
-            for expression in question.expression_set.all():
-                n+=1
-                expression.sort_order = n
-                if expression.doit:
-                    expression.evaluate_level = Expression.EVALUATE_FULL
-                else:
-                    expression.evaluate_level = Expression.EVALUATE_PARTIAL
-                if expression.required_condition:
-                    expression.expression_type = Expression.CONDITION
-                elif expression.tuple_is_unordered:
-                    expression.expression_type = Expression.UNORDERED_TUPLE
-                elif expression.randomize_list:
-                    expression.expression_type = Expression.RANDOM_ORDER_TUPLE
-                elif expression.sort_list:
-                    expression.expression_type = Expression.SORTED_TUPLE
-                elif expression.function_inputs:
-                    expression.expression_type = Expression.FUNCTION
-                expression.save()
-            n=0
-            for randomnumber in question.randomnumber_set.all():
-                n+=1
-                question.expression_set.create(
-                    name = randomnumber.name,
-                    expression_type = Expression.RANDOM_NUMBER,
-                    expression = "(%s, %s, %s)" % \
-                        (randomnumber.min_value, randomnumber.max_value, 
-                         randomnumber.increment),
-                    sort_order=n
-                    )
-                randomnumber.delete()
-            for randomword in question.randomword_set.all():
-                n+=1
-                option_list = ""
-                if randomword.treat_as_function:
-                    et = Expression.RANDOM_FUNCTION_NAME
-                elif randomword.sympy_parse:
-                    et = Expression.RANDOM_EXPRESSION
-                else:
-                    et = Expression.RANDOM_WORD
-                    if randomword.plural_list:
-                        word_list = [item.strip() for item in \
-                                         randomword.option_list.split(",")]
-                        plural_list = [item.strip() for item in \
-                                           randomword.plural_list.split(",")]
-                    
-                        for (i,word) in enumerate(word_list):
-                            if option_list:
-                                option_list += ", "
-                            try:
-                                plural = plural_list[i]
-                                option_list += "(%s, %s)" % (word, plural)
-                            except:
-                                option_list += word
-                if not option_list:
-                    option_list = randomword.option_list
-                question.expression_set.create(
-                    name = randomword.name,
-                    expression_type = et,
-                    expression = option_list,
-                    group = randomword.group,
-                    sort_order = n
-                    )
-                randomword.delete()
-                
+        # Adding field 'QuestionAnswerOption.answer_code'
+        db.add_column(u'mitesting_questionansweroption', 'answer_code',
+                      self.gf('django.db.models.fields.SlugField')(default='ans', max_length=50),
+                      keep_default=False)
+
+        # Adding field 'QuestionAnswerOption.answer_type'
+        db.add_column(u'mitesting_questionansweroption', 'answer_type',
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      keep_default=False)
+
+        # Adding field 'QuestionAnswerOption.percent_correct'
+        db.add_column(u'mitesting_questionansweroption', 'percent_correct',
+                      self.gf('django.db.models.fields.FloatField')(default=100),
+                      keep_default=False)
+
+        # Adding field 'QuestionAnswerOption.normalize_on_compare'
+        db.add_column(u'mitesting_questionansweroption', 'normalize_on_compare',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'QuestionAnswerOption.split_symbols_on_compare'
+        db.add_column(u'mitesting_questionansweroption', 'split_symbols_on_compare',
+                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      keep_default=False)
+
+        # Adding field 'QuestionAnswerOption.sort_order'
+        db.add_column(u'mitesting_questionansweroption', 'sort_order',
+                      self.gf('django.db.models.fields.FloatField')(default=0, blank=True),
+                      keep_default=False)
+
+
     def backwards(self, orm):
-        raise RuntimeError("Have not implemented the reverse migration.")
+        # Deleting field 'QuestionAnswerOption.answer_code'
+        db.delete_column(u'mitesting_questionansweroption', 'answer_code')
+
+        # Deleting field 'QuestionAnswerOption.answer_type'
+        db.delete_column(u'mitesting_questionansweroption', 'answer_type')
+
+        # Deleting field 'QuestionAnswerOption.percent_correct'
+        db.delete_column(u'mitesting_questionansweroption', 'percent_correct')
+
+        # Deleting field 'QuestionAnswerOption.normalize_on_compare'
+        db.delete_column(u'mitesting_questionansweroption', 'normalize_on_compare')
+
+        # Deleting field 'QuestionAnswerOption.split_symbols_on_compare'
+        db.delete_column(u'mitesting_questionansweroption', 'split_symbols_on_compare')
+
+        # Deleting field 'QuestionAnswerOption.sort_order'
+        db.delete_column(u'mitesting_questionansweroption', 'sort_order')
+
 
     models = {
         u'auth.group': {
@@ -241,7 +223,6 @@ class Migration(DataMigration):
         u'mitesting.expression': {
             'Meta': {'ordering': "[u'sort_order', u'id']", 'object_name': 'Expression'},
             'collapse_equal_tuple_elements': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'doit': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'evaluate_level': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'expand': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'expression': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
@@ -254,13 +235,9 @@ class Migration(DataMigration):
             'normalize_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'output_no_delimiters': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
-            'randomize_list': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'required_condition': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'round_decimals': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'sort_list': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'}),
+            'sort_order': ('django.db.models.fields.FloatField', [], {'blank': 'True'}),
             'split_symbols_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'tuple_is_unordered': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'use_ln': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'mitesting.plotfunction': {
@@ -298,12 +275,18 @@ class Migration(DataMigration):
             'subjects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Subject']", 'null': 'True', 'blank': 'True'})
         },
         u'mitesting.questionansweroption': {
-            'Meta': {'object_name': 'QuestionAnswerOption'},
+            'Meta': {'ordering': "[u'sort_order', u'id']", 'object_name': 'QuestionAnswerOption'},
             'answer': ('django.db.models.fields.CharField', [], {'max_length': '400'}),
+            'answer_code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
+            'answer_type': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'correct': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'feedback': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"})
+            'normalize_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'percent_correct': ('django.db.models.fields.FloatField', [], {'default': '100'}),
+            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
+            'sort_order': ('django.db.models.fields.FloatField', [], {'blank': 'True'}),
+            'split_symbols_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
         },
         u'mitesting.questionassigned': {
             'Meta': {'ordering': "[u'question_set', u'id']", 'object_name': 'QuestionAssigned'},
@@ -365,26 +348,6 @@ class Migration(DataMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'})
         },
-        u'mitesting.randomnumber': {
-            'Meta': {'object_name': 'RandomNumber'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'increment': ('django.db.models.fields.CharField', [], {'default': "u'1'", 'max_length': '200'}),
-            'max_value': ('django.db.models.fields.CharField', [], {'default': "u'10'", 'max_length': '200'}),
-            'min_value': ('django.db.models.fields.CharField', [], {'default': "u'0'", 'max_length': '200'}),
-            'name': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
-            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"})
-        },
-        u'mitesting.randomword': {
-            'Meta': {'object_name': 'RandomWord'},
-            'group': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
-            'option_list': ('django.db.models.fields.CharField', [], {'max_length': '400'}),
-            'plural_list': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
-            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
-            'sympy_parse': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'treat_as_function': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
-        },
         u'mitesting.sympycommandset': {
             'Meta': {'object_name': 'SympyCommandSet'},
             'commands': ('django.db.models.fields.TextField', [], {}),
@@ -394,4 +357,3 @@ class Migration(DataMigration):
     }
 
     complete_apps = ['mitesting']
-    symmetrical = True

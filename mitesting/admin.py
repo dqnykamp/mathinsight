@@ -39,9 +39,7 @@ class ExpressionInline(admin.TabularInline):
               'evaluate_level', 'n_digits', 'round_decimals', 
               'use_ln', 'function_inputs', 'collapse_equal_tuple_elements',
               'output_no_delimiters', 'group', 'sort_order')
-    # formfield_overrides = {
-    #     models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-    #     }
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,
                                                                     **kwargs)
