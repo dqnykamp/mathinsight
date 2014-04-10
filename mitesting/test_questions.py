@@ -27,8 +27,8 @@ class TestSetupExpressionContext(TestCase):
     def test_with_single_expression(self):
         self.new_expr(name="the_x",expression="x")
 
-        results=self.q.setup_expression_context(seed=0)
-        self.assertEqual(results['seed'], 0)
+        random.seed(0)
+        results=self.q.setup_expression_context()
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -41,8 +41,8 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="expr2",expression="expr/y")
         self.new_expr(name="expr3",expression="5*expr2 + expr*z")
 
-        results=self.q.setup_expression_context(seed=1)
-        self.assertEqual(results['seed'], 1)
+        random.seed(1)
+        results=self.q.setup_expression_context()
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -64,8 +64,8 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="b",expression="3*a")
         self.new_expr(name="a",expression="x+y")
 
-        results=self.q.setup_expression_context(seed=2)
-        self.assertEqual(results['seed'], 2)
+        random.seed(2)
+        results=self.q.setup_expression_context()
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -148,7 +148,7 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(results['sympy_global_dict']['n'], n)
 
 
-    def test_repeatable_results_no_seed(self):
+    def test_repeatable_results(self):
         self.new_expr(name="x", expression="x,y,z,u,v,w", 
                       expression_type = Expression.RANDOM_EXPRESSION)
         self.new_expr(name="y", expression="x,y,z,u,v,w", 
@@ -163,8 +163,9 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.CONDITION)
 
         for i in range(10):
+            seed=self.q.get_new_seed()
+            random.seed(seed)
             results=self.q.setup_expression_context()
-            seed=results['seed']
             self.assertEqual(results['user_function_dict'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -183,8 +184,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(n in range(-10,11))
         
             #try again with same seed
-            results=self.q.setup_expression_context(seed=seed)
-            self.assertEqual(results['seed'],seed)
+            random.seed(seed)
+            results=self.q.setup_expression_context()
             self.assertEqual(results['user_function_dict'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -194,21 +195,6 @@ class TestSetupExpressionContext(TestCase):
             self.assertEqual(m,expression_context["m"])
             self.assertEqual(n,expression_context["n"])
 
-
-    def test_repeatable_results_given_seed(self):
-        self.new_expr(name="m", expression="(-100,100)", 
-                      expression_type = Expression.RANDOM_NUMBER)
-        for i in range(10):
-            seed=str(random.randint(0,1E8))
-            results=self.q.setup_expression_context(seed=seed)
-            self.assertEqual(results['seed'],seed)
-            m = results['expression_context']['m']
-            self.assertTrue(m in range(-100,101))
-        
-            #try again with same seed
-            results=self.q.setup_expression_context(seed=seed)
-            self.assertEqual(results['seed'],seed)
-            self.assertEqual(m,results['expression_context']["m"])
 
     def test_with_error(self):
         self.new_expr(name="x", expression="(")

@@ -166,7 +166,7 @@ class Question(models.Model):
         return html_string
 
     
-    def setup_expression_context(self, seed=None):
+    def setup_expression_context(self):
         """
         Set up the question context by parsing all expressions for question.
         Returns context that contains all evaluated expressions 
@@ -175,10 +175,8 @@ class Question(models.Model):
         Before evaluating expressions, initializes global dictionary
         with allowed sympy commands for the question.
 
-        If argument seed is specified, random number generator used for
-        randomly generating expressions is initialized to that seed.
-        Otherwise a seed is randomly generated (and returned so can
-        generate exact version again by passing the seed back in).
+        Random expressions are based on state of random.
+        Its seed can be set via random.seed(seed).
 
         Return a dictionary with the following:
         - expression_context: a Context() with mappings from the expressions
@@ -188,15 +186,9 @@ class Question(models.Model):
         - expression_error: dictionary of all error messages encountered
         - failed_conditions: True if failed conditions for all attempts
         - failed_condition_message: message of which expression last failed
-        - seed used for generating random expressions
         """
 
 
-        if seed is None:
-            seed=self.get_new_seed()
-
-        random.seed(seed)
-        
         max_tries=500
         success=False
 
@@ -268,7 +260,6 @@ class Question(models.Model):
             'sympy_global_dict': global_dict,
             'user_function_dict': user_function_dict,
             'expression_context': expression_context,
-            'seed': seed,
             }
 
 
@@ -319,26 +310,60 @@ class Question(models.Model):
             html_string += "</ol>\n"
         return mark_safe(html_string)
 
-    def render_question(self, context, user=None, show_help=True,
+    def render_question(self, seed=None, user=None, show_help=True,
                         identifier="", assessment=None, question_set=None, 
                         assessment_seed=None, pre_answers=None, readonly=False,
                         precheck=False):
 
-        # attempt to set identifier to be unique for each question that
-        # occurs in a page
-        # if question set is specified, that should make it unique
-        # if question set is not specified 
-        # (meaning, either question was embedded directly with tag in page
-        # or we are at a question page), then assume question id will
-        # make it unique
-        identifier_base = "%s_%s_qs%s" % (identifier, self.id, question_set)
+        """
+        renders question
         
-        context['readonly'] = readonly
-        if pre_answers:
-            context['pre_answers'] = pre_answers
+        If argument seed is specified, random number generator used for
+        randomly generating expressions is initialized to that seed.
+        Otherwise a seed is randomly generated (and returned so can
+        generate exact version again by passing the seed back in).
 
-        seed_used = context['question_%s_seed' % identifier_base]
 
+        """
+
+        if seed is None:
+            seed=self.get_new_seed()
+
+        random.seed(seed)
+
+        # first, setup context due to expressions from question
+        context_results = self.setup_expression_context()
+
+        # results = {
+        #     'error_in_expressions': error_in_expressions,
+        #     'expression_error': expression_error,
+        #     'failed_conditions': failed_conditions,
+        #     'failed_condition_message': failed_condition_message,
+        #     'sympy_global_dict': global_dict,
+        #     'user_function_dict': user_function_dict,
+        #     'expression_context': expression_context,
+        #     }
+
+        
+        question_info = {}
+                
+        question_info['question'] = self
+        question_info['identifier'] = identifier
+        question_info['seed'] = seed
+        question_info['question_set'] = question_set
+        question_info['assessment'] = assessment
+        question_info['assessment_seed'] = assessment_seed
+        question_info['show_help'] = show_help
+        question_info['user'] = user
+        question_info['readonly'] = readonly
+        question_info['pre_check'] = pre_check
+        question_info['pre_answers'] = pre_answers
+            
+
+        applet_info={}
+        applet_info['counter']=0
+        applet_info['javascript'] = {}
+        
 
         # set applet counter to zero
         context['_applet_counter'] = 0
@@ -457,13 +482,13 @@ class Question(models.Model):
 
         send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, assessment_seed, question_set, record)
 
-        the_correct_answers = context.get('_math_writein_answer_list',[])
-        answer_feedback_strings=""
-        for answer_tuple in the_correct_answers:
-            answer_string = answer_tuple[0]
+        # the_correct_answers = context.get('_math_writein_answer_list',[])
+        # answer_feedback_strings=""
+        # for answer_tuple in the_correct_answers:
+        #     answer_string = answer_tuple[0]
 
-            answer_feedback_strings += "answer_%s_%s_feedback" % (answer_string, identifier)
-            break
+        #     answer_feedback_strings += "answer_%s_%s_feedback" % (answer_string, identifier)
+        #     break
 
 
         #callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
@@ -479,7 +504,6 @@ class Question(models.Model):
         # ajax removed class geogebraweb from any previous applets so that
         # don't get applets duplicated by web()
         callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);}</script>' % (identifier, identifier)
-
 
 
         html_string = question_text
