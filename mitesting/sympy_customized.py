@@ -4,8 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 from sympy import sympify
-from sympy import Tuple, Float, Symbol, Rational, Integer
-
+from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
+import re
+from keyword import iskeyword
 
 def bottom_up(rv, F, atoms=False, nonbasic=False):
     """Apply ``F`` to all expressions in an expression tree from the
@@ -16,6 +17,8 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
     1. always call rv=rv.func(*args) even if  args and rv.args
        evaluate to be equal.
     2. call bottom_up on elements of tuples and lists
+    3. catch TypeError so that can be called on tuples or lists
+       that contain other lists
     """
     try:
         if isinstance(rv, list):
@@ -35,6 +38,8 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
                 rv = F(rv)
             except TypeError:
                 pass
+    except TypeError:
+        pass
 
     return rv
 
@@ -42,21 +47,24 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
 def parse_expr(s, global_dict=None, local_dict=None, 
                split_symbols=False, evaluate=True):
     """
-    Customized version of sympy parse_expr with three modifications.
-    1.  Add Integer, Float, Rational, Symbol to global_dict if not 
-        not present.  (Needed since  Symbol could be added by auto_symbol
-        and Integer, Float, or Rational could be added by auto_number.)
-    2.  Use convert_xor and implicit_multiplication transformations
-        by default, and add split_symbols transformation if 
-        split_symbols is True.
-    3.  Call sympify after parse_expr so that tuples will be 
+    Customized version of sympy parse_expr with four modifications.
+    1.  Add Integer, Float, Rational, Symbol, and factorial
+        to global_dict if not present.  
+        (Needed since Symbol could be added by auto_symbol,
+        Integer, Float, or Rational could be added by auto_number,
+        and factorial could be added by factorial_notation.)
+    2.  Use a customized version of the auto_symbol transformation 
+        so that "lambda" will be parsed to Symbol('lambda')
+    3.  In addition, use auto_number, factorial notation, convert_xor
+        and implicit_multiplication transformations by default, 
+        and add split_symbols transformation if split_symbols is True.
+    4.  Call sympify after parse_expr so that tuples will be 
         converted to Sympy Tuples.  (A bug in parse_expr that this
         doesn't happen automatically?)
     """
     
     from sympy.parsing.sympy_parser import \
-        (standard_transformations, convert_xor, \
-             implicit_multiplication)
+        (auto_number, factorial_notation, convert_xor, implicit_multiplication)
     from sympy.parsing.sympy_parser import split_symbols as split_symbols_trans
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
 
@@ -76,6 +84,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
         new_global_dict['Rational'] = Rational
     if 'Symbol' not in new_global_dict:
         new_global_dict['Symbol'] = Symbol
+    if 'factorial' not in new_global_dict:
+        new_global_dict['factorial'] = factorial
 
     # If evaluate==False, then operators could be included
     # so must add them to global_dict if not present
@@ -88,19 +98,25 @@ def parse_expr(s, global_dict=None, local_dict=None,
         if 'Pow' not in new_global_dict:
             new_global_dict['Pow'] = Pow
 
-
-    # Always include convert_xor and implicit multiplication
-    # transformations so that can use ^ for exponentiation
-    # and 5x for 5*x
+    # Always include the transformations:
+    # auto_symbol: converts undefined variables to symbols
+    #   (customized so that lambda is also a symbol)
+    # auto_number: converts numbers to sympy numbers (Integer, Float, etc.)
+    # factorial_notation: allow standard factorial notation: x!
+    # convert_xor: allows use of ^ for exponentiation
+    # implicit multiplication: allows use of 5x for 5*x
     # If split_symbols is True, then include split_symbols
     # transformation so that can use xy for x*y
+    transformations = (auto_symbol, auto_number, factorial_notation,\
+                           convert_xor)
     if split_symbols:
-        transformations=standard_transformations+(convert_xor, split_symbols_trans, implicit_multiplication)
-    else:
-        transformations=standard_transformations+(convert_xor, implicit_multiplication)
+        transformations += (split_symbols_trans, )
+    transformations += (implicit_multiplication, )
 
     # call sympify after parse_expr to convert tuples to Tuples
-    expr= sympify(sympy_parse_expr(s, global_dict=new_global_dict, local_dict=local_dict, transformations=transformations, evaluate=evaluate))
+    expr = sympify(sympy_parse_expr(
+            s, global_dict=new_global_dict, local_dict=local_dict, 
+            transformations=transformations, evaluate=evaluate))
 
     return expr
 
@@ -136,3 +152,51 @@ def parse_and_process(s, global_dict=None, local_dict=None,
         
     return expression
 
+
+def auto_symbol(tokens, local_dict, global_dict):
+    # customized verison of auto symbol
+    # only difference is that ignore keyword "lambda"
+    # so that "lambda" will be turned into a symbol
+    from sympy.parsing.sympy_tokenize import NAME, OP
+    from sympy.core.basic import Basic
+
+
+    """Inserts calls to ``Symbol`` for undefined variables."""
+    result = []
+    prevTok = (None, None)
+
+    tokens.append((None, None))  # so zip traverses all tokens
+    for tok, nextTok in zip(tokens, tokens[1:]):
+        tokNum, tokVal = tok
+        nextTokNum, nextTokVal = nextTok
+        if tokNum == NAME:
+            name = tokVal
+
+            if (name in ['True', 'False', 'None']
+                or (iskeyword(name) and name != 'lambda')
+                or name in local_dict
+                # Don't convert attribute access
+                or (prevTok[0] == OP and prevTok[1] == '.')
+                # Don't convert keyword arguments
+                or (prevTok[0] == OP and prevTok[1] in ('(', ',')
+                    and nextTokNum == OP and nextTokVal == '=')):
+                result.append((NAME, name))
+                continue
+            elif name in global_dict:
+                obj = global_dict[name]
+                if isinstance(obj, (Basic, type)) or callable(obj):
+                    result.append((NAME, name))
+                    continue
+
+            result.extend([
+                (NAME, 'Symbol'),
+                (OP, '('),
+                (NAME, repr(str(name))),
+                (OP, ')'),
+            ])
+        else:
+            result.append((tokNum, tokVal))
+
+        prevTok = (tokNum, tokVal)
+
+    return result

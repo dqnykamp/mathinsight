@@ -4,8 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.test import SimpleTestCase
-from mitesting.sympy_customized import bottom_up, parse_expr
+from mitesting.sympy_customized import bottom_up, parse_expr, parse_and_process
 from mitesting.customized_commands import normalize_floats
+from mitesting.models import Expression
 from sympy import Symbol, diff, Tuple, sympify, Integer
 import random
 
@@ -84,9 +85,63 @@ class ParseExprTests(SimpleTestCase):
                                      global_dict={'e': E}),
                           3*x*exp(x))
         
-
     def test_with_tuples(self):
         x = Symbol('x')
         y = Symbol('y')
         self.assertEqual(parse_expr("(x,y)"), Tuple(x,y))
 
+
+    def test_lambda_symbol(self):
+        lambda_symbol = Symbol('lambda')
+        x = Symbol('x')
+        y = Symbol('y')
+        self.assertEqual(parse_expr("lambda"), lambda_symbol)
+        self.assertEqual(parse_expr("x-lambda+y"), -lambda_symbol+x+y)
+        self.assertEqual(parse_expr("lambda(x)(y)"), lambda_symbol*x*y)
+
+    def test_no_evaluate(self):
+        expr_no_evaluate = parse_expr("x + x - lambda + 2*lambda",
+                                      evaluate=False)
+        expr = parse_expr("x + x - lambda + 2*lambda")
+        expr_with_evaluate = parse_expr("x + x - lambda + 2*lambda",
+                                        evaluate=True)
+        self.assertNotEqual(expr_no_evaluate, expr)
+        self.assertEqual(expr, expr_with_evaluate)
+        self.assertEqual(repr(expr_no_evaluate),'-lambda + 2*lambda + x + x')
+
+    def test_factorial(self):
+        from sympy import factorial
+        expr = parse_expr("x!")
+        self.assertEqual(expr, factorial(Symbol('x')))
+        expr = parse_expr("5!")
+        self.assertEqual(expr, 120)
+
+    def test_parse_and_process(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        expr = parse_and_process("2x")
+        self.assertEqual(2*x, expr)
+        expr = parse_and_process("xy", split_symbols=True)
+        self.assertEqual(expr, x*y)
+        expr = parse_and_process("var1*var2", 
+                                 global_dict = {'var1':x, 'var2': y})
+        self.assertEqual(expr, x*y)
+
+    def test_parse_and_process_evaluate_level(self):
+        from sympy import Derivative
+        global_dict = {'Derivative': Derivative}
+        x=Symbol('x')
+        y=Symbol('y')
+        expr = parse_and_process("2+x+x", 
+                                 evaluate_level=Expression.EVALUATE_NONE)
+        self.assertNotEqual(expr, 2+x+x)
+        self.assertEqual(repr(expr), 'x + x + 2')
+        
+        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
+                                 evaluate_level = Expression.EVALUATE_PARTIAL)
+        self.assertEqual(Derivative(x**2,x), expr)
+        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
+                                 evaluate_level = Expression.EVALUATE_FULL)
+        self.assertEqual(2*x, expr)
+        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict)
+        self.assertEqual(2*x, expr)
