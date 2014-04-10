@@ -709,9 +709,19 @@ class TestExpressions(TestCase):
         x=Symbol('x')
         expr1=self.new_expr(name="s", expression="x*sin(x)")
         expr1_eval=expr1.evaluate(global_dict={})
-        self.assertEqual(expr1_eval.return_expression(), x**2*Symbol('sin'))
+        self.assertEqual(expr1_eval, x**2*Symbol('sin'))
         expr1_eval=expr1.evaluate(global_dict={'sin':sin})
-        self.assertEqual(expr1_eval.return_expression(), x*sin(x))
+        self.assertEqual(expr1_eval, x*sin(x))
+
+
+    def test_greek(self):
+        expr = self.new_expr(name="greek", 
+                             expression="lambda*gamma/delta + epsilon")
+        expr_eval=expr.evaluate()
+        self.assertEqual(expr_eval, Symbol('lambda')*Symbol('gamma') \
+                             / Symbol('delta') + Symbol('epsilon'))
+        self.assertEqual(six.text_type(expr_eval),
+                         r'\epsilon + \frac{\gamma \lambda}{\delta}')
 
 
     def test_errors(self):
@@ -750,3 +760,45 @@ class TestExpressions(TestCase):
                                 expr4.evaluate, global_dict=global_dict)
         self.assertEqual(global_dict['d'],symqq)
 
+
+class TestExpressionSortOrder(TestCase):
+    def test_sort_order(self):
+        qt = QuestionType.objects.create(name="question type")
+        qp = QuestionPermission.objects.create(name="Public")
+        q  = Question.objects.create(
+            name="fun question",
+            question_type = qt,
+            question_permission = qp,
+            )
+            
+        e1 = q.expression_set.create(name="a", expression="a")
+        self.assertEqual(e1.sort_order, 1)
+
+        e2 = q.expression_set.create(name="b", expression="b")
+        self.assertEqual(e2.sort_order, 2)
+        
+        e3 = q.expression_set.create(name="c", expression="c", sort_order=10)
+        self.assertEqual(e3.sort_order, 10)
+        
+        e4 = q.expression_set.create(name="d", expression="d")
+        self.assertEqual(e4.sort_order, 11)
+        
+        e1.sort_order=21.2
+        e1.save()
+
+        e5 = q.expression_set.create(name="e", expression="e")
+        self.assertEqual(e5.sort_order, 23)
+
+        e3.sort_order=-100
+        e3.save()
+
+        e6 = q.expression_set.create(name="f", expression="f")
+        self.assertEqual(e6.sort_order, 24)
+
+        e6.delete()
+        e5.delete()
+        e1.sort_order=9
+        e1.save()
+
+        e7 = q.expression_set.create(name="g", expression="g")
+        self.assertEqual(e7.sort_order, 12)

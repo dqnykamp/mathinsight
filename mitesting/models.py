@@ -166,64 +166,115 @@ class Question(models.Model):
         return html_string
 
     
-    def setup_context(self, identifier="", seed=None, allow_solution_buttons=False, previous_context = None, question_set=None):
+    def setup_expression_context(self, seed=None):
+        """
+        Set up the question context by parsing all expressions for question.
+        Returns context that contains all evaluated expressions 
+        with keys given by the expression names.
 
-        # attempt to set identifier to be unique for each question that
-        # occurs in a page
-        # if question set is specified, that should make it unique
-        # if question set is not specified 
-        # (meaning, either question was embedded directly with tag in page
-        # or we are at a question page), then assume question id will
-        # make it unique
-        identifier = "%s_%s_qs%s" % (identifier, self.id, question_set)
+        Before evaluating expressions, initializes global dictionary
+        with allowed sympy commands for the question.
+
+        If argument seed is specified, random number generator used for
+        randomly generating expressions is initialized to that seed.
+        Otherwise a seed is randomly generated (and returned so can
+        generate exact version again by passing the seed back in).
+
+        Return a dictionary with the following:
+        - expression_context: a Context() with mappings from the expressions
+        - sympy_global_dict: the final global_dict from all expressions
+        - user_function_dict: results of any RANDOM_FUNCTION_NAME expressions
+        - error_in_expressions: True if encountered any errors in expressions
+        - expression_error: dictionary of all error messages encountered
+        - failed_conditions: True if failed conditions for all attempts
+        - failed_condition_message: message of which expression last failed
+        - seed used for generating random expressions
+        """
+
 
         if seed is None:
             seed=self.get_new_seed()
 
         random.seed(seed)
         
-        the_context=Context({})
-        if previous_context:
-            try:
-                for d in previous_context.dicts:
-                    the_context.update(d)
-            except:
-                pass
-
-        the_context['the_question'] = self
-        the_context['allow_solution_buttons']=allow_solution_buttons
-        the_context['_setup_errors'] = []
-        the_context['_random_group_indices'] = {}
         max_tries=500
         success=False
 
         from mitesting.utils import return_sympy_global_dict
-
+        
+        failed_condition_message=""
+        failed_conditions=True
         for i in range(max_tries):
-            failed_condition = ""
-            for expression in self.expression_set.all():
-                failed_condition=expression.evaluate_and_add_to_context(
-                    global_dict=global_dict, 
-                    user_function_dict=user_function_dict,
-                    context=context)
-                
-                # if failed condition, then stop processing expressions
-                if failed_condition:
-                    break
+            expression_context = Context({})
+            random_group_indices={}
+            error_in_expressions = False
+            expression_error = {}
+            user_function_dict = {}
 
-            # processed all expressions without failing a condition
-            # then don't try additional random values
-            if not failed_condition:
+            # initialize global dictionary using the comamnds
+            # found in allowed_sympy_commands.
+            # Also adds standard symbols to dictionary.
+            global_dict = return_sympy_global_dict(
+                [a.commands for a in self.allowed_sympy_commands.all()])
+
+            try:
+                for expression in self.expression_set.all():
+                    try:
+                        expression_evaluated=expression.evaluate(
+                            global_dict=global_dict, 
+                            user_function_dict=user_function_dict,
+                            random_group_indices=random_group_indices)
+
+                    # on FailedCondition, reraise to stop evaluating expressions
+                    except expression.FailedCondition:
+                        raise
+                    
+                    # for any other exception, record exception and
+                    # allow to continue processing expressions
+                    except Exception as exc:
+                        error_in_expressions = True
+                        expression_error[expression.name] = exc.args[0]
+                        expression_context[expression.name] = '??'
+                        
+                    else:
+                        # if random word, add singular and plural to context
+                        if expression.expression_type == expression.RANDOM_WORD:
+                            expression_context[expression.name] \
+                                = expression_evaluated[0]
+                            expression_context[expression.name + "_plural"] \
+                                = expression_evaluated[1]
+                        else:
+                            expression_context[expression.name] \
+                                = expression_evaluated
+
+                # if make it through all expressions without encountering
+                # a failed condition, then record fact and
+                # break out of loop
+                failed_conditions = False
                 break
+                
+            # on FailedCondition, continue loop, but record
+            # message in case it is final pass through loop
+            except expression.FailedCondition as exc:
+                failed_condition_message = exc.args[0]
+            
 
-        if failed_condition:
-            the_context['_failed_condition'] = True
-            the_context['_failed_condition_message'] = failed_condition
 
-        the_context['sympy_global_dict']=global_dict
-        the_context['user_function_dict'] = user_function_dict
-        the_context['question_%s_seed' % identifier] = seed
-        return the_context
+        results = {
+            'error_in_expressions': error_in_expressions,
+            'expression_error': expression_error,
+            'failed_conditions': failed_conditions,
+            'failed_condition_message': failed_condition_message,
+            'sympy_global_dict': global_dict,
+            'user_function_dict': user_function_dict,
+            'expression_context': expression_context,
+            'seed': seed,
+            }
+
+
+        return results
+
+
 
     def render_text(self, context, identifier, user=None, solution=False, 
                     show_help=True, seed_used=None, assessment=None):
@@ -584,13 +635,44 @@ class QuestionReferencePage(models.Model):
 
 @python_2_unicode_compatible
 class QuestionAnswerOption(models.Model):
+    EXPRESSION = 0
+    MULTIPLE_CHOICE = 1
+    ANSWER_TYPE_CHOICES = (
+        (EXPRESSION, "Expression"),
+        (MULTIPLE_CHOICE, "Multiple Choice"),
+        )
+    answer_code = models.SlugField(max_length=50)
     question = models.ForeignKey(Question)
+    answer_type = models.IntegerField(choices = ANSWER_TYPE_CHOICES,
+                                         default = EXPRESSION)
     answer = models.CharField(max_length=400)
     correct = models.BooleanField(default=False)
+    percent_correct = models.IntegerField(default=100)
     feedback = models.TextField(blank=True,null=True)
+
+    normalize_on_compare = models.BooleanField(default=False)
+    split_symbols_on_compare = models.BooleanField(default=True)
+
+    sort_order = models.FloatField(blank=True)
+
+    class Meta:
+        ordering = ['sort_order','id']
 
     def __str__(self):
         return  self.answer
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.question.questionansweroption_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+                
+        super(QuestionAnswerOption, self).save(*args, **kwargs) 
+
 
     def render_answer(self, context):
         template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
@@ -1202,8 +1284,6 @@ class Expression(models.Model):
         (EVALUATE_FULL, "Full")
         )
 
-    class FailedCondition(Exception):
-        pass
 
     name = models.SlugField(max_length=50)
     expression_type = models.CharField(
@@ -1221,22 +1301,33 @@ class Expression(models.Model):
                                        null=True)
     use_ln = models.BooleanField(default=False)
 
-    # move next two to an answer table
-    normalize_on_compare = models.BooleanField(default=False)
-    split_symbols_on_compare = models.BooleanField(default=True)
-
     collapse_equal_tuple_elements=models.BooleanField(
         default=False, verbose_name="elim dup tuple els")
     output_no_delimiters = models.BooleanField(
         default=False, verbose_name="no delims")
     group = models.CharField(max_length=50, blank=True, null=True)
-    sort_order = models.FloatField(default=0)
+    sort_order = models.FloatField(blank=True)
     class Meta:
         ordering = ['sort_order','id']
 
+    class FailedCondition(Exception):
+        pass
+
     def __str__(self): 
         return  self.name
-    
+
+    def save(self, *args, **kwargs):
+        # if sort_order is nul, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.question.expression_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+                
+        super(Expression, self).save(*args, **kwargs) 
+
 
     def evaluate(self, global_dict=None, user_function_dict=None,
                  random_group_indices=None):
@@ -1254,8 +1345,8 @@ class Expression(models.Model):
         added to global_dict[self.name] so that its value will
         be substituted in following expressions.
         
-        If error occurs, add Symbol("??") to global_dict, 
-        and don't add to user_function_dict.
+        If error occurs, add Symbol("??") to global_dict,
+        don't add to user_function_dict, and raise an exception
 
         For entries selected randomly from lists,
         (RANDOM_WORD, RANDOM_EXPRESSION, RANDOM_FUNCTION_NAME),
@@ -1506,8 +1597,8 @@ class Expression(models.Model):
                 # if CONDITION is not met, raise exception
                 if self.expression_type == self.CONDITION:
                     if not math_expr:
-                        raise self.FailedCondition("Condition %s was not met" \
-                                                       % self.name)
+                        raise Expression.FailedCondition(
+                            "Condition %s was not met" % self.name)
 
                 if self.expression_type == self.RANDOM_ORDER_TUPLE:
                     if isinstance(math_expr,list):
@@ -1572,7 +1663,10 @@ class Expression(models.Model):
                 output_no_delimiters=self.output_no_delimiters)
 
 
-        # on exception, add "??" to  global_dict for self.name
+        # no additional processing for FailedCondition
+        except self.FailedCondition:
+            raise
+        # on any other exception, add "??" to  global_dict for self.name
         # add name of expression to error message
         except Exception as exc:
             # don't want to raise another exception 
