@@ -9,20 +9,15 @@ from sympy import Symbol, sympify
 import six
 
 class TestDicts(SimpleTestCase):
-    def test_greek_dict(self):
-        gd = create_greek_dict()
-        from sympy.abc import omega
-        self.assertEqual(gd['omega'], omega)
-        self.assertEqual(gd['omega_symbol'], omega)
 
     def test_sympy_global_dict(self):
-        greek_dict = create_greek_dict()
+
         global_dict = return_sympy_global_dict()
-        self.assertEqual(global_dict, greek_dict)
+        self.assertEqual(global_dict, {})
 
         from mitesting.customized_commands import Abs
         global_dict = return_sympy_global_dict(["Abs"])
-        global_dict2 = greek_dict;
+        global_dict2 = {}
         global_dict2['Abs']=Abs
         self.assertEqual(global_dict, global_dict2)
 
