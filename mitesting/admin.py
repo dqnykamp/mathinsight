@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionSpacing, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, Expression, QuestionType, QuestionPermission, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
 from django.conf import settings
 import reversion
 
@@ -152,9 +152,6 @@ class QuestionPermissionAdmin(reversion.VersionAdmin):
 class AssessmentTypeAdmin(reversion.VersionAdmin):
     pass
 
-class QuestionSpacingAdmin(reversion.VersionAdmin):
-    pass
-
 class SympyCommandSetAdmin(reversion.VersionAdmin):
     pass
 
@@ -164,5 +161,4 @@ admin.site.register(Assessment, AssessmentAdmin)
 admin.site.register(QuestionType, QuestionTypeAdmin)
 admin.site.register(QuestionPermission, QuestionPermissionAdmin)
 admin.site.register(AssessmentType, AssessmentTypeAdmin)
-admin.site.register(QuestionSpacing, QuestionSpacingAdmin)
 admin.site.register(SympyCommandSet, SympyCommandSetAdmin)

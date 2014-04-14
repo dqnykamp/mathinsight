@@ -17,73 +17,72 @@ import random
 from django.contrib.contenttypes.models import ContentType
 import datetime
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
+from django.views.generic import DetailView
 
-
-def question_view(request, question_id):
-    the_question = get_object_or_404(Question, id=question_id)
+class QuestionView(DetailView):
+    """
     
-    # determine if user has permission to view, given privacy level
-    # solution permission required, since shows solution
-    if not the_question.user_can_view(request.user, solution=True):
-        path = request.build_absolute_uri()
-        from django.contrib.auth.views import redirect_to_login
-        return redirect_to_login(path)
+    """
 
-    if request.method == 'GET':
-        try:
-            seed = request.GET['seed']
-        except:
-            seed = None
-    else:
-        try:
-            seed = request.POST['seed']
-        except:
-            seed = None
+    model = Question
+    pk_url_kwarg = 'question_id'
 
-    # use qv in identifier since coming from question view
-    identifier = "qv"
-    question_context = the_question.setup_context(identifier=identifier,
-                                                  seed=seed, 
-                                                  allow_solution_buttons=True)
-    
-    # if there was an error, question_context is a string 
-    # so just make rendered question text be that string
-    if not isinstance(question_context, Context):
-        rendered_question = question_context
-        rendered_solution = question_context
-        geogebra_oninit_commands=""
-    else:
-        rendered_question = the_question.render_question(question_context, 
-                                                         identifier=identifier,
-                                                         user=request.user)
-        rendered_solution = the_question.render_solution(question_context,
-                                                         identifier=identifier)
-        geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
-        #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=True, solution=True)
+    def render_to_response(self, context, **response_kwargs):
+        # determine if user has permission to view question,
+        # given privacy level
+        if not context['question'].user_can_view(self.request.user):
+            path = self.request.build_absolute_uri()
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(path)
+        else:
+            return super(QuestionView, self)\
+                .render_to_response(context, **response_kwargs)
 
-        # n_geogebra_web_applets = question_context.get('n_geogebra_web_applets', 0)
-        # if n_geogebra_web_applets>0:
-        #     html_string = "napplets++;\nif(napplets == %i) {\n%s\n}" \
-        #         % (n_geogebra_web_applets, html_string)
+    def get_context_data(self, **kwargs):
+        context = super(QuestionView, self).get_context_data(**kwargs)
+
+        if self.request.method == 'GET':
+            try:
+                seed = self.request.GET['seed']
+            except:
+                seed = None
+        else:
+            try:
+                seed = self.request.POST['seed']
+            except:
+                seed = None
+
+        # In question view, there will be only one question on page.
+        # Identifier doesn't matter.  Use qv to indiciate from question view.
+        identifier = "qv"
+        from mitesting.render_assessments import render_question
+        context['results']= render_question(question=context['question'],
+                                            seed=seed, user=self.request.user,
+                                            question_identifier=identifier, 
+                                            allow_solution_buttons=True)
 
 
-    if user_has_given_assessment_permission_level(request.user, 2, solution=True):
-        show_lists=True
-    else:
-        show_lists=False
+        # if users has full permissions on assessments
+        # (i.e., permission level 2 for solutions),
+        # then show lists of assessments
+        if user_has_given_assessment_permission_level(self.request.user, 2, 
+                                                      solution=True):
+            context['show_lists']=True
+        else:
+            context['show_lists']=False
 
-    # no Google analytics for questions
-    noanalytics=True
+        # no Google analytics for questions
+        context['noanalytics']=True
 
-    return render_to_response \
-        ('mitesting/question.html', {'the_question': the_question, 
-                                     'rendered_question': rendered_question,
-                                     'rendered_solution': rendered_solution,
-                                     'show_lists': show_lists,
-                                     'geogebra_oninit_commands': geogebra_oninit_commands,
-                                     'noanalytics': noanalytics,
-                                     },
-         context_instance=RequestContext(request))
+        return context
+
+    # return render_to_response \
+    #     ('mitesting/question.html', {'the_question': the_question, 
+    #                                  'results': render_results,
+    #                                  'show_lists': show_lists,
+    #                                  'noanalytics': noanalytics,
+    #                                  },
+    #      context_instance=RequestContext(request))
 
 
 def question_solution_view(request, question_id):
