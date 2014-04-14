@@ -7,7 +7,7 @@ from mitesting.models import Question, Assessment
 from django.db import IntegrityError
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
@@ -18,6 +18,7 @@ from django.contrib.contenttypes.models import ContentType
 import datetime
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
 from django.views.generic import DetailView
+import json 
 
 class QuestionView(DetailView):
     """
@@ -482,3 +483,11 @@ def question_list_view(request):
                                           'noanalytics': noanalytics,
                                           },
          context_instance=RequestContext(request))
+
+
+def default_sympy_commands(request):
+    from mitesting.models import SympyCommandSet
+    default_commands = json.dumps(
+        [(cmd.pk, cmd.name) for cmd in SympyCommandSet.objects.filter(default=True)])
+        
+    return HttpResponse(default_commands, content_type = 'application/json')

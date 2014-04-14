@@ -39,5 +39,6 @@ urlpatterns = patterns(
     url(r'^(?P<assessment_code>\w+)/solution$','assessment_view', kwargs={'solution': True}, name='mit-assessmentsolution'),
     url(r'^(?P<assessment_code>\w+)/avoid$','assessment_avoid_question_view', name='mit-assessmentavoidquestion'),
     url(r'^(?P<slug>\w+)/generate$', GenerateAssessmentView.as_view(), name='mit-assessmentgenerate'),
+    url(r'^question/default_sympy_commands', 'default_sympy_commands'),
     
     )

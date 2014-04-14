@@ -1424,6 +1424,7 @@ class PlotFunction(models.Model):
 class SympyCommandSet(models.Model):
     name = models.CharField(max_length=50, unique=True)
     commands = models.TextField()
+    default = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.name
