@@ -31,7 +31,8 @@ class QuestionView(DetailView):
     def render_to_response(self, context, **response_kwargs):
         # determine if user has permission to view question,
         # given privacy level
-        if not context['question'].user_can_view(self.request.user):
+        if not context['question'].user_can_view(self.request.user,
+                                                 solution=context['solution']):
             path = self.request.build_absolute_uri()
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(path)
@@ -41,7 +42,7 @@ class QuestionView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(QuestionView, self).get_context_data(**kwargs)
-
+        
         if self.request.method == 'GET':
             try:
                 seed = self.request.GET['seed']
@@ -52,7 +53,13 @@ class QuestionView(DetailView):
                 seed = self.request.POST['seed']
             except:
                 seed = None
+                
+        # determine if rendering solution.
+        solution=kwargs.get('solution',False)
+        context['solution'] = solution
 
+        show_help = not solution
+        
         # In question view, there will be only one question on page.
         # Identifier doesn't matter.  Use qv to indiciate from question view.
         identifier = "qv"
@@ -60,7 +67,9 @@ class QuestionView(DetailView):
         context['results']= render_question(question=context['question'],
                                             seed=seed, user=self.request.user,
                                             question_identifier=identifier, 
-                                            allow_solution_buttons=True)
+                                            allow_solution_buttons=True,
+                                            solution=solution,
+                                            show_help = show_help)
 
 
         # if users has full permissions on assessments
@@ -77,63 +86,12 @@ class QuestionView(DetailView):
 
         return context
 
-    # return render_to_response \
-    #     ('mitesting/question.html', {'the_question': the_question, 
-    #                                  'results': render_results,
-    #                                  'show_lists': show_lists,
-    #                                  'noanalytics': noanalytics,
-    #                                  },
-    #      context_instance=RequestContext(request))
+class QuestionSolutionView(QuestionView):
+    template_name = 'mitesting/question_solution.html'
 
-
-def question_solution_view(request, question_id):
-    the_question = get_object_or_404(Question, id=question_id)
-    
-    # determine if user has permission to view, given privacy level
-    if not the_question.user_can_view(request.user, solution=True):
-        path = request.build_absolute_uri()
-        from django.contrib.auth.views import redirect_to_login
-        return redirect_to_login(path)
-
-    if request.method == 'GET':
-        try:
-            seed = request.GET['seed']
-        except:
-            seed = None
-    else:
-        try:
-            seed = request.POST['seed']
-        except:
-            seed = None
-
-    # use qsv in identifier since coming from question solution view
-    identifier = "qsv"
-    question_context = the_question.setup_context(identifier=identifier,
-                                                  seed=seed, 
-                                                  allow_solution_buttons=True)
-    
-    # if there was an error, question_context is a string string,
-    # so just make rendered question text be that string
-    if not isinstance(question_context, Context):
-        rendered_solution = question_context
-        geogebra_oninit_commands=""
-    else:
-        rendered_solution = the_question.render_solution(question_context,
-                                                         identifier=identifier)
-
-        geogebra_oninit_commands=question_context.get('geogebra_oninit_commands')
-        #geogebra_oninit_commands=the_question.render_javascript_commands(question_context, question=False, solution=True)
-
-    # no Google analytics for questions
-    noanalytics=True
-
-    return render_to_response \
-        ('mitesting/question_solution.html', {'the_question': the_question, 
-                                     'rendered_solution': rendered_solution,
-                                     'geogebra_oninit_commands': geogebra_oninit_commands,
-                                     'noanalytics': noanalytics,
-                                     },
-         context_instance=RequestContext(request))
+    def get_context_data(self, **kwargs):
+        kwargs['solution']=True
+        return super(QuestionSolutionView, self).get_context_data(**kwargs)
 
 
 

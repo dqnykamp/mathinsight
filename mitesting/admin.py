@@ -122,8 +122,20 @@ class QuestionReferencePageInline(admin.TabularInline):
 class QuestionAnswerInline(admin.TabularInline):
     model = QuestionAnswerOption
     formfield_overrides = {
-        models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 'cols': 30})},
+        models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 
+                                                           'cols': 30})},
         }
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(QuestionAnswerInline, self).formfield_for_dbfield(
+            db_field, **kwargs)
+        if db_field.name == 'answer_code':
+            field.widget.attrs['size'] = 10
+            del field.widget.attrs['class']
+        if db_field.name == 'answer':
+            field.widget = forms.Textarea(attrs={'rows': 2, 'cols': 30})
+        if db_field.name == 'sort_order':
+            field.widget.attrs['size'] = 3
+        return field
 
 class QuestionAuthorInline(admin.TabularInline):
     model = QuestionAuthor

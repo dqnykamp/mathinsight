@@ -28,6 +28,8 @@ class QuestionType(models.Model):
    
 @python_2_unicode_compatible
 class Question(models.Model):
+
+    # spacing choices must correspond to css classes
     SPACING_CHOICES = (
         ('large3spacebelow', 'large3'),
         ('large2spacebelow', 'large2'),

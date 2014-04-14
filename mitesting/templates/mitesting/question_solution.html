@@ -1,15 +1,43 @@
 {% extends "mitesting/assessment_base.html" %}
 {% load mi_tags %}
 
-{% block title %}Solution to question: {{ the_question }}, version {{ version }} - Math Insight{%endblock%}
+{% block title %}Solution to question: {{ question }}, version {{ version }} - Math Insight{%endblock%}
 {% block content %}
 
-<h3>Solution to question: {{ the_question }}</h3>
 
-<ol>
-{{ rendered_solution }}
+
+<h3>Solution to question: {{ question }}</h3>
+
+
+{% if not results.success %}
+<section class="error">
+<h4>Error in question</h4>
+<p>Print generic error message.  Change page background like webwork?</p>
+{{results.error_message}}
+</section>
+{% endif %}
+
+
+{{ results.rendered_text }}
+
+{% if results.subparts %}
+<ol class='question_subparts'>
+{% for subpart in results.subparts %}
+<li class='question'>
+  {{ subpart.subpart_text}}
+</li>
+{% endfor %}
 </ol>
+{% endif %}
 
 
 {% endblock %}
 
+{% block rightcolumn %}
+{% if show_lists %}
+<ul class="linklist">
+<li><a href="{% url 'mit-questionlist' %}">List of all questions</a></li>
+<li><a href="{% url 'mit-assessmentlist' %}">List of all assessment</a></li>
+</ul>
+{% endif %}
+{%endblock%}

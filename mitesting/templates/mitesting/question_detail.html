@@ -17,11 +17,12 @@
 </section>
 {% endif %}
 
+
 {% if results.submit_button %}
 <form action="" method="post" id="id_question_{{results.identifier}}" class="writein" onsubmit="event.preventDefault();submit_answer();return false;">
 {%endif%}
 
-{{ results.question_text }}
+{{ results.rendered_text }}
 
 {% if results.help_available %}
 <div class="question_help_container">
