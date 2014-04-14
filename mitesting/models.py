@@ -27,17 +27,8 @@ class QuestionType(models.Model):
         return  self.name
    
 @python_2_unicode_compatible
-class QuestionPermission(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    privacy_level=models.SmallIntegerField(default=0)
-    privacy_level_solution=models.SmallIntegerField(default=0)
-    def __str__(self):
-        return  self.name
-    
-
-@python_2_unicode_compatible
 class Question(models.Model):
-    QUESTION_SPACING_CHOICES = (
+    SPACING_CHOICES = (
         ('large3spacebelow', 'large3'),
         ('large2spacebelow', 'large2'),
         ('largespacebelow', 'large'),
@@ -46,13 +37,21 @@ class Question(models.Model):
         ('smallspacebelow', 'small'),
         ('tinyspacebelow', 'tiny'),
         )
+    PRIVACY_CHOICES = (
+        (0, 'Public'),
+        (1, 'Logged in users'),
+        (2, 'Instructors only'),
+        )
 
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
-    question_permission = models.ForeignKey(QuestionPermission)
+    question_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
+                                           default=2)
+    solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
+                                           default=2)
     description = models.CharField(max_length=400,blank=True, null=True)
     question_spacing = models.CharField(max_length=20, blank=True, null=True,
-                                         choices=QUESTION_SPACING_CHOICES)
+                                         choices=SPACING_CHOICES)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
@@ -100,11 +99,10 @@ class Question(models.Model):
         return('mit-questionsolution', (), {'question_id': self.id})
 
     def return_privacy_level(self, solution=True):
-        # privacy level is just that of the question type
         if solution:
-            return self.question_permission.privacy_level_solution
+            return self.solution_privacy
         else:
-            return self.question_permission.privacy_level
+            return self.question_privacy
 
     def author_list_abbreviated_link(self):
         return author_list_abbreviated(self.questionauthor_set.all(), 
@@ -295,9 +293,8 @@ class QuestionAuthor(models.Model):
 @python_2_unicode_compatible
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
-    question_spacing = models.CharField(
-        max_length=20, blank=True, null=True,
-        choices=Question.QUESTION_SPACING_CHOICES)
+    question_spacing = models.CharField(max_length=20, blank=True, null=True,
+                                        choices=Question.SPACING_CHOICES)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     sort_order = models.FloatField(default=0)
     question_text = models.TextField(blank=True, null=True)
@@ -355,7 +352,6 @@ class QuestionAnswerOption(models.Model):
     answer_type = models.IntegerField(choices = ANSWER_TYPE_CHOICES,
                                          default = EXPRESSION)
     answer = models.CharField(max_length=400)
-    correct = models.BooleanField(default=False)
     percent_correct = models.IntegerField(default=100)
     feedback = models.TextField(blank=True,null=True)
 
@@ -408,10 +404,18 @@ class QuestionAnswerOption(models.Model):
 
 @python_2_unicode_compatible
 class AssessmentType(models.Model):
+    PRIVACY_CHOICES = (
+        (0, 'Public'),
+        (1, 'Logged in users'),
+        (2, 'Instructors only'),
+        )
+
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
-    privacy_level = models.SmallIntegerField(default=0)
-    privacy_level_solution = models.SmallIntegerField(default=0)
+    assessment_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES, 
+                                             default=2)
+    solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
+                                                default=2)
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
     record_online_attempts = models.BooleanField(default=True)
     
@@ -537,13 +541,30 @@ class Assessment(models.Model):
         # privacy level is max of privacy level from assessment type
         # and all question sets
         if solution:
-            privacy_level = self.assessment_type.privacy_level_solution
+            privacy_level = self.assessment_type.solution_privacy
         else:
-            privacy_level = self.assessment_type.privacy_level
+            privacy_level = self.assessment_type.assessment_privacy
         for question in self.questions.all():
             privacy_level = max(privacy_level, question.return_privacy_level(solution))
         return privacy_level
-                                
+    
+    def privacy_level_description(self):
+        privacy_level = self.return_privacy_level(solution=False)
+        privacy_word= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
+        if self.groups_can_view.exists():
+            privacy_word += " (overridden for some groups)"
+        return privacy_word
+    privacy_level_description.short_description = "Assessment privacy"
+
+
+    def privacy_level_solution_description(self):
+        privacy_level = self.return_privacy_level(solution=True)
+        privacy_word= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
+        if self.groups_can_view_solution.exists():
+            privacy_word += " (overridden for some groups)"
+        return privacy_word
+    privacy_level_solution_description.short_description = "Solution privacy"
+
     def render_instructions(self):
         template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
         template_string=template_string_base + self.instructions

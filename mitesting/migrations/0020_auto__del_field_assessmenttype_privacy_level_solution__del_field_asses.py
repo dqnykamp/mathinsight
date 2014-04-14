@@ -8,55 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'QuestionAnswerOption.answer_code'
-        db.add_column(u'mitesting_questionansweroption', 'answer_code',
-                      self.gf('django.db.models.fields.SlugField')(default='ans', max_length=50),
-                      keep_default=False)
+        # Renaming field 'AssessmentType.privacy_level_solution'
+        db.rename_column(u'mitesting_assessmenttype', 'privacy_level_solution', 'solution_privacy')
 
-        # Adding field 'QuestionAnswerOption.answer_type'
-        db.add_column(u'mitesting_questionansweroption', 'answer_type',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
-                      keep_default=False)
-
-        # Adding field 'QuestionAnswerOption.percent_correct'
-        db.add_column(u'mitesting_questionansweroption', 'percent_correct',
-                      self.gf('django.db.models.fields.IntegerField')(default=100),
-                      keep_default=False)
-
-        # Adding field 'QuestionAnswerOption.normalize_on_compare'
-        db.add_column(u'mitesting_questionansweroption', 'normalize_on_compare',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
-
-        # Adding field 'QuestionAnswerOption.split_symbols_on_compare'
-        db.add_column(u'mitesting_questionansweroption', 'split_symbols_on_compare',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
-
-        # Adding field 'QuestionAnswerOption.sort_order'
-        db.add_column(u'mitesting_questionansweroption', 'sort_order',
-                      self.gf('django.db.models.fields.FloatField')(default=0, blank=True),
-                      keep_default=False)
+        # Deleting field 'AssessmentType.privacy_level'
+        db.rename_column(u'mitesting_assessmenttype', 'privacy_level', 'assessment_privacy')
 
 
     def backwards(self, orm):
-        # Deleting field 'QuestionAnswerOption.answer_code'
-        db.delete_column(u'mitesting_questionansweroption', 'answer_code')
+        # Renaming field 'AssessmentType.assessment_privacy'
+        db.rename_column(u'mitesting_assessmenttype', 'assessment_privacy', 'privacy_level')
 
-        # Deleting field 'QuestionAnswerOption.answer_type'
-        db.delete_column(u'mitesting_questionansweroption', 'answer_type')
-
-        # Deleting field 'QuestionAnswerOption.percent_correct'
-        db.delete_column(u'mitesting_questionansweroption', 'percent_correct')
-
-        # Deleting field 'QuestionAnswerOption.normalize_on_compare'
-        db.delete_column(u'mitesting_questionansweroption', 'normalize_on_compare')
-
-        # Deleting field 'QuestionAnswerOption.split_symbols_on_compare'
-        db.delete_column(u'mitesting_questionansweroption', 'split_symbols_on_compare')
-
-        # Deleting field 'QuestionAnswerOption.sort_order'
-        db.delete_column(u'mitesting_questionansweroption', 'sort_order')
+        # Renaming field 'AssessmentType.solution_privacy'
+        db.rename_column(u'mitesting_assessmenttype', 'solution_privacy', 'privacy_level_solution')
 
 
     models = {
@@ -212,12 +176,12 @@ class Migration(SchemaMigration):
         },
         u'mitesting.assessmenttype': {
             'Meta': {'object_name': 'AssessmentType'},
+            'assessment_privacy': ('django.db.models.fields.SmallIntegerField', [], {'default': '2'}),
             'code': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
-            'privacy_level': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'}),
-            'privacy_level_solution': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'}),
             'record_online_attempts': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'solution_privacy': ('django.db.models.fields.SmallIntegerField', [], {'default': '2'}),
             'template_base_name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'})
         },
         u'mitesting.expression': {
@@ -232,12 +196,10 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'n_digits': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
-            'normalize_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'output_no_delimiters': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
             'round_decimals': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'blank': 'True'}),
-            'split_symbols_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'use_ln': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
         },
         u'mitesting.plotfunction': {
@@ -265,12 +227,13 @@ class Migration(SchemaMigration):
             'keywords': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Keyword']", 'null': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'question_permission': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.QuestionPermission']"}),
-            'question_spacing': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.QuestionSpacing']", 'null': 'True', 'blank': 'True'}),
+            'question_privacy': ('django.db.models.fields.SmallIntegerField', [], {'default': '2'}),
+            'question_spacing': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'question_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'question_type': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.QuestionType']"}),
             'reference_pages': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['midocs.Page']", 'through': u"orm['mitesting.QuestionReferencePage']", 'symmetrical': 'False'}),
             'show_solution_button_after_attempts': ('django.db.models.fields.IntegerField', [], {'default': '3'}),
+            'solution_privacy': ('django.db.models.fields.SmallIntegerField', [], {'default': '2'}),
             'solution_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'subjects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Subject']", 'null': 'True', 'blank': 'True'})
         },
@@ -279,7 +242,6 @@ class Migration(SchemaMigration):
             'answer': ('django.db.models.fields.CharField', [], {'max_length': '400'}),
             'answer_code': ('django.db.models.fields.SlugField', [], {'max_length': '50'}),
             'answer_type': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'correct': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'feedback': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'normalize_on_compare': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
@@ -302,13 +264,6 @@ class Migration(SchemaMigration):
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
         },
-        u'mitesting.questionpermission': {
-            'Meta': {'object_name': 'QuestionPermission'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
-            'privacy_level': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'}),
-            'privacy_level_solution': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'})
-        },
         u'mitesting.questionreferencepage': {
             'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'question', u'page', u'question_subpart'),)", 'object_name': 'QuestionReferencePage'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -325,20 +280,13 @@ class Migration(SchemaMigration):
             'points': ('django.db.models.fields.FloatField', [], {'default': '0'}),
             'question_set': ('django.db.models.fields.SmallIntegerField', [], {'default': '0', 'db_index': 'True'})
         },
-        u'mitesting.questionspacing': {
-            'Meta': {'ordering': "[u'sort_order', u'name']", 'object_name': 'QuestionSpacing'},
-            'css_code': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50'}),
-            'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
-        },
         u'mitesting.questionsubpart': {
             'Meta': {'ordering': "[u'sort_order', u'id']", 'object_name': 'QuestionSubpart'},
             'css_class': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'hint_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.Question']"}),
-            'question_spacing': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['mitesting.QuestionSpacing']", 'null': 'True', 'blank': 'True'}),
+            'question_spacing': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'question_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'solution_text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'})
