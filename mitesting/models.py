@@ -21,19 +21,6 @@ from mitesting.sympy_customized import parse_expr, parse_and_process
 import six
 
 @python_2_unicode_compatible
-class QuestionSpacing(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    css_code = models.SlugField(max_length=50, unique=True)
-    sort_order = models.FloatField(default=0)
-
-    def __str__(self):
-        return  self.name
-
-    class Meta:
-        ordering = ['sort_order', 'name']
-
-
-@python_2_unicode_compatible
 class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     def __str__(self):
@@ -50,11 +37,22 @@ class QuestionPermission(models.Model):
 
 @python_2_unicode_compatible
 class Question(models.Model):
+    QUESTION_SPACING_CHOICES = (
+        ('large3spacebelow', 'large3'),
+        ('large2spacebelow', 'large2'),
+        ('largespacebelow', 'large'),
+        ('medlargespacebelow', 'medium large'),
+        ('medspacebelow', 'medium'),
+        ('smallspacebelow', 'small'),
+        ('tinyspacebelow', 'tiny'),
+        )
+
     name = models.CharField(max_length=200)
     question_type = models.ForeignKey(QuestionType)
     question_permission = models.ForeignKey(QuestionPermission)
     description = models.CharField(max_length=400,blank=True, null=True)
-    question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
+    question_spacing = models.CharField(max_length=20, blank=True, null=True,
+                                         choices=QUESTION_SPACING_CHOICES)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
@@ -88,7 +86,7 @@ class Question(models.Model):
 
     def spacing_css(self):
         if self.question_spacing:
-            return self.question_spacing.css_code
+            return self.question_spacing
  
     def get_new_seed(self):
         return str(random.randint(0,1E8))
@@ -297,7 +295,9 @@ class QuestionAuthor(models.Model):
 @python_2_unicode_compatible
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
-    question_spacing = models.ForeignKey(QuestionSpacing, blank=True, null=True)
+    question_spacing = models.CharField(
+        max_length=20, blank=True, null=True,
+        choices=Question.QUESTION_SPACING_CHOICES)
     css_class = models.CharField(max_length=100,blank=True, null=True)
     sort_order = models.FloatField(default=0)
     question_text = models.TextField(blank=True, null=True)
@@ -324,7 +324,7 @@ class QuestionSubpart(models.Model):
 
     def spacing_css(self):
         if self.question_spacing:
-            return self.question_spacing.css_code
+            return self.question_spacing
 
 
 
