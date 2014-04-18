@@ -29,15 +29,18 @@ class TestDicts(SimpleTestCase):
 
         global_dict = return_sympy_global_dict(["Abs", "floor, ceiling",
                                                 "min, max, Min, Max",
-                                                "nothingvalid"])
+                                                "nothingvalid", "if"])
         from mitesting.customized_commands import min_including_tuples,\
-            max_including_tuples
+            max_including_tuples, iif
         global_dict2['min']=min_including_tuples
         global_dict2['Min']=min_including_tuples
         global_dict2['max']=max_including_tuples
         global_dict2['Max']=max_including_tuples
+        global_dict2['if']=iif
         self.assertEqual(global_dict, global_dict2)
 
+
+        
 
 class TestRandomNumber(SimpleTestCase):
     def test_returns_integer_in_range(self):

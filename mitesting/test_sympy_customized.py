@@ -109,6 +109,54 @@ class ParseExprTests(SimpleTestCase):
                          4*x**2*y**2+x+y)
         self.assertEqual(parse_expr("lambda^2+x+y", local_dict=sub_dict),
                          4*x**2*y**2+x+y)
+        self.assertEqual(parse_expr("lambda^2+x+y", local_dict=sub_dict,
+                                    global_dict=sub_dict), 4*x**2*y**2+x+y)
+
+    def test_as_symbol(self):
+        as_symbol = Symbol('as')
+        x = Symbol('x')
+        y = Symbol('y')
+        self.assertEqual(parse_expr("as"), as_symbol)
+        self.assertEqual(parse_expr("x-as+y"), -as_symbol+x+y)
+        self.assertEqual(parse_expr("as(x)(y)"), as_symbol*x*y)
+
+    def test_as_symbol_substitutions(self):
+        x = Symbol('x')
+        y = Symbol('y')
+        as_symbol = Symbol('as')
+        sub_dict = {'as': 2*x*y}
+        self.assertEqual(parse_expr("as^2+x+y"), as_symbol**2+x+y)
+        self.assertEqual(parse_expr("as^2+x+y", global_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+        self.assertEqual(parse_expr("as^2+x+y", local_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+
+    def test_if_symbol(self):
+        if_symbol = Symbol('if')
+        x = Symbol('x')
+        y = Symbol('y')
+        self.assertEqual(parse_expr("if"), if_symbol)
+        self.assertEqual(parse_expr("x-if+y"), -if_symbol+x+y)
+        self.assertEqual(parse_expr("if(x)(y)"), if_symbol*x*y)
+
+    def test_if_symbol_substitutions(self):
+        x = Symbol('x')
+        y = Symbol('y')
+        if_symbol = Symbol('if')
+        sub_dict = {'if': 2*x*y}
+        self.assertEqual(parse_expr("if^2+x+y"), if_symbol**2+x+y)
+        self.assertEqual(parse_expr("if^2+x+y", global_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+        self.assertEqual(parse_expr("if^2+x+y", local_dict=sub_dict),
+                         4*x**2*y**2+x+y)
+
+    def test_if_as_iif(self):
+        from .customized_commands import iif
+        x = Symbol('x')
+        sub_dict = {'if': iif}
+        self.assertEqual(parse_expr('if(4>3,x,y)', global_dict=sub_dict),x)
+        self.assertEqual(parse_expr('if(-4>3,y,x^2)', 
+                                    global_dict=sub_dict),x**2)
 
     def test_no_evaluate(self):
         expr_no_evaluate = parse_expr("x + x - lambda + 2*lambda",

@@ -6,7 +6,7 @@ from __future__ import division
 from sympy import sympify
 from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
 import re
-from keyword import iskeyword
+import keyword
 
 def bottom_up(rv, F, atoms=False, nonbasic=False):
     """Apply ``F`` to all expressions in an expression tree from the
@@ -54,12 +54,14 @@ def parse_expr(s, global_dict=None, local_dict=None,
         Integer, Float, or Rational could be added by auto_number,
         and factorial could be added by factorial_notation.)
     2.  Use a customized version of the auto_symbol transformation 
-        so that "lambda" will be parsed to Symbol('lambda')
+        so that python keywords like "lambda", "as" and "if" 
+        will be parsed to symbols
     3.  In addition, use auto_number, factorial notation, convert_xor
         and implicit_multiplication transformations by default, 
         and add split_symbols transformation if split_symbols is True.
-    4.  If 'lambda' is in global_dict
-    4.  Call sympify after parse_expr so that tuples will be 
+    4.  Allows substitution of python keywords like 'lambda', 'as", or "if" 
+        via local/global_dict.
+    5.  Call sympify after parse_expr so that tuples will be 
         converted to Sympy Tuples.  (A bug in parse_expr that this
         doesn't happen automatically?)
     """
@@ -114,22 +116,23 @@ def parse_expr(s, global_dict=None, local_dict=None,
         transformations += (split_symbols_trans, )
     transformations += (implicit_multiplication, )
 
-    # if lambda is in the local or global dictionary, we can't use 
-    # the standard approach to substitute values of lambda,
-    # given that lambda has a special meaning in python.
-    # Instead, we replace lambda with _lambda_ in both the
-    # expression and the global_dict key.
-    if 'lambda' in new_global_dict:
-        new_global_dict['_lambda_'] = new_global_dict['lambda']
-        del new_global_dict['lambda']
-        s = re.sub(r'\blambda\b', '_lambda_', s)
-    if local_dict and 'lambda' in local_dict:
-        local_dict_old=local_dict
-        local_dict = {}
-        local_dict.update(local_dict_old)
-        local_dict['_lambda_'] = local_dict['lambda']
-        del local_dict['lambda']
-        s = re.sub(r'\blambda\b', '_lambda_', s)
+    # if a python keyword such as "lambda" or "as" is in 
+    # the local or global dictionary, we can't use 
+    # the standard approach to substitute values. 
+    # Instead, we replace keyword with _keyword_ in both the
+    # expression and the dictionary keys.
+    for kword in keyword.kwlist:
+        if kword in new_global_dict:
+            new_global_dict['_'+kword+'_'] = new_global_dict[kword]
+            del new_global_dict[kword]
+            s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
+        if local_dict and kword in local_dict:
+            local_dict_old=local_dict
+            local_dict = {}
+            local_dict.update(local_dict_old)
+            local_dict['_'+kword+'_'] = local_dict[kword]
+            del local_dict[kword]
+            s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
 
     
     # call sympify after parse_expr to convert tuples to Tuples
@@ -174,8 +177,8 @@ def parse_and_process(s, global_dict=None, local_dict=None,
 
 def auto_symbol(tokens, local_dict, global_dict):
     # customized verison of auto symbol
-    # only difference is that ignore keyword "lambda"
-    # so that "lambda" will be turned into a symbol
+    # only difference is that ignore python keywords 
+    # so that the keywords will be turned into a symbol
     from sympy.parsing.sympy_tokenize import NAME, OP
     from sympy.core.basic import Basic
 
@@ -192,7 +195,6 @@ def auto_symbol(tokens, local_dict, global_dict):
             name = tokVal
 
             if (name in ['True', 'False', 'None']
-                or (iskeyword(name) and name != 'lambda')
                 or name in local_dict
                 # Don't convert attribute access
                 or (prevTok[0] == OP and prevTok[1] == '.')
