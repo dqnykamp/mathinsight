@@ -17,7 +17,7 @@ from django import forms
 import re
 import json
 import datetime
-import settings
+from django.conf import settings
 
 def format_datetime(value):
     return "%s, %s" % (formats.date_format(value), formats.time_format(value))

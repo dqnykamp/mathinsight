@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db.models import Count
 from django.template.loader import render_to_string
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.contenttypes import generic
 import datetime, os
 from django.contrib.sites.models import Site
@@ -86,8 +86,43 @@ class Author(models.Model):
 class Level(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.CharField(max_length=400)
+    default = models.BooleanField(default=False)
     def __unicode__(self):
         return self.code
+
+    def save(self, *args, **kwargs):
+
+        # check if newly default
+        newly_default=False
+        if self.default:
+            if self.pk is None:
+                newly_default = True
+            else:
+                orig = Level.objects.get(pk=self.pk)
+                if not orig.default:
+                    newly_default = True
+
+        super(Level, self).save(*args, **kwargs) 
+
+    @classmethod
+    def return_default(theclass):
+        try:
+            return theclass.objects.get(default=True)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            pass
+
+        # if zero or multiple items marked as default
+        # return first level in database (or None if no Levels)
+        try:
+            return theclass.objects.all()[0]
+        except IndexError:
+            return None
+
+def return_default_level():
+    try:
+        return Level.return_default();
+    except:
+        return None
 
 class Objective(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
@@ -106,12 +141,6 @@ class Keyword(models.Model):
         return self.code
     class Meta:
         ordering = ['code']
-
-# class ContentType(models.Model):
-#     code = models.CharField(max_length=50, db_index=True, unique=True)
-#     description = models.CharField(max_length=400)
-#     def __unicode__(self):
-#         return self.code
 
 class RelationshipType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
@@ -175,11 +204,10 @@ class Page(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
-    level = models.ForeignKey(Level, default="i")
+    level = models.ForeignKey(Level, default=return_default_level)
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
-    #content_types = models.ManyToManyField(ContentType, blank=True, null=True)
     thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
     related_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageRelationship', 
@@ -191,10 +219,10 @@ class Page(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True,db_index=True)
     notes = models.TextField(blank=True, null=True)
-    highlight = models.BooleanField(db_index=True)
+    highlight = models.BooleanField(db_index=True, default=False)
     worksheet = models.BooleanField(default=False)
     author_copyright = models.BooleanField(default=True)
-    hidden = models.BooleanField(db_index=True)
+    hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
 
@@ -334,28 +362,6 @@ class Page(models.Model):
             
         except:
             pass
-
-    def find_template(self):
-        full_template_name = 'midocs/pages/%s/%s.html' % (self.template_dir, self.code)
-        found_template=0
-        for template_dir in settings.TEMPLATE_DIRS:
-            if(template_dir[-1] == '/'):
-                template_filename = "%s%s" % \
-                    (template_dir, full_template_name)
-            else:
-                template_filename = "%s/%s" % \
-                    (template_dir, full_template_name)
-            try:
-                template_mtime=datetime.datetime.fromtimestamp \
-                    (os.path.getmtime(template_filename))
-            except:
-                continue
-            found_template=1
-            break
-        if found_template:
-            return template_filename
-        else:
-            return ""
 
 
     @classmethod
@@ -937,6 +943,9 @@ class Applet(models.Model):
     notation_systems = models.ManyToManyField(NotationSystem, through='AppletNotationSystem')
     highlight = models.BooleanField(db_index=True)
     javascript = models.TextField(blank=True, null=True)
+    child_applet = models.ForeignKey('self', blank=True, null=True)
+    child_applet_percent_width = models.IntegerField(default=50)
+    child_applet_parameters = models.CharField(max_length=100, blank=True, null=True)
     thumbnail = models.ImageField(max_length=150, upload_to=applet_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
@@ -1080,13 +1089,60 @@ class Applet(models.Model):
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
 
-        # check if changed code
-        # if so, may need to change file names after save
+        # check if changed code, applet file, or image file
+        # if changed code, may need to change file names after save
+        # if changed file, and Geogebra web, then generated encoded content
+        # if changed image, then generate thumbnail
         changed_code=False
+        changed_applet=False
+        changed_image=False
         if self.pk is not None:
             orig = Applet.objects.get(pk=self.pk)
             if orig.code != self.code:
                 changed_code = True
+            if orig.applet_file != self.applet_file:
+                changed_applet = True
+            if orig.image != self.image:
+                changed_image = True
+
+        # create encoded content if applet_file exists
+        # only do this for new file or if have changed the applet_file
+        # and if is GeogebraWeb applet
+        if (self.pk is None or changed_applet or not self.encoded_content)\
+                and self.applet_file:
+            # check if GeogebraWeb applet
+            gw_type=AppletType.objects.get(code="GeogebraWeb")
+            if(self.applet_type == gw_type):
+                try:
+                    self.applet_file.open()
+                    import base64
+                    self.encoded_content = base64.b64encode\
+                        (self.applet_file.read())
+                    self.applet_file.close()
+                except:
+                    raise
+                
+        # create thumbnail from image file, if it exists
+        # adapted from http://djangosnippets.org/snippets/2094/
+        # only do this for new file or if have changed the image
+        if (self.pk is None or changed_image) and self.image:
+
+            image = PILImage.open(self.image)
+        
+            thumb_size = (200,200)
+
+            image.thumbnail(thumb_size, PILImage.ANTIALIAS)
+        
+            # save the thumbnail to memory
+            temp_handle = StringIO()
+            image.save(temp_handle, 'png')
+            temp_handle.seek(0) # rewind the file
+        
+            # save to the thumbnail field
+            suf = SimpleUploadedFile(os.path.split(self.image.name)[-1],
+                                     temp_handle.read(),
+                                     content_type='image/png')
+            self.thumbnail.save(suf.name+'.png', suf, save=False)
 
         super(Applet, self).save(*args, **kwargs) 
 
@@ -1171,6 +1227,18 @@ class AppletObject(models.Model):
 
     def __unicode__(self):
         return "%s: %s" % (self.object_type, self.name)
+
+
+class AppletChildObjectLink(models.Model):
+    applet = models.ForeignKey(Applet)
+    object_name = models.CharField(max_length=100)
+    child_object_name = models.CharField(max_length=100)
+    applet_to_child_link = models.BooleanField(default=True)
+    child_to_applet_link = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return "link %s to %s" % (self.object_name, self.child_object_name)
+
 
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)

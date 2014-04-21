@@ -1,14 +1,7 @@
 *.swp
 *.pyc
 *.sql
-/settings.py
-/urls.py
+/mathinsight/settings.py
 *.bak
 *~
-/templates/analytics.html
-/apache/django.wsgi
-/xapian_index/*
-/archive
-/scripts
-/static2
-/update_template_links*.py
+/mathinsight/mathinsight.log

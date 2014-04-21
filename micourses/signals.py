@@ -5,7 +5,12 @@ from micourses.models import CourseUser
 def create_course_user(sender, **kwargs):
     user = kwargs['instance']
     if kwargs['created']:
-        new_course_user = CourseUser(user = user)
-        new_course_user.save()
+        try:
+            new_course_user = CourseUser(user = user)
+            new_course_user.save()
+        except:
+            # if don't have CourseUser table set up yet
+            # (e.g., when creating initial user before migrating), ignore error
+            pass
 
 post_save.connect(create_course_user, sender = User, dispatch_uid = 'users-course-user-creation-signal')

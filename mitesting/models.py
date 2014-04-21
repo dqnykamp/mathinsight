@@ -533,7 +533,7 @@ class Question(models.Model):
 
         callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
 
-        html_string += '%s<form action="" method="post" id="question_%s" >' % (callback_script,  identifier)
+        html_string += '%s<form action="" method="post" id="question_%s" onsubmit="event.preventDefault();%s;return false;">' % (callback_script,  identifier, send_command)
 
         # Format html so that it is formatted as though it came from 
         # MultipleChoiceQuestionForm(prefix=identifier)
@@ -550,7 +550,7 @@ class Question(models.Model):
                 (html_string, answer_field_name, answer['answer_id'])
         html_string = html_string + "</ul>"
 
-        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="button" class="mi_answer_submit" value="Submit" onclick="%s"></p></form>'  % (html_string, identifier, send_command)
+        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="submit" class="mi_answer_submit" value="Submit" ></p></form>'  % (html_string, identifier)
 
         return mark_safe(html_string)
 
@@ -619,11 +619,11 @@ class Question(models.Model):
         
 
         if not precheck:
-            html_string += '<br/><input type="button" class="mi_answer_submit" value="Submit" onclick="%s">' % send_command
+            html_string += '<br/><input type="submit" class="mi_answer_submit" value="Submit" >' 
         else:
             html_string += '<script type="text/javascript">%s</script>' % (send_command)
 
-        html_string = '<form onkeypress="return event.keyCode != 13;" action="" method="post" id="id_question_%s" class="writein" >%s</form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>' % (identifier, html_string,  identifier, identifier)
+        html_string = '<form action="" method="post" id="id_question_%s" class="writein" onsubmit="event.preventDefault();%s;return false;" >%s</form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>' % (identifier, send_command, html_string,  identifier, identifier)
 
         html_string = "%s%s%s" % (callback_script, callback_solution_script,html_string)
 

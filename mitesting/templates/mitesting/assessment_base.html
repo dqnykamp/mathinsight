@@ -1,0 +1,74 @@
+{% extends "base.html" %}{% load mi_tags testing_tags %}{% load dajaxice_templatetags %}
+
+
+{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
+
+{% block title %}{{ assessment_name }}{{ version_string }} - Math Insight{%endblock%}
+
+{% block extrastyle %}
+<link href="{{ STATIC_URL }}mitesting/miassessment.css" rel="stylesheet" type="text/css"/>
+<meta name="description" content="{{ assessment.description}}"/>
+<script src="{{ STATIC_URL }}js/jquery.dajax.core.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/jquery.ba-serializeobject.min.js" type="text/javascript"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% dajaxice_js_import %} 
+ <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/excanvas.js"></script><![endif]-->
+<script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/jquery.jqplot.css" />
+
+<script type="text/javascript">
+ function showHide(shID) {
+	if (document.getElementById(shID)) {
+		if (document.getElementById(shID+'_show').style.display != 'none') {
+			document.getElementById(shID+'_show').style.display = 'none';
+			document.getElementById(shID).style.display = 'block';
+		}
+		else {
+			document.getElementById(shID+'_show').style.display = 'inline';
+			document.getElementById(shID).style.display = 'none';
+		}
+	}
+}
+</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+
+{% block extrastyle2 %}{% endblock %}
+{% endblock %}
+
+{% block rightcolumn %}
+{% if assessment.thread_content_set.all %}
+<a id="threads" class="anchor"></a>
+<section class="box threadbox">
+<h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
+{% for thread_content in assessment.thread_content_set.all %}
+<a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
+<ul class="linklist">
+  {% with thread_content.find_previous as previous_in_thread %}
+  {% if previous_in_thread %}
+  <li> Previous: {{ previous_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+  {% with thread_content.find_next as next_in_thread %}
+  {% if next_in_thread %}
+  <li> Next: {{ next_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+</ul>
+{% endfor %}
+</section>
+{% endif %}
+{% if question_numbers %}<p>Question numbers: {{ question_numbers }}</p>{% endif %}
+<p>{% if generate_assessment_link %}<a href="{% url 'mit-assessmentgenerate' assessment.code %}">Generate assessment</a><br/>
+Current seed: {{seed}}<br/>
+{%endif%}
+{% if show_solution_link %}<a href="{% url 'mit-assessmentsolution' assessment.code %}?{{request.GET.urlencode}}">View solution</a>{%endif%}</p>
+
+{%endblock%}

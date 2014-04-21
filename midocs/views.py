@@ -5,15 +5,14 @@ from django.views.decorators.http import last_modified
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext, loader, TemplateDoesNotExist, Template, Context
 from django.db.models import Count, Q
+from django.db.models.query import EmptyQuerySet
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage
 from django.contrib import auth
 import django.contrib.auth.views
 from django.contrib.auth.decorators import permission_required
-from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
-from midocs.search_functions import midocsSearchQuerySet
 from itertools import chain
 from haystack.views import SearchView
 import datetime
@@ -160,7 +159,8 @@ def pageview(request, page_code):
           'geogebra_oninit_commands': geogebra_oninit_commands,
           'rendered_text': rendered_text,
           },
-         context_instance=RequestContext(request))
+         context_instance=context  # use to get context from rendered text
+         )
 
 
 
@@ -384,10 +384,13 @@ def videoview(request, video_code):
 
 
 def indexview(request, index_code):
-
-    index_type = get_object_or_404(IndexType, code=index_code)
     
-    index_entries = index_type.entries.all()
+    try:
+        index_type = IndexType.objects.get(code=index_code)
+        index_entries = index_type.entries.all()
+    except ObjectDoesNotExist:
+        index_type = None
+        index_entries = None
 
     # turn off google analytics for localhost
     noanalytics=False
@@ -423,13 +426,32 @@ def newsview(request, news_code):
 # calculate date of applet as the date_modified 
 def date_whatsnew(request, items):
     if items=='news':
-        return NewsItem.objects.latest("date_modified").date_modified
+        try:
+            return NewsItem.objects.latest("date_modified").date_modified
+        except ObjectDoesNotExist:
+            return None
     else:
-        last_page=Page.objects.latest("date_modified").date_modified
-        last_applet=Applet.objects.latest("date_modified").date_modified
-        last_video=Video.objects.latest("date_modified").date_modified
-        last_image=Image.objects.latest("date_modified").date_modified
-        return max(last_page,last_applet,last_video,last_image)
+        try:
+            latest_date=Page.objects.latest("date_modified").date_modified
+        except ObjectDoesNotExist:
+            return None;
+        try:
+            last_applet=Applet.objects.latest("date_modified").date_modified
+            latest_date = max(latest_date, last_applet)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            last_video=Video.objects.latest("date_modified").date_modified
+            latest_date = max(latest_date, last_video)
+        except ObjectDoesNotExist:
+            pass
+        try:
+            last_image=Image.objects.latest("date_modified").date_modified
+            latest_date = max(latest_date, last_image)
+        except ObjectDoesNotExist:
+            pass
+        return latest_date
+    
 
 @last_modified(date_whatsnew)
 def whatsnewview(request, items):
@@ -465,23 +487,39 @@ def whatsnewview(request, items):
     today = datetime.date.today()
 
     if includepages:
-        newpages=Page.objects.exclude(level__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        try:
+            newpages=Page.objects.exclude(level__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        except ObjectDoesNotExist:
+            newpages=EmptyQuerySet
     else:
         newpages=None
     if includeapplets:
-        newapplets=Applet.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        try:
+            newapplets=Applet.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        except ObjectDoesNotExist:
+            newapplets=EmptyQuerySet
     else:
         newapplets=None
     if includevideos:
-        newvideos=Video.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        try:
+            newvideos=Video.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        except ObjectDoesNotExist:
+            newvideos=EmptyQuerySet
     else:
         newvideos=None
+
     if includeimages:
-        newimages=Image.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        try:
+            newimages=Image.objects.filter(publish_date__lte=today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+        except ObjectDoesNotExist:
+            newimages=EmptyQuerySet
     else:
         newimages=None
     if includenews:
-        recent_news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[0:max_items]
+        try:
+            recent_news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[0:max_items]
+        except ObjectDoesNotExist:
+            recent_news=EmptyQuerySet
     else:
         recent_news=None
 
@@ -503,12 +541,25 @@ def whatsnewview(request, items):
 
 
 
-# calculate date of applet as the date_modified 
+# calculate date of home page the last date a pge new or applet was_modified 
+# as these are the items that show up the home page
 def date_home(request):
-    last_page=Page.objects.latest("date_modified").date_modified
-    last_news=NewsItem.objects.latest("date_modified").date_modified
-    last_applet=Applet.objects.latest("date_modified").date_modified
-    return max(last_page,last_news,last_applet)
+    
+    try:
+        latest_date=Page.objects.latest("date_modified").date_modified
+    except ObjectDoesNotExist:
+        return None;
+    try:
+        last_news=NewsItem.objects.latest("date_modified").date_modified
+        latest_date = max(latest_date, last_news)
+    except ObjectDoesNotExist:
+        pass
+    try:
+        last_applet=Applet.objects.latest("date_modified").date_modified
+        latest_date = max(latest_date, last_applet)
+    except ObjectDoesNotExist:
+        pass
+    return latest_date
 
 @last_modified(date_home)
 def home(request):

@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import TemplateView, ListView, DetailView
 from midocs.models import Applet, Video, Image, Author, Page, NotationSystem
 import datetime
-from urls import paginate_by
+from mathinsight.urls import paginate_by
 
 new_days_past=365
 

@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 import datetime
-import settings
+from django.conf import settings
 
 def day_of_week_to_python(day_of_week):
     if day_of_week.upper() == 'S':
