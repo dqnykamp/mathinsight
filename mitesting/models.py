@@ -61,6 +61,10 @@ class Question(models.Model):
     notes = models.TextField(blank=True, null=True)
     reference_pages = models.ManyToManyField('midocs.Page', through='QuestionReferencePage')
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
+    customize_user_sympy_commands = models.BooleanField(default=False)
+    allowed_user_sympy_commands = models.ManyToManyField(
+        'SympyCommandSet', blank=True, null=True,
+        related_name='question_set_user')
     computer_graded=models.BooleanField(default=False)
     show_solution_button_after_attempts=models.IntegerField(default=3)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
@@ -123,27 +127,22 @@ class Question(models.Model):
                                 include_link=include_link)
 
 
+    def return_sympy_global_dict(self, user_response=False):
+        """
+        Return dictionary containing sympy command mappings for 
+        parsing expressions.
+        If user_response is True and customize_sympy_user_commands is True,
+        then use the commands from allowed_user_sympy_commands.
+        Otherwise use commands from allowed_sympy_commands.
+        """
+        from .utils import return_sympy_global_dict
+        if user_response and self.customize_user_sympy_commands:
+            return return_sympy_global_dict(
+                [a.commands for a in \
+                     self.allowed_user_sympy_commands.all()])
+        return return_sympy_global_dict(
+            [a.commands for a in self.allowed_sympy_commands.all()])
     
-
-
-    def render_solution(self, context, user=None, identifier="",
-                        question_set=None):
-        
-        # attempt to set identifier to be unique for each question that
-        # occurs in a page
-        # if question set is specified, that should make it unique
-        # if question set is not specified 
-        # (meaning, either question was embedded directly with tag in page
-        # or we are at a question page), then assume question id will
-        # make it unique
-        identifier = "%s_%s_qs%s" % (identifier, self.id, question_set)
-
-        context['identifier'] = identifier
-
-        seed_used = context['question_%s_seed' % identifier]
-        
-        return self.render_text(context, identifier=identifier, user=user, 
-                                    solution=True, seed_used=seed_used)
 
 
     def render_multiple_choice_question(self, context, identifier, 
@@ -284,7 +283,7 @@ class Question(models.Model):
 class QuestionAuthor(models.Model):
     question = models.ForeignKey(Question)
     author = models.ForeignKey('midocs.Author')
-    sort_order = models.FloatField(default=0)
+    sort_order = models.FloatField(blank=True)
 
     class Meta:
         unique_together = ("question","author")
@@ -292,13 +291,25 @@ class QuestionAuthor(models.Model):
     def __str__(self):
         return "%s" % self.author
 
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.question.questionauthor_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(QuestionAuthor, self).save(*args, **kwargs) 
+
+
 @python_2_unicode_compatible
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
     question_spacing = models.CharField(max_length=20, blank=True, null=True,
                                         choices=Question.SPACING_CHOICES)
     css_class = models.CharField(max_length=100,blank=True, null=True)
-    sort_order = models.FloatField(default=0)
+    sort_order = models.FloatField(blank=True)
     question_text = models.TextField(blank=True, null=True)
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
@@ -309,7 +320,19 @@ class QuestionSubpart(models.Model):
     
     class Meta:
         ordering = ['sort_order','id']
-                                         
+                 
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.question.questionsubpart_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(QuestionSubpart, self).save(*args, **kwargs) 
+
+                        
     def fullcode(self):
         return "%s_%s" % (self.question.id, self.id)
 
@@ -332,7 +355,7 @@ class QuestionSubpart(models.Model):
 class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
     page = models.ForeignKey('midocs.Page')
-    sort_order = models.FloatField(default=0)
+    sort_order = models.FloatField(blank=True)
     question_subpart = models.CharField(max_length=1, blank=True,null=True)
     
     class Meta:
@@ -340,6 +363,18 @@ class QuestionReferencePage(models.Model):
         ordering = ['sort_order','id']
     def __str__(self):
         return "%s for %s" % (self.page, self.question)
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.question.questionreferencepage_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(QuestionReferencePage, self).save(*args, **kwargs) 
+
 
 @python_2_unicode_compatible
 class QuestionAnswerOption(models.Model):
@@ -366,7 +401,7 @@ class QuestionAnswerOption(models.Model):
         ordering = ['sort_order','id']
 
     def __str__(self):
-        return  self.answer
+        return  "code: %s, answer: %s" % (self.answer_code, self.answer)
 
     def save(self, *args, **kwargs):
         # if sort_order is null, make it one more than the max
@@ -377,7 +412,6 @@ class QuestionAnswerOption(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-                
         super(QuestionAnswerOption, self).save(*args, **kwargs) 
 
 
@@ -923,12 +957,23 @@ class Assessment(models.Model):
 class AssessmentBackgroundPage(models.Model):
     assessment = models.ForeignKey(Assessment)
     page = models.ForeignKey('midocs.Page')
-    sort_order = models.FloatField(default = 0.0)
+    sort_order = models.FloatField(blank=True)
 
     class Meta:
         ordering = ['sort_order']
     def __str__(self):
         return "%s for %s" % (self.page, self.assessment)
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.assessment.assessmentbackgroundpage_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(AssessmentBackgroundPage, self).save(*args, **kwargs) 
 
 @python_2_unicode_compatible
 class QuestionSetDetail(models.Model):
@@ -1057,7 +1102,6 @@ class Expression(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-                
         super(Expression, self).save(*args, **kwargs) 
 
 

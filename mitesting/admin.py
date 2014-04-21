@@ -142,7 +142,8 @@ class QuestionAuthorInline(admin.TabularInline):
 
 class QuestionAdmin(reversion.VersionAdmin):
     inlines = [QuestionSubpartInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
-    filter_horizontal = ['allowed_sympy_commands','keywords','subjects']
+    filter_horizontal = ['allowed_sympy_commands','allowed_user_sympy_commands',
+                         'keywords','subjects']
     list_display = ("question_with_number","question_type", "question_privacy", "solution_privacy")
     list_filter = ("question_type", "question_privacy", "solution_privacy",)
     search_fields = ['id', 'name']
@@ -179,6 +180,11 @@ class QuestionAdmin(reversion.VersionAdmin):
                 }),
         ('Commands', {
                 'fields': ('allowed_sympy_commands',)
+                }),
+        ('User commands', {
+                'classes': ('collapse',),
+                'fields': ('customize_user_sympy_commands', 
+                           'allowed_user_sympy_commands',)
                 }),
         )
 

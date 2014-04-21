@@ -1,5 +1,5 @@
 {% extends "mitesting/assessment_base.html" %}
-{% load mi_tags %}
+{% load testing_tags %}
 
 {% block title %}Solution to question: {{ question }}, version {{ version }} - Math Insight{%endblock%}
 {% block content %}
@@ -9,27 +9,7 @@
 <h3>Solution to question: {{ question }}</h3>
 
 
-{% if not results.success %}
-<section class="error">
-<h4>Error in question</h4>
-<p>Print generic error message.  Change page background like webwork?</p>
-{{results.error_message}}
-</section>
-{% endif %}
-
-
-{{ results.rendered_text }}
-
-{% if results.subparts %}
-<ol class='question_subparts'>
-{% for subpart in results.subparts %}
-<li class='question'>
-  {{ subpart.subpart_text}}
-</li>
-{% endfor %}
-</ol>
-{% endif %}
-
+{% question_solution_body question_data %}
 
 {% endblock %}
 

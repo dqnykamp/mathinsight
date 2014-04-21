@@ -668,6 +668,16 @@ def figure(parser, token):
     return FigureNode(figure_number, args, kwargs)
 
 
+@register.inclusion_tag('mitesting/question_body.html')
+def question_body(question_data):
+    return {'question_data': question_data}
+
+@register.inclusion_tag('mitesting/question_solution_body.html')
+def question_solution_body(question_data):
+    return {'question_data': question_data}
+
+    
+
 def _render_question(question, seed, context):
 
 
@@ -813,9 +823,8 @@ def display_video_questions(parser, token):
 
 
 class AnswerBlankNode(template.Node):
-    def __init__(self, answer_expression, answer_expression_string, kwargs):
-        self.answer_expression = answer_expression
-        self.answer_expression_string = answer_expression_string
+    def __init__(self, answer_code, kwargs):
+        self.answer_code = answer_code
         self.kwargs = kwargs
     def render(self, context):
 
@@ -830,26 +839,23 @@ class AnswerBlankNode(template.Node):
             points=float(kwargs['points'])
         except:
             points=1
-
-        answer_list = context.get('_math_writein_answer_list',[])
-
-        # answer expression should refer to an expression that is
-        # defined in the question context
+            
         try:
-            answer_expression = self.answer_expression.resolve(context)
-        except:
+            answer_data = context['_answer_data_']
+        except KeyError:
             return "[invalid answer blank]"
 
-        if answer_expression is None or answer_expression=="":
-            return "[invalid answer blank]"
+        # answer code should be a code defined in the question answer options
+        # that is an expression
+        if self.answer_code not in answer_data['answer_codes']:
+            return "[invalid answer blank: %s]" % (self.answer_code)
 
-        answer_list.append((self.answer_expression_string, answer_expression, 
-                            points))
-        
-        context['_math_writein_answer_list'] = answer_list
+        answer_number = len(answer_data['answer_blank_codes'])
+        answer_identifier = "%s_%s_%s" % (self.answer_code, answer_number,
+                                          answer_data['question_identifier'])
+        answer_data['answer_blank_codes'][answer_identifier] = self.answer_code
+        answer_data['answer_blank_points'][answer_identifier] = points
 
-
-        identifier = context['identifier']
         
         if context.get('readonly', False):
             readonly_string = ' readonly'
@@ -859,18 +865,16 @@ class AnswerBlankNode(template.Node):
         if pre_answers:
             identifier_in_answer = pre_answers['identifier']
             value_string = ' value="%s"' % \
-                pre_answers['answer_%s_%s' % (self.answer_expression_string,
+                pre_answers['answer_%s_%s' % (self.answer_code,
                                              identifier_in_answer)]
         else:
             value_string = ''
-            #{u'asb_qa5_240': u'1', u'answer_answer_qa5_240': u'hello', u'number_attempts_qa5_240': u'0'}
 
-        return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer_blank" type="text" id="id_answer_%s_%s" maxlength="200" name="answer_%s_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_%s_feedback"></span></span>' % \
-            (self.answer_expression_string, identifier,  
-             self.answer_expression_string,
-             identifier, size, readonly_string, value_string, 
-             self.answer_expression_string, 
-             identifier )
+
+        return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer_blank" type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_feedback"></span></span>' % \
+            (answer_identifier, answer_identifier,
+             size, readonly_string, value_string, 
+             answer_identifier)
     
 
 @register.tag
@@ -880,8 +884,7 @@ def answer_blank(parser, token):
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
 
-    answer_expression = parser.compile_filter(bits[1])
-    answer_expression_string = bits[1]
+    answer_code = bits[1]
 
     kwargs = {} 
     bits = bits[2:]
@@ -896,7 +899,7 @@ def answer_blank(parser, token):
                 kwargs[name] = parser.compile_filter(value)
 
 
-    return AnswerBlankNode(answer_expression, answer_expression_string, kwargs)
+    return AnswerBlankNode(answer_code, kwargs)
 
 
 class AssessmentUserCanViewNode(Node):

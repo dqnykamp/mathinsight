@@ -67,7 +67,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
     """
     
     from sympy.parsing.sympy_parser import \
-        (auto_number, factorial_notation, convert_xor, implicit_multiplication)
+        (auto_number, factorial_notation, convert_xor)
     from sympy.parsing.sympy_parser import split_symbols as split_symbols_trans
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
 
@@ -176,14 +176,16 @@ def parse_and_process(s, global_dict=None, local_dict=None,
 
 
 def auto_symbol(tokens, local_dict, global_dict):
-    # customized verison of auto symbol
-    # only difference is that ignore python keywords 
-    # so that the keywords will be turned into a symbol
+    """Inserts calls to ``Symbol`` for undefined variables.
+    
+    Customized verison of auto symbol
+    only difference is that ignore python keywords 
+    so that the keywords will be turned into a symbol
+    """
     from sympy.parsing.sympy_tokenize import NAME, OP
     from sympy.core.basic import Basic
 
 
-    """Inserts calls to ``Symbol`` for undefined variables."""
     result = []
     prevTok = (None, None)
 
@@ -194,7 +196,7 @@ def auto_symbol(tokens, local_dict, global_dict):
         if tokNum == NAME:
             name = tokVal
 
-            if (name in ['True', 'False', 'None']
+            if (name in ['True', 'False', 'None', 'and', 'or', 'not']
                 or name in local_dict
                 # Don't convert attribute access
                 or (prevTok[0] == OP and prevTok[1] == '.')
@@ -221,3 +223,104 @@ def auto_symbol(tokens, local_dict, global_dict):
         prevTok = (tokNum, tokVal)
 
     return result
+
+
+def implicit_multiplication(result, local_dict, global_dict):
+    """Makes the multiplication operator optional in most cases.
+
+    Customized version: only difference is don't add multiplication
+    adjacent to and/or/not.
+
+    Use this before :func:`implicit_application`, otherwise expressions like
+    ``sin 2x`` will be parsed as ``x * sin(2)`` rather than ``sin(2*x)``.
+
+    Example:
+
+    >>> from sympy.parsing.sympy_parser import (parse_expr,
+    ... standard_transformations, implicit_multiplication)
+    >>> transformations = standard_transformations + (implicit_multiplication,)
+    >>> parse_expr('3 x y', transformations=transformations)
+    3*x*y
+    """
+    # These are interdependent steps, so we don't expose them separately
+    from sympy.parsing.sympy_parser import _group_parentheses, \
+        _apply_functions, _flatten
+    for step in (_group_parentheses(implicit_multiplication),
+                 _apply_functions,
+                 _implicit_multiplication):
+        result = step(result, local_dict, global_dict)
+
+    result = _flatten(result)
+    return result
+
+
+def _implicit_multiplication(tokens, local_dict, global_dict):
+    """Implicitly adds '*' tokens.
+
+    Customized version: only difference is don't add multiplication
+    adjacent to and/or/not.
+
+    Cases:
+
+    - Two AppliedFunctions next to each other ("sin(x)cos(x)")
+
+    - AppliedFunction next to an open parenthesis ("sin x (cos x + 1)")
+
+    - A close parenthesis next to an AppliedFunction ("(x+2)sin x")\
+
+    - A close parenthesis next to an open parenthesis ("(x+2)(x+3)")
+
+    - AppliedFunction next to an implicitly applied function ("sin(x)cos x")
+
+    """
+    from sympy.parsing.sympy_parser import AppliedFunction, _token_callable
+    from sympy.parsing.sympy_tokenize import NAME, OP
+    result = []
+    for tok, nextTok in zip(tokens, tokens[1:]):
+        result.append(tok)
+        # only change from standard: ingore and/or/not
+        if ((tok[0] == NAME and tok[1] in ("and", "or", "not")) or
+            (nextTok[0] == NAME and nextTok[1] in ("and", "or", "not"))):
+            continue
+        elif (isinstance(tok, AppliedFunction) and
+              isinstance(nextTok, AppliedFunction)):
+            result.append((OP, '*'))
+        elif (isinstance(tok, AppliedFunction) and
+              nextTok[0] == OP and nextTok[1] == '('):
+            # Applied function followed by an open parenthesis
+            result.append((OP, '*'))
+        elif (tok[0] == OP and tok[1] == ')' and
+              isinstance(nextTok, AppliedFunction)):
+            # Close parenthesis followed by an applied function
+            result.append((OP, '*'))
+        elif (tok[0] == OP and tok[1] == ')' and
+              nextTok[0] == NAME):
+            # Close parenthesis followed by an implicitly applied function
+            result.append((OP, '*'))
+        elif (tok[0] == nextTok[0] == OP
+              and tok[1] == ')' and nextTok[1] == '('):
+            # Close parenthesis followed by an open parenthesis
+            result.append((OP, '*'))
+        elif (isinstance(tok, AppliedFunction) and nextTok[0] == NAME):
+            # Applied function followed by implicitly applied function
+            result.append((OP, '*'))
+        elif (tok[0] == NAME and
+              not _token_callable(tok, local_dict, global_dict) and
+              nextTok[0] == OP and nextTok[1] == '('):
+            # Constant followed by parenthesis
+            result.append((OP, '*'))
+        elif (tok[0] == NAME and
+              not _token_callable(tok, local_dict, global_dict) and
+              nextTok[0] == NAME and
+              not _token_callable(nextTok, local_dict, global_dict)):
+            # Constant followed by constant
+            result.append((OP, '*'))
+        elif (tok[0] == NAME and
+              not _token_callable(tok, local_dict, global_dict) and
+              (isinstance(nextTok, AppliedFunction) or nextTok[0] == NAME)):
+            # Constant followed by (implicitly applied) function
+            result.append((OP, '*'))
+    if tokens:
+        result.append(tokens[-1])
+    return result
+

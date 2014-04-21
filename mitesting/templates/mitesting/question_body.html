@@ -1,0 +1,146 @@
+
+{% if not question_data.success %}
+<section class="error">
+<h4>Error in question {{question_data.question}}</h4>
+<p>Print generic error message.  Change page background like webwork?</p>
+{{question_data.error_message}}
+</section>
+{% endif %}
+
+
+<form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
+
+{{ question_data.rendered_text }}
+
+{% if question_data.help_available %}
+<div class="question_help_container">
+  <p><a id="{{question_data.identifier}}_help_show" class="show_help" onclick="showHide('{{question_data.identifier}}_help');">Need help?</a></p>
+  <section id="{{question_data.identifier}}_help" class="question_help info">
+    {% if question_data.hint_text %}
+    <h5>Hint</h5>
+    {{ question_data.hint_text}}
+    {% endif %}
+    {% if question_data.reference_pages %}
+    <h5>Helpful pages</h5>
+    <ul>
+      {% for rpage in question_data.reference_pages %}
+      <li>{{rpage.return_link}}</li>
+      {% endfor%}
+    </ul>
+    {% endif %}
+    {% if question_data.include_solution_link %}
+    <p><a href='{{question_data.question.get_solution_url}}?seed={{question_data.seed}}'>View solution</a></p>
+    {% endif %}
+    <p><a id="{{question_data.identifier}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_help');">Hide help</a></p>
+  </section>
+
+</div>
+
+{% endif %}
+
+{% if question_data.subparts %}
+<ol class='question_subparts'>
+{% for subpart in question_data.subparts %}
+<li class='question {{ subpart.spacing.css}}'>
+  {{ subpart.subpart_text}}
+  {% if subpart.help_available %}
+<div class="question_help_container">
+  <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_show" class="show_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Need help?</a></p>
+  <section id="{{question_data.identifier}}_{{subpart.letter}}_help" class="question_help info">
+    {% if subpart.hint_text %}
+    <h5>Hint</h5>
+    {{ subpart.hint_text}}
+    {% endif %}
+    {% if subpart.reference_pages %}
+    <h5>Helpful pages</h5>
+    <ul>
+      {% for rpage in subpart.reference_pages %}
+      <li>{{rpage.return_link}}</li>
+      {% endfor%}
+    </ul>
+    {% endif %}
+    {% if subpart.include_solution_link %}
+    <p><a href='{{question.get_solution_url}}?seed={{question_data.seed}}'>View solution</a></p>
+    {% endif %}
+    <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
+  </section>
+
+</div>
+
+{% endif %}
+
+</li>
+{% endfor %}
+</ol>
+{% endif %}
+
+
+{% if question_data.submit_button %}
+<input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">
+<div id="question_{{question_data.identifier}}_feedback" class="info"></div>
+<div id="question_{{question_data.identifier}}_solution" class="info"></div>
+<p><input type="submit" id="question_{{question_data.identifier}}_submit" class="mi_answer_submit" value="Submit" > <span id="question_{{question_data.identifier}}_for_hint_button"></span> <span id="question_{{question_data.identifier}}_for_solution_button"></span></p>
+{% endif %}
+</form>
+<script>
+    {% if question_data.submit_button %}
+  $( "#id_question_{{question_data.identifier}}").submit(function(event) {
+      event.preventDefault();
+      post_form_{{question_data.identifier}}();
+    });
+  {%endif%}  
+  {% if question_data.precheck %}
+  post_form_{{question_data.identifier}}(false);
+  {% endif %}
+  function post_form_{{question_data.identifier}}(record) {
+      var thepost = $.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', $('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
+
+      thepost.done(process_graded_question);
+      
+  }
+</script>
+
+<script>
+    function process_graded_question(data) {
+	var question_identifier=data['identifier'];
+	var question_feedback=$('#question_'+question_identifier+"_feedback");
+	question_feedback.html(data['feedback']);
+	if(data['correct']) {
+	    question_feedback.addClass('success');
+	}
+	else {
+	    question_feedback.removeClass('success');
+	}
+
+	for(var answer_identifier in data['answer_blank_feedback']) {
+	    var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
+	    answer_feedback.html(data['answer_blank_feedback'][answer_identifier]);
+	    if(data['answer_blank_correct'][answer_identifier]) {
+		answer_feedback.removeClass('error').addClass('success');
+	    }
+	    else {
+		answer_feedback.removeClass('success').addClass('error');
+	    }
+	}
+
+	
+	$('#id_number_attempts_'+question_identifier).val(data['number_attempts']);
+	if(data["show_solution_button"]) {
+	    $('#question_'+question_identifier+'_for_solution_button').html(data['solution_button_html']);
+	}
+
+	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_"+question_identifier]);
+    }
+
+  function process_solution_inject(data) {
+      var question_identifier=data['identifier'];
+      $('#question_'+question_identifier+"_solution").html(data['rendered_solution']);
+      $('#question_'+question_identifier+'_for_solution_button').remove();
+      $('#question_'+question_identifier+'_submit').remove();
+
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_"+question_identifier]);
+      
+
+  }
+</script>
+

@@ -175,6 +175,29 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("5!")
         self.assertEqual(expr, 120)
 
+    def test_boolean(self):
+        self.assertEqual(parse_expr("True and True"), True)
+        self.assertEqual(parse_expr("True and not True"), False)
+        self.assertEqual(parse_expr("False or not True"), False)
+        self.assertEqual(parse_expr("not False or not True"), True)
+
+        global_dict = {'a': sympify(1), 'b': sympify(2), 'c': sympify(3),
+                       'd': sympify(4)}
+        expr = parse_expr("a and b and c and d", global_dict=global_dict)
+        self.assertEqual(expr, 4)
+        global_dict['b'] = sympify(0)
+        expr = parse_expr("a and b and c and d", global_dict=global_dict)
+        self.assertEqual(expr, 0)
+        expr = parse_expr("a and not b and c and d", global_dict=global_dict)
+        self.assertEqual(expr, 4)
+        expr = parse_expr("a b and c d", global_dict=global_dict)
+        self.assertEqual(expr, 0)
+        expr = parse_expr("a b or c d", global_dict=global_dict)
+        self.assertEqual(expr, 12)
+        expr = parse_expr("ab or cd", global_dict=global_dict, 
+                          split_symbols=True)
+        self.assertEqual(expr, 12)
+
     def test_parse_and_process(self):
         x=Symbol('x')
         y=Symbol('y')

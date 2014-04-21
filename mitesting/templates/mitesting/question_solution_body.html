@@ -1,0 +1,19 @@
+{% if not question_data.success %}
+<section class="error">
+<h4>Error in question {{question_data.question}}</h4>
+<p>Print generic error message.  Change page background like webwork?</p>
+{{question_data.error_message}}
+</section>
+{% endif %}
+
+{{ question_data.rendered_text }}
+
+{% if question_data.subparts %}
+<ol class='question_subparts'>
+{% for subpart in question_data.subparts %}
+<li class='question'>
+  {{ subpart.subpart_text}}
+</li>
+{% endfor %}
+</ol>
+{% endif %}

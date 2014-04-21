@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, QuestionPermission
+from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
 from sympy import Symbol, sympify, Function
 from numpy import arange, linspace
@@ -14,11 +14,11 @@ import six
 class TestExpressions(TestCase):
     def setUp(self):
         qt = QuestionType.objects.create(name="question type")
-        qp = QuestionPermission.objects.create(name="Public")
         self.q  = Question.objects.create(
             name="fun question",
             question_type = qt,
-            question_permission = qp,
+            question_privacy = 0,
+            solution_privacy = 0
             )
             
     def new_expr(self, **kwargs):
@@ -764,11 +764,11 @@ class TestExpressions(TestCase):
 class TestExpressionSortOrder(TestCase):
     def test_sort_order(self):
         qt = QuestionType.objects.create(name="question type")
-        qp = QuestionPermission.objects.create(name="Public")
         q  = Question.objects.create(
             name="fun question",
             question_type = qt,
-            question_permission = qp,
+            question_privacy = 0,
+            solution_privacy = 0,
             )
             
         e1 = q.expression_set.create(name="a", expression="a")

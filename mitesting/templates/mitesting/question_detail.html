@@ -1,96 +1,12 @@
 {% extends "mitesting/assessment_base.html" %}
-{% load mi_tags %}
+{% load testing_tags %}
 
 {% block title %}Question: {{ question }}, version {{ version }} - Math Insight{%endblock%}
 {% block content %}
 
-
-
 <h3>Question: {{ question }}</h3>
 
-
-{% if not results.success %}
-<section class="error">
-<h4>Error in question</h4>
-<p>Print generic error message.  Change page background like webwork?</p>
-{{results.error_message}}
-</section>
-{% endif %}
-
-
-{% if results.submit_button %}
-<form action="" method="post" id="id_question_{{results.identifier}}" class="writein" onsubmit="event.preventDefault();submit_answer();return false;">
-{%endif%}
-
-{{ results.rendered_text }}
-
-{% if results.help_available %}
-<div class="question_help_container">
-  <p><a id="{{results.identifier}}_help_show" class="show_help" onclick="showHide('{{results.identifier}}_help');">Need help?</a></p>
-  <section id="{{results.identifier}}_help" class="question_help info">
-    {% if results.hint_text %}
-    <h5>Hint</h5>
-    {{ results.hint_text}}
-    {% endif %}
-    {% if results.reference_pages %}
-    <h5>Helpful pages</h5>
-    <ul>
-      {% for rpage in results.reference_pages %}
-      <li>{{rpage.return_link}}</li>
-      {% endfor%}
-    </ul>
-    {% endif %}
-    {% if results.include_solution_link %}
-    <p><a href='{{question.get_solution_url}}?seed={{results.seed}}'>View solution</a></p>
-    {% endif %}
-    <p><a id="{{results.identifier}}_help_hide" class="hide_help" onclick="showHide('{{results.identifier}}_help');">Hide help</a></p>
-  </section>
-
-</div>
-
-{% endif %}
-
-{% if results.subparts %}
-<ol class='question_subparts'>
-{% for subpart in results.subparts %}
-<li class='question {{ subpart.spacing.css}}'>
-  {{ subpart.subpart_text}}
-  {% if subpart.help_available %}
-<div class="question_help_container">
-  <p><a id="{{results.identifier}}_{{subpart.letter}}_help_show" class="show_help" onclick="showHide('{{results.identifier}}_{{subpart.letter}}_help');">Need help?</a></p>
-  <section id="{{results.identifier}}_{{subpart.letter}}_help" class="question_help info">
-    {% if subpart.hint_text %}
-    <h5>Hint</h5>
-    {{ subpart.hint_text}}
-    {% endif %}
-    {% if subpart.reference_pages %}
-    <h5>Helpful pages</h5>
-    <ul>
-      {% for rpage in subpart.reference_pages %}
-      <li>{{rpage.return_link}}</li>
-      {% endfor%}
-    </ul>
-    {% endif %}
-    {% if subpart.include_solution_link %}
-    <p><a href='{{question.get_solution_url}}?seed={{results.seed}}'>View solution</a></p>
-    {% endif %}
-    <p><a id="{{results.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{results.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
-  </section>
-
-</div>
-
-{% endif %}
-
-</li>
-{% endfor %}
-</ol>
-{% endif %}
-
-{% if results.submit_button %}
-<div id="question_{{results.identifier}}_feedback" class="info"></div>
-<p><input type="submit" class="mi_answer_submit" value="Submit" ></p></form>
-{% endif %}
-
+{% question_body question_data %}
 
 {% endblock %}
 
