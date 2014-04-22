@@ -151,7 +151,7 @@ class ParseExprTests(SimpleTestCase):
                          4*x**2*y**2+x+y)
 
     def test_if_as_iif(self):
-        from .customized_commands import iif
+        from mitesting.customized_commands import iif
         x = Symbol('x')
         sub_dict = {'if': iif}
         self.assertEqual(parse_expr('if(4>3,x,y)', global_dict=sub_dict),x)
