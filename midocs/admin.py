@@ -284,7 +284,7 @@ class PageWithNotesAdmin(admin.ModelAdmin):
         return False
     
     # exclude pages without notes
-    def queryset(self, request):
+    def get_queryset(self, request):
         qs = super(PageWithNotesAdmin, self).queryset(request)
         return qs.exclude(notes=None).exclude(notes="")
 

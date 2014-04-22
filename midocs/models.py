@@ -389,7 +389,7 @@ class Page(models.Model):
     def similar_10(self):
         return self.similar.all()[0:10]
     
-    @transaction.commit_on_success
+    @transaction.atomic
     def update_similar(self):
         """ Update all similar pages for page """
         # delete old similar pages

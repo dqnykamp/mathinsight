@@ -72,7 +72,7 @@ def course_assessment_thread_content_form_factory(thread):
 
 class CourseAssessmentThreadContentInline(admin.StackedInline):
     model = CourseThreadContent
-    def queryset(self, request):
+    def get_queryset(self, request):
         qs = super(CourseAssessmentThreadContentInline, self).queryset(request)
         return qs.filter(thread_content__content_type__model='assessment')
 
