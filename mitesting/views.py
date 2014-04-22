@@ -108,8 +108,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         
         response_data = request.POST
 
-        import pickle
-        import base64
+        import pickle, base64
         computer_grade_data = pickle.loads(
             base64.b64decode(response_data.get('cgd')))
 
@@ -310,7 +309,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         
         # if not recording the result of the question,
         # we're finished, so return response with the results
-        if not (computer_grade_data['record'] 
+        if not (computer_grade_data['record_answers'] 
                 and request.user.is_authenticated()):
             return HttpResponse(json.dumps(answer_results),
                                 content_type = 'application/json')
@@ -480,7 +479,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # this code is untested
 
         # record fact that user viewed solution
-        if computer_grade_data['record'] and request.user.is_authenticated():
+        if computer_grade_data['record_answers'] and request.user.is_authenticated():
             assessment_code = computer_grade_data.get('assessment_code')
             assessment_seed = computer_grade_data.get('assessment_seed')
             if assessment_code:
