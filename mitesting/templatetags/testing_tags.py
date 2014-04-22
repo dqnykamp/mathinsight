@@ -857,16 +857,16 @@ class AnswerBlankNode(template.Node):
         answer_data['answer_blank_points'][answer_identifier] = points
 
         
-        if context.get('readonly', False):
+        if answer_data['readonly']:
             readonly_string = ' readonly'
         else:
             readonly_string = ''
-        pre_answers = context.get('pre_answers')
-        if pre_answers:
-            identifier_in_answer = pre_answers['identifier']
+        prefilled_answers = answer_data['prefilled_answers']
+        if prefilled_answers:
+            identifier_in_answer = prefilled_answers['identifier']
             value_string = ' value="%s"' % \
-                pre_answers['answer_%s_%s' % (self.answer_code,
-                                             identifier_in_answer)]
+                prefilled_answers['answer_%s_%s' % (self.answer_code,
+                                                    identifier_in_answer)]
         else:
             value_string = ''
 

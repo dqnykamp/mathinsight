@@ -6,7 +6,7 @@ from __future__ import division
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
 from midocs.models import Page, Level
-from mitesting.render_assessments import setup_expression_context, answer_code_list, render_question_text
+from mitesting.render_assessments import setup_expression_context, answer_code_list, render_question_text, render_question
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
 from sympy import Symbol, sympify, Function
@@ -436,16 +436,15 @@ class TestRenderQuestionText(TestCase):
 
 
     def test_render_blank(self):
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'], "")
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'], "")
-        
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data, solution=False)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'], "")
 
@@ -453,22 +452,22 @@ class TestRenderQuestionText(TestCase):
         self.q.question_text="${{f}}({{x}}) = {{fun_x}}$"
         self.q.solution_text="${{x}} = {{n}}$"
         self.q.save()
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'],
                          "$%s(%s) = %s$" % (
                 self.expr_context["f"], self.expr_context["x"],
                 self.expr_context["fun_x"]))
 
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'],
                          "$%s = %s$" % (
                 self.expr_context["x"], self.expr_context["n"]))
 
-        render_results = render_question_text(question_data, solution=False)
+        render_results = render_question_text(render_data, solution=False)
         self.assertEqual(render_results['question'], self.q)
         self.assertEqual(render_results['rendered_text'],
                          "$%s(%s) = %s$" % (
@@ -480,42 +479,42 @@ class TestRenderQuestionText(TestCase):
                                           solution_text="{{fun_x}}")
         self.q.questionsubpart_set.create(question_text="1+2",
                                           solution_text="3")
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results['rendered_text'], "")
         self.assertEqual(render_results['subparts'][0]['letter'],"a")
-        self.assertEqual(render_results['subparts'][0]['subpart_text'],
+        self.assertEqual(render_results['subparts'][0]['rendered_text'],
                          "%s(%s)" % (self.expr_context["f"],
                                      self.expr_context["x"]))
         self.assertEqual(render_results['subparts'][1]['letter'],"b")
-        self.assertEqual(render_results['subparts'][1]['subpart_text'],
+        self.assertEqual(render_results['subparts'][1]['rendered_text'],
                          "1+2")
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertEqual(render_results['subparts'][0]['letter'],"a")
         self.assertEqual(render_results['rendered_text'], "")
-        self.assertEqual(render_results['subparts'][0]['subpart_text'],
+        self.assertEqual(render_results['subparts'][0]['rendered_text'],
                          "%s" % self.expr_context["fun_x"])
         self.assertEqual(render_results['subparts'][1]['letter'],"b")
-        self.assertEqual(render_results['subparts'][1]['subpart_text'],
+        self.assertEqual(render_results['subparts'][1]['rendered_text'],
                          "3")
 
     def test_render_errors(self):
         self.q.question_text = "{% hmm %}"
         self.q.save()
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['render_error'])
         self.assertTrue("Error in question" in render_results['rendered_text'])
         self.assertTrue("Error in question template" in
                           render_results['render_error_messages'][0])
 
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertFalse(render_results.get('render_error',False))
         
         self.q.solution_text = "{% %}"
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertTrue(render_results['render_error'])
         self.assertTrue("Error in solution" in render_results['rendered_text'])
         self.assertTrue("Error in solution template" in
@@ -527,31 +526,31 @@ class TestRenderQuestionText(TestCase):
         self.q.questionsubpart_set.create(question_text="{% df %}",
                                           solution_text="{% a %}")
 
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['render_error'])
         self.assertEqual(render_results['subparts'][0]['letter'],"a")
         self.assertTrue("Error in question subpart" in 
-                        render_results['subparts'][0]['subpart_text'])
+                        render_results['subparts'][0]['rendered_text'])
         self.assertTrue("Error in question subpart a template" in 
                         render_results['render_error_messages'][0])
         self.assertEqual(render_results['subparts'][1]['letter'],"b")
         self.assertTrue("Error in question subpart" in 
-                        render_results['subparts'][1]['subpart_text'])
+                        render_results['subparts'][1]['rendered_text'])
         self.assertTrue("Error in question subpart b template" in 
                         render_results['render_error_messages'][1])
 
-        render_results = render_question_text(question_data, solution=True)
+        render_results = render_question_text(render_data, solution=True)
         self.assertTrue(render_results['render_error'])
         self.assertEqual(render_results['subparts'][0]['letter'],"a")
         self.assertTrue("Error in solution subpart" in 
-                        render_results['subparts'][0]['subpart_text'])
+                        render_results['subparts'][0]['rendered_text'])
         self.assertTrue("Error in solution subpart a template" in 
                         render_results['render_error_messages'][0])
         self.assertEqual(render_results['subparts'][1]['letter'],"b")
         self.assertTrue("Error in solution subpart" in 
-                        render_results['subparts'][1]['subpart_text'])
+                        render_results['subparts'][1]['rendered_text'])
         self.assertTrue("Error in solution subpart b template" in 
                         render_results['render_error_messages'][1])
 
@@ -564,23 +563,23 @@ class TestRenderQuestionText(TestCase):
         page = Page.objects.create(code="test", title="test")
         self.q.questionreferencepage_set.create(page=page)
 
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertFalse(render_results.get('help_available',False))
         self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "")
         self.assertEqual(render_results.get('reference_pages',[]),[])
         
-        question_data['show_help'] = True
-        render_results = render_question_text(question_data)
+        render_data['show_help'] = True
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
         self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
         self.assertEqual(render_results.get('reference_pages',[]),[page])
         
-        question_data['user'] = AnonymousUser()
-        render_results = render_question_text(question_data)
+        render_data['user'] = AnonymousUser()
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
         self.assertTrue(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
@@ -588,7 +587,7 @@ class TestRenderQuestionText(TestCase):
 
         self.q.solution_text=""
         self.q.save()
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
         self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
@@ -598,14 +597,14 @@ class TestRenderQuestionText(TestCase):
         self.q.hint_text=""
         self.q.save()
         self.q.questionreferencepage_set.get(page=page).delete()
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
         self.assertTrue(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "")
         self.assertEqual(render_results.get('reference_pages',[]),[])
         
         self.q.questionreferencepage_set.create(page=page, question_subpart="a")
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results.get('reference_pages',[]),[page])
 
         
@@ -618,9 +617,9 @@ class TestRenderQuestionText(TestCase):
         page = Page.objects.create(code="test", title="test")
         self.q.questionreferencepage_set.create(page=page, question_subpart="a")
 
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertFalse(render_results['subparts'][0]\
                              .get('help_available',False))
         self.assertFalse(render_results['subparts'][0]\
@@ -630,8 +629,8 @@ class TestRenderQuestionText(TestCase):
         self.assertEqual(render_results['subparts'][0]\
                              .get('reference_pages',[]),[])
 
-        question_data['show_help'] = True
-        render_results = render_question_text(question_data)
+        render_data['show_help'] = True
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
         self.assertFalse(render_results['subparts'][0]\
@@ -641,8 +640,8 @@ class TestRenderQuestionText(TestCase):
         self.assertEqual(render_results['subparts'][0]\
                              .get('reference_pages',[]),[page])
 
-        question_data['user'] = AnonymousUser()
-        render_results = render_question_text(question_data)
+        render_data['user'] = AnonymousUser()
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
         self.assertTrue(render_results['subparts'][0]\
@@ -655,7 +654,7 @@ class TestRenderQuestionText(TestCase):
         sp = self.q.questionsubpart_set.all()[0]
         sp.solution_text=""
         sp.save()
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
         self.assertFalse(render_results['subparts'][0]\
@@ -669,7 +668,7 @@ class TestRenderQuestionText(TestCase):
         sp.hint_text=""
         sp.save()
         self.q.questionreferencepage_set.get(page=page).delete()
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
         self.assertTrue(render_results['subparts'][0]\
@@ -681,12 +680,12 @@ class TestRenderQuestionText(TestCase):
 
         self.q.questionreferencepage_set.create(page=page, question_subpart="b")
         self.q.questionreferencepage_set.create(page=page)
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results['subparts'][0]\
                              .get('reference_pages',[]),[])
 
         self.q.questionreferencepage_set.create(page=page, question_subpart="a")
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertEqual(render_results['subparts'][0]\
                              .get('reference_pages',[]),[page])
 
@@ -695,14 +694,14 @@ class TestRenderQuestionText(TestCase):
         self.q.hint_text = "{% %}"
         self.q.save()
         
-        question_data = {"question": self.q, 
+        render_data = {"question": self.q, 
                          'expression_context': self.expr_context}
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertFalse(render_results.get('hint_template_error',False))
         self.assertFalse(render_results.get('render_error',False))
         
-        question_data['show_help'] = True
-        render_results = render_question_text(question_data)
+        render_data['show_help'] = True
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('hint_template_error',False))
         self.assertFalse(render_results.get('render_error',False))
         self.assertTrue('Error in hint text' in render_results['hint_text'])
@@ -713,7 +712,7 @@ class TestRenderQuestionText(TestCase):
         self.q.questionsubpart_set.create(question_text="question",
                                           solution_text="solution",
                                           hint_text="{% h %}")
-        render_results = render_question_text(question_data)
+        render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('hint_template_error',False))
         self.assertFalse(render_results.get('render_error',False))
         self.assertTrue('Error in hint text' in 
@@ -757,13 +756,13 @@ class TestShowSolutionLink(TestCase):
             for jq in range(3):
                 for iu in range(3):
                     for ju in range(3):
-                        question_data = {"question": self.qs[iq][jq], 
+                        render_data = {"question": self.qs[iq][jq], 
                                          'expression_context':
                                              self.expr_contexts[iq][jq],
                                          'user': self.users[iu][ju],
                                          'show_help': True}
                 
-                        render_results = render_question_text(question_data)
+                        render_results = render_question_text(render_data)
                         if ju >= jq:
                             self.assertTrue(render_results.get(
                                     'include_solution_link',False))
@@ -780,13 +779,13 @@ class TestShowSolutionLink(TestCase):
 
                 for iu in range(3):
                     for ju in range(3):
-                        question_data = {"question": self.qs[iq][jq], 
+                        render_data = {"question": self.qs[iq][jq], 
                                          'expression_context':
                                              self.expr_contexts[iq][jq],
                                          'user': self.users[iu][ju],
                                          'show_help': True}
                 
-                        render_results = render_question_text(question_data)
+                        render_results = render_question_text(render_data)
                         if ju >= jq:
                             self.assertTrue(render_results['subparts'][0].get(
                                     'include_solution_link',False))
@@ -804,17 +803,298 @@ class TestShowSolutionLink(TestCase):
             for jq in range(3):
                 for iu in range(3):
                     for ju in range(3):
-                        question_data = {"question": self.qs[iq][jq], 
+                        render_data = {"question": self.qs[iq][jq], 
                                          'expression_context':
                                              self.expr_contexts[iq][jq],
                                          'user': self.users[iu][ju],
                                          'show_help': True,
                                          'assessment': asmt}
                 
-                        render_results = render_question_text(question_data)
+                        render_results = render_question_text(render_data)
                         if ju == 2:
                             self.assertTrue(render_results.get(
                                     'include_solution_link',False))
                         else:
                             self.assertFalse(render_results.get(
                                     'include_solution_link',False))
+
+class TestRenderQuestion(TestCase):
+    def setUp(self):
+        qt = QuestionType.objects.create(name="question type")
+        self.q  = Question.objects.create(
+            name="question",
+            question_type = qt,
+            question_privacy = 0,
+            solution_privacy = 0,
+            )
+        self.q.expression_set.create(
+            name="n", expression="(-100,100)", 
+            expression_type = Expression.RANDOM_NUMBER)
+        self.q.expression_set.create(
+            name="x",expression="u,v,w,x,y,z,a,b,c,U,V,W,X,Y,Z,A,B,C",
+            expression_type =Expression.RANDOM_EXPRESSION)
+
+    def test_render_blank(self):
+        question_data=render_question(self.q, question_identifier="blank")
+        self.assertEqual(question_data["question"],self.q)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"")
+        self.assertEqual(question_data["identifier"],"blank")
+
+        question_data=render_question(self.q, solution=True, 
+                                      question_identifier="blank_sol")
+        self.assertEqual(question_data["question"],self.q)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"")
+        self.assertEqual(question_data["identifier"],"blank_sol")
+        
+        question_data=render_question(self.q, solution=False)
+        self.assertEqual(question_data["question"],self.q)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"")
+        self.assertEqual(question_data["identifier"],"")
+        
+    def test_render_simple(self):
+        self.q.question_text = "What?"
+        self.q.solution_text = "This."
+        self.q.hint_text = "Because"
+        self.q.save()
+        
+        question_data=render_question(self.q)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"What?")
+        self.assertTrue(question_data.get("help_available"))
+        self.assertEqual(question_data["hint_text"], "Because")
+        
+        question_data=render_question(self.q, solution=True)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"This.")
+        self.assertFalse(question_data.get("help_available"))
+        self.assertEqual(question_data.get("hint_text",""), "")
+
+        question_data=render_question(self.q, show_help=False)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"What?")
+        self.assertFalse(question_data.get("help_available"))
+        self.assertEqual(question_data.get("hint_text",""), "")
+
+        question_data=render_question(self.q, user=AnonymousUser())
+        self.assertTrue(question_data.get("help_available"))
+        self.assertTrue(question_data.get("include_solution_link",False))
+        
+
+    def test_render_subparts(self):
+        self.q.question_text = "Main question"
+        self.q.solution_text = "Main solution"
+        self.q.hint_text = "Main hint"
+        self.q.save()
+        self.q.questionsubpart_set.create(question_text="subquestion1",
+                                          solution_text="subsolution1",
+                                          hint_text="subhint1")
+        self.q.questionsubpart_set.create(question_text="subquestion2",
+                                          solution_text="subsolution2",
+                                          hint_text="subhint2")
+
+        question_data=render_question(self.q)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["rendered_text"],"Main question")
+        self.assertTrue(question_data.get("help_available"))
+        self.assertFalse(question_data.get("include_solution_link",False))
+        self.assertEqual(question_data.get("hint_text",""), "Main hint")
+        self.assertEqual(len(question_data["subparts"]),2)
+
+        self.assertEqual(question_data["subparts"][0]["rendered_text"],
+                         "subquestion1")
+        self.assertTrue(question_data["subparts"][0].get("help_available"))
+        self.assertFalse(question_data["subparts"][0]\
+                            .get("include_solution_link",False))
+        self.assertEqual(question_data["subparts"][0].get("hint_text",""),
+                         "subhint1")
+        
+        self.assertEqual(question_data["subparts"][1]["rendered_text"],
+                         "subquestion2")
+        self.assertTrue(question_data["subparts"][1].get("help_available"))
+        self.assertFalse(question_data["subparts"][1]\
+                            .get("include_solution_link",False))
+        self.assertEqual(question_data["subparts"][1].get("hint_text",""),
+                         "subhint2")
+
+        
+    def test_seed(self):
+        self.q.question_text = "${{x}} = {{n}}$"
+        self.q.save()
+        question_data=render_question(self.q)
+        text = question_data["rendered_text"]
+        seed = question_data["seed"]
+        question_data=render_question(self.q, seed=seed)
+        self.assertEqual(question_data["rendered_text"],text)
+        self.assertEqual(question_data["seed"],seed)
+        
+
+    def test_solution_link(self):
+        self.q.question_text = "What?"
+        self.q.solution_text = "This."
+        self.q.hint_text = "Because"
+        self.q.save()
+  
+        question_data=render_question(self.q)
+        self.assertTrue(question_data.get("help_available"))
+        self.assertFalse(question_data.get("include_solution_link",False))
+
+        question_data=render_question(self.q, user=AnonymousUser())
+        self.assertTrue(question_data.get("help_available"))
+        self.assertTrue(question_data.get("include_solution_link",False))
+
+        at = AssessmentType.objects.create(
+            code="a", name="a", assessment_privacy=2, solution_privacy=2)
+        asmt = Assessment.objects.create(
+            code="a", name="a", assessment_type=at)
+        
+        question_data=render_question(self.q, user=AnonymousUser(),
+                                      assessment=asmt)
+        self.assertTrue(question_data.get("help_available"))
+        self.assertFalse(question_data.get("include_solution_link",False))
+
+        at.question_privacy=0;
+        at.solution_privacy=0;
+        at.save()
+        question_data=render_question(self.q, user=AnonymousUser(),
+                                      assessment=asmt)
+        self.assertTrue(question_data.get("help_available"))
+        self.assertTrue(question_data.get("include_solution_link",False))
+
+
+    def test_readonly(self):
+        answer_code='ans'
+        identifier = "abc_5"
+        answer_identifier ="%s_0_%s" % (answer_code, identifier)
+
+        self.q.questionansweroption_set.create(answer_code=answer_code)
+        self.q.question_text = "{% answer_blank ans %}"
+        self.q.save()
+        
+        question_data=render_question(self.q, question_identifier=identifier)
+        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
+        self.assertInHTML(answerblank_html, question_data["rendered_text"])
+
+        question_data=render_question(self.q, question_identifier=identifier,
+                                      readonly=True)
+        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' readonly>" % (answer_identifier, answer_identifier)
+        self.assertInHTML(answerblank_html, question_data["rendered_text"])
+
+    def test_prefilled_answer(self):
+        answer_code='ans'
+        identifier = "abc_5"
+        answer_identifier ="%s_0_%s" % (answer_code, identifier)
+        previous_answer = "complete guess"
+        prefilled_answers = {
+            'identifier': 'old_one',
+            'answer_%s_old_one' % answer_code: previous_answer}
+
+        self.q.questionansweroption_set.create(answer_code=answer_code)
+        self.q.question_text = "{% answer_blank ans %}"
+        self.q.save()
+        
+        question_data=render_question(self.q, question_identifier=identifier,
+                                      prefilled_answers=prefilled_answers)
+
+        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' value='%s'>" % (answer_identifier, answer_identifier, previous_answer)
+        self.assertInHTML(answerblank_html, question_data["rendered_text"])
+
+ 
+    def test_buttons(self):
+ 
+        question_data=render_question(self.q)
+        
+        self.assertFalse(question_data.get("submit_button",False))
+        self.assertFalse(question_data.get("auto_submit",False))
+        self.assertFalse(question_data.get("help_as_buttons",False))
+        
+        self.q.computer_graded=True
+        self.q.save()
+
+        question_data=render_question(self.q)
+        
+        self.assertTrue(question_data.get("submit_button",False))
+        self.assertFalse(question_data.get("auto_submit",False))
+        self.assertTrue(question_data.get("help_as_buttons",False))
+
+        question_data=render_question(self.q, auto_submit=True)
+        
+        self.assertFalse(question_data.get("submit_button",False))
+        self.assertTrue(question_data.get("auto_submit",False))
+        self.assertTrue(question_data.get("help_as_buttons",False))
+
+    def test_computer_grade_data(self):
+        import pickle, base64
+        identifier="one"
+        seed = "4c"
+        answer_code='ans'
+        answer_identifier = "%s_0_%s" % (answer_code, identifier)
+        self.q.questionansweroption_set.create(answer_code=answer_code)
+        self.q.questionansweroption_set.create(answer_code="another")
+        self.q.question_text = "{% answer_blank ans %}"
+        self.q.computer_graded=True
+        self.q.save()
+
+        question_data=render_question(self.q, question_identifier=identifier,
+                                      seed=seed)
+        cgd = pickle.loads(
+            base64.b64decode(question_data["computer_grade_data"]))
+        
+        self.assertEqual(cgd['identifier'],identifier)
+        self.assertEqual(cgd['seed'], seed)
+        self.assertFalse(cgd['allow_solution_buttons'])
+        self.assertTrue(cgd['record_answers'])
+        self.assertEqual(cgd.get('question_set'),None)
+        self.assertEqual(cgd.get('assessment_code'),None)
+        self.assertEqual(cgd.get('assessment_seed'),None)
+        self.assertEqual(cgd['answer_blank_codes'],
+                         {answer_identifier: answer_code})
+        self.assertEqual(cgd['answer_blank_points'],
+                         {answer_identifier: 1})
+
+        question_data=render_question(self.q, record_answers=False,
+                                      allow_solution_buttons=True)
+        cgd = pickle.loads(
+            base64.b64decode(question_data["computer_grade_data"]))
+        self.assertFalse(cgd['record_answers'])
+        self.assertTrue(cgd['allow_solution_buttons'])
+         
+        question_data=render_question(self.q, record_answers=True,
+                                      allow_solution_buttons=False)
+        cgd = pickle.loads(
+            base64.b64decode(question_data["computer_grade_data"]))
+        self.assertTrue(cgd['record_answers'])
+        self.assertFalse(cgd['allow_solution_buttons'])
+
+    def test_computer_grade_data_assessment(self):
+        import pickle, base64
+
+        identifier="one"
+        seed = "4c"
+        assessment_seed = "12d"
+        assessment_code = "the_test"
+        question_set=5
+
+        at = AssessmentType.objects.create(
+            code="a", name="a", assessment_privacy=2, solution_privacy=2)
+        asmt = Assessment.objects.create(
+            code=assessment_code, name="a", assessment_type=at)
+
+
+        self.q.computer_graded=True
+        self.q.save()
+
+        question_data=render_question(self.q, question_identifier=identifier,
+                                      seed=seed, assessment=asmt,
+                                      assessment_seed=assessment_seed,
+                                      question_set = question_set)
+        cgd = pickle.loads(
+            base64.b64decode(question_data["computer_grade_data"]))
+        
+        self.assertEqual(cgd['identifier'],identifier)
+        self.assertEqual(cgd['seed'], seed)
+        self.assertEqual(cgd['assessment_code'], assessment_code)
+        self.assertEqual(cgd['assessment_seed'], assessment_seed)
+        self.assertEqual(cgd['question_set'], question_set)

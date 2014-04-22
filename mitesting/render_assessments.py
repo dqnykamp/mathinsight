@@ -17,7 +17,7 @@ Identifier changed
 
 """
 
-
+ 
 
 def setup_expression_context(question):
     """
@@ -134,7 +134,7 @@ def answer_code_list(question):
     return answer_code_list
 
 
-def render_question_text(question_data, solution=False):
+def render_question_text(render_data, solution=False):
     """
     Render the question text and subparts as Django templates.
     Use context specified by expression context and load in custom tags
@@ -144,19 +144,19 @@ def render_question_text(question_data, solution=False):
     - question: the question to be rendered
     - expression_context: the template context used to render the text
     - show_help (optional): if true, render the "need help" information
-    If show_help is true, then question_data should also include:
+    If show_help is true, then render_data should also include:
     - user: the logged in user
     - assessment: any assessment for which the question belongs
     (These are used to determine if solution link should be included.)
     
     Return render_results dictionary with the following:
-    - question: the quesiton that was rendered
-    - rendered_text: the results from rendering the main question text
+    - question: the question that was rendered
+    - rendered_text: the results from rendering the main question text 
     - render_error: exists and true on error rendering the template
     - subparts: a list of dictionaries of results from rendering subparts
       Each dictionary has the following keys:
       - letter: the letter assigned to the supart
-      - subpart_text: the results from rendering the subpart text
+      - rendered_text: the results from rendering the subpart text
       - render_error: exists and true on error rendering the template
     If show_help is true, then render_results also contains;
     - reference_pages: a list of pages relevant to the question
@@ -172,8 +172,8 @@ def render_question_text(question_data, solution=False):
       - help_available: true if there is help for subpart
     """
 
-    question = question_data['question']
-    expr_context = question_data['expression_context']
+    question = render_data['question']
+    expr_context = render_data['expression_context']
 
     render_results = {'question': question, 'render_error_messages': [] }
     template_string_base = "{% load testing_tags mi_tags humanize %}"
@@ -218,39 +218,40 @@ def render_question_text(question_data, solution=False):
         if the_text:
             template_string=template_string_base + the_text
             try:
-                subpart_dict['subpart_text'] = \
+                subpart_dict['rendered_text'] = \
                     mark_safe(Template(template_string).render(expr_context))
             except Exception as e:
                 if solution:
-                    subpart_dict['subpart_text'] = \
+                    subpart_dict['rendered_text'] = \
                         mark_safe("Error in solution subpart")
                     render_results['render_error_messages'].append(
                         mark_safe("Error in solution subpart %s template: %s" 
                                   % (subpart_dict["letter"],e)))
                 else:
-                    subpart_dict['subpart_text'] = \
+                    subpart_dict['rendered_text'] = \
                         mark_safe("Error in question subpart")
                     render_results['render_error_messages'].append(
                         mark_safe("Error in question subpart %s template: %s" 
                                   % (subpart_dict["letter"],e)))
                 render_results['render_error'] = True
         else:
-            subpart_dict["subpart_text"] = ""
+            subpart_dict["rendered_text"] = ""
                 
         render_results['subparts'].append(subpart_dict)
 
-    # add help data to render_results, if show_help is set to true
-    if question_data.get('show_help'):
-        add_help_data(question_data, render_results, subparts)
+    # add help data to render_results
+    # if show_help is set to true and not solution
+    if render_data.get('show_help') and not solution:
+        add_help_data(render_data, render_results, subparts)
 
     return render_results
 
 
-def add_help_data(question_data, render_results, subparts=None):
+def add_help_data(render_data, render_results, subparts=None):
     """
     Add hints, references pages, and solution availability to render_results
     
-    Input question_data is a dictionary with the following keys
+    Input render_data is a dictionary with the following keys
     - question: the question to be rendered
     - expression_context: the template context used to render the text
     - user: the logged in user
@@ -285,20 +286,20 @@ def add_help_data(question_data, render_results, subparts=None):
       - help_available: true if there is help for subpart
 
     """
-    question = question_data['question']
+    question = render_data['question']
 
     template_string_base = "{% load testing_tags mi_tags humanize %}"
-    expr_context = question_data['expression_context']
+    expr_context = render_data['expression_context']
     hint_template_error=False
    
     # solution is visible if user has permisions for question and, 
     # in the case when the question is part of an assessment, 
     # also has permissions for assessment
     solution_visible = False
-    if question_data.get('user') and \
-            question.user_can_view(question_data['user'],solution=True):
-        if question_data.get('assessment'):
-            if question_data['assessment'].user_can_view(question_data['user'],
+    if render_data.get('user') and \
+            question.user_can_view(render_data['user'],solution=True):
+        if render_data.get('assessment'):
+            if render_data['assessment'].user_can_view(render_data['user'],
                                                          solution=True):
                 solution_visible=True
         else:
@@ -376,10 +377,13 @@ def add_help_data(question_data, render_results, subparts=None):
 
 
 def render_question(question, seed=None, solution=False, 
-                    question_identifier="",  question_set=None, 
+                    question_identifier="",
                     user=None, show_help=True,
-                    assessment=None, assessment_seed=None, 
-                    pre_answers=None, readonly=False, auto_submit=False, 
+                    assessment=None, question_set=None, 
+                    assessment_seed=None, 
+                    prefilled_answers=None, 
+                    readonly=False, auto_submit=False, 
+                    record_answers=True,
                     allow_solution_buttons=False,
                     applet_counter=0):
 
@@ -392,15 +396,86 @@ def render_question(question, seed=None, solution=False,
     3.  If question is computer graded, set up conditions for submitting
         and recording answer.
 
-    
+    Input arguments
+    - question: the Question instance to be rendered
+    - seed: the random generator seed
+      Used for setting up the expression context.
+      If seed is none, then randomly generate a seed, recording the new
+      seed so that exact version can be reproduced by passing seed in
+    - solution: if true, generate the solution.  Else generate the question.
+    - question_identifier: should be a string that uniquely identifies
+      this particular question among any others on the page
+    - user: a User instance.  Used to determine if solution is viewable
+      and for recording answers of computer graded questions
+    - show_help: if true, show help (hints/reference pages/viewable solutions).
+      If computer graded, will show via buttons (so can record access),
+      else, show via links.
+    - assessment: if not None, indicates the Assessment instance
+      in which question is being rendered.  Used to determine if solution is
+      visible and for recording answers of computer graded questions
+    - question_set: which assessment question_set the question belongs to.
+      Used for recording answers of computer graded questions
+    - assessment_seed: which assessment seed was used to generate assessment.
+      Used for recording answers of computer graded questions
+    - prefilled_answers: a dictionary containing answer for answer blanks.
+      Useful for redisplaying student answers
+    - readonly: if true, then all answer blanks are readonly.
+      Useful with prefilled answers.
+    - auto_submit: automatically submit answers (instead of submit button)
+      Useful with prefilled answers
+    - record_answers: if true, record answer upon submit
+    - allow_solution_buttons: if true, allow a solution button to be displayed
+      on computer graded questions
+    - applet_counter: still need to see how this is needed
 
-    If argument seed is specified, random number generator used for
-    randomly generating expressions is initialized to that seed.
-    Otherwise a seed is randomly generated (and returned so can
-    generate exact version again by passing the seed back in).
-
-
-    """
+    The output is a question_data dictionary.  With the exception of
+    question, success, rendered_text, and error_message, all entries
+    are optional.  The entries are
+    - question: the question that was rendered
+    - success: true if question rendered without errors.
+      If false, rendered text will still show as much of the question
+      as was processed, but submit_button will not be set
+    - error_message: text explaining all errors encountered
+    - rendered_text: the results from rendering the main question text 
+    - subparts: a list of dictionaries of results from rendering subparts
+      Each dictionary has the following keys:
+      - letter: the letter assigned to the supart
+      - rendered_text: the results from rendering the subpart text
+      - help_available: true if there is help for subpart
+      - reference_pages: a list of pages relevant to the subpart
+      - hint_text: rendered hint text
+      - include_solution_link: exists and is true if should include 
+        link to solution
+   - help_available: true if there is help (hint or links to page/solution).
+      If help_available, then the following
+      - reference_pages: a list of pages relevant to the question
+      - hint_text: rendered hint text
+      - include_solution_link: exists & true if should include link to solution
+      - hint_template_error: true if error rendering hint text
+    - help_as_buttons: if true, indicates should not display help as links
+      but instead as buttons (so can track if click those buttons)
+    - applet_data: dictionary of information about applets embedded in text
+    - identifier: the passed in string to identify the question
+    - seed: the random number generator seed used to generate question
+    - auto_submit: if true, automatically submit answers upon page load
+    - submit_button: if true, include button to submit for computer grading
+    - computer_grade_data: a pickled and base64 encoded dictionary of 
+      information about the question to be sent to server with submission
+      of results for computer grading.  Some entries are identical to above:
+      - seed
+      - identifier
+      - allow_solution_buttons
+      - record_answers
+      - question_set
+      - assessment_seed
+      - assessment_code (of assessment from input)
+      Computer grade data also contains information about answer blanks
+      - answer_blank_codes: codes of the answer blanks appearing in question
+      - answer_blank_points: points of those answer blanks
+      Computer grade data contains information about applets
+      - applet_counter: number of applets encountered so far 
+        (not sure if need this)
+   """
 
     if seed is None:
         seed=question.get_new_seed()
@@ -413,25 +488,24 @@ def render_question(question, seed=None, solution=False,
     # if failed condition, then don't display the question
     # but instead give message that condition failed
     if context_results.get('failed_conditions'):
-        results = {
+        question_data = {
+            'question': question,
             'success': False,
             'error_message': mark_safe(
                 '<p>'+context_results['failed_condition_message']+'</p>'),
-            'question_text': mark_safe(
+            'rendered_text': mark_safe(
                 "<p>Question cannot be displayed"
                 + " due to failed condition.</p>")
         }
         return results
 
+
     # probably can remove some of these from question_data
     # if only need to put into the html for computer grading
-    question_data = {
-        'question': question, 'identifier': question_identifier,
-        'seed': seed, 'question_set': question_set,
-        'show_help': show_help, 'user': user,
-        'readonly': readonly, 'precheck': precheck,
-        'pre_answers': pre_answers, 
+    render_data = {
+        'question': question, 'show_help': show_help, 
         'expression_context': context_results['expression_context'],
+        'user': user, 'assessment': assessment
         }
 
     # applet_data will be used to gather information about applets
@@ -441,8 +515,7 @@ def render_question(question, seed=None, solution=False,
     applet_data={}
     applet_data['counter']=applet_counter
     applet_data['javascript'] = {}
-    question_data['expression_context']['_applet_data_'] = applet_data
-    question_data['applet_data']=applet_data
+    render_data['expression_context']['_applet_data_'] = applet_data
 
     # answer data to keep track of
     # 1. possible answer_codes that are valid
@@ -453,19 +526,30 @@ def render_question(question, seed=None, solution=False,
                     'answer_blank_points': {},
                     'multiple_choice_in_question': [],
                     'question_identifier': question_identifier,
+                    'prefilled_answers': prefilled_answers,
+                    'readonly': readonly,
                     }
 
-    question_data['expression_context']['_answer_data_']= answer_data
+    render_data['expression_context']['_answer_data_']= answer_data
 
-    results = render_question_text(question_data, solution=solution)
+    question_data = render_question_text(render_data, solution=solution)
 
-    question_data.update(results)
+    question_data.update({
+            'applet_data': applet_data,
+            'identifier': question_identifier,
+            'seed': seed,
+            'auto_submit': auto_submit,
+            })
 
+    # for computer graded questions show help via buttons 
+    # (so can record if view hint/solution)
+    if question.computer_graded:
+        question_data['help_as_buttons'] = True
+
+    # If render or expression error, combine all error messages
+    # for display in question template.
     question_data['error_message'] = ''
 
-    # If error in expressions or in rendering,
-    # still show as much of the question as was processed.
-    # However, don't give opportunity to submit answer
     if question_data.get('render_error') \
             or context_results.get('error_in_expressions'):
 
@@ -479,46 +563,54 @@ def render_question(question, seed=None, solution=False,
             for error_message in question_data["render_error_messages"]:
                 question_data['error_message'] += \
                     '<li>%s</li>' % error_message
+            del question_data['render_error']
 
         question_data['error_message'] = mark_safe(\
             "<ul>" + question_data['error_message'] + "</ul>")
+
+    else:
+        question_data['success'] = True
+
+
+    # if error or not computer-graded or rendering a solution,
+    # return without adding computer grading data
+    if not question_data['success'] or not question.computer_graded \
+            or solution:
         return question_data
+    
 
-    question_data['success'] = True
+    # if computer graded, add submit button (unless auto_submit)
+    question_data['submit_button'] = not auto_submit
 
-    # if computer graded, then,
-    # - add submit button and show help via buttons (unless auto_submit)
-    # - set up computer grade data, which
-    if question.computer_graded:
+    # set up computer grade data to be sent back to server on submit
+    # computer grade data contains
+    # - information about question (seed, identifier)
+    # - information on grading (record answer and allow solution buttons)
+    # - information about assessment (code, seed, and question_set)
+    # - information about answer blanks found in template (codes and points)
+    # - number of applets encountered so far (not sure if need this)
 
-        # if computer, include submit button
-        # and show help via buttons (so can record if view hint/solution)
-        question_data['submit_button'] = question.computer_graded and not precheck
-        question_data['help_as_buttons'] = question.computer_graded
-
-        assessment_code = assessment.code if assessment else None
-
-        computer_grade_data = {'seed': seed, 'identifier': question_identifier, 
-                               'record': not precheck, 
-                               'allow_solution_buttons': allow_solution_buttons}
-        if assessment:
-            computer_grade_data['assessment_code'] = assessment.code
-            computer_grade_data['assessment_seed'] = assessment_seed,
+    computer_grade_data = {'seed': seed, 'identifier': question_identifier, 
+                           'record_answers': record_answers,
+                           'allow_solution_buttons': allow_solution_buttons}
+    if assessment:
+        computer_grade_data['assessment_code'] = assessment.code
+        computer_grade_data['assessment_seed'] = assessment_seed
         if question_set is not None:
             computer_grade_data['question_set'] = question_set
 
-        computer_grade_data['answer_blank_codes'] \
-            = answer_data['answer_blank_codes']
-        computer_grade_data['answer_blank_points'] \
-            = answer_data['answer_blank_points']
-        computer_grade_data['applet_counter'] = applet_data["counter"]
+    computer_grade_data['answer_blank_codes'] \
+        = answer_data['answer_blank_codes']
+    computer_grade_data['answer_blank_points'] \
+        = answer_data['answer_blank_points']
 
-        # convert data to url parameter format so can append to the 
-        # serialized form output
-        import pickle
-        import base64
-        question_data['computer_grade_data'] = \
-            base64.b64encode(pickle.dumps(computer_grade_data))
+    computer_grade_data['applet_counter'] = applet_data["counter"]
+
+    # serialize and encode computer grade data to facilitate appending
+    # to post data of http request sent when submitting answers
+    import pickle, base64
+    question_data['computer_grade_data'] = \
+        base64.b64encode(pickle.dumps(computer_grade_data))
 
     return question_data
 

@@ -42,7 +42,7 @@
 <ol class='question_subparts'>
 {% for subpart in question_data.subparts %}
 <li class='question {{ subpart.spacing.css}}'>
-  {{ subpart.subpart_text}}
+  {{ subpart.rendered_text}}
   {% if subpart.help_available %}
 <div class="question_help_container">
   <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_show" class="show_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Need help?</a></p>
@@ -136,7 +136,6 @@
       var question_identifier=data['identifier'];
       $('#question_'+question_identifier+"_solution").html(data['rendered_solution']);
       $('#question_'+question_identifier+'_for_solution_button').remove();
-      $('#question_'+question_identifier+'_submit').remove();
 
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_"+question_identifier]);
       
