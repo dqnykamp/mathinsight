@@ -1003,12 +1003,15 @@ class TestRenderQuestion(TestCase):
 
  
     def test_buttons(self):
- 
+        self.q.hint_text="hint"
+        self.q.save()
+
         question_data=render_question(self.q)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertFalse(question_data.get("help_as_buttons",False))
+        self.assertTrue(question_data.get("help_available",False))
         
         self.q.computer_graded=True
         self.q.save()
@@ -1018,6 +1021,14 @@ class TestRenderQuestion(TestCase):
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertTrue(question_data.get("help_as_buttons",False))
+        self.assertFalse(question_data.get("help_available",False))
+
+        question_data=render_question(self.q, show_help=False)
+        
+        self.assertTrue(question_data.get("submit_button",False))
+        self.assertFalse(question_data.get("auto_submit",False))
+        self.assertFalse(question_data.get("help_as_buttons",False))
+        self.assertFalse(question_data.get("help_available",False))
 
         question_data=render_question(self.q, auto_submit=True)
         

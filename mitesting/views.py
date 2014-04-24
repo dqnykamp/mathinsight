@@ -25,13 +25,24 @@ import json
 
 class QuestionView(DetailView):
     """
+    View question or question solution by itself on a page
+
+    Accepts either get or post, with seed given as a parameter.
+    Checks is logged in user has required permissions. 
+    If not, redirects to login page.
+    If not solution, then shows help and solution buttons, if available.
+    
     
     """
 
     model = Question
     pk_url_kwarg = 'question_id'
+    solution=False
 
     def render_to_response(self, context, **response_kwargs):
+        if self.solution:
+            self.template_name = 'mitesting/question_solution.html'
+
         # determine if user has permission to view question,
         # given privacy level
         if not self.object.user_can_view(self.request.user,
@@ -57,11 +68,11 @@ class QuestionView(DetailView):
             except:
                 seed = None
                 
-        # determine if rendering solution.
-        solution=kwargs.get('solution',False)
-        context['solution'] = solution
 
-        show_help = not solution and not self.object.computer_graded
+        # determine if rendering solution.
+        context['solution'] = self.solution
+
+        show_help = not self.solution
         
         # In question view, there will be only one question on page.
         # Identifier doesn't matter.  Use qv to indiciate from question view.
@@ -72,7 +83,7 @@ class QuestionView(DetailView):
             seed=seed, user=self.request.user,
             question_identifier=identifier, 
             allow_solution_buttons=True,
-            solution=solution,
+            solution=self.solution,
             show_help = show_help)
 
 
@@ -90,13 +101,11 @@ class QuestionView(DetailView):
 
         return context
 
-class QuestionSolutionView(QuestionView):
-    template_name = 'mitesting/question_solution.html'
-
-    def get_context_data(self, **kwargs):
-        kwargs['solution']=True
-        return super(QuestionSolutionView, self).get_context_data(**kwargs)
-
+    # allow one to retrieve question via post
+    # (so can't see seed)
+    def post(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
+    
 
 class GradeQuestionView(SingleObjectMixin, View):
     model = Question

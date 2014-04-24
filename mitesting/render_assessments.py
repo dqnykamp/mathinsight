@@ -499,14 +499,15 @@ def render_question(question, seed=None, solution=False,
         }
         return results
 
-
-    # probably can remove some of these from question_data
-    # if only need to put into the html for computer grading
     render_data = {
         'question': question, 'show_help': show_help, 
         'expression_context': context_results['expression_context'],
         'user': user, 'assessment': assessment
         }
+
+    # if computer graded, don't show help as links
+    if question.computer_graded:
+        render_data['show_help']=False
 
     # applet_data will be used to gather information about applets
     # included in templates.  Applets should add to javascript item
@@ -542,8 +543,8 @@ def render_question(question, seed=None, solution=False,
             })
 
     # for computer graded questions show help via buttons 
-    # (so can record if view hint/solution)
-    if question.computer_graded:
+    # (so can record if view hint)
+    if question.computer_graded and show_help==True:
         question_data['help_as_buttons'] = True
 
     # If render or expression error, combine all error messages
