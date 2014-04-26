@@ -2,7 +2,7 @@
 {% if not question_data.success %}
 <section class="error">
 <h4>Error in question {{question_data.question}}</h4>
-<p>Print generic error message.  Change page background like webwork?</p>
+<p>The following errors occurred when rendering the question:</p>
 {{question_data.error_message}}
 </section>
 {% endif %}

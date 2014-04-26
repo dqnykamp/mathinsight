@@ -116,22 +116,34 @@ def setup_expression_context(question):
     return results
 
 
-def answer_code_list(question): 
+def answer_code_list(question, expression_context): 
     """
     Return a list of all the unique answer codes from the answer options
     of question that are expressions.
+
+    Also, returns list of expressions not found in expression context
     """
     
     from mitesting.models import QuestionAnswerOption
 
     answer_code_list = []
+    invalid_answers = []
     for option in question.questionansweroption_set.filter(
         answer_type=QuestionAnswerOption.EXPRESSION):
         
-        if option.answer_code not in answer_code_list:
+        if option.answer not in expression_context:
+            invalid_answers.append("(%s, %s)" %(option.answer_code, option.answer))
+        elif option.answer_code not in answer_code_list:
             answer_code_list.append(option.answer_code)
     
-    return answer_code_list
+    if invalid_answers:
+        if len(invalid_answers) > 1:
+            invalid_answers = ["Invalid answer codes: " + \
+                                   ", ".join(invalid_answers),]
+        else:
+            invalid_answers = ["Invalid answer code: " +  invalid_answers[0],]
+
+    return (answer_code_list, invalid_answers)
 
 
 def render_question_text(render_data, solution=False):
@@ -417,7 +429,7 @@ def render_question(question, seed=None, solution=False,
       Used for recording answers of computer graded questions
     - assessment_seed: which assessment seed was used to generate assessment.
       Used for recording answers of computer graded questions
-    - prefilled_answers: a dictionary containing answer for answer blanks.
+    - prefilled_answers: a list containing answers for answer blanks.
       Useful for redisplaying student answers
     - readonly: if true, then all answer blanks are readonly.
       Useful with prefilled answers.
@@ -522,13 +534,18 @@ def render_question(question, seed=None, solution=False,
     # 1. possible answer_codes that are valid
     # 2. the answer_codes that actually appear in the question
     # 3. the multiple choices that actually appear in the question
-    answer_data = { 'answer_codes': answer_code_list(question),
+    (answer_codes, invalid_answers) = answer_code_list(
+        question, render_data['expression_context'])
+
+    answer_data = { 'answer_codes': answer_codes,
                     'answer_blank_codes': {},
                     'answer_blank_points': {},
                     'multiple_choice_in_question': [],
                     'question_identifier': question_identifier,
                     'prefilled_answers': prefilled_answers,
                     'readonly': readonly,
+                    'error': bool(invalid_answers),
+                    'answer_blank_errors': invalid_answers,
                     }
 
     render_data['expression_context']['_answer_data_']= answer_data
@@ -542,6 +559,15 @@ def render_question(question, seed=None, solution=False,
             'auto_submit': auto_submit,
             })
 
+    # if have prefilled answers, check to see that the number matches the
+    # number of answer blanks (template tag already checked if
+    # the answer_codes matched for those answers that were found)
+    if prefilled_answers:
+        if len(prefilled_answers) != len(answer_data["answer_blank_codes"]):
+            answer_data["error"]=True
+            answer_data["answer_blank_errors"].append(
+                "Invalid number of previous answers")
+    
     # for computer graded questions show help via buttons 
     # (so can record if view hint)
     if question.computer_graded and show_help==True:
@@ -552,7 +578,8 @@ def render_question(question, seed=None, solution=False,
     question_data['error_message'] = ''
 
     if question_data.get('render_error') \
-            or context_results.get('error_in_expressions'):
+            or context_results.get('error_in_expressions')\
+            or answer_data.get('error'):
 
         question_data['success']=False
         if context_results.get('error_in_expressions'):
@@ -565,6 +592,10 @@ def render_question(question, seed=None, solution=False,
                 question_data['error_message'] += \
                     '<li>%s</li>' % error_message
             del question_data['render_error']
+        if answer_data.get('error'):
+            for error_message in answer_data['answer_blank_errors']:
+                question_data['error_message'] += \
+                    '<li>%s</li>' % error_message
 
         question_data['error_message'] = mark_safe(\
             "<ul>" + question_data['error_message'] + "</ul>")
@@ -573,10 +604,10 @@ def render_question(question, seed=None, solution=False,
         question_data['success'] = True
 
 
-    # if error or not computer-graded or rendering a solution,
+    # if error or not computer-graded or rendering a solution or no answer blanks,
     # return without adding computer grading data
     if not question_data['success'] or not question.computer_graded \
-            or solution:
+            or solution or not answer_data['answer_blank_codes']:
         return question_data
     
 

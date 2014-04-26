@@ -843,16 +843,19 @@ class AnswerBlankNode(template.Node):
         try:
             answer_data = context['_answer_data_']
         except KeyError:
-            return "[invalid answer blank]"
+            return "[Invalid answer blank]"
 
         # answer code should be a code defined in the question answer options
         # that is an expression
         if self.answer_code not in answer_data['answer_codes']:
-            return "[invalid answer blank: %s]" % (self.answer_code)
+            answer_data['error']=True
+            answer_data['answer_blank_errors'].append(
+                "Invalid answer blank: %s" % self.answer_code)
+            return "[Invalid answer blank: %s]" % (self.answer_code)
 
         answer_number = len(answer_data['answer_blank_codes'])
-        answer_identifier = "%s_%s_%s" % (self.answer_code, answer_number,
-                                          answer_data['question_identifier'])
+        answer_identifier = "%s_%s" % (answer_number,
+                                       answer_data['question_identifier'])
         answer_data['answer_blank_codes'][answer_identifier] = self.answer_code
         answer_data['answer_blank_points'][answer_identifier] = points
 
@@ -861,14 +864,20 @@ class AnswerBlankNode(template.Node):
             readonly_string = ' readonly'
         else:
             readonly_string = ''
-        prefilled_answers = answer_data['prefilled_answers']
-        if prefilled_answers:
-            identifier_in_answer = prefilled_answers['identifier']
-            value_string = ' value="%s"' % \
-                prefilled_answers['answer_%s_%s' % (self.answer_code,
-                                                    identifier_in_answer)]
-        else:
-            value_string = ''
+            
+        value_string = ''
+        try:
+            prefilled_answers = answer_data['prefilled_answers']
+            the_answer = prefilled_answers[answer_number-1]
+            if the_answer["answer_code"] == self.answer_code:
+                value_string = ' value="%s"' %  the_answer["answer"]
+            else:
+                answer_data['error'] = True
+                answer_data['answer_blank_errors'].append(
+                    "Invalid previous answer: %s != %s" % 
+                    (the_answer["answer_code"], self.answer_code))
+        except (KeyError, IndexError, TypeError):
+            pass
 
 
         return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer_blank" type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_feedback"></span></span>' % \

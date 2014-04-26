@@ -31,8 +31,13 @@ class QuestionView(DetailView):
     Checks is logged in user has required permissions. 
     If not, redirects to login page.
     If not solution, then shows help and solution buttons, if available.
-    
-    
+
+    Add the following to the context:
+    - question_data: dictionary returned by render_assessments.render_question.
+      This dictionary contains the information about the question that is
+      used by the template mitesting/question_body.html
+    - show_lists: True if should show lists of assessments
+    - noanalytics: True to indicate shouldn't link to Google analytics
     """
 
     model = Question
@@ -46,7 +51,7 @@ class QuestionView(DetailView):
         # determine if user has permission to view question,
         # given privacy level
         if not self.object.user_can_view(self.request.user,
-                                         solution=context['solution']):
+                                         solution=self.solution):
             path = self.request.build_absolute_uri()
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(path)
@@ -69,9 +74,7 @@ class QuestionView(DetailView):
                 seed = None
                 
 
-        # determine if rendering solution.
-        context['solution'] = self.solution
-
+        # show help if no rendering solution
         show_help = not self.solution
         
         # In question view, there will be only one question on page.
@@ -108,6 +111,50 @@ class QuestionView(DetailView):
     
 
 class GradeQuestionView(SingleObjectMixin, View):
+    """
+    Grade user responses for computer graded questions.
+    Record answer for logged in users, if record_answers for computer_grade_data
+    is set.
+
+    Expects the following POST data:
+    - cgd: a picked and base64 encoded dictionary of computer_grade_data,
+      which is a dictionary containing information about the equation needed
+      for computer grading.
+      computer_grade_data should contain the following
+      - seed: the seed use to used to generate the question
+      - identifier: the identifier for the question
+      - allow_solution_buttons: if set to true, show a solution  button if
+        other criteria are met
+      - record_answers: if set to true, record logged in user answers
+      - assessment_code: code of any assessment in which the question was rendered
+      - question_set: question_set of this assessment in which question appeared
+      - assessment_seed: seed used to generate the assessment
+      - answer_blank_codes: codes of the answer blanks appearing in question
+      - answer_blank_points: points of those answer blanks
+      - applet_counter: number of applets encountered so far 
+        (not sure if need this)
+    - number_attempts_[identifier]: the number of previous attempts answering
+      the question
+    - answer_[answer_identifier]: the response user entered for the answer
+       
+    Returns a json objects with the following properties
+    - identifier: the identifier for the questions
+    - correct: true if all answer blanks were answer correctly
+    - feedback: message detailing the correctness of the answers
+    - answer_blank_correct: an object keyed by answer identifiers,
+      where each property is true if the corresponding answer was correct
+    - answer_blank_feedback: an object keyed by answer identifiers,
+      where each property gives a message about the correctness of the answer
+    - number_attempts: the number of attempts answering the question, 
+      including the current attempt
+    - show_solution_button: true if should show a button to reveal the solution
+    - solution_button_html: the html for the solution button
+
+    If record_answers is set to true and user is logged in, then record
+    users answers, associating answer with a course if associated with a course
+    that is set up for recording answers and assessment not past due
+
+    """
     model = Question
     pk_url_kwarg = 'question_id'
 
@@ -118,13 +165,16 @@ class GradeQuestionView(SingleObjectMixin, View):
         response_data = request.POST
 
         import pickle, base64
-        computer_grade_data = pickle.loads(
-            base64.b64decode(response_data.get('cgd')))
-
+        try:
+            computer_grade_data = pickle.loads(
+                base64.b64decode(response_data.get('cgd')))
+        except TypeError, IndexError:
+            return HttpResponse("", content_type = 'application/json')
+            
         question_identifier = computer_grade_data['identifier']
 
         # set up context from question expressions
-        seed = computer_grade_data.get('seed')
+        seed = computer_grade_data['seed']
         random.seed(seed)
         from .render_assessments import setup_expression_context
         context_results = setup_expression_context(question)
@@ -141,9 +191,8 @@ class GradeQuestionView(SingleObjectMixin, View):
         answer_blank_user_responses = {}
         for answer_identifier in answer_blank_codes.keys():
             answer_blank_user_responses[answer_identifier] = \
-                response_data['answer_%s' % answer_identifier]
-
-
+                response_data.get('answer_%s' % answer_identifier, "")
+        
         points_achieved=0
         total_points=0
 
@@ -178,7 +227,8 @@ class GradeQuestionView(SingleObjectMixin, View):
                 continue
             
             feedback=""
-               
+            near_match_feedback=""
+
             # compare with expressions associated with answer_code
             for answer_option in question.questionansweroption_set \
                     .filter(answer_code=answer_code, \
@@ -190,12 +240,10 @@ class GradeQuestionView(SingleObjectMixin, View):
                 except KeyError:
                     continue
 
-                split_symbols=answer_option.split_symbols_on_compare
-                
                 try:
                     user_response_parsed = parse_and_process(
                         user_response, global_dict=global_dict, 
-                        split_symbols=split_symbols)
+                        split_symbols=answer_option.split_symbols_on_compare)
                 except Exception as e:
                     feedback = "Sorry.  Unable to understand the answer."
                     break
@@ -205,11 +253,13 @@ class GradeQuestionView(SingleObjectMixin, View):
                     tuple_is_unordered=valid_answer.return_if_unordered(),
                     output_no_delimiters= \
                         valid_answer.return_if_output_no_delimiters(),
-                    use_ln=valid_answer.return_if_use_ln())
+                    use_ln=valid_answer.return_if_use_ln(),
+                    normalize_on_compare=answer_option.normalize_on_compare)
 
 
-                correctness_of_answer = valid_answer.compare_with_expression \
-                    (user_response_parsed.return_expression())
+                correctness_of_answer = \
+                    user_response_parsed.compare_with_expression( \
+                    valid_answer.return_expression())
 
                 if correctness_of_answer == 1:
                     if answer_option.percent_correct > percent_correct:
@@ -217,30 +267,34 @@ class GradeQuestionView(SingleObjectMixin, View):
                             feedback = \
                                 'Yes, $%s$ is correct.' % user_response_parsed
                         else:
-                            feedback = \
-                                '$%s$ is partially correct (%s%% credit).'\
+                            feedback = '$%s$ is not completely correct but earns' \
+                                ' partial (%s%%) credit.' \
                                 % (user_response_parsed, 
                                    answer_option.percent_correct)
                         percent_correct = answer_option.percent_correct
                         
-                elif correctness_of_answer == -1 and percent_correct==0:
-                    if answer_option.percent_correct >\
-                            near_match_percent_correct:
-                        feedback = "No, $%s$ is not correct. " \
-                            % user_response_parsed
-                        feedback += " You are close as your "\
-                            + "answer is mathematically equivalent to " 
-                        if answer_option.percent_correct == 100:
-                            feedback += "the correct answer, "
-                        else:
-                            feedback += "an answer that is %s%% correct, " \
-                                % answer_option.percent_correct
-                        feedback += "but this question requires"\
-                            " you to write your answer in a different form." 
-                elif not feedback:
-                    feedback = 'No, $%s$ is incorrect.  Try again.' \
+                else:
+                    if correctness_of_answer == -1:
+                        if answer_option.percent_correct >\
+                                near_match_percent_correct:
+                            near_match_feedback = \
+                                " Your answer is mathematically equivalent to " 
+                            if answer_option.percent_correct == 100:
+                                near_match_feedback += "the correct answer, "
+                            else:
+                                near_match_feedback  += \
+                                    "an answer that is %s%% correct, " \
+                                    % answer_option.percent_correct
+                            near_match_feedback += "but this question requires"\
+                                " you to write your answer in a different form." 
+                            near_match_percent_correct =\
+                                answer_option.percent_correct
+                    if not feedback:
+                        feedback = 'No, $%s$ is incorrect.' \
                         % user_response_parsed
 
+            if percent_correct < 100 and near_match_feedback:
+                feedback += near_match_feedback
 
             # store (points achieved)*100 as integer for now
             points_achieved += percent_correct * \
@@ -249,21 +303,46 @@ class GradeQuestionView(SingleObjectMixin, View):
             answer_results['answer_blank_feedback'][answer_identifier] \
                 = feedback
             answer_results['answer_blank_correct'][answer_identifier]\
-                = percent_correct
+                = (percent_correct == 100)
 
         
         # record if exactly correct, then normalize points achieved
-        answer_correct = (points_achieved == total_points*100)
-        points_achieved /= 100.0
-        credit = points_achieved/total_points
+        if total_points:
+            answer_correct = (points_achieved == total_points*100)
+            points_achieved /= 100.0
+            credit = points_achieved/total_points
+        else:
+            answer_correct = False
+            points_achieved /= 100.0
+            credit = 0
         answer_results['correct'] = answer_correct
-        if answer_correct:
+        if total_points == 0:
+            answer_results['feedback'] = \
+                "<p>No points possible for question</p>"
+        elif answer_correct:
             answer_results['feedback'] = "<p>Answer is correct</p>"
         elif points_achieved == 0:
             answer_results['feedback'] = "<p>Answer is incorrect</p>"
         else:
             answer_results['feedback'] = '<p>Answer is %s%% correct'\
-                % round(credit*100) 
+                % int(round(credit*100))
+
+        # determine if question is part of an assessment
+        assessment_code = computer_grade_data.get('assessment_code')
+        assessment_seed = computer_grade_data.get('assessment_seed')
+        question_set = computer_grade_data.get('question_set')
+
+        if assessment_code:
+            try:
+                assessment = Assessment.objects.get(code=assessment_code)
+            except ObjectDoesNotExist:
+                assessment_code = None
+
+        if not assessment_code:
+            assessment = None
+            question_set = None
+            assessment_seed = None
+
 
         # increment number of attempts
         try:
@@ -274,41 +353,44 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         number_attempts+=1
         answer_results['number_attempts'] = number_attempts
-
+        
         show_solution_button = False
         allow_solution_buttons = computer_grade_data.get(
             'allow_solution_buttons', False)
 
-        if allow_solution_buttons and \
-                question.show_solution_button_after_attempts and \
-                number_attempts >= \
-                question.show_solution_button_after_attempts and \
-                question.user_can_view(request.user, solution=True):
-
-            # check if solution exists for question or subpart
-            solution_exists = False
+        def determine_show_solution_button():
+            if not allow_solution_buttons:
+                return False
+            if not question.show_solution_button_after_attempts:
+                return False
+            if not number_attempts >= question.show_solution_button_after_attempts:
+                return False
+            if not question.user_can_view(request.user, solution=True):
+                return False
+            if assessment:
+                if not assessment.user_can_view(request.user, solution=True):
+                    return False
             if question.solution_text:
-                solution_exists = True
-            else:
-                for question_subpart in question.questionsubpart_set.all():
-                    if question_subpart.solution_text:
-                        solution_exists = True
-                        break
-
-            if solution_exists:
-                show_solution_button = True
-                inject_solution_url = reverse('mit-injectquestionsolution',
-                                      kwargs={'question_id': question.id})
-                show_solution_command = \
-                    '$.post("%s", "cgd=%s", process_solution_inject);' \
-                    % (inject_solution_url, response_data.get('cgd'))
+                return True
+            for question_subpart in question.questionsubpart_set.all():
+                if question_subpart.solution_text:
+                    return True
+            return False
                 
-                solution_button_html = \
-                    "<input type='button' class='mi_show_solution' value='Show solution' onclick='%s'>" % (show_solution_command)
+        
+        show_solution_button = determine_show_solution_button()
+        if show_solution_button:
+            show_solution_button = True
+            inject_solution_url = reverse('mit-injectquestionsolution',
+                                  kwargs={'question_id': question.id})
+            show_solution_command = \
+                '$.post("%s", "cgd=%s", process_solution_inject);' \
+                % (inject_solution_url, response_data.get('cgd'))
 
-                answer_results['solution_button_html'] = \
-                    solution_button_html
+            solution_button_html = \
+                "<input type='button' class='mi_show_solution' value='Show solution' onclick='%s'>" % (show_solution_command)
 
+            answer_results['solution_button_html'] = solution_button_html
                 
 
         answer_results['show_solution_button'] = show_solution_button
@@ -316,22 +398,13 @@ class GradeQuestionView(SingleObjectMixin, View):
         
         # untested with courses
         
+        record_answers = computer_grade_data['record_answers'] 
+
         # if not recording the result of the question,
         # we're finished, so return response with the results
-        if not (computer_grade_data['record_answers'] 
-                and request.user.is_authenticated()):
+        if not (record_answers and request.user.is_authenticated()):
             return HttpResponse(json.dumps(answer_results),
                                 content_type = 'application/json')
-            
-        
-        assessment_code = computer_grade_data.get('assessment_code')
-        assessment_seed = computer_grade_data.get('assessment_seed')
-        if assessment_code:
-            assessment = Assessment.objects.get(code=assessment_code)
-        else:
-            assessment = None
-            question_set = None
-            assessment_seed = None
 
         try:
             student = request.user.courseuser
@@ -346,7 +419,6 @@ class GradeQuestionView(SingleObjectMixin, View):
         past_due = False
         due_date = None
         solution_viewed = False
-        record_scores = True
 
         if course and assessment_code:
                         
@@ -361,25 +433,25 @@ class GradeQuestionView(SingleObjectMixin, View):
                 # record answer only if assessment_type 
                 # specifies recoding online attempts
                 if not assessment.assessment_type.record_online_attempts:
-                    record_scores = False
+                    record_answers = False
 
                 if not content.record_scores:
-                    record_scores = False
+                    record_answers = False
 
             except ObjectDoesNotExist:
                 content=None
-                record_scores = False
+                record_answers = False
 
-            if record_scores:
+            if record_answers:
                 due_date = content.adjusted_due_date(student)
                 today = datetime.date.today()
                 if due_date and today > due_date:
                     past_due = True
-                    record_scores = False
+                    record_answers = False
 
             # if record scores, get or create attempt by student
             # with same assessment_seed
-            if record_scores:
+            if record_answers:
                 try:
                     current_attempt = content.studentcontentattempt_set\
                         .filter(student=student, seed=assessment_seed).latest()
@@ -394,7 +466,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                         .filter(question_set=question_set).exists():
                     solution_viewed = True
                     current_attempt = None
-                    record_scores = False
+                    record_answers = False
 
 
         # if have current_attempt, don't record assessment,
@@ -404,9 +476,8 @@ class GradeQuestionView(SingleObjectMixin, View):
             assessment_seed = None
 
         # record attempt, possibly linking to latest content attempt
-        # even if record_scores is False, create QuestionStudentAnswer
+        # even if record_answers is False, create QuestionStudentAnswer
         # record (just in case), but don't associate it with course
-        import json
         QuestionStudentAnswer.objects.create\
             (user=request.user, question=question, \
                  question_set=question_set,\
@@ -421,7 +492,7 @@ class GradeQuestionView(SingleObjectMixin, View):
             feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
         elif solution_viewed:
             feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
-        elif not record_scores:
+        elif not record_answers:
             feedback_message = "Assessment not set up for recording answers"
         else:
             feedback_message = ""
@@ -440,6 +511,30 @@ class GradeQuestionView(SingleObjectMixin, View):
 
 
 class InjectQuestionSolutionView(SingleObjectMixin, View):
+    """
+    Returns rendered solution of question as json object.
+    Record that logged in users have viewed the solution
+
+    Expects the following POST data:
+    - cgd: a picked and base64 encoded dictionary of computer_grade_data,
+      which is a dictionary containing information about the equation needed
+      for computer grading.
+      computer_grade_data should contain the following
+      - seed: the seed use to used to generate the question
+      - identifier: the identifier for the question
+      - assessment_code: code of any assessment in which the question was rendered
+      - question_set: question_set of this assessment in which question appeared
+      - assessment_seed: seed used to generate the assessment
+      - applet_counter: number of applets encountered so far 
+        (not sure if need this)
+
+    Returns a json objects with the following properties
+    - identifier: the identifier for the questions
+    - rendered_solution: the solution rendered via the template
+      mitesting/question_solution_body.html
+    
+
+    """
     model = Question
     pk_url_kwarg = 'question_id'
 
@@ -447,20 +542,38 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # Look up the question to grade
         question = self.get_object()
         
-        if not question.user_can_view(request.user, True):
-            return HttpResponse("", content_type = 'application/json')
-
         response_data = request.POST
 
-        import pickle
-        import base64
-        computer_grade_data = pickle.loads(
-            base64.b64decode(response_data.get('cgd')))
+        import pickle, base64
+        try:
+            computer_grade_data = pickle.loads(
+                base64.b64decode(response_data.get('cgd')))
+        except TypeError, IndexError:
+            return HttpResponse("", content_type = 'application/json')
+
+        assessment_code = computer_grade_data.get('assessment_code')
+        assessment = None
+        
+        if assessment_code:
+            try:
+                assessment = Assessment.objects.get(code=assessment_code)
+            except ObjectDoesNotExist:
+                assessment_code = None
+
+        # if user cannot view question solution,
+        # or if user cannot view assessment solution (in case question is
+        # part of an assessment)
+        # then return empty json object
+        if not question.user_can_view(request.user, solution=True):
+            return HttpResponse("", content_type = 'application/json')
+        if assessment:
+            if not assessment.user_can_view(request.user, solution=True):
+                return HttpResponse("", content_type = 'application/json')
 
         question_identifier = computer_grade_data['identifier']
 
         # set up context from question expressions
-        seed = computer_grade_data.get('seed')
+        seed = computer_grade_data['seed']
 
         from mitesting.render_assessments import render_question
         question_data= render_question(
@@ -482,57 +595,56 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                    'identifier': question_identifier
                    }
 
-        # record that viewed solution
-        # if record is true
+
+        # if don't have logged in user, then just return results
+        if not request.user.is_authenticated():
+            return HttpResponse(json.dumps(results),
+                                content_type = 'application/json')
+            
+        # otherwise, first record that user viewed solution
 
         # this code is untested
 
-        # record fact that user viewed solution
-        if computer_grade_data['record_answers'] and request.user.is_authenticated():
-            assessment_code = computer_grade_data.get('assessment_code')
+        try:
+            student = request.user.courseuser
+            course = student.return_selected_course()
+        except:
+            course = None
+
+        # check if assessment given by assessment_code is in course
+        # if so, will link to latest attempt
+        if course and assessment_code:
+
             assessment_seed = computer_grade_data.get('assessment_seed')
-            if assessment_code:
-                assessment = Assessment.objects.get(code=assessment_code)
-            else:
-                assessment = None
+            question_set = computer_grade_data.get('question_set')
+
+            assessment_content_type = ContentType.objects.get\
+                (model='assessment')
 
             try:
-                student = request.user.courseuser
-                course = student.return_selected_course()
-            except:
-                course = None
-                    
-            # check if assessment given by assessment_code is in course
-            # if so, will link to latest attempt
-            if course and assessment_code:
-                    
-                assessment_content_type = ContentType.objects.get\
-                    (model='assessment')
-                    
-                try:
-                    content=course.coursethreadcontent_set.get\
-                        (thread_content__object_id=assessment.id,\
-                             thread_content__content_type=\
-                             assessment_content_type)
-                except ObjectDoesNotExist:
-                    content=None
+                content=course.coursethreadcontent_set.get\
+                    (thread_content__object_id=assessment.id,\
+                         thread_content__content_type=\
+                         assessment_content_type)
+            except ObjectDoesNotExist:
+                content=None
 
-                # if found course content, get or create attempt by student
-                # with same assessment_seed
-                if content:
-                    try:
-                        current_attempt = content.studentcontentattempt_set\
-                            .filter(student=student, seed=assessment_seed)\
-                            .latest()
-                    except ObjectDoesNotExist:
-                        current_attempt = content.studentcontentattempt_set\
-                            .create(student=student, seed=assessment_seed)
-                        
-                    # record fact that viewed solution
-                    # for this content attempt
-                    # and this question set
-                    current_attempt.studentcontentattemptsolutionview_set\
-                        .create(question_set=question_set)
+            # if found course content, get or create attempt by student
+            # with same assessment_seed
+            if content:
+                try:
+                    current_attempt = content.studentcontentattempt_set\
+                        .filter(student=student, seed=assessment_seed)\
+                        .latest()
+                except ObjectDoesNotExist:
+                    current_attempt = content.studentcontentattempt_set\
+                        .create(student=student, seed=assessment_seed)
+
+                # record fact that viewed solution
+                # for this content attempt
+                # and this question set
+                current_attempt.studentcontentattemptsolutionview_set\
+                    .create(question_set=question_set)
 
 
 
@@ -550,7 +662,7 @@ def assessment_view(request, assessment_code, solution=False, question_only=None
     assessment = get_object_or_404(Assessment, code=assessment_code)
     
     # determine if user has permission to view, given privacy level
-    if not assessment.user_can_view(request.user, solution):
+    if not assessment.user_can_view(request.user, solution=solution):
         path = request.build_absolute_uri()
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
