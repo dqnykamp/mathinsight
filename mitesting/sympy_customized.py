@@ -47,7 +47,7 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
 def parse_expr(s, global_dict=None, local_dict=None, 
                split_symbols=False, evaluate=True):
     """
-    Customized version of sympy parse_expr with four modifications.
+    Customized version of sympy parse_expr with the following modifications.
     1.  Add Integer, Float, Rational, Symbol, and factorial
         to global_dict if not present.  
         (Needed since Symbol could be added by auto_symbol,
@@ -61,7 +61,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
         and add split_symbols transformation if split_symbols is True.
     4.  Allows substitution of python keywords like 'lambda', 'as", or "if" 
         via local/global_dict.
-    5.  Call sympify after parse_expr so that tuples will be 
+    5.  Remove leading 0s from numbers so not interpretted as octal numbers.
+    6.  Convert leading 0x to 0*x so not interpreeted as hexadecimal numbers.
+    7.  Call sympify after parse_expr so that tuples will be 
         converted to Sympy Tuples.  (A bug in parse_expr that this
         doesn't happen automatically?)
     """
@@ -134,6 +136,16 @@ def parse_expr(s, global_dict=None, local_dict=None,
             del local_dict[kword]
             s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
 
+
+    # Don't interpret leading 0 in number as indicating octal number
+    # To prevent this interpretation, remove leading 0s from numbers
+    # Use a lookbehind to make sure the zero does not comes after
+    # an alphanumeric character or a period
+    s = re.sub(r'(?<![\w\.])0*(\d)', r'\1', s)
+
+    # Don't interpret leading 0x as indicating hexadecimal number
+    # To prevent this interpretation, change to 0*x
+    s = re.sub(r'\b0x', r'0*x', s)
     
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(

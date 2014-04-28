@@ -227,3 +227,40 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(2*x, expr)
         expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict)
         self.assertEqual(2*x, expr)
+
+    def test_prevent_octal(self):
+        expr = parse_expr("0123")
+        self.assertEqual(expr, 123)
+
+        expr = parse_expr("0193")
+        self.assertEqual(expr, 193)
+ 
+        expr = parse_expr("0.123")
+        self.assertEqual(expr, 0.123)
+        
+        expr = parse_expr("0.000791")
+        self.assertEqual(expr, 0.000791)
+        
+        expr = parse_expr("4.04")
+        self.assertEqual(expr, 4.04)
+
+        expr = parse_expr("1230")
+        self.assertEqual(expr, 1230)
+
+        expr = parse_expr("0009505")
+        self.assertEqual(expr, 9505)
+        
+        expr = parse_expr("89-088")
+        self.assertEqual(expr,1)
+
+        expr = parse_expr("72x/072 - x + 081")
+        self.assertEqual(expr, 81)
+
+    def test_prevent_hexadecimal(self):
+        from sympy import Symbol
+        expr = parse_expr("0x99")
+        self.assertEqual(expr, 0)
+        
+        expr = parse_expr("10x99")
+        self.assertEqual(expr, 10*Symbol("x99"))
+        
