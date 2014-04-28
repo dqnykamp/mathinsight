@@ -59,8 +59,10 @@ class Question(models.Model):
     solution_text = models.TextField(blank=True, null=True)
     hint_text = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    reference_pages = models.ManyToManyField('midocs.Page', through='QuestionReferencePage')
-    allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', blank=True, null=True)
+    reference_pages = models.ManyToManyField('midocs.Page', 
+                                             through='QuestionReferencePage')
+    allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', 
+                                                    blank=True, null=True)
     customize_user_sympy_commands = models.BooleanField(default=False)
     allowed_user_sympy_commands = models.ManyToManyField(
         'SympyCommandSet', blank=True, null=True,
@@ -143,118 +145,6 @@ class Question(models.Model):
         return return_sympy_global_dict(
             [a.commands for a in self.allowed_sympy_commands.all()])
     
-
-
-    def render_multiple_choice_question(self, context, identifier, 
-                                        seed_used=None, assessment=None,
-                                        assessment_seed=None, question_set=None):
-        html_string = '<p>%s</p>' % self.render_text(context, identifier, 
-                                                     show_help=False)
-        
-        answer_options = self.questionansweroption_set.all()
-        rendered_answer_list = []
-        for answer in answer_options:
-            rendered_answer_list.append({'answer_id':answer.id, 'rendered_answer': answer.render_answer(context)})
-        random.shuffle(rendered_answer_list)
-        
-        send_command = "Dajaxice.midocs.send_multiple_choice_question_form(callback_%s,{'form':$('#question_%s').serializeArray(), 'prefix':'%s', 'seed':'%s', 'identifier':'%s' })" % (identifier, identifier, identifier, seed_used, identifier)
-
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback"]);}</script>' % (identifier, identifier)
-
-        html_string += '%s<form action="" method="post" id="question_%s" onsubmit="event.preventDefault();%s;return false;">' % (callback_script,  identifier, send_command)
-
-        # Format html so that it is formatted as though it came from 
-        # MultipleChoiceQuestionForm(prefix=identifier)
-        # ajax will use that form to parse the result
-        answer_field_name = '%s-answers' % identifier
-        html_string = html_string + '<ul class="answerlist">'
-        for (counter,answer) in enumerate(rendered_answer_list):
-            html_string = '%s<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % \
-                (html_string, answer_field_name, counter, answer_field_name,
-                 answer['answer_id'], answer_field_name, counter, 
-                 answer['answer_id'], answer_field_name, 
-                 answer['rendered_answer'] )
-            html_string = '%s<div id="feedback_%s_%s" ></div></li>' % \
-                (html_string, answer_field_name, answer['answer_id'])
-        html_string = html_string + "</ul>"
-
-        html_string = '%s<div id="question_%s_feedback" class="info"></div><p><input type="submit" class="mi_answer_submit" value="Submit" ></p></form>'  % (html_string, identifier)
-
-        return mark_safe(html_string)
-
-    def render_math_write_in_question(self, context, identifier, seed_used,
-                                      assessment=None,
-                                      assessment_seed=None, question_set=None,
-                                      precheck=False):
-        
-        # render question text at the beginning so that have answer_list in context
-        question_text = '<span id=question_text_%s>%s</span>' % (identifier,self.render_text(context, identifier=identifier, show_help=False))
-
-        if assessment:
-            assessment_code = assessment.code
-        else:
-            assessment_code = ""
-            assessment_seed = None
-        
-        if question_set is None:
-            question_set = ""
-        
-        if precheck:
-            record = 'false'
-        else:
-            record = 'true'
-
-        send_command = "Dajaxice.midocs.check_math_write_in(callback_%s,{'answer_serialized':$('#id_question_%s').serializeArray(), 'seed':'%s', 'question_id': '%s', 'identifier': '%s', 'assessment_code': '%s', 'assessment_seed': '%s', 'question_set': '%s', 'record': %s });" % ( identifier, identifier, seed_used, self.id, identifier, assessment_code, assessment_seed, question_set, record)
-
-        # the_correct_answers = context.get('_math_writein_answer_list',[])
-        # answer_feedback_strings=""
-        # for answer_tuple in the_correct_answers:
-        #     answer_string = answer_tuple[0]
-
-        #     answer_feedback_strings += "answer_%s_%s_feedback" % (answer_string, identifier)
-        #     break
-
-
-        #callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_feedback%s"]);}</script>' % (identifier, identifier, answer_feedback_strings)
-
-        # for callback script, process question with Mathjax
-        # after processing ajax
-        callback_script = '<script type="text/javascript">function callback_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"the_question_%s"]); }</script>' % (identifier, identifier)
-
-        # for solution callback script, process solution with Mathjax
-        # after processing ajax,
-        # then call web (defined in GeoGebraWeb .js file) to process any
-        # new geogebra web applet
-        # ajax removed class geogebraweb from any previous applets so that
-        # don't get applets duplicated by web()
-        callback_solution_script = '<script type="text/javascript">function callback_solution_%s(data){Dajax.process(data); MathJax.Hub.Queue(["Typeset",MathJax.Hub,"question_%s_solution"]);}</script>' % (identifier, identifier)
-
-
-        html_string = question_text
-
-        asb_string = 0
-        if context['allow_solution_buttons'] and not precheck:
-            asb_string = 1
-
-        html_string += '<input type="hidden" id="id_number_attempts_%s" maxlength="5" name="number_attempts_%s" size="5" value = "0" /><input type="hidden" id="id_asb_%s" maxlength="5" name="asb_%s" size="5" value = "%s">' % (identifier, identifier, identifier, identifier, asb_string)
-        # html_string += '<label for="answer_%s">Answer: </label><input type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="60" />' % \
-        #     (identifier, identifier, identifier)
-
-        # html_string += '<div id="question_%s_feedback" class="info"></div><div id="question_%s_solution" class="info"></div><input type="button" value="Submit" onclick="%s"> <span id="solution_button_%s"></span></form>'  % (identifier, send_command, identifier, identifier)
-        
-        html_string = '<span id="the_question_%s">%s</span><div id="question_%s_feedback" class="info"></div>' % (identifier, html_string, identifier)
-        
-
-        if not precheck:
-            html_string += '<br/><input type="submit" class="mi_answer_submit" value="Submit" >' 
-        else:
-            html_string += '<script type="text/javascript">%s</script>' % (send_command)
-
-        html_string = '<form action="" method="post" id="id_question_%s" class="writein" onsubmit="event.preventDefault();%s;return false;" >%s</form><div id="question_%s_solution" class="info"></div><span id="solution_button_%s"></span>' % (identifier, send_command, html_string,  identifier, identifier)
-
-        html_string = "%s%s%s" % (callback_script, callback_solution_script,html_string)
-
-        return mark_safe(html_string)
 
     def render_javascript_commands(self, context, question=True, solution=False):
         template_string=""
@@ -414,28 +304,6 @@ class QuestionAnswerOption(models.Model):
                 self.sort_order = 1
         super(QuestionAnswerOption, self).save(*args, **kwargs) 
 
-
-    def render_answer(self, context):
-        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
-        template_string=template_string_base
-        template_string += self.answer
-        try:
-            t = Template(template_string)
-            html_string = t.render(context)
-        except TemplateSyntaxError as e:
-            return "Error in answer template: %s" % e
-        return mark_safe(html_string)
-
-    def render_feedback(self, context):
-        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
-        template_string=template_string_base
-        template_string += self.feedback
-        try:
-            t = Template(template_string)
-            html_string = t.render(context)
-        except TemplateSyntaxError as e:
-            return "Error in answer template: %s" % e
-        return mark_safe(html_string)
 
 
 @python_2_unicode_compatible

@@ -6,7 +6,7 @@ from __future__ import division
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
 from midocs.models import Page, Level
-from mitesting.render_assessments import setup_expression_context, answer_code_list, render_question_text, render_question
+from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
 from sympy import Symbol, sympify, Function
@@ -390,56 +390,64 @@ class TestAnswerCodes(TestCase):
     def new_answer(self, **kwargs):
         return QuestionAnswerOption.objects.create(question=self.q, **kwargs)
     
-    def test_answer_code_list(self):
+    def test_valid_answer_codes(self):
         from django.template import Context
         expr_context = Context({})
 
-        self.assertEqual(answer_code_list(self.q, expr_context),([],[]))
+        EXPRESSION = QuestionAnswerOption.EXPRESSION
+        MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
 
-        self.new_answer(answer_code="h", answer="hh",
-                        answer_type=QuestionAnswerOption.EXPRESSION)
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(answer_codes,[])
+        self.assertEqual(return_valid_answer_codes(self.q, expr_context),
+                         ({},[]))
+
+        self.new_answer(answer_code="h", answer="hh", answer_type=EXPRESSION)
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes,{})
         self.assertTrue("Invalid answer code" in invalid_answers[0])
 
         expr_context["h"]=1
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(answer_codes,[])
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes,{})
         self.assertTrue("Invalid answer code" in invalid_answers[0])
 
 
         expr_context["hh"]=1
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(answer_codes,["h"])
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes,{"h": EXPRESSION })
         self.assertEqual(invalid_answers, [])
 
-        self.new_answer(answer_code="h", answer="",
-                        answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(answer_codes,["h"])
+        self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
         self.assertEqual(invalid_answers, [])
 
-        self.new_answer(answer_code="m", answer="mm",
-                        answer_type=QuestionAnswerOption.EXPRESSION)
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(answer_codes,["h"])
+        self.new_answer(answer_code="m", answer="mm", answer_type=EXPRESSION)
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
         self.assertTrue("Invalid answer code" in invalid_answers[0])
 
         expr_context["mm"]=1
-        self.new_answer(answer_code="h", answer="",
-                        answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(set(answer_codes),set(["m","h"]))
+        self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE})
         self.assertEqual(invalid_answers, [])
 
-        self.new_answer(answer_code="n", answer="",
-                        answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
-        (answer_codes, invalid_answers) = answer_code_list(self.q, expr_context)
-        self.assertEqual(set(answer_codes),set(["m","h"]))
+        self.new_answer(answer_code="n", answer="", answer_type=MULTIPLE_CHOICE)
+        (valid_answer_codes, invalid_answers) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE })
         self.assertEqual(invalid_answers, [])
 
 
-        
 
 class TestRenderQuestionText(TestCase):
     def setUp(self):
@@ -1003,16 +1011,16 @@ class TestRenderQuestion(TestCase):
         answer_identifier ="0_%s" % (identifier)
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
-        self.q.question_text = "{% answer_blank ans %}"
+        self.q.question_text = "{% answer ans %}"
         self.q.save()
         
         question_data=render_question(self.q, question_identifier=identifier)
-        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
+        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
         question_data=render_question(self.q, question_identifier=identifier,
                                       readonly=True)
-        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' readonly>" % (answer_identifier, answer_identifier)
+        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' readonly>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
     def test_prefilled_answers(self):
@@ -1026,14 +1034,14 @@ class TestRenderQuestion(TestCase):
             'answer': previous_answer })
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
-        self.q.question_text = "{% answer_blank " + answer_code + " %}"
+        self.q.question_text = "{% answer " + answer_code + " %}"
         self.q.save()
         
         question_data=render_question(self.q, question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
 
         self.assertTrue(question_data["success"])
-        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' value='%s'>" % (answer_identifier, answer_identifier, previous_answer)
+        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' value='%s'>" % (answer_identifier, answer_identifier, previous_answer)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
         prefilled_answers[0]= { 
@@ -1044,7 +1052,7 @@ class TestRenderQuestion(TestCase):
                                       prefilled_answers=prefilled_answers)
         self.assertFalse(question_data['success'])
         self.assertTrue("Invalid previous answer" in question_data["error_message"])
-        answerblank_html = "<input type='text' class='mi_answer_blank' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
+        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
 
@@ -1085,7 +1093,7 @@ class TestRenderQuestion(TestCase):
         self.assertFalse(question_data.get("help_available",False))
 
         self.q.questionansweroption_set.create(answer_code="x", answer="x")
-        self.q.question_text="{% answer_blank x %}"
+        self.q.question_text="{% answer x %}"
         self.q.save()
 
         question_data=render_question(self.q)
@@ -1124,7 +1132,7 @@ class TestRenderQuestion(TestCase):
                                                answer="expr1")
         self.q.questionansweroption_set.create(answer_code="another",
                                                answer="expr2")
-        self.q.question_text = "{% answer_blank ans %}"
+        self.q.question_text = "{% answer ans %}"
         self.q.computer_graded=True
         self.q.save()
 
@@ -1141,10 +1149,10 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd.get('question_set'),None)
         self.assertEqual(cgd.get('assessment_code'),None)
         self.assertEqual(cgd.get('assessment_seed'),None)
-        self.assertEqual(cgd['answer_blank_codes'],
-                         {answer_identifier: answer_code})
-        self.assertEqual(cgd['answer_blank_points'],
-                         {answer_identifier: 1})
+        self.assertEqual(cgd['answer_data'],
+                         {answer_identifier: 
+                          {'code': answer_code, 'points': 1, 
+                           'type': QuestionAnswerOption.EXPRESSION}})
 
         question_data=render_question(self.q, record_answers=False,
                                       allow_solution_buttons=True)
@@ -1170,7 +1178,7 @@ class TestRenderQuestion(TestCase):
         question_set=5
 
         self.q.questionansweroption_set.create(answer_code="x", answer="x")
-        self.q.question_text="{% answer_blank x %}"
+        self.q.question_text="{% answer x %}"
         self.q.save()
 
         at = AssessmentType.objects.create(

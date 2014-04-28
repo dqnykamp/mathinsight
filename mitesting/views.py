@@ -21,7 +21,13 @@ import datetime
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
 from django.views.generic import DetailView, View
 from django.views.generic.detail import SingleObjectMixin
+from django.template import TemplateSyntaxError
 import json 
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class QuestionView(DetailView):
     """
@@ -129,8 +135,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       - assessment_code: code of any assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
       - assessment_seed: seed used to generate the assessment
-      - answer_blank_codes: codes of the answer blanks appearing in question
-      - answer_blank_points: points of those answer blanks
+      - answer_data: codes, points and answer type of answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
     - number_attempts_[identifier]: the number of previous attempts answering
@@ -141,9 +146,9 @@ class GradeQuestionView(SingleObjectMixin, View):
     - identifier: the identifier for the questions
     - correct: true if all answer blanks were answer correctly
     - feedback: message detailing the correctness of the answers
-    - answer_blank_correct: an object keyed by answer identifiers,
+    - answer_correct: an object keyed by answer identifiers,
       where each property is true if the corresponding answer was correct
-    - answer_blank_feedback: an object keyed by answer identifiers,
+    - answer_feedback: an object keyed by answer identifiers,
       where each property gives a message about the correctness of the answer
     - number_attempts: the number of attempts answering the question, 
       including the current attempt
@@ -170,7 +175,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                 base64.b64decode(response_data.get('cgd')))
         except TypeError, IndexError:
             return HttpResponse("", content_type = 'application/json')
-            
+
         question_identifier = computer_grade_data['identifier']
 
         # set up context from question expressions
@@ -185,12 +190,11 @@ class GradeQuestionView(SingleObjectMixin, View):
         global_dict = question.return_sympy_global_dict(user_response=True)
         global_dict.update(function_dict)
 
-        answer_blank_codes = computer_grade_data['answer_blank_codes']
-        answer_blank_points = computer_grade_data['answer_blank_points']
+        answer_data = computer_grade_data['answer_data']
         
-        answer_blank_user_responses = {}
-        for answer_identifier in answer_blank_codes.keys():
-            answer_blank_user_responses[answer_identifier] = \
+        answer_user_responses = {}
+        for answer_identifier in answer_data.keys():
+            answer_user_responses[answer_identifier] = \
                 response_data.get('answer_%s' % answer_identifier, "")
         
         points_achieved=0
@@ -200,69 +204,103 @@ class GradeQuestionView(SingleObjectMixin, View):
         from .math_objects import math_object
         answer_results={}
 
-        answer_results['answer_blank_feedback'] = {}
-        answer_results['answer_blank_correct'] = {}
+        answer_results['answer_feedback'] = {}
+        answer_results['answer_correct'] = {}
         answer_results['identifier']=question_identifier
+        answer_results['feedback']=""
+
 
         # check correctness of each answer
-        for answer_identifier in answer_blank_codes.keys():
-            user_response = answer_blank_user_responses[answer_identifier]
-            answer_code = answer_blank_codes[answer_identifier]
-            answer_points = answer_blank_points[answer_identifier]
+        for answer_identifier in sorted(answer_data.keys()):
+            user_response = answer_user_responses[answer_identifier]
+            answer_code = answer_data[answer_identifier]['code']
+            answer_points= answer_data[answer_identifier]['points']
+            answer_type = answer_data[answer_identifier]['type']
 
             total_points += answer_points
-
-            # get rid of any .methods, so can't call commands like
-            # .expand() or .factor()
-            import re
-            user_response = re.sub('\.[a-zA-Z]+', '', user_response)
-            
             percent_correct = 0
-            near_match_percent_correct = 0
+            feedback = ""
 
-            if not user_response:
-                answer_results['answer_blank_feedback'][answer_identifier] \
-                    = "No response"
-                answer_results['answer_blank_correct'][answer_identifier]=0
-                continue
+            answer_option_used = None
             
-            feedback=""
-            near_match_feedback=""
-
-            # compare with expressions associated with answer_code
-            for answer_option in question.questionansweroption_set \
-                    .filter(answer_code=answer_code, \
-                                answer_type=QuestionAnswerOption.EXPRESSION):
-                
-                # find the expression associated with answer_option
+            if answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:
                 try:
-                    valid_answer=expr_context[answer_option.answer]
-                except KeyError:
+                    the_answer = question.questionansweroption_set \
+                        .get(id = user_response)
+                except ObjectDoesNotExist:
+                    logger.warning("Multiple choice answer not found")
+                    answer_results['answer_feedback'][answer_identifier] \
+                        = "Cannot grade due to error in question"
+                    answer_results['answer_correct'][answer_identifier]=False
+                    continue
+                except ValueError:
+                    answer_results['answer_feedback'][answer_identifier] \
+                        = "No response"
+                    answer_results['answer_correct'][answer_identifier]=False
+                    continue
+                else:
+                    percent_correct = the_answer.percent_correct
+                    if percent_correct == 100:
+                        feedback = "Yes, you are correct"
+                    elif percent_correct > 0:
+                        feedback = 'Answer is not completely correct' \
+                            + ' but earns partial (%s%%) credit.' \
+                            % (the_answer.percent_correct)
+                    else:
+                        feedback = "No, you are incorrect"
+                    answer_option_used = the_answer
+
+            elif answer_type == QuestionAnswerOption.EXPRESSION:
+
+                # get rid of any .methods, so can't call commands like
+                # .expand() or .factor()
+                import re
+                user_response = re.sub('\.[a-zA-Z]+', '', user_response)
+
+                near_match_percent_correct = 0
+                near_match_feedback=""
+
+                if not user_response:
+                    answer_results['answer_feedback'][answer_identifier] \
+                        = "No response"
+                    answer_results['answer_correct'][answer_identifier]=False
                     continue
 
-                try:
-                    user_response_parsed = parse_and_process(
-                        user_response, global_dict=global_dict, 
-                        split_symbols=answer_option.split_symbols_on_compare)
-                except Exception as e:
-                    feedback = "Sorry.  Unable to understand the answer."
-                    break
 
-                user_response_parsed=math_object(
-                    user_response_parsed,
-                    tuple_is_unordered=valid_answer.return_if_unordered(),
-                    output_no_delimiters= \
-                        valid_answer.return_if_output_no_delimiters(),
-                    use_ln=valid_answer.return_if_use_ln(),
-                    normalize_on_compare=answer_option.normalize_on_compare)
+                # compare with expressions associated with answer_code
+                for answer_option in question.questionansweroption_set \
+                        .filter(answer_code=answer_code, \
+                                    answer_type=QuestionAnswerOption.EXPRESSION):
+
+                    # find the expression associated with answer_option
+                    try:
+                        valid_answer=expr_context[answer_option.answer]
+                    except KeyError:
+                        continue
+
+                    try:
+                        user_response_parsed = parse_and_process(
+                            user_response, global_dict=global_dict, 
+                            split_symbols=answer_option.split_symbols_on_compare)
+                    except Exception as e:
+                        feedback = "Sorry.  Unable to understand the answer."
+                        break
+
+                    user_response_parsed=math_object(
+                        user_response_parsed,
+                        tuple_is_unordered=valid_answer.return_if_unordered(),
+                        output_no_delimiters= \
+                            valid_answer.return_if_output_no_delimiters(),
+                        use_ln=valid_answer.return_if_use_ln(),
+                        normalize_on_compare=answer_option.normalize_on_compare)
 
 
-                correctness_of_answer = \
-                    user_response_parsed.compare_with_expression( \
-                    valid_answer.return_expression())
+                    correctness_of_answer = \
+                        user_response_parsed.compare_with_expression( \
+                        valid_answer.return_expression())
 
-                if correctness_of_answer == 1:
-                    if answer_option.percent_correct > percent_correct:
+                    if correctness_of_answer == 1 and \
+                            answer_option.percent_correct > percent_correct:
                         if answer_option.percent_correct == 100:
                             feedback = \
                                 'Yes, $%s$ is correct.' % user_response_parsed
@@ -272,38 +310,63 @@ class GradeQuestionView(SingleObjectMixin, View):
                                 % (user_response_parsed, 
                                    answer_option.percent_correct)
                         percent_correct = answer_option.percent_correct
-                        
-                else:
-                    if correctness_of_answer == -1:
-                        if answer_option.percent_correct >\
-                                near_match_percent_correct:
-                            near_match_feedback = \
-                                " Your answer is mathematically equivalent to " 
-                            if answer_option.percent_correct == 100:
-                                near_match_feedback += "the correct answer, "
-                            else:
-                                near_match_feedback  += \
-                                    "an answer that is %s%% correct, " \
-                                    % answer_option.percent_correct
-                            near_match_feedback += "but this question requires"\
-                                " you to write your answer in a different form." 
-                            near_match_percent_correct =\
-                                answer_option.percent_correct
+                        answer_option_used = answer_option
+
+                    elif correctness_of_answer == -1 and \
+                            answer_option.percent_correct >\
+                            near_match_percent_correct:
+                        near_match_feedback = \
+                            " Your answer is mathematically equivalent to " 
+                        if answer_option.percent_correct == 100:
+                            near_match_feedback += "the correct answer, "
+                        else:
+                            near_match_feedback  += \
+                                "an answer that is %s%% correct, " \
+                                % answer_option.percent_correct
+                        near_match_feedback += "but this question requires"\
+                            " you to write your answer in a different form." 
+                        near_match_percent_correct =\
+                            answer_option.percent_correct
+                        answer_option_used = answer_option
                     if not feedback:
                         feedback = 'No, $%s$ is incorrect.' \
-                        % user_response_parsed
+                            % user_response_parsed
+                        answer_option_used = answer_option
 
-            if percent_correct < 100 and near_match_feedback:
-                feedback += near_match_feedback
+                if percent_correct < 100 and near_match_feedback:
+                    feedback += near_match_feedback
+
+            else:
+                logger.warning("Unrecognized answer type: %s" % answer_type)
+                answer_results['answer_feedback'][answer_identifier] \
+                    = "Cannot grade due to error in question"
+                answer_results['answer_correct'][answer_identifier]=False
+                continue
+
 
             # store (points achieved)*100 as integer for now
             points_achieved += percent_correct * \
-                answer_blank_points[answer_identifier]
+                answer_points
 
-            answer_results['answer_blank_feedback'][answer_identifier] \
+            answer_results['answer_feedback'][answer_identifier] \
                 = feedback
-            answer_results['answer_blank_correct'][answer_identifier]\
+            answer_results['answer_correct'][answer_identifier]\
                 = (percent_correct == 100)
+
+            # record any feedback from answer option used
+            if answer_option_used and answer_option_used.feedback:
+                template_string = "{% load testing_tags mi_tags humanize %}"
+                template_string += answer_option_used.feedback
+                try:
+                    t = Template(template_string)
+                    rendered_feedback = mark_safe(t.render(expr_context))
+                except TemplateSyntaxError as e:
+                    logger.warning("Error in feedback for answer option with "
+                                   + " code = %s: %s"
+                                   % (answer_code, answer_option_used))
+                else:
+                    answer_results['feedback'] += "<p>%s</p>" %\
+                        rendered_feedback
 
         
         # record if exactly correct, then normalize points achieved
@@ -317,16 +380,17 @@ class GradeQuestionView(SingleObjectMixin, View):
             credit = 0
         answer_results['correct'] = answer_correct
         if total_points == 0:
-            answer_results['feedback'] = \
-                "<p>No points possible for question</p>"
+            total_score_feedback = "<p>No points possible for question</p>"
         elif answer_correct:
-            answer_results['feedback'] = "<p>Answer is correct</p>"
+            total_score_feedback = "<p>Answer is correct</p>"
         elif points_achieved == 0:
-            answer_results['feedback'] = "<p>Answer is incorrect</p>"
+            total_score_feedback = "<p>Answer is incorrect</p>"
         else:
-            answer_results['feedback'] = '<p>Answer is %s%% correct'\
+            total_score_feedback = '<p>Answer is %s%% correct'\
                 % int(round(credit*100))
-
+        answer_results['feedback'] = total_score_feedback + \
+            answer_results['feedback']
+            
         # determine if question is part of an assessment
         assessment_code = computer_grade_data.get('assessment_code')
         assessment_seed = computer_grade_data.get('assessment_seed')
@@ -481,7 +545,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         QuestionStudentAnswer.objects.create\
             (user=request.user, question=question, \
                  question_set=question_set,\
-                 answer=json.dumps(answer_blank_user_responses),\
+                 answer=json.dumps(answer_user_responses),\
                  identifier_in_answer = question_identifier, \
                  seed=seed, credit=credit,\
                  course_content_attempt=current_attempt,\

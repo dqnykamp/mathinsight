@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 import random
 import json 
 import re
+import sys
 
 """
 Change to deal with:
@@ -116,26 +117,30 @@ def setup_expression_context(question):
     return results
 
 
-def answer_code_list(question, expression_context): 
+def return_valid_answer_codes(question, expression_context): 
     """
-    Return a list of all the unique answer codes from the answer options
-    of question that are expressions.
+    Return a dictionary of all the valid answer codes from the answer options.
+    of question.  For an expression to valid, it must be in expression_context.
+
+    If an answer code appears multiple times, the last instances
+    takes precedence.
 
     Also, returns list of expressions not found in expression context
     """
     
     from mitesting.models import QuestionAnswerOption
 
-    answer_code_list = []
+    valid_answer_codes = {}
     invalid_answers = []
-    for option in question.questionansweroption_set.filter(
-        answer_type=QuestionAnswerOption.EXPRESSION):
-        
-        if option.answer not in expression_context:
-            invalid_answers.append("(%s, %s)" %(option.answer_code, option.answer))
-        elif option.answer_code not in answer_code_list:
-            answer_code_list.append(option.answer_code)
-    
+    for option in question.questionansweroption_set.all():
+
+        if option.answer_type==QuestionAnswerOption.EXPRESSION and \
+                option.answer not in expression_context:
+            invalid_answers.append(
+                "(%s, %s)" % (option.answer_code, option.answer))
+        else:
+            valid_answer_codes[option.answer_code] = option.answer_type
+
     if invalid_answers:
         if len(invalid_answers) > 1:
             invalid_answers = ["Invalid answer codes: " + \
@@ -143,7 +148,7 @@ def answer_code_list(question, expression_context):
         else:
             invalid_answers = ["Invalid answer code: " +  invalid_answers[0],]
 
-    return (answer_code_list, invalid_answers)
+    return (valid_answer_codes, invalid_answers)
 
 
 def render_question_text(render_data, solution=False):
@@ -202,16 +207,21 @@ def render_question_text(render_data, solution=False):
             render_results['rendered_text'] = \
                 mark_safe(Template(template_string).render(expr_context))
         except Exception as e:
+            if isinstance(e,TemplateSyntaxError):
+                message = str(e)
+            else:
+                message = "%s: %s" % (type(e).__name__, e)
             if solution:
                 render_results['rendered_text'] = \
                     mark_safe("<p>Error in solution</p>")
                 render_results['render_error_messages'].append(
-                    mark_safe("Error in solution template: %s" % e))
+                    mark_safe("Error in solution template: %s" % message))
             else:
                 render_results['rendered_text'] = \
                     mark_safe("<p>Error in question</p>")
                 render_results['render_error_messages'].append(
-                    mark_safe("Error in question template: %s" % e))
+                    mark_safe("Error in question template: %s" % message))
+                print()
             render_results['render_error'] = True
     else:
         render_results['rendered_text'] = ""
@@ -481,10 +491,7 @@ def render_question(question, seed=None, solution=False,
       - question_set
       - assessment_seed
       - assessment_code (of assessment from input)
-      Computer grade data also contains information about answer blanks
-      - answer_blank_codes: codes of the answer blanks appearing in question
-      - answer_blank_points: points of those answer blanks
-      Computer grade data contains information about applets
+      - answer_data: codes, points, and answer type of the answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
    """
@@ -534,18 +541,17 @@ def render_question(question, seed=None, solution=False,
     # 1. possible answer_codes that are valid
     # 2. the answer_codes that actually appear in the question
     # 3. the multiple choices that actually appear in the question
-    (answer_codes, invalid_answers) = answer_code_list(
+    (valid_answer_codes, invalid_answers) = return_valid_answer_codes(
         question, render_data['expression_context'])
 
-    answer_data = { 'answer_codes': answer_codes,
-                    'answer_blank_codes': {},
-                    'answer_blank_points': {},
-                    'multiple_choice_in_question': [],
+    answer_data = { 'valid_answer_codes': valid_answer_codes,
+                    'answer_data': {},
+                    'question': question,
                     'question_identifier': question_identifier,
                     'prefilled_answers': prefilled_answers,
                     'readonly': readonly,
                     'error': bool(invalid_answers),
-                    'answer_blank_errors': invalid_answers,
+                    'answer_errors': invalid_answers,
                     }
 
     render_data['expression_context']['_answer_data_']= answer_data
@@ -563,9 +569,9 @@ def render_question(question, seed=None, solution=False,
     # number of answer blanks (template tag already checked if
     # the answer_codes matched for those answers that were found)
     if prefilled_answers:
-        if len(prefilled_answers) != len(answer_data["answer_blank_codes"]):
+        if len(prefilled_answers) != len(answer_data["answer_data"]):
             answer_data["error"]=True
-            answer_data["answer_blank_errors"].append(
+            answer_data["answer_errors"].append(
                 "Invalid number of previous answers")
     
     # for computer graded questions show help via buttons 
@@ -593,7 +599,7 @@ def render_question(question, seed=None, solution=False,
                     '<li>%s</li>' % error_message
             del question_data['render_error']
         if answer_data.get('error'):
-            for error_message in answer_data['answer_blank_errors']:
+            for error_message in answer_data['answer_errors']:
                 question_data['error_message'] += \
                     '<li>%s</li>' % error_message
 
@@ -607,7 +613,7 @@ def render_question(question, seed=None, solution=False,
     # if error or not computer-graded or rendering a solution or no answer blanks,
     # return without adding computer grading data
     if not question_data['success'] or not question.computer_graded \
-            or solution or not answer_data['answer_blank_codes']:
+            or solution or not answer_data['answer_data']:
         return question_data
     
 
@@ -631,10 +637,8 @@ def render_question(question, seed=None, solution=False,
         if question_set is not None:
             computer_grade_data['question_set'] = question_set
 
-    computer_grade_data['answer_blank_codes'] \
-        = answer_data['answer_blank_codes']
-    computer_grade_data['answer_blank_points'] \
-        = answer_data['answer_blank_points']
+    computer_grade_data['answer_data'] \
+        = answer_data['answer_data']
 
     computer_grade_data['applet_counter'] = applet_data["counter"]
 

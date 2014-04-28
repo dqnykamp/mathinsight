@@ -112,15 +112,16 @@
 	    question_feedback.removeClass('success');
 	}
 
-	for(var answer_identifier in data['answer_blank_feedback']) {
+	for(var answer_identifier in data['answer_feedback']) {
 	    var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
-	    answer_feedback.html(data['answer_blank_feedback'][answer_identifier]);
-	    if(data['answer_blank_correct'][answer_identifier]) {
+	    answer_feedback.html(data['answer_feedback'][answer_identifier]);
+	    if(data['answer_correct'][answer_identifier]) {
 		answer_feedback.removeClass('error').addClass('success');
 	    }
 	    else {
 		answer_feedback.removeClass('success').addClass('error');
 	    }
+	    answer_feedback.filter("span").css({ display: 'inline-block'})
 	}
 
 	

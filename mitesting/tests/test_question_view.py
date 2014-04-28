@@ -149,6 +149,42 @@ class TestQuestionView(TestCase):
         self.assertContains(response, solution_textb)
 
 
+    def test_multiple_choice(self):
+        MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
+        self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "The correct answer: {{fun_x}}",
+            percent_correct = 100)
+        self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "An incorrect answer: {{f}}({{x}})",
+            percent_correct = 0)
+        self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "A partially correct answer: {{n}}",
+            percent_correct = 50)
+
+        response = self.client.get("/assess/question/1")
+        self.assertNotContains(response, "The correct answer")
+        self.assertNotContains(response, "An incorrect answer")
+        self.assertNotContains(response, "A partially correct answer")
+
+        self.q.question_text="Which is right? {% answer choice %}"
+        self.q.save()
+
+        response = self.client.get("/assess/question/1")
+        f = response.context["f"]
+        x = response.context["x"]
+        n = response.context["n"]
+        fun_x = response.context["fun_x"]
+        
+        self.assertContains(response, "The correct answer: %s" % fun_x)
+        self.assertContains(response, "An incorrect answer: %s(%s)" 
+                            % (f, x))
+        self.assertContains(response, "A partially correct answer: %s" % n)
+
+
+
     def test_permissions(self):
         qpks=[[],[],[]]
         for i in range(3):
@@ -254,8 +290,8 @@ class TestGradeQuestionView(TestCase):
     def test_view_simple(self):
         computer_grade_data = {
             'seed': '0', 'identifier': 'a', 'record_answers': True,
-            'allow_solution_buttons': True, 'answer_blank_codes': {},
-            'answer_blank_points': {}, 'applet_counter': 0}
+            'allow_solution_buttons': True, 'answer_data': {},
+            'applet_counter': 0}
 
         cgd = base64.b64encode(pickle.dumps(computer_grade_data))
 
@@ -267,8 +303,8 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(results['number_attempts'],1)
         self.assertFalse(results['show_solution_button'])
         self.assertFalse(results['correct'])
-        self.assertEqual(results['answer_blank_correct'],{})
-        self.assertEqual(results['answer_blank_feedback'],{})
+        self.assertEqual(results['answer_correct'],{})
+        self.assertEqual(results['answer_feedback'],{})
         
     def test_bad_cgd(self):
         response=self.client.post("/assess/question/1/grade_question")
@@ -288,7 +324,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/1")
         self.assertFalse("computer_grade_data" in response.context["question_data"])
         
-        self.q.question_text="Type the answer: {% answer_blank fun_x %}"
+        self.q.question_text="Type the answer: {% answer fun_x %}"
         self.q.save()
         response = self.client.get("/assess/question/1")
         self.assertContains(response,"Type the answer: ")
@@ -301,8 +337,8 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
-        self.assertContains(response, '<input class="mi_answer_blank" type="text" id="id_answer_%s" name="answer_%s" maxlength="200" size="20" />' % (answer_identifier, answer_identifier), html=True)
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
+        self.assertContains(response, '<input class="mi_answer" type="text" id="id_answer_%s" name="answer_%s" maxlength="200" size="20" />' % (answer_identifier, answer_identifier), html=True)
 
         fun_x = response.context['fun_x']
         
@@ -314,9 +350,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_blank_feedback"]\
+        self.assertTrue("is correct" in results["answer_feedback"]\
                             [answer_identifier])
 
         response=self.client.post("/assess/question/1/grade_question",
@@ -327,14 +363,14 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_blank_feedback"]\
+        self.assertTrue("is incorrect" in results["answer_feedback"]\
                             [answer_identifier])
 
 
     def test_multiple_correct_answers(self):
-        self.q.question_text="Type the answer: {% answer_blank ans %}$"
+        self.q.question_text="Type the answer: {% answer ans %}$"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="n")
@@ -343,7 +379,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         n = response.context['n']
         
@@ -355,9 +391,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_blank_feedback"]\
+        self.assertTrue("is correct" in results["answer_feedback"]\
                             [answer_identifier])
 
         response=self.client.post("/assess/question/1/grade_question",
@@ -368,9 +404,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_blank_feedback"]\
+        self.assertTrue("is incorrect" in results["answer_feedback"]\
                             [answer_identifier])
 
 
@@ -385,7 +421,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         n = response.context['n']
         
@@ -397,9 +433,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_blank_feedback"]\
+        self.assertTrue("is correct" in results["answer_feedback"]\
                             [answer_identifier])
 
         response=self.client.post("/assess/question/1/grade_question",
@@ -410,9 +446,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_blank_feedback"]\
+        self.assertTrue("is correct" in results["answer_feedback"]\
                             [answer_identifier])
 
 
@@ -424,9 +460,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_blank_feedback"]\
+        self.assertTrue("is incorrect" in results["answer_feedback"]\
                             [answer_identifier])
 
 
@@ -440,7 +476,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         n = response.context['n']
         
@@ -452,9 +488,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_blank_feedback"]\
+        self.assertTrue("is correct" in results["answer_feedback"]\
                             [answer_identifier])
 
         response=self.client.post("/assess/question/1/grade_question",
@@ -465,12 +501,12 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertTrue("is not completely correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
         response=self.client.post("/assess/question/1/grade_question",
@@ -481,15 +517,15 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_blank_feedback"]\
+        self.assertTrue("is incorrect" in results["answer_feedback"]\
                             [answer_identifier])
 
 
 
     def test_repeat_same_answer(self):
-        self.q.question_text="Type the same answer twice: {% answer_blank ans %}  {% answer_blank ans %}"
+        self.q.question_text="Type the same answer twice: {% answer ans %}  {% answer ans %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="x")
@@ -498,7 +534,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_blank_codes"]\
+        answer_identifiers = sorted(computer_grade_data["answer_data"]\
                                         .keys())
 
         x = response.context['x']
@@ -515,9 +551,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_blank_correct"][ai])
+            self.assertTrue(results["answer_correct"][ai])
             self.assertTrue("is correct" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
         answers["answer_" + answer_identifiers[0]] \
             = str(x.return_expression()+1)
@@ -530,17 +566,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("is incorrect" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[1]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
 
             
     def test_two_different_answers(self):
-        self.q.question_text="Type two different answers: {% answer_blank ans1 %}  {% answer_blank ans2 %}"
+        self.q.question_text="Type two different answers: {% answer ans1 %}  {% answer ans2 %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="x")
@@ -550,7 +586,7 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_blank_codes"]\
+        answer_identifiers = sorted(computer_grade_data["answer_data"]\
                                         .keys())
         
         x = response.context['x']
@@ -570,9 +606,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_blank_correct"][ai])
+            self.assertTrue(results["answer_correct"][ai])
             self.assertTrue("is correct" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
         answers["answer_" + answer_identifiers[1]] \
             = str(x.return_expression())
@@ -587,9 +623,9 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertFalse(results["answer_blank_correct"][ai])
+            self.assertFalse(results["answer_correct"][ai])
             self.assertTrue("is incorrect" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
 
         answers["answer_" + answer_identifiers[0]] \
@@ -605,17 +641,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("is incorrect" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
 
 
     def test_two_unequal_answers(self):
-        self.q.question_text="Type two different answers: {% answer_blank ans1 points=3 %}  {% answer_blank ans2 %}"
+        self.q.question_text="Type two different answers: {% answer ans1 points=3 %}  {% answer ans2 %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="x")
@@ -625,7 +661,7 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_blank_codes"]\
+        answer_identifiers = sorted(computer_grade_data["answer_data"]\
                                         .keys())
 
         x = response.context['x']
@@ -646,9 +682,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_blank_correct"][ai])
+            self.assertTrue(results["answer_correct"][ai])
             self.assertTrue("is correct" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
         answers["answer_" + answer_identifiers[0]] \
             = str(x.return_expression())
@@ -663,13 +699,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("is incorrect" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
 
 
     def test_split_symbols_on_compare(self):
@@ -677,7 +713,7 @@ class TestGradeQuestionView(TestCase):
             name="two_a_x", expression="2*a*x", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answers: {% answer_blank ans1 %} {% answer_blank ans2 %} {% answer_blank ans3 %}"
+        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="two_a_x",
@@ -691,7 +727,7 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_blank_codes"]\
+        answer_identifiers = sorted(computer_grade_data["answer_data"]\
                                         .keys())
 
         x = response.context['x']
@@ -712,17 +748,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 67% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("is incorrect" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[2]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         
 
         answers["answer_" + answer_identifiers[0]] \
@@ -740,16 +776,16 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_blank_correct"][ai])
+            self.assertTrue(results["answer_correct"][ai])
             self.assertTrue("is correct" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
     def test_normalize_on_compare(self):
         self.q.expression_set.create(
             name="product", expression="(x+a)(x-a)", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answers: {% answer_blank ans1 %} {% answer_blank ans2 %} {% answer_blank ans3 %}"
+        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="product",
@@ -762,7 +798,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_blank_codes"]\
+        answer_identifiers = sorted(computer_grade_data["answer_data"]\
                                         .keys())
 
         x = response.context['x']
@@ -783,9 +819,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_blank_correct"][ai])
+            self.assertTrue(results["answer_correct"][ai])
             self.assertTrue("is correct" in \
-                                results["answer_blank_feedback"][ai])
+                                results["answer_feedback"][ai])
 
         answers["answer_" + answer_identifiers[0]] \
             = "%s^2-a^2" % x.return_expression()
@@ -802,17 +838,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 33% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_blank_correct"][ai])
+        self.assertTrue(results["answer_correct"][ai])
         self.assertTrue("is correct" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("answer in a different form" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
         ai = answer_identifiers[2]
-        self.assertFalse(results["answer_blank_correct"][ai])
+        self.assertFalse(results["answer_correct"][ai])
         self.assertTrue("answer in a different form" in \
-                            results["answer_blank_feedback"][ai])
+                            results["answer_feedback"][ai])
 
 
     def test_near_match_partial_correct(self):
@@ -820,7 +856,7 @@ class TestGradeQuestionView(TestCase):
             name="product", expression="(x+a)(x-a)x", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answers: {% answer_blank ans %}"
+        self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="product",
@@ -831,7 +867,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         x = response.context['x']
         
@@ -845,13 +881,13 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is not completely correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("answer in a different form" in 
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
         self.q.expression_set.create(
@@ -864,7 +900,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         x = response.context['x']
         
@@ -878,13 +914,13 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is not completely correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("partial (75%) credit" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("answer in a different form" in 
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
     def test_near_match_partial_correct2(self):
@@ -892,7 +928,7 @@ class TestGradeQuestionView(TestCase):
             name="product", expression="(x+a)(x-a)", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answers: {% answer_blank ans %}"
+        self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="product",
@@ -905,7 +941,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         x = response.context['x']
         
@@ -918,15 +954,15 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("is not completely correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("that is 75% correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         self.assertTrue("answer in a different form" in 
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
     def test_user_function(self):
@@ -934,7 +970,7 @@ class TestGradeQuestionView(TestCase):
             name="f_x", expression="f(x)", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answers: {% answer_blank ans %}"
+        self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="f_x")
@@ -944,7 +980,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
 
         x = response.context['x']
         f = response.context['f']
@@ -959,9 +995,9 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue(results["answer_blank_correct"][answer_identifier])
+        self.assertTrue(results["answer_correct"][answer_identifier])
         self.assertTrue("is correct" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
     def test_user_sympy_dict(self):
@@ -972,7 +1008,7 @@ class TestGradeQuestionView(TestCase):
             name="exp_x", expression="exp(x)", 
             expression_type = Expression.EXPRESSION)
 
-        self.q.question_text="Type answer: {% answer_blank exp_x %}"
+        self.q.question_text="Type answer: {% answer exp_x %}"
         self.q.save()
         
         self.new_answer(answer_code="exp_x", answer="exp_x")
@@ -980,7 +1016,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/1")
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
         x = response.context['x']
         
         answers = {"cgd": cgd,}
@@ -1014,7 +1050,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
 
     def test_seed(self):
-        self.q.question_text="Type answer: {% answer_blank function %}"
+        self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -1024,7 +1060,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
         fun_x = response.context['fun_x']
         
         self.assertEqual(seed, computer_grade_data["seed"])
@@ -1039,16 +1075,15 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_blank_answer(self):
-        self.q.question_text="Type answer: {% answer_blank function %}"
+        self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
 
         response = self.client.get("/assess/question/1")
-
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
         fun_x = response.context['fun_x']
 
         answers = {"cgd": cgd,}
@@ -1057,22 +1092,22 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("No response" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
         answers["answer_" + answer_identifier] = ""
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("No response" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
         
 
     def test_unparsable_answer(self):
-        self.q.question_text="Type answer: {% answer_blank function %}"
+        self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -1081,7 +1116,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
         fun_x = response.context['fun_x']
 
         answers = {"cgd": cgd,}
@@ -1091,9 +1126,9 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_blank_correct"][answer_identifier])
+        self.assertFalse(results["answer_correct"][answer_identifier])
         self.assertTrue("Unable to understand the answer" in
-                        results["answer_blank_feedback"][answer_identifier])
+                        results["answer_feedback"][answer_identifier])
 
 
     def test_bad_answer_option(self):
@@ -1102,9 +1137,10 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/1")
         self.assertContains(response, "Invalid answer code: (function, abc)")
         self.assertNotContains(response, "Invalid answer blank")
-        self.assertFalse("computer_grade_data" in response.context["question_data"])
+        self.assertFalse("computer_grade_data" in 
+                         response.context["question_data"])
 
-        self.q.question_text="Type answer: {% answer_blank function %}"
+        self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
 
         response = self.client.get("/assess/question/1")
@@ -1125,7 +1161,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_blank_codes"].keys()[0]
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
         fun_x = response.context['fun_x']
         
         answers = {"cgd": cgd,}
@@ -1140,7 +1176,7 @@ class TestGradeQuestionView(TestCase):
         solution_button_html_fragment = \
             "<input type='button' class='mi_show_solution' value='Show solution'"
 
-        self.q.question_text="Type answer: {% answer_blank function %}"
+        self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -1217,7 +1253,66 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(solution_button_html_fragment in 
                         results["solution_button_html"])
 
+    def test_multiple_choice(self):
+        MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
+        a1 = self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "The correct answer: {{fun_x}}",
+            percent_correct = 100)
+        a2 = self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "An incorrect answer: {{f}}({{x}})",
+            percent_correct = 0)
+        a3 = self.q.questionansweroption_set.create(
+            answer_code="choice", answer_type=MULTIPLE_CHOICE,
+            answer = "A partially correct answer: {{n}}",
+            percent_correct = 50)
+        self.q.question_text="Which is right? {% answer choice %}"
+        self.q.save()
+
+        response = self.client.get("/assess/question/1")
         
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
+
+        f = response.context["f"]
+        x = response.context["x"]
+        n = response.context["n"]
+        fun_x = response.context["fun_x"]
+
+        
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifier] = "%s" % a1.id
+        response=self.client.post("/assess/question/1/grade_question", answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue("are correct" in
+                        results["answer_feedback"][answer_identifier])
+
+        answers["answer_" + answer_identifier] = "%s" % a2.id
+        response=self.client.post("/assess/question/1/grade_question", answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertTrue("are incorrect" in
+                        results["answer_feedback"][answer_identifier])
+
+        answers["answer_" + answer_identifier] = "%s" % a3.id
+        response=self.client.post("/assess/question/1/grade_question", answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertTrue("not completely correct" in
+                        results["answer_feedback"][answer_identifier])
+        self.assertTrue("partial (50%) credit" in
+                        results["answer_feedback"][answer_identifier])
+
+
 
 class TestInjectQuestionSolutionView(TestCase):
     def setUp(self):
@@ -1228,7 +1323,7 @@ class TestInjectQuestionSolutionView(TestCase):
             question_privacy = 0,
             solution_privacy = 0,
             computer_graded=True,
-            question_text = "Type answer: {% answer_blank ans %}",
+            question_text = "Type answer: {% answer ans %}",
             )
         self.q.expression_set.create(
             name="f",expression="f,g,h,k", 
@@ -1291,8 +1386,8 @@ class TestInjectQuestionSolutionView(TestCase):
     def test_permissions(self):
         computer_grade_data = {
             'seed': '0', 'identifier': 'a', 'record_answers': True,
-            'allow_solution_buttons': True, 'answer_blank_codes': {},
-            'answer_blank_points': {}, 'applet_counter': 0}
+            'allow_solution_buttons': True, 'answer_codes': {},
+            'answer_points': {}, 'applet_counter': 0}
 
         cgd = base64.b64encode(pickle.dumps(computer_grade_data))
 

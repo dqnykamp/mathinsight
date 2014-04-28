@@ -20,6 +20,8 @@ from django.utils.encoding import force_unicode
 from django.utils.encoding import smart_text
 import json
 from math import floor, ceil
+from django.utils.safestring import mark_safe
+
 
 register=Library()
 
@@ -70,7 +72,7 @@ class PluralizeWordNode(Node):
 def pluralize_word(parser, token):
     bits = token.split_contents()
     if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % bits[0]
+        raise TemplateSyntaxError("%r tag requires two arguments" % bits[0])
     value=parser.compile_filter(bits[1])
     word=parser.compile_filter(bits[2])
     # word_plural is the same as word but with "_plural" appended
@@ -122,7 +124,8 @@ class ExprNode(Node):
 def expr(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % str(bits[0])
+        raise TemplateSyntaxError("%r tag requires at least one argument" \
+                                      % str(bits[0]))
     expression = parser.compile_filter(bits[1])
 
     asvar = None
@@ -137,7 +140,8 @@ def expr(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %r tag" % str(bits[0]))
+                raise TemplateSyntaxError("Malformed arguments to %r tag" \
+                                              % str(bits[0]))
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -647,7 +651,8 @@ class FigureNode(Node):
 def figure(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % str(bits[0])
+        raise TemplateSyntaxError("%r tag requires at least one argument" \
+                                      % str(bits[0]))
     
     figure_number = parser.compile_filter(bits[1])
     args = []
@@ -750,7 +755,8 @@ class QuestionNode(template.Node):
 def display_question(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise TemplateSyntaxError("%r tag requires at least one arguments" \
+                                      % bits[0])
     
     question_id=parser.compile_filter(bits[1])
   
@@ -809,7 +815,8 @@ class VideoQuestionsNode(template.Node):
 def display_video_questions(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one arguments" % bits[0]
+        raise TemplateSyntaxError("%r tag requires at least one arguments" \
+                                      % bits[0])
     
     video_code=parser.compile_filter(bits[1])
 
@@ -822,7 +829,7 @@ def display_video_questions(parser, token):
 
 
 
-class AnswerBlankNode(template.Node):
+class AnswerNode(template.Node):
     def __init__(self, answer_code, kwargs):
         self.answer_code = answer_code
         self.kwargs = kwargs
@@ -843,55 +850,106 @@ class AnswerBlankNode(template.Node):
         try:
             answer_data = context['_answer_data_']
         except KeyError:
-            return "[Invalid answer blank]"
+            return "[No answer data]"
 
-        # answer code should be a code defined in the question answer options
-        # that is an expression
-        if self.answer_code not in answer_data['answer_codes']:
+
+        def return_error(message):
             answer_data['error']=True
-            answer_data['answer_blank_errors'].append(
-                "Invalid answer blank: %s" % self.answer_code)
-            return "[Invalid answer blank: %s]" % (self.answer_code)
+            answer_data['answer_errors'].append(message)
+            return "[%s]" % message
+        
+        # answer code should be a code defined in the question answer options
+        try:
+            answer_type = answer_data['valid_answer_codes'][self.answer_code]
+        except KeyError:
+            return return_error("Invalid answer blank: %s" % self.answer_code)
 
-        answer_number = len(answer_data['answer_blank_codes'])
+        answer_number = len(answer_data['answer_data'])
         answer_identifier = "%s_%s" % (answer_number,
                                        answer_data['question_identifier'])
-        answer_data['answer_blank_codes'][answer_identifier] = self.answer_code
-        answer_data['answer_blank_points'][answer_identifier] = points
+        answer_field_name = 'answer_%s' % answer_identifier
+        answer_data['answer_data'][answer_identifier] = \
+            {'code': self.answer_code, 'points': points, 
+             'type': answer_type }
 
-        
-        if answer_data['readonly']:
-            readonly_string = ' readonly'
-        else:
-            readonly_string = ''
-            
-        value_string = ''
-        try:
-            prefilled_answers = answer_data['prefilled_answers']
-            the_answer = prefilled_answers[answer_number-1]
-            if the_answer["answer_code"] == self.answer_code:
-                value_string = ' value="%s"' %  the_answer["answer"]
+
+        if answer_type == QuestionAnswerOption.EXPRESSION:
+            if answer_data['readonly']:
+                readonly_string = ' readonly'
             else:
-                answer_data['error'] = True
-                answer_data['answer_blank_errors'].append(
-                    "Invalid previous answer: %s != %s" % 
-                    (the_answer["answer_code"], self.answer_code))
-        except (KeyError, IndexError, TypeError):
-            pass
+                readonly_string = ''
+
+            value_string = ''
+            try:
+                prefilled_answers = answer_data['prefilled_answers']
+                the_answer = prefilled_answers[answer_number-1]
+                if the_answer["answer_code"] == self.answer_code:
+                    value_string = ' value="%s"' %  the_answer["answer"]
+                else:
+                    answer_data['error'] = True
+                    answer_data['answer_errors'].append(
+                        "Invalid previous answer: %s != %s" % 
+                        (the_answer["answer_code"], self.answer_code))
+            except (KeyError, IndexError, TypeError):
+                pass
 
 
-        return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer_blank" type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="%i"%s%s /><br/><span class="info" id="answer_%s_feedback"></span></span>' % \
-            (answer_identifier, answer_identifier,
-             size, readonly_string, value_string, 
-             answer_identifier)
-    
+            return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s /><br/><span class="info" id="%s_feedback"></span></span>' % \
+                (answer_field_name, answer_field_name,
+                 size, readonly_string, value_string, 
+                 answer_field_name)
 
+        elif answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:
+            try:
+                question = answer_data["question"]
+            except KeyError:
+                return return_error("Invalid answer_data")
+
+            answer_options = question.questionansweroption_set.filter(
+                answer_type=QuestionAnswerOption.MULTIPLE_CHOICE,
+                answer_code=self.answer_code)
+            
+            rendered_answer_list=[]
+            for answer in answer_options:
+                template_string = "{% load testing_tags mi_tags humanize %}"
+                template_string += answer.answer
+                try:
+                    t = Template(template_string)
+                    rendered_answer = mark_safe(t.render(context))
+                except TemplateSyntaxError as e:
+                    return return_error("Invalid multiple choice answer: %s" \
+                                            % self.answer_code)
+                rendered_answer_list.append({
+                        'answer_id': answer.id,
+                        'rendered_answer': rendered_answer})
+            random.shuffle(rendered_answer_list)
+        
+            html_string = ""
+            for answer in rendered_answer_list:
+                ans_id = answer['answer_id']
+                html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % \
+                    (answer_field_name, ans_id, answer_field_name,
+                     ans_id, answer_field_name, ans_id, 
+                     ans_id, answer_field_name, 
+                     answer['rendered_answer'] )
+            html_string += '<div id="%s_feedback" ></div></li>' % \
+                (answer_field_name)
+            html_string = '<ul class="answerlist">%s</ul>' % html_string
+            
+            return mark_safe(html_string)
+        
+        # if not recognized type, return error
+        else:
+            return return_error()
+
+                
 @register.tag
-def answer_blank(parser, token):
+def answer(parser, token):
     bits = token.split_contents()
 
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise TemplateSyntaxError("%r tag requires at least one argument" \
+                                      % bits[0])
 
     answer_code = bits[1]
 
@@ -902,13 +960,14 @@ def answer_blank(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %r tag" % str(bits[0]))
+                raise TemplateSyntaxError("Malformed arguments to %r tag" \
+                                              % str(bits[0]))
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
 
 
-    return AnswerBlankNode(answer_code, kwargs)
+    return AnswerNode(answer_code, kwargs)
 
 
 class AssessmentUserCanViewNode(Node):
@@ -935,7 +994,8 @@ class AssessmentUserCanViewNode(Node):
 def assessment_user_can_view(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+        raise TemplateSyntaxError("%r tag requires at least two arguments" \
+                                      % str(bits[0]))
     assessment = parser.compile_filter(bits[1])
     user = parser.compile_filter(bits[2])
     
