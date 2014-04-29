@@ -18,8 +18,10 @@ Identifier changed
 
 """
 
- 
+def get_new_seed():
+    return str(random.randint(0,1E8))
 
+ 
 def setup_expression_context(question):
     """
     Set up the question context by parsing all expressions for question.
@@ -497,7 +499,7 @@ def render_question(question, seed=None, solution=False,
    """
 
     if seed is None:
-        seed=question.get_new_seed()
+        seed=get_new_seed()
 
     random.seed(seed)
 
@@ -649,4 +651,158 @@ def render_question(question, seed=None, solution=False,
         base64.b64encode(pickle.dumps(computer_grade_data))
 
     return question_data
+
+
+
+def get_question_list(assessment):
+    """
+    Return list of questions for assessment, one for each question_set.
+    Questions are chosen randomly based on state of random.
+    Its seed can be set via random.seed(seed).
+
+    Return a list of dictionaries, one for each question. 
+    Each dictionary contains the following:
+    - question_set: the question_set from which the question was drawn
+    - question: the question chosen
+    - points: the number of points the question set is worth
+    - seed: the seed to use to render the question
+    """
+    question_list = []
+
+    for question_set in assessment.question_sets():
+        questions_in_set = assessment.questionassigned_set.filter(
+            question_set=question_set)
+
+        the_question=random.choice(questions_in_set).question
+
+        # generate a seed for the question
+        # so that can have link to this version of question and solution
+        question_seed=get_new_seed()
+        the_points = assessment.points_of_question_set(question_set)
+        if the_points is None:
+            the_points = ""    
+        question_list.append({'question_set': question_set,
+                              'question': the_question,
+                              'points': the_points,
+                              'seed': question_seed}
+                             )
+
+    return question_list
+            
+
+
+def render_question_list(assessment, seed=None, user=None, solution=False,
+                         current_attempt=None):
+
+
+    if seed is None:
+        seed=get_new_seed()
+        
+    random.seed(seed)
+    question_list = get_question_list(assessment)
+
+    rendered_question_list = []
+
+    applet_counter=0
+    for (i, question_dict) in enumerate(question_list):
+
+        # use qa for identifier since coming from assessment
+        identifier="qa%s" % i
+
+        question = question_dict['question']
+        question_set = question_dict['question_set']
+
+        question_data = render_question(
+            question, seed=question_dict["seed"],solution=solution,
+                question_identifier=identifier,
+                user=user, show_help=not solution,
+                assessment=assessment, question_set=question_set,
+                assessment_seed=seed, 
+                record_answers=True,
+                allow_solution_buttons=assessment.allow_solution_buttons,
+                applet_counter=applet_counter)
+        applet_counter = question_data['applet_data']['counter']
+        
+        question_dict['question_data']=question_data
+
+        # if have a latest attempt, look for maximum score on question_set
+        current_score=None
+        if current_attempt:
+            try:
+                current_credit =current_attempt\
+                    .get_percent_credit_question_set(question_set)
+                if question_dict['points']:
+                    current_score = current_credit\
+                        *question_dict['points']/100
+                else:
+                    current_score=0
+            except ObjectDoesNotExist:
+                current_credit = None
+        else:
+            current_credit = None
+
+        question_dict['current_score']=current_score
+        question_dict['current_credit']=current_credit
+
+        try:
+            question_group = assessment.questionsetdetail_set.get\
+                (question_set=question_set).group
+        except:
+            question_group = ''
+        
+        question_dict["group"] = question_group
+        question_dict["previous_same_group"] = False
+
+
+    if assessment.fixed_order:
+        return question_list, seed
+
+    # if not fixed order randomly shuffle questions
+    # keep questions with same group together
+    # i.e., first random shuffle groups, 
+    # then randomly shuffle questions within each group
+    # set 'previous_same_group' if previous question is from the same group
+
+    # create list of the groups, 
+    # adding unique groups to questions with no group
+    question_set_groups = {}
+    for (ind,q) in enumerate(question_list):
+        question_group = q['group']
+        if question_group in question_set_groups:
+            question_set_groups[question_group].append(ind)
+        elif question_group:
+            question_set_groups[question_group] = [ind]
+        else:
+            unique_no_group_name = '_no_group_%s' % ind
+            question_set_groups[unique_no_group_name] = [ind]
+            q['group']=unique_no_group_name
+
+    # create list of randomly shuffled groups
+    groups = question_set_groups.keys()
+    random.shuffle(groups)
+
+    # for each group, shuffle questions,
+    # creating cummulative list of the resulting question index order
+    question_order =[]
+    for group in groups:
+        group_indices=question_set_groups[group]
+        random.shuffle(group_indices)
+        question_order += group_indices
+
+    # shuffle questions based on that order
+    # also check if previous question is from same group
+    question_list_shuffled =[]
+    previous_group = 0
+    for i in question_order:
+        q=question_list[i]
+        this_group = q['group']
+        if this_group == previous_group:
+            previous_same_group = True
+        else:
+            previous_same_group = False
+        q['previous_same_group'] = previous_same_group
+        previous_group = this_group
+        question_list_shuffled.append(q)
+
+    return question_list_shuffled, seed
 

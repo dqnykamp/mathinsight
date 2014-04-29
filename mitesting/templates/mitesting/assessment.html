@@ -2,6 +2,14 @@
 
 
 {% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
+
+
 <h3>{{ assessment }}</h3>
 {% if course %}<h5>{{ course }}</h5>{%endif%}
 
@@ -14,8 +22,10 @@
 {% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
 
 <ol class="assessment_questions">
-{% for question in question_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{{ question.question_text }}</li>
+{% for question in rendered_list %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}
+{% question_body question.question_data %}
+</li>
 {% endfor %}
 </ol>
 </section>
@@ -29,7 +39,7 @@
   </form>
   {% else %}
   <form action="{{assessment.get_absolute_url}}" method="get">
-    <input type="hidden" name="seed" value="{{ assessment.get_new_seed }}">
+    <input type="hidden" name="seed" value="{{ new_seed }}">
     <input type="submit" value="Generate another sample of the questions" />
   </form>
   {%endif%}

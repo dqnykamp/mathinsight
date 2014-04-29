@@ -10,6 +10,7 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
+<div class="question" >
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -41,7 +42,7 @@
 {% if question_data.subparts %}
 <ol class='question_subparts'>
 {% for subpart in question_data.subparts %}
-<li class='question {{ subpart.spacing.css}}'>
+<li class='question {{ subpart.spacing.css}}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
   {{ subpart.rendered_text}}
   {% if subpart.help_available %}
 <div class="question_help_container">
@@ -60,7 +61,7 @@
     </ul>
     {% endif %}
     {% if subpart.include_solution_link %}
-    <p><a href='{{question.get_solution_url}}?seed={{question_data.seed}}'>View solution</a></p>
+    <p><a href='{{question_data.question.get_solution_url}}?seed={{question_data.seed}}#question_solution_{{question_data.identifier}}_{{subpart.letter}}'>View solution</a></p>
     {% endif %}
     <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
   </section>
@@ -73,7 +74,7 @@
 {% endfor %}
 </ol>
 {% endif %}
-
+</div>
 
 {% if question_data.submit_button %}
 <input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">

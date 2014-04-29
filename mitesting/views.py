@@ -14,7 +14,7 @@ from django.template import RequestContext, Template, Context
 from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
 from django.utils.safestring import mark_safe
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 import random
 from django.contrib.contenttypes.models import ContentType
 import datetime
@@ -36,7 +36,7 @@ class QuestionView(DetailView):
     Accepts either get or post, with seed given as a parameter.
     Checks is logged in user has required permissions. 
     If not, redirects to login page.
-    If not solution, then shows help and solution buttons, if available.
+    If not solution, then shows help and solution buttons/links, if available.
 
     Add the following to the context:
     - question_data: dictionary returned by render_assessments.render_question.
@@ -44,6 +44,9 @@ class QuestionView(DetailView):
       used by the template mitesting/question_body.html
     - show_lists: True if should show lists of assessments
     - noanalytics: True to indicate shouldn't link to Google analytics
+
+    TODO: have not yet implemented show help buttons for computer graded
+
     """
 
     model = Question
@@ -711,230 +714,262 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                     .create(question_set=question_set)
 
 
-
         return HttpResponse(json.dumps(results),
                             content_type = 'application/json')
 
 
 
-def assessment_view(request, assessment_code, solution=False, question_only=None):
-    
-    # if question_only is set, then view only that question
-    if question_only:
-        question_only = int(question_only)
+class AssessmentView(DetailView):
+    """
+    View assessment or assessment solution
 
-    assessment = get_object_or_404(Assessment, code=assessment_code)
-    
-    # determine if user has permission to view, given privacy level
-    if not assessment.user_can_view(request.user, solution=solution):
-        path = request.build_absolute_uri()
-        from django.contrib.auth.views import redirect_to_login
-        return redirect_to_login(path)
+    Accepts either get or post, with seed given as a parameter.
+    Checks is logged in user has required permissions. 
+    If not, redirects to login page.
+    If not solution, then shows help and solution buttons/links, if available.
 
-    seed = None
-    version = ''
-    
-    if request.method == 'POST':
-        new_attempt = request.POST['new_attempt']
-    else:
-        new_attempt = False
-        seed = request.REQUEST.get('seed', None)
-        """
-        This is possibly not a correct comment.
-        If the user is anonymous, the seed is available in _GET.
-        However, users in courses have seeds passed through the database and this will be set to None, to be overwritten later.
-        """
-        version = seed
-        if not version:
-            if assessment.nothing_random:
-                version = ''
-            else:
-                version='random'
+    Add the following to the context:
+    - question_data: dictionary returned by render_assessments.render_question.
+      This dictionary contains the information about the question that is
+      used by the template mitesting/question_body.html
+    - show_lists: True if should show lists of assessments
+    - noanalytics: True to indicate shouldn't link to Google analytics
+    """
 
-    assessment_date = request.REQUEST.get\
-        ('date', datetime.date.today().strftime("%B %d, %Y"))
+    model = Assessment
+    slug_url_kwarg = 'assessment_code'
+    slug_field = 'code'
+    solution=False
 
+    def render_to_response(self, context, **response_kwargs):
 
-    try:
-        courseuser = request.user.courseuser
-        course = courseuser.return_selected_course()
-    except:
-        courseuser = None
-        course = None
-
-    current_attempt=None
-    attempt_number=0
-    course_thread_content=None
-
-    # if student in the course
-    if course:
-        assessment_content_type = ContentType.objects.get\
-            (model='assessment')
-                        
-        try:
-            course_thread_content=course.coursethreadcontent_set.get\
-                (thread_content__object_id=assessment.id,\
-                     thread_content__content_type=assessment_content_type)
-            # Finds the course version of the specific assessment
-        except ObjectDoesNotExist:
-            course=None
-
-        if course_thread_content:
-            attempts = course_thread_content.studentcontentattempt_set\
-                .filter(student=courseuser) 
-            attempt_number = attempts.count()
-            # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
-            
-            if new_attempt:
-                # if new_attempt, create another attempt
-                attempt_number += 1
-                version = str(attempt_number)
-                if course_thread_content.individualize_by_student:
-                    version= "%s_%s" % (courseuser.user.username, version)
-                seed = "%s_%s_%s" % (course.code, assessment.id, version)
-
-                try:
-                    current_attempt = \
-                        course_thread_content.studentcontentattempt_set\
-                        .create(student=courseuser, seed=seed)
-                except IntegrityError:
-                    raise 
-                    
-
-            # if instructor and seed is set (from GET)
-            # then use that seed and don't link to attempt
-            # (i.e., skip this processing)
-            elif not (courseuser.role == 'I' and seed is not None):
-                
-                # else try to find latest attempt
-                try:
-                    current_attempt = attempts.latest()
-                    seed = current_attempt.seed
-                    version = str(attempt_number)
-                    if course_thread_content.individualize_by_student:
-                        version= "%s_%s" % (courseuser.user.username, version)
-
-                except ObjectDoesNotExist:
-                    # for seed use course_code, assessment_id, 
-                    # and possibly student
-
-                    # if individualize_by_student, add username
-                    version = "1"
-                    if course_thread_content.individualize_by_student:
-                        version= "%s_%s" % (courseuser.user.username, version)
-                    seed = "%s_%s_%s" % (course.code, assessment.id, version)
-
-                    # create the attempt
-                    current_attempt = \
-                        course_thread_content.studentcontentattempt_set\
-                        .create(student=courseuser, seed=seed)
-                
-
-    rendered_question_list=[]
-    rendered_solution_list=[]
-    if solution:
-        rendered_solution_list=assessment.render_solution_list(seed)
-        if question_only:
-            try:
-                rendered_solution_list=rendered_solution_list[question_only-1:question_only]
-            except:
-                pass
-
-        geogebra_oninit_commands=""
-        for sol in rendered_solution_list:
-            if geogebra_oninit_commands:
-                geogebra_oninit_commands += "\n"
-            if sol['geogebra_oninit_commands']:
-                geogebra_oninit_commands += sol['geogebra_oninit_commands']
-
-                        
-    else:
-        rendered_question_list=assessment.render_question_list(seed, user=request.user, current_attempt=current_attempt)
-        if question_only:
-            try:
-                rendered_question_list = rendered_question_list[question_only-1:question_only]
-            except:
-                raise#  pass
-
-        geogebra_oninit_commands=""
-        for ques in rendered_question_list:
-            if geogebra_oninit_commands:
-                geogebra_oninit_commands += "\n"
-            if ques['geogebra_oninit_commands']:
-                geogebra_oninit_commands += ques['geogebra_oninit_commands']
-
-        
-        
-    geogebra_oninit_commands = mark_safe(geogebra_oninit_commands)
-
-    if "question_numbers" in request.REQUEST:
-        if solution:
-            the_list=rendered_solution_list
+        # determine if user has permission to view question,
+        # given privacy level
+        if not self.object.user_can_view(self.request.user,
+                                         solution=self.solution):
+            path = self.request.build_absolute_uri()
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(path)
         else:
-            the_list=rendered_question_list
-            
-        question_numbers=[]
-        for q in the_list:
-            question_numbers.append(str(q['question'].id))
-        question_numbers = ", ".join(question_numbers)
-    else:
-        question_numbers=None
+            return super(AssessmentView, self)\
+                .render_to_response(context, **response_kwargs)
 
 
-    generate_assessment_link = False
-    show_solution_link = False
-    if request.user.has_perm("mitesting.administer_assessment"):
-        generate_assessment_link = True
-        if not solution:
-            show_solution_link = True
+    def get_template_names(self):
+        """
+        Returns a list of template names to be used for the request.
+        Called by based implementation of render_to_response.
+
+        If template base name is defined in assessment type,
+        makes that name be the primary name, with fallback to assessment.html.
+        Appends _solution if rendering solution
+        """
+        template_names = []
+        solution_postfix=""
+        if self.solution:
+            solution_postfix="_solution"
+        template_base_name = self.object.assessment_type.template_base_name
+        if template_base_name:
+            template_names.append("mitesting/%s%s.html" % 
+                                  (template_base_name, solution_postfix))
+        template_names.append("mitesting/assessment%s.html" % solution_postfix)
+        
+        return template_names
 
 
-    # turn off google analytics for localhost
-    noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3:
-        noanalytics=True
+    def get_context_data(self, **kwargs):
+        context = super(AssessmentView, self).get_context_data(**kwargs)
 
-    template_names = []
-    solution_postfix=""
-    if solution:
-        solution_postfix="_solution"
-    template_base_name = assessment.assessment_type.template_base_name
-    if template_base_name:
-        template_names.append("mitesting/%s%s.html" % (template_base_name, solution_postfix))
-    template_names.append("mitesting/assessment%s.html" % solution_postfix)
+        context['assessment_date'] = self.request.REQUEST.get\
+            ('date', datetime.date.today().strftime("%B %d, %Y"))
 
 
-    assessment_name = assessment.name
-    if solution:
-        assessment_name = assessment_name + " solution"
-    assessment_short_name = assessment.return_short_name()
-    if solution:
-        assessment_short_name = assessment_short_name + " sol."
+        from .render_assessments import render_question_list, get_new_seed
+        rendered_list=[]
+        (rendered_list,self.seed)=render_question_list(
+            self.object, seed=self.seed, user=self.request.user, 
+            solution=self.solution,
+            current_attempt=self.current_attempt)
 
-    if version:
-        version_string = ', version %s' % version
-    else:
-        version_string = ''
-    return render_to_response \
-        (template_names, 
-         {'assessment': assessment, 
-          'assessment_name': assessment_name, 
-          'assessment_short_name': assessment_short_name, 
-          'question_list': rendered_question_list,
-          'solution_list': rendered_solution_list,
-          'seed': seed, 'version_string': version_string,
-          'assessment_date': assessment_date,
-          'course': course,
-          'course_thread_content': course_thread_content,
-          'attempt_number': attempt_number,
-          'question_numbers': question_numbers,
-          'generate_assessment_link': generate_assessment_link,
-          'show_solution_link': show_solution_link,
-          'question_only': question_only,
-          'geogebra_oninit_commands': geogebra_oninit_commands,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
+        # if question_only is set, then view only that question
+        if self.kwargs.get('question_only'):
+            question_only = int(self.kwargs['question_only'])
+            rendered_list=rendered_list[question_only-1:question_only]
+        context['rendered_list'] = rendered_list
+
+        context['seed'] = self.seed
+
+        # determine if there were any errors
+        success=True
+        question_errors=[]
+        for (ind,q) in enumerate(rendered_list):
+            if not q["question_data"]["success"]:
+                success=False
+                question_errors.append(str(ind+1))
+        if not success:
+            context['error_message'] = \
+                "Errors occurred in the following questions: %s" %\
+                ", ".join(question_errors)
+
+        context['success'] = success
+        
+        
+
+        context['generate_assessment_link'] = False
+        context['show_solution_link'] = False
+        if self.request.user.has_perm("mitesting.administer_assessment"):
+            context['generate_assessment_link'] = True
+            if not self.solution:
+                context['show_solution_link'] = True
+
+
+        context['assessment_name'] = self.object.name
+        if self.solution:
+            context['assessment_name'] += " solution"
+        context['assessment_short_name'] = self.object.return_short_name()
+        if self.solution:
+            context['assessment_short_name'] += " sol."
+
+        if self.version:
+            context['version_string'] = ', version %s' % self.version
+        else:
+            context['version_string'] = ''
+
+
+
+        # get list of the question numbers in assessment
+        # if question_numbers specified in GET parameters
+        if "question_numbers" in self.request.GET:
+            if self.solution:
+                the_list=rendered_solution_list
+            else:
+                the_list=rendered_question_list
+
+            question_numbers=[]
+            for q in the_list:
+                question_numbers.append(str(q['question'].id))
+            question_numbers = ", ".join(question_numbers)
+        else:
+            question_numbers=None
+        context['question_numbers']=question_numbers
+
+        # turn off Google analytics for localhost/development site
+        context['noanalytics']=(settings.SITE_ID > 1)
+
+        context['new_seed']=get_new_seed
+
+        return context
+
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        seed = request.GET.get('seed')
+        self.determine_seed_version(user=request.user,seed=seed)
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        new_attempt = request.POST.get('new_attempt',False)
+        self.determine_seed_version(user=request.user,
+                                    new_attempt=new_attempt)
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+
+    def determine_seed_version(self, user, seed=None, new_attempt=False):
+        """
+        
+        Need to fix and test this.
+
+        """
+
+        if self.object.nothing_random:
+            seed=1
+            self.version = ''
+        else:
+            if not seed:
+                seed=1
+            self.version = seed
+        
+        # First determine if user is enrolled in an course
+        try:
+            courseuser = user.courseuser
+            course = courseuser.return_selected_course()
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            courseuser = None
+            course = None
+
+        self.current_attempt=None
+        attempt_number=0
+        course_thread_content=None
+
+
+        # if enrolled in the course
+        if course:
+            assessment_content_type = ContentType.objects.get\
+                (model='assessment')
+
+            try:
+                course_thread_content=course.coursethreadcontent_set.get\
+                    (thread_content__object_id=self.object.id,\
+                         thread_content__content_type=assessment_content_type)
+                # Finds the course version of the specific assessment
+            except ObjectDoesNotExist:
+                course=None
+
+            if course_thread_content:
+                attempts = course_thread_content.studentcontentattempt_set\
+                    .filter(student=courseuser) 
+                attempt_number = attempts.count()
+                # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
+
+                if self.new_attempt:
+                    # if new_attempt, create another attempt
+                    attempt_number += 1
+                    self.version = str(attempt_number)
+                    if course_thread_content.individualize_by_student:
+                        self.version= "%s_%s" % (courseuser.user.username, self.version)
+                    seed = "%s_%s_%s" % (course.code, self.object.id, self.version)
+
+                    try:
+                        self.current_attempt = \
+                            course_thread_content.studentcontentattempt_set\
+                            .create(student=courseuser, seed=seed)
+                    except IntegrityError:
+                        raise 
+
+
+                # if instructor and seed is set (from GET)
+                # then use that seed and don't link to attempt
+                # (i.e., skip this processing)
+                elif not (courseuser.role == 'I' and seed is not None):
+
+                    # else try to find latest attempt
+                    try:
+                        self.current_attempt = attempts.latest()
+                        seed = self.current_attempt.seed
+                        self.version = str(attempt_number)
+                        if course_thread_content.individualize_by_student:
+                            self.version= "%s_%s" % (courseuser.user.username, self.version)
+
+                    except ObjectDoesNotExist:
+                        # for seed use course_code, assessment_id, 
+                        # and possibly student
+
+                        # if individualize_by_student, add username
+                        self.version = "1"
+                        if course_thread_content.individualize_by_student:
+                            self.version= "%s_%s" % (courseuser.user.username, self.version)
+                        seed = "%s_%s_%s" % (course.code, self.object.id, self.version)
+
+                        # create the attempt
+                        self.current_attempt = \
+                            course_thread_content.studentcontentattempt_set\
+                            .create(student=courseuser, seed=seed)
+    
+        self.seed=seed
 
 
 def assessment_avoid_question_view(request, assessment_code):

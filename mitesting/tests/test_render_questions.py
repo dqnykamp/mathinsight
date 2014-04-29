@@ -166,7 +166,8 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.CONDITION)
 
         for i in range(10):
-            seed=self.q.get_new_seed()
+            from mitesting.render_assessments import get_new_seed
+            seed=get_new_seed()
             random.seed(seed)
             results=setup_expression_context(self.q)
             self.assertEqual(results['user_function_dict'], {})

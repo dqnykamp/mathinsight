@@ -95,9 +95,6 @@ class Question(models.Model):
         if self.question_spacing:
             return self.question_spacing
  
-    def get_new_seed(self):
-        return str(random.randint(0,1E8))
-
     @models.permalink
     def get_absolute_url(self):
         return('mit-question', (), {'question_id': self.id})
@@ -417,9 +414,6 @@ class Assessment(models.Model):
             allowed_users += list(group.user_set.all())
         return allowed_users
 
-    def get_new_seed(self):
-        return str(random.randint(0,1E8))
-
     @models.permalink
     def get_absolute_url(self):
         return('mit-assessment', (), {'assessment_code': self.code})
@@ -441,36 +435,56 @@ class Assessment(models.Model):
             ("administer_assessment","Can administer assessments"),
         )
 
-    def return_privacy_level(self, solution=True):
+    def return_privacy_level(self, solution=True, include_questions=True):
         # privacy level is max of privacy level from assessment type
-        # and all question sets
+        # and (if include_questions==True) all question sets
         if solution:
             privacy_level = self.assessment_type.solution_privacy
         else:
             privacy_level = self.assessment_type.assessment_privacy
-        for question in self.questions.all():
-            privacy_level = max(privacy_level, question.return_privacy_level(solution))
+        if include_questions:
+            for question in self.questions.all():
+                privacy_level = max(privacy_level, 
+                                    question.return_privacy_level(solution))
         return privacy_level
     
-    def privacy_level_description(self):
-        privacy_level = self.return_privacy_level(solution=False)
-        privacy_word= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
-        if self.groups_can_view.exists():
-            privacy_word += " (overridden for some groups)"
-        return privacy_word
+    def privacy_level_description(self, solution=False):
+        """
+        Returns description of the privacy of the assessment or solution.
+        using the words of the PRIVACY_CHOICES from AssessmentType.
+        Also includes statements alerting to the following situations:
+        - If the privacy level was increased from that of the assessment type
+          due to a higher privacy level associated with a question
+        - If a privacy override will allow some groups to view a non-public
+          assessment or solution.
+        """
+        privacy_level = self.return_privacy_level(solution=solution)
+        privacy_description= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
+        privacy_description_addenda = []
+        if privacy_level > self.return_privacy_level(solution=solution, 
+                                                     include_questions=False):
+            privacy_description_addenda.append(
+                "increased due to an assigned question")
+        
+        if (solution and self.groups_can_view_solution.exists()) or \
+                (not solution and self.groups_can_view.exists()):
+            if privacy_level > 0:
+                privacy_description_addenda.append("overridden for some groups")
+
+        if privacy_description_addenda:
+            privacy_description += " (%s)" %\
+                ", ".join(privacy_description_addenda)
+        
+        return privacy_description
     privacy_level_description.short_description = "Assessment privacy"
 
 
     def privacy_level_solution_description(self):
-        privacy_level = self.return_privacy_level(solution=True)
-        privacy_word= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
-        if self.groups_can_view_solution.exists():
-            privacy_word += " (overridden for some groups)"
-        return privacy_word
+        return self.privacy_level_description(solution=True)
     privacy_level_solution_description.short_description = "Solution privacy"
 
     def render_instructions(self):
-        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions
         try:
             t = Template(template_string)
@@ -479,269 +493,13 @@ class Assessment(models.Model):
             return "Error in instructions template: %s" % e
 
     def render_instructions2(self):
-        template_string_base = "{% load testing_tags mi_tags humanize %}{% load url from future %}"
+        template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions2
         try:
             t = Template(template_string)
             return mark_safe(t.render(Context({})))
         except TemplateSyntaxError as e:
             return "Error in instructions2 template: %s" % e
-
-
-    def render_question_list(self, seed=None, user=None, current_attempt=None):
-        if seed is not None:
-            random.seed(seed)
-            
-        question_list = self.get_question_list(seed)
-
-        rendered_question_list = []
-        
-        previous_context=Context({})
-        for (i, question_dict) in enumerate(question_list):
-
-            # use qa for identifier since coming from assessment
-            identifier="qa%s" % i
-
-            question = question_dict['question']
-            question_set = question_dict['question_set']
-            question_context = question.setup_context\
-                (seed=question_dict['seed'], identifier=identifier, \
-                     allow_solution_buttons = self.allow_solution_buttons,\
-                     previous_context = previous_context, \
-                     question_set = question_set)
-            
-            # if there was an error, question_context is a string string,
-            # so just make rendered question text be that string
-            if not isinstance(question_context, Context):
-                question_text = question_context
-                geogebra_oninit_commands=""
-            else:
-                question_text = question.render_question(question_context, user=user, identifier=identifier, assessment=self, assessment_seed = seed, question_set=question_set)
-                geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
-                #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=False)
-                previous_context = question_context
-
-
-            # if have a latest attempt, look for maximum score on question_set
-            current_score=None
-            if current_attempt:
-                try:
-                    current_credit =current_attempt\
-                        .get_percent_credit_question_set(question_set)
-                    if question_dict['points']:
-                        current_score = current_credit\
-                            *question_dict['points']/100
-                    else:
-                        current_score=0
-                except ObjectDoesNotExist:
-                    current_credit = None
-            else:
-                current_credit = None
-
-            try:
-                question_group = self.questionsetdetail_set.get\
-                    (question_set=question_set).group
-            except:
-                question_group = ''
-
-            rendered_question_list.append({'question_text': question_text,
-                                           'question': question,
-                                           'points': question_dict['points'],
-                                           'seed': question_dict['seed'],
-                                           'question_set': question_set,
-                                           'current_credit': current_credit,
-                                           'current_score': current_score,
-                                           'group': question_group,
-                                           'previous_same_group': False,
-                                           'geogebra_oninit_commands':\
-                                               geogebra_oninit_commands})
-
-
-        if self.fixed_order:
-            return rendered_question_list
-
-        # if not fixed order randomly shuffle questions
-        # keep questions with same group together
-        # i.e., first random shuffle groups, 
-        # then randomly shuffle questions within each group
-        # set 'previous_same_group' if previous question is from the same group
-
-        # create list of the groups, 
-        # adding unique groups to questions with no group
-        question_set_groups = {}
-        for (ind,q) in enumerate(rendered_question_list):
-            question_group = q['group']
-            if question_group in question_set_groups:
-                question_set_groups[question_group].append(ind)
-            elif question_group:
-                question_set_groups[question_group] = [ind]
-            else:
-                unique_no_group_name = '_no_group_%s' % ind
-                question_set_groups[unique_no_group_name] = [ind]
-                q['group']=unique_no_group_name
-                
-        # create list of randomly shuffled groups
-        groups = question_set_groups.keys()
-        random.shuffle(groups)
-            
-        # for each group, shuffle questions,
-        # creating cummulative list of the resulting question index order
-        question_order =[]
-        for group in groups:
-            group_indices=question_set_groups[group]
-            random.shuffle(group_indices)
-            question_order += group_indices
-        
-        # shuffle questions based on that order
-        # also check if previous question is from same group
-        rendered_question_list_shuffled =[]
-        previous_group = 0
-        for i in question_order:
-            q=rendered_question_list[i]
-            this_group = q['group']
-            if this_group == previous_group:
-                previous_same_group = True
-            else:
-                previous_same_group = False
-            q['previous_same_group'] = previous_same_group
-            previous_group = this_group
-            rendered_question_list_shuffled.append(q)
-
-        return rendered_question_list_shuffled
-
-
-    def render_solution_list(self, seed=None):
-        if seed is not None:
-            random.seed(seed)
-            
-        question_list = self.get_question_list(seed)
-
-        rendered_solution_list = []
-
-        previous_context = Context({})
-        for (i, solution_dict) in enumerate(question_list):
-
-            # use qa for identifier since coming from assessment
-            identifier="qa%s" % i
-
-            question = solution_dict['question']
-            question_set = solution_dict['question_set']
-            question_context = question.setup_context\
-                (seed=solution_dict['seed'], identifier=identifier, \
-                     allow_solution_buttons = self.allow_solution_buttons, \
-                     previous_context = previous_context,\
-                     question_set = question_set)
-
-            # if there was an error, question_context is a string string,
-            # so just make rendered question text be that string
-            if not isinstance(question_context, Context):
-                question_text = question_context
-                solution_text = question_context
-                geogebra_oninit_commands=""
-            else:
-                question_text = question.render_question\
-                    (question_context, identifier=identifier,\
-                         question_set=question_set)
-                solution_text = question.render_solution\
-                    (question_context, identifier=identifier, \
-                         question_set=question_set)
-                geogebra_oninit_commands=question_context.dicts[0].get('geogebra_oninit_commands')
-                #geogebra_oninit_commands=question.render_javascript_commands(question_context, question=True, solution=True)
-                
-                previous_context = question_context
-
-
-            solution_dict['question_text'] = question_text
-            solution_dict['solution_text'] = solution_text
-            solution_dict['geogebra_oninit_commands'] = geogebra_oninit_commands
-
-            try:
-                question_group = self.questionsetdetail_set.get\
-                    (question_set=question_set).group
-            except:
-                question_group = ''
-                
-            solution_dict['group']=question_group
-
-            rendered_solution_list.append(solution_dict)
-
-        if self.fixed_order:
-            return rendered_solution_list
-
-        # if not fixed order randomly shuffle questions
-        # keep questions with same group together
-        # i.e., first random shuffle groups, 
-        # then randomly shuffle questions within each group
-        # set 'previous_same_group' if previous question is from the same group
-
-        # create list of the groups, 
-        # adding unique groups to questions with no group
-        question_set_groups = {}
-        for (ind,q) in enumerate(rendered_solution_list):
-            question_group = q['group']
-            if question_group in question_set_groups:
-                question_set_groups[question_group].append(ind)
-            elif question_group:
-                question_set_groups[question_group] = [ind]
-            else:
-                unique_no_group_name = '_no_group_%s' % ind
-                question_set_groups[unique_no_group_name] = [ind]
-                q['group']=unique_no_group_name
-                
-        # create list of randomly shuffled groups
-        groups = question_set_groups.keys()
-        random.shuffle(groups)
-            
-        # for each group, shuffle questions,
-        # creating cummulative list of the resulting question index order
-        question_order =[]
-        for group in groups:
-            group_indices=question_set_groups[group]
-            random.shuffle(group_indices)
-            question_order += group_indices
-        
-        # shuffle questions based on that order
-        # also check if previous question is from same group
-        rendered_solution_list_shuffled =[]
-        previous_group = 0
-        for i in question_order:
-            q=rendered_solution_list[i]
-            this_group = q['group']
-            if this_group == previous_group:
-                previous_same_group = True
-            else:
-                previous_same_group = False
-            q['previous_same_group'] = previous_same_group
-            previous_group = this_group
-            rendered_solution_list_shuffled.append(q)
-
-        return rendered_solution_list_shuffled
-
-
-    def get_question_list(self, seed=None):
-        if seed is not None:
-            random.seed(seed)
-
-        question_list = []
-
-        for question_set in self.question_sets():
-            questions_in_set = self.questionassigned_set.filter(question_set=question_set)
-            the_question=random.choice(questions_in_set).question
-
-            # generate a seed for the question
-            # so that can have link to this version of question and solution
-            question_seed=self.get_new_seed()
-            the_points = self.points_of_question_set(question_set)
-            if the_points is None:
-                the_points = ""    
-            question_list.append({'question_set': question_set,
-                                  'question': the_question,
-                                  'points': the_points,
-                                  'seed': question_seed}
-                                 )
-
-        return question_list
-            
 
 
     def question_sets(self):
@@ -754,9 +512,10 @@ class Assessment(models.Model):
 
     def points_of_question_set(self, question_set):
         try:
-            question_detail=self.questionsetdetail_set.get(question_set=question_set)
+            question_detail=self.questionsetdetail_set.get(
+                question_set=question_set)
             return question_detail.points
-        except:
+        except ObjectDoesNotExist:
             return None
 
     def get_total_points(self):

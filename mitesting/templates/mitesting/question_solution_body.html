@@ -6,14 +6,16 @@
 </section>
 {% endif %}
 
+<div class="question">
 {{ question_data.rendered_text }}
 
 {% if question_data.subparts %}
 <ol class='question_subparts'>
 {% for subpart in question_data.subparts %}
-<li class='question'>
+<li class='question' id="question_solution_{{question_data.identifier}}_{{subpart.letter}}">
   {{ subpart.rendered_text}}
 </li>
 {% endfor %}
 </ol>
 {% endif %}
+</div>

@@ -1055,7 +1055,8 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="function", answer="fun_x")
 
-        seed=self.q.get_new_seed()
+        from mitesting.render_assessments import get_new_seed
+        seed=get_new_seed()
         response = self.client.get("/assess/question/1", {'seed': seed})
 
         cgd = response.context["question_data"]["computer_grade_data"]
