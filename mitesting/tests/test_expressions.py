@@ -6,6 +6,8 @@ from __future__ import division
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
+from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL, \
+    EVALUATE_FULL
 from sympy import Symbol, sympify, Function
 from numpy import arange, linspace
 import re
@@ -134,6 +136,31 @@ class TestExpressions(TestCase):
             self.assertTrue(c in [2*b**2, (a-b)/x]),
             test_global_dict["c"] = c
             self.assertEqual(global_dict, test_global_dict)
+
+    def test_random_expression_evaluate_level(self):
+        from sympy import Derivative, Integral
+        x = Symbol('x')
+        global_dict={'Derivative': Derivative }
+
+        for i in range(10):
+            expr1=self.new_expr(name="a",expression=
+                                "x+x, Derivative(x^3,x), 5(x-3)",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            a = expr1.evaluate(global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
+
+            expr1.evaluate_level = EVALUATE_FULL
+            a = expr1.evaluate(global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
+
+            expr1.evaluate_level = EVALUATE_PARTIAL
+            a = expr1.evaluate(global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, Derivative(x**3,x), 5*x-15])
+            
+            expr1.evaluate_level = EVALUATE_NONE
+            a = expr1.evaluate(global_dict=global_dict).return_expression()
+            self.assertTrue(six.text_type(a) in 
+                            ['x + x', 'Derivative(x**3, x)', '5*(x - 3)'])
 
     def test_random_function_name(self):
         x = Symbol('x')
@@ -668,7 +695,7 @@ class TestExpressions(TestCase):
         expr1_eval=expr1.evaluate(global_dict=global_dict)
         self.assertEqual(six.text_type(expr1_eval), "x^{2} y + 2 x")
         expr2=self.new_expr(name="s2", expression="x+x*y*x+x", 
-                            evaluate_level=Expression.EVALUATE_NONE)
+                            evaluate_level=EVALUATE_NONE)
         expr2_eval=expr2.evaluate(global_dict=global_dict)
         self.assertEqual(six.text_type(expr2_eval), "x x y + x + x")
         self.assertEqual(expr2_eval.compare_with_expression(
@@ -684,7 +711,7 @@ class TestExpressions(TestCase):
         expr1_eval=expr1.evaluate(global_dict=global_dict)
         self.assertEqual(expr1_eval.return_expression(), 2*x)
         expr2=self.new_expr(name="s2", expression="Derivative(x^2,x)", 
-                            evaluate_level=Expression.EVALUATE_PARTIAL)
+                            evaluate_level=EVALUATE_PARTIAL)
         expr2_eval=expr2.evaluate(global_dict=global_dict)
         self.assertEqual(expr2_eval.return_expression(), Derivative(x**2,x))
         self.assertEqual(expr2_eval.compare_with_expression(
@@ -696,7 +723,7 @@ class TestExpressions(TestCase):
         expr3_eval=expr3.evaluate(global_dict=global_dict)
         self.assertEqual(expr3_eval.return_expression(), x**3/3)
         expr4=self.new_expr(name="s4", expression="Integral(x^2,x)", 
-                            evaluate_level=Expression.EVALUATE_PARTIAL)
+                            evaluate_level=EVALUATE_PARTIAL)
         expr4_eval=expr4.evaluate(global_dict=global_dict)
         self.assertEqual(expr4_eval.return_expression(), Integral(x**2,x))
         self.assertEqual(expr4_eval.compare_with_expression(

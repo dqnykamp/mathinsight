@@ -4,9 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.test import SimpleTestCase
-from mitesting.sympy_customized import bottom_up, parse_expr, parse_and_process
+from mitesting.sympy_customized import bottom_up, parse_expr, \
+    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL
 from mitesting.customized_commands import normalize_floats
-from mitesting.models import Expression
 from sympy import Symbol, diff, Tuple, sympify, Integer
 import random
 
@@ -215,15 +215,15 @@ class ParseExprTests(SimpleTestCase):
         x=Symbol('x')
         y=Symbol('y')
         expr = parse_and_process("2+x+x", 
-                                 evaluate_level=Expression.EVALUATE_NONE)
+                                 evaluate_level=EVALUATE_NONE)
         self.assertNotEqual(expr, 2+x+x)
         self.assertEqual(repr(expr), 'x + x + 2')
         
         expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
-                                 evaluate_level = Expression.EVALUATE_PARTIAL)
+                                 evaluate_level = EVALUATE_PARTIAL)
         self.assertEqual(Derivative(x**2,x), expr)
         expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
-                                 evaluate_level = Expression.EVALUATE_FULL)
+                                 evaluate_level = EVALUATE_FULL)
         self.assertEqual(2*x, expr)
         expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict)
         self.assertEqual(2*x, expr)

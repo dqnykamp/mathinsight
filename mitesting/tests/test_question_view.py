@@ -780,6 +780,265 @@ class TestGradeQuestionView(TestCase):
             self.assertTrue("is correct" in \
                                 results["answer_feedback"][ai])
 
+    def test_evaluate_level_on_compare_x_plus_x(self):
+        from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
+            EVALUATE_FULL
+        expr=self.q.expression_set.create(
+            name="x_plus_x", expression="x+x", 
+            expression_type = Expression.EXPRESSION)
+        self.q.question_text="{% answer x_plus_x %}"
+        self.q.save()
+        self.new_answer(answer_code="x_plus_x", answer="x_plus_x")
+
+        response = self.client.get("/assess/question/1")
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
+        x = response.context['x']
+        answers = {"cgd": cgd,}
+
+        answers["answer_" + answer_identifier] \
+            = "%s + %s" % (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "2%s" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        expr.evaluate_level=EVALUATE_NONE
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "%s + %s" % (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "2%s" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+
+        expr.evaluate_level=EVALUATE_PARTIAL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "%s + %s" % (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "2%s" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        expr.evaluate_level=EVALUATE_FULL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "%s + %s" % (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "2%s" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+
+    def test_evaluate_level_on_compare_distribute(self):
+        from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
+            EVALUATE_FULL
+        expr=self.q.expression_set.create(
+            name="ans", expression="6x+9", 
+            expression_type = Expression.EXPRESSION)
+        self.q.question_text="{% answer ans %}"
+        self.q.save()
+        self.new_answer(answer_code="ans", answer="ans")
+
+        response = self.client.get("/assess/question/1")
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
+        x = response.context['x']
+        answers = {"cgd": cgd,}
+
+        answers["answer_" + answer_identifier] \
+            = "6%s + 9" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "3(2%s+3)" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        expr.evaluate_level=EVALUATE_NONE
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "6%s + 9" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "3(2%s+3)" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+
+        expr.evaluate_level=EVALUATE_PARTIAL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "6%s + 9" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "3(2%s+3)" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        expr.evaluate_level=EVALUATE_FULL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "6%s + 9" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "3(2%s+3)" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+
+    def test_evaluate_level_on_compare_derivative(self):
+        from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
+            EVALUATE_FULL
+        expr=self.q.expression_set.create(
+            name="deriv", expression="4x^3", 
+            expression_type = Expression.EXPRESSION)
+        self.q.question_text="{% answer deriv %}"
+        self.q.save()
+        self.new_answer(answer_code="deriv", answer="deriv")
+        scs_derivative = SympyCommandSet.objects.create(
+                name = 'derivative', commands='Derivative')
+        self.q.allowed_sympy_commands.add(scs_derivative)
+
+        response = self.client.get("/assess/question/1")
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_data"].keys()[0]
+        x = response.context['x']
+        answers = {"cgd": cgd,}
+
+        answers["answer_" + answer_identifier] \
+            = "Derivative(%s^4,%s)" % \
+            (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "4*%s^3" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        expr.evaluate_level=EVALUATE_NONE
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "Derivative(%s^4,%s)" % \
+            (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "4*%s^3" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+
+        expr.evaluate_level=EVALUATE_PARTIAL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "Derivative(%s^4,%s)" % \
+            (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "4*%s^3" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+
+        expr.evaluate_level=EVALUATE_FULL
+        expr.save()
+
+        answers["answer_" + answer_identifier] \
+            = "Derivative(%s^4,%s)" % \
+            (x.return_expression(),x.return_expression())
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+        answers["answer_" + answer_identifier] \
+            = "4*%s^3" % x.return_expression()
+        response=self.client.post("/assess/question/1/grade_question",
+                                  answers)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+
+
+
     def test_normalize_on_compare(self):
         self.q.expression_set.create(
             name="product", expression="(x+a)(x-a)", 

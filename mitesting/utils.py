@@ -249,7 +249,7 @@ def return_random_expression(expression_list, index=None,
     try:
         parsed_list = parse_and_process(expression_list, 
                                         global_dict=global_dict,
-                                        evaluate_level=None)
+                                        evaluate_level=evaluate_level)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random expression: "
                          + expression_list

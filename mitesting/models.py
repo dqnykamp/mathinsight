@@ -678,10 +678,9 @@ class Expression(models.Model):
          ),
         )
 
-    
-    EVALUATE_NONE = 0
-    EVALUATE_PARTIAL = 1
-    EVALUATE_FULL = 2
+    from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
+        EVALUATE_FULL
+
     EVALUATE_CHOICES = (
         (EVALUATE_NONE, "None"),
         (EVALUATE_PARTIAL, "Partial"),
@@ -1059,7 +1058,7 @@ class Expression(models.Model):
                 n_digits=self.n_digits, 
                 round_decimals=self.round_decimals, 
                 use_ln=self.use_ln, 
-                evaluate = self.evaluate_level != self.EVALUATE_NONE,
+                evaluate_level = self.evaluate_level,
                 tuple_is_unordered=self.expression_type==self.UNORDERED_TUPLE,
                 collapse_equal_tuple_elements \
                     =self.collapse_equal_tuple_elements, 

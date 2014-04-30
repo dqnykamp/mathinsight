@@ -8,6 +8,10 @@ from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
 import re
 import keyword
 
+EVALUATE_NONE = 0
+EVALUATE_PARTIAL = 1
+EVALUATE_FULL = 2
+
 def bottom_up(rv, F, atoms=False, nonbasic=False):
     """Apply ``F`` to all expressions in an expression tree from the
     bottom up. If ``atoms`` is True, apply ``F`` even if there are no args;
@@ -160,14 +164,13 @@ def parse_and_process(s, global_dict=None, local_dict=None,
                       split_symbols=False, evaluate_level=None):
     """
     Parse expression and optionally call doit, evaluate_level is full. 
-    If evaluate_level = Expression.EVALUATE_NONE, then parse
+    If evaluate_level = EVALUATE_NONE, then parse
     with evaluate=False set.
-    If evaluate_level = Expression.EVALUATE_FULL or evaluate_level=None,
+    If evaluate_level = EVALUATE_FULL or evaluate_level=None,
     then call doit() after parsing.
     """
     
-    from mitesting.models import Expression
-    if evaluate_level == Expression.EVALUATE_NONE:
+    if evaluate_level == EVALUATE_NONE:
         evaluate = False
     else:
         evaluate = True
@@ -177,8 +180,7 @@ def parse_and_process(s, global_dict=None, local_dict=None,
                             split_symbols=split_symbols,
                             evaluate=evaluate)
 
-    if evaluate_level == Expression.EVALUATE_FULL \
-            or evaluate_level is None:
+    if evaluate_level == EVALUATE_FULL or evaluate_level is None:
         try: 
             expression=expression.doit()
         except (AttributeError, TypeError):

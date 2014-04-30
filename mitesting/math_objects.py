@@ -45,8 +45,9 @@ class math_object(object):
             the expression is replaced by just that element.
         output_no_delimiters: if flag set to True, then tuples or lists
             are printed just with entries separated by commas.
-        evaluate: if False, then don't process the expression before 
-            displaying or comparing with another expression
+        evaluate_level: if EVALUATE_NONE, then don't process the expression
+            before displaying or comparing with another expression
+            Value can be retrieved with return_evaluate_level.            
         copy_parameters_from: objects from which to copy parameters.
             If set to an object with a dictionary with a _parameters attribute,
             all parameters are passed into function are ignored 
@@ -172,6 +173,9 @@ class math_object(object):
         return self._parameters.get('output_no_delimiters',False)
     def return_split_symbols_on_compare(self):
         return self._parameters.get('split_symbols_on_compare', False)
+    def return_evaluate_level(self):
+        from mitesting.sympy_customized import EVALUATE_FULL
+        return self._parameters.get('evaluate_level', EVALUATE_FULL)
 
     def eval_to_precision(self, expression):
         """
@@ -228,7 +232,8 @@ class math_object(object):
         3. If use_ln is set, then substitute ln for log
         """
         from sympy.geometry.line import LinearEntity
-        if self._parameters.get('evaluate') is False:
+        from mitesting.sympy_customized import EVALUATE_NONE
+        if self._parameters.get('evaluate_level') == EVALUATE_NONE:
             expression = self._expression
         else:
             expression = self.convert_expression()
@@ -292,7 +297,8 @@ class math_object(object):
         # As long as evaluate is not False
         # evaluate both expressions to precision as specified
         # by n_digits and round_decimals
-        if self._parameters.get("evaluate") is False:
+        from mitesting.sympy_customized import EVALUATE_NONE
+        if self._parameters.get("evaluate_level") == EVALUATE_NONE:
             expression=self._expression
         else:
             new_expr = self.eval_to_precision(new_expr)

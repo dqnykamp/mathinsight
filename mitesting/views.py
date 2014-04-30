@@ -281,10 +281,15 @@ class GradeQuestionView(SingleObjectMixin, View):
                     except KeyError:
                         continue
 
+                    # determine level of evaluation of answer_option
+                    evaluate_level = valid_answer.return_evaluate_level()
+
                     try:
                         user_response_parsed = parse_and_process(
                             user_response, global_dict=global_dict, 
-                            split_symbols=answer_option.split_symbols_on_compare)
+                            split_symbols=answer_option
+                            .split_symbols_on_compare,
+                            evaluate_level=evaluate_level)
                     except Exception as e:
                         feedback = "Sorry.  Unable to understand the answer."
                         break
@@ -295,7 +300,8 @@ class GradeQuestionView(SingleObjectMixin, View):
                         output_no_delimiters= \
                             valid_answer.return_if_output_no_delimiters(),
                         use_ln=valid_answer.return_if_use_ln(),
-                        normalize_on_compare=answer_option.normalize_on_compare)
+                        normalize_on_compare=answer_option.normalize_on_compare,
+                        evaluate_level=evaluate_level)
 
 
                     correctness_of_answer = \

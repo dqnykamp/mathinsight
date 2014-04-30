@@ -567,17 +567,32 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expr5),0)
 
     def test_evaluate_false(self):
-        from mitesting.sympy_customized import parse_expr
+        from mitesting.sympy_customized import parse_expr, EVALUATE_NONE, \
+            EVALUATE_PARTIAL, EVALUATE_FULL
         expr_string="x-x+x*x/x"
         expr_evaluated = sympify(expr_string)
         expr_unevaluated = parse_expr(expr_string, evaluate=False)
         mobject = math_object(expr_unevaluated)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
         self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
 
-        mobject = math_object(expr_unevaluated, evaluate=False)
+        mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_NONE)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated),-1)
         self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+        self.assertEqual(mobject.return_evaluate_level(), EVALUATE_NONE)
+        
+        mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_PARTIAL)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
+        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.return_evaluate_level(), EVALUATE_PARTIAL)
+
+        mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_FULL)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
+        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
+        
+
 
     def test_evaluate_normalize_with_doit(self):
         from sympy import Derivative
