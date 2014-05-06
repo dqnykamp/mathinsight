@@ -8,9 +8,11 @@ from django.test import SimpleTestCase
 from mitesting.math_objects import *
 from sympy import Symbol, diff, Tuple, sympify
 from sympy.printing import latex
-
+import random
 
 class MathObjectTests(SimpleTestCase):
+    def setUp(self):
+        random.seed()
     
     def test_base_case(self):
         expression = sympify("5*x")

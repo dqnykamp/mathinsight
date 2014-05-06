@@ -1,7 +1,7 @@
 
 {% if not question_data.success %}
 <section class="error">
-<h4>Error in question {{question_data.question}}</h4>
+<h4>Error in question</h4>
 <p>The following errors occurred when rendering the question:</p>
 {{question_data.error_message}}
 </section>
@@ -10,7 +10,7 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-<div class="question" >
+<span class="question" >
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -74,7 +74,7 @@
 {% endfor %}
 </ol>
 {% endif %}
-</div>
+</span>
 
 {% if question_data.submit_button %}
 <input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">

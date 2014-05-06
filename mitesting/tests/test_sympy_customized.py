@@ -8,7 +8,6 @@ from mitesting.sympy_customized import bottom_up, parse_expr, \
     parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL
 from mitesting.customized_commands import normalize_floats
 from sympy import Symbol, diff, Tuple, sympify, Integer
-import random
 
 class BottomUpTests(SimpleTestCase):
     

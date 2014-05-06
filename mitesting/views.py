@@ -786,9 +786,8 @@ class AssessmentView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(AssessmentView, self).get_context_data(**kwargs)
 
-        context['assessment_date'] = self.request.REQUEST.get\
+        context['assessment_date'] = self.request.GET.get\
             ('date', datetime.date.today().strftime("%B %d, %Y"))
-
 
         from .render_assessments import render_question_list, get_new_seed
         rendered_list=[]
@@ -801,6 +800,7 @@ class AssessmentView(DetailView):
         if self.kwargs.get('question_only'):
             question_only = int(self.kwargs['question_only'])
             rendered_list=rendered_list[question_only-1:question_only]
+            context['question_only'] = question_only
         context['rendered_list'] = rendered_list
 
         context['seed'] = self.seed
@@ -846,13 +846,8 @@ class AssessmentView(DetailView):
         # get list of the question numbers in assessment
         # if question_numbers specified in GET parameters
         if "question_numbers" in self.request.GET:
-            if self.solution:
-                the_list=rendered_solution_list
-            else:
-                the_list=rendered_question_list
-
             question_numbers=[]
-            for q in the_list:
+            for q in rendered_list:
                 question_numbers.append(str(q['question'].id))
             question_numbers = ", ".join(question_numbers)
         else:
@@ -876,6 +871,10 @@ class AssessmentView(DetailView):
 
 
     def post(self, request, *args, **kwargs):
+        """
+        Through post can generate new attempt.
+        Need to test and fix this.
+        """
         self.object = self.get_object()
         new_attempt = request.POST.get('new_attempt',False)
         self.determine_seed_version(user=request.user,
@@ -892,18 +891,18 @@ class AssessmentView(DetailView):
         """
 
         if self.object.nothing_random:
-            seed=1
+            seed='1'
             self.version = ''
         else:
             if not seed:
-                seed=1
+                seed='1'
             self.version = seed
         
         # First determine if user is enrolled in an course
         try:
             courseuser = user.courseuser
             course = courseuser.return_selected_course()
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
+        except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
             courseuser = None
             course = None
 

@@ -12,9 +12,11 @@ from sympy import Symbol, sympify, Function
 from numpy import arange, linspace
 import re
 import six
+import random
 
 class TestExpressions(TestCase):
     def setUp(self):
+        random.seed()
         qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="fun question",
@@ -789,6 +791,9 @@ class TestExpressions(TestCase):
 
 
 class TestExpressionSortOrder(TestCase):
+    def setUp(self):
+        random.seed()
+
     def test_sort_order(self):
         qt = QuestionType.objects.create(name="question type")
         q  = Question.objects.create(

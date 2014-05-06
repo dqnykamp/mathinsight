@@ -8,10 +8,12 @@ from mitesting.models import Expression, Question, QuestionType, SympyCommandSet
 from django.contrib.auth.models import AnonymousUser, User, Permission
 import json
 import pickle, base64
+import random
 
 class TestQuestionView(TestCase):
 
     def setUp(self):
+        random.seed()
         self.qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="a question",
@@ -41,12 +43,12 @@ class TestQuestionView(TestCase):
 
         response = self.client.get("/assess/question/1")
         self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed("mitesting/question_detail.html")
+        self.assertTemplateUsed(response,"mitesting/question_detail.html")
         self.assertContains(response, "What is your name?")
 
         response = self.client.post("/assess/question/1")
         self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed("mitesting/question_detail.html")
+        self.assertTemplateUsed(response,"mitesting/question_detail.html")
         self.assertContains(response, "What is your name?")
 
 
@@ -59,12 +61,14 @@ class TestQuestionView(TestCase):
 
         response = self.client.get("/assess/question/1/solution")
         self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed("mitesting/question_solution_detail.html")
+        self.assertTemplateUsed(response,
+                                "mitesting/question_solution.html")
         self.assertContains(response, "The full solution")
 
         response = self.client.post("/assess/question/1/solution")
         self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed("mitesting/question_solution_detail.html")
+        self.assertTemplateUsed(response,
+                                "mitesting/question_solution.html")
         self.assertContains(response, "The full solution")
 
 
@@ -258,6 +262,7 @@ class TestQuestionView(TestCase):
 
 class TestGradeQuestionView(TestCase):
     def setUp(self):
+        random.seed()
         self.qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="a question",
@@ -1576,6 +1581,7 @@ class TestGradeQuestionView(TestCase):
 
 class TestInjectQuestionSolutionView(TestCase):
     def setUp(self):
+        random.seed()
         self.qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="a question",

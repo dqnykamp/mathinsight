@@ -9,6 +9,8 @@ from sympy import Symbol, sympify
 import six
 
 class TestDicts(SimpleTestCase):
+    def setUp(self):
+        random.seed()
 
     def test_sympy_global_dict(self):
 
@@ -43,6 +45,9 @@ class TestDicts(SimpleTestCase):
         
 
 class TestRandomNumber(SimpleTestCase):
+    def setUp(self):
+        random.seed()
+
     def test_returns_integer_in_range(self):
         from sympy import Integer
         the_num = return_random_number_sample("(1,3,1)")
@@ -93,6 +98,9 @@ class TestRandomNumber(SimpleTestCase):
 
 
 class TestRandomWordPlural(SimpleTestCase):
+    def setUp(self):
+        random.seed()
+
     def test_with_no_plurals(self):
         word = return_random_word_and_plural("hello, bye, seeya")
         self.assertTrue(word[0] in ["hello", "bye", "seeya"])
@@ -167,6 +175,9 @@ class TestRandomWordPlural(SimpleTestCase):
 
 
 class TestRandomExpression(SimpleTestCase):
+    def setUp(self):
+        random.seed()
+
     def test_basic_example(self):
         expr = return_random_expression("hello, bye, seeya")
         self.assertTrue(expr[0] in [Symbol("hello"), Symbol("bye"),
@@ -210,6 +221,9 @@ class TestRandomExpression(SimpleTestCase):
                                 return_random_expression, "(")
 
 class TestParsedFunction(SimpleTestCase):
+    def setUp(self):
+        random.seed()
+
     def test_simple_function(self):
         z=Symbol('z')
         fun = return_parsed_function("x^2","x", name="f")

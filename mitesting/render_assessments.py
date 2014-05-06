@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.template import TemplateSyntaxError, Context, Template
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
 import random
 import json 
@@ -32,7 +33,7 @@ def setup_expression_context(question):
     with allowed sympy commands for the question.
 
     Random expressions are based on state of random.
-    Its seed can be set via random.seed(seed).
+    Its state can be set via random.seed(seed).
 
     Return a dictionary with the following:
     - expression_context: a Context() with mappings from the expressions
@@ -658,7 +659,11 @@ def get_question_list(assessment):
     """
     Return list of questions for assessment, one for each question_set.
     Questions are chosen randomly based on state of random.
-    Its seed can be set via random.seed(seed).
+    Its state can be set via random.seed(seed).
+
+    Each question is randomly assigned a seed, which is to be used
+    generate the question and/or solution, ensuring that question
+    and solution will match.
 
     Return a list of dictionaries, one for each question. 
     Each dictionary contains the following:
@@ -667,6 +672,7 @@ def get_question_list(assessment):
     - points: the number of points the question set is worth
     - seed: the seed to use to render the question
     """
+
     question_list = []
 
     for question_set in assessment.question_sets():
@@ -693,15 +699,50 @@ def get_question_list(assessment):
 
 def render_question_list(assessment, seed=None, user=None, solution=False,
                          current_attempt=None):
+    """
+    Generate list of rendered questions or solutions for assessment.
 
+    After initializing random number generator with seed
+    (or generating a new seed if seed was None),
+    from each question set, randomly pick a question and a question seed,
+    render the question, determine score on this attempt of assessment,
+    and determine question group.  If assessment is not set to fixed order,
+    randomly order the chosen assessments, keeping questions in the same
+    group together.
+    
+
+    Inputs:
+    - assessment: the assessment to be rendered
+    - seed: random number generator seed to generate assesment and questions
+    - user: the logged in user
+    - solution: True if rendering solution
+    - current_attempt: information about score so far on computer scored
+      assessments (need to fix and test)
+
+    Outputs:
+    - seed that used to generate assessment (the input seed unless it was None)
+    - question_list.  List of dictionaries, one per question, giving
+      information about the question.  Each dictionary contains:
+      - question_set: the question_set from which the question was drawn
+      - question: the question chosen
+      - points: the number of points the question set is worth
+      - seed: the seed to use to render the question
+      - question_data: dictionary containing the information needed to
+        display the question with question_body.html template.
+        This dictionary is what is returned by render_question.
+      - current_credit: the percent credit achieved in current attempt
+      - current_score: the score (points) achieved in the current attempt
+      - group: the group the question set belongs to
+      - previous_same_group: true if the previous question if from the
+        same question group as the current question
+        (Used as indicator for templates that questions belong together.)
+    """
 
     if seed is None:
         seed=get_new_seed()
         
     random.seed(seed)
     question_list = get_question_list(assessment)
-
-    rendered_question_list = []
 
     applet_counter=0
     for (i, question_dict) in enumerate(question_list):
@@ -747,7 +788,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
         try:
             question_group = assessment.questionsetdetail_set.get\
                 (question_set=question_set).group
-        except:
+        except ObjectDoesNotExist:
             question_group = ''
         
         question_dict["group"] = question_group
@@ -755,6 +796,12 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
 
 
     if assessment.fixed_order:
+        for i in range(1, len(question_list)):
+            the_group = question_list[i]["group"]
+            # if group is not blank and the same as previous group
+            # make as belonging to same group as previous question
+            if the_group and question_list[i-1]["group"] == the_group:
+                    question_list[i]["previous_same_group"] = True
         return question_list, seed
 
     # if not fixed order randomly shuffle questions

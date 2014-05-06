@@ -12,6 +12,9 @@ import random
 class AbsTests(SimpleTestCase):
     from sympy.functions import sign
 
+    def setUp(self):
+        random.seed()
+
     def test_basic_abs_behavior(self):
         self.assertEqual(17, Abs(-17))
         self.assertEqual(51, Abs(-51))
@@ -31,6 +34,9 @@ class AbsTests(SimpleTestCase):
             self.assertEqual(dexpr.subs(x,a), 2*a)
     
 class RootsTests(SimpleTestCase):
+    def setUp(self):
+        random.seed()
+
     def test_roots_polys_with_real_roots(self):
         x = Symbol('x')
         for j in range(10):
