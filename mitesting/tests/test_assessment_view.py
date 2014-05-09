@@ -111,6 +111,12 @@ class TestAssessmentView(TestCase):
 
 
     def test_nothing_random(self):
+
+        u=User.objects.create_user("user1", password="pass")
+        self.client.login(username="user1",password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         self.q1.expression_set.create(
             name="n", expression="(-100,100)", 
             expression_type = Expression.RANDOM_NUMBER)
@@ -317,6 +323,11 @@ class TestAssessmentView(TestCase):
                          "This complex assessment")
         self.assertEqual(response.context['assessment_short_name'], 
                          "This complex assessment")
+
+        u=User.objects.create_user("user1", password="pass")
+        self.client.login(username="user1",password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
         response = self.client.get("/assess/the_test/solution")
         self.assertEqual(response.context['assessment_name'], 
                          "This complex assessment solution")
@@ -397,14 +408,10 @@ class TestAssessmentView(TestCase):
     def test_solution_link(self):
         response = self.client.get("/assess/the_test")
         self.assertFalse(response.context['show_solution_link'])
-        response = self.client.get("/assess/the_test/solution")
-        self.assertFalse(response.context['show_solution_link'])
 
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
         response = self.client.get("/assess/the_test")
-        self.assertFalse(response.context['show_solution_link'])
-        response = self.client.get("/assess/the_test/solution")
         self.assertFalse(response.context['show_solution_link'])
 
         p=Permission.objects.get(codename = "administer_assessment")
@@ -426,6 +433,11 @@ class TestAssessmentView(TestCase):
         
 
     def test_seed(self):
+        u=User.objects.create_user("user1", password="pass")
+        self.client.login(username="user1",password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         self.q1.expression_set.create(
             name="n", expression="(-100,100)", 
             expression_type = Expression.RANDOM_NUMBER)
@@ -467,7 +479,56 @@ class TestAssessmentView(TestCase):
             solution1text =  response.context['rendered_list'][question1ind] \
                 ['question_data']['rendered_text']
             self.assertTrue(question1text in solution1text)
-            
+
+
+    def test_template_selected(self):
+
+        u=User.objects.create_user("instructor", password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        self.client.login(username="instructor", password="pass")
+
+        response = self.client.get("/assess/the_test")
+        self.assertTemplateUsed(response,"mitesting/assessment.html")
+
+        response = self.client.get("/assess/the_test/solution")
+        self.assertTemplateUsed(response,"mitesting/assessment_solution.html")
+
+        at_exam = AssessmentType.objects.create(
+            code="exam", name="exam", assessment_privacy=0, solution_privacy=0,
+            template_base_name = "exam")
+        asmt_exam = Assessment.objects.create(
+            code="the_exam", name="The exam", assessment_type=at_exam)
+        
+        asmt_exam.questionassigned_set.create(question=self.q1)
+        asmt_exam.questionassigned_set.create(question=self.q2)
+        asmt_exam.questionassigned_set.create(question=self.q3)
+
+        response = self.client.get("/assess/the_exam")
+        self.assertTemplateUsed(response,"mitesting/exam.html")
+        self.assertTemplateNotUsed(response,"mitesting/assessment.html")
+
+        response = self.client.get("/assess/the_exam/solution")
+        self.assertTemplateUsed(response,"mitesting/exam_solution.html")
+        self.assertTemplateNotUsed(response,
+                                   "mitesting/assessment_solution.html")
+
+        at_wonky_one = AssessmentType.objects.create(
+            code="wonky_one", name="wonky_one", assessment_privacy=0, solution_privacy=0,
+            template_base_name = "wonky_one")
+        asmt_wonky_one = Assessment.objects.create(
+            code="the_wonky_one", name="The wonky_one", assessment_type=at_wonky_one)
+        
+        asmt_wonky_one.questionassigned_set.create(question=self.q1)
+        asmt_wonky_one.questionassigned_set.create(question=self.q2)
+        asmt_wonky_one.questionassigned_set.create(question=self.q3)
+
+        response = self.client.get("/assess/the_wonky_one")
+        self.assertTemplateUsed(response,"mitesting/assessment.html")
+
+        response = self.client.get("/assess/the_wonky_one/solution")
+        self.assertTemplateUsed(response, "mitesting/assessment_solution.html")
+
 
 class TestAssessmentViewPermissions(TestCase):
 
@@ -480,7 +541,7 @@ class TestAssessmentViewPermissions(TestCase):
             question_privacy = 0,
             solution_privacy = 0,
             question_text = "The 1 question",
-            solution_text = "The 1 solution"
+            solution_text = "The 1 solution",
             )
         self.q2  = Question.objects.create(
             name="a question",
@@ -523,56 +584,53 @@ class TestAssessmentViewPermissions(TestCase):
                 else:
                     asmt.questionassigned_set.create(question=self.q3)
                
-        users = [[],[],[]]
-        for i in range(3):
-            for j in range(3):
-                username = "u%s%s" % (i,j)
-                u=User.objects.create_user(username, password="pass")
-                users[i].append(username)
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    u.user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    u.user_permissions.add(p)
-                    
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         for iu in range(3):
-            for ju in range(3):
-                self.client.login(username=users[iu][ju],password="pass")
-                for ia in range(3):
-                    for ja in range(3):
-                        response = self.client.get(
-                            "/assess/%s" % asmt_codes[ia][ja])
-                        
-                        if iu < ia:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s" % (ia,ja))
-                            self.assertContains(
-                                response,"The %s question" % (ia+1))
+            if users[iu]:
+                self.client.login(username=users[iu],password="pass")
+            for ia in range(3):
+                for ja in range(3):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
 
-                            if ju < ja:
-                                self.assertNotContains(
-                                    response, "View solution")
-                            else: 
-                                self.assertContains(
-                                    response, "View solution")
+                    if iu < ia:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s" % (ia,ja))
+                        self.assertContains(
+                            response,"The %s question" % (ia+1))
 
-                        response = self.client.get(
-                            "/assess/%s/solution" % asmt_codes[ia][ja])
-                        
-                        if ju < ja:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
-                        else:
+                        if iu < ja:
+                            self.assertNotContains(
+                                response, "Show solution")
+                        else: 
                             self.assertContains(
-                                response,"Test %s %s solution" % (ia,ja))
-                            self.assertContains(
-                                response,"The %s solution" % (ia+1))
-                                 
-                self.client.logout()
+                                response, "Show solution")
+
+                    response = self.client.get(
+                        "/assess/%s/solution" % asmt_codes[ia][ja])
+
+                    if iu < 2:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s solution" % (ia,ja))
+                        self.assertContains(
+                            response,"The %s solution" % (ia+1))
+
+            self.client.logout()
 
             
 
@@ -597,55 +655,52 @@ class TestAssessmentViewPermissions(TestCase):
                 
                 asmt.questionassigned_set.create(question=q)
                
-        users = [[],[],[]]
-        for i in range(3):
-            for j in range(3):
-                username = "u%s%s" % (i,j)
-                u=User.objects.create_user(username, password="pass")
-                users[i].append(username)
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    u.user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    u.user_permissions.add(p)
-                    
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         for iu in range(3):
-            for ju in range(3):
-                self.client.login(username=users[iu][ju],password="pass")
-                for ia in range(3):
-                    for ja in range(3):
-                        response = self.client.get(
-                            "/assess/%s" % asmt_codes[ia][ja])
-                        
-                        if iu < ia:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s" % (ia,ja))
-                            self.assertContains(
-                                response,"A profound question")
+            if users[iu]:
+                self.client.login(username=users[iu],password="pass")
+            for ia in range(3):
+                for ja in range(3):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
 
-                            if ju < ja:
-                                self.assertNotContains(
-                                    response, "View solution")
-                            else: 
-                                self.assertContains(
-                                    response, "View solution")
+                    if iu < ia:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s" % (ia,ja))
+                        self.assertContains(
+                            response,"A profound question")
 
-                        response = self.client.get(
-                            "/assess/%s/solution" % asmt_codes[ia][ja])
-                        
-                        if ju < ja:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
-                        else:
+                        if iu < ja:
+                            self.assertNotContains(
+                                response, "Show solution")
+                        else: 
                             self.assertContains(
-                                response,"Test %s %s solution" % (ia,ja))
-                            self.assertContains(
-                                response,"The only solution")
-                self.client.logout()
+                                response, "Show solution")
+
+                    response = self.client.get(
+                        "/assess/%s/solution" % asmt_codes[ia][ja])
+
+                    if iu < 2:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s solution" % (ia,ja))
+                        self.assertContains(
+                            response,"The only solution")
+            self.client.logout()
 
             
     def test_privacy_overrides(self):
@@ -675,134 +730,203 @@ class TestAssessmentViewPermissions(TestCase):
                 asmt.groups_can_view_solution.add(group3)
         
 
-        users = [[],[]]
-        user_objects = [[],[]]
-        for i in range(2):
-            for j in range(2):
-                username = "u%s%s" % (i,j)
-                u=User.objects.create_user(username, password="pass")
-                users[i].append(username)
-                user_objects[i].append(u)
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    u.user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    u.user_permissions.add(p)
-                u.groups.add(group1)
-                    
+        users = []
+        user_objects = []
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        user_objects.append(u)
+        u.groups.add(group1)
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        user_objects.append(u)
+        u.groups.add(group1)
 
         for iu in range(2):
-            for ju in range(2):
-                self.client.login(username=users[iu][ju],password="pass")
-                for ia in range(2):
-                    for ja in range(2):
-                        response = self.client.get(
-                            "/assess/%s" % asmt_codes[ia][ja])
-                        
-                        if iu < ia+1:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s" % (ia+1,ja+1))
-                            self.assertContains(
-                                response,"The %s question" % (ia+1))
+            self.client.login(username=users[iu],password="pass")
+            for ia in range(2):
+                for ja in range(2):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
 
-                            if ju < ja+1:
-                                self.assertNotContains(
-                                    response, "View solution")
-                            else: 
-                                self.assertContains(
-                                    response, "View solution")
-
-                        response = self.client.get(
-                            "/assess/%s/solution" % asmt_codes[ia][ja])
-                        
-                        if ju < ja+1:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s solution" % (ia+1,ja+1))
-                            self.assertContains(
-                                response,"The %s solution" % (ia+1))
-                                 
-                self.client.logout()
-
-        
-
-        for iu in range(2):
-            for ju in range(2):
-                user_objects[iu][ju].groups.remove(group1)
-                user_objects[iu][ju].groups.add(group2)
-                self.client.login(username=users[iu][ju],password="pass")
-                for ia in range(2):
-                    for ja in range(2):
-                        response = self.client.get(
-                            "/assess/%s" % asmt_codes[ia][ja])
-                        
+                    if iu < ia:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
+                    else:
                         self.assertContains(
                             response,"Test %s %s" % (ia+1,ja+1))
                         self.assertContains(
                             response,"The %s question" % (ia+1))
 
-                        if ju < ja+1:
+                        if iu < ja:
                             self.assertNotContains(
-                                response, "View solution")
+                                response, "Show solution")
                         else: 
                             self.assertContains(
-                                response, "View solution")
+                                response, "Show solution")
 
-                        response = self.client.get(
-                            "/assess/%s/solution" % asmt_codes[ia][ja])
-                        
-                        if ju < ja+1:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s solution" % (ia+1,ja+1))
-                            self.assertContains(
-                                response,"The %s solution" % (ia+1))
-                                 
-                self.client.logout()
+                    response = self.client.get(
+                        "/assess/%s/solution" % asmt_codes[ia][ja])
 
-        for iu in range(2):
-            for ju in range(2):
-                user_objects[iu][ju].groups.remove(group2)
-                user_objects[iu][ju].groups.add(group3)
-                self.client.login(username=users[iu][ju],password="pass")
-                for ia in range(2):
-                    for ja in range(2):
-                        response = self.client.get(
-                            "/assess/%s" % asmt_codes[ia][ja])
-                        
-                        if iu < ia+1:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
-                        else:
-                            self.assertContains(
-                                response,"Test %s %s" % (ia+1,ja+1))
-                            self.assertContains(
-                                response,"The %s question" % (ia+1))
-
-                            self.assertContains(
-                                response, "View solution")
-
-                        response = self.client.get(
-                            "/assess/%s/solution" % asmt_codes[ia][ja])
-                        
+                    if iu < 1:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
+                    else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia+1,ja+1))
                         self.assertContains(
                             response,"The %s solution" % (ia+1))
-                                 
-                self.client.logout()
+
+            self.client.logout()
 
         
 
+        for iu in range(2):
+            user_objects[iu].groups.remove(group1)
+            user_objects[iu].groups.add(group2)
+            self.client.login(username=users[iu],password="pass")
+            for ia in range(2):
+                for ja in range(2):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
+
+                    self.assertContains(
+                        response,"Test %s %s" % (ia+1,ja+1))
+                    self.assertContains(
+                        response,"The %s question" % (ia+1))
+
+                    if iu < ja:
+                        self.assertNotContains(
+                            response, "Show solution")
+                    else: 
+                        self.assertContains(
+                            response, "Show solution")
+
+                    response = self.client.get(
+                        "/assess/%s/solution" % asmt_codes[ia][ja])
+
+                    if iu < 1:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s solution" % (ia+1,ja+1))
+                        self.assertContains(
+                            response,"The %s solution" % (ia+1))
+
+            self.client.logout()
+
+        for iu in range(2):
+            user_objects[iu].groups.remove(group2)
+            user_objects[iu].groups.add(group3)
+            self.client.login(username=users[iu],password="pass")
+            for ia in range(2):
+                for ja in range(2):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
+
+                    if iu < ia:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s" % (ia+1,ja+1))
+                        self.assertContains(
+                            response,"The %s question" % (ia+1))
+
+                        self.assertContains(
+                            response, "Show solution")
+
+                    response = self.client.get(
+                        "/assess/%s/solution" % asmt_codes[ia][ja])
+
+                    if iu < 1:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s/solution' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s solution" % (ia+1,ja+1))
+                        self.assertContains(
+                            response,"The %s solution" % (ia+1))
+
+            self.client.logout()
 
 
-    # def test_allow_solution_buttons(self):
-    #     pass
-    # def test_template_selected(self):
-    #     pass
+    def test_solution_buttons(self):
+  
+        self.q2.solution_privacy=1
+        self.q2.save()
+        
+        self.q3.solution_privacy=2
+        self.q3.save()
+        
+        solution_button_1_html_fragment = '<input type="button" class="mi_show_solution" value="Show solution" id="question_qa0_show_solution" disabled >'
+        solution_button_2_html_fragment = '<input type="button" class="mi_show_solution" value="Show solution" id="question_qa1_show_solution" disabled >'
+        solution_button_3_html_fragment = '<input type="button" class="mi_show_solution" value="Show solution" id="question_qa2_show_solution" disabled >'
+
+
+        asmt_codes=[[],[],[]]
+        for i in range(3):
+            for j in range(3):
+                at = AssessmentType.objects.create(
+                    code="%s_%s" % (i,j),
+                    name="%s %s" % (i,j),
+                    assessment_privacy=i,
+                    solution_privacy=j)
+                asmt=Assessment.objects.create(
+                    code="test_%s_%s" % (i,j),
+                    name = "Test %s %s" % (i,j),
+                    assessment_type = at,
+                    )
+                asmt_codes[i].append(asmt.code) 
+                asmt.questionassigned_set.create(question=self.q1)
+                asmt.questionassigned_set.create(question=self.q2)
+                asmt.questionassigned_set.create(question=self.q3)
+               
+
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
+        for iu in range(3):
+            if users[iu]:
+                self.client.login(username=users[iu],password="pass")
+            for ia in range(3):
+                for ja in range(3):
+                    response = self.client.get(
+                        "/assess/%s" % asmt_codes[ia][ja])
+
+                    if iu < ia:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/%s' % asmt_codes[ia][ja])
+                    else:
+                        self.assertContains(
+                            response,"Test %s %s" % (ia,ja))
+                        if iu < ja:
+                            self.assertNotContains(
+                                response, solution_button_1_html_fragment)
+                        else:
+                            self.assertContains(
+                                response, solution_button_1_html_fragment)
+
+                        if iu < 1 or iu < ja:
+                            self.assertNotContains(
+                                response, solution_button_2_html_fragment)
+                        else:
+                            self.assertContains(
+                                response, solution_button_2_html_fragment)
+                        if iu < 2 or iu < ja:
+                            self.assertNotContains(
+                                response, solution_button_3_html_fragment)
+                        else:
+                            self.assertContains(
+                                response, solution_button_3_html_fragment)
+
+            self.client.logout()

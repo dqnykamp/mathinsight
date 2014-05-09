@@ -10,7 +10,7 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-<span class="question" >
+<span class="question" > 
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -28,9 +28,6 @@
       <li>{{rpage.return_link}}</li>
       {% endfor%}
     </ul>
-    {% endif %}
-    {% if question_data.include_solution_link %}
-    <p><a href='{{question_data.question.get_solution_url}}?seed={{question_data.seed}}'>View solution</a></p>
     {% endif %}
     <p><a id="{{question_data.identifier}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_help');">Hide help</a></p>
   </section>
@@ -60,10 +57,7 @@
       {% endfor%}
     </ul>
     {% endif %}
-    {% if subpart.include_solution_link %}
-    <p><a href='{{question_data.question.get_solution_url}}?seed={{question_data.seed}}#question_solution_{{question_data.identifier}}_{{subpart.letter}}'>View solution</a></p>
-    {% endif %}
-    <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
+   <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
   </section>
 
 </div>
@@ -76,13 +70,14 @@
 {% endif %}
 </span>
 
-{% if question_data.submit_button %}
 <input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">
 <div id="question_{{question_data.identifier}}_feedback" class="info"></div>
 <div id="question_{{question_data.identifier}}_solution" class="info"></div>
-<p><input type="submit" id="question_{{question_data.identifier}}_submit" class="mi_answer_submit" value="Submit" > <span id="question_{{question_data.identifier}}_for_hint_button"></span> <span id="question_{{question_data.identifier}}_for_solution_button"></span></p>
-{% endif %}
+<p>{% if question_data.submit_button %}<input type="submit" id="question_{{question_data.identifier}}_submit" class="mi_answer_submit" value="Submit" >{% endif %}
+<span id="question_{{question_data.identifier}}_for_solution_button">{% if question_data.show_solution_button %}<input type="button" class="mi_show_solution" value="Show solution" id="question_{{question_data.identifier}}_show_solution" disabled >{%endif%}
+</span></p>
 </form>
+
 <script>
     {% if question_data.submit_button %}
   $( "#id_question_{{question_data.identifier}}").submit(function(event) {
@@ -93,18 +88,17 @@
   {% if question_data.precheck %}
   post_form_{{question_data.identifier}}(false);
   {% endif %}
-  function post_form_{{question_data.identifier}}(record) {
+  {% if question_data.enable_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");{%endif %}
+  {% if question_data.show_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").click(function() {$.post("{{question_data.inject_solution_url}}", "cgd={{question_data.computer_grade_data}}", process_solution_inject_{{question_data.identifier}});});{% endif %}
+  function post_form_{{question_data.identifier}}() {
       var thepost = $.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', $('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
 
-      thepost.done(process_graded_question);
+      thepost.done(process_graded_question_{{question_data.identifier}});
       
   }
-</script>
 
-<script>
-    function process_graded_question(data) {
-	var question_identifier=data['identifier'];
-	var question_feedback=$('#question_'+question_identifier+"_feedback");
+  function process_graded_question_{{question_data.identifier}}(data) {
+	var question_feedback=$("#question_{{question_data.identifier}}_feedback");
 	question_feedback.html(data['feedback']);
 	if(data['correct']) {
 	    question_feedback.addClass('success');
@@ -126,20 +120,19 @@
 	}
 
 	
-	$('#id_number_attempts_'+question_identifier).val(data['number_attempts']);
-	if(data["show_solution_button"]) {
-	    $('#question_'+question_identifier+'_for_solution_button').html(data['solution_button_html']);
+	$('#id_number_attempts_{{question_data.identifier}}').val(data['number_attempts']);
+	if(data["enable_solution_button"]) {
+	    $( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
 	}
 
-	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_"+question_identifier]);
+	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
     }
 
-  function process_solution_inject(data) {
-      var question_identifier=data['identifier'];
-      $('#question_'+question_identifier+"_solution").html(data['rendered_solution']);
-      $('#question_'+question_identifier+'_for_solution_button').remove();
+  function process_solution_inject_{{question_data.identifier}}(data) {
+      $("#question_{{question_data.identifier}}_solution").html(data['rendered_solution']);
+      $("#question_{{question_data.identifier}}_for_solution_button").remove();
 
-      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_"+question_identifier]);
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
       
 
   }

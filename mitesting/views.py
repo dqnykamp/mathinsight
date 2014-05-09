@@ -33,19 +33,20 @@ class QuestionView(DetailView):
     """
     View question or question solution by itself on a page
 
-    Accepts either get or post, with seed given as a parameter.
-    Checks is logged in user has required permissions. 
+    Checks if logged in user has level 2 permissions.
     If not, redirects to login page.
-    If not solution, then shows help and solution buttons/links, if available.
+    If not solution, then shows help and solution buttons, if available.
+
+    Random number seed can be given as a GET parameter;
+    otherwise, seed is randomly chosen and stored so can reproduce.
 
     Add the following to the context:
     - question_data: dictionary returned by render_assessments.render_question.
       This dictionary contains the information about the question that is
       used by the template mitesting/question_body.html
-    - show_lists: True if should show lists of assessments
+    - show_lists: True, since should show lists of assessments
     - noanalytics: True to indicate shouldn't link to Google analytics
 
-    TODO: have not yet implemented show help buttons for computer graded
 
     """
 
@@ -57,10 +58,10 @@ class QuestionView(DetailView):
         if self.solution:
             self.template_name = 'mitesting/question_solution.html'
 
-        # determine if user has permission to view question,
-        # given privacy level
-        if not self.object.user_can_view(self.request.user,
-                                         solution=self.solution):
+        # determine if user has full permissions on assessments
+        # (i.e., permission level 2),
+        if not user_has_given_assessment_permission_level(
+            self.request.user, 2):
             path = self.request.build_absolute_uri()
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(path)
@@ -71,17 +72,10 @@ class QuestionView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(QuestionView, self).get_context_data(**kwargs)
         
-        if self.request.method == 'GET':
-            try:
-                seed = self.request.GET['seed']
-            except:
-                seed = None
-        else:
-            try:
-                seed = self.request.POST['seed']
-            except:
-                seed = None
-                
+        try:
+            seed = self.request.GET['seed']
+        except:
+            seed = None
 
         # show help if no rendering solution
         show_help = not self.solution
@@ -98,26 +92,13 @@ class QuestionView(DetailView):
             solution=self.solution,
             show_help = show_help)
 
-
-        # if users has full permissions on assessments
-        # (i.e., permission level 2 for solutions),
-        # then show lists of assessments
-        if user_has_given_assessment_permission_level(self.request.user, 2, 
-                                                      solution=True):
-            context['show_lists']=True
-        else:
-            context['show_lists']=False
+        context['show_lists']=True
 
         # no Google analytics for questions
         context['noanalytics']=True
 
         return context
 
-    # allow one to retrieve question via post
-    # (so can't see seed)
-    def post(self, request, *args, **kwargs):
-        return self.get(request, *args, **kwargs)
-    
 
 class GradeQuestionView(SingleObjectMixin, View):
     """
@@ -155,8 +136,8 @@ class GradeQuestionView(SingleObjectMixin, View):
       where each property gives a message about the correctness of the answer
     - number_attempts: the number of attempts answering the question, 
       including the current attempt
-    - show_solution_button: true if should show a button to reveal the solution
-    - solution_button_html: the html for the solution button
+    - enable_solution_button: true if should enable the button to reveal
+      the solution
 
     If record_answers is set to true and user is logged in, then record
     users answers, associating answer with a course if associated with a course
@@ -427,47 +408,17 @@ class GradeQuestionView(SingleObjectMixin, View):
         number_attempts+=1
         answer_results['number_attempts'] = number_attempts
         
-        show_solution_button = False
-        allow_solution_buttons = computer_grade_data.get(
-            'allow_solution_buttons', False)
+        show_solution_button = computer_grade_data.get(
+            'show_solution_button', False)
 
-        def determine_show_solution_button():
-            if not allow_solution_buttons:
-                return False
-            if not question.show_solution_button_after_attempts:
-                return False
-            if not number_attempts >= question.show_solution_button_after_attempts:
-                return False
-            if not question.user_can_view(request.user, solution=True):
-                return False
-            if assessment:
-                if not assessment.user_can_view(request.user, solution=True):
-                    return False
-            if question.solution_text:
-                return True
-            for question_subpart in question.questionsubpart_set.all():
-                if question_subpart.solution_text:
-                    return True
-            return False
+        enable_solution_button = False
+        if show_solution_button and \
+                question.show_solution_button_after_attempts and \
+                number_attempts >= question.show_solution_button_after_attempts:
+            enable_solution_button = True
+
+        answer_results['enable_solution_button'] = enable_solution_button
                 
-        
-        show_solution_button = determine_show_solution_button()
-        if show_solution_button:
-            show_solution_button = True
-            inject_solution_url = reverse('mit-injectquestionsolution',
-                                  kwargs={'question_id': question.id})
-            show_solution_command = \
-                '$.post("%s", "cgd=%s", process_solution_inject);' \
-                % (inject_solution_url, response_data.get('cgd'))
-
-            solution_button_html = \
-                "<input type='button' class='mi_show_solution' value='Show solution' onclick='%s'>" % (show_solution_command)
-
-            answer_results['solution_button_html'] = solution_button_html
-                
-
-        answer_results['show_solution_button'] = show_solution_button
-
         
         # untested with courses
         
@@ -621,7 +572,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         try:
             computer_grade_data = pickle.loads(
                 base64.b64decode(response_data.get('cgd')))
-        except TypeError, IndexError:
+        except (TypeError, IndexError, EOFError) as exc:
+            logger.error("cgd malformed: %s" % exc)
             return HttpResponse("", content_type = 'application/json')
 
         assessment_code = computer_grade_data.get('assessment_code')
@@ -640,7 +592,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         if not question.user_can_view(request.user, solution=True):
             return HttpResponse("", content_type = 'application/json')
         if assessment:
-            if not assessment.user_can_view(request.user, solution=True):
+            if not assessment.user_can_view(request.user, solution=True,
+                                            include_questions=False):
                 return HttpResponse("", content_type = 'application/json')
 
         question_identifier = computer_grade_data['identifier']
@@ -730,9 +683,10 @@ class AssessmentView(DetailView):
     View assessment or assessment solution
 
     Accepts either get or post, with seed given as a parameter.
-    Checks is logged in user has required permissions. 
-    If not, redirects to login page.
-    If not solution, then shows help and solution buttons/links, if available.
+    Checks if logged in user has required permissions. 
+    For solution, checks if logged in user with level 2 permissions.
+    If user doesn't have required permissions, redirects to login page.
+    If not solution, then shows help and solution buttons, if available.
 
     Add the following to the context:
     - question_data: dictionary returned by render_assessments.render_question.
@@ -749,10 +703,16 @@ class AssessmentView(DetailView):
 
     def render_to_response(self, context, **response_kwargs):
 
-        # determine if user has permission to view question,
-        # given privacy level
-        if not self.object.user_can_view(self.request.user,
-                                         solution=self.solution):
+        # determine if user has permission to view assessment or solution
+        has_permission=False
+
+        if user_has_given_assessment_permission_level(self.request.user, 2):
+            has_permission=True
+        elif not self.solution and self.object.user_can_view(
+            self.request.user, solution=False):
+            has_permission=True
+            
+        if not has_permission:
             path = self.request.build_absolute_uri()
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(path)
@@ -1070,15 +1030,12 @@ def assessment_overview_view(request, assessment_code):
     
     
 
-@user_has_given_assessment_permission_level_decorator(2, solution=False)
+@user_has_given_assessment_permission_level_decorator(2)
 def assessment_list_view(request):
 
     assessment_list = Assessment.objects.all()
 
-    if return_user_assessment_permission_level(request.user, solution=True) >=2:
-        view_solution = True
-    else:
-        view_solution = False
+    view_solution = True
     
     # no Google analytics for assessment list
     noanalytics=True
@@ -1091,7 +1048,7 @@ def assessment_list_view(request):
           },
          context_instance=RequestContext(request))
 
-@user_has_given_assessment_permission_level_decorator(2, solution=True)
+@user_has_given_assessment_permission_level_decorator(2)
 def question_list_view(request):
     question_list = Question.objects.all()
 

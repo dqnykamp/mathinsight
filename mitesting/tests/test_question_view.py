@@ -36,17 +36,19 @@ class TestQuestionView(TestCase):
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
 
+        u=User.objects.create_user("user", password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        self.client.login(username="user",password="pass")
+
+
+
     def test_view_simple(self):
         self.q.question_text="What is your name?"
         self.q.hint_text="Ask your mother."
         self.q.save()
 
         response = self.client.get("/assess/question/1")
-        self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed(response,"mitesting/question_detail.html")
-        self.assertContains(response, "What is your name?")
-
-        response = self.client.post("/assess/question/1")
         self.assertEqual(response.context['question'],self.q)
         self.assertTemplateUsed(response,"mitesting/question_detail.html")
         self.assertContains(response, "What is your name?")
@@ -60,12 +62,6 @@ class TestQuestionView(TestCase):
         self.q.save()
 
         response = self.client.get("/assess/question/1/solution")
-        self.assertEqual(response.context['question'],self.q)
-        self.assertTemplateUsed(response,
-                                "mitesting/question_solution.html")
-        self.assertContains(response, "The full solution")
-
-        response = self.client.post("/assess/question/1/solution")
         self.assertEqual(response.context['question'],self.q)
         self.assertTemplateUsed(response,
                                 "mitesting/question_solution.html")
@@ -89,16 +85,33 @@ class TestQuestionView(TestCase):
         response = self.client.get("/assess/question/1", {'seed': seed})
         self.assertContains(response, question_text)
 
-        response = self.client.post("/assess/question/1", {'seed': seed})
-        self.assertContains(response, question_text)
-
         response = self.client.get("/assess/question/1/solution", 
                                    {'seed': seed})
         self.assertContains(response, solution_text)
 
-        response = self.client.post("/assess/question/1/solution", 
-                                    {'seed': seed})
-        self.assertContains(response, solution_text)
+
+    def test_solution_button_help(self):
+
+        response = self.client.get("/assess/question/1")
+        identifier = response.context['question_data']['identifier']
+        self.assertNotContains(response, "Show solution")
+
+        self.q.solution_text = "Solution"
+        self.q.save()
+        response = self.client.get("/assess/question/1")
+        self.assertContains(response, "Show solution")
+        self.assertTrue(response.context['question_data']\
+                            ['enable_solution_button'])
+
+        response = self.client.get("/assess/question/1/solution")
+        self.assertNotContains(response, "Show solution")
+
+        self.q.computer_graded=True
+        self.q.save()
+        response = self.client.get("/assess/question/1")
+        self.assertContains(response, "Show solution")
+        self.assertFalse(response.context['question_data']\
+                            ['enable_solution_button'])
 
 
     def test_need_help(self):
@@ -119,7 +132,7 @@ class TestQuestionView(TestCase):
         self.q.computer_graded=True
         self.q.save()
         response = self.client.get("/assess/question/1")
-        self.assertNotContains(response, need_help_snippet, html=True)
+        self.assertContains(response, need_help_snippet, html=True)
 
 
     def test_subparts(self):
@@ -203,61 +216,51 @@ class TestQuestionView(TestCase):
                     )
                 qpks[i].append(q.pk)
                 
-        users = [[],[],[]]
-        for i in range(3):
-            for j in range(3):
-                username = "u%s%s" % (i,j)
-                u=User.objects.create_user(username, password="pass")
-                users[i].append(username)
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    u.user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    u.user_permissions.add(p)
-                    
+        self.client.logout()
+        User.objects.all().delete()
+
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         for iu in range(3):
-            for ju in range(3):
-                self.client.login(username=users[iu][ju],password="pass")
-                for iq in range(3):
-                    for jq in range(3):
-                        response = self.client.get(
-                            "/assess/question/%s" % qpks[iq][jq])
-                        
-                        if iu < iq:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s' % qpks[iq][jq])
-                        else:
-                            self.assertContains(
-                                response, "A profound question")
-                                 
-                            if ju < jq:
-                                self.assertNotContains(
-                                    response, "View solution")
-                            else: 
-                                self.assertContains(
-                                    response, "View solution")
-                            if ju==2:
-                                self.assertTrue(response.context['show_lists'])
-                            else:
-                                self.assertFalse(response.context['show_lists'])
+            self.client.login(username=users[iu],password="pass")
+            for iq in range(3):
+                for jq in range(3):
+                    response = self.client.get(
+                        "/assess/question/%s" % qpks[iq][jq])
 
-                        response = self.client.get(
-                            "/assess/question/%s/solution" % qpks[iq][jq])
-                        
-                        if ju < jq:
-                            self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s/solution' % qpks[iq][jq])
-                        else:
-                            self.assertContains(
-                                response, "The only solution")
-                                 
-                            if ju==2:
-                                self.assertTrue(response.context['show_lists'])
-                            else:
-                                self.assertFalse(response.context['show_lists'])
+                    if iu < 2:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s' % qpks[iq][jq])
+                    else:
+                        self.assertContains(
+                            response, "A profound question")
 
-                self.client.logout()
+                        self.assertContains(
+                            response, "Show solution")
+
+                        self.assertTrue(response.context['show_lists'])
+
+                    response = self.client.get(
+                        "/assess/question/%s/solution" % qpks[iq][jq])
+
+                    if iu < 2:
+                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s/solution' % qpks[iq][jq])
+                    else:
+                        self.assertContains(
+                            response, "The only solution")
+
+                        self.assertTrue(response.context['show_lists'])
+
+            self.client.logout()
 
 
 class TestGradeQuestionView(TestCase):
@@ -289,6 +292,11 @@ class TestGradeQuestionView(TestCase):
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
 
+        u=User.objects.create_user("user", password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        self.client.login(username="user",password="pass")
+
     def new_answer(self, **kwargs):
         return self.q.questionansweroption_set.create(**kwargs)
 
@@ -306,7 +314,8 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertEqual(results['identifier'], "a")
         self.assertEqual(results['number_attempts'],1)
-        self.assertFalse(results['show_solution_button'])
+        self.assertFalse(results['enable_solution_button'])
+        self.assertFalse(results.get('inject_solution_url',''),'')
         self.assertFalse(results['correct'])
         self.assertEqual(results['answer_correct'],{})
         self.assertEqual(results['answer_feedback'],{})
@@ -327,7 +336,7 @@ class TestGradeQuestionView(TestCase):
         
     def test_simple_grade(self):
         response = self.client.get("/assess/question/1")
-        self.assertFalse("computer_grade_data" in response.context["question_data"])
+        self.assertTrue("computer_grade_data" in response.context["question_data"])
         
         self.q.question_text="Type the answer: {% answer fun_x %}"
         self.q.save()
@@ -1439,7 +1448,7 @@ class TestGradeQuestionView(TestCase):
                                    
     def test_show_solution_button(self):
         solution_button_html_fragment = \
-            "<input type='button' class='mi_show_solution' value='Show solution'"
+            '<input type="button" class="mi_show_solution" value="Show solution"'
 
         self.q.question_text="Type answer: {% answer function %}"
         self.q.save()
@@ -1447,6 +1456,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="function", answer="fun_x")
 
         response = self.client.get("/assess/question/1")
+        self.assertNotContains(response, solution_button_html_fragment)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -1456,67 +1466,39 @@ class TestGradeQuestionView(TestCase):
 
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
+        self.assertFalse(results.get("enable_solution_button",False))
         
         answers['number_attempts_%s' % question_identifier ] = 3
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
+        self.assertFalse(results.get("enable_solution_button",False))
 
         self.q.solution_text="The solution"
         self.q.save()
         
-        del answers['number_attempts_%s' % question_identifier ]
+        response = self.client.get("/assess/question/1")
+        self.assertContains(response, solution_button_html_fragment)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        question_identifier = computer_grade_data['identifier']
+
+        answers = {"cgd": cgd,}
+
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
+        self.assertFalse(results.get("enable_solution_button",False))
 
         answers['number_attempts_%s' % question_identifier ] = 1
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
+        self.assertFalse(results.get("enable_solution_button",False))
         
         answers['number_attempts_%s' % question_identifier ] = 2
         response=self.client.post("/assess/question/1/grade_question", answers)
         results = json.loads(response.content)
-        self.assertTrue(results.get("show_solution_button",False))
-        self.assertTrue(solution_button_html_fragment in 
-                        results["solution_button_html"])
+        self.assertTrue(results.get("enable_solution_button",False))
         
-        self.q.solution_privacy=2
-        self.q.save()
-        response=self.client.post("/assess/question/1/grade_question", answers)
-        results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
-
-        self.q.solution_privacy=0
-        self.q.save()
-
-        at = AssessmentType.objects.create(
-            code="a", name="a", assessment_privacy=0, solution_privacy=2)
-        asmt = Assessment.objects.create(
-            code="a", name="a", assessment_type=at)
-        
-        computer_grade_data["assessment_code"] = asmt.code
-        cgd = base64.b64encode(pickle.dumps(computer_grade_data))
-        answers["cgd"] = cgd
-        response=self.client.post("/assess/question/1/grade_question", answers)
-        results = json.loads(response.content)
-        self.assertFalse(results.get("show_solution_button",False))
-        self.assertEqual(results.get("solution_button_html",""),"")
-
-        at.solution_privacy = 0
-        at.save()
-        response=self.client.post("/assess/question/1/grade_question", answers)
-        results = json.loads(response.content)
-        self.assertTrue(results.get("show_solution_button",False))
-        self.assertTrue(solution_button_html_fragment in 
-                        results["solution_button_html"])
 
     def test_multiple_choice(self):
         MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
@@ -1608,6 +1590,10 @@ class TestInjectQuestionSolutionView(TestCase):
             name="x",expression="u,v,w,x,y,z",
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
+        u=User.objects.create_user("user", password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        self.client.login(username="user",password="pass")
 
 
     def test_simple(self):
@@ -1669,36 +1655,110 @@ class TestInjectQuestionSolutionView(TestCase):
                     computer_graded = True
                     )
                 qpks[i].append(q.pk)
-                
-        users = [[],[],[]]
+
+        self.client.logout()
+        User.objects.all().delete()
+
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
+        for iu in range(3):
+            self.client.login(username=users[iu],password="pass")
+            for iq in range(3):
+                for jq in range(3):
+                    response=self.client.post(
+                        "/assess/question/%s/inject_solution" % 
+                        qpks[iq][jq], {"cgd": cgd})
+
+                    if iu < jq:
+                        self.assertEqual(response.content, "")
+                    else: 
+                        results = json.loads(response.content)
+                        self.assertTrue("The only solution" in
+                                        results["rendered_solution"])
+
+            self.client.logout()
+
+
+    def test_permissions_in_assessment(self):
+        at0 = AssessmentType.objects.create(
+            code="a0", name="a0", assessment_privacy=0, solution_privacy=0)
+        at1 = AssessmentType.objects.create(
+            code="a1", name="a1", assessment_privacy=0, solution_privacy=1)
+        at2 = AssessmentType.objects.create(
+            code="a2", name="a2", assessment_privacy=0, solution_privacy=2)
+
+        asmt0 = Assessment.objects.create(
+            code="the_test0", name="The test0", assessment_type=at0)
+        asmt1 = Assessment.objects.create(
+            code="the_test1", name="The test1", assessment_type=at1)
+        asmt2 = Assessment.objects.create(
+            code="the_test2", name="The test2", assessment_type=at2)
+
+        computer_grade_data = {
+            'seed': '0', 'identifier': 'a', 'record_answers': True,
+            'allow_solution_buttons': True, 'answer_codes': {},
+            'answer_points': {}, 'applet_counter': 0}
+
+        cgds=[]
+        computer_grade_data['assessment_code'] = asmt0.code
+        cgds.append(base64.b64encode(pickle.dumps(computer_grade_data)))
+        computer_grade_data['assessment_code'] = asmt1.code
+        cgds.append(base64.b64encode(pickle.dumps(computer_grade_data)))
+        computer_grade_data['assessment_code'] = asmt2.code
+        cgds.append(base64.b64encode(pickle.dumps(computer_grade_data)))
+
+        qpks=[[],[],[]]
         for i in range(3):
             for j in range(3):
-                username = "u%s%s" % (i,j)
-                u=User.objects.create_user(username, password="pass")
-                users[i].append(username)
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    u.user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    u.user_permissions.add(p)
-                    
+                q=Question.objects.create(
+                    name="question",
+                    solution_text="The only solution",
+                    question_type = self.qt,
+                    question_privacy = i,
+                    solution_privacy = j,
+                    computer_graded = True
+                    )
+                qpks[i].append(q.pk)
+
+        self.client.logout()
+        User.objects.all().delete()
+
+        users = [""]
+
+        username = "user"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+
+        username = "instructor"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
         for iu in range(3):
-            for ju in range(3):
-                self.client.login(username=users[iu][ju],password="pass")
-                for iq in range(3):
-                    for jq in range(3):
+            self.client.login(username=users[iu],password="pass")
+            for iq in range(3):
+                for jq in range(3):
+                    for ic in range(3):
                         response=self.client.post(
                             "/assess/question/%s/inject_solution" % 
-                            qpks[iq][jq], {"cgd": cgd})
-
-                        if ju < jq:
+                            qpks[iq][jq], {"cgd": cgds[ic]})
+                        
+                        if iu < jq or iu < ic:
                             self.assertEqual(response.content, "")
                         else: 
                             results = json.loads(response.content)
                             self.assertTrue("The only solution" in
                                             results["rendered_solution"])
 
-                self.client.logout()
+            self.client.logout()

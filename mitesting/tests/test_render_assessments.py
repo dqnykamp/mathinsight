@@ -612,21 +612,18 @@ class TestRenderQuestionText(TestCase):
                          'expression_context': self.expr_context}
         render_results = render_question_text(render_data)
         self.assertFalse(render_results.get('help_available',False))
-        self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "")
         self.assertEqual(render_results.get('reference_pages',[]),[])
         
         render_data['show_help'] = True
         render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
-        self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
         self.assertEqual(render_results.get('reference_pages',[]),[page])
         
         render_data['user'] = AnonymousUser()
         render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
-        self.assertTrue(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
         self.assertEqual(render_results.get('reference_pages',[]),[page])
 
@@ -634,7 +631,6 @@ class TestRenderQuestionText(TestCase):
         self.q.save()
         render_results = render_question_text(render_data)
         self.assertTrue(render_results.get('help_available',False))
-        self.assertFalse(render_results.get('include_solution_link',False))
         self.assertEqual(render_results.get('hint_text',""), "Hint")
         self.assertEqual(render_results.get('reference_pages',[]),[page])
 
@@ -643,8 +639,7 @@ class TestRenderQuestionText(TestCase):
         self.q.save()
         self.q.questionreferencepage_set.get(page=page).delete()
         render_results = render_question_text(render_data)
-        self.assertTrue(render_results.get('help_available',False))
-        self.assertTrue(render_results.get('include_solution_link',False))
+        self.assertFalse(render_results.get('help_available',False))
         self.assertEqual(render_results.get('hint_text',""), "")
         self.assertEqual(render_results.get('reference_pages',[]),[])
         
@@ -667,8 +662,6 @@ class TestRenderQuestionText(TestCase):
         render_results = render_question_text(render_data)
         self.assertFalse(render_results['subparts'][0]\
                              .get('help_available',False))
-        self.assertFalse(render_results['subparts'][0]\
-                             .get('include_solution_link',False))
         self.assertEqual(render_results['subparts'][0]\
                              .get('hint_text',""), "")
         self.assertEqual(render_results['subparts'][0]\
@@ -678,8 +671,6 @@ class TestRenderQuestionText(TestCase):
         render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
-        self.assertFalse(render_results['subparts'][0]\
-                             .get('include_solution_link',False))
         self.assertEqual(render_results['subparts'][0]\
                              .get('hint_text',""), "hint")
         self.assertEqual(render_results['subparts'][0]\
@@ -689,8 +680,6 @@ class TestRenderQuestionText(TestCase):
         render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
-        self.assertTrue(render_results['subparts'][0]\
-                             .get('include_solution_link',False))
         self.assertEqual(render_results['subparts'][0]\
                              .get('hint_text',""), "hint")
         self.assertEqual(render_results['subparts'][0]\
@@ -702,8 +691,6 @@ class TestRenderQuestionText(TestCase):
         render_results = render_question_text(render_data)
         self.assertTrue(render_results['subparts'][0]\
                              .get('help_available',False))
-        self.assertFalse(render_results['subparts'][0]\
-                             .get('include_solution_link',False))
         self.assertEqual(render_results['subparts'][0]\
                              .get('hint_text',""), "hint")
         self.assertEqual(render_results['subparts'][0]\
@@ -714,10 +701,8 @@ class TestRenderQuestionText(TestCase):
         sp.save()
         self.q.questionreferencepage_set.get(page=page).delete()
         render_results = render_question_text(render_data)
-        self.assertTrue(render_results['subparts'][0]\
+        self.assertFalse(render_results['subparts'][0]\
                              .get('help_available',False))
-        self.assertTrue(render_results['subparts'][0]\
-                             .get('include_solution_link',False))
         self.assertEqual(render_results['subparts'][0]\
                              .get('hint_text',""), "")
         self.assertEqual(render_results['subparts'][0]\
@@ -765,104 +750,6 @@ class TestRenderQuestionText(TestCase):
         
 
 
-class TestShowSolutionLink(TestCase):
-    def setUp(self):
-        random.seed()
-        qt = QuestionType.objects.create(name="question type")
-        self.qs=[[],[],[]]
-        self.expr_contexts=[[],[],[]]
-        for i in range(3):
-            for j in range(3):
-                self.qs[i].append(Question.objects.create(
-                        name="question",
-                        question_type = qt,
-                        question_privacy = i,
-                        solution_privacy = j,
-                        solution_text="solution",
-                        ))
-                results=setup_expression_context(self.qs[i][j])
-                self.expr_contexts[i].append(results["expression_context"])
-
-        self.users = [[],[],[]]
-        for i in range(3):
-            for j in range(3):
-                self.users[i].append(User.objects.create_user(
-                        "u%s%s" % (i,j), "u%s%s@example.com" % (i,j)))
-                if i > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s" % i)
-                    self.users[i][j].user_permissions.add(p)
-                if j > 0:
-                    p=Permission.objects.get(
-                        codename = "view_assessment_%s_solution" % j)
-                    self.users[i][j].user_permissions.add(p)
-            
-    def test_show_solution_link(self):
-        for iq in range(3):
-            for jq in range(3):
-                for iu in range(3):
-                    for ju in range(3):
-                        render_data = {"question": self.qs[iq][jq], 
-                                         'expression_context':
-                                             self.expr_contexts[iq][jq],
-                                         'user': self.users[iu][ju],
-                                         'show_help': True}
-                
-                        render_results = render_question_text(render_data)
-                        if ju >= jq:
-                            self.assertTrue(render_results.get(
-                                    'include_solution_link',False))
-                        else:
-                            self.assertFalse(render_results.get(
-                                    'include_solution_link',False))
-
-    def test_show_solution_link_subparts(self):
-        for iq in range(3):
-            for jq in range(3):
-                self.qs[iq][jq].questionsubpart_set.create(
-                    question_text="question",
-                    solution_text="solution")
-
-                for iu in range(3):
-                    for ju in range(3):
-                        render_data = {"question": self.qs[iq][jq], 
-                                         'expression_context':
-                                             self.expr_contexts[iq][jq],
-                                         'user': self.users[iu][ju],
-                                         'show_help': True}
-                
-                        render_results = render_question_text(render_data)
-                        if ju >= jq:
-                            self.assertTrue(render_results['subparts'][0].get(
-                                    'include_solution_link',False))
-                        else:
-                            self.assertFalse(render_results['subparts'][0].get(
-                                    'include_solution_link',False))
-
-
-    def test_show_solution_link_assessment(self):
-        at = AssessmentType.objects.create(
-            code="a", name="a", assessment_privacy=2, solution_privacy=2)
-        asmt = Assessment.objects.create(
-            code="a", name="a", assessment_type=at)
-        for iq in range(3):
-            for jq in range(3):
-                for iu in range(3):
-                    for ju in range(3):
-                        render_data = {"question": self.qs[iq][jq], 
-                                         'expression_context':
-                                             self.expr_contexts[iq][jq],
-                                         'user': self.users[iu][ju],
-                                         'show_help': True,
-                                         'assessment': asmt}
-                
-                        render_results = render_question_text(render_data)
-                        if ju == 2:
-                            self.assertTrue(render_results.get(
-                                    'include_solution_link',False))
-                        else:
-                            self.assertFalse(render_results.get(
-                                    'include_solution_link',False))
 
 class TestRenderQuestion(TestCase):
     def setUp(self):
@@ -927,7 +814,6 @@ class TestRenderQuestion(TestCase):
 
         question_data=render_question(self.q, user=AnonymousUser())
         self.assertTrue(question_data.get("help_available"))
-        self.assertTrue(question_data.get("include_solution_link",False))
         
 
     def test_render_subparts(self):
@@ -978,19 +864,48 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(question_data["seed"],seed)
         
 
-    def test_solution_link(self):
+    def test_solution_button(self):
         self.q.question_text = "What?"
         self.q.solution_text = "This."
-        self.q.hint_text = "Because"
         self.q.save()
   
         question_data=render_question(self.q)
-        self.assertTrue(question_data.get("help_available"))
-        self.assertFalse(question_data.get("include_solution_link",False))
+        self.assertFalse(question_data.get("show_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url",""),"")
+
+        question_data=render_question(self.q, allow_solution_buttons=True)
+        self.assertFalse(question_data.get("show_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url",""),"")
 
         question_data=render_question(self.q, user=AnonymousUser())
-        self.assertTrue(question_data.get("help_available"))
-        self.assertTrue(question_data.get("include_solution_link",False))
+        self.assertFalse(question_data.get("show_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url",""),"")
+
+        question_data=render_question(self.q, user=AnonymousUser(),
+                                      allow_solution_buttons=True)
+        self.assertTrue(question_data.get("show_solution_button",False))
+        self.assertTrue(question_data.get("enable_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url"),
+                         "/assess/question/1/inject_solution")
+
+
+        question_data=render_question(self.q, user=AnonymousUser(),
+                                      allow_solution_buttons=False)
+        self.assertFalse(question_data.get("show_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url",""),"")
+
+
+        self.q.computer_graded=True
+        self.q.save()
+        question_data=render_question(self.q, user=AnonymousUser(),
+                                      allow_solution_buttons=True)
+        self.assertTrue(question_data.get("show_solution_button",False))
+        self.assertFalse(question_data.get("enable_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url"),
+                         "/assess/question/1/inject_solution")
+
+        self.q.computer_graded=False
+        self.q.save()
 
         at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=2, solution_privacy=2)
@@ -998,17 +913,21 @@ class TestRenderQuestion(TestCase):
             code="a", name="a", assessment_type=at)
         
         question_data=render_question(self.q, user=AnonymousUser(),
-                                      assessment=asmt)
-        self.assertTrue(question_data.get("help_available"))
-        self.assertFalse(question_data.get("include_solution_link",False))
+                                      assessment=asmt,
+                                      allow_solution_buttons=True)
+        self.assertFalse(question_data.get("show_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url",""),"")
 
         at.question_privacy=0;
         at.solution_privacy=0;
         at.save()
         question_data=render_question(self.q, user=AnonymousUser(),
-                                      assessment=asmt)
-        self.assertTrue(question_data.get("help_available"))
-        self.assertTrue(question_data.get("include_solution_link",False))
+                                      assessment=asmt,
+                                      allow_solution_buttons=True)
+        self.assertTrue(question_data.get("show_solution_button",False))
+        self.assertTrue(question_data.get("enable_solution_button",False))
+        self.assertEqual(question_data.get("inject_solution_url"),
+                         "/assess/question/1/inject_solution")
 
 
     def test_readonly(self):
@@ -1085,7 +1004,6 @@ class TestRenderQuestion(TestCase):
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
-        self.assertFalse(question_data.get("help_as_buttons",False))
         self.assertTrue(question_data.get("help_available",False))
         
         self.q.computer_graded=True
@@ -1095,8 +1013,7 @@ class TestRenderQuestion(TestCase):
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
-        self.assertTrue(question_data.get("help_as_buttons",False))
-        self.assertFalse(question_data.get("help_available",False))
+        self.assertTrue(question_data.get("help_available",False))
 
         self.q.questionansweroption_set.create(answer_code="x", answer="x")
         self.q.question_text="{% answer x %}"
@@ -1106,21 +1023,18 @@ class TestRenderQuestion(TestCase):
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
-        self.assertTrue(question_data.get("help_as_buttons",False))
-        self.assertFalse(question_data.get("help_available",False))
+        self.assertTrue(question_data.get("help_available",False))
 
         question_data=render_question(self.q, show_help=False)
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
-        self.assertFalse(question_data.get("help_as_buttons",False))
         self.assertFalse(question_data.get("help_available",False))
 
         question_data=render_question(self.q, auto_submit=True)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertTrue(question_data.get("auto_submit",False))
-        self.assertTrue(question_data.get("help_as_buttons",False))
 
     def test_computer_grade_data(self):
         import pickle, base64
@@ -1139,18 +1053,19 @@ class TestRenderQuestion(TestCase):
         self.q.questionansweroption_set.create(answer_code="another",
                                                answer="expr2")
         self.q.question_text = "{% answer ans %}"
+        self.q.solution_text = "{{expr1}}"
         self.q.computer_graded=True
         self.q.save()
 
         question_data=render_question(self.q, question_identifier=identifier,
-                                      seed=seed)
+                                      seed=seed, user=AnonymousUser())
 
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
         
         self.assertEqual(cgd['identifier'],identifier)
         self.assertEqual(cgd['seed'], seed)
-        self.assertFalse(cgd['allow_solution_buttons'])
+        self.assertFalse(cgd['show_solution_button'])
         self.assertTrue(cgd['record_answers'])
         self.assertEqual(cgd.get('question_set'),None)
         self.assertEqual(cgd.get('assessment_code'),None)
@@ -1161,18 +1076,20 @@ class TestRenderQuestion(TestCase):
                            'type': QuestionAnswerOption.EXPRESSION}})
 
         question_data=render_question(self.q, record_answers=False,
-                                      allow_solution_buttons=True)
+                                      allow_solution_buttons=True,
+                                      user=AnonymousUser())
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
         self.assertFalse(cgd['record_answers'])
-        self.assertTrue(cgd['allow_solution_buttons'])
+        self.assertTrue(cgd['show_solution_button'])
          
         question_data=render_question(self.q, record_answers=True,
-                                      allow_solution_buttons=False)
+                                      allow_solution_buttons=False,
+                                      user=AnonymousUser())
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
         self.assertTrue(cgd['record_answers'])
-        self.assertFalse(cgd['allow_solution_buttons'])
+        self.assertFalse(cgd['show_solution_button'])
 
     def test_computer_grade_data_assessment(self):
         import pickle, base64
@@ -1208,6 +1125,94 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd['assessment_code'], assessment_code)
         self.assertEqual(cgd['assessment_seed'], assessment_seed)
         self.assertEqual(cgd['question_set'], question_set)
+
+
+class TestShowSolutionButton(TestCase):
+    def setUp(self):
+        random.seed()
+        qt = QuestionType.objects.create(name="question type")
+        self.qs=[[],[],[]]
+        for i in range(3):
+            for j in range(3):
+                self.qs[i].append(Question.objects.create(
+                        name="question",
+                        question_type = qt,
+                        question_privacy = i,
+                        solution_privacy = j,
+                        solution_text="solution",
+                        ))
+
+        self.users = [AnonymousUser()]
+
+        u=User.objects.create_user("user", password="pass")
+        self.users.append(u)
+
+        u=User.objects.create_user("instructor", password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+        self.users.append(u)
+            
+    def test_show_solution_button(self):
+        for iq in range(3):
+            for jq in range(3):
+                for iu in range(3):
+                    question_data = render_question(
+                        self.qs[iq][jq], question_identifier="q",
+                        user=self.users[iu], allow_solution_buttons=True)
+                                                    
+                    if iu >= jq:
+                        self.assertTrue(question_data.get(
+                                'show_solution_button',False))
+                    else:
+                        self.assertFalse(question_data.get(
+                                'show_solution_button',False))
+
+                    question_data = render_question(
+                        self.qs[iq][jq], question_identifier="q",
+                        user=self.users[iu], allow_solution_buttons=False)
+                    
+                    self.assertFalse(question_data.get(
+                            'show_solution_button',False))
+
+                    question_data = render_question(
+                        self.qs[iq][jq], question_identifier="q",
+                        user=self.users[iu])
+                    
+                    self.assertFalse(question_data.get(
+                            'show_solution_button',False))
+
+
+    def test_show_solution_button_assessment(self):
+        
+        asmts=[]
+        for i in range(3):
+            at = AssessmentType.objects.create(
+                code="%s" % (i),
+                name="%s" % (i),
+                assessment_privacy=0,
+                solution_privacy=i)
+            asmt=Assessment.objects.create(
+                code="test_%s" % (i),
+                name = "Test %s" % (i),
+                assessment_type = at,
+                )
+            asmts.append(asmt) 
+        for jq in range(3):
+            for iu in range(3):
+                for ia in range(3):
+
+                    question_data = render_question(
+                        self.qs[0][jq], question_identifier="q",
+                        user=self.users[iu], 
+                        assessment=asmts[ia],
+                        allow_solution_buttons=True)
+
+                    if iu >= jq and iu >= ia:
+                        self.assertTrue(question_data.get(
+                                'show_solution_button',False))
+                    else:
+                        self.assertFalse(question_data.get(
+                                'show_solution_button',False))
 
 
 class TestGetQuestionList(TestCase):

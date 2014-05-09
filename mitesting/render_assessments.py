@@ -6,6 +6,7 @@ from __future__ import division
 from django.template import TemplateSyntaxError, Context, Template
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
 import random
 import json 
 import re
@@ -164,10 +165,6 @@ def render_question_text(render_data, solution=False):
     - question: the question to be rendered
     - expression_context: the template context used to render the text
     - show_help (optional): if true, render the "need help" information
-    If show_help is true, then render_data should also include:
-    - user: the logged in user
-    - assessment: any assessment for which the question belongs
-    (These are used to determine if solution link should be included.)
     
     Return render_results dictionary with the following:
     - question: the question that was rendered
@@ -181,14 +178,11 @@ def render_question_text(render_data, solution=False):
     If show_help is true, then render_results also contains;
     - reference_pages: a list of pages relevant to the question
     - hint_text: rendered hint text
-    - include_solution_link: exists and true if should include link to solution
-    - help_available: true if there is help (hint or links to page/solution)
+    - help_available: true if there is help (hint or links to pages)
     - hint_template_error: true if error rendering hint text
     - to each subpart dicionary, the following are added:
       - reference_pages: a list of pages relevant to the subpart
       - hint_text: rendered hint text
-      - include_solution_link: exists and is true if should include 
-        link to solution
       - help_available: true if there is help for subpart
     """
 
@@ -224,7 +218,6 @@ def render_question_text(render_data, solution=False):
                     mark_safe("<p>Error in question</p>")
                 render_results['render_error_messages'].append(
                     mark_safe("Error in question template: %s" % message))
-                print()
             render_results['render_error'] = True
     else:
         render_results['rendered_text'] = ""
@@ -274,13 +267,11 @@ def render_question_text(render_data, solution=False):
 
 def add_help_data(render_data, render_results, subparts=None):
     """
-    Add hints, references pages, and solution availability to render_results
+    Add hints and references pages to render_results
     
     Input render_data is a dictionary with the following keys
     - question: the question to be rendered
     - expression_context: the template context used to render the text
-    - user: the logged in user
-    - assessment: any assessment for which the question belongs
 
     Input render_results is a dictionary.
     If question contains subparts, then
@@ -292,22 +283,15 @@ def add_help_data(render_data, render_results, subparts=None):
     Otherwise, a database query is made to determine question subparts
 
     Modifies render_results to add the following to the dictionary
-    - include_solution_link: if exists and set to true, then user
-      has permission to view solution of question and a solution exists.   
-      In addition, if assessment is specified, then user must also have
-      permission to view solution of assessment for include_solution_link
-      to be set to true.
     - reference_pages: a list of pages relevant to the question
     - hint_text: rendered hint text.
-    - help_available: true if there is help (hint or links to page/solution)
+    - help_available: true if there is help (hint or links to page)
     - hint_template_error: true if error rendering hint text of either
       main part of question or any subparts.
     - to each subpart dicionary, render_results['subparts'][i]
       the following are added:
       - reference_pages: a list of pages relevant to the subpart
       - hint_text: rendered hint text
-      - include_solution_link: exists and is true if user has permission to
-        view solution (see above) and solution to subpart exists.
       - help_available: true if there is help for subpart
 
     """
@@ -317,18 +301,6 @@ def add_help_data(render_data, render_results, subparts=None):
     expr_context = render_data['expression_context']
     hint_template_error=False
    
-    # solution is visible if user has permisions for question and, 
-    # in the case when the question is part of an assessment, 
-    # also has permissions for assessment
-    solution_visible = False
-    if render_data.get('user') and \
-            question.user_can_view(render_data['user'],solution=True):
-        if render_data.get('assessment'):
-            if render_data['assessment'].user_can_view(render_data['user'],
-                                                         solution=True):
-                solution_visible=True
-        else:
-            solution_visible=True
 
     if subparts is None:
         subparts = question.questionsubpart_set.all()
@@ -345,10 +317,6 @@ def add_help_data(render_data, render_results, subparts=None):
             [rpage.page for rpage in question.questionreferencepage_set\
                  .filter(question_subpart=subpart_dict['letter'])]
         if subpart_dict['reference_pages']:
-            help_available=True
-
-        if solution_visible and subpart.solution_text:
-            subpart_dict['include_solution_link']=True
             help_available=True
 
         if subpart.hint_text:
@@ -379,10 +347,6 @@ def add_help_data(render_data, render_results, subparts=None):
         render_results['reference_pages'] = \
             [rpage.page for rpage in question.questionreferencepage_set.all()]
     if render_results['reference_pages']:
-        help_available=True
-
-    if solution_visible and question.solution_text:
-        render_results['include_solution_link'] = True
         help_available=True
 
     if question.hint_text:
@@ -432,9 +396,7 @@ def render_question(question, seed=None, solution=False,
       this particular question among any others on the page
     - user: a User instance.  Used to determine if solution is viewable
       and for recording answers of computer graded questions
-    - show_help: if true, show help (hints/reference pages/viewable solutions).
-      If computer graded, will show via buttons (so can record access),
-      else, show via links.
+    - show_help: if true, show help (hints and reference pages).
     - assessment: if not None, indicates the Assessment instance
       in which question is being rendered.  Used to determine if solution is
       visible and for recording answers of computer graded questions
@@ -469,27 +431,32 @@ def render_question(question, seed=None, solution=False,
       - help_available: true if there is help for subpart
       - reference_pages: a list of pages relevant to the subpart
       - hint_text: rendered hint text
-      - include_solution_link: exists and is true if should include 
-        link to solution
-   - help_available: true if there is help (hint or links to page/solution).
+   - help_available: true if there is help (hint or links to pages).
       If help_available, then the following
       - reference_pages: a list of pages relevant to the question
       - hint_text: rendered hint text
-      - include_solution_link: exists & true if should include link to solution
       - hint_template_error: true if error rendering hint text
-    - help_as_buttons: if true, indicates should not display help as links
-      but instead as buttons (so can track if click those buttons)
     - applet_data: dictionary of information about applets embedded in text
     - identifier: the passed in string to identify the question
     - seed: the random number generator seed used to generate question
     - auto_submit: if true, automatically submit answers upon page load
     - submit_button: if true, include button to submit for computer grading
+    - show_solution_button: if exists and set to true, then display a
+      button to show the solution.  For show_solution_button to be true, 
+      allow_solution_button must be true, the user must have permission 
+      to view solution of question, and a solution must exist.
+      In addition, if assessment is specified, then user must also have
+      permission to view solution of assessment for show_solution_button
+      to be set to true.
+    - enable_solution_button: true if solution button should be enabled
+      at the outset.  (Set true if not computer graded.)
+    - inject_solution_url: url from which to retrieve solution
     - computer_grade_data: a pickled and base64 encoded dictionary of 
       information about the question to be sent to server with submission
       of results for computer grading.  Some entries are identical to above:
       - seed
       - identifier
-      - allow_solution_buttons
+      - show_solution_button
       - record_answers
       - question_set
       - assessment_seed
@@ -526,10 +493,6 @@ def render_question(question, seed=None, solution=False,
         'expression_context': context_results['expression_context'],
         'user': user, 'assessment': assessment
         }
-
-    # if computer graded, don't show help as links
-    if question.computer_graded:
-        render_data['show_help']=False
 
     # applet_data will be used to gather information about applets
     # included in templates.  Applets should add to javascript item
@@ -577,10 +540,6 @@ def render_question(question, seed=None, solution=False,
             answer_data["answer_errors"].append(
                 "Invalid number of previous answers")
     
-    # for computer graded questions show help via buttons 
-    # (so can record if view hint)
-    if question.computer_graded and show_help==True:
-        question_data['help_as_buttons'] = True
 
     # If render or expression error, combine all error messages
     # for display in question template.
@@ -613,15 +572,57 @@ def render_question(question, seed=None, solution=False,
         question_data['success'] = True
 
 
-    # if error or not computer-graded or rendering a solution or no answer blanks,
+
+    # if allow_solution_buttons is true, then determine if
+    # solution is visible to user (ie. user has permissions)
+    # and solution exists
+    
+    # solution is visible if user has permisions for question and, 
+    # in the case when the question is part of an assessment, 
+    # also has permissions for assessment 
+    # (not adjusted for privacy of other questions)
+
+    show_solution_button = False
+    if allow_solution_buttons:
+    
+        solution_visible = False
+        if render_data.get('user') and \
+                question.user_can_view(user=render_data['user'],solution=True):
+            if render_data.get('assessment'):
+                if render_data['assessment'].user_can_view(
+                    user=render_data['user'], solution=True,
+                    include_questions=False):
+                    solution_visible=True
+            else:
+                solution_visible=True
+
+        if solution_visible:
+            # check if solution text exists in question or a subpart
+            solution_exists=bool(question.solution_text)
+            if not solution_exists:
+                for subpart in question.questionsubpart_set.all():
+                    if subpart.solution_text:
+                        solution_exists = True
+                        break
+
+            if solution_exists:
+                show_solution_button=True
+
+    question_data['show_solution_button']=show_solution_button
+    if show_solution_button:
+        question_data['inject_solution_url'] = reverse(
+            'mit-injectquestionsolution', kwargs={'question_id': question.id})
+        question_data['enable_solution_button'] = not question.computer_graded
+
+    # if error or rendering a solution 
     # return without adding computer grading data
-    if not question_data['success'] or not question.computer_graded \
-            or solution or not answer_data['answer_data']:
+    if not question_data['success'] or solution:
         return question_data
     
-
-    # if computer graded, add submit button (unless auto_submit)
-    question_data['submit_button'] = not auto_submit
+    # if computer graded and answer data available,
+    # add submit button (unless auto_submit)
+    question_data['submit_button'] = question.computer_graded and\
+        answer_data['answer_data'] and (not auto_submit)
 
     # set up computer grade data to be sent back to server on submit
     # computer grade data contains
@@ -633,15 +634,16 @@ def render_question(question, seed=None, solution=False,
 
     computer_grade_data = {'seed': seed, 'identifier': question_identifier, 
                            'record_answers': record_answers,
-                           'allow_solution_buttons': allow_solution_buttons}
+                           'show_solution_button': show_solution_button}
     if assessment:
         computer_grade_data['assessment_code'] = assessment.code
         computer_grade_data['assessment_seed'] = assessment_seed
         if question_set is not None:
             computer_grade_data['question_set'] = question_set
 
-    computer_grade_data['answer_data'] \
-        = answer_data['answer_data']
+    if answer_data['answer_data']:
+        computer_grade_data['answer_data'] \
+            = answer_data['answer_data']
 
     computer_grade_data['applet_counter'] = applet_data["counter"]
 

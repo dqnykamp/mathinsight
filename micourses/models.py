@@ -6,11 +6,14 @@ from __future__ import division
 from django.db import models
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 import datetime
 from django.conf import settings
+
+STUDENT_ROLE = 'S'
+INSTRUCTOR_ROLE = 'I'
 
 def day_of_week_to_python(day_of_week):
     if day_of_week.upper() == 'S':
@@ -29,15 +32,9 @@ def day_of_week_to_python(day_of_week):
         return 5
 
 class CourseUser(models.Model):
-    ROLE_CHOICES = (
-        ('S', 'Student'),
-        ('I', 'Instructor'),
-    )
     user = models.OneToOneField(User)
-    selected_course = models.ForeignKey('Course', blank=True, null=True)
-    role = models.CharField(max_length=1,
-                            choices = ROLE_CHOICES,
-                            default = 'S')
+    selected_course_enrollment = models.ForeignKey(
+        'CourseEnrollment', blank=True, null=True)
 
     class Meta:
         ordering = ['user__last_name', 'user__first_name']
@@ -51,27 +48,45 @@ class CourseUser(models.Model):
         return self.user.get_short_name()
 
     def return_selected_course(self):
-        if self.selected_course:
-            return self.selected_course
+        if self.selected_course_enrollment:
+            return self.selected_course_enrollment.course
 
-        # will raise exception if course not selected
-        # and enrolled in more or less than one active course
-        enrolled_course = self.course_set.filter(active=True).get()
+        # Try to find unique enrolled, active course.
+        # Will raise MultipleObjectReturned if multiple enrolled courses.
+        # Will raise ObjectDoesNotExist is no enrolled courses
+        course_enrollment = self.courseenrollment_set.get(
+            course__active=True)
         
         # if found just one active course, make it be the selected course
-        self.selected_course = enrolled_course
+        self.selected_course_enrollment = course_enrollment
         self.save()
-        return enrolled_course
+        return course_enrollment.course
 
     def active_courses(self):
         return self.course_set.filter(active=True)
     
     def get_current_role(self):
-        return self.role
-    
+        if self.selected_course_enrollment:
+            self.selected_course_enrollmnent.role
+
+    def return_permission_level(self):
+        if not self.selected_course_enrollment:
+            return None
+
+        role = self.selected_course_enrollmnent.role
+
+        if role == INSTRUCTOR_ROLE:
+            return 2
+        else:
+            return 1
+        
+
     def percent_attendance(self, course=None, date=None):
         if not course:
-            course = self.return_selected_course()
+            try:
+                course = self.return_selected_course()
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                return None
         if not date:
             date = course.last_attendance_day_previous_week()
             if not date:
@@ -98,7 +113,6 @@ class CourseUser(models.Model):
         else:
             return 0
     
-
 
 
 class GradeLevel(models.Model):
@@ -653,12 +667,20 @@ class Course(models.Model):
                               studentcontentcompletion__skip=True))[:number]
 
 class CourseEnrollment(models.Model):
+    ROLE_CHOICES = (
+        (STUDENT_ROLE, 'Student'),
+        (INSTRUCTOR_ROLE, 'Instructor'),
+    )
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
     section = models.IntegerField()
     date_enrolled = models.DateField()
     withdrew = models.BooleanField(default=False)
-    
+    role = models.CharField(max_length=1,
+                            choices = ROLE_CHOICES,
+                            default = STUDENT_ROLE)
+
+
     def __unicode__(self):
         return "%s enrolled in %s" % (self.student, self.course)
 

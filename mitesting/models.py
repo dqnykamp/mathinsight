@@ -77,24 +77,6 @@ class Question(models.Model):
     def __str__(self):
         return "%s: %s" % (self.id, self.name)
 
-    def question_with_number(self):
-        return "%s: %s" % (self.id, self.name)
-    question_with_number.admin_order_field = 'id'
-    question_with_number.short_description = "Question"
-
-    def user_can_view(self, user, solution=True):
-        permission_level=return_user_assessment_permission_level(user, solution)
-        privacy_level=self.return_privacy_level(solution)
-        # if permission level is high enough, user can view
-        if permission_level >= privacy_level:
-            return True
-        else:
-            return False
-
-    def spacing_css(self):
-        if self.question_spacing:
-            return self.question_spacing
- 
     @models.permalink
     def get_absolute_url(self):
         return('mit-question', (), {'question_id': self.id})
@@ -103,12 +85,30 @@ class Question(models.Model):
     def get_solution_url(self):
         return('mit-questionsolution', (), {'question_id': self.id})
 
+    def question_with_number(self):
+        return "%s: %s" % (self.id, self.name)
+    question_with_number.admin_order_field = 'id'
+    question_with_number.short_description = "Question"
+
+    def user_can_view(self, user, solution=True):
+        permission_level=return_user_assessment_permission_level(user)
+        privacy_level=self.return_privacy_level(solution)
+        # if permission level is high enough, user can view
+        if permission_level >= privacy_level:
+            return True
+        else:
+            return False
+
     def return_privacy_level(self, solution=True):
         if solution:
             return self.solution_privacy
         else:
             return self.question_privacy
 
+    def spacing_css(self):
+        if self.question_spacing:
+            return self.question_spacing
+ 
     def author_list_abbreviated_link(self):
         return author_list_abbreviated(self.questionauthor_set.all(), 
                                        include_link=True)
@@ -390,30 +390,6 @@ class Assessment(models.Model):
         kwargs['seed']=None
         return self.return_link(**kwargs)
 
-    def user_can_view(self, user, solution=True):
-        permission_level=return_user_assessment_permission_level(user, solution)
-        privacy_level=self.return_privacy_level(solution)
-        # if permission level is high enough, user can view
-        if permission_level >= privacy_level:
-            return True
-        
-        # else check if user is in one of the groups 
-        allowed_users=self.return_users_of_groups_can_view(solution)
-        if user in allowed_users:
-            return True
-        else:
-            return False
-
-    def return_users_of_groups_can_view(self, solution=True):
-        if solution:
-            allowed_groups= self.groups_can_view_solution.all()
-        else:
-            allowed_groups= self.groups_can_view.all()
-        allowed_users = []
-        for group in allowed_groups:
-            allowed_users += list(group.user_set.all())
-        return allowed_users
-
     @models.permalink
     def get_absolute_url(self):
         return('mit-assessment', (), {'assessment_code': self.code})
@@ -428,12 +404,33 @@ class Assessment(models.Model):
 
     class Meta:
         permissions = (
-            ("view_assessment_1", "Can view 1"),
-            ("view_assessment_1_solution", "Can view 1 solution"),
-            ("view_assessment_2", "Can view 2"),
-            ("view_assessment_2_solution", "Can view 2 solution"),
             ("administer_assessment","Can administer assessments"),
         )
+
+    def user_can_view(self, user, solution=True, include_questions=True):
+        permission_level=return_user_assessment_permission_level(user)
+        privacy_level=self.return_privacy_level(
+            solution=solution, include_questions=include_questions)
+        # if permission level is high enough, user can view
+        if permission_level >= privacy_level:
+            return True
+        
+        # else check if user is in one of the groups 
+        allowed_users=self.return_users_of_groups_can_view(solution)
+        if user in allowed_users:
+            return True
+        else:
+            return False
+
+    def return_users_of_groups_can_view(self, solution=False):
+        if solution:
+            allowed_groups= self.groups_can_view_solution.all()
+        else:
+            allowed_groups= self.groups_can_view.all()
+        allowed_users = []
+        for group in allowed_groups:
+            allowed_users += list(group.user_set.all())
+        return allowed_users
 
     def return_privacy_level(self, solution=True, include_questions=True):
         # privacy level is max of privacy level from assessment type
