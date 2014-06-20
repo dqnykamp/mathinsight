@@ -1,0 +1,4 @@
+-r requirements.txt
+ipython
+nose
+django_nose
