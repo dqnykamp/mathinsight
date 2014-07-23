@@ -1549,7 +1549,39 @@ article.videohighlight {
 }
 article.geogebraweb table {
     margin: 0px;
+    width: auto;
+    border-width: medium;
+    border-style: none;
+
 }
+article.geogebraweb .EuclidianPanel th, 
+article.geogebraweb .EuclidianPanel td {
+    line-height: normal;
+    vertical-align: baseline;
+    padding: 0;
+}
+article.geogebraweb .EuclidianPanele thead th {
+    border-width: medium;
+    border-style: none;
+}
+
+article.geogebraweb .EuclidianPanel tbody th {
+    border-width: medium;
+    border-style: none;
+}
+
+
+article.geogebraweb .EuclidianPanel tbody td {
+    border-width: medium;
+    border-style: none;
+}
+
+
+article.geogebraweb .EuclidianPanel tbody tr:hover th,
+article.geogebraweb .EuclidianPanel tbody tr:hover td {
+    background: transparent;
+}
+
 
 @media screen {
 .ym-gbox-perpad { padding: 0 8%; }
