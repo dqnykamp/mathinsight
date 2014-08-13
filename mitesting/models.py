@@ -688,7 +688,7 @@ class Expression(models.Model):
     name = models.SlugField(max_length=50)
     expression_type = models.CharField(
         max_length=2, choices = EXPRESSION_TYPES, default=EXPRESSION)
-    expression = models.CharField(max_length=200)
+    expression = models.CharField(max_length=1000)
     expand = models.BooleanField(default=False)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)

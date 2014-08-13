@@ -185,7 +185,7 @@ class Migration(SchemaMigration):
             'collapse_equal_tuple_elements': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'doit': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'expand': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'expression': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'expression': ('django.db.models.fields.CharField', [], {'max_length': '1000'}),
             'function_inputs': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'n_digits': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
