@@ -18,7 +18,7 @@
 <script type="text/javascript" language="javascript" src="//www.geogebra.org/web/4.4/web/web.nocache.js"></script>
 {% block extrastyle %}{% endblock %}
 
-<script type="text/javascript" src="/MathJax/MathJax.js?config=TeX-AMS_HTML-full,local/midefault{% if notation_config %},local/{{notation_config }}{%endif%}"></script>
+<script type="text/javascript" src="{{STATIC_URL}}MathJax/MathJax.js?config=TeX-AMS_HTML-full,{{STATIC_URL}}mathjaxconfig/midefault{% if notation_config %},{{STATIC_URL}}mathjaxconfig/{{notation_config }}{%endif%}"></script>
 
 {% comment %}<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full,http://localhost/MathJax/config/local/midefault{% if notation_config %},http://localhost/MathJax/config/local/{{notation_config }}{%endif%}"></script>
 {% endcomment %}

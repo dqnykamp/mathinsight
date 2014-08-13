@@ -76,8 +76,8 @@ def pageview(request, page_code):
     max_keyword_matches=5
     max_total_related=10
     related_pages = get_all_related_pages(thepage,max_keyword_matches,max_total_related)
-    if related_pages['generic'] or related_pages['lighter'] \
-            or related_pages['depth']:
+    if related_pages.get('generic') or related_pages.get('lighter') \
+            or related_pages.get('depth'):
         manual_links=True
     else:
         manual_links=False
