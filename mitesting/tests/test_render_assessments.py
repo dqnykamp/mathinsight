@@ -39,6 +39,8 @@ class TestSetupExpressionContext(TestCase):
         expression_context = results['expression_context']
         self.assertEqual(expression_context['the_x'], Symbol('x'))
         self.assertEqual(results['sympy_global_dict']['the_x'], Symbol('x'))
+        self.assertEqual(expression_context['_sympy_global_dict_'],
+                         results['sympy_global_dict'])
 
     def test_with_composed_expressions(self):
         self.new_expr(name="expr",expression="x*x")
@@ -886,7 +888,7 @@ class TestRenderQuestion(TestCase):
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/1/inject_solution")
+                         "/assess/question/%s/inject_solution" % self.q.id)
 
 
         question_data=render_question(self.q, user=AnonymousUser(),
@@ -902,7 +904,7 @@ class TestRenderQuestion(TestCase):
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertFalse(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/1/inject_solution")
+                         "/assess/question/%s/inject_solution" % self.q.id)
 
         self.q.computer_graded=False
         self.q.save()
@@ -927,7 +929,7 @@ class TestRenderQuestion(TestCase):
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/1/inject_solution")
+                         "/assess/question/%s/inject_solution" % self.q.id)
 
 
     def test_readonly(self):
@@ -1254,8 +1256,8 @@ class TestGetQuestionList(TestCase):
         
         for i in range(10):
             question_list = get_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertEqual(question_ids, [1,2,3,4])
+            questions = [ql['question'] for ql in question_list]
+            self.assertEqual(questions, [self.q1, self.q2, self.q3, self.q4])
             
             question_sets = [ql['question_set'] for ql in question_list]
             self.assertEqual(question_sets, [1,2,3,4])
@@ -1275,16 +1277,16 @@ class TestGetQuestionList(TestCase):
         self.qsa3.question_set=4
         self.qsa3.save()
 
-        valid_options = [[1,3],[1,4],[2,3],[2,4]]
+        valid_options = [[self.q1,self.q3],[self.q1,self.q4],[self.q2,self.q3],[self.q2,self.q4]]
 
         options_used = [False, False, False, False]
 
         for i in range(100):
             question_list = get_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertTrue(question_ids in valid_options)
+            questions = [ql['question'] for ql in question_list]
+            self.assertTrue(questions in valid_options)
 
-            one_used = valid_options.index(question_ids)
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -1296,16 +1298,16 @@ class TestGetQuestionList(TestCase):
         self.qsa1.question_set=4
         self.qsa1.save()
 
-        valid_options = [[2,1],[2,3],[2,4]]
+        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q2,self.q4]]
 
         options_used = [False, False, False]
 
         for i in range(100):
             question_list = get_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertTrue(question_ids in valid_options)
+            questions = [ql['question'] for ql in question_list]
+            self.assertTrue(questions in valid_options)
 
-            one_used = valid_options.index(question_ids)
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -1327,7 +1329,7 @@ class TestGetQuestionList(TestCase):
                                                points = 7.3)
 
         
-        valid_options = [[2,1],[2,3],[4,1],[4,3]]
+        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q4,self.q1],[self.q4,self.q3]]
 
         options_used = [False, False, False, False]
 
@@ -1337,10 +1339,10 @@ class TestGetQuestionList(TestCase):
             points = [ql['points'] for ql in question_list]
             self.assertEqual(points, [7.3,5])
 
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertTrue(question_ids in valid_options)
+            questions = [ql['question'] for ql in question_list]
+            self.assertTrue(questions in valid_options)
 
-            one_used = valid_options.index(question_ids)
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -1402,7 +1404,8 @@ class TestRenderQuestionList(TestCase):
 
     def test_no_question_groups_all_orders(self):
         self.qsa4.delete()
-
+        
+        qs = [self.q1, self.q2, self.q3, self.q4]
         valid_orders = []
         orders_used = []
         for i in range(3):
@@ -1412,7 +1415,7 @@ class TestRenderQuestionList(TestCase):
                 for k in range(3):
                     if k==i or k==j:
                         continue
-                    valid_orders.append([i+1, j+1, k+1])
+                    valid_orders.append([qs[i], qs[j], qs[k]])
                     orders_used.append(False)
 
         for i in range(200):
@@ -1420,9 +1423,9 @@ class TestRenderQuestionList(TestCase):
             for question_dict in question_list:
                 self.assertEqual(question_dict['points'],"")
                 self.assertFalse(question_dict['previous_same_group'])
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertTrue(question_ids in valid_orders)
-            one_used = valid_orders.index(question_ids)
+            questions = [ql['question'] for ql in question_list]
+            self.assertTrue(questions in valid_orders)
+            one_used = valid_orders.index(questions)
             orders_used[one_used]=True
             
             if False not in orders_used:
@@ -1434,11 +1437,12 @@ class TestRenderQuestionList(TestCase):
     def test_no_question_groups_fixed_order(self):
         self.asmt.fixed_order=True
         self.asmt.save()
-            
+
+        qs = [self.q1, self.q2, self.q3, self.q4]
         for j in range(10):
             question_list, seed = render_question_list(self.asmt)
             for (i,question_dict) in enumerate(question_list):
-                self.assertEqual(question_dict['question'].id, i+1)
+                self.assertEqual(question_dict['question'], qs[i])
                 self.assertEqual(question_dict['question_set'], i+1)
                 self.assertEqual(question_dict['points'],"")
                 qseed = int(question_dict['seed'])
@@ -1455,6 +1459,7 @@ class TestRenderQuestionList(TestCase):
                                                group="apple")
         self.asmt.questionsetdetail_set.create(question_set=4,
                                                group="apple")
+        qs = [self.q1, self.q2, self.q3, self.q4]
         for j in range(10):
             question_list, seed = render_question_list(self.asmt)
             hit_first_group_member=False
@@ -1463,7 +1468,7 @@ class TestRenderQuestionList(TestCase):
                 if hit_first_group_member:
                     self.assertTrue(question_dict['previous_same_group'])
                     self.assertEqual(question_dict['group'],'apple')
-                    self.assertEqual(question_dict['question'].id, 
+                    self.assertEqual(qs.index(question_dict['question'])+1, 
                                      expected_next_group_member)
                     hit_first_group_member = False
                         
@@ -1471,14 +1476,14 @@ class TestRenderQuestionList(TestCase):
                     self.assertFalse(question_dict['previous_same_group'])
                     if question_dict['group'] == 'apple':
                         hit_first_group_member = True
-                        if question_dict['question'].id == 1:
+                        if qs.index(question_dict['question']) == 0:
                             expected_next_group_member = 4
                         else:
                             expected_next_group_member = 1
 
                 self.assertEqual(
                     question_dict['question_data']['rendered_text'],
-                    "Question number %s text." % question_dict['question'].id)
+                    "Question number %i text." % (qs.index(question_dict['question'])+1))
 
 
         self.asmt.questionsetdetail_set.create(question_set=2,
@@ -1494,7 +1499,7 @@ class TestRenderQuestionList(TestCase):
                 if hit_first_group_member:
                     self.assertTrue(question_dict['previous_same_group'])
                     self.assertEqual(question_dict['group'],group_found)
-                    self.assertEqual(question_dict['question'].id, 
+                    self.assertEqual(qs.index(question_dict['question'])+1, 
                                      expected_next_group_member)
                     hit_first_group_member = False
                         
@@ -1503,20 +1508,20 @@ class TestRenderQuestionList(TestCase):
                     group_found = question_dict['group']
                     if group_found == 'apple':
                         hit_first_group_member = True
-                        if question_dict['question'].id == 1:
+                        if qs.index(question_dict['question']) == 0:
                             expected_next_group_member = 4
                         else:
                             expected_next_group_member = 1
                     elif group_found == 'appl':
                         hit_first_group_member = True
-                        if question_dict['question'].id == 2:
+                        if qs.index(question_dict['question']) == 1:
                             expected_next_group_member = 3
                         else:
                             expected_next_group_member = 2
                         
                 self.assertEqual(
                     question_dict['question_data']['rendered_text'],
-                    "Question number %s text." % question_dict['question'].id)
+                    "Question number %s text." % (qs.index(question_dict['question'])+1))
 
 
 
@@ -1530,8 +1535,8 @@ class TestRenderQuestionList(TestCase):
                                                group="apple")
         for i in range(3):
             question_list, seed = render_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertEqual(question_ids, [1,2,3,4])
+            questions = [ql['question'] for ql in question_list]
+            self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
             psg = [ql['previous_same_group'] for ql in question_list]
             self.assertEqual(psg, [False,False,False,False])
             groups = [ql['group'] for ql in question_list]
@@ -1546,8 +1551,8 @@ class TestRenderQuestionList(TestCase):
 
         for i in range(3):
             question_list, seed = render_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertEqual(question_ids, [1,2,3,4])
+            questions = [ql['question'] for ql in question_list]
+            self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
             psg = [ql['previous_same_group'] for ql in question_list]
             self.assertEqual(psg, [False,False,True,False])
             groups = [ql['group'] for ql in question_list]
@@ -1565,19 +1570,19 @@ class TestRenderQuestionList(TestCase):
         self.qsa4.question_set=7
         self.qsa4.save()
         
-        valid_options=[[1,2],[2,1],[1,4],[4,1],
-                       [3,2],[2,3],[3,4],[4,3]]
+        valid_options=[[self.q1,self.q2],[self.q2,self.q1],[self.q1,self.q4],[self.q4,self.q1],
+                       [self.q3,self.q2],[self.q2,self.q3],[self.q3,self.q4],[self.q4,self.q3]]
 
         options_used = [False, False, False, False,
                         False, False, False, False]
 
         for j in range(200):
             question_list, seed = render_question_list(self.asmt)
-            question_ids = [ql['question'].id for ql in question_list]
-
-            self.assertTrue(question_ids in valid_options)
+            questions = [ql['question'] for ql in question_list]
             
-            one_used = valid_options.index(question_ids)
+            self.assertTrue(questions in valid_options)
+            
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -1607,8 +1612,8 @@ class TestRenderQuestionList(TestCase):
                                                points = 7.3)
 
         
-        valid_options = [[2,1],[2,3],[4,1],[4,3],
-                         [1,2],[3,2],[1,4],[3,4]]
+        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q4,self.q1],[self.q4,self.q3],
+                         [self.q1,self.q2],[self.q3,self.q2],[self.q1,self.q4],[self.q3,self.q4]]
 
         options_used = [False, False, False, False,
                         False, False, False, False]
@@ -1625,10 +1630,10 @@ class TestRenderQuestionList(TestCase):
             else:
                 self.assertEqual(points, [7.3,5])
 
-            question_ids = [ql['question'].id for ql in question_list]
-            self.assertTrue(question_ids in valid_options)
+            questions = [ql['question'] for ql in question_list]
+            self.assertTrue(questions in valid_options)
 
-            one_used = valid_options.index(question_ids)
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -1648,19 +1653,21 @@ class TestRenderQuestionList(TestCase):
         self.qsa4.question_set=7
         self.qsa4.save()
         
-        valid_options=[[1,2],[2,1],[1,4],[4,1],
-                       [3,2],[2,3],[3,4],[4,3]]
+        valid_options=[[self.q1,self.q2],[self.q2,self.q1],[self.q1,self.q4],[self.q4,self.q1],
+                       [self.q3,self.q2],[self.q2,self.q3],[self.q3,self.q4],[self.q4,self.q3]]
 
+
+        qs = [self.q1, self.q2, self.q3, self.q4]
 
         for j in range(3):
             question_list, seed = render_question_list(self.asmt, solution=True)
-            question_ids = [ql['question'].id for ql in question_list]
+            questions = [ql['question'] for ql in question_list]
 
-            self.assertTrue(question_ids in valid_options)
+            self.assertTrue(questions in valid_options)
             
-            for question_dict in question_list:
+            for (i,question_dict) in enumerate(question_list):
                 self.assertEqual(
                     question_dict['question_data']['rendered_text'],
-                    "Question number %s solution."
-                    % question_dict['question'].id)
+                    "Question number %i solution."
+                    % (qs.index(question_dict['question'])+1))
             

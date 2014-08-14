@@ -88,9 +88,9 @@ class TestAssessmentView(TestCase):
         for seed in range(1121,1129):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
-            question_order = [q['question'].id for q in \
+            question_order = [q['question'] for q in \
                                    response.context['rendered_list']]
-            self.assertEqual(question_order, [1,2,3])
+            self.assertEqual(question_order, [self.q1,self.q2,self.q3])
 
 
         self.qsa1.question_set=10
@@ -103,9 +103,9 @@ class TestAssessmentView(TestCase):
         for seed in range(315,319):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
-            question_order = [q['question'].id for q in \
+            question_order = [q['question'] for q in \
                                    response.context['rendered_list']]
-            self.assertEqual(question_order, [2,3,1])
+            self.assertEqual(question_order, [self.q2,self.q3,self.q1])
 
 
 
@@ -126,8 +126,8 @@ class TestAssessmentView(TestCase):
 
         response = self.client.get("/assess/the_test")
 
-        question1ind = [q['question'].id for q in \
-                            response.context['rendered_list']].index(1)
+        question1ind = [q['question'] for q in \
+                        response.context['rendered_list']].index(self.q1)
 
         question1text =  response.context['rendered_list'][question1ind] \
             ['question_data']['rendered_text']
@@ -139,8 +139,8 @@ class TestAssessmentView(TestCase):
         for seed in range(begin_seed,begin_seed+200):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
-            question1ind = [q['question'].id for q in \
-                                response.context['rendered_list']].index(1)
+            question1ind = [q['question'] for q in \
+                            response.context['rendered_list']].index(self.q1)
             question1texta =  response.context['rendered_list'][question1ind] \
                 ['question_data']['rendered_text']
 
@@ -154,8 +154,8 @@ class TestAssessmentView(TestCase):
         self.asmt.save()
 
         response = self.client.get("/assess/the_test")
-        question1ind = [q['question'].id for q in \
-                            response.context['rendered_list']].index(1)
+        question1ind = [q['question'] for q in \
+                        response.context['rendered_list']].index(self.q1)
 
         question1text =  response.context['rendered_list'][question1ind] \
             ['question_data']['rendered_text']
@@ -176,8 +176,8 @@ class TestAssessmentView(TestCase):
         self.asmt.save()
         response = self.client.get("/assess/the_test/solution")
 
-        question1ind = [q['question'].id for q in \
-                            response.context['rendered_list']].index(1)
+        question1ind = [q['question'] for q in \
+                            response.context['rendered_list']].index(self.q1)
 
         solution1text =  response.context['rendered_list'][question1ind] \
             ['question_data']['rendered_text']
@@ -188,8 +188,8 @@ class TestAssessmentView(TestCase):
         for seed in range(begin_seed,begin_seed+200):
             response = self.client.get("/assess/the_test/solution", 
                                        {'seed': '%s' % seed })
-            question1ind = [q['question'].id for q in \
-                                response.context['rendered_list']].index(1)
+            question1ind = [q['question'] for q in \
+                                response.context['rendered_list']].index(self.q1)
             solution1texta =  response.context['rendered_list'][question1ind] \
                 ['question_data']['rendered_text']
 
@@ -203,8 +203,8 @@ class TestAssessmentView(TestCase):
         self.asmt.save()
 
         response = self.client.get("/assess/the_test/solution")
-        question1ind = [q['question'].id for q in \
-                            response.context['rendered_list']].index(1)
+        question1ind = [q['question'] for q in \
+                            response.context['rendered_list']].index(self.q1)
 
         solution1text =  response.context['rendered_list'][question1ind] \
             ['question_data']['rendered_text']
@@ -242,8 +242,8 @@ class TestAssessmentView(TestCase):
         self.asmt.questionassigned_set.create(question=self.q4, 
                                               question_set=7)
 
-        valid_options=[[1,2],[2,1],[1,4],[4,1],
-                       [3,2],[2,3],[3,4],[4,3]]
+        valid_options=[[self.q1,self.q2],[self.q2,self.q1],[self.q1,self.q4],[self.q4,self.q1],
+                       [self.q3,self.q2],[self.q2,self.q3],[self.q3,self.q4],[self.q4,self.q3]]
 
         options_used = [False, False, False, False,
                         False, False, False, False]
@@ -252,12 +252,12 @@ class TestAssessmentView(TestCase):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
             
-            question_ids = [q['question'].id for q in \
+            questions = [q['question'] for q in \
                                 response.context['rendered_list']]
 
-            self.assertTrue(question_ids in valid_options)
+            self.assertTrue(questions in valid_options)
             
-            one_used = valid_options.index(question_ids)
+            one_used = valid_options.index(questions)
             options_used[one_used]=True
             
             if False not in options_used:
@@ -287,10 +287,10 @@ class TestAssessmentView(TestCase):
         for seed in range(begin_seed,begin_seed+10):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
-            question_ids = [q['question'].id for q in \
+            questions = [q['question'] for q in \
                                 response.context['rendered_list']]
-            qid1=question_ids.index(1)
-            qid4=question_ids.index(4)
+            qid1=questions.index(self.q1)
+            qid4=questions.index(self.q4)
 
             self.assertEqual(abs(qid1-qid4),1)
 
@@ -304,12 +304,12 @@ class TestAssessmentView(TestCase):
         for seed in range(begin_seed,begin_seed+10):
             response = self.client.get("/assess/the_test", 
                                        {'seed': '%s' % seed })
-            question_ids = [q['question'].id for q in \
+            questions = [q['question'] for q in \
                                 response.context['rendered_list']]
-            qid1=question_ids.index(1)
-            qid2=question_ids.index(2)
-            qid3=question_ids.index(3)
-            qid4=question_ids.index(4)
+            qid1=questions.index(self.q1)
+            qid2=questions.index(self.q2)
+            qid3=questions.index(self.q3)
+            qid4=questions.index(self.q4)
 
             self.assertEqual(abs(qid1-qid4),1)
             self.assertEqual(abs(qid2-qid3),1)
@@ -452,8 +452,8 @@ class TestAssessmentView(TestCase):
             response = self.client.get("/assess/the_test",
                                        {'seed': seed })
 
-            question1ind = [q['question'].id for q in \
-                                response.context['rendered_list']].index(1)
+            question1ind = [q['question'] for q in \
+                            response.context['rendered_list']].index(self.q1)
 
             question1text =  response.context['rendered_list'][question1ind] \
                 ['question_data']['rendered_text']
@@ -461,8 +461,8 @@ class TestAssessmentView(TestCase):
             response = self.client.get("/assess/the_test",
                                        {'seed': seed })
 
-            question1inda = [q['question'].id for q in \
-                                response.context['rendered_list']].index(1)
+            question1inda = [q['question'] for q in \
+                                response.context['rendered_list']].index(self.q1)
             self.assertEqual(question1inda, question1ind)
             
             question1texta =  response.context['rendered_list'][question1ind] \
@@ -472,8 +472,8 @@ class TestAssessmentView(TestCase):
             response = self.client.get("/assess/the_test/solution",
                                        {'seed': seed })
 
-            question1indb = [q['question'].id for q in \
-                                response.context['rendered_list']].index(1)
+            question1indb = [q['question'] for q in \
+                                response.context['rendered_list']].index(self.q1)
             self.assertEqual(question1indb, question1ind)
             
             solution1text =  response.context['rendered_list'][question1ind] \
