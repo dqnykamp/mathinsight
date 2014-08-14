@@ -88,22 +88,18 @@ def pluralize_word(parser, token):
 
 
 class ExprNode(Node):
-    def __init__(self, expression, asvar, args, kwargs):
+    def __init__(self, expression, asvar, kwargs):
         self.expression = expression
         self.asvar = asvar
-        self.args = args
         self.kwargs = kwargs
     def render(self, context):
-        args = [arg.resolve(context) for arg in self.args]
-        # for django 1.5
-        # kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
-        #                for k, v in self.kwargs.items()])
+
         kwargs = dict([(k, v.resolve(context))
                        for k, v in self.kwargs.items()])
 
         expression = force_unicode(self.expression.resolve(context))
 
-        global_dict = context["sympy_global_dict"]
+        global_dict = context["_sympy_global_dict_"]
 
         from mitesting.math_objects import math_object
         from mitesting.sympy_customized import parse_and_process
@@ -111,7 +107,7 @@ class ExprNode(Node):
         expression = parse_and_process(expression,
                                        global_dict=global_dict)
 
-        expression=math_object(expression, args, **kwargs)
+        expression=math_object(expression, **kwargs)
 
         if self.asvar:
             context[self.asvar] = expression
@@ -129,7 +125,6 @@ def expr(parser, token):
     expression = parser.compile_filter(bits[1])
 
     asvar = None
-    args = []
     kwargs = {}
     bits = bits[2:]
     if len(bits) >= 2 and bits[-2] == 'as':
@@ -145,11 +140,9 @@ def expr(parser, token):
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
-            else:
-                args.append(parser.compile_filter(value))
 
     
-    return ExprNode(expression, asvar, args, kwargs)
+    return ExprNode(expression, asvar, kwargs)
 
     
 @register.inclusion_tag("mitesting/exam_header.html", takes_context=True)
@@ -378,6 +371,9 @@ class FigureNode(Node):
         self.kwargs = kwargs
 
     def render(self, context):
+
+        return "[[figure tag is broken]]"
+
         xaxis_options=dict()
         yaxis_options=dict()
 
