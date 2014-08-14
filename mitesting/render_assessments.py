@@ -11,6 +11,7 @@ import random
 import json 
 import re
 import sys
+import six
 
 """
 Change to deal with:
@@ -80,7 +81,7 @@ def setup_expression_context(question):
                 # allow to continue processing expressions
                 except Exception as exc:
                     error_in_expressions = True
-                    expression_error[expression.name] = exc.args[0]
+                    expression_error[expression.name] = six.text_type(exc)
                     expression_context[expression.name] = '??'
 
                 else:
@@ -105,7 +106,9 @@ def setup_expression_context(question):
         except expression.FailedCondition as exc:
             failed_condition_message = exc.args[0]
 
-
+    # add sympy global dictionary to expression context
+    # so that expr template tag has access to it
+    expression_context['_sympy_global_dict_'] = global_dict
 
     results = {
         'error_in_expressions': error_in_expressions,
@@ -486,7 +489,7 @@ def render_question(question, seed=None, solution=False,
                 "<p>Question cannot be displayed"
                 + " due to failed condition.</p>")
         }
-        return results
+        return question_data
 
     render_data = {
         'question': question, 'show_help': show_help, 
