@@ -611,7 +611,7 @@ def home(request):
 
 
 class MidocsSearchView(SearchView):
-    __name__ = 'MidocsSearchView'
+    __name__ = str('MidocsSearchView')
 
     def extra_context(self):
         """
