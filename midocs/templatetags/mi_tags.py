@@ -1200,7 +1200,7 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
     #html_string += '<div class="javascriptapplet"><article id="%s" class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-enableRightClick="false" data-param-ggbbase64="%s"></article></div>\n' % \
     #    (applet_identifier, width, height, applet_identifier, applet.encoded_content)
-    html_string += '<div class="javascriptapplet"><div class="geogebraweb" id="container%s" style="min-width:%spx;min-height:%spx"></div></div>\n' % \
+    html_string += '<div class="javascriptapplet"><div class="geogebrawebapplet" id="container%s" style="min-width:%spx;min-height:%spx"></div></div>\n' % \
         (applet_identifier, width, height)
     script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,"showToolBar":false,"showMenuBar":false,"showAlgebraInput":false,"showResetIcon":true,"enableLabelDrags":false,"enableShiftDragZoom":true,"enableRightClick":false,"showToolBarHelp":false,"errorDialogsActive":true,"useBrowserForJS":true,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false};\n' % \
                    (applet_identifier, applet_identifier, width, height, applet.encoded_content)
