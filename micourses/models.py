@@ -67,7 +67,7 @@ class CourseUser(models.Model):
     
     def get_current_role(self):
         if self.selected_course_enrollment:
-            self.selected_course_enrollment.role
+            return self.selected_course_enrollment.role
 
     def return_permission_level(self):
         if not self.selected_course_enrollment:
