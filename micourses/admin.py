@@ -18,7 +18,7 @@ patch_admin(User)
 
 class UserChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        return "%s, %s" % (obj.last_name, obj.first_name)
+        return "%s, %s" % (obj.user.last_name, obj.user.first_name)
 
 
 class QuestionStudentAnswerAdmin(reversion.VersionAdmin):

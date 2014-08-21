@@ -156,7 +156,7 @@ def course_main_view(request):
 
     next_items = course.next_items(courseuser, number=5)
     
-    if courseuser.role == 'I':
+    if courseuser.get_current_role() == 'I':
         return render_to_response \
             ('micourses/course_instructor_view.html', 
              {'student': courseuser,
