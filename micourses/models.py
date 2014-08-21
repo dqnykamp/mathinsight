@@ -73,7 +73,7 @@ class CourseUser(models.Model):
         if not self.selected_course_enrollment:
             return None
 
-        role = self.selected_course_enrollmnent.role
+        role = self.selected_course_enrollment.role
 
         if role == INSTRUCTOR_ROLE:
             return 2
