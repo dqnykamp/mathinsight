@@ -1069,7 +1069,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                  value_string)  
         elif object_type=='Function':
             from sympy import Symbol
-            global_dict=context["sympy_global_dict"]
+            global_dict=context["_sympy_global_dict_"]
             try:
                 the_fun = global_dict[str(objectvalue_string)]
             except KeyError:
@@ -1082,7 +1082,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 return ""
         elif object_type=='Function2D':
             from sympy import Symbol
-            global_dict=context["sympy_global_dict"]
+            global_dict=context["_sympy_global_dict_"]
             try:
                 the_fun = global_dict[str(objectvalue_string)]
             except KeyError:
@@ -1179,7 +1179,7 @@ def GeogebraTube_link(context, applet, applet_identifier, width, height):
     try:
         geogebracode=applet.appletparameter_set.get(parameter__parameter_name ="code").value
     except ObjectDoesNotExist:
-        return "[Broken applet]"
+        return "[Broken applet]", ""
 
     applet_parameters = return_applet_parameter_dictionary(applet)
 
@@ -1190,30 +1190,31 @@ def GeogebraTube_link(context, applet, applet_identifier, width, height):
     html_string = '<div class="applet"><iframe scrolling="no" src="//www.geogebratube.org/material/iframe/id/%s/width/%s/height/%s/border/888888%s/at/preferjava" width="%spx" height="%spx" style="border:0px;"> </iframe></div>' %\
         (geogebracode, width, height, applet_parameter_string, width, height)
 
-    return html_string
+    return html_string, ''
     
 
 def GeogebraWeb_link(context, applet, applet_identifier, width, height):
 
     html_string=""
-    geogebra_javascript_included=context.get('geogebra_javascript_included',False)
-    n_geogebra_web_applets=context.get('n_geogebra_web_applets', 0)
-    geogebra_web_applet_list=context.get('geogebra_web_applet_list',[])
+    script_string = ""
 
-    # now put this base.html, so it is loaded with every page
-    # if n_geogebra_web_applets==0:
-    #     html_string+='<script type="text/javascript" language="javascript" src="//www.geogebra.org/web/4.2/web/web.nocache.js"></script>'
+    #html_string += '<div class="javascriptapplet"><article id="%s" class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-enableRightClick="false" data-param-ggbbase64="%s"></article></div>\n' % \
+    #    (applet_identifier, width, height, applet_identifier, applet.encoded_content)
+    html_string += '<div class="javascriptapplet"><div class="geogebraweb" id="container%s" style="min-width:%spx;min-height:%spx"></div></div>\n' % \
+        (applet_identifier, width, height)
+    script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,"showToolBar":false,"showMenuBar":false,"showAlgebraInput":false,"showResetIcon":true,"enableLabelDrags":false,"enableShiftDragZoom":true,"enableRightClick":false,"showToolBarHelp":false,"errorDialogsActive":true,"useBrowserForJS":true,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false};\n' % \
+                   (applet_identifier, applet_identifier, width, height, applet.encoded_content)
+    script_string += 'var applet%s = new GGBApplet( parameters%s, true);\n' % \
+                     (applet_identifier, applet_identifier)
+                
+    script_string += "applet%s.setJavaCodebase('%sgeogebra/Java/4.2', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
+    script_string += "applet%s.setHTML5Codebase('%sgeogebra/HTML5/4.4/web/', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
+    #html_string += "applet.setPreviewImage('GeoGebra/files/material-49718.png', 'GeoGebra/images/GeoGebra_loading.png');"
 
-    n_geogebra_web_applets += 1
-    context['n_geogebra_web_applets']=n_geogebra_web_applets
-    geogebra_web_applet_list.append(applet_identifier)
-    context['geogebra_web_applet_list']=geogebra_web_applet_list
+    #script_string += "window.onload = function() {\napplet%s.inject('container%s', 'auto');\n}" % (applet_identifier, applet_identifier)
+    script_string += "applet%s.inject('container%s', 'auto');\n" % (applet_identifier, applet_identifier)
 
-    html_string += '<div class="javascriptapplet"><article id="%s" class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-enableRightClick="false" data-param-ggbbase64="%s"></article></div>\n' % \
-        (applet_identifier, width, height, applet_identifier, applet.encoded_content)
-
-
-    return html_string
+    return html_string, script_string
 
 
 def Geogebra_link(context, applet, applet_identifier, width, height):
@@ -1237,15 +1238,18 @@ def Geogebra_link(context, applet, applet_identifier, width, height):
     #         % (html_string,applet.encoded_content)
     html_string = '%s%s' % (html_string, return_applet_error_string(applet))
 
+    script_string = ''
     if applet.javascript:
-        javascript_string='</applet></div>\n<script type="text/javascript">\nvar ggbApplet = document.%s;\n%s</script>' % (applet.code, applet.javascript)
-        html_string = '%s%s' % (html_string, javascript_string)
+        html_string = '%s</applet></div>\n' % html_string
+
+        script_string='var ggbApplet = document.%s;\n%s' % (applet.code, applet.javascript)
     else:
         #html_string = '%s</object></div>' % html_string
         html_string = '%s</applet></div>\n' % html_string
 
     html_string = '%s%s' % (html_string, return_print_image_string(applet))
-    return html_string
+
+    return html_string, script_string
 
 
 
@@ -1374,7 +1378,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
                            applet_object_name, applet_id, 
                            child_applet_object.name)
                 
-
+    
     three_javascript=context.dicts[0].get('three_javascript', '')
     three_javascript += script_string
     context.dicts[0]['three_javascript'] = three_javascript
@@ -1382,7 +1386,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
     run_three_javascript += run_script_string
     context.dicts[0]['run_three_javascript'] = run_three_javascript
 
-    return html_string
+    return html_string, ''
 
 
 
@@ -1396,7 +1400,7 @@ def LiveGraphics3D_link(context, applet, applet_identifier, width, height):
             % (html_string,applet.applet_file.url)
     html_string = '%s%s</object></div>%s' % (html_string, return_applet_error_string(applet), return_print_image_string(applet))
 
-    return html_string
+    return html_string, ''
 
 def DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height):
 
@@ -1465,7 +1469,7 @@ def DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
     html_string = '%s%s</object></div>%s</div></div></div>' % (html_string, return_applet_error_string(applet,2), return_print_image_string(applet,2))
 
 
-    return html_string
+    return html_string, ''
 
 
 
@@ -1570,43 +1574,139 @@ class AppletNode(template.Node):
             else:
                 return " %s " % applet.title
 
-            
         # html for applet inclusion
         # add html for applet embedding based on applet_type
         identifier = context.get('identifier','')
-        applet_counter = context.get('_applet_counter', 0)+1
-        context['_applet_counter']=applet_counter
-        applet_identifier = "%s0%s0%s" % (applet.code_camel(), 
-                                          applet_counter,
-                                          underscore_to_camel(identifier))
+        
+        try:
+            applet_data=context['_applet_data_']
+        except KeyError:
+            return "[Broken applet: no applet data]"
+        
+        applet_counter = applet_data['counter']+1
+        applet_data['counter']=applet_counter
+        applet_suffix = applet_data.get('suffix','')
+        applet_identifier = "Applet%s0%s%s0%s" % (
+            applet.code_camel(), applet_counter, 
+            underscore_to_camel(applet_suffix),
+            underscore_to_camel(identifier))
+
+        if applet.applet_type.code == "GeogebraWeb":
+            applet_data['activate_geogebraweb']=True
 
         if applet.applet_type.code == "LiveGraphics3D":
-            applet_link = LiveGraphics3D_link(context, applet, applet_identifier, width, height)
+            (applet_link, script_string) = LiveGraphics3D_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "DoubleLiveGraphics3D":
-           applet_link = DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
+           (applet_link, script_string) = DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "Geogebra":
-           applet_link = Geogebra_link(context, applet, applet_identifier, width, height)
+           (applet_link, script_string) = Geogebra_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "GeogebraWeb":
-           applet_link = GeogebraWeb_link(context, applet, applet_identifier, width, height)
+           (applet_link, script_string) = GeogebraWeb_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "GeogebraTube":
-           applet_link = GeogebraTube_link(context, applet, applet_identifier, width, height)
+           (applet_link, script_string) = GeogebraTube_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "Three":
-           applet_link = Three_link(context, applet, applet_identifier, width, height, url_get_parameters)
+           (applet_link, script_string) = Three_link(context, applet, applet_identifier, width, height, url_get_parameters)
         else:
             # if applet type for which haven't yet coded a link
             # return broken applet text
-            return '<p>[Broken applet]</p>'
+            return '<p>[Broken applet: unrecognized applet type]</p>'
 
-        pre_answers = context.get('pre_answers')
-        if pre_answers:
-            identifier_in_answer = pre_answers['identifier']
-        else:
-            identifier_in_answer = None
-        #     value_string = ' value="%s"' % \
-        #         pre_answers['answer_%s_%s' % (self.answer_expression_string,
-        #                                      identifier_in_answer)]
-        # else:
-        #     value_string = ''
+
+        answer_data = context.get('_answer_data_')
+        prefilled_answers=None
+        if answer_data:
+            prefilled_answers = answer_data.get('prefilled_answers')
+
+        prefilled_answers_by_object = {}
+
+        # Check if any applet objects are specified 
+        # to be captured with javascript to answer blanks.
+        # To be captured, the following conditions must hold:
+        # 1. the applet object marked with captured_change=True
+        # 2. the applet tag must contain a kwargs of the form
+        #    answer_[object_name]=[answer_code]
+        # 3. answer code must be a valid answer_code in answer_data
+        # 4. the answer blank must not have been given a prefilled_answer
+
+        appletobjects = []
+        if answer_data:
+            appletobjects=applet.appletobject_set.filter \
+                           (capture_changes=True).order_by(
+                               "category_for_capture")
+
+        inputboxlist=''
+        capture_javascript=''
+
+        previous_category=None
+
+        for appletobject in appletobjects:
+            the_kw = "answer_%s" % appletobject.name
+            answer_code =  kwargs_string.get(the_kw)
+
+            # if answer_code is not a valid answer code
+            # skip this applet object
+            try:
+                answer_type = answer_data['valid_answer_codes'][answer_code]
+            except KeyError:
+                continue
+
+            try:
+                points = float(kwargs['points_'+the_kw])
+            except:
+                points = 1
+
+            answer_number = len(answer_data['answer_info'])+1
+            answer_identifier = "%s_%s" % \
+                (answer_number, answer_data['question_identifier'])
+            answer_field_name = 'answer_%s' % answer_identifier
+            answer_data['answer_info'][answer_identifier] \
+                = {'code': self.answer_code, 'points': points, \
+                   'type': answer_type }
+
+
+            # check if object is in prefilled_answers
+            # if so, use that value for input box
+            value_string = ""
+            if prefilled_answers:
+                try:
+                    the_answer = prefilled_answers[answer_number-1]
+                    if the_answer["answer_code"] == answer_code:
+                        value_string = 'value="%s"' % the_answer["answer"]
+                        prefilled_answers_by_object[applet_object.pk] \
+                            = the_answer["answer"]
+                except (KeyError, IndexError, TypeError):
+                    pass
+
+            inputboxlist += '<input type="hidden" id="id_%s" maxlength="200" name="%s" size="20"%s />\n' % \
+                (answer_field_name, answer_field_name,  value_string)
+
+            if appletobject.category_for_capture != previous_category:
+                the_category = appletobject.category_for_capture
+                if the_category:
+                    inputboxlist += '<br/>%s:' % the_category
+                previous_category=the_category
+            inputboxlist += '<span id="%s_feedback_binary"></span>\n' % \
+                            answer_field_name
+
+            related_objects=[]
+            if appletobject.related_objects:
+                related_object_names = \
+                    [item.strip() for item in appletobject.related_objects.split(",")]
+                for name in related_object_names:
+                    try:
+                        ro = applet.appletobject_set.get(name=name)
+                        related_objects.append(ro)
+                    except:
+                        pass
+
+            # capture value only if not prefilled_answers
+            if prefilled_answers_by_object.get(applet_object.pk) is not None:
+                if applet.applet_type.code == "Geogebra" \
+                        or applet.applet_type.code == "GeogebraWeb":
+                    capture_javascript += Geogebra_capture_object_javascript \
+                        (context, appletobject, applet_identifier, 
+                         target_id, related_objects)
+
 
 
         # check if any applet objects are specified 
@@ -1618,20 +1718,20 @@ class AppletNode(template.Node):
             objectvalue = kwargs.get(appletobject.name)
             objectvalue_string = kwargs_string.get(appletobject.name)
             
-            # check if object is in pre_answers
+            # check if object is in prefilled_answers
             # if so, overwrite and use that value instead
-            if pre_answers:
+            if prefilled_answers:
                 # check if applet object is set to be captured
-                the_kw = "answer_blank_%s" % appletobject.name
+                the_kw = "answer_%s" % appletobject.name
                 expression_for_object = kwargs.get(the_kw)
                 if expression_for_object is not None:
                     expression_string =  kwargs_string.get(the_kw)
-                    # target as it would have been in pre_answer
-                    pre_answer_target = "answer_%s_%s" % (expression_string, 
+                    # target as it would have been in prefilled_answer
+                    prefilled_answer_target = "answer_%s_%s" % (expression_string, 
                                                           identifier_in_answer)
-                    pre_answer = pre_answers.get(pre_answer_target)
-                    if pre_answer:
-                        objectvalue = pre_answer
+                    prefilled_answer = prefilled_answers.get(prefilled_answer_target)
+                    if prefilled_answer:
+                        objectvalue = prefilled_answer
 
             if objectvalue is not None:
                 if applet.applet_type.code == "Geogebra" \
@@ -1641,79 +1741,15 @@ class AppletNode(template.Node):
                              objectvalue, objectvalue_string)
                     
 
-        # check if any applet objects are specified 
-        # to be captured with javascript
-        appletobjects=applet.appletobject_set.filter \
-            (capture_changes=True).order_by("category_for_capture")
-        inputboxlist=''
-        capture_javascript=''
-        answer_list = context.get('_math_writein_answer_list',[])
-        previous_category=None
-
-        for appletobject in appletobjects:
-            the_kw = "answer_blank_%s" % appletobject.name
-            expression_for_object = kwargs.get(the_kw)
-            if expression_for_object is not None:
-                expression_string =  kwargs_string.get(the_kw)
-
-                target = "answer_%s_%s" % (expression_string, identifier)
-                target_id = "id_" + target
-
-                # check if object is in pre_answers
-                # if so, use that value for input box
-                value_string = ""
-                if pre_answers:
-                    # target as it would have been in pre_answer
-                    pre_answer_target = "answer_%s_%s" % (expression_string, 
-                                                          identifier_in_answer)
-                    pre_answer = pre_answers.get(pre_answer_target)
-                    if pre_answer:
-                        value_string = ' value="%s"' % pre_answer
-
-                inputboxlist += '<input type="hidden" id="%s" maxlength="20" name="%s" size="20"%s />\n' % (target_id, target, value_string)
-                if appletobject.category_for_capture != previous_category:
-                    the_category = appletobject.category_for_capture
-                    if the_category:
-                        inputboxlist += '<br/>%s:' % the_category
-                    previous_category=the_category
-                inputboxlist += '<span id="%s_feedback_binary"></span>\n' % target
-                    
-                related_objects=[]
-                if appletobject.related_objects:
-                    related_object_names = \
-                        [item.strip() for item in appletobject.related_objects.split(",")]
-                    for name in related_object_names:
-                        try:
-                            ro = applet.appletobject_set.get(name=name)
-                            related_objects.append(ro)
-                        except:
-                            pass
-
-                # capture value only if not pre_answers
-                if not pre_answers:
-                    if applet.applet_type.code == "Geogebra" \
-                            or applet.applet_type.code == "GeogebraWeb":
-                        capture_javascript += Geogebra_capture_object_javascript \
-                            (context, appletobject, applet_identifier, 
-                             target_id, related_objects)
-
-                try:
-                    points = float(kwargs['points_'+the_kw])
-                except:
-                    points = 1
-
-                answer_list.append((expression_string, expression_for_object,
-                                    points))
-        
-        context['_math_writein_answer_list'] = answer_list
-
 
         if inputboxlist:
             inputboxlist = '<div class="hidden_feedback applet_feedback_%s info"><b>Feedback from applet</b>%s</div>' % (identifier, inputboxlist)
         applet_link += inputboxlist
-        if applet.applet_type.code == "Geogebra" \
-                or applet.applet_type.code == "GeogebraWeb":
-            if capture_javascript:
+
+
+        if capture_javascript:
+            if applet.applet_type.code == "Geogebra" \
+               or applet.applet_type.code == "GeogebraWeb":
                 listener_function_name = "listener%s" % applet_identifier
                 init_javascript += 'document.%s.registerUpdateListener("%s");\n' \
                     % (applet_identifier, listener_function_name)
@@ -1722,21 +1758,34 @@ class AppletNode(template.Node):
                 # so answer_blanks have values
                 init_javascript += "%s();\n" % listener_function_name
 
-                listener_function_script = '<script type="text/javascript">\nfunction %s(obj) {\n%s}\n</script>\n' %(listener_function_name, capture_javascript)
-                applet_link += listener_function_script
+                listener_function_script = 'function %s(obj) {\n%s}\n' %(listener_function_name, capture_javascript)
+                
+                script_string = "%s\n%s" % (script_string,
+                                            listener_function_script)
+
+        applet_data['javascript']['_initialization'] += script_string
 
 
         if init_javascript:
             if applet.applet_type.code == "Geogebra" \
                     or applet.applet_type.code == "GeogebraWeb":
-                # since javascript has to be combined in ggbOnInit
-                # add javascript to geogebra_init_javascript in context
-                # use context.dicts[0] so available outside template block
-                all_init_javascript = context.dicts[0].get('geogebra_oninit_commands','')
+
+                # add javascript to applet_data
+                try:
+                    geogebra_javascript = applet_data['javascript']['Geogebra']
+                except KeyError:
+                    applet_data['javascript']['Geogebra'] = {
+                        'on_init_commands': ""}
+                    geogebra_javascript = applet_data['javascript']['Geogebra']
+
+                all_init_javascript = geogebra_javascript.get(
+                    'on_init_commands','')
+
                 all_init_javascript += 'if(arg=="%s") {\n%s}\n' % \
                     (applet_identifier, init_javascript)
-                context.dicts[0]['geogebra_oninit_commands'] = all_init_javascript
-        
+                
+                geogebra_javascript['on_init_commands'] \
+                    = all_init_javascript
 
         # if not boxed, just return code for applet
         if not self.boxed:
@@ -2151,11 +2200,27 @@ class AccumulatedJavascriptNode(template.Node):
 
         script_string = ""
         static_url = context.get("STATIC_URL","")
+        applet_data = context.get('applet_data')
+
+        
+        try:
+            initialization_script = applet_data['javascript']['_initialization']
+        except:
+            pass
+        else:
+            if initialization_script:
+                script_string += '<div id="applet_initialization">\n<script>\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>\n</div>\n' % initialization_script
 
         # return any geogebra_init_javascript
-        init_javascript = context.get('geogebra_oninit_commands','')
-        if init_javascript:
-            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nMathJax.Hub.Register.StartupHook("End",function () {function ggbOnInit(arg) {\n%s}\n});</script></div>' % init_javascript
+        try:
+            geogebra_on_init_commands = applet_data['javascript']['Geogebra']\
+                                        ['on_init_commands']
+        except:
+            pass
+        else:
+            if geogebra_on_init_commands:
+                #script_string += '<div id="geogebra_onit"><script type="text/javascript">\n\nMathJax.Hub.Register.StartupHook("End",function () {console.log("hi");\nfunction ggbOnInit(arg) {\n%s}\n});</script></div>' % geogebra_on_init_commands
+                script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\n }\n</script></div>' % geogebra_on_init_commands
 
         three_javascript = context.dicts[0].get('three_javascript', '')
         run_three_javascript = context.dicts[0].get('run_three_javascript', '')

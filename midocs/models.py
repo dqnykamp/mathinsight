@@ -1000,6 +1000,10 @@ class Applet(models.Model):
     def __unicode__(self):
         return "%s (Applet: %s)" % (self.code, self.title)
 
+    @classmethod
+    def return_initial_applet_data(cls):
+        return {'javascript': {'_initialization': ''}, 'counter': 0}
+
     def annotated_title(self):
           return "Applet: %s" % self.title
     def get_title(self):

@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mitesting.models import Question, Assessment, QuestionAnswerOption
+from midocs.models import Applet
 from micourses.models import QuestionStudentAnswer
 from django.db import IntegrityError
 from django.shortcuts import render_to_response, get_object_or_404, redirect
@@ -83,6 +84,9 @@ class QuestionView(DetailView):
         # In question view, there will be only one question on page.
         # Identifier doesn't matter.  Use qv to indiciate from question view.
         identifier = "qv"
+
+        applet_data = Applet.return_initial_applet_data()
+
         from mitesting.render_assessments import render_question
         context['question_data']= render_question(
             question=self.object,
@@ -90,7 +94,10 @@ class QuestionView(DetailView):
             question_identifier=identifier, 
             allow_solution_buttons=True,
             solution=self.solution,
-            show_help = show_help)
+            show_help = show_help,
+            applet_data=applet_data)
+
+        context['applet_data'] = applet_data
 
         context['show_lists']=True
 
@@ -119,7 +126,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       - assessment_code: code of any assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
       - assessment_seed: seed used to generate the assessment
-      - answer_data: codes, points and answer type of answers in question
+      - answer_info: codes, points and answer type of answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
     - number_attempts_[identifier]: the number of previous attempts answering
@@ -174,10 +181,10 @@ class GradeQuestionView(SingleObjectMixin, View):
         global_dict = question.return_sympy_global_dict(user_response=True)
         global_dict.update(function_dict)
 
-        answer_data = computer_grade_data['answer_data']
+        answer_info = computer_grade_data['answer_info']
         
         answer_user_responses = {}
-        for answer_identifier in answer_data.keys():
+        for answer_identifier in answer_info.keys():
             answer_user_responses[answer_identifier] = \
                 response_data.get('answer_%s' % answer_identifier, "")
         
@@ -195,11 +202,11 @@ class GradeQuestionView(SingleObjectMixin, View):
 
 
         # check correctness of each answer
-        for answer_identifier in sorted(answer_data.keys()):
+        for answer_identifier in sorted(answer_info.keys()):
             user_response = answer_user_responses[answer_identifier]
-            answer_code = answer_data[answer_identifier]['code']
-            answer_points= answer_data[answer_identifier]['points']
-            answer_type = answer_data[answer_identifier]['type']
+            answer_code = answer_info[answer_identifier]['code']
+            answer_points= answer_info[answer_identifier]['points']
+            answer_type = answer_info[answer_identifier]['type']
 
             total_points += answer_points
             percent_correct = 0
@@ -601,12 +608,15 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # set up context from question expressions
         seed = computer_grade_data['seed']
 
+        applet_data = Applet.return_initial_applet_data()
+        applet_data['suffix'] = "%s_sol" % question_identifier
+
         from mitesting.render_assessments import render_question
         question_data= render_question(
             question=question,
             seed=seed, user=request.user,
             question_identifier=question_identifier, 
-            applet_counter = computer_grade_data["applet_counter"],
+            applet_data = applet_data,
             solution=True,
             show_help = False)
 
@@ -618,7 +628,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
 
         rendered_solution = mark_safe("<h4>Solution</h4>" + rendered_solution)
         results = {'rendered_solution': rendered_solution,
-                   'identifier': question_identifier
+                   'identifier': question_identifier,
+                   'applet_javascript': applet_data['javascript'],
                    }
 
 
@@ -739,7 +750,7 @@ class AssessmentView(DetailView):
             template_names.append("mitesting/%s%s.html" % 
                                   (template_base_name, solution_postfix))
         template_names.append("mitesting/assessment%s.html" % solution_postfix)
-        
+
         return template_names
 
 
@@ -749,12 +760,16 @@ class AssessmentView(DetailView):
         context['assessment_date'] = self.request.GET.get\
             ('date', datetime.date.today().strftime("%B %d, %Y"))
 
+        applet_data = Applet.return_initial_applet_data()
+        context['applet_data'] = applet_data
+
         from .render_assessments import render_question_list, get_new_seed
         rendered_list=[]
         (rendered_list,self.seed)=render_question_list(
             self.object, seed=self.seed, user=self.request.user, 
             solution=self.solution,
-            current_attempt=self.current_attempt)
+            current_attempt=self.current_attempt,
+            applet_data = applet_data)
 
         # if question_only is set, then view only that question
         if self.kwargs.get('question_only'):

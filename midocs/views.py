@@ -144,6 +144,8 @@ def pageview(request, page_code):
     
     # render page text with extra template tags
     context=RequestContext(request)
+    context['_applet_data_'] = Applet.return_initial_applet_data()
+
     if thepage.text:
         try:
             rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
@@ -151,9 +153,6 @@ def pageview(request, page_code):
             rendered_text = "Template error in text (TMPLERR): %s" % e
     else:
         rendered_text = ""
-
-    # get any geogebra javascript init commands from rendering tags in text
-    geogebra_oninit_commands=context.dicts[0].get('geogebra_oninit_commands')
 
     return render_to_response \
         ("midocs/page_detail.html", 
@@ -163,7 +162,7 @@ def pageview(request, page_code):
           'notation_config': notation_config,
           'notation_system_form': notation_system_form,
           'noanalytics': noanalytics,
-          'geogebra_oninit_commands': geogebra_oninit_commands,
+          'applet_data': context['_applet_data_'],
           'rendered_text': rendered_text,
           },
          context_instance=context  # use to get context from rendered text
@@ -348,6 +347,9 @@ def appletview(request, applet_code):
     if theapplet.applet_file2:
         applet_filename2 = re.sub(settings.APPLET_UPLOAD_TO,"", theapplet.applet_file2.name)  # get rid of upload path
 
+
+    applet_data = Applet.return_initial_applet_data()
+
     return render_to_response("midocs/applet_detail.html", 
                               {'applet': theapplet, 'in_pages': in_pages,
                                'applet_filename': applet_filename,
@@ -355,6 +357,8 @@ def appletview(request, applet_code):
                                'notation_config': notation_config,
                                'notation_system_form': notation_system_form,
                                'noanalytics': noanalytics,
+                               '_applet_data_': applet_data,
+                               'applet_data': applet_data,
                                },
                               context_instance=RequestContext(request))
 

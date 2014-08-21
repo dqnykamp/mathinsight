@@ -935,7 +935,7 @@ class TestRenderQuestion(TestCase):
     def test_readonly(self):
         answer_code='ans'
         identifier = "abc_5"
-        answer_identifier ="0_%s" % (identifier)
+        answer_identifier ="1_%s" % (identifier)
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
         self.q.question_text = "{% answer ans %}"
@@ -953,7 +953,7 @@ class TestRenderQuestion(TestCase):
     def test_prefilled_answers(self):
         answer_code='ans'
         identifier = "abc_5"
-        answer_identifier ="0_%s" % (identifier)
+        answer_identifier ="1_%s" % (identifier)
         previous_answer = "complete guess"
         prefilled_answers = []
         prefilled_answers.append({ 
@@ -1043,7 +1043,7 @@ class TestRenderQuestion(TestCase):
         identifier="one"
         seed = "4c"
         answer_code='ans'
-        answer_identifier = "0_%s" % (identifier)
+        answer_identifier = "1_%s" % (identifier)
         self.q.expression_set.create(
             name="expr1", expression="n*x", 
             expression_type = Expression.EXPRESSION)
@@ -1072,7 +1072,7 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd.get('question_set'),None)
         self.assertEqual(cgd.get('assessment_code'),None)
         self.assertEqual(cgd.get('assessment_seed'),None)
-        self.assertEqual(cgd['answer_data'],
+        self.assertEqual(cgd['answer_info'],
                          {answer_identifier: 
                           {'code': answer_code, 'points': 1, 
                            'type': QuestionAnswerOption.EXPRESSION}})

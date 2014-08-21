@@ -129,12 +129,31 @@
     }
 
   function process_solution_inject_{{question_data.identifier}}(data) {
-      $("#question_{{question_data.identifier}}_solution").html(data['rendered_solution']);
-      $("#question_{{question_data.identifier}}_for_solution_button").remove();
+      /*$('article .geogebraweb').removeClass('geogebraweb')*/
 
-      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
+      var geogebra_on_init_commands = "";
+      try {
+	  geogebra_on_init_commands = data['applet_javascript']['Geogebra']['on_init_commands'];
+      }
+      catch (err) {
+	  /*console.log("Error: " + err); */
+      }
+
+      ggbOnInit = function(arg) {
+	  console.log(arg);
+	  if(geogebra_on_init_commands) {
+	      eval(geogebra_on_init_commands);
+	  }
+      }
       
 
+      $("#question_{{question_data.identifier}}_solution").html(data['rendered_solution']);
+      $("#question_{{question_data.identifier}}_for_solution_button").remove();
+      eval(data['applet_javascript']['_initialization']);
+
+      MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
+
+    
   }
 </script>
 

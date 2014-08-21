@@ -377,7 +377,7 @@ def render_question(question, seed=None, solution=False,
                     readonly=False, auto_submit=False, 
                     record_answers=True,
                     allow_solution_buttons=False,
-                    applet_counter=0):
+                    applet_data=None):
 
     """
     Render question or solution by compiling text in expression context
@@ -416,7 +416,7 @@ def render_question(question, seed=None, solution=False,
     - record_answers: if true, record answer upon submit
     - allow_solution_buttons: if true, allow a solution button to be displayed
       on computer graded questions
-    - applet_counter: still need to see how this is needed
+    - applet_data: dictionary of information about applets embedded in text
 
     The output is a question_data dictionary.  With the exception of
     question, success, rendered_text, and error_message, all entries
@@ -439,7 +439,6 @@ def render_question(question, seed=None, solution=False,
       - reference_pages: a list of pages relevant to the question
       - hint_text: rendered hint text
       - hint_template_error: true if error rendering hint text
-    - applet_data: dictionary of information about applets embedded in text
     - identifier: the passed in string to identify the question
     - seed: the random number generator seed used to generate question
     - auto_submit: if true, automatically submit answers upon page load
@@ -464,7 +463,7 @@ def render_question(question, seed=None, solution=False,
       - question_set
       - assessment_seed
       - assessment_code (of assessment from input)
-      - answer_data: codes, points, and answer type of the answers in question
+      - answer_info: codes, points, and answer type of the answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
    """
@@ -497,13 +496,8 @@ def render_question(question, seed=None, solution=False,
         'user': user, 'assessment': assessment
         }
 
-    # applet_data will be used to gather information about applets
-    # included in templates.  Applets should add to javascript item
-    # with key given by applet code (to avoid collisions)
-    # Add to context with key _applet_data_ to avoid overwriting expressions
-    applet_data={}
-    applet_data['counter']=applet_counter
-    applet_data['javascript'] = {}
+    # Add applet_data to context with key _applet_data_
+    # to avoid overwriting expressions
     render_data['expression_context']['_applet_data_'] = applet_data
 
     # answer data to keep track of
@@ -514,7 +508,7 @@ def render_question(question, seed=None, solution=False,
         question, render_data['expression_context'])
 
     answer_data = { 'valid_answer_codes': valid_answer_codes,
-                    'answer_data': {},
+                    'answer_info': {},
                     'question': question,
                     'question_identifier': question_identifier,
                     'prefilled_answers': prefilled_answers,
@@ -528,7 +522,6 @@ def render_question(question, seed=None, solution=False,
     question_data = render_question_text(render_data, solution=solution)
 
     question_data.update({
-            'applet_data': applet_data,
             'identifier': question_identifier,
             'seed': seed,
             'auto_submit': auto_submit,
@@ -538,7 +531,7 @@ def render_question(question, seed=None, solution=False,
     # number of answer blanks (template tag already checked if
     # the answer_codes matched for those answers that were found)
     if prefilled_answers:
-        if len(prefilled_answers) != len(answer_data["answer_data"]):
+        if len(prefilled_answers) != len(answer_data["answer_info"]):
             answer_data["error"]=True
             answer_data["answer_errors"].append(
                 "Invalid number of previous answers")
@@ -625,7 +618,7 @@ def render_question(question, seed=None, solution=False,
     # if computer graded and answer data available,
     # add submit button (unless auto_submit)
     question_data['submit_button'] = question.computer_graded and\
-        answer_data['answer_data'] and (not auto_submit)
+        answer_data['answer_info'] and (not auto_submit)
 
     # set up computer grade data to be sent back to server on submit
     # computer grade data contains
@@ -644,11 +637,9 @@ def render_question(question, seed=None, solution=False,
         if question_set is not None:
             computer_grade_data['question_set'] = question_set
 
-    if answer_data['answer_data']:
-        computer_grade_data['answer_data'] \
-            = answer_data['answer_data']
-
-    computer_grade_data['applet_counter'] = applet_data["counter"]
+    if answer_data['answer_info']:
+        computer_grade_data['answer_info'] \
+            = answer_data['answer_info']
 
     # serialize and encode computer grade data to facilitate appending
     # to post data of http request sent when submitting answers
@@ -703,7 +694,7 @@ def get_question_list(assessment):
 
 
 def render_question_list(assessment, seed=None, user=None, solution=False,
-                         current_attempt=None):
+                         current_attempt=None, applet_data=None):
     """
     Generate list of rendered questions or solutions for assessment.
 
@@ -723,6 +714,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
     - solution: True if rendering solution
     - current_attempt: information about score so far on computer scored
       assessments (need to fix and test)
+    - applet_data: dictionary of information about applets embedded in text
 
     Outputs:
     - seed that used to generate assessment (the input seed unless it was None)
@@ -749,7 +741,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
     random.seed(seed)
     question_list = get_question_list(assessment)
 
-    applet_counter=0
+
     for (i, question_dict) in enumerate(question_list):
 
         # use qa for identifier since coming from assessment
@@ -766,8 +758,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
                 assessment_seed=seed, 
                 record_answers=True,
                 allow_solution_buttons=assessment.allow_solution_buttons,
-                applet_counter=applet_counter)
-        applet_counter = question_data['applet_data']['counter']
+                applet_data=applet_data)
         
         question_dict['question_data']=question_data
 
@@ -798,7 +789,6 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
         
         question_dict["group"] = question_group
         question_dict["previous_same_group"] = False
-
 
     if assessment.fixed_order:
         for i in range(1, len(question_list)):

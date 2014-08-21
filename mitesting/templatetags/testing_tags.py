@@ -860,11 +860,11 @@ class AnswerNode(template.Node):
         except KeyError:
             return return_error("Invalid answer blank: %s" % self.answer_code)
 
-        answer_number = len(answer_data['answer_data'])
+        answer_number = len(answer_data['answer_info'])+1
         answer_identifier = "%s_%s" % (answer_number,
                                        answer_data['question_identifier'])
         answer_field_name = 'answer_%s' % answer_identifier
-        answer_data['answer_data'][answer_identifier] = \
+        answer_data['answer_info'][answer_identifier] = \
             {'code': self.answer_code, 'points': points, 
              'type': answer_type }
 
