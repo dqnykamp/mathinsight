@@ -173,6 +173,10 @@ class math_object(object):
         return self._parameters.get('output_no_delimiters',False)
     def return_split_symbols_on_compare(self):
         return self._parameters.get('split_symbols_on_compare', False)
+    def return_n_digits(self):
+        return self._parameters.get('n_digits')
+    def return_round_decimals(self):
+        return self._parameters.get('round_decimals')
     def return_evaluate_level(self):
         from mitesting.sympy_customized import EVALUATE_FULL
         return self._parameters.get('evaluate_level', EVALUATE_FULL)
