@@ -4,7 +4,7 @@
 {% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{content.thread_content.content_object}}{%endblock%}
 
 {% block extrastyle2 %}
-<link href="{{ STATIC_URL }}css/miassessment.css" rel="stylesheet" type="text/css"/>
+<link href="{{ STATIC_URL }}mitesting/miassessment.css" rel="stylesheet" type="text/css"/>
  <!--[if lt IE 9]><script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/excanvas.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="{{ STATIC_URL }}js/jqplot/jquery.jqplot.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jqplot/plugins/jqplot.canvasTextRenderer.min.js"></script>
@@ -29,6 +29,7 @@ MathJax.Hub.Config({
 <p><i>As answered on {{answer_dict.datetime}}</i></p>
 
 {{ rendered_question }}
+{% question_body question_data %}
 
 <p>Points: {{ answer_dict.points}}<br/>
 Percent: {{ answer_dict.credit_percent|percent_checked_100 }}<br/>
