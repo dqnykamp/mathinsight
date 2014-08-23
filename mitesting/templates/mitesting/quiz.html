@@ -7,9 +7,8 @@
 <section class="namesection"><div class="nameblank">Name(s):</div><div class="sectionblank">Section:</div></section>
 
 <section class="quiz_main">
-<ol class="quiz_questions">
-{% for question in question_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
+{% for question in rendered_list %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{% question_body question.question_data %}</li>
 {% endfor %}
 </ol>
 </section>
