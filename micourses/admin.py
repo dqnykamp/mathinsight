@@ -18,6 +18,10 @@ patch_admin(User)
 
 class UserChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
+        return "%s, %s" % (obj.last_name, obj.first_name)
+
+class CourseUserChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
         return "%s, %s" % (obj.user.last_name, obj.user.first_name)
 
 
@@ -36,7 +40,7 @@ class CourseEnrollmentInline(admin.TabularInline):
     model = CourseEnrollment
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
-            kwargs['form_class'] = UserChoiceField
+            kwargs['form_class'] = CourseUserChoiceField
         return super(CourseEnrollmentInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -209,19 +213,19 @@ class GradeLevelAdmin(reversion.VersionAdmin):
 class ManualDueDateAdjustmentAdmin(reversion.VersionAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
-            kwargs['form_class'] = UserChoiceField
+            kwargs['form_class'] = CourseUserChoiceField
         return super(ManualDueDateAdjustmentAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class StudentContentAttemptAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
-            kwargs['form_class'] = UserChoiceField
+            kwargs['form_class'] = CourseUserChoiceField
         return super(StudentContentAttemptAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 class StudentContentCompletionAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
-            kwargs['form_class'] = UserChoiceField
+            kwargs['form_class'] = CourseUserChoiceField
         return super(StudentContentCompletionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
