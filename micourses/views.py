@@ -5,6 +5,7 @@ from __future__ import division
 
 from micourses.models import Course, CourseUser, CourseThreadContent
 from mitesting.models import Assessment
+from midocs.models import Applet
 from micourses.forms import StudentContentAttemptForm
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponseRedirect
@@ -22,6 +23,7 @@ from django.utils.safestring import mark_safe
 from django import forms
 import datetime
 from micourses.templatetags.course_tags import floatformat_or_dash
+from mitesting.render_assessments import render_question_list, render_question
 
 def format_datetime(value):
     return "%s, %s" % (formats.date_format(value), formats.time_format(value))
@@ -99,9 +101,11 @@ def course_main_view(request):
     # if POST, then set selected_course
     if request.method == 'POST':
         course_code = request.POST['course']
-        course = Course.objects.get(code=course_code)
-        courseuser.selected_course = course
+        selected_enrollment = courseuser.courseenrollment_set\
+                                        .get(course__code=course_code)
+        courseuser.selected_course_enrollment = selected_enrollment
         courseuser.save()
+        course=selected_enrollment.course
     # else get selected_course from database
     else:
         try:
@@ -364,8 +368,10 @@ class AssessmentAttempt(AssessmentAttempted):
         context['attempt_number'] = self.attempt_number
         context['score_overridden'] = self.attempt.score_overridden()
 
-        rendered_question_list=self.assessment.render_question_list\
-            (self.attempt.seed, current_attempt=self.attempt)
+
+        rendered_question_list=render_question_list\
+            (self.assessment, self.attempt.seed,
+             current_attempt=self.attempt)[0]
 
         question_list = []
         for qd in rendered_question_list:
@@ -418,9 +424,9 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
         self.question_number = int(self.question_number)
 
         try:
-            self.question_dict = self.assessment.render_question_list\
-                (self.attempt.seed, current_attempt=self.attempt)\
-                [self.question_number-1]
+            self.question_dict=render_question_list\
+                    (self.assessment, self.attempt.seed, 
+                     current_attempt=self.attempt)[0][self.question_number-1]
         except IndexError:
             raise  Http404('Question %s not found.' % self.question_number)
 
@@ -451,7 +457,7 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
                 answer_dict['score'] = answer.credit*self.question_dict['points']
             except TypeError:
                 answer_dict['score'] = 0
-            answer_dict['credit_percent'] = int(answer.credit*100)
+            answer_dict['credit_percent'] = int(round(answer.credit*100))
             answer_list.append(answer_dict)
         context['answers'] = answer_list
 
@@ -517,7 +523,7 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         except TypeError:
             answer_dict['score'] = 0
         answer_dict['points'] = self.question_dict['points']
-        answer_dict['credit_percent'] = int(self.answer.credit*100)
+        answer_dict['credit_percent'] = int(round(self.answer.credit*100))
         answer_dict['attempt_number'] = self.question_attempt_number
         
 
@@ -528,39 +534,32 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         # use aaqav in identifier since coming from
         # assessment attempt question attempt view
         identifier = "aaqav"
-        question_context = question.setup_context(identifier=identifier,
-                                                  seed=self.answer.seed, 
-                                                  allow_solution_buttons=False)
 
-        # if there was an error, question_context is a string 
-        # so just make rendered question text be that string
-        if not isinstance(question_context, Context):
-            rendered_question = question_context
-            geogebra_oninit_commands=""
-        else:
-            pre_answers = {'identifier': self.answer.identifier_in_answer }
-            import json
-            pre_answers.update(json.loads(self.answer.answer))
-            rendered_question = question.render_question\
-                (question_context, identifier=identifier,\
-                     user=self.request.user,\
-                     show_help=False, pre_answers=pre_answers, readonly=True, \
-                     precheck=True)
+        applet_data = Applet.return_initial_applet_data()
 
-            geogebra_oninit_commands=question_context\
-                .get('geogebra_oninit_commands')
+        import json
+        prefilled_answers = json.loads(self.answer.answer)
 
-            context= {'question': question, 
-                      'rendered_question': rendered_question,
-                      'geogebra_oninit_commands': geogebra_oninit_commands,
-                      'attempt': self.attempt,
-                      'attempt_number': self.attempt_number,
-                      'question_number': self.question_number,
-                      'answer_dict': answer_dict,
-                      'rendered_question': rendered_question,
-                      }
+        question_data = render_question(question, seed=self.answer.seed,
+                                        question_identifier=identifier,
+                                        user=self.request.user, show_help=False,
+                                        prefilled_answers=prefilled_answers, 
+                                        readonly=True, auto_submit=True, 
+                                        record_answers=False,
+                                        allow_solution_buttons=False,
+                                        applet_data=applet_data)
 
-            return context
+
+        context= {'question': question, 
+                  'question_data': question_data,
+                  'applet_data': applet_data,
+                  'attempt': self.attempt,
+                  'attempt_number': self.attempt_number,
+                  'question_number': self.question_number,
+                  'answer_dict': answer_dict,
+        }
+        
+        return context
 
 class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttempt):
     template_name = 'micourses/assessment_attempt_question_attempt_instructor.html'
@@ -838,7 +837,7 @@ def update_individual_attendance_view(request):
                     # for integer values, present must be integer
                     # so that radio button shows initial value
                     if attended.present==1 or attended.present==0 or attended.present==-1:
-                        present=int(attended.present)
+                        present=int(round(attended.present))
                     else:
                         present = attended.present
                 except ObjectDoesNotExist:

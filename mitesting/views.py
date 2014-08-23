@@ -183,10 +183,14 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         answer_info = computer_grade_data['answer_info']
         
-        answer_user_responses = {}
-        for answer_identifier in answer_info.keys():
-            answer_user_responses[answer_identifier] = \
-                response_data.get('answer_%s' % answer_identifier, "")
+        answer_user_responses = []
+        for answer_num in range(len(answer_info)):
+            answer_identifier = answer_info[answer_num]['identifier']
+            answer_user_responses.append({
+                'identifier': answer_identifier,
+                'code': answer_info[answer_num]['code'],
+                'answer': 
+                response_data.get('answer_%s' % answer_identifier, "")})
         
         points_achieved=0
         total_points=0
@@ -202,11 +206,12 @@ class GradeQuestionView(SingleObjectMixin, View):
 
 
         # check correctness of each answer
-        for answer_identifier in sorted(answer_info.keys()):
-            user_response = answer_user_responses[answer_identifier]
-            answer_code = answer_info[answer_identifier]['code']
-            answer_points= answer_info[answer_identifier]['points']
-            answer_type = answer_info[answer_identifier]['type']
+        for answer_num in range(len(answer_info)):
+            user_response = answer_user_responses[answer_num]["answer"]
+            answer_code = answer_info[answer_num]['code']
+            answer_points= answer_info[answer_num]['points']
+            answer_type = answer_info[answer_num]['type']
+            answer_identifier = answer_info[answer_num]['identifier']
 
             total_points += answer_points
             percent_correct = 0
@@ -550,8 +555,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         if current_attempt:
             feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
 
-
-        answer_results['feedback_message']=feedback_message
+        answer_results['feedback'] += "<p>%s</p>" % feedback_message
         
 
         data = json.dumps(answer_results)
@@ -835,7 +839,8 @@ class AssessmentView(DetailView):
         else:
             context['version_string'] = ''
 
-
+        context['course_thread_content'] = self.course_thread_content
+        context['attempt_number'] = self.attempt_number
 
         # get list of the question numbers in assessment
         # if question_numbers specified in GET parameters
@@ -851,7 +856,7 @@ class AssessmentView(DetailView):
         # turn off Google analytics for localhost/development site
         context['noanalytics']=(settings.SITE_ID > 1)
 
-        context['new_seed']=get_new_seed
+        context['new_seed']=get_new_seed()
 
         return context
 
@@ -901,8 +906,8 @@ class AssessmentView(DetailView):
             course = None
 
         self.current_attempt=None
-        attempt_number=0
-        course_thread_content=None
+        self.attempt_number=0
+        self.course_thread_content=None
 
 
         # if enrolled in the course
@@ -911,30 +916,32 @@ class AssessmentView(DetailView):
                 (model='assessment')
 
             try:
-                course_thread_content=course.coursethreadcontent_set.get\
+                self.course_thread_content=course.coursethreadcontent_set.get\
                     (thread_content__object_id=self.object.id,\
                          thread_content__content_type=assessment_content_type)
                 # Finds the course version of the specific assessment
             except ObjectDoesNotExist:
                 course=None
 
-            if course_thread_content:
-                attempts = course_thread_content.studentcontentattempt_set\
+            if self.course_thread_content:
+                attempts = self.course_thread_content.studentcontentattempt_set\
                     .filter(student=courseuser) 
-                attempt_number = attempts.count()
+                self.attempt_number = attempts.count()
                 # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
 
-                if self.new_attempt:
+                if new_attempt:
                     # if new_attempt, create another attempt
-                    attempt_number += 1
-                    self.version = str(attempt_number)
-                    if course_thread_content.individualize_by_student:
-                        self.version= "%s_%s" % (courseuser.user.username, self.version)
-                    seed = "%s_%s_%s" % (course.code, self.object.id, self.version)
+                    self.attempt_number += 1
+                    self.version = str(self.attempt_number)
+                    if self.course_thread_content.individualize_by_student:
+                        self.version= "%s_%s" % (courseuser.user.username, 
+                                                 self.version)
+                    seed = "%s_%s_%s" % (course.code, self.object.id, 
+                                         self.version)
 
                     try:
                         self.current_attempt = \
-                            course_thread_content.studentcontentattempt_set\
+                            self.course_thread_content.studentcontentattempt_set\
                             .create(student=courseuser, seed=seed)
                     except IntegrityError:
                         raise 
@@ -943,15 +950,17 @@ class AssessmentView(DetailView):
                 # if instructor and seed is set (from GET)
                 # then use that seed and don't link to attempt
                 # (i.e., skip this processing)
-                elif not (courseuser.role == 'I' and seed is not None):
+                elif not (courseuser.get_current_role() == 'I' and \
+                          seed is not None):
 
                     # else try to find latest attempt
                     try:
                         self.current_attempt = attempts.latest()
                         seed = self.current_attempt.seed
-                        self.version = str(attempt_number)
-                        if course_thread_content.individualize_by_student:
-                            self.version= "%s_%s" % (courseuser.user.username, self.version)
+                        self.version = str(self.attempt_number)
+                        if self.course_thread_content.individualize_by_student:
+                            self.version= "%s_%s" % (courseuser.user.username,
+                                                     self.version)
 
                     except ObjectDoesNotExist:
                         # for seed use course_code, assessment_id, 
@@ -959,15 +968,17 @@ class AssessmentView(DetailView):
 
                         # if individualize_by_student, add username
                         self.version = "1"
-                        if course_thread_content.individualize_by_student:
-                            self.version= "%s_%s" % (courseuser.user.username, self.version)
-                        seed = "%s_%s_%s" % (course.code, self.object.id, self.version)
+                        if self.course_thread_content.individualize_by_student:
+                            self.version= "%s_%s" % (courseuser.user.username, 
+                                                     self.version)
+                        seed = "%s_%s_%s" % (course.code, self.object.id, 
+                                             self.version)
 
                         # create the attempt
                         self.current_attempt = \
-                            course_thread_content.studentcontentattempt_set\
+                            self.course_thread_content.studentcontentattempt_set\
                             .create(student=courseuser, seed=seed)
-    
+
         self.seed=seed
 
 

@@ -85,8 +85,8 @@
       post_form_{{question_data.identifier}}();
     });
   {%endif%}  
-  {% if question_data.precheck %}
-  post_form_{{question_data.identifier}}(false);
+  {% if question_data.auto_submit %}
+  post_form_{{question_data.identifier}}();
   {% endif %}
   {% if question_data.enable_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");{%endif %}
   {% if question_data.show_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").click(function() {$.post("{{question_data.inject_solution_url}}", "cgd={{question_data.computer_grade_data}}", process_solution_inject_{{question_data.identifier}});});{% endif %}
@@ -124,6 +124,10 @@
 	if(data["enable_solution_button"]) {
 	    $( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
 	}
+
+
+      $("#id_question_{{question_data.identifier}} input:radio").parent().removeClass('highlight_answer');
+      $("#id_question_{{question_data.identifier}} input:checked").parent().addClass('highlight_answer');
 
 	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
     }

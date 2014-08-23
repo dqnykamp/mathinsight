@@ -133,6 +133,10 @@ table.question_scores td.blank {
     margin-left: 1em;
 }
 
+.highlight_answer {
+    background:#c4c4c4;
+
+}
 
 @media screen {
 

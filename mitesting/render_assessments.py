@@ -463,7 +463,8 @@ def render_question(question, seed=None, solution=False,
       - question_set
       - assessment_seed
       - assessment_code (of assessment from input)
-      - answer_info: codes, points, and answer type of the answers in question
+      - answer_info: list of codes, points, and answer type of the answers 
+        in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
    """
@@ -508,7 +509,7 @@ def render_question(question, seed=None, solution=False,
         question, render_data['expression_context'])
 
     answer_data = { 'valid_answer_codes': valid_answer_codes,
-                    'answer_info': {},
+                    'answer_info': [],
                     'question': question,
                     'question_identifier': question_identifier,
                     'prefilled_answers': prefilled_answers,

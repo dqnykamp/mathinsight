@@ -864,32 +864,36 @@ class AnswerNode(template.Node):
         answer_identifier = "%s_%s" % (answer_number,
                                        answer_data['question_identifier'])
         answer_field_name = 'answer_%s' % answer_identifier
-        answer_data['answer_info'][answer_identifier] = \
+        answer_data['answer_info'].append(\
             {'code': self.answer_code, 'points': points, 
-             'type': answer_type }
+             'type': answer_type, 'identifier': answer_identifier })
 
+        if answer_data['readonly']:
+            readonly_string = ' readonly'
+        else:
+            readonly_string = ''
+
+        given_answer=None
+        try:
+            prefilled_answers = answer_data['prefilled_answers']
+            the_answer_dict = prefilled_answers[answer_number-1]
+
+            if the_answer_dict["code"] == self.answer_code:
+                given_answer = the_answer_dict["answer"]
+            else:
+                answer_data['error'] = True
+                answer_data['answer_errors'].append(
+                    "Invalid previous answer: %s != %s" % 
+                (the_answer_dict["code"], self.answer_code))
+        except (KeyError, IndexError, TypeError):
+            pass
 
         if answer_type == QuestionAnswerOption.EXPRESSION:
-            if answer_data['readonly']:
-                readonly_string = ' readonly'
-            else:
-                readonly_string = ''
 
             value_string = ''
-            try:
-                prefilled_answers = answer_data['prefilled_answers']
-                the_answer = prefilled_answers[answer_number-1]
-                if the_answer["answer_code"] == self.answer_code:
-                    value_string = ' value="%s"' %  the_answer["answer"]
-                else:
-                    answer_data['error'] = True
-                    answer_data['answer_errors'].append(
-                        "Invalid previous answer: %s != %s" % 
-                        (the_answer["answer_code"], self.answer_code))
-            except (KeyError, IndexError, TypeError):
-                pass
-
-
+            if given_answer is not None:
+                value_string = ' value="%s"' %  given_answer
+                
             return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s /><br/><span class="info" id="%s_feedback"></span></span>' % \
                 (answer_field_name, answer_field_name,
                  size, readonly_string, value_string, 
@@ -923,10 +927,14 @@ class AnswerNode(template.Node):
             html_string = ""
             for answer in rendered_answer_list:
                 ans_id = answer['answer_id']
-                html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s" /> %s</label>' % \
+                checked_string = ""
+                if given_answer is not None:
+                    if str(ans_id) == str(given_answer):
+                        checked_string = " checked"
+                html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s"%s%s /> %s</label>' % \
                     (answer_field_name, ans_id, answer_field_name,
                      ans_id, answer_field_name, ans_id, 
-                     ans_id, answer_field_name, 
+                     ans_id, answer_field_name, readonly_string, checked_string,
                      answer['rendered_answer'] )
             html_string += '<div id="%s_feedback" ></div></li>' % \
                 (answer_field_name)

@@ -1659,9 +1659,9 @@ class AppletNode(template.Node):
             answer_identifier = "%s_%s" % \
                 (answer_number, answer_data['question_identifier'])
             answer_field_name = 'answer_%s' % answer_identifier
-            answer_data['answer_info'][answer_identifier] \
-                = {'code': self.answer_code, 'points': points, \
-                   'type': answer_type }
+            answer_data['answer_info'].append(\
+                {'code': self.answer_code, 'points': points, \
+                   'type': answer_type })
 
 
             # check if object is in prefilled_answers
