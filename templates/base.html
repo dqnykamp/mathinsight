@@ -87,7 +87,7 @@
       <div class="ym-grid linearize-level-1">
 	<div class="ym-g66 ym-gl">
 	  <div class="ym-gbox-left">
-	    {% if user.courseuser.selected_course %}<a href="{% url 'mic-coursemain' %}">{{user.courseuser.selected_course}}</a> {% block coursebreadcrumb %}{%endblock%}{%endif%}
+	    {% if user.courseuser.return_selected_course %}<a href="{% url 'mic-coursemain' %}">{{user.courseuser.return_selected_course}}</a> {% block coursebreadcrumb %}{%endblock%}{%endif%}
 	  </div>
 	</div>
 	<div class="ym-g33 ym-gr"> 
