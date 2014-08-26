@@ -304,6 +304,9 @@ class Page(models.Model):
     def get_absolute_url(self):
         return('mi-page', (), {'page_code': self.code})
 
+    def get_active_thread_content_set(self):
+        return self.thread_content_set.filter(section__thread__active=True)
+
     def title_with_period(self):
         # add period to end of title unless title already ends with 
         # period, exclamation point or question mark

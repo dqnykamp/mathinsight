@@ -30,9 +30,9 @@
       <li><a href="#{{ subentry.page_anchor }}">{{ subentry.navigation_subphrase|safe }}</a></li>
       {%endfor%}</ul>{%endif%}
   </li>{%endfor%}
-  {% if thepage.thread_content_set.all %}
+  {% if thepage.get_active_thread_content_set %}
   <li><a href="#threads">In threads</a><ul>
-  {% for thread_content in thepage.thread_content_set.all %}
+  {% for thread_content in thepage.get_active_thread_content_set %}
   <li><a href="#thread_{{ thread_content.section.thread.code }}">{{ thread_content.section.thread }}</a></li>
   {% endfor %}</ul></li>{% endif %}
   {%if notation_system_form %}<li><a href="#notation_systems">Notation</a></li>{%endif%}
@@ -83,11 +83,11 @@
 
 
 {% block rightcolumn %}
-{% if thepage.thread_content_set.all %}
+{% if thepage.get_active_thread_content_set %}
 <a id="threads" class="anchor"></a>
 <section class="box threadbox">
 <h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
-{% for thread_content in thepage.thread_content_set.all %}
+{% for thread_content in thepage.get_active_thread_content_set %}
 <a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
 <h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
 <ul class="linklist">

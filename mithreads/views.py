@@ -41,7 +41,7 @@ def thread_view(request, thread_code):
         ('mithreads/thread_detail.html', \
              {'thread': thread, 
               'include_edit_link': include_edit_link,
-              'thread_list': Thread.objects.all(),
+              'thread_list': Thread.activethreads.all(),
               'student': student, 'course': course,              
               'noanalytics': noanalytics,
               },

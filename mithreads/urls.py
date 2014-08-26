@@ -12,7 +12,7 @@ paginate_by=20
 urlpatterns = patterns('mithreads.views',
    url(r'^list$', ListView.as_view
      (template_name="mithreads/thread_list.html", 
-      model=Thread,
+      queryset=Thread.activethreads.all(),
       paginate_by=paginate_by),
      name="mithreads-list"),
    url(r'^(?P<thread_code>\w+)$', 'thread_view', 

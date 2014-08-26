@@ -11,12 +11,21 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils.safestring import mark_safe
 
 
+class ActiveThreadManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveThreadManager, self).get_queryset() \
+            .filter(active=True)
+
 class Thread(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=100, db_index=True, unique=True)
     description = models.CharField(max_length=400)
     sort_order = models.FloatField(default=0)
     numbered = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    activethreads = ActiveThreadManager()
 
     def __unicode__(self):
         return self.name
@@ -73,6 +82,8 @@ class Thread(models.Model):
         # copy all thread sections
         for thread_section in original_thread.thread_sections.all():
             thread_section.save_to_new_thread(new_thread)
+
+        return new_thread
 
     def save_to_course(self, course):
         sort_order = 0

@@ -62,9 +62,16 @@ class CourseUser(models.Model):
         self.save()
         return course_enrollment.course
 
+    def return_selected_course_if_exists(self):
+        if self.selected_course_enrollment:
+            return self.selected_course_enrollment.course
+        else:
+            return None
+
     def active_courses(self):
         return self.course_set.filter(active=True)
     
+
     def get_current_role(self):
         if self.selected_course_enrollment:
             return self.selected_course_enrollment.role
@@ -143,7 +150,11 @@ class CourseAssessmentCategory(models.Model):
     class Meta:
         verbose_name_plural = 'Course assessment categories'
 
-
+    def save_to_new_course(self, course):
+        new_courseassessmentcategory = self
+        new_courseassessmentcategory.pk = None
+        new_courseassessmentcategory.course = course
+        new_courseassessmentcategory.save()
     
 
 class AttendanceDate(models.Model):
@@ -196,6 +207,35 @@ class Course(models.Model):
         )
 
 
+    # save course as a new course
+    # copy course thread content
+    # not users
+    # also create new thread
+    def save_as(self, new_code, new_name, new_thread_code, new_thread_name):
+        original_code = self.code
+
+        thread = self.thread
+        new_thread = thread.save_as(new_thread_code, new_thread_name)
+    
+        new_course = self
+        new_course.pk = None
+        new_course.code = new_code
+        new_course.name = new_name
+        new_course.last_attendance_date = None
+        new_course.save()
+        
+        original_course = Course.objects.get(code=original_code)
+        
+        for ca_category in original_course.courseassessmentcategory_set.all():
+            ca_category.save_to_new_course(new_course)
+
+
+        for course_thread_content in \
+            original_course.coursethreadcontent_set.all():
+            
+            course_thread_content.save_to_new_course(new_course, new_thread)
+            
+            
     def enrolled_students_ordered(self):
         return self.enrolled_students.filter(role='S').order_by('user__last_name', 'user__first_name')
 
@@ -728,6 +768,26 @@ class CourseThreadContent(models.Model):
             raise ValidationError, \
                 "Thread content is not from course thread: %s"\
                 % self.course.thread
+
+    def save_to_new_course(self, course, thread):
+        original_pk = self.pk
+
+        new_content = self
+        new_content.pk = None
+        new_content.course = course
+
+        old_thread_content = self.thread_content
+        old_thread_section = old_thread_content.section
+        new_thread_section = thread.thread_sections.get(
+            code = old_thread_section.code)
+        # use filter rather than get, as it is possible to have 
+        # same content_object appear multiple times
+        # in that case, just take first one
+        new_thread_content = new_thread_section.threadcontent_set.filter(
+            content_type = old_thread_content.content_type,
+            object_id = old_thread_content.object_id)[0]
+        new_content.thread_content = new_thread_content
+        new_content.save()
 
     def total_points(self):
         try:
