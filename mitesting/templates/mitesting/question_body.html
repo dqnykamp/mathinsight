@@ -72,6 +72,7 @@
 
 <input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">
 <div id="question_{{question_data.identifier}}_feedback" class="info"></div>
+<div id="question_{{question_data.identifier}}_feedback_binary" class="info"></div>
 <div id="question_{{question_data.identifier}}_solution" class="info"></div>
 <p>{% if question_data.submit_button %}<input type="submit" id="question_{{question_data.identifier}}_submit" class="mi_answer_submit" value="Submit" >{% endif %}
 <span id="question_{{question_data.identifier}}_for_solution_button">{% if question_data.show_solution_button %}<input type="button" class="mi_show_solution" value="Show solution" id="question_{{question_data.identifier}}_show_solution" disabled >{%endif%}
@@ -98,32 +99,40 @@
   }
 
   function process_graded_question_{{question_data.identifier}}(data) {
-	var question_feedback=$("#question_{{question_data.identifier}}_feedback");
-	question_feedback.html(data['feedback']);
-	if(data['correct']) {
-	    question_feedback.addClass('success');
-	}
-	else {
-	    question_feedback.removeClass('success');
-	}
+      var question_feedback=$("#question_{{question_data.identifier}}_feedback");
+      var question_binary_feedback=$("#question_{{question_data.identifier}}_feedback_binary");
 
-	for(var answer_identifier in data['answer_feedback']) {
-	    var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
-	    answer_feedback.html(data['answer_feedback'][answer_identifier]);
-	    if(data['answer_correct'][answer_identifier]) {
-		answer_feedback.removeClass('error').addClass('success');
-	    }
-	    else {
-		answer_feedback.removeClass('success').addClass('error');
-	    }
-	    answer_feedback.filter("span").css({ display: 'inline-block'})
-	}
+      $(".applet_feedback_{{question_data.identifier}}").removeClass('hidden_feedback');
+
+      question_feedback.html(data['feedback']);
+      if(data['correct']) {
+	  question_feedback.addClass('success');
+      }
+      else {
+	  question_feedback.removeClass('success');
+      }
+      
+      for(var answer_identifier in data['answer_feedback']) {
+	  var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
+	  answer_feedback.html(data['answer_feedback'][answer_identifier]);
+	  console.log(answer_identifier)
+	  console.log(answer_identifier.indexOf("__binary_"))
+	  if(answer_identifier.indexOf("__binary_") == -1) {
+	      if(data['answer_correct'][answer_identifier]) {
+		  answer_feedback.removeClass('error').addClass('success');
+	      }
+	      else {
+		  answer_feedback.removeClass('success').addClass('error');
+	      }
+	      answer_feedback.filter("span").css({ display: 'inline-block'})
+	  }
+      }
 
 	
-	$('#id_number_attempts_{{question_data.identifier}}').val(data['number_attempts']);
-	if(data["enable_solution_button"]) {
-	    $( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
-	}
+      $('#id_number_attempts_{{question_data.identifier}}').val(data['number_attempts']);
+      if(data["enable_solution_button"]) {
+	  $( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
+      }
 
 
       $("#id_question_{{question_data.identifier}} input:radio").parent().removeClass('highlight_answer');

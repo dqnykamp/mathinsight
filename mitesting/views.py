@@ -204,6 +204,10 @@ class GradeQuestionView(SingleObjectMixin, View):
         answer_results['identifier']=question_identifier
         answer_results['feedback']=""
 
+        binary_feedback_correct = ' <img src="%sadmin/img/icon-yes.gif" alt="correct" />'\
+             % (settings.STATIC_URL)
+        binary_feedback_incorrect = ' <img src="%sadmin/img/icon-no.gif" alt="incorrect" />'\
+            % (settings.STATIC_URL)
 
         # check correctness of each answer
         for answer_num in range(len(answer_info)):
@@ -259,6 +263,9 @@ class GradeQuestionView(SingleObjectMixin, View):
                 if not user_response:
                     answer_results['answer_feedback'][answer_identifier] \
                         = "No response"
+                    answer_results['answer_feedback']\
+                        [answer_identifier+"__binary_"] \
+                        = binary_feedback_incorrect
                     answer_results['answer_correct'][answer_identifier]=False
                     continue
 
@@ -361,6 +368,9 @@ class GradeQuestionView(SingleObjectMixin, View):
                 logger.warning("Unrecognized answer type: %s" % answer_type)
                 answer_results['answer_feedback'][answer_identifier] \
                     = "Cannot grade due to error in question"
+                answer_results['answer_feedback']\
+                    [answer_identifier+"__binary_"] \
+                    = binary_feedback_incorrect
                 answer_results['answer_correct'][answer_identifier]=False
                 continue
 
@@ -371,6 +381,15 @@ class GradeQuestionView(SingleObjectMixin, View):
 
             answer_results['answer_feedback'][answer_identifier] \
                 = feedback
+            if percent_correct == 100:
+                answer_results['answer_feedback']\
+                    [answer_identifier+"__binary_"] \
+                    = binary_feedback_correct
+            else:
+                answer_results['answer_feedback']\
+                    [answer_identifier+"__binary_"] \
+                    = binary_feedback_incorrect
+
             answer_results['answer_correct'][answer_identifier]\
                 = (percent_correct == 100)
 

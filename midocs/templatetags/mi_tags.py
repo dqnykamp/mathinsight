@@ -1636,7 +1636,9 @@ class AppletNode(template.Node):
 
         inputboxlist=''
         capture_javascript=''
-
+        init_javascript = ""
+        
+        
         previous_category=None
 
         for appletobject in appletobjects:
@@ -1660,8 +1662,8 @@ class AppletNode(template.Node):
                 (answer_number, answer_data['question_identifier'])
             answer_field_name = 'answer_%s' % answer_identifier
             answer_data['answer_info'].append(\
-                {'code': self.answer_code, 'points': points, \
-                   'type': answer_type })
+                {'code': answer_code, 'points': points, \
+                   'type': answer_type, 'identifier': answer_identifier })
 
 
             # check if object is in prefilled_answers
@@ -1669,23 +1671,25 @@ class AppletNode(template.Node):
             value_string = ""
             if prefilled_answers:
                 try:
-                    the_answer = prefilled_answers[answer_number-1]
-                    if the_answer["answer_code"] == answer_code:
-                        value_string = 'value="%s"' % the_answer["answer"]
-                        prefilled_answers_by_object[applet_object.pk] \
-                            = the_answer["answer"]
+                    the_answer_dict = prefilled_answers[answer_number-1]
+                    if the_answer_dict["answer_code"] == answer_code:
+                        value_string = 'value="%s"' % the_answer_dict["answer"]
+                        prefilled_answers_by_object[appletobject.pk] \
+                            = the_answer_dict["answer"]
                 except (KeyError, IndexError, TypeError):
                     pass
 
-            inputboxlist += '<input type="hidden" id="id_%s" maxlength="200" name="%s" size="20"%s />\n' % \
-                (answer_field_name, answer_field_name,  value_string)
+            inputbox_id = "id_%s" % answer_field_name
+            inputboxlist += '<input type="hidden" id="%s" maxlength="200" name="%s" size="20"%s />\n' % \
+                (inputbox_id, answer_field_name,  value_string)
+
 
             if appletobject.category_for_capture != previous_category:
                 the_category = appletobject.category_for_capture
                 if the_category:
                     inputboxlist += '<br/>%s:' % the_category
                 previous_category=the_category
-            inputboxlist += '<span id="%s_feedback_binary"></span>\n' % \
+            inputboxlist += '<span id="%s__binary__feedback"></span>\n' % \
                             answer_field_name
 
             related_objects=[]
@@ -1700,20 +1704,18 @@ class AppletNode(template.Node):
                         pass
 
             # capture value only if not prefilled_answers
-            if prefilled_answers_by_object.get(applet_object.pk) is not None:
+            if prefilled_answers_by_object.get(appletobject.pk) is None:
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     capture_javascript += Geogebra_capture_object_javascript \
                         (context, appletobject, applet_identifier, 
-                         target_id, related_objects)
-
-
+                         inputbox_id, related_objects)
 
         # check if any applet objects are specified 
         # to be changed with javascript
         appletobjects=applet.appletobject_set.filter \
             (change_from_javascript=True)
-        init_javascript = ""
+
         for appletobject in appletobjects:
             objectvalue = kwargs.get(appletobject.name)
             objectvalue_string = kwargs_string.get(appletobject.name)
@@ -1743,14 +1745,34 @@ class AppletNode(template.Node):
 
 
         if inputboxlist:
-            inputboxlist = '<div class="hidden_feedback applet_feedback_%s info"><b>Feedback from applet</b>%s</div>' % (identifier, inputboxlist)
+            inputboxlist = '<div class="hidden_feedback applet_feedback_%s info"><b>Feedback from applet</b>%s</div>' % (answer_data['question_identifier'], inputboxlist)
         applet_link += inputboxlist
 
+
+        if applet.applet_type.code == "Geogebra" \
+           or applet.applet_type.code == "GeogebraWeb":
+            try:
+                geogebra_javascript = applet_data['javascript']['Geogebra']
+            except KeyError:
+                applet_data['javascript']['Geogebra'] = {
+                    'on_init_commands': ""}
+                geogebra_javascript = applet_data['javascript']['Geogebra']
 
         if capture_javascript:
             if applet.applet_type.code == "Geogebra" \
                or applet.applet_type.code == "GeogebraWeb":
                 listener_function_name = "listener%s" % applet_identifier
+                
+                capture_javascript = 'function %s(obj) {\n%s}\n' % \
+                        (listener_function_name, capture_javascript)
+
+                all_capture_javascript = geogebra_javascript.get(
+                    'capture_javascript','')
+              
+                all_capture_javascript += capture_javascript
+
+                geogebra_javascript['capture_javascript'] = all_capture_javascript
+
                 init_javascript += 'document.%s.registerUpdateListener("%s");\n' \
                     % (applet_identifier, listener_function_name)
                 
@@ -1758,10 +1780,6 @@ class AppletNode(template.Node):
                 # so answer_blanks have values
                 init_javascript += "%s();\n" % listener_function_name
 
-                listener_function_script = 'function %s(obj) {\n%s}\n' %(listener_function_name, capture_javascript)
-                
-                script_string = "%s\n%s" % (script_string,
-                                            listener_function_script)
 
         applet_data['javascript']['_initialization'] += script_string
 
@@ -1770,13 +1788,6 @@ class AppletNode(template.Node):
             if applet.applet_type.code == "Geogebra" \
                     or applet.applet_type.code == "GeogebraWeb":
 
-                # add javascript to applet_data
-                try:
-                    geogebra_javascript = applet_data['javascript']['Geogebra']
-                except KeyError:
-                    applet_data['javascript']['Geogebra'] = {
-                        'on_init_commands': ""}
-                    geogebra_javascript = applet_data['javascript']['Geogebra']
 
                 all_init_javascript = geogebra_javascript.get(
                     'on_init_commands','')
@@ -1786,6 +1797,7 @@ class AppletNode(template.Node):
                 
                 geogebra_javascript['on_init_commands'] \
                     = all_init_javascript
+
 
         # if not boxed, just return code for applet
         if not self.boxed:
@@ -2210,6 +2222,17 @@ class AccumulatedJavascriptNode(template.Node):
         else:
             if initialization_script:
                 script_string += '<div id="applet_initialization">\n<script>\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>\n</div>\n' % initialization_script
+
+        # capture javascript
+        try:
+            capture_javascript = applet_data['javascript']['Geogebra']\
+                                        ['capture_javascript']
+        except:
+            pass
+        else:
+            if capture_javascript:
+                script_string += '<div id="geogebra_capture">\n<script>\n%s\n</script>\n</div>\n' % capture_javascript
+        
 
         # return any geogebra_init_javascript
         try:
