@@ -1665,14 +1665,13 @@ class AppletNode(template.Node):
                 {'code': answer_code, 'points': points, \
                    'type': answer_type, 'identifier': answer_identifier })
 
-
             # check if object is in prefilled_answers
             # if so, use that value for input box
             value_string = ""
             if prefilled_answers:
                 try:
                     the_answer_dict = prefilled_answers[answer_number-1]
-                    if the_answer_dict["answer_code"] == answer_code:
+                    if the_answer_dict["code"] == answer_code:
                         value_string = 'value="%s"' % the_answer_dict["answer"]
                         prefilled_answers_by_object[appletobject.pk] \
                             = the_answer_dict["answer"]
@@ -1711,6 +1710,7 @@ class AppletNode(template.Node):
                         (context, appletobject, applet_identifier, 
                          inputbox_id, related_objects)
 
+
         # check if any applet objects are specified 
         # to be changed with javascript
         appletobjects=applet.appletobject_set.filter \
@@ -1722,18 +1722,17 @@ class AppletNode(template.Node):
             
             # check if object is in prefilled_answers
             # if so, overwrite and use that value instead
-            if prefilled_answers:
+            the_prefilled_answer = \
+                prefilled_answers_by_object.get(appletobject.pk) 
+            if the_prefilled_answer is not None:
                 # check if applet object is set to be captured
                 the_kw = "answer_%s" % appletobject.name
                 expression_for_object = kwargs.get(the_kw)
                 if expression_for_object is not None:
                     expression_string =  kwargs_string.get(the_kw)
+
                     # target as it would have been in prefilled_answer
-                    prefilled_answer_target = "answer_%s_%s" % (expression_string, 
-                                                          identifier_in_answer)
-                    prefilled_answer = prefilled_answers.get(prefilled_answer_target)
-                    if prefilled_answer:
-                        objectvalue = prefilled_answer
+                    objectvalue = the_prefilled_answer
 
             if objectvalue is not None:
                 if applet.applet_type.code == "Geogebra" \

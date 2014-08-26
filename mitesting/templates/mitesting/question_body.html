@@ -115,8 +115,6 @@
       for(var answer_identifier in data['answer_feedback']) {
 	  var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
 	  answer_feedback.html(data['answer_feedback'][answer_identifier]);
-	  console.log(answer_identifier)
-	  console.log(answer_identifier.indexOf("__binary_"))
 	  if(answer_identifier.indexOf("__binary_") == -1) {
 	      if(data['answer_correct'][answer_identifier]) {
 		  answer_feedback.removeClass('error').addClass('success');
