@@ -221,6 +221,7 @@ class Course(models.Model):
         new_course.pk = None
         new_course.code = new_code
         new_course.name = new_name
+        new_course.thread = new_thread
         new_course.last_attendance_date = None
         new_course.save()
         
@@ -236,6 +237,25 @@ class Course(models.Model):
             course_thread_content.save_to_new_course(new_course, new_thread)
             
             
+    def shift_dates(self, n_days):
+        """ 
+        Shifts class dates and due dates of assignments by n_days days
+        """
+        
+        timeshift = datetime.timedelta(days=n_days)
+
+        self.start_date += timeshift
+        self.end_date += timeshift
+        self.save()
+
+        for ctc in self.coursethreadcontent_set.all():
+            if ctc.initial_due_date:
+                ctc.initial_due_date += timeshift
+            if ctc.final_due_date:
+                ctc.final_due_date += timeshift
+            if ctc.initial_due_date or ctc.final_due_date:
+                ctc.save()
+
     def enrolled_students_ordered(self):
         return self.enrolled_students.filter(role='S').order_by('user__last_name', 'user__first_name')
 
