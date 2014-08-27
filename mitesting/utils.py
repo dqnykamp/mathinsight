@@ -44,7 +44,7 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
                           'evalf': evalf_expression,
                           'index': index,
                           'sum': sum,
-                          'iif': iif,
+                          'if': iif,
                           'len': len,
                           }
     
