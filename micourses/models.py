@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.safestring import mark_safe
 import datetime
 from django.conf import settings
+from math import ceil
 
 STUDENT_ROLE = 'S'
 INSTRUCTOR_ROLE = 'I'
@@ -143,12 +144,25 @@ class CourseAssessmentCategory(models.Model):
     assessment_category = models.ForeignKey(AssessmentCategory)
     number_count_for_grade = models.IntegerField(blank=True, null=True)
     rescale_factor = models.FloatField(default=1.0)
-    sort_order = models.FloatField(default=0.0)
+    sort_order = models.FloatField(blank=True)
 
     def __unicode__(self):
         return "%s for %s" % (self.assessment_category, self.course)
+
     class Meta:
         verbose_name_plural = 'Course assessment categories'
+        ordering = ['sort_order',  'id']
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.course.courseassessmentcategory_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(CourseAssessmentCategory, self).save(*args, **kwargs)
 
     def save_to_new_course(self, course):
         new_courseassessmentcategory = self
@@ -771,7 +785,7 @@ class CourseThreadContent(models.Model):
                                            default = 'Max')
     optional = models.BooleanField(default=False)
     record_scores = models.BooleanField(default=False)
-    sort_order = models.FloatField(default=0.0)
+    sort_order = models.FloatField(blank=True)
     
     class Meta:
         ordering = ['sort_order', 'id']
@@ -788,6 +802,17 @@ class CourseThreadContent(models.Model):
             raise ValidationError, \
                 "Thread content is not from course thread: %s"\
                 % self.course.thread
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.course.coursethreadcontent_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(CourseThreadContent, self).save(*args, **kwargs)
 
     def save_to_new_course(self, course, thread):
         original_pk = self.pk
@@ -1114,7 +1139,7 @@ class StudentContentAttempt(models.Model):
         if self.datetime is None:
             self.datetime = datetime.datetime.now()
 
-        super(StudentContentAttempt, self).save(*args, **kwargs) 
+        super(StudentContentAttempt, self).save(*args, **kwargs)
 
 
     def get_percent_credit(self):

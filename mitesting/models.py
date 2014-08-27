@@ -187,7 +187,7 @@ class QuestionAuthor(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(QuestionAuthor, self).save(*args, **kwargs) 
+        super(QuestionAuthor, self).save(*args, **kwargs)
 
 
 @python_2_unicode_compatible
@@ -217,7 +217,7 @@ class QuestionSubpart(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(QuestionSubpart, self).save(*args, **kwargs) 
+        super(QuestionSubpart, self).save(*args, **kwargs)
 
                         
     def fullcode(self):
@@ -260,7 +260,7 @@ class QuestionReferencePage(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(QuestionReferencePage, self).save(*args, **kwargs) 
+        super(QuestionReferencePage, self).save(*args, **kwargs)
 
 
 @python_2_unicode_compatible
@@ -299,7 +299,7 @@ class QuestionAnswerOption(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(QuestionAnswerOption, self).save(*args, **kwargs) 
+        super(QuestionAnswerOption, self).save(*args, **kwargs)
 
 
 
@@ -597,7 +597,7 @@ class AssessmentBackgroundPage(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(AssessmentBackgroundPage, self).save(*args, **kwargs) 
+        super(AssessmentBackgroundPage, self).save(*args, **kwargs)
 
 @python_2_unicode_compatible
 class QuestionSetDetail(models.Model):
@@ -636,7 +636,7 @@ class QuestionAssigned(models.Model):
             else:
                 self.question_set = 1
                 
-        super(QuestionAssigned, self).save(*args, **kwargs) 
+        super(QuestionAssigned, self).save(*args, **kwargs)
 
         
 @python_2_unicode_compatible
@@ -725,7 +725,7 @@ class Expression(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(Expression, self).save(*args, **kwargs) 
+        super(Expression, self).save(*args, **kwargs)
 
 
     def evaluate(self, global_dict=None, user_function_dict=None,
