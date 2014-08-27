@@ -30,5 +30,6 @@ urlpatterns = patterns \
      url(r'^gradebook/student/(?P<student_id>\w+)/(?P<pk>\w+)/(?P<attempt_number>\d+)/(?P<question_number>\d+)$',AssessmentAttemptQuestionInstructor.as_view(), name='mic-assessmentattemptquestioninstructor'),
      url(r'^gradebook/student/(?P<student_id>\w+)/(?P<pk>\w+)/(?P<attempt_number>\d+)/(?P<question_number>\d+)/(?P<question_attempt_number>\d+)$',AssessmentAttemptQuestionAttemptInstructor.as_view(), name='mic-assessmentattemptquestionattemptinstructor'),
      url(r'^gradebook/assessment/(?P<pk>\w+)$',EditAssessmentAttempt.as_view(), name='mic-editassessmentattempt'),
+     url(r'^gradebook/assessment/(?P<pk>\w+)/add_new_attempt$','add_assessment_attempts_view', name='mic-addnewassessmentattempt'),
 
 )

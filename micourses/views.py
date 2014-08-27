@@ -7,7 +7,7 @@ from micourses.models import Course, CourseUser, CourseThreadContent
 from mitesting.models import Assessment
 from midocs.models import Applet
 from micourses.forms import StudentContentAttemptForm
-from django.shortcuts import render_to_response, get_object_or_404, redirect
+from django.shortcuts import render_to_response, get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User, Group
@@ -1108,14 +1108,10 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
         return {'latest_attempts': self.latest_attempts,
                 'assessment': self.assessment,
                 'latest_attempts_present': latest_attempts_present,
-                'default_datetime': datetime.datetime.now()\
-                    .strftime('%Y-%m-%d %H:%M')
                 }
 
 
 # temporary view while gradebook view is so slow
-# and while don't have a way to have asseessment that don't contribute
-# to course score show up in gradebook
 @user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
 def instructor_list_assessments_view(request):
     courseuser = request.user.courseuser
@@ -1146,3 +1142,90 @@ def instructor_list_assessments_view(request):
           },
          context_instance=RequestContext(request))
 
+
+
+# eventually change this to use generic view
+# view to add assessment attempts
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+def add_assessment_attempts_view(request, pk):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+
+    content = get_object_or_404(CourseThreadContent, id=pk)
+
+    assessment=content.thread_content.content_object
+    latest_attempts = content.latest_student_attempts()
+
+    class DateTimeForm(forms.Form):
+        datetime = forms.DateTimeField()
+
+    error_message = ""
+    status_message = ""
+
+    # if POST, then add assessment attempts, assuming valid date
+    if request.method == 'POST':
+        datetime_form = DateTimeForm({'datetime': request.POST['new_datetime']})
+        valid_day = False
+        if datetime_form.is_valid():
+            attempt_datetime = datetime_form.cleaned_data['datetime']
+            n_added = 0
+            n_errors = 0
+            for (i,student) in \
+                enumerate(content.course.enrolled_students_ordered()):
+
+                new_score = request.POST['%i_new' % student.id]
+
+                if new_score != "":
+                    try:
+                        content.studentcontentattempt_set.create \
+                            (student = student, datetime=attempt_datetime, 
+                             score=new_score)
+                        
+                        latest_attempts[i]['status'] ="New score saved"
+                        latest_attempts[i]['number_attempts'] += 1
+                        n_added +=1
+                    except ValueError:
+                        latest_attempts[i]['error'] = "Enter a number"
+                        n_errors +=1
+
+            if(n_added):
+                status_message = "%s attempts added." % n_added
+            if(n_errors):
+                error_message = "%s errors encountered." % n_errors
+            if(not n_added and not n_errors):
+                error_message = "No attempts added.  Enter at least one score."
+
+            return render(request, 'micourses/edit_assessment_attempt.html',
+                          {'latest_attempts': latest_attempts,
+                           'assessment': assessment,
+                           'content': content,
+                           'error_message': error_message,
+                           'status_message': status_message,
+                       })
+            
+        else:
+            datetime_error = datetime_form['datetime'].errors
+            error_message = "Invalid date/time, no attempts added"
+            
+            return render(request, 'micourses/edit_assessment_attempt.html',
+                          {'latest_attempts': latest_attempts,
+                           'assessment': assessment,
+                           'content': content,
+                           'error_message': error_message,
+                           'datetime_error': datetime_error,
+                    })
+            
+        
+    else:
+        return HttpResponseRedirect(reverse('mic-editassessmentattempt',args=(pk,)))
