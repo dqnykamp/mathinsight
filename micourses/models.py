@@ -271,7 +271,8 @@ class Course(models.Model):
                 ctc.save()
 
     def enrolled_students_ordered(self):
-        return self.enrolled_students.filter(role='S').order_by('user__last_name', 'user__first_name')
+        student_enrollments = self.courseenrollment_set.filter(role=STUDENT_ROLE)
+        return self.enrolled_students.filter(courseenrollment__in=student_enrollments).order_by('user__last_name', 'user__first_name')
 
     def points_for_assessment_category(self, assessment_category):
         try:
