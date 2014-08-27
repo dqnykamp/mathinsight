@@ -1218,6 +1218,12 @@ def add_assessment_attempts_view(request, pk):
             datetime_error = datetime_form['datetime'].errors
             error_message = "Invalid date/time, no attempts added"
             
+            for (i,student) in \
+                enumerate(content.course.enrolled_students_ordered()):
+
+                new_score = request.POST['%i_new' % student.id]
+                latest_attempts[i]['old_value_string'] = 'value=%s' % new_score
+                
             return render(request, 'micourses/edit_assessment_attempt.html',
                           {'latest_attempts': latest_attempts,
                            'assessment': assessment,
