@@ -9,7 +9,9 @@
 
 <h3>Grades</h3>
 <p>Student: {{student.get_full_name}}<br/>
-Course: {{course}}</p>
+Course: {{course}}<br/>
+Section: {{enrollment.section}}<br/>
+Group: {{enrollment.group}}</p>
 <table class="bordertable">
 <thead><tr><th>Grade item</th><th class="centertext">Possible<br> points</th><th>Score</th><th>Percentage</th></tr></thead>
 <tbody>{% for category in category_scores.scores %}

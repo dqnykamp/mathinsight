@@ -748,7 +748,8 @@ class CourseEnrollment(models.Model):
     )
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
-    section = models.IntegerField()
+    section = models.IntegerField(blank=True, null=True)
+    group = models.SlugField(max_length=20, blank=True, null=True)
     date_enrolled = models.DateField()
     withdrew = models.BooleanField(default=False)
     role = models.CharField(max_length=1,

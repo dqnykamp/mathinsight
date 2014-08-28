@@ -17,9 +17,12 @@
 
 <table class="narrow" style="width:10%">
 <tr><td>1</td><td>&frac12;</td><td>0</td><td>E</td></tr>
-{% for student in course.enrolled_students_ordered %}
-<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{student.id}}" value="1" checked /></td><td><input id="id_student_halfpresent_{{forloop.counter}}" type="radio" name="student_{{student.id}}" value="0.5" /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{student.id}}" value="0"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{student.id}}" value="-1"  /></td><td class="nowrap">{{student.get_full_name}}</td></tr>
-{% endfor %}
+{% regroup enrollment_list by group as group_list %}
+{% for group in group_list %}
+<tr><td colspan=5>Group: {{group.grouper}}</td></tr>
+{% for enrollment in group.list %}
+<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="1" checked /></td><td><input id="id_student_halfpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0.5" /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="-1"  /></td><td class="nowrap">{{enrollment.student.get_full_name}}</td></tr>
+{% endfor %}{% endfor%}
 </table>
 </form>
 {% endblock %}

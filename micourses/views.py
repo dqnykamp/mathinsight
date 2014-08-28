@@ -741,6 +741,7 @@ def update_attendance_view(request):
     # get next_attendance date
     next_attendance_date = course.find_next_attendance_date()
             
+    enrollment_list = course.courseenrollment_set.filter(role='S').order_by('group', 'student__user__last_name', 'student__user__first_name')
 
     # no Google analytics for course
     noanalytics=True
@@ -749,6 +750,7 @@ def update_attendance_view(request):
         ('micourses/update_attendance.html', 
          {'course': course,
           'courseuser': courseuser,
+          'enrollment_list': enrollment_list,
           'message': message,
           'next_attendance_date': next_attendance_date,
           'noanalytics': noanalytics,
@@ -1042,6 +1044,7 @@ def student_gradebook_view(request):
          {'course': course,
           'courseuser': courseuser,
           'student': courseuser, 
+          'enrollment': course.courseenrollment_set.get(student=courseuser),
           'category_scores': category_scores,
           'noanalytics': noanalytics,
           },
