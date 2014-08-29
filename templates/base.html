@@ -92,7 +92,7 @@
 	</div>
 	<div class="ym-g33 ym-gr"> 
 	  <div class="ym-gbox-left" style="text-align: right;">
-	    {% if user.is_authenticated %}logged in as {{ user}}  (<a href="{% url 'mi-logout' %}">log out</a>){%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
+	    {% if user.is_authenticated %}logged in as {{ user}} {% comment %} (<a href="{% url 'mi-logout' %}">log out</a>){%endcomment%}{%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
 	  </div>
 	</div>
       </div>
