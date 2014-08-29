@@ -34,6 +34,7 @@ def day_of_week_to_python(day_of_week):
 
 class CourseUser(models.Model):
     user = models.OneToOneField(User)
+    userid = models.CharField(max_length=20, blank=True, null=True)
     selected_course_enrollment = models.ForeignKey(
         'CourseEnrollment', blank=True, null=True)
 
