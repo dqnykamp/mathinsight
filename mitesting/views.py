@@ -906,11 +906,16 @@ class AssessmentView(DetailView):
 
         """
 
+        if seed is None:
+            seed_from_get_post=False
+        else:
+            seed_from_get_post=True
+
         if self.object.nothing_random:
             seed='1'
             self.version = ''
         else:
-            if not seed:
+            if seed is not None:
                 seed='1'
             self.version = seed
         
@@ -964,11 +969,11 @@ class AssessmentView(DetailView):
                         raise 
 
 
-                # if instructor and seed is set (from GET)
+                # if instructor and seed is set from GET/POST
                 # then use that seed and don't link to attempt
                 # (i.e., skip this processing)
                 elif not (courseuser.get_current_role() == 'I' and \
-                          seed is not None):
+                          seed_from_get_post):
 
                     # else try to find latest attempt
                     try:
