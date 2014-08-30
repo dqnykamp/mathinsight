@@ -938,7 +938,7 @@ class AnswerNode(template.Node):
                      ans_id, answer_field_name, ans_id, 
                      ans_id, answer_field_name, readonly_string, checked_string,
                      answer['rendered_answer'] )
-            html_string += '<div id="%s_feedback" ></div></li>' % \
+            html_string += '<div class="info" id="%s_feedback" ></div></li>' % \
                 (answer_field_name)
             html_string = '<ul class="answerlist">%s</ul>' % html_string
             
