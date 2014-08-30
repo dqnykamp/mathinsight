@@ -609,7 +609,8 @@ def render_question(question, seed=None, solution=False,
     if show_solution_button:
         question_data['inject_solution_url'] = reverse(
             'mit-injectquestionsolution', kwargs={'question_id': question.id})
-        question_data['enable_solution_button'] = not question.computer_graded
+        question_data['enable_solution_button'] = not question.computer_graded \
+                        or  (question.show_solution_button_after_attempts == 0)
 
     # if error or rendering a solution 
     # return without adding computer grading data
