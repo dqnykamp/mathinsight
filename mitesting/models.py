@@ -418,6 +418,9 @@ class Assessment(models.Model):
         from .render_assessments import get_new_seed
         return get_new_seed()
 
+    def get_active_thread_content_set(self):
+        return self.thread_content_set.filter(section__thread__active=True)
+
     def user_can_view(self, user, solution=True, include_questions=True):
         permission_level=return_user_assessment_permission_level(user)
         privacy_level=self.return_privacy_level(

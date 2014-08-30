@@ -44,11 +44,11 @@ MathJax.Hub.Config({
 {% endblock %}
 
 {% block rightcolumn %}
-{% if assessment.thread_content_set.all %}
+{% if assessment.get_active_thread_content_set %}
 <a id="threads" class="anchor"></a>
 <section class="box threadbox">
 <h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
-{% for thread_content in assessment.thread_content_set.all %}
+{% for thread_content in assessment.get_active_thread_content_set %}
 <a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
 <h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
 <ul class="linklist">
