@@ -1481,6 +1481,10 @@ h5.pre_list {
     margin-bottom: -0.2em;
 }
 
+li.question span.top_level_question > p:first-child {
+    margin-top: 0px;
+}
+
 #main_content {
     border-bottom: 1px solid #ddd;
     padding-bottom: 3em;

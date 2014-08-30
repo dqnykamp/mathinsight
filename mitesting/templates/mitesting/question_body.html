@@ -10,7 +10,7 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-<span class="question" > 
+<span class="question top_level_question" > 
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -39,7 +39,7 @@
 {% if question_data.subparts %}
 <ol class='question_subparts'>
 {% for subpart in question_data.subparts %}
-<li class='question {{ subpart.spacing.css}}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
+<li class='question {{ subpart.subpart.spacing_css}}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
   {{ subpart.rendered_text}}
   {% if subpart.help_available %}
 <div class="question_help_container">

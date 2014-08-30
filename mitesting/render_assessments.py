@@ -231,7 +231,7 @@ def render_question_text(render_data, solution=False):
     subparts = question.questionsubpart_set.all()
     for subpart in subparts:
         template_string=template_string_base
-        subpart_dict = {'letter': subpart.get_subpart_letter() }
+        subpart_dict = {'letter': subpart.get_subpart_letter(), 'subpart': subpart }
         if solution:
             the_text = subpart.solution_text
         else:
