@@ -7,6 +7,7 @@ from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
 from mitesting.models import Question, QuestionAnswerOption, PlotFunction
+from mitesting.render_assessments import get_new_seed, render_question
 from mitesting.forms import MultipleChoiceQuestionForm
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -693,19 +694,20 @@ def _render_question(question, seed, context):
     # use qtag in identifier since coming from tag
     identifier = "qtag_%s" % questions_rendered
     
-    question_context = question.setup_context(identifier=identifier,
-                                              seed=seed)
-    
-    html_string = '<div class="question">%s</div>' % \
-        question.render_question(question_context, identifier = identifier)
+    try:
+        applet_data=context['_applet_data_']
+    except KeyError:
+        appet_data = Applet.return_initial_applet_data()
+        context['_applet_data_'] = applet_data
 
-    # check to see if any geogebra javascript commands were added from question
-    # if so, add them to the context
-    new_commands = question_context.dicts[0].get('geogebra_oninit_commands')
-    if new_commands:
-        geogebra_oninit_commands = context.dicts[0].get('geogebra_oninit_commands','')
-        geogebra_oninit_commands += new_commands
-        context.dicts[0]['geogebra_oninit_commands'] = geogebra_oninit_commands
+    question_data = question.render(question_identifier=identifier,
+                                    seed=seed, applet_data=applet_data)
+    
+    html_string = template.loader.render_to_string("mitesting/question_body.html",
+                                                   {'question_data': question_data})
+    
+    
+    html_string = '<div class="question">%s</div>' % html_string
 
     return html_string
 
@@ -742,7 +744,7 @@ class QuestionNode(template.Node):
                 return "<p>[Broken Question, question not found]</p>"
             
         if seed is None:
-            seed = thequestion.get_new_seed()
+            seed = get_new_seed()
             
         return _render_question(thequestion, seed, context)
 
@@ -801,7 +803,7 @@ class VideoQuestionsNode(template.Node):
 
         for videoquestion in thevideo.videoquestion_set.all():
             question = videoquestion.question
-            question_seed = question.get_new_seed()
+            question_seed = get_new_seed()
             html_string += _render_question(question, seed, context)
 
         return html_string

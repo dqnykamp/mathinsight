@@ -125,6 +125,13 @@ class Question(models.Model):
         return author_list_full(self.questionauthor_set.all(), 
                                 include_link=include_link)
 
+    def render(*args, **kwargs):
+        from .render_assessments import render_question
+        return render_question(*args, **kwargs)
+
+    def get_new_seed(self):
+        from .render_assessments import get_new_seed
+        return get_new_seed()
 
     def return_sympy_global_dict(self, user_response=False):
         """
@@ -406,6 +413,10 @@ class Assessment(models.Model):
         permissions = (
             ("administer_assessment","Can administer assessments"),
         )
+
+    def get_new_seed(self):
+        from .render_assessments import get_new_seed
+        return get_new_seed()
 
     def user_can_view(self, user, solution=True, include_questions=True):
         permission_level=return_user_assessment_permission_level(user)

@@ -87,9 +87,7 @@ class QuestionView(DetailView):
 
         applet_data = Applet.return_initial_applet_data()
 
-        from mitesting.render_assessments import render_question
-        context['question_data']= render_question(
-            question=self.object,
+        context['question_data']= self.object.render(
             seed=seed, user=self.request.user,
             question_identifier=identifier, 
             allow_solution_buttons=True,
