@@ -211,7 +211,9 @@ class Course(models.Model):
                                               default='F')
     
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
-
+    syllabus_url = models.URLField(blank=True, null=True)
+    instructor_url = models.URLField(blank=True, null=True)
+    
     def __unicode__(self):
         return self.name
 

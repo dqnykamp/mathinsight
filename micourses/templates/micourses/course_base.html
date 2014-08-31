@@ -14,8 +14,8 @@
 
 {% block rightcolumn %}
  <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a><br/>
-<a href="http://math.umn.edu/~nykamp/m1241/fall13/syllabus.html">Course syllabus</a><br/>
-<a href="http://math.umn.edu/~nykamp/m1241/fall13/instructors.html">Instructors and office hours</a><br/>
+{% if course.syllabus_url %}<a href="{{course.syllabus_url}}">Course syllabus</a><br/>{% endif %}
+{% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
 {% if courseuser.get_current_role == 'I' %}
 <a href="{% url 'mic-instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
 <a href="{% url 'mic-instructorlistassessments' %}">List assessments</a> (enter grades)<br/>

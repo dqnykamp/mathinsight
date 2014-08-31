@@ -123,8 +123,8 @@ class CourseAdmin(reversion.VersionAdmin):
     inlines=[CourseAssessmentCategoryInline, CourseEnrollmentInline, CourseSkipDate]
     fieldsets = (
         (None, {
-                'fields': ('code', 'name',  'short_name', 'semester',
-                           'description', 'thread', 'active')
+                'fields': ('code', ('name',  'short_name'), 'semester',
+                           'description', 'thread', ('syllabus_url', 'instructor_url'), 'active')
                 }),
         ('Dates and attendance', {
                 'classes': ('collapse',),
