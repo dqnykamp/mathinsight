@@ -20,6 +20,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils import formats
 from django.utils.safestring import mark_safe
+from django.db import IntegrityError
 from django import forms
 import datetime
 from micourses.templatetags.course_tags import floatformat_or_dash
@@ -706,8 +707,6 @@ def update_attendance_view(request):
             attendance_date = None
 
         if valid_day:
-            # delete previous attendance data for the day
-            course.studentattendance_set.filter(date=attendance_date).delete()
             
             for student in course.enrolled_students.all():
                 present=request.POST.get('student_%s' % student.id, 0)
@@ -715,10 +714,13 @@ def update_attendance_view(request):
                     present = float(present)
                 except ValueError:
                     present = 0.0
-                course.studentattendance_set.create(student=student, 
-                                                    date=attendance_date,
-                                                    present=present)
 
+                sa, created = course.studentattendance_set.get_or_create(
+                    student=student, date=attendance_date,
+                    defaults = {'present': present})
+                if not created and sa.present != -1:
+                    sa.present = present
+                    sa.save()
             
             if not course.last_attendance_date \
                     or attendance_date > course.last_attendance_date:
@@ -804,7 +806,7 @@ def update_individual_attendance_view(request):
 
             for i, attendance_date in enumerate(dates):
                 self.fields['date_%s' % i] = forms.ChoiceField\
-                    (label=attendance_date['date'],\
+                    (label=str(attendance_date['date']),\
                          initial=attendance_date['present'],\
                          choices=((1,1),(0.5,0.5),(0,0),(-1,-1)),\
                          widget=forms.RadioSelect,
@@ -847,14 +849,11 @@ def update_individual_attendance_view(request):
 
                 attendance.append({'date': date.date, 'present': present})
 
-    
-                
-    
 
     # if POST, then update attendance, assuming data is valid
     if request.method == 'POST':
 
-         attendance_dates_form = AttendanceDatesForm(request.POST or None, dates=attendance)
+         attendance_dates_form = AttendanceDatesForm(request.POST or None, dates=attendance, label_suffix="")
 
          if attendance_dates_form.is_valid():
              if last_attendance_date:
@@ -871,10 +870,13 @@ def update_individual_attendance_view(request):
     # if get
     else:
         if student:
-            attendance_dates_form = AttendanceDatesForm(dates=attendance)
+            attendance_dates_form = AttendanceDatesForm(dates=attendance, label_suffix="")
         else:            
             attendance_dates_form = AttendanceDatesForm()
 
+
+    # get next_attendance date
+    next_attendance_date = course.find_next_attendance_date()
 
     # no Google analytics for course
     noanalytics=True
@@ -886,10 +888,160 @@ def update_individual_attendance_view(request):
           'select_student_form': select_student_form,
           'student': student,
           'attendance_dates_form': attendance_dates_form,
+          'next_attendance_date': next_attendance_date,
           'message': message,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
+
+
+
+@permission_required("micourses.update_attendance")
+def add_excused_absence_view(request):
+    
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+
+    if request.method == "GET":
+        return HttpResponseRedirect(reverse('mic-updateindividualattendance') + '?' + request.GET.urlencode())
+
+    class SelectStudentForm(forms.Form):
+        student = forms.ModelChoiceField(queryset=course.enrolled_students_ordered())           
+    # get student from request
+    student_id = request.POST.get('student')
+    try:
+        student = CourseUser.objects.get(id=student_id)
+        select_student_form = SelectStudentForm(request.POST)
+    except (ObjectDoesNotExist, ValueError):
+        return HttpResponseRedirect(reverse('mic-updateindividualattendance'))
+
+
+    thestudent=student
+    class AttendanceDatesForm(forms.Form):
+        student = forms.ModelChoiceField\
+            (queryset=course.enrolled_students_ordered(), \
+                 widget=forms.HiddenInput,\
+                 initial=thestudent)
+        
+        def __init__(self, *args, **kwargs):
+            try:
+                dates = kwargs.pop('dates')
+            except:
+                dates =[]
+            super(AttendanceDatesForm, self).__init__(*args, **kwargs)
+
+            for i, attendance_date in enumerate(dates):
+                self.fields['date_%s' % i] = forms.ChoiceField\
+                    (label=str(attendance_date['date']),\
+                         initial=attendance_date['present'],\
+                         choices=((1,1),(0.5,0.5),(0,0),(-1,-1)),\
+                         widget=forms.RadioSelect,
+                     )
+                
+        def date_attendance(self):
+            for name, value in self.cleaned_data.items():
+                if name.startswith('date_'):
+                    yield (self.fields[name].label, value)
+
+
+
+
+
+    class DateForm(forms.Form):
+        date = forms.DateField()
+
+    # if POST, then update attendance, assuming date is valid
+    if request.method == 'POST':
+        date_form = DateForm({'date':  request.POST['attendance_date']})
+        valid_day = False
+        if date_form.is_valid():
+            attendance_date = date_form.cleaned_data['date']
+            
+            # check if date is a class day
+            for class_day in course.attendancedate_set.all():
+                if attendance_date == class_day.date:
+                    valid_day = True
+                    break
+        else:
+            attendance_date = None
+
+        if valid_day:
+            sa, created = student.studentattendance_set.get_or_create(
+                course=course, date=attendance_date, defaults = {'present': -1})
+            
+            if not created:
+                sa.present=-1
+                sa.save()
+
+            message = "Added excused absence for %s on %s." % \
+                      (student, attendance_date.strftime("%B %d, %Y"))
+
+        else:
+
+            message = "Excused absence not added.  " \
+                + "%s is not a valid course day: %s" % \
+                (request.POST['attendance_date'], attendance_date)
+
+    # no Google analytics for course
+    noanalytics=True
+
+    # get list of attendance up to last_attendance_date
+    attendance=[]
+    last_attendance_date = course.last_attendance_date
+    if last_attendance_date:
+        date_enrolled = student.courseenrollment_set.get(course=course)\
+            .date_enrolled
+        attendance_dates = course.attendancedate_set\
+            .filter(date__lte = last_attendance_date)\
+            .filter(date__gte = date_enrolled)
+        days_attended = student.studentattendance_set.filter \
+            (course=course).filter(date__lte = last_attendance_date)\
+            .filter(date__gte = date_enrolled)
+
+        for date in attendance_dates:
+            try:
+                attended = days_attended.get(date=date.date)
+
+                # for integer values, present must be integer
+                # so that radio button shows initial value
+                if attended.present==1 or attended.present==0 or attended.present==-1:
+                    present=int(round(attended.present))
+                else:
+                    present = attended.present
+            except ObjectDoesNotExist:
+                present = 0
+
+            attendance.append({'date': date.date, 'present': present})
+
+
+    attendance_dates_form = AttendanceDatesForm(dates=attendance, label_suffix="")
+
+
+    return render_to_response \
+        ('micourses/update_individual_attendance.html', 
+         {'course': course,
+          'courseuser': courseuser,
+          'select_student_form': select_student_form,
+          'student': student,
+          'attendance_dates_form': attendance_dates_form,
+          'next_attendance_date': attendance_date,
+          'message': message,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
+        
+
 
 @login_required
 def attendance_display_view(request):

@@ -190,6 +190,9 @@ class StudentAttendance(models.Model):
     # 0: absent, 1: present, 0.5: half-present, -1: excused absense
     present = models.FloatField(default=1.0)
 
+    class Meta:
+        unique_together = ['course', 'student', 'date']
+
 # should this be a group instead?
 class Course(models.Model):
     code = models.SlugField(max_length=50, unique=True)

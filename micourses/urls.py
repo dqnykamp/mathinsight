@@ -20,6 +20,7 @@ urlpatterns = patterns \
      url(r'^contentlist$','content_list_view', name='mic-contentlist'),
      url(r'^update_attendance$', 'update_attendance_view', name='mic-updateattendance'),
      url(r'^update_individual_attendance$', 'update_individual_attendance_view', name='mic-updateindividualattendance'),
+     url(r'^add_excused_absence$', 'add_excused_absence_view', name='mic-addexcusedabsence'),
      url(r'^attendance_display$', 'attendance_display_view', name='mic-attendancedisplay'),
      url(r'^adjusted_due_date_calculation/(?P<id>\w+)$','adjusted_due_date_calculation_view', name='mic-adjustedduedatecalculation'),
      url(r'^grades$','student_gradebook_view', name='mic-studentgradebook'),

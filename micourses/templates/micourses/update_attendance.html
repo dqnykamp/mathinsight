@@ -21,7 +21,7 @@
 {% for group in group_list %}
 <tr><td colspan=5>Group: {{group.grouper}}</td></tr>
 {% for enrollment in group.list %}
-<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="1" checked /></td><td><input id="id_student_halfpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0.5" /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="-1"  /></td><td class="nowrap">{{enrollment.student.get_full_name}}</td></tr>
+<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="1" checked /></td><td><input id="id_student_halfpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0.5" /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="-1"  /></td><td class="nowrap">{{enrollment.student}}</td></tr>
 {% endfor %}{% endfor%}
 </table>
 </form>
