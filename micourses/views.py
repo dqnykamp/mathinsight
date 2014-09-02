@@ -670,7 +670,7 @@ def content_list_view(request):
 
 
 
-@permission_required("micourses.update_attendance")
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
 def update_attendance_view(request):
     
     courseuser = request.user.courseuser
@@ -759,7 +759,7 @@ def update_attendance_view(request):
           },
          context_instance=RequestContext(request))
 
-@permission_required("micourses.update_attendance")
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
 def update_individual_attendance_view(request):
     
     courseuser = request.user.courseuser
@@ -896,7 +896,7 @@ def update_individual_attendance_view(request):
 
 
 
-@permission_required("micourses.update_attendance")
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
 def add_excused_absence_view(request):
     
     courseuser = request.user.courseuser

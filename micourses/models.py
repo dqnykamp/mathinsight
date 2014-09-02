@@ -222,10 +222,6 @@ class Course(models.Model):
 
     class Meta:
         ordering = ['start_date','id']
-        permissions = (
-            ("update_attendance","Can update attendance"),
-        )
-
 
     # save course as a new course
     # copy course thread content
