@@ -927,20 +927,36 @@ class AnswerNode(template.Node):
             random.shuffle(rendered_answer_list)
         
             html_string = ""
-            for answer in rendered_answer_list:
-                ans_id = answer['answer_id']
-                checked_string = ""
-                if given_answer is not None:
-                    if str(ans_id) == str(given_answer):
-                        checked_string = " checked"
-                html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s"%s%s /> %s</label>' % \
-                    (answer_field_name, ans_id, answer_field_name,
-                     ans_id, answer_field_name, ans_id, 
-                     ans_id, answer_field_name, readonly_string, checked_string,
-                     answer['rendered_answer'] )
-            html_string += '<div class="info" id="%s_feedback" ></div></li>' % \
-                (answer_field_name)
+            if kwargs.get("select"):
+                html_string += "<option></option>"
+                for answer in rendered_answer_list:
+                    ans_id = answer['answer_id']
+                    selected_string = ""
+                    if given_answer is not None:
+                        if str(ans_id) == str(given_answer):
+                            selected_string = " selected"
+                    html_string += '<option id="id_%s_%s" value="%s"%s> %s</option>' % \
+                        (answer_field_name, ans_id, 
+                         ans_id, selected_string, answer['rendered_answer'] )
+                html_string = '<select id="id_%s" name="%s" class="mi_select">%s</select>' % \
+                              (answer_field_name, answer_field_name, html_string)
+
+            else:
+                for answer in rendered_answer_list:
+                    ans_id = answer['answer_id']
+                    checked_string = ""
+                    if given_answer is not None:
+                        if str(ans_id) == str(given_answer):
+                            checked_string = " checked"
+                    html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s"%s%s /> %s</label></li>' % \
+                        (answer_field_name, ans_id, answer_field_name,
+                         ans_id, answer_field_name, ans_id, 
+                         ans_id, answer_field_name, readonly_string, checked_string,
+                         answer['rendered_answer'] )
+
             html_string = '<ul class="answerlist">%s</ul>' % html_string
+            html_string += '<div class="info" id="%s_feedback" ></div>' % \
+                (answer_field_name)
             
             return mark_safe(html_string)
         
