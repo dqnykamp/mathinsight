@@ -76,13 +76,13 @@ def round_expression(expression, n=0, initial_n_digits=100):
         from sympy import Integer
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Integer(w.round(n)),
+            lambda w: w if not w.is_Number else Integer(round(w,n)),
             atoms=True)
     else:
         from sympy import Float
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Float(str(w.round(n))),
+            lambda w: w if not w.is_Number else Float(str(round(w,n))),
             atoms=True)
         
     return expression
