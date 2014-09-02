@@ -915,7 +915,7 @@ class AssessmentView(DetailView):
             seed='1'
             self.version = ''
         else:
-            if seed is not None:
+            if seed is None:
                 seed='1'
             self.version = seed
         
