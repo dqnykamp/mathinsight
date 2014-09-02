@@ -842,9 +842,12 @@ class AssessmentView(DetailView):
         if self.request.user.has_perm("mitesting.administer_assessment"):
             context['generate_assessment_link'] = True
         else:
-            if self.request.user.courseuser:
-                if self.request.courseuser.get_current_role == 'I':
-                    context['generate_assessment_link'] = True
+            try:
+                if self.request.user.courseuser:
+                    if self.request.courseuser.get_current_role() == 'I':
+                        context['generate_assessment_link'] = True
+            except AttributeError:
+                pass
 
         if context['generate_assessment_link']:
             if not self.solution:
@@ -1085,10 +1088,12 @@ def assessment_overview_view(request, assessment_code):
     if request.user.has_perm("mitesting.administer_assessment"):
         generate_assessment_link = True
     else:
-        if self.request.user.courseuser:
-            if self.request.courseuser.get_current_role == 'I':
-                generate_assessment_link = True
-
+        try:
+            if self.request.user.courseuser:
+                if self.request.courseuser.get_current_role() == 'I':
+                    generate_assessment_link = True
+        except AttributeError:
+            pass
 
     # turn off google analytics for localhost
     noanalytics=False

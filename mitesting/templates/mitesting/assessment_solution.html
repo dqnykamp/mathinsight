@@ -6,10 +6,10 @@
 
 <section class="quiz_main">
 <ol class="quiz_questions">
-{% for question in rendered_list %}
+{% for solution in rendered_list %}
 <a class="anchor" id="solution{{ forloop.counter}}"></a>
 <li class="question{%if solution.question.css_class%} {{ solution.question.css_class }}{%endif%}">
-{% question_solution_body question.question_data %}</li>
+{% question_solution_body solution.question_data %}</li>
 {% endfor %}
 </ol>
 </section>
