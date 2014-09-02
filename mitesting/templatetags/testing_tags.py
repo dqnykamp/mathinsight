@@ -940,7 +940,8 @@ class AnswerNode(template.Node):
                          ans_id, selected_string, answer['rendered_answer'] )
                 html_string = '<select id="id_%s" name="%s" class="mi_select">%s</select>' % \
                               (answer_field_name, answer_field_name, html_string)
-
+                html_string = '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info" id="%s_feedback"></span></span>'  %\
+                              (html_string, answer_field_name)
             else:
                 for answer in rendered_answer_list:
                     ans_id = answer['answer_id']
@@ -954,9 +955,9 @@ class AnswerNode(template.Node):
                          ans_id, answer_field_name, readonly_string, checked_string,
                          answer['rendered_answer'] )
 
-            html_string = '<ul class="answerlist">%s</ul>' % html_string
-            html_string += '<div class="info" id="%s_feedback" ></div>' % \
-                (answer_field_name)
+                html_string = '<ul class="answerlist">%s</ul>' % html_string
+                html_string += '<div class="info" id="%s_feedback" ></div>' % \
+                               (answer_field_name)
             
             return mark_safe(html_string)
         
