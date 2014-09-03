@@ -349,8 +349,19 @@ def create_symbol_name_dict():
 def try_normalize_expr(expr):
     """
     Attempt to normalized expression.
+    If relational, subtract rhs from both sides.
     Use, doit, expand, then ratsimp to simplify rationals, then expand again
     """
+    
+    if expr.is_Relational:
+        from sympy import StrictLessThan, LessThan
+
+        if isinstance(expr, StrictLessThan) or isinstance(expr,LessThan):
+            expr = expr.func(0, expr.rhs-expr.lhs)
+        else:
+            expr = expr.func(expr.lhs-expr.rhs,0)
+
+
     from mitesting.sympy_customized import bottom_up
     return bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
 
@@ -366,7 +377,7 @@ def check_equality(expression1, expression2, tuple_is_unordered=False):
     if isinstance(expression1, Tuple):
         return check_tuple_equality(expression1, expression2, 
                                     tuple_is_unordered=tuple_is_unordered)
-    elif isinstance(expression1, Relational):
+    elif expression1.is_Relational:
         return check_relational_equality(expression1, expression2)
     elif isinstance(expression1, LinearEntity):
         try:
