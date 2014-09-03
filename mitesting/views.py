@@ -1089,8 +1089,8 @@ def assessment_overview_view(request, assessment_code):
         generate_assessment_link = True
     else:
         try:
-            if self.request.user.courseuser:
-                if self.request.courseuser.get_current_role() == 'I':
+            if request.user.courseuser:
+                if request.courseuser.get_current_role() == 'I':
                     generate_assessment_link = True
         except AttributeError:
             pass
