@@ -5,7 +5,7 @@
 
 {% block content %}
 <h3>{{course}}</h3>
-
+{% if courseuser.selected_course_enrollment.group %}<h5>Group: {{ courseuser.selected_course_enrollment.group }}</h5>{% endif %}
 {% if multiple_courses %}<p><a href= "{% url 'mic-selectcourse' %}">Select other course</a></p>{% endif %}
 
 <h4>Next items</h4>
