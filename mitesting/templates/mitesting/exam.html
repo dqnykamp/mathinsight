@@ -48,7 +48,7 @@
 <ol class="exam_questions">
 {% for question in question_list %}
 {% if not question.previous_same_group %}{% new_exam_page %}{% endif %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} points) {%endif%}{{ question.question_text }}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize}}) {%endif%}{{ question.question_text }}</li>
 {% endfor %}
 </ol>
 </section>

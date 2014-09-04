@@ -16,7 +16,7 @@
 <ol class="exam_solutions">
 {% for solution in solution_list %}
 {% comment %}{% if not forloop.first %}{% new_exam_page %}{% endif %}{% endcomment %}
-<li class="solution">{% if solution.points %}({{solution.points}} points) {%endif%}{{ solution.solution_text }}</li>
+<li class="solution">{% if solution.points %}({{solution.points}} point{{solution.points|pluralize}}) {%endif%}{{ solution.solution_text }}</li>
 {% endfor %}
 </ol>
 </section>
