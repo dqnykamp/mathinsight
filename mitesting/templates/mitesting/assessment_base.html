@@ -3,7 +3,7 @@
 
 {% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
 
-{% block title %}{{ assessment_name }}{{ version_string }} - Math Insight{%endblock%}
+{% block title %}{{ assessment_name }} - Math Insight{%endblock%}
 
 {% block extrastyle %}
 <link href="{{ STATIC_URL }}mitesting/miassessment.css" rel="stylesheet" type="text/css"/>
