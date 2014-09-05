@@ -4,7 +4,7 @@
 <h3>{{ assessment_name }}<span class="visible_print_only">{{version_string}}</span></h3>
 <h5>{{ course }} {{ semester }}</h5>
 
-<section class="namesection"><div class="nameblank">Name:</div><div class="sectionblank">Section:</div></section>
+<section class="namesection"><div class="nameblank">Name:</div><div class="sectionblank">Section:<br/>Table/group #:</div></section>
 
 <section class="assessment_main">
 {% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
