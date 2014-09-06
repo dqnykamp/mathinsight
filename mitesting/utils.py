@@ -46,6 +46,8 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
                           'sum': sum,
                           'if': iif,
                           'len': len,
+                          'log': log,
+                          'ln': log
                           }
     
     # create a set of allowed commands containing all comma-separated

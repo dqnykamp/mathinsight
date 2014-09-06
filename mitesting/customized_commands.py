@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify
+from sympy import Tuple, sympify, Function
 from sympy import Abs as sympy_Abs
 from mitesting.sympy_customized import bottom_up
 
@@ -213,3 +213,17 @@ def iif(cond, result_if_true, result_if_false):
     except:
         return ""
       
+
+class log(Function):
+    """
+    Don't implicitly do any simplification or evalf 
+    until doit() is called.  
+    Is an undefined function until call doit().
+    """
+
+    def _eval_evalf(self,prec):
+        pass
+
+    def doit(self, **hints):
+        from sympy import log as sympy_log
+        return sympy_log(self.args[0]).doit(**hints)
