@@ -124,7 +124,7 @@ class CourseAdmin(reversion.VersionAdmin):
     fieldsets = (
         (None, {
                 'fields': ('code', ('name',  'short_name'), 'semester',
-                           'description', 'thread', ('syllabus_url', 'instructor_url'), 'active')
+                           'description', 'thread', ('syllabus_url', 'instructor_url','tutoring_url',), 'active')
                 }),
         ('Dates and attendance', {
                 'classes': ('collapse',),
