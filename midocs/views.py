@@ -145,6 +145,8 @@ def pageview(request, page_code):
     # render page text with extra template tags
     context=RequestContext(request)
     context['_applet_data_'] = Applet.return_initial_applet_data()
+    context['thepage'] = thepage
+    context['notation_system']=notation_system,
 
     if thepage.text:
         try:
