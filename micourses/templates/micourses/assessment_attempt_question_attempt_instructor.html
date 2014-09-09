@@ -30,7 +30,7 @@ MathJax.Hub.Config({
 
 <p><i>As answered on {{answer_dict.datetime}}</i></p>
 
-{{ rendered_question }}
+{% question_body question_data %}
 
 <p>Points: {{ answer_dict.points}}<br/>
 Percent: {{ answer_dict.credit_percent|percent_checked_100 }}<br/>
