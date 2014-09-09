@@ -273,8 +273,11 @@ class Course(models.Model):
             if ctc.initial_due_date or ctc.final_due_date:
                 ctc.save()
 
-    def enrolled_students_ordered(self):
+    def enrolled_students_ordered(self, active_only=True):
         student_enrollments = self.courseenrollment_set.filter(role=STUDENT_ROLE)
+        if active_only:
+            student_enrollments = student_enrollments.filter(withdrew=False)
+
         return self.enrolled_students.filter(courseenrollment__in=student_enrollments).order_by('user__last_name', 'user__first_name')
 
     def points_for_assessment_category(self, assessment_category):

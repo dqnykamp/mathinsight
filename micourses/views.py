@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from micourses.models import Course, CourseUser, CourseThreadContent
+from micourses.models import Course, CourseUser, CourseThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
 from mitesting.models import Assessment
 from midocs.models import Applet
 from micourses.forms import StudentContentAttemptForm
@@ -161,7 +161,7 @@ def course_main_view(request):
 
     next_items = course.next_items(courseuser, number=5)
     
-    if courseuser.get_current_role() == 'I':
+    if courseuser.get_current_role() == INSTRUCTOR_ROLE:
         return render_to_response \
             ('micourses/course_instructor_view.html', 
              {'student': courseuser,
@@ -264,7 +264,7 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
 
     template_name = 'micourses/assessment_attempted_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptedInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -398,7 +398,7 @@ class AssessmentAttempt(AssessmentAttempted):
 class AssessmentAttemptInstructor(AssessmentAttempt):
     template_name = 'micourses/assessment_attempt_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -468,7 +468,7 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
 class AssessmentAttemptQuestionInstructor(AssessmentAttemptQuestion):
     template_name = 'micourses/assessment_attempt_question_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptQuestionInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -565,7 +565,7 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
 class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttempt):
     template_name = 'micourses/assessment_attempt_question_attempt_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptQuestionAttemptInstructor, self)\
             .dispatch(request, *args, **kwargs) 
@@ -670,7 +670,7 @@ def content_list_view(request):
 
 
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def update_attendance_view(request):
     
     courseuser = request.user.courseuser
@@ -708,7 +708,7 @@ def update_attendance_view(request):
 
         if valid_day:
             
-            for student in course.enrolled_students.all():
+            for student in course.enrolled_students_ordered():
                 present=request.POST.get('student_%s' % student.id, 0)
                 try:
                     present = float(present)
@@ -743,7 +743,7 @@ def update_attendance_view(request):
     # get next_attendance date
     next_attendance_date = course.find_next_attendance_date()
             
-    enrollment_list = course.courseenrollment_set.filter(role='S').order_by('group', 'student__user__last_name', 'student__user__first_name')
+    enrollment_list = course.courseenrollment_set.filter(role=STUDENT_ROLE,withdrew=False).order_by('group', 'student__user__last_name', 'student__user__first_name')
 
     # no Google analytics for course
     noanalytics=True
@@ -759,7 +759,7 @@ def update_attendance_view(request):
           },
          context_instance=RequestContext(request))
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def update_individual_attendance_view(request):
     
     courseuser = request.user.courseuser
@@ -896,7 +896,7 @@ def update_individual_attendance_view(request):
 
 
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def add_excused_absence_view(request):
     
     courseuser = request.user.courseuser
@@ -1203,7 +1203,7 @@ def student_gradebook_view(request):
          context_instance=RequestContext(request))
 
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def instructor_gradebook_view(request):
     courseuser = request.user.courseuser
     
@@ -1243,7 +1243,7 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
     context_object_name = 'content'
     template_name = 'micourses/edit_assessment_attempt.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I'))
+    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(EditAssessmentAttempt, self)\
             .dispatch(request, *args, **kwargs) 
@@ -1267,7 +1267,7 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
 
 
 # temporary view while gradebook view is so slow
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def instructor_list_assessments_view(request):
     courseuser = request.user.courseuser
     
@@ -1301,7 +1301,7 @@ def instructor_list_assessments_view(request):
 
 # eventually change this to use generic view
 # view to add assessment attempts
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()=='I')
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
 def add_assessment_attempts_view(request, pk):
     courseuser = request.user.courseuser
     
