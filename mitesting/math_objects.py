@@ -397,14 +397,15 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
         
     from sympy.geometry.line import LinearEntity
  
-    if isinstance(expression1, Tuple):
+    if isinstance(expression1, Tuple) or isinstance(expression2, Tuple):
         return check_tuple_equality(expression1, expression2, 
                                     tuple_is_unordered=tuple_is_unordered,
                                     partial_tuple_matches=
                                     partial_tuple_matches)
-    elif expression1.is_Relational:
+    elif expression1.is_Relational or expression2.is_Relational:
         return 1*check_relational_equality(expression1, expression2)
-    elif isinstance(expression1, LinearEntity):
+    elif isinstance(expression1, LinearEntity) or \
+         isinstance(expression2, LinearEntity):
         try:
             return 1*expression1.is_similar(expression2)
         except AttributeError:
