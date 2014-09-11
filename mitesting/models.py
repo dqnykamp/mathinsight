@@ -288,6 +288,7 @@ class QuestionAnswerOption(models.Model):
 
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
+    match_partial_tuples_on_compare = models.BooleanField(default=False)
 
     sort_order = models.FloatField(blank=True)
 

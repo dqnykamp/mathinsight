@@ -31,6 +31,9 @@ class math_object(object):
             on normalized versions of expressions.  Currently,
             normalizations involves trying to expand and call
             ratsimp to simplify rational expressions.
+        match_partial_tuples_on_compare: if True, then check for 
+            partial equality on tuples, returning fraction of 
+            elements that match
         split_symbols_on_compare: flag set to indicate that answers
             to be compared to this object should have symbols split
             when parsing.  If this flag is true, then only effect on
@@ -288,6 +291,12 @@ class math_object(object):
            are not the same, but their normalized expressions are the same.
         0  if the expressions not the same and the normalized expressions
            are not the same
+        p  number p, 0 < p < 1, if expressions are partially equal,
+           where p indicates the fraction of expressions that are equal
+        -p number p, 0 < p < 1, if normalize_on compare is not set,
+           the expressions themselves are not the same,
+           but their normalized expressions are partially equal, then
+           p indicates the fraction of normalized expressions that are equal
         In all determinations of equality, expressions are rounded to
         the precision determined by n_digits and round_decimals, if set.
         """
@@ -309,25 +318,33 @@ class math_object(object):
             expression=self.eval_to_precision(self._expression)
 
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
-        expressions_equal=False
-        equal_if_normalize=False
+        match_partial_tuples_on_compare = self._parameters.get(
+            'match_partial_tuples_on_compare',False)
+        expressions_equal=0
+        equal_if_normalize=0
         if self._parameters.get('normalize_on_compare'):
             expressions_equal = check_equality \
                 (expression_normalize, new_expr_normalize, \
-                     tuple_is_unordered=tuple_is_unordered)
+                 tuple_is_unordered=tuple_is_unordered, \
+                 partial_tuple_matches = \
+                 match_partial_tuples_on_compare)
         else:
             expressions_equal = check_equality \
                 (expression, new_expr, \
-                     tuple_is_unordered=tuple_is_unordered)
-            if not expressions_equal:
+                 tuple_is_unordered=tuple_is_unordered, \
+                 partial_tuple_matches = \
+                 match_partial_tuples_on_compare)
+            if expressions_equal==0:
                 equal_if_normalize = check_equality \
                     (expression_normalize, new_expr_normalize, \
-                         tuple_is_unordered=tuple_is_unordered)
+                     tuple_is_unordered=tuple_is_unordered, \
+                     partial_tuple_matches = \
+                     match_partial_tuples_on_compare)
 
         if expressions_equal:
-            return 1
+            return expressions_equal
         if equal_if_normalize:
-            return -1
+            return -1*equal_if_normalize
         return 0
 
         
@@ -366,35 +383,55 @@ def try_normalize_expr(expr):
     return bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
 
 
-def check_equality(expression1, expression2, tuple_is_unordered=False):
+def check_equality(expression1, expression2, tuple_is_unordered=False, \
+                   partial_tuple_matches=False):
     """ 
     Determine if expression1 and expression2 are equal.
     If tuple_is_unordered is set, then tuples are compared regardless of order.
+    Returns:
+    1   if correct
+    0   if completely incorrect
+    p   number p, 0 < p < 1 indicating fraction correct 
+        in case is partially correct
     """
         
     from sympy.geometry.line import LinearEntity
-
+ 
     if isinstance(expression1, Tuple):
         return check_tuple_equality(expression1, expression2, 
-                                    tuple_is_unordered=tuple_is_unordered)
+                                    tuple_is_unordered=tuple_is_unordered,
+                                    partial_tuple_matches=
+                                    partial_tuple_matches)
     elif expression1.is_Relational:
-        return check_relational_equality(expression1, expression2)
+        return 1*check_relational_equality(expression1, expression2)
     elif isinstance(expression1, LinearEntity):
         try:
-            return expression1.is_similar(expression2)
+            return 1*expression1.is_similar(expression2)
         except AttributeError:
-            return  False
+            return 0
     else:
         if expression1 == expression2:
-            return True
+            return 1
         else:
-            return False
+            return 0
 
-def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False):
+def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
+                         partial_tuple_matches=False):
     """
     Check if two Tuples are equal, converting non-Tuples to length 1 Tuples.
+    (Hence doesn't work for tuples just for Tuples)
+
     If tuple_is_unordered is set, then check if elements match
     regardless of order.
+    If partial_tuple_matches is set, then check if just some elements
+    match and return the fraction that match.  For ordered tuples, 
+    the matching elements must be in the same order.
+
+    Return 
+    1   if exact match
+    p   number p, 0 < p < 1, if partial_tuple_matches is set and fracction
+        p of elements mtach.  Denominator of fraction is max length of 
+        both tuples
     """
 
     # if either isn't a tuple, replace with a tuple of length 1
@@ -405,29 +442,52 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False):
     
     # if tuple_is_unordered isn't set, demand exact equality
     if not tuple_is_unordered:
-        return the_tuple1 == the_tuple2
+        if the_tuple1 == the_tuple2:
+            return 1
+        if not partial_tuple_matches:
+            return 0
+        else:
+
+            def max_ordered_subsequence(t1, t2):
+                max_matched=0
+                for (i1,start_element) in enumerate(t1):
+                    try: 
+                        i2 = t2.index(start_element)
+                    except ValueError:
+                        continue
+                    matched = 1 + max_ordered_subsequence(t1[i1+1:],t2[i2+1:])
+                    max_matched=max(max_matched,matched)
+                return max_matched
+
+
+            # if partial matches, then look for maximum number of matches
+            # that occur in the same order
+            max_matched = max_ordered_subsequence(the_tuple1,the_tuple2)
+            return max_matched/max(len(the_tuple1),len(the_tuple2))
+
 
     # if not ordered, check if match with any order
     
-    # their lengths must be the same
-    if len(the_tuple1) != len(the_tuple2):
-        return False
-
     # loop through all elements of tuple 1
     # for each element, look for a matching element of tuple 2
     # that has not been used yet.
     tuple2_indices_used=[]
+    n_matches=0
     for expr1 in the_tuple1:
-        expr1_matches=False
         for (i, expr2) in enumerate(the_tuple2):
             if expr1 == expr2 and i not in tuple2_indices_used:
                 tuple2_indices_used.append(i)
-                expr1_matches=True
+                n_matches +=1
                 break
-            
-        if not expr1_matches:
-            return False
-    return True
+
+    if len(the_tuple1) == len(the_tuple2) and n_matches==len(the_tuple1):
+        return 1
+
+    if not partial_tuple_matches:
+        return 0
+    else:
+        return n_matches/max(len(the_tuple1),len(the_tuple2))
+
 
 
 # given inheritance structure of sympy

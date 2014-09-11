@@ -303,10 +303,12 @@ class GradeQuestionView(SingleObjectMixin, View):
                     user_response_parsed=math_object(
                         user_response_parsed,
                         tuple_is_unordered=valid_answer.return_if_unordered(),
-                        output_no_delimiters= \
-                            valid_answer.return_if_output_no_delimiters(),
+                        output_no_delimiters= 
+                    valid_answer.return_if_output_no_delimiters(),
                         use_ln=valid_answer.return_if_use_ln(),
                         normalize_on_compare=answer_option.normalize_on_compare,
+                        match_partial_tuples_on_compare= 
+                        answer_option.match_partial_tuples_on_compare,
                         evaluate_level=evaluate_level,
                         n_digits = valid_answer.return_n_digits(),
                         round_decimals = valid_answer.return_round_decimals())
@@ -314,28 +316,31 @@ class GradeQuestionView(SingleObjectMixin, View):
                     user_response_unevaluated=math_object(
                         user_response_unevaluated,
                         tuple_is_unordered=valid_answer.return_if_unordered(),
-                        output_no_delimiters= \
-                            valid_answer.return_if_output_no_delimiters(),
+                        output_no_delimiters=
+                        valid_answer.return_if_output_no_delimiters(),
                         use_ln=valid_answer.return_if_use_ln(),
                         normalize_on_compare=answer_option.normalize_on_compare,
+                        match_partial_tuples_on_compare= 
+                        answer_option.match_partial_tuples_on_compare,
                         evaluate_level=EVALUATE_NONE)
 
                     correctness_of_answer = \
                         user_response_parsed.compare_with_expression( \
                         valid_answer.return_expression())
-
-                    if correctness_of_answer == 1 and \
-                            answer_option.percent_correct > percent_correct:
-                        if answer_option.percent_correct == 100:
+                    this_percent_correct = \
+                        answer_option.percent_correct*correctness_of_answer
+                    if correctness_of_answer > 0 and correctness_of_answer <=1 \
+                       and  this_percent_correct  > percent_correct:
+                        if this_percent_correct == 100:
                             feedback = \
                                 'Yes, $%s$ is correct.' % \
                                 user_response_unevaluated
                         else:
                             feedback = '$%s$ is not completely correct but earns' \
-                                ' partial (%s%%) credit.' \
+                                ' partial (%i%%) credit.' \
                                 % (user_response_unevaluated, 
-                                   answer_option.percent_correct)
-                        percent_correct = answer_option.percent_correct
+                                   this_percent_correct)
+                        percent_correct = this_percent_correct
                         answer_option_used = answer_option
 
                     elif correctness_of_answer == -1 and \
