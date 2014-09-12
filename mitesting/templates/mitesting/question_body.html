@@ -39,7 +39,7 @@
 {% if question_data.subparts %}
 <ol class='question_subparts'>
 {% for subpart in question_data.subparts %}
-<li class='question {{ subpart.subpart.spacing_css}}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
+<li class='question{% if subpart.subpart.spacing_css%} {{ subpart.subpart.spacing_css}}{%endif%}{%if subpart.subpart.css_class%} {{ subpart.subpart.css_class }}{%endif%}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
   {{ subpart.rendered_text}}
   {% if subpart.help_available %}
 <div class="question_help_container">
