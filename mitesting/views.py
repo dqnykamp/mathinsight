@@ -329,6 +329,8 @@ class GradeQuestionView(SingleObjectMixin, View):
                         valid_answer.return_expression())
                     this_percent_correct = \
                         answer_option.percent_correct*correctness_of_answer
+                    this_near_match_percent_correct = \
+                        abs(answer_option.percent_correct*correctness_of_answer)
                     if correctness_of_answer > 0 and correctness_of_answer <=1 \
                        and  this_percent_correct  > percent_correct:
                         if this_percent_correct == 100:
@@ -343,21 +345,21 @@ class GradeQuestionView(SingleObjectMixin, View):
                         percent_correct = this_percent_correct
                         answer_option_used = answer_option
 
-                    elif correctness_of_answer == -1 and \
-                            answer_option.percent_correct >\
-                            near_match_percent_correct:
+                    elif correctness_of_answer<0 and correctness_of_answer>=-1 \
+                         and this_near_match_percent_correct  > \
+                         near_match_percent_correct:
+                        near_match_percent_correct =\
+                            this_near_match_percent_correct
                         near_match_feedback = \
                             " Your answer is mathematically equivalent to " 
-                        if answer_option.percent_correct == 100:
+                        if near_match_percent_correct == 100:
                             near_match_feedback += "the correct answer, "
                         else:
                             near_match_feedback  += \
-                                "an answer that is %s%% correct, " \
-                                % answer_option.percent_correct
+                                "an answer that is %i%% correct, " \
+                                % near_match_percent_correct
                         near_match_feedback += "but this question requires"\
                             " you to write your answer in a different form." 
-                        near_match_percent_correct =\
-                            answer_option.percent_correct
                         answer_option_used = answer_option
                     if not feedback:
                         feedback = 'No, $%s$ is incorrect.' \
