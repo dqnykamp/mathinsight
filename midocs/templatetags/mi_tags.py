@@ -1137,22 +1137,22 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
         ycoord = 'document.%s.getYcoord("%s")' % \
             (applet_identifier, appletobject.name)
 
-        javascript='$("#%s").val("Point("+%s+","+%s+")");\n' % \
+        javascript='jQuery("#%s").val("Point("+%s+","+%s+")");\n' % \
             (target, xcoord,ycoord)
     elif object_type=='Number' or object_type=='Boolean':
         value = 'document.%s.getValue("%s")' % \
             (applet_identifier, appletobject.name)
-        javascript='$("#%s").val(%s);\n' % (target, value)
+        javascript='jQuery("#%s").val(%s);\n' % (target, value)
     elif object_type=='Text':
         value = 'document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
-        javascript='$("#%s").val(%s);\n' % (target, value)
+        javascript='jQuery("#%s").val(%s);\n' % (target, value)
     elif object_type=='List':
         value = 'document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
         # extract the list within the braces returned by getValueString
         value = "/{(.*)}/.exec(%s)[1]" % value
-        javascript='$("#%s").val(%s);\n' % (target, value)
+        javascript='jQuery("#%s").val(%s);\n' % (target, value)
     elif object_type=='Line':
         if len(related_objects)==2:
             point1=related_objects[0]
@@ -1167,7 +1167,7 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
                     (applet_identifier, point2.name)
                 ycoord2 = 'document.%s.getYcoord("%s")' % \
                     (applet_identifier, point2.name)
-                javascript='$("#%s").val("Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))");\n' % \
+                javascript='jQuery("#%s").val("Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))");\n' % \
                     (target, xcoord1,ycoord1, xcoord2,ycoord2)
                 
                 
@@ -1311,7 +1311,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
 
     script_string += "applet_%s.run = function() {\nvar renderer=this.renderer, container=this.container, width=this.width, height=this.height, namedObjects=this.namedObjects, parameters=this.parameters;\n%s\n}\n"  % (applet_id, applet.javascript)
     
-    run_script_string = "\n$('#container_%s').empty();\napplet_%s.run();\n" % (applet_id, applet_id)
+    run_script_string = "\njQuery('#container_%s').empty();\napplet_%s.run();\n" % (applet_id, applet_id)
     
     if applet.child_applet:
         child_parameters = parameters_string
@@ -1320,7 +1320,7 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
         script_string += "\napplet2_%s=new MIAppletThree('container2_%s', %s, %s, { %s });\n" % (applet_id, applet_id, child_width, height, child_parameters);
         script_string += "applet2_%s.run = function() {\nvar renderer=this.renderer, container=this.container, width=this.width, height=this.height, namedObjects=this.namedObjects, parameters=this.parameters;\n%s\n}\n"  % (applet_id, applet.child_applet.javascript)
 
-        run_script_string += "\n$('#container2_%s').empty();\napplet2_%s.run();\n" % (applet_id, applet_id)
+        run_script_string += "\njQuery('#container2_%s').empty();\napplet2_%s.run();\n" % (applet_id, applet_id)
 
         # insert javascript to link applet and child objects
         for object_link in applet.appletchildobjectlink_set.all():
@@ -2259,7 +2259,7 @@ class AccumulatedJavascriptNode(template.Node):
             #    and instead add message from three.js error string
 
             three_error_string = AppletType.objects.get(code="Three").error_string
-            script_string += '<script>\nif(Detector.webgl) {\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n}\nelse {\n $( ".three_applet_loading_message").remove(); $( ".three_load_error" ).append(\'%s<br/> \').append(Detector.getWebGLErrorMessage())\n}\n</script>' % (three_javascript, run_three_javascript, three_error_string )
+            script_string += '<script>\nif(Detector.webgl) {\n%s\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n}\nelse {\n jQuery( ".three_applet_loading_message").remove(); jQuery( ".three_load_error" ).append(\'%s<br/> \').append(Detector.getWebGLErrorMessage())\n}\n</script>' % (three_javascript, run_three_javascript, three_error_string )
         
 
         return script_string
