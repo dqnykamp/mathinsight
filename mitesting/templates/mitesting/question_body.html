@@ -81,7 +81,7 @@
 
 <script>
     {% if question_data.submit_button %}
-  $( "#id_question_{{question_data.identifier}}").submit(function(event) {
+  jQuery( "#id_question_{{question_data.identifier}}").submit(function(event) {
       event.preventDefault();
       post_form_{{question_data.identifier}}();
     });
@@ -89,20 +89,20 @@
   {% if question_data.auto_submit %}
   post_form_{{question_data.identifier}}();
   {% endif %}
-  {% if question_data.enable_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");{%endif %}
-  {% if question_data.show_solution_button %}$( "#question_{{question_data.identifier}}_show_solution").click(function() {$.post("{{question_data.inject_solution_url}}", "cgd={{question_data.computer_grade_data}}", process_solution_inject_{{question_data.identifier}});});{% endif %}
+  {% if question_data.enable_solution_button %}jQuery( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");{%endif %}
+  {% if question_data.show_solution_button %}jQuery( "#question_{{question_data.identifier}}_show_solution").click(function() {jQuery.post("{{question_data.inject_solution_url}}", "cgd={{question_data.computer_grade_data}}", process_solution_inject_{{question_data.identifier}});});{% endif %}
   function post_form_{{question_data.identifier}}() {
-      var thepost = $.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', $('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
+      var thepost = jQuery.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
 
       thepost.done(process_graded_question_{{question_data.identifier}});
       
   }
 
   function process_graded_question_{{question_data.identifier}}(data) {
-      var question_feedback=$("#question_{{question_data.identifier}}_feedback");
-      var question_binary_feedback=$("#question_{{question_data.identifier}}_feedback_binary");
+      var question_feedback=jQuery("#question_{{question_data.identifier}}_feedback");
+      var question_binary_feedback=jQuery("#question_{{question_data.identifier}}_feedback_binary");
 
-      $(".applet_feedback_{{question_data.identifier}}").removeClass('hidden_feedback');
+      jQuery(".applet_feedback_{{question_data.identifier}}").removeClass('hidden_feedback');
 
       question_feedback.html(data['feedback']);
       if(data['correct']) {
@@ -113,7 +113,7 @@
       }
       
       for(var answer_identifier in data['answer_feedback']) {
-	  var answer_feedback = $("#answer_"+answer_identifier+"_feedback");
+	  var answer_feedback = jQuery("#answer_"+answer_identifier+"_feedback");
 	  answer_feedback.html(data['answer_feedback'][answer_identifier]);
 	  if(answer_identifier.indexOf("__binary_") == -1) {
 	      if(data['answer_correct'][answer_identifier]) {
@@ -127,20 +127,20 @@
       }
 
 	
-      $('#id_number_attempts_{{question_data.identifier}}').val(data['number_attempts']);
+      jQuery('#id_number_attempts_{{question_data.identifier}}').val(data['number_attempts']);
       if(data["enable_solution_button"]) {
-	  $( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
+	  jQuery( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");
       }
 
 
-      $("#id_question_{{question_data.identifier}} input:radio").parent().removeClass('highlight_answer');
-      $("#id_question_{{question_data.identifier}} input:checked").parent().addClass('highlight_answer');
+      jQuery("#id_question_{{question_data.identifier}} input:radio").parent().removeClass('highlight_answer');
+      jQuery("#id_question_{{question_data.identifier}} input:checked").parent().addClass('highlight_answer');
 
 	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
     }
 
   function process_solution_inject_{{question_data.identifier}}(data) {
-      /*$('article .geogebraweb').removeClass('geogebraweb')*/
+      /*jQuery('article .geogebraweb').removeClass('geogebraweb')*/
 
       var geogebra_on_init_commands = "";
       try {
@@ -158,8 +158,8 @@
       }
       
 
-      $("#question_{{question_data.identifier}}_solution").html(data['rendered_solution']);
-      $("#question_{{question_data.identifier}}_for_solution_button").remove();
+      jQuery("#question_{{question_data.identifier}}_solution").html(data['rendered_solution']);
+      jQuery("#question_{{question_data.identifier}}_for_solution_button").remove();
       eval(data['applet_javascript']['_initialization']);
 
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
