@@ -963,7 +963,7 @@ class AnswerNode(template.Node):
         
         # if not recognized type, return error
         else:
-            return return_error()
+            return return_error("Unrecognized answer type")
 
                 
 @register.tag
