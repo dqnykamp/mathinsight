@@ -855,6 +855,13 @@ def process_mi_tags(parser, token):
 
 
 def return_applet_parameter_string(applet):
+    """
+    return string of applets parameters.
+    If value of parameter defined in applet, use that one,
+    else use the value from applet type
+    Skip DEFAULT_WIDTH or DEFAULT_HEIGHT
+
+    """
     the_string=""
 
     # loop through all applet parameters of applet type
@@ -891,6 +898,14 @@ def return_applet_parameter_string(applet):
 
 
 def return_applet_parameter_dictionary(applet):
+    """
+    return dictionary of applets parameters.
+    If value of parameter defined in applet, use that one,
+    else use the value from applet type
+    Skip DEFAULT_WIDTH or DEFAULT_HEIGHT
+    """
+
+
     applet_parameters = {}
 
     # loop through all applet parameters of applet type
@@ -1198,12 +1213,16 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
     html_string=""
     script_string = ""
 
+    applet_parameters = return_applet_parameter_dictionary(applet)
+    applet_parameter_string = ",".join(["%s:%s" % (par,applet_parameters[par]) \
+                                        for par in applet_parameters.keys()])
+
     #html_string += '<div class="javascriptapplet"><article id="%s" class="geogebraweb" data-param-width="%s" data-param-height="%s" data-param-id="%s" data-param-showResetIcon="false" data-param-enableLabelDrags="false" data-param-showMenuBar="false" data-param-showToolBar="false" data-param-showAlgebraInput="false" data-param-useBrowserForJS="true" data-param-enableRightClick="false" data-param-ggbbase64="%s"></article></div>\n' % \
     #    (applet_identifier, width, height, applet_identifier, applet.encoded_content)
     html_string += '<div class="javascriptapplet"><div class="geogebrawebapplet" id="container%s" style="min-width:%spx;min-height:%spx"></div></div>\n' % \
         (applet_identifier, width, height)
-    script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,"showToolBar":false,"showMenuBar":false,"showAlgebraInput":false,"showResetIcon":true,"enableLabelDrags":false,"enableShiftDragZoom":true,"enableRightClick":false,"showToolBarHelp":false,"errorDialogsActive":true,"useBrowserForJS":true,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false};\n' % \
-                   (applet_identifier, applet_identifier, width, height, applet.encoded_content)
+    script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,%s,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false};\n' % \
+                   (applet_identifier, applet_identifier, width, height, applet_parameter_string, applet.encoded_content)
     script_string += 'var applet%s = new GGBApplet( parameters%s, true);\n' % \
                      (applet_identifier, applet_identifier)
                 
