@@ -206,6 +206,8 @@ class GradeQuestionView(SingleObjectMixin, View):
              % (settings.STATIC_URL)
         binary_feedback_incorrect = ' <img src="%sadmin/img/icon-no.gif" alt="incorrect" />'\
             % (settings.STATIC_URL)
+        binary_feedback_partial = ' <img src="%sadmin/img/tool-left.gif" alt="incorrect" />'\
+            % (settings.STATIC_URL)
 
         # check correctness of each answer
         for answer_num in range(len(answer_info)):
@@ -390,6 +392,10 @@ class GradeQuestionView(SingleObjectMixin, View):
                 answer_results['answer_feedback']\
                     [answer_identifier+"__binary_"] \
                     = binary_feedback_correct
+            elif percent_correct > 0:
+                answer_results['answer_feedback']\
+                    [answer_identifier+"__binary_"] \
+                    = binary_feedback_partial
             else:
                 answer_results['answer_feedback']\
                     [answer_identifier+"__binary_"] \
