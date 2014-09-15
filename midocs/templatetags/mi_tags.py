@@ -1657,18 +1657,35 @@ class AppletNode(template.Node):
         capture_javascript=''
         init_javascript = ""
         
-        
+        # dictionary to check if have a kwarg of form answer_xxxxx
+        # where xxxx is not an applet object that can be changed
+        kwarg_answer_keys_not_matched = {}
+        for the_kw in kwargs_string.keys():
+            if re.match('answer_', the_kw):
+                kwarg_answer_keys_not_matched[the_kw]=True
+
         previous_category=None
 
         for appletobject in appletobjects:
             the_kw = "answer_%s" % appletobject.name
-            answer_code =  kwargs_string.get(the_kw)
+            
+            # check if object is specified to be captured in kwargs
+            try:
+                answer_code =  kwargs_string[the_kw]
+            except KeyError:
+                continue
 
+            # mark that found an changeable object for the_kw
+            del kwarg_answer_keys_not_matched[the_kw]
+                
             # if answer_code is not a valid answer code
-            # skip this applet object
+            # skip this applet object but register error
             try:
                 answer_type = answer_data['valid_answer_codes'][answer_code]
             except KeyError:
+                answer_data['error']=True
+                answer_data['answer_errors'].append(\
+                    "Invalid answer code from applet: %s" % answer_code)
                 continue
 
             try:
@@ -1728,6 +1745,14 @@ class AppletNode(template.Node):
                     capture_javascript += Geogebra_capture_object_javascript \
                         (context, appletobject, applet_identifier, 
                          inputbox_id, related_objects)
+
+        # if there was a kwarg of form answer_xxxx that was not a
+        # changeable object, register the error
+        for the_kw in kwarg_answer_keys_not_matched.keys():
+            answer_data['error']=True
+            answer_data['answer_errors'].append(\
+                "No changeable applet object to match answer: %s" % the_kw)
+            
 
 
         # check if any applet objects are specified 
