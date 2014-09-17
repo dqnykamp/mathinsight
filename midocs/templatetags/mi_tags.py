@@ -1751,7 +1751,7 @@ class AppletNode(template.Node):
         for the_kw in kwarg_answer_keys_not_matched.keys():
             answer_data['error']=True
             answer_data['answer_errors'].append(\
-                "No changeable applet object to match answer: %s" % the_kw)
+                "No captureable applet object to match answer: %s" % the_kw)
             
 
 

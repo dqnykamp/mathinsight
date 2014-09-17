@@ -218,8 +218,11 @@ class GradeQuestionView(SingleObjectMixin, View):
             answer_identifier = answer_info[answer_num]['identifier']
 
             total_points += answer_points
-            percent_correct = 0
             feedback = ""
+
+            # start with negative percent_correct so that will get 
+            # feedback from matched answers with 0 percent correct
+            percent_correct = -1
 
             answer_option_used = None
             
@@ -381,6 +384,9 @@ class GradeQuestionView(SingleObjectMixin, View):
                 answer_results['answer_correct'][answer_identifier]=False
                 continue
 
+            # since started with negative percent_correct
+            # make it zero if no matches
+            percent_correct = max(0, percent_correct)
 
             # store (points achieved)*100 as integer for now
             points_achieved += percent_correct * \
@@ -416,8 +422,8 @@ class GradeQuestionView(SingleObjectMixin, View):
                                    + " code = %s: %s"
                                    % (answer_code, answer_option_used))
                 else:
-                    answer_results['feedback'] += "<p>%s</p>" %\
-                        rendered_feedback
+                    answer_results['answer_feedback'][answer_identifier] \
+                        += " " + rendered_feedback
 
         
         # record if exactly correct, then normalize points achieved
