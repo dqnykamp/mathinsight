@@ -342,7 +342,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                             feedback = \
                                 'Yes, $%s$ is correct.' % \
                                 user_response_unevaluated
-                        else:
+                        elif this_percent_correct > 0:
                             feedback = '$%s$ is not completely correct but earns' \
                                 ' partial (%i%%) credit.' \
                                 % (user_response_unevaluated, 
