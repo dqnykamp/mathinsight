@@ -536,7 +536,11 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
             question_data = {'success': False,
                              'error_message': 'Invalid question' }
             context= {'question_data': question_data,
-            }
+                      'attempt': self.attempt,
+                      'attempt_number': self.attempt_number,
+                      'question_number': self.question_number,
+                      'answer_dict': answer_dict,
+                  }
             return context
 
         # use aaqav in identifier since coming from
