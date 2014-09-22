@@ -8,13 +8,9 @@
 
 <p>We welcome comments or suggestions about Math Insight. Please contact us via our <a href="{% url 'mi-authorlist' %}">e-mail addresses</a> or use the below comment form. We're always interested in hearing from people who find this work useful or can help us improve it.</p>
 
-{% if midocs.author.1 %}
 <div id="messageform">
-{% render_comment_form for midocs.author 1 %}
+{% render_comment_form for comment_object %}
 </div>
-{% else %}
-<p>No author to contact.</p>
-{% endif%}
 {% endblock %}
 
 

@@ -12,11 +12,20 @@ from mathinsight.urls import paginate_by
 new_days_past=365
 
 
+class ContactView(TemplateView):
+    def get_context_data(self, **kwargs):
+        context = super(ContactView, self).get_context_data(**kwargs)
+        # need some object with which to associate comment
+        # use first Author, since that wouldn't be confused with anything else
+        comment_object =Author.objects.order_by('id')[0]
+        context['comment_object']=comment_object
+        return context
+
 urlpatterns = patterns('midocs.views',
  url(r'^mathinsight$', TemplateView.as_view(template_name="about_mathinsight.html"), 
      name='mi-about'),
- url(r'^contact$', ListView.as_view(template_name="contact.html", 
-                                          model=Author), name='mi-contact'),
+ url(r'^contact$', ContactView.as_view(template_name="contact.html"),
+     name='mi-contact'),
  url(r'^news/(?P<news_code>[\w-]+)$', 'newsview', 
      name='mi-news'),
  url(r'^recent_news$', 'whatsnewview', {'items': 'news'}, 
