@@ -530,7 +530,14 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
 
 
         # construct question
-        question = self.answer.question
+        try:
+            question = self.answer.question
+        except ObjectDoesNotExist:
+            question_data = {'success': False,
+                             'error_message': 'Invalid question' }
+            context= {'question_data': question_data,
+            }
+            return context
 
         # use aaqav in identifier since coming from
         # assessment attempt question attempt view
