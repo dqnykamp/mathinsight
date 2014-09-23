@@ -36,7 +36,7 @@
   <div class="yma-g50 yma-gr">
     <div class="yma-gbox-right">
 <table class="question_scores">
-{% for question in question_list %}
+{% for question in rendered_list %}
 <tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
 {% endfor %}
  <tr><td class="examlabel">Total</td><td class="points">{{ assessment.get_total_points }} pts</td><td class="blank"></td></tr>
@@ -46,9 +46,11 @@
 </div>
 <section class="exam_main">
 <ol class="exam_questions">
-{% for question in question_list %}
+{% for question in rendered_list %}
 {% if not question.previous_same_group %}{% new_exam_page %}{% endif %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize}}) {%endif%}{{ question.question_text }}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize}}) {%endif%}
+{% question_body question.question_data %}
+</li>
 {% endfor %}
 </ol>
 </section>
