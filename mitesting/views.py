@@ -816,8 +816,10 @@ class AssessmentView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(AssessmentView, self).get_context_data(**kwargs)
 
-        context['assessment_date'] = self.request.GET.get\
-            ('date', datetime.date.today().strftime("%B %d, %Y"))
+        context['assessment_date'] = self.request.GET.get('date')
+        if not context['assessment_date']:
+            context['assessment_date']  = \
+                datetime.date.today().strftime("%B %d, %Y")
 
         applet_data = Applet.return_initial_applet_data()
         context['applet_data'] = applet_data
@@ -885,6 +887,7 @@ class AssessmentView(DetailView):
         else:
             context['version_string'] = ''
 
+        context['course'] = self.course
         context['course_thread_content'] = self.course_thread_content
         context['attempt_number'] = self.attempt_number
 
@@ -951,10 +954,10 @@ class AssessmentView(DetailView):
         # First determine if user is enrolled in an course
         try:
             courseuser = user.courseuser
-            course = courseuser.return_selected_course()
+            self.course = courseuser.return_selected_course()
         except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
             courseuser = None
-            course = None
+            self.course = None
 
         self.current_attempt=None
         self.attempt_number=0
@@ -962,17 +965,17 @@ class AssessmentView(DetailView):
 
 
         # if enrolled in the course
-        if course:
+        if self.course:
             assessment_content_type = ContentType.objects.get\
                 (model='assessment')
 
             try:
-                self.course_thread_content=course.coursethreadcontent_set.get\
+                self.course_thread_content=self.course.coursethreadcontent_set.get\
                     (thread_content__object_id=self.object.id,\
                          thread_content__content_type=assessment_content_type)
                 # Finds the course version of the specific assessment
             except ObjectDoesNotExist:
-                course=None
+                self.course=None
 
             if self.course_thread_content:
                 attempts = self.course_thread_content.studentcontentattempt_set\
@@ -987,7 +990,7 @@ class AssessmentView(DetailView):
                     if self.course_thread_content.individualize_by_student:
                         self.version= "%s_%s" % (courseuser.user.username, 
                                                  self.version)
-                    seed = "%s_%s_%s" % (course.code, self.object.id, 
+                    seed = "%s_%s_%s" % (self.course.code, self.object.id, 
                                          self.version)
 
                     try:
@@ -1022,7 +1025,7 @@ class AssessmentView(DetailView):
                         if self.course_thread_content.individualize_by_student:
                             self.version= "%s_%s" % (courseuser.user.username, 
                                                      self.version)
-                        seed = "%s_%s_%s" % (course.code, self.object.id, 
+                        seed = "%s_%s_%s" % (self.course.code, self.object.id, 
                                              self.version)
 
                         # create the attempt
@@ -1043,26 +1046,16 @@ def assessment_avoid_question_view(request, assessment_code):
         from django.contrib.auth.views import redirect_to_login
         return redirect_to_login(path)
     
-    try:
-        avoid_list= request.REQUEST['avoid_list']
-    except:
-        avoid_list = ""
-    try:
-        seed = request.REQUEST['seed']
-    except:
-        seed = None
-    try: 
-        assessment_date = request.REQUEST['date']
-    except:
+    avoid_list= request.GET.get('avoid_list',"")
+    seed = request.GET.get('seed')
+
+    assessment_date = request.GET.get('date')
+    if not assessment_date:
         assessment_date = datetime.date.today().strftime("%B %d, %Y")
-    try: 
-        course = request.REQUEST['course']
-    except:
-        course = ""
-    try: 
-        semester = request.REQUEST['semester']
-    except:
-        semester = ""
+
+    course = request.GET.get('course',"")
+    semester = request.GET.get('semester',"")
+
 
     if avoid_list:
         new_seed = assessment.avoid_question_seed(avoid_list, start_seed=seed)
