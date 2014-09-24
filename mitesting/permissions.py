@@ -57,3 +57,34 @@ def user_has_given_assessment_permission_level_decorator(
         lambda u: user_has_given_assessment_permission_level(
             u, permission_level),
         login_url=login_url)
+
+def user_can_administer_assessment(user):
+    """
+    Check whether or not a user can administer exams.
+
+    True if either user has the mitesting.administer_assessment permission
+    or if user.courseuser.get_current_role() is I
+
+    """
+
+    if user.has_perm("mitesting.administer_assessment"):
+        return True
+    else:
+        try:
+            if user.courseuser:
+                if user.courseuser.get_current_role() == 'I':
+                    return True
+        except AttributeError:
+            return False
+
+    return False
+
+
+def user_can_administer_assessment_decorator(login_url=None):
+    """
+    Decorator for views that checks whether a user has 
+    can administer assessments
+    redirecting to the log-in page if necessary.
+    """
+    return user_passes_test(user_can_administer_assessment,
+        login_url=login_url)

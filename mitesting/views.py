@@ -18,7 +18,7 @@ from django.utils.safestring import mark_safe
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
 import datetime
-from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
+from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level, user_can_administer_assessment
 from django.views.generic import DetailView, View
 from django.views.generic.detail import SingleObjectMixin
 from django.template import TemplateSyntaxError
@@ -871,15 +871,8 @@ class AssessmentView(DetailView):
         context['generate_assessment_link'] = False
         context['show_solution_link'] = False
         
-        if self.request.user.has_perm("mitesting.administer_assessment"):
+        if user_can_administer_assessment(self.request.user):
             context['generate_assessment_link'] = True
-        else:
-            try:
-                if self.request.user.courseuser:
-                    if self.request.user.courseuser.get_current_role() == 'I':
-                        context['generate_assessment_link'] = True
-            except AttributeError:
-                pass
 
         if context['generate_assessment_link']:
             if not self.solution:
@@ -1108,15 +1101,8 @@ def assessment_overview_view(request, assessment_code):
             course = None
 
     generate_assessment_link = False
-    if request.user.has_perm("mitesting.administer_assessment"):
+    if user_can_administer_assessment(request.user):
         generate_assessment_link = True
-    else:
-        try:
-            if request.user.courseuser:
-                if request.user.courseuser.get_current_role() == 'I':
-                    generate_assessment_link = True
-        except AttributeError:
-            pass
 
     # turn off google analytics for localhost
     noanalytics=False

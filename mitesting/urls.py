@@ -11,13 +11,14 @@ from mitesting.models import Assessment
 from mitesting.views import QuestionView, \
     GradeQuestionView, InjectQuestionSolutionView, \
     AssessmentView
+from mitesting.permissions import user_can_administer_assessment_decorator
 
 class GenerateAssessmentView(DetailView):
     context_object_name = "assessment"
     model = Assessment
     template_name = "mitesting/assessment_generate.html"
     slug_field = 'code'
-    @method_decorator(permission_required('mitesting.administer_assessment'))
+    @method_decorator(user_can_administer_assessment_decorator())
     def dispatch(self, *args, **kwargs):
         return super(GenerateAssessmentView, self).dispatch(*args, **kwargs)
 
