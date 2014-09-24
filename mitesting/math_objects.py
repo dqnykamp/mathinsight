@@ -258,7 +258,13 @@ class math_object(object):
             yvar=self._parameters.get('yvar','y')
             output = "%s = 0" % latex(expression.equation(x=xvar,y=yvar))
         else:
-            output = latex(expression, symbol_names=symbol_name_dict)
+            try:
+                output = latex(expression, symbol_names=symbol_name_dict)
+            except RuntimeError:
+                # for now, since dividing by one creates infinite recursion
+                # in latex printer, use sstr print
+                from sympy.printing import sstr
+                output = sstr(expression)
 
         if self._parameters.get('use_ln'):
             import re
