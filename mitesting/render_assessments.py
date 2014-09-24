@@ -7,7 +7,6 @@ from django.template import TemplateSyntaxError, Context, Template
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
-import random
 import json 
 import re
 import sys
@@ -21,11 +20,11 @@ Identifier changed
 
 """
 
-def get_new_seed():
-    return str(random.randint(0,1E8))
+def get_new_seed(rng):
+    return str(rng.randint(0,1E8))
 
  
-def setup_expression_context(question):
+def setup_expression_context(question, rng):
     """
     Set up the question context by parsing all expressions for question.
     Returns context that contains all evaluated expressions 
@@ -34,8 +33,8 @@ def setup_expression_context(question):
     Before evaluating expressions, initializes global dictionary
     with allowed sympy commands for the question.
 
-    Random expressions are based on state of random.
-    Its state can be set via random.seed(seed).
+    Random expressions are based on state of random instance rng
+    Its state can be set via rng.seed(seed).
 
     Return a dictionary with the following:
     - expression_context: a Context() with mappings from the expressions
@@ -71,7 +70,8 @@ def setup_expression_context(question):
                     expression_evaluated=expression.evaluate(
                         global_dict=global_dict, 
                         user_function_dict=user_function_dict,
-                        random_group_indices=random_group_indices)
+                        random_group_indices=random_group_indices,
+                        rng=rng)
 
                 # on FailedCondition, reraise to stop evaluating expressions
                 except expression.FailedCondition:
@@ -368,7 +368,7 @@ def add_help_data(render_data, render_results, subparts=None):
     render_results['hint_template_error'] = hint_template_error
 
 
-def render_question(question, seed=None, solution=False, 
+def render_question(question, rng, seed=None, solution=False, 
                     question_identifier="",
                     user=None, show_help=True,
                     assessment=None, question_set=None, 
@@ -390,6 +390,7 @@ def render_question(question, seed=None, solution=False,
 
     Input arguments
     - question: the Question instance to be rendered
+    - rng: the random number generator instance to use
     - seed: the random generator seed
       Used for setting up the expression context.
       If seed is none, then randomly generate a seed, recording the new
@@ -417,6 +418,7 @@ def render_question(question, seed=None, solution=False,
     - allow_solution_buttons: if true, allow a solution button to be displayed
       on computer graded questions
     - applet_data: dictionary of information about applets embedded in text
+    
 
     The output is a question_data dictionary.  With the exception of
     question, success, rendered_text, and error_message, all entries
@@ -470,12 +472,12 @@ def render_question(question, seed=None, solution=False,
    """
 
     if seed is None:
-        seed=get_new_seed()
+        seed=get_new_seed(rng)
 
-    random.seed(seed)
+    rng.seed(seed)
 
     # first, setup context due to expressions from question
-    context_results = setup_expression_context(question)
+    context_results = setup_expression_context(question, rng=rng)
 
     # if failed condition, then don't display the question
     # but instead give message that condition failed
@@ -516,6 +518,7 @@ def render_question(question, seed=None, solution=False,
                     'readonly': readonly,
                     'error': bool(invalid_answers),
                     'answer_errors': invalid_answers,
+                    'rng': rng
                     }
 
     render_data['expression_context']['_answer_data_']= answer_data
@@ -653,11 +656,11 @@ def render_question(question, seed=None, solution=False,
 
 
 
-def get_question_list(assessment):
+def get_question_list(assessment, rng):
     """
     Return list of questions for assessment, one for each question_set.
-    Questions are chosen randomly based on state of random.
-    Its state can be set via random.seed(seed).
+    Questions are chosen randomly based on state of random instance rng
+    Its state can be set via rng.seed(seed).
 
     Each question is randomly assigned a seed, which is to be used
     generate the question and/or solution, ensuring that question
@@ -677,11 +680,11 @@ def get_question_list(assessment):
         questions_in_set = assessment.questionassigned_set.filter(
             question_set=question_set)
 
-        the_question=random.choice(questions_in_set).question
+        the_question=rng.choice(questions_in_set).question
 
         # generate a seed for the question
         # so that can have link to this version of question and solution
-        question_seed=get_new_seed()
+        question_seed=get_new_seed(rng)
         the_points = assessment.points_of_question_set(question_set)
         if the_points is None:
             the_points = ""    
@@ -695,7 +698,7 @@ def get_question_list(assessment):
             
 
 
-def render_question_list(assessment, seed=None, user=None, solution=False,
+def render_question_list(assessment, rng, seed=None, user=None, solution=False,
                          current_attempt=None, applet_data=None):
     """
     Generate list of rendered questions or solutions for assessment.
@@ -711,6 +714,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
 
     Inputs:
     - assessment: the assessment to be rendered
+    - rng: instance of random number generator to use
     - seed: random number generator seed to generate assesment and questions
     - user: the logged in user
     - solution: True if rendering solution
@@ -737,11 +741,12 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
         (Used as indicator for templates that questions belong together.)
     """
 
+    
     if seed is None:
-        seed=get_new_seed()
+        seed=get_new_seed(rng)
         
-    random.seed(seed)
-    question_list = get_question_list(assessment)
+    rng.seed(seed)
+    question_list = get_question_list(assessment, rng=rng)
 
 
     for (i, question_dict) in enumerate(question_list):
@@ -753,7 +758,7 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
         question_set = question_dict['question_set']
 
         question_data = render_question(
-            question, seed=question_dict["seed"],solution=solution,
+            question, rng=rng, seed=question_dict["seed"],solution=solution,
                 question_identifier=identifier,
                 user=user, show_help=not solution,
                 assessment=assessment, question_set=question_set,
@@ -823,14 +828,14 @@ def render_question_list(assessment, seed=None, user=None, solution=False,
 
     # create list of randomly shuffled groups
     groups = question_set_groups.keys()
-    random.shuffle(groups)
+    rng.shuffle(groups)
 
     # for each group, shuffle questions,
     # creating cummulative list of the resulting question index order
     question_order =[]
     for group in groups:
         group_indices=question_set_groups[group]
-        random.shuffle(group_indices)
+        rng.shuffle(group_indices)
         question_order += group_indices
 
     # shuffle questions based on that order

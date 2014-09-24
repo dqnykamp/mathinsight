@@ -12,7 +12,6 @@ from django.conf import settings
 from django.utils.encoding import smart_text
 from django.template.base import kwarg_re
 import re
-import random
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from sympy.printing import StrPrinter

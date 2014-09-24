@@ -11,7 +11,6 @@ from django.contrib.contenttypes import generic
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
-import random 
 from mitesting.permissions import return_user_assessment_permission_level
 import re
 from sympy import Symbol, Function, Tuple, default_sort_key, expand
@@ -743,7 +742,7 @@ class Expression(models.Model):
         super(Expression, self).save(*args, **kwargs)
 
 
-    def evaluate(self, global_dict=None, user_function_dict=None,
+    def evaluate(self, rng, global_dict=None, user_function_dict=None,
                  random_group_indices=None):
         """
         Return evaluated expression and add result to dicts.
@@ -890,6 +889,7 @@ class Expression(models.Model):
         is treated like an ORDERED_TUPLE
 
         """
+
     
         from mitesting.utils import return_random_number_sample, \
             return_random_expression, return_random_word_and_plural, \
@@ -919,7 +919,7 @@ class Expression(models.Model):
                 if self.expression_type == self.RANDOM_WORD:
                     try:
                         result = return_random_word_and_plural( 
-                            self.expression, index=group_index)
+                            self.expression, index=group_index, rng=rng)
                     except IndexError:
                         raise IndexError("Insufficient entries for group: " \
                                              + self.group)
@@ -947,7 +947,7 @@ class Expression(models.Model):
                         (math_expr, index) = return_random_expression(
                             self.expression, index=group_index,
                             global_dict=global_dict,
-                            evaluate_level = self.evaluate_level)
+                            evaluate_level = self.evaluate_level, rng=rng)
                     except IndexError:
                         raise IndexError("Insufficient entries for group: " \
                                              + self.group)
@@ -969,7 +969,7 @@ class Expression(models.Model):
                         (math_expr, index) = return_random_expression(
                             self.expression, index=group_index,
                             global_dict=global_dict,
-                            evaluate_level = self.evaluate_level)
+                            evaluate_level = self.evaluate_level, rng=rng)
                     except IndexError:
                         raise IndexError("Insufficient entries for group: " \
                                              + self.group)
@@ -983,7 +983,7 @@ class Expression(models.Model):
 
             elif self.expression_type == self.RANDOM_NUMBER:
                 math_expr = return_random_number_sample(
-                    self.expression, global_dict=global_dict)
+                    self.expression, global_dict=global_dict, rng=rng)
 
             # if not randomly generating
             else:
@@ -1016,10 +1016,10 @@ class Expression(models.Model):
 
                 if self.expression_type == self.RANDOM_ORDER_TUPLE:
                     if isinstance(math_expr,list):
-                        random.shuffle(math_expr)
+                        rng.shuffle(math_expr)
                     elif isinstance(math_expr, Tuple):
                         math_expr = list(math_expr)
-                        random.shuffle(math_expr)
+                        rng.shuffle(math_expr)
                     math_expr = Tuple(*math_expr)
                 elif self.expression_type == self.SORTED_TUPLE:
                     if isinstance(math_expr,list):

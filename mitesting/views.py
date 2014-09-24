@@ -16,7 +16,6 @@ from django.contrib.auth.decorators import permission_required, user_passes_test
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-import random
 from django.contrib.contenttypes.models import ContentType
 import datetime
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level
@@ -87,8 +86,11 @@ class QuestionView(DetailView):
 
         applet_data = Applet.return_initial_applet_data()
 
+        import random
+        rng = random.Random()
+
         context['question_data']= self.object.render(
-            seed=seed, user=self.request.user,
+            rng=rng, seed=seed, user=self.request.user,
             question_identifier=identifier, 
             allow_solution_buttons=True,
             solution=self.solution,
@@ -169,9 +171,12 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         # set up context from question expressions
         seed = computer_grade_data['seed']
-        random.seed(seed)
+        # use local random generate to make sure threadsafe
+        import random
+        rng=random.Random()
+        rng.seed(seed)
         from .render_assessments import setup_expression_context
-        context_results = setup_expression_context(question)
+        context_results = setup_expression_context(question, rng=rng)
 
         expr_context = context_results['expression_context']
 
@@ -670,10 +675,13 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         applet_data = Applet.return_initial_applet_data()
         applet_data['suffix'] = "%s_sol" % question_identifier
 
+        import random
+        rng=random.Random()
+
         from mitesting.render_assessments import render_question
         question_data= render_question(
             question=question,
-            seed=seed, user=request.user,
+            rng=rng, seed=seed, user=request.user,
             question_identifier=question_identifier, 
             applet_data = applet_data,
             solution=True,
@@ -824,10 +832,13 @@ class AssessmentView(DetailView):
         applet_data = Applet.return_initial_applet_data()
         context['applet_data'] = applet_data
 
+        import random
+        rng=random.Random()
+
         from .render_assessments import render_question_list, get_new_seed
         rendered_list=[]
         (rendered_list,self.seed)=render_question_list(
-            self.object, seed=self.seed, user=self.request.user, 
+            self.object, rng=rng, seed=self.seed, user=self.request.user, 
             solution=self.solution,
             current_attempt=self.current_attempt,
             applet_data = applet_data)
@@ -905,7 +916,7 @@ class AssessmentView(DetailView):
         # turn off Google analytics for localhost/development site
         context['noanalytics']=(settings.SITE_ID > 1)
 
-        context['new_seed']=get_new_seed()
+        context['new_seed']=get_new_seed(rng)
 
         return context
 

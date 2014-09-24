@@ -14,7 +14,6 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
 from django.template.base import kwarg_re
 import re
-import random
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from django.utils.encoding import force_unicode
@@ -680,7 +679,7 @@ def question_solution_body(question_data):
 
     
 
-def _render_question(question, seed, context):
+def _render_question(question, rng, seed, context):
 
 
     try: 
@@ -701,7 +700,8 @@ def _render_question(question, seed, context):
         context['_applet_data_'] = applet_data
 
     question_data = question.render(question_identifier=identifier,
-                                    seed=seed, applet_data=applet_data)
+                                    seed=seed, applet_data=applet_data,
+                                    rng=rng)
     
     html_string = template.loader.render_to_string("mitesting/question_body.html",
                                                    {'question_data': question_data})
@@ -743,10 +743,18 @@ class QuestionNode(template.Node):
             else:
                 return "<p>[Broken Question, question not found]</p>"
             
+        try:
+            rng = context['_answer_data_']['rng']
+        except:
+            import random
+            rng = random.Random()
+
+
         if seed is None:
-            seed = get_new_seed()
+            seed = get_new_seed(rng)
             
-        return _render_question(thequestion, seed, context)
+        return _render_question(thequestion, rng=rng, seed=seed, 
+                                context=context)
 
 
 @register.tag
@@ -798,13 +806,20 @@ class VideoQuestionsNode(template.Node):
         # render for each question associated with video
         html_string=""
 
+        try:
+            rng = context['_answer_data_']['rng']
+        except:
+            import random
+            rng = random.Random()
+
         if seed is not None:
-            random.seed(seed)
+            rng.seed(seed)
 
         for videoquestion in thevideo.videoquestion_set.all():
             question = videoquestion.question
-            question_seed = get_new_seed()
-            html_string += _render_question(question, seed, context)
+            question_seed = get_new_seed(rng)
+            html_string += _render_question(question, rng=rng, seed=seed, 
+                                            context=context)
 
         return html_string
 
@@ -924,7 +939,7 @@ class AnswerNode(template.Node):
                 rendered_answer_list.append({
                         'answer_id': answer.id,
                         'rendered_answer': rendered_answer})
-            random.shuffle(rendered_answer_list)
+            answer_data['rng'].shuffle(rendered_answer_list)
         
             html_string = ""
             if kwargs.get("select"):

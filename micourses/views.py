@@ -369,9 +369,10 @@ class AssessmentAttempt(AssessmentAttempted):
         context['attempt_number'] = self.attempt_number
         context['score_overridden'] = self.attempt.score_overridden()
 
-
+        import random
+        rng=random.Random()
         rendered_question_list=render_question_list\
-            (self.assessment, self.attempt.seed,
+            (self.assessment, rng=rng, seed=self.attempt.seed,
              current_attempt=self.attempt)[0]
 
         question_list = []
@@ -425,8 +426,10 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
         self.question_number = int(self.question_number)
 
         try:
+            import random
+            rng=random.Random()
             self.question_dict=render_question_list\
-                    (self.assessment, self.attempt.seed, 
+                    (self.assessment, rng=rng, seed=self.attempt.seed, 
                      current_attempt=self.attempt)[0][self.question_number-1]
         except IndexError:
             raise  Http404('Question %s not found.' % self.question_number)
@@ -545,7 +548,10 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         import json
         prefilled_answers = json.loads(self.answer.answer)
 
-        question_data = render_question(question, seed=self.answer.seed,
+        import random
+        rng=random.Random()
+        question_data = render_question(question, 
+                                        rng=rng, seed=self.answer.seed,
                                         question_identifier=identifier,
                                         user=self.request.user, show_help=False,
                                         prefilled_answers=prefilled_answers, 

@@ -6,7 +6,6 @@ from __future__ import division
 from mitesting.customized_commands import *
 from mitesting.sympy_customized import parse_and_process
 from sympy import Tuple, Function, Symbol
-import random
 from sympy.parsing.sympy_tokenize import TokenError
 import six
 
@@ -76,7 +75,7 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
 
 
 
-def return_random_number_sample(expression, global_dict=None):
+def return_random_number_sample(expression, rng, global_dict=None):
     """
     Returns a randomly generated number based on string.
     Expression is first parsed via sympy using global_dict, if specified.
@@ -116,7 +115,7 @@ def return_random_number_sample(expression, global_dict=None):
     except TypeError:
         raise TypeError("Expression defining random number must contain numbers: " + str(number_params) + "\nRequired format: (minval, maxval, [increment])")
     choices=[min_value+n*increment for n in range(num_possibilities)]
-    the_num = random.choice(choices)
+    the_num = rng.choice(choices)
 
     # if the_num is an integer, convert to integer so don't have decimal
     if int(the_num)==the_num:
@@ -135,7 +134,7 @@ def return_random_number_sample(expression, global_dict=None):
     return sympify(the_num)
 
 
-def return_random_word_and_plural(expression_list, index=None):
+def return_random_word_and_plural(expression_list, rng, index=None):
     """
     Return word and its plural chosen from string.
     Expression_list is a command separated list of tuples.
@@ -226,7 +225,7 @@ def return_random_word_and_plural(expression_list, index=None):
 
     # if index isn't prescribed, generate randomly
     if index is None:
-        index = random.randrange(len(option_list))
+        index = rng.randrange(len(option_list))
 
     the_word=option_list[index]
     the_plural=plural_list[index]
@@ -235,7 +234,7 @@ def return_random_word_and_plural(expression_list, index=None):
 
 
 
-def return_random_expression(expression_list, index=None, 
+def return_random_expression(expression_list, rng, index=None, 
                              global_dict=None, evaluate_level=None):
     """
     Return an expression from a string containing comma-separated list.
@@ -260,7 +259,7 @@ def return_random_expression(expression_list, index=None,
 
     # if index isn't prescribed, generate randomly
     if index is None:
-        index = random.randrange(len(parsed_list))
+        index = rng.randrange(len(parsed_list))
 
     the_expression = parsed_list[index]
 
