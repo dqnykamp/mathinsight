@@ -128,16 +128,19 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # Instead, we replace keyword with _keyword_ in both the
     # expression and the dictionary keys.
     for kword in keyword.kwlist:
+        kword_found=False
         if kword in new_global_dict:
             new_global_dict['_'+kword+'_'] = new_global_dict[kword]
             del new_global_dict[kword]
-            s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
+            kword_found=True
         if local_dict and kword in local_dict:
             local_dict_old=local_dict
             local_dict = {}
             local_dict.update(local_dict_old)
             local_dict['_'+kword+'_'] = local_dict[kword]
             del local_dict[kword]
+            kword_found=True
+        if kword_found:
             s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
 
 
@@ -193,8 +196,8 @@ def auto_symbol(tokens, local_dict, global_dict):
     """Inserts calls to ``Symbol`` for undefined variables.
     
     Customized verison of auto symbol
-    only difference is that ignore python keywords 
-    so that the keywords will be turned into a symbol
+    only difference is that ignore python keywords and None
+    so that the keywords and None will be turned into a symbol
     """
     from sympy.parsing.sympy_tokenize import NAME, OP
     from sympy.core.basic import Basic
@@ -210,7 +213,7 @@ def auto_symbol(tokens, local_dict, global_dict):
         if tokNum == NAME:
             name = tokVal
 
-            if (name in ['True', 'False', 'None', 'and', 'or', 'not']
+            if (name in ['True', 'False', 'and', 'or', 'not']
                 or name in local_dict
                 # Don't convert attribute access
                 or (prevTok[0] == OP and prevTok[1] == '.')

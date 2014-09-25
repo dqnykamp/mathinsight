@@ -265,7 +265,8 @@ class math_object(object):
                 # in latex printer, use sstr print
                 from sympy.printing import sstr
                 output = sstr(expression)
-
+            except:
+                output = "[error]"
         if self._parameters.get('use_ln'):
             import re
             output = re.sub(r'\log', 'ln', output)
