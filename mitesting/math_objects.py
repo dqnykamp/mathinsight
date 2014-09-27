@@ -367,6 +367,11 @@ def create_symbol_name_dict():
     for symbol in symbol_list:
         symbol_name_dict[eval("Symbol('%s')" % symbol)] = '\\%s' % symbol
 
+    symbol_name_dict[Symbol('heart')] = '\\heartsuit'
+    symbol_name_dict[Symbol('club')] = '\\clubsuit'
+    symbol_name_dict[Symbol('diamond')] = '\\diamondsuit'
+    symbol_name_dict[Symbol('spade')] = '\\spadesuit'
+
     return symbol_name_dict
 
 
