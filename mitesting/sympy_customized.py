@@ -154,6 +154,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # To prevent this interpretation, change to 0*x
     s = re.sub(r'\b0x', r'0*x', s)
     
+    # Don't interpret integer followed by l or L as a long integer.
+    # Instead, make it be a multiplication
+    s = re.sub(r'(\d)l', r'\1*l', s)
+    s = re.sub(r'(\d)L', r'\1*L', s)
+
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
             s, global_dict=new_global_dict, local_dict=local_dict, 
