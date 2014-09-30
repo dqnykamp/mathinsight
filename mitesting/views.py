@@ -836,7 +836,6 @@ class AssessmentView(DetailView):
         rng=random.Random()
 
         from .render_assessments import render_question_list, get_new_seed
-        rendered_list=[]
         (rendered_list,self.seed)=render_question_list(
             self.object, rng=rng, seed=self.seed, user=self.request.user, 
             solution=self.solution,

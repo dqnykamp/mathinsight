@@ -560,7 +560,7 @@ class Assessment(models.Model):
 
             # make list of all questions that are not in avoid list
             allowed_questions = [q for q in questions_in_set if str(q.id) not in avoid_list]
-            
+
             # if removed all questions, but back all questions in set
             if len(allowed_questions) == 0:
                 allowed_questions=list(questions_in_set)
@@ -571,14 +571,21 @@ class Assessment(models.Model):
         min_disallowed_questions=1000
         seed_min_disallowed=None
 
+        import random
+        rng=random.Random()
+
+        from .render_assessments import get_question_list
+
         for seed in range(start_seed, start_seed+1000):
 
-            question_list = self.get_question_list(str(seed))
+            rng.seed(str(seed))
+            question_list=get_question_list(self, rng=rng)
 
             number_disallowed_questions=0
 
             for (i, question_set) in enumerate(question_sets):
-                if not question_list[i]['question'] in allowed_question_lists[i]:
+                if not question_list[i]['question'] \
+                   in allowed_question_lists[i]:
                     number_disallowed_questions += 1
             
             if number_disallowed_questions < min_disallowed_questions:
