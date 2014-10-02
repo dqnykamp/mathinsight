@@ -107,12 +107,16 @@ def evalf_expression(expression, n=15):
     expression = sympify(expression)
     initial_n_digits = max(30, n+5)
     
+    def initial_evalf(w):
+        try:
+            return w.evalf(initial_n_digits)
+        except:
+            return w
+
+
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(
-        expression,
-        lambda w: w if not (w.is_Number or w.is_NumberSymbol) else w.evalf(initial_n_digits),
-        atoms=True)
+    expression =  bottom_up(expression, initial_evalf, atoms=True)
 
     from sympy import Float
     expression =  bottom_up(
@@ -214,16 +218,140 @@ def iif(cond, result_if_true, result_if_false):
         return ""
       
 
-class log(Function):
-    """
-    Don't implicitly do any simplification or evalf 
-    until doit() is called.  
-    Is an undefined function until call doit().
-    """
+"""
+Turn off automatic evaluation of floats in the following sympy functions.
+Functions will still evaluate to floats when .evalf() is called
+and will otherwise behave normally.
+"""
 
-    def _eval_evalf(self,prec):
-        pass
+from sympy import log as sympy_log
+class log(sympy_log):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
 
-    def doit(self, **hints):
-        from sympy import log as sympy_log
-        return sympy_log(self.args[0]).doit(**hints)
+class ln(sympy_log):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import acosh as sympy_acosh
+class acosh(sympy_acosh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import acos as sympy_acos
+class acos(sympy_acos):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import acosh as sympy_acosh
+class acosh(sympy_acosh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import acot as sympy_acot
+class acot(sympy_acot):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import acoth as sympy_acoth
+class acoth(sympy_acoth):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import asin as sympy_asin
+class asin(sympy_asin):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import asinh as sympy_asinh
+class asinh(sympy_asinh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import atan as sympy_atan
+class atan(sympy_atan):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import atan2 as sympy_atan2
+class atan2(sympy_atan2):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import atanh as sympy_atanh
+class atanh(sympy_atanh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import cos as sympy_cos
+class cos(sympy_cos):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import cosh as sympy_cosh
+class cosh(sympy_cosh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import cot as sympy_cot
+class cot(sympy_cot):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import coth as sympy_coth
+class coth(sympy_coth):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import csc as sympy_csc
+class csc(sympy_csc):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import sec as sympy_sec
+class sec(sympy_sec):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import sin as sympy_sin
+class sin(sympy_sin):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import sinh as sympy_sinh
+class sinh(sympy_sinh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import tan as sympy_tan
+class tan(sympy_tan):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+
+from sympy import tanh as sympy_tanh
+class tanh(sympy_tanh):
+    @classmethod
+    def _should_evalf(cls, arg):
+        return -1
+

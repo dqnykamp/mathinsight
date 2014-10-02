@@ -30,24 +30,29 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
     exec "from sympy import *" in all_sympy_commands
 
     # create a dictionary containing the localized commands
-    localized_commands = {'roots_tuple': roots_tuple, 
-                          'real_roots_tuple': real_roots_tuple, 
-                          'round': round_expression,
-                          'smallest_factor': smallest_factor,
-                          'e': all_sympy_commands['E'], 
-                          'max': max_including_tuples,
-                          'Max': max_including_tuples,
-                          'min': min_including_tuples,
-                          'Min': min_including_tuples,
-                          'abs': Abs,
-                          'evalf': evalf_expression,
-                          'index': index,
-                          'sum': sum,
-                          'if': iif,
-                          'len': len,
-                          'log': log,
-                          'ln': log
-                          }
+    localized_commands = \
+        {'roots_tuple': roots_tuple, 
+         'real_roots_tuple': real_roots_tuple, 
+         'round': round_expression,
+         'smallest_factor': smallest_factor,
+         'e': all_sympy_commands['E'], 
+         'max': max_including_tuples,
+         'Max': max_including_tuples,
+         'min': min_including_tuples,
+         'Min': min_including_tuples,
+         'abs': Abs,
+         'evalf': evalf_expression,
+         'index': index,
+         'sum': sum,
+         'if': iif,
+         'len': len,
+         'log': log, 'ln': ln,
+         'acosh': acosh, 'acos': acos, 'acosh': acosh, 
+         'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
+         'atan': atan, 'atan2': atan2, 'atanh': atanh, 
+         'cos': cos, 'cosh': cosh, 'cot': cot, 'coth': coth, 'csc': csc, 
+         'sec': sec, 'sin': sin, 'sinh': sinh, 'tan': tan, 'tanh': tanh, 
+        }
     
     # create a set of allowed commands containing all comma-separated
     # strings from allowed_sympy_commands

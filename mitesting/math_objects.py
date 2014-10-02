@@ -308,21 +308,33 @@ class math_object(object):
         the precision determined by n_digits and round_decimals, if set.
         """
 
+        from mitesting.sympy_customized import EVALUATE_NONE
+
+        expression=self._expression
+
+        # As long as evaluate is not False
+        # convert customized ln command to customized log command
+        if self._parameters.get("evaluate_level") != EVALUATE_NONE:
+            from .customized_commands import log, ln
+            from .sympy_customized import bottom_up
+            expression = bottom_up(expression, 
+                lambda w: w if not w.func==ln else log(*w.args))
+            new_expr = bottom_up(new_expr, 
+                lambda w: w if not w.func==ln else log(*w.args))
+
         # Calculate the normalized expressions for both expressions,
         # rounded to precision as specified by n_digits and round_decimals
         new_expr_normalize=self.eval_to_precision(try_normalize_expr(new_expr))
         expression_normalize = self.eval_to_precision(\
-            try_normalize_expr(self._expression))
+            try_normalize_expr(expression))
+
 
         # As long as evaluate is not False
         # evaluate both expressions to precision as specified
         # by n_digits and round_decimals
-        from mitesting.sympy_customized import EVALUATE_NONE
-        if self._parameters.get("evaluate_level") == EVALUATE_NONE:
-            expression=self._expression
-        else:
+        if self._parameters.get("evaluate_level") != EVALUATE_NONE:
             new_expr = self.eval_to_precision(new_expr)
-            expression=self.eval_to_precision(self._expression)
+            expression = self.eval_to_precision(expression)
 
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         match_partial_tuples_on_compare = self._parameters.get(
