@@ -309,6 +309,18 @@ class QuestionAnswerOption(models.Model):
         super(QuestionAnswerOption, self).save(*args, **kwargs)
 
 
+    def render_feedback(self, expr_context):
+        template_string = "{% load testing_tags mi_tags humanize %}"
+        template_string += self.feedback
+        try:
+            t = Template(template_string)
+            return mark_safe(t.render(expr_context))
+        except TemplateSyntaxError as e:
+            logger.warning("Error in feedback for answer option with "
+                           + " code = %s: %s"
+                           % (self.answer_code, self))
+            return ""
+
 
 @python_2_unicode_compatible
 class AssessmentType(models.Model):

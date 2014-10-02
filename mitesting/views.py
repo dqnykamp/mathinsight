@@ -225,9 +225,7 @@ class GradeQuestionView(SingleObjectMixin, View):
             total_points += answer_points
             feedback = ""
 
-            # start with negative percent_correct so that will get 
-            # feedback from matched answers with 0 percent correct
-            percent_correct = -1
+            percent_correct = 0
 
             answer_option_used = None
             
@@ -249,14 +247,17 @@ class GradeQuestionView(SingleObjectMixin, View):
                 else:
                     percent_correct = the_answer.percent_correct
                     if percent_correct == 100:
-                        feedback = "Yes, you are correct"
+                        feedback = "Yes, you are correct."
                     elif percent_correct > 0:
                         feedback = 'Answer is not completely correct' \
                             + ' but earns partial (%s%%) credit.' \
                             % (the_answer.percent_correct)
                     else:
-                        feedback = "No, you are incorrect"
-                    answer_option_used = the_answer
+                        feedback = "No, you are incorrect."
+                        
+                # record any feedback from answer option used
+                feedback += " " +  the_answer.render_feedback(expr_context)
+
 
             elif answer_type == QuestionAnswerOption.EXPRESSION:
 
@@ -277,6 +278,9 @@ class GradeQuestionView(SingleObjectMixin, View):
                     answer_results['answer_correct'][answer_identifier]=False
                     continue
 
+                # start with negative percent_correct so that will get 
+                # feedback from matched answers with 0 percent correct
+                percent_correct=-1
 
                 # compare with expressions associated with answer_code
                 for answer_option in question.questionansweroption_set \
@@ -357,26 +361,34 @@ class GradeQuestionView(SingleObjectMixin, View):
 
                     elif correctness_of_answer<0 and correctness_of_answer>=-1 \
                          and this_near_match_percent_correct  > \
-                         near_match_percent_correct:
+                         max(near_match_percent_correct,percent_correct):
                         near_match_percent_correct =\
                             this_near_match_percent_correct
                         near_match_feedback = \
-                            " Your answer is mathematically equivalent to " 
+                            "<br><small>(Your answer is mathematically equivalent to " 
                         if near_match_percent_correct == 100:
                             near_match_feedback += "the correct answer, "
                         else:
                             near_match_feedback  += \
                                 "an answer that is %i%% correct, " \
                                 % near_match_percent_correct
-                        near_match_feedback += "but this question requires"\
-                            " you to write your answer in a different form." 
-                        answer_option_used = answer_option
+                        near_match_feedback += "but "\
+                            " you must write your answer in a different form.)</small>" 
                     if not feedback:
                         feedback = 'No, $%s$ is incorrect.' \
                             % user_response_unevaluated
                         answer_option_used = answer_option
 
-                if percent_correct < 100 and near_match_feedback:
+                # since started with negative percent_correct
+                # make it zero if no matches
+                percent_correct = max(0, percent_correct)
+
+                # record any feedback from answer option used
+                feedback += " " + \
+                    answer_option_used.render_feedback(expr_context)
+
+                if percent_correct < 100 and \
+                   near_match_percent_correct > percent_correct:
                     feedback += near_match_feedback
 
             else:
@@ -389,9 +401,6 @@ class GradeQuestionView(SingleObjectMixin, View):
                 answer_results['answer_correct'][answer_identifier]=False
                 continue
 
-            # since started with negative percent_correct
-            # make it zero if no matches
-            percent_correct = max(0, percent_correct)
 
             # store (points achieved)*100 as integer for now
             points_achieved += percent_correct * \
@@ -414,21 +423,6 @@ class GradeQuestionView(SingleObjectMixin, View):
 
             answer_results['answer_correct'][answer_identifier]\
                 = (percent_correct == 100)
-
-            # record any feedback from answer option used
-            if answer_option_used and answer_option_used.feedback:
-                template_string = "{% load testing_tags mi_tags humanize %}"
-                template_string += answer_option_used.feedback
-                try:
-                    t = Template(template_string)
-                    rendered_feedback = mark_safe(t.render(expr_context))
-                except TemplateSyntaxError as e:
-                    logger.warning("Error in feedback for answer option with "
-                                   + " code = %s: %s"
-                                   % (answer_code, answer_option_used))
-                else:
-                    answer_results['answer_feedback'][answer_identifier] \
-                        += " " + rendered_feedback
 
         
         # record if exactly correct, then normalize points achieved
