@@ -63,6 +63,7 @@ class AppletAdmin(reversion.VersionAdmin):
     inlines = [AppletParameterInline, AppletObjectInline, AppletChildObjectLinkInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
+    list_filter = ("applet_type",)
     list_display = ("code","title","applet_type")
     filter_horizontal = ['features','keywords','subjects']
     search_fields = ['code', 'title','applet_type__code']
