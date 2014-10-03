@@ -50,8 +50,8 @@ def round_expression(expression, n=0, initial_n_digits=100):
     Attempts to round expressions to n decimal places in a way to get 
     identical results for two expressions that agree to n decimal places.
     To accomplish, the method performs the following steps
-    1.  Traverses expression tree to call evalf with initial_n_digits
-        precision on every number or numbersymbol (like pi).
+    1.  Traverses expression tree and attempts to call evalf with 
+        initial_n_digits precision on every element.
         The first pass puts expression in a consistent form.
     2.  Traverses expression tree, converting each number to a float
         with the number of decimal places specified by n n.
@@ -63,12 +63,16 @@ def round_expression(expression, n=0, initial_n_digits=100):
     """
     
     expression = sympify(expression)
+
+    def initial_evalf(w):
+        try:
+            return w.evalf(initial_n_digits)
+        except:
+            return w
+
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(
-        expression,
-        lambda w: w if not (w.is_Number or w.is_NumberSymbol) else w.evalf(initial_n_digits),
-        atoms=True)
+    expression =  bottom_up(expression, initial_evalf, atoms=True)
 
     # next, round numbers
     if n <= 0:
@@ -93,8 +97,8 @@ def evalf_expression(expression, n=15):
     Attempts to truncate expressions to n digits in a way to get 
     identical results for two expressions that agree to n digits.
     To accomplish, the method performs the following steps
-    1.  Traverses expression tree to call evalf with max(30,n+5)
-        precision on every number or numbersymbol (like pi).
+    1.  Traverses expression tree and attempts to call evalf with max(30,n+5)
+        precision on every element.
         The first pass puts expression in a consistent form.
     2.  Traverses expression tree, converting each number to a float
         with the precision specified by n.
