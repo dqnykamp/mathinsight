@@ -256,7 +256,10 @@ class GradeQuestionView(SingleObjectMixin, View):
                         feedback = "No, you are incorrect."
                         
                 # record any feedback from answer option used
-                feedback += " " +  the_answer.render_feedback(expr_context)
+                try:
+                    feedback += " " +  the_answer.render_feedback(expr_context)
+                except:
+                    pass
 
 
             elif answer_type == QuestionAnswerOption.EXPRESSION:
@@ -384,8 +387,11 @@ class GradeQuestionView(SingleObjectMixin, View):
                 percent_correct = max(0, percent_correct)
 
                 # record any feedback from answer option used
-                feedback += " " + \
-                    answer_option_used.render_feedback(expr_context)
+                try:
+                    feedback += " " + \
+                                answer_option_used.render_feedback(expr_context)
+                except:
+                    pass
 
                 if percent_correct < 100 and \
                    near_match_percent_correct > percent_correct:
