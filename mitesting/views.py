@@ -310,18 +310,11 @@ class GradeQuestionView(SingleObjectMixin, View):
                         break
 
                     
-                    from mitesting.sympy_customized import EVALUATE_NONE
-                    user_response_unevaluated =  parse_and_process(
-                        user_response, global_dict=global_dict, 
-                        split_symbols=answer_option
-                        .split_symbols_on_compare,
-                        evaluate_level=EVALUATE_NONE)
-
                     user_response_parsed=math_object(
                         user_response_parsed,
                         tuple_is_unordered=valid_answer.return_if_unordered(),
                         output_no_delimiters= 
-                    valid_answer.return_if_output_no_delimiters(),
+                        valid_answer.return_if_output_no_delimiters(),
                         use_ln=valid_answer.return_if_use_ln(),
                         normalize_on_compare=answer_option.normalize_on_compare,
                         match_partial_tuples_on_compare= 
@@ -330,16 +323,31 @@ class GradeQuestionView(SingleObjectMixin, View):
                         n_digits = valid_answer.return_n_digits(),
                         round_decimals = valid_answer.return_round_decimals())
 
-                    user_response_unevaluated=math_object(
-                        user_response_unevaluated,
-                        tuple_is_unordered=valid_answer.return_if_unordered(),
-                        output_no_delimiters=
-                        valid_answer.return_if_output_no_delimiters(),
-                        use_ln=valid_answer.return_if_use_ln(),
-                        normalize_on_compare=answer_option.normalize_on_compare,
-                        match_partial_tuples_on_compare= 
-                        answer_option.match_partial_tuples_on_compare,
-                        evaluate_level=EVALUATE_NONE)
+
+                    user_response_string=""
+                    from mitesting.sympy_customized import EVALUATE_NONE
+                    try:
+                        user_response_unevaluated =  parse_and_process(
+                            user_response, global_dict=global_dict, 
+                            split_symbols=answer_option
+                            .split_symbols_on_compare,
+                            evaluate_level=EVALUATE_NONE)
+                        user_response_unevaluated=math_object(
+                            user_response_unevaluated,
+                            output_no_delimiters=
+                            valid_answer.return_if_output_no_delimiters(),
+                            use_ln=valid_answer.return_if_use_ln(),
+                            evaluate_level=EVALUATE_NONE)
+                        user_response_string = str(user_response_unevaluated)
+                    except:
+                        pass
+                    
+                    if not user_response_string:
+                        try:
+                            user_response_string = str(user_response_parsed)
+                        except:
+                            user_response_string = "[error displaying answer]"
+                    
 
                     correctness_of_answer = \
                         user_response_parsed.compare_with_expression( \
@@ -353,11 +361,11 @@ class GradeQuestionView(SingleObjectMixin, View):
                         if this_percent_correct == 100:
                             feedback = \
                                 'Yes, $%s$ is correct.' % \
-                                user_response_unevaluated
+                                user_response_string
                         elif this_percent_correct > 0:
                             feedback = '$%s$ is not completely correct but earns' \
                                 ' partial (%i%%) credit.' \
-                                % (user_response_unevaluated, 
+                                % (user_response_string, 
                                    this_percent_correct)
                         percent_correct = this_percent_correct
                         answer_option_used = answer_option
@@ -379,7 +387,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                             " you must write your answer in a different form.)</small>" 
                     if not feedback:
                         feedback = 'No, $%s$ is incorrect.' \
-                            % user_response_unevaluated
+                            % user_response_string
                         answer_option_used = answer_option
 
                 # since started with negative percent_correct
