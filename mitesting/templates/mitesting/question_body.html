@@ -10,7 +10,6 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-<span class="question top_level_question" > 
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -68,7 +67,6 @@
 {% endfor %}
 </ol>
 {% endif %}
-</span>
 
 <input type="hidden" id="id_number_attempts_{{question_data.identifier}}" name="number_attempts_{{question_data.identifier}}" value="0">
 <div id="question_{{question_data.identifier}}_feedback" class="info"></div>
