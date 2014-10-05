@@ -159,6 +159,15 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s = re.sub(r'(\d)l', r'\1*l', s)
     s = re.sub(r'(\d)L', r'\1*L', s)
 
+    # replace unicode character for - used in mathjax display with -
+    s= re.sub(r'\u2212', r'-', s)
+
+    # replace mathjax character for \times with *
+    s = re.sub(r'\xd7', r'*', s)
+    
+    # replace unicode character for \cdot used in mathjax display with *
+    s = re.sub(r'\u22c5', r'*', s)
+
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
             s, global_dict=new_global_dict, local_dict=local_dict, 
