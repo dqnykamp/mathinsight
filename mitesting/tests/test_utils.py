@@ -7,11 +7,9 @@ from django.test import SimpleTestCase
 from mitesting.utils import *
 from sympy import Symbol, sympify
 import six
+import random
 
 class TestDicts(SimpleTestCase):
-    def setUp(self):
-        random.seed()
-
     def test_sympy_global_dict(self):
 
         global_dict = return_sympy_global_dict()
@@ -46,30 +44,33 @@ class TestDicts(SimpleTestCase):
 
 class TestRandomNumber(SimpleTestCase):
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
 
     def test_returns_integer_in_range(self):
         from sympy import Integer
-        the_num = return_random_number_sample("(1,3,1)")
+        the_num = return_random_number_sample("(1,3,1)", rng=self.rng)
         self.assertTrue(the_num in range(1,4))
         self.assertTrue(isinstance(the_num, Integer))
 
     def test_with_no_increment(self):
         from sympy import Integer
-        the_num = return_random_number_sample("(-1,5)")
+        the_num = return_random_number_sample("(-1,5)", rng=self.rng)
         self.assertTrue(the_num in range(-1,6))
         self.assertTrue(isinstance(the_num, Integer))
 
     def test_rounding_with_tenths(self):
         valid_answers = [round(0.1*a,1) for a in range(-31,52)]
         for i in range(5):
-            the_num = return_random_number_sample("(-3.1,5.1,0.1)")
+            the_num = return_random_number_sample("(-3.1,5.1,0.1)", 
+                                                  rng=self.rng)
             self.assertTrue(the_num in valid_answers)
 
     def test_can_achieve_max_value(self):
         achieved_max = False
         for i in range(1000):
-            the_num = return_random_number_sample("(4.04,4.15,0.01)")
+            the_num = return_random_number_sample("(4.04,4.15,0.01)",
+                                                  rng=self.rng)
             if the_num == 4.15:
                 achieved_max = True
                 break
@@ -77,39 +78,44 @@ class TestRandomNumber(SimpleTestCase):
     
     def test_with_global_dict(self):
         global_dict = {"x": sympify(-2), "y": sympify(2)}
-        the_num = return_random_number_sample("(x,y)", global_dict=global_dict)
+        the_num = return_random_number_sample("(x,y)", rng=self.rng,
+                                              global_dict=global_dict)
         self.assertTrue(the_num in range(-2,3))
     
     def test_raises_useful_exceptions(self):
         self.assertRaisesRegexp(ValueError, 'Invalid format for random number',
-                                return_random_number_sample, "(")
+                                return_random_number_sample, "(", rng=self.rng)
         
         self.assertRaisesRegexp(ValueError, 'require minval <= maxval', 
-                                return_random_number_sample, "(5,3)")
+                                return_random_number_sample, "(5,3)",
+                                rng=self.rng)
 
         self.assertRaisesRegexp(ValueError, 'Invalid format for random number', 
-                                return_random_number_sample, "4")
+                                return_random_number_sample, "4", rng=self.rng)
 
         self.assertRaisesRegexp(ValueError, 'Invalid format for random number', 
-                                return_random_number_sample, "(1,2,3,4)")
+                                return_random_number_sample, "(1,2,3,4)",
+                                rng=self.rng)
 
         self.assertRaisesRegexp(TypeError, 'random number must contain numbers',
-                                return_random_number_sample, "(a,b,c)")
+                                return_random_number_sample, "(a,b,c)",
+                                rng=self.rng)
 
 
 class TestRandomWordPlural(SimpleTestCase):
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
 
     def test_with_no_plurals(self):
-        word = return_random_word_and_plural("hello, bye, seeya")
+        word = return_random_word_and_plural("hello, bye, seeya", rng=self.rng)
         self.assertTrue(word[0] in ["hello", "bye", "seeya"])
         self.assertEqual(word[0]+"s", word[1])
 
     def test_with_no_plurals(self):
         for i in range(3):
             word = return_random_word_and_plural(
-                "(hello, helloes), bye, (seeya, seeyee)")
+                "(hello, helloes), bye, (seeya, seeyee)", rng=self.rng)
             self.assertTrue(word[0] in ["hello", "bye", "seeya"])
             if word[2]==0:
                 self.assertEqual(word[0],'hello')
@@ -125,7 +131,7 @@ class TestRandomWordPlural(SimpleTestCase):
         for i in range(3):
             word = return_random_word_and_plural(
                 "('hello all', \"hellos to all\"), 'bye-bye', " 
-                + '("see ya", \'see yee\')')
+                + '("see ya", \'see yee\')', rng=self.rng)
             self.assertTrue(word[0] in ["hello all", "bye-bye", "see ya"])
             if word[2]==0:
                 self.assertEqual(word[0],'hello all')
@@ -140,33 +146,40 @@ class TestRandomWordPlural(SimpleTestCase):
     def test_with_varied_spacing(self):
         for i in range(3):
             word = return_random_word_and_plural(
-                " what,kind, of,  list,  'is this?'  ")
+                " what,kind, of,  list,  'is this?'  ", rng=self.rng)
             self.assertTrue(word[0] in ["what","kind","of","list","is this?"])
                             
     def test_with_given_index(self):
-        word = return_random_word_and_plural("a,b,(c,d),e", index=2)
+        word = return_random_word_and_plural("a,b,(c,d),e", rng=self.rng,
+                                             index=2)
         self.assertEqual(word[0], "c")
         self.assertEqual(word[1], "d")
         self.assertEqual(word[2], 2)
 
     def test_with_extra_characters(self):
         word = return_random_word_and_plural("hi!, bye-bye, this_one, me&you,"
-                                             + "this@whatever.net")
+                                             + "this@whatever.net",
+                                             rng=self.rng)
         self.assertTrue(word[0] in ["hi!","bye-bye", "this_one", "me&you",
                                     "this@whatever.net"])
 
 
     def test_raises_useful_exception(self):
         self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
-                                return_random_word_and_plural, "(")
+                                return_random_word_and_plural, "(",
+                                rng=self.rng)
         self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
-                                return_random_word_and_plural, "(a a)")
+                                return_random_word_and_plural, "(a a)",
+                                rng=self.rng)
         self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
-                                return_random_word_and_plural, "((a,a), a)")
+                                return_random_word_and_plural, "((a,a), a)",
+                                rng=self.rng)
         self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
-                                return_random_word_and_plural, "a,(a,a,a)")
+                                return_random_word_and_plural, "a,(a,a,a)",
+                                rng=self.rng)
         self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
-                                return_random_word_and_plural, "(a,(a,a))")
+                                return_random_word_and_plural, "(a,(a,a))",
+                                rng=self.rng)
 
         # this should raise a value error, but it doesn't yet
         # self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
@@ -176,10 +189,11 @@ class TestRandomWordPlural(SimpleTestCase):
 
 class TestRandomExpression(SimpleTestCase):
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
 
     def test_basic_example(self):
-        expr = return_random_expression("hello, bye, seeya")
+        expr = return_random_expression("hello, bye, seeya", rng=self.rng)
         self.assertTrue(expr[0] in [Symbol("hello"), Symbol("bye"),
                                     Symbol("seeya")])
         if expr[1]==0:
@@ -192,38 +206,38 @@ class TestRandomExpression(SimpleTestCase):
     def test_with_math_expression(self):
         x=Symbol("x")
         y=Symbol("y")
-        expr = return_random_expression("x^3, x^2+2*x*y")
+        expr = return_random_expression("x^3, x^2+2*x*y", rng=self.rng)
         self.assertTrue(expr[0] in [x**3, x**2+2*x*y])
 
     def test_with_global_dict(self):
         x=Symbol("x")
         y=Symbol("y")
         global_dict = {"v1": x, "v2": y}
-        expr = return_random_expression("v1+v2, v1/v2", global_dict=global_dict)
+        expr = return_random_expression("v1+v2, v1/v2", rng=self.rng,
+                                        global_dict=global_dict)
         self.assertTrue(expr[0] in [x+y, x/y])
 
         from sympy import sin, cos
         u = Symbol("u")
         global_dict = {"f": sin, "g": cos, "x": u }
-        expr = return_random_expression("f(x), g(x)", global_dict=global_dict)
+        expr = return_random_expression("f(x), g(x)", rng=self.rng,
+                                        global_dict=global_dict)
         self.assertTrue(expr[0] in [sin(u),cos(u)])
 
     def test_with_given_index(self):
         x = Symbol('x')
         g = Symbol('g')
-        expr = return_random_expression("f(x), g(x), h(x)", index=1)
+        expr = return_random_expression("f(x), g(x), h(x)", rng=self.rng,
+                                        index=1)
         self.assertEqual(expr[0], x*g)
         self.assertEqual(expr[1], 1)
 
     def test_raises_useful_exception(self):
         self.assertRaisesRegexp(ValueError,
                                 'Invalid format for random expression',
-                                return_random_expression, "(")
+                                return_random_expression, "(", rng=self.rng)
 
 class TestParsedFunction(SimpleTestCase):
-    def setUp(self):
-        random.seed()
-
     def test_simple_function(self):
         z=Symbol('z')
         fun = return_parsed_function("x^2","x", name="f")
@@ -284,8 +298,6 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(fun2(x),9*x**2*(x - 1)**2)
     
         
-        
-
     def test_raises_useful_exceptions(self):
         self.assertRaisesRegexp(ValueError,
                                 'Invalid format for function',

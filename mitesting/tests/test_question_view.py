@@ -305,7 +305,7 @@ class TestGradeQuestionView(TestCase):
     def test_view_simple(self):
         computer_grade_data = {
             'seed': '0', 'identifier': 'a', 'record_answers': True,
-            'allow_solution_buttons': True, 'answer_info': {},
+            'allow_solution_buttons': True, 'answer_info': [],
             'applet_counter': 0}
 
         cgd = base64.b64encode(pickle.dumps(computer_grade_data))
@@ -353,7 +353,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         self.assertContains(response, '<input class="mi_answer" type="text" id="id_answer_%s" name="answer_%s" maxlength="200" size="20" />' % (answer_identifier, answer_identifier), html=True)
 
         fun_x = response.context['fun_x']
@@ -395,7 +395,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         n = response.context['n']
         
@@ -437,7 +437,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         n = response.context['n']
         
@@ -492,7 +492,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         n = response.context['n']
         
@@ -550,8 +550,8 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_info"]\
-                                        .keys())
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
 
         x = response.context['x']
         
@@ -602,8 +602,8 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_info"]\
-                                        .keys())
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
         
         x = response.context['x']
         fun_x = response.context['fun_x']
@@ -677,8 +677,8 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_info"]\
-                                        .keys())
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
 
         x = response.context['x']
         fun_x = response.context['fun_x']
@@ -743,8 +743,8 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_info"]\
-                                        .keys())
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
 
         x = response.context['x']
         
@@ -809,7 +809,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         x = response.context['x']
         answers = {"cgd": cgd,}
 
@@ -892,7 +892,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         x = response.context['x']
         answers = {"cgd": cgd,}
 
@@ -978,7 +978,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         x = response.context['x']
         answers = {"cgd": cgd,}
 
@@ -1073,8 +1073,8 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifiers = sorted(computer_grade_data["answer_info"]\
-                                        .keys())
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
 
         x = response.context['x']
         
@@ -1142,7 +1142,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         x = response.context['x']
         
@@ -1175,7 +1175,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         x = response.context['x']
         
@@ -1216,7 +1216,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         x = response.context['x']
         
@@ -1255,7 +1255,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         x = response.context['x']
         f = response.context['f']
@@ -1291,7 +1291,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         x = response.context['x']
         
         answers = {"cgd": cgd,}
@@ -1331,12 +1331,13 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="function", answer="fun_x")
 
         from mitesting.render_assessments import get_new_seed
-        seed=get_new_seed()
+        rng=random.Random()
+        seed=get_new_seed(rng)
         response = self.client.get("/assess/question/%s" % self.q.id, {'seed': seed})
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         fun_x = response.context['fun_x']
         
         self.assertEqual(seed, computer_grade_data["seed"])
@@ -1359,7 +1360,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         fun_x = response.context['fun_x']
 
         answers = {"cgd": cgd,}
@@ -1392,7 +1393,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         fun_x = response.context['fun_x']
 
         answers = {"cgd": cgd,}
@@ -1437,7 +1438,7 @@ class TestGradeQuestionView(TestCase):
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
         fun_x = response.context['fun_x']
         
         answers = {"cgd": cgd,}
@@ -1523,7 +1524,7 @@ class TestGradeQuestionView(TestCase):
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier = computer_grade_data["answer_info"].keys()[0]
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         f = response.context["f"]
         x = response.context["x"]

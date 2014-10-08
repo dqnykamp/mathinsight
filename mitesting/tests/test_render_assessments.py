@@ -30,9 +30,9 @@ class TestSetupExpressionContext(TestCase):
 
     def test_with_single_expression(self):
         self.new_expr(name="the_x",expression="x")
-
-        random.seed(0)
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed(0)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -47,8 +47,9 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="expr2",expression="expr/y")
         self.new_expr(name="expr3",expression="5*expr2 + expr*z")
 
-        random.seed(1)
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -70,8 +71,9 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="b",expression="3*a")
         self.new_expr(name="a",expression="x+y")
 
-        random.seed(2)
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed(2)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -90,8 +92,11 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.RANDOM_FUNCTION_NAME)
         self.new_expr(name="a",expression="3*f(x)+2")
 
+        rng = random.Random()
+        rng.seed()
+
         for i in range(10):
-            results=setup_expression_context(self.q)
+            results=setup_expression_context(self.q, rng=rng)
             self.assertTrue(results['user_function_dict'] in  \
                                 [{item: Function(str(item))} for item in \
                                      ['f','g','h','k']])
@@ -119,8 +124,11 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="n_nonzero", expression="n != 0", 
                       expression_type = Expression.CONDITION)
         
+        rng = random.Random()
+        rng.seed()
+
         for i in range(10):
-            results=setup_expression_context(self.q)
+            results=setup_expression_context(self.q, rng=rng)
             self.assertEqual(results['user_function_dict'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -142,7 +150,10 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="n_greater_than_4", expression="n > 4", 
                       expression_type = Expression.CONDITION)
 
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed()
+
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertTrue(results['failed_conditions'])
         self.assertEqual("Condition n_greater_than_4 was not met",
@@ -170,9 +181,12 @@ class TestSetupExpressionContext(TestCase):
 
         for i in range(10):
             from mitesting.render_assessments import get_new_seed
-            seed=get_new_seed()
-            random.seed(seed)
-            results=setup_expression_context(self.q)
+
+            rng = random.Random()
+            rng.seed()
+            seed=get_new_seed(rng=rng)
+            rng.seed(seed)
+            results=setup_expression_context(self.q, rng=rng)
             self.assertEqual(results['user_function_dict'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -191,8 +205,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(n in range(-10,11))
         
             #try again with same seed
-            random.seed(seed)
-            results=setup_expression_context(self.q)
+            rng.seed(seed)
+            results=setup_expression_context(self.q, rng=rng)
             self.assertEqual(results['user_function_dict'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -204,8 +218,11 @@ class TestSetupExpressionContext(TestCase):
 
 
     def test_with_error(self):
+        rng = random.Random()
+        rng.seed()
+
         self.new_expr(name="x", expression="(")
-        results=setup_expression_context(self.q)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
@@ -221,7 +238,9 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="e4", expression="e3/")
         self.new_expr(name="e5", expression="e2/e1 + e3/e4")
 
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed()
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(results['user_function_dict'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
@@ -281,7 +300,7 @@ class TestSetupExpressionContext(TestCase):
                 self.q.allowed_sympy_commands.add(scs_other)
 
     def test_initial_sympy_global_dict(self):
-        from sympy import sin, cos, log, exp
+        from mitesting.customized_commands import sin, cos, log, exp
         self.assertEqual(self.q.return_sympy_global_dict(), {})
         self.assertEqual(self.q.return_sympy_global_dict(user_response=True), 
                          {})
@@ -305,12 +324,16 @@ class TestSetupExpressionContext(TestCase):
 
     def test_command_set_inclusion(self):
         x=Symbol('x')
-        from sympy import sin, cos, log, exp
+        from mitesting.customized_commands import sin, cos, log, exp, ln
         self.new_expr(name="sincos", expression="sin(x)*cos(x)")
         self.new_expr(name="explog1", expression="exp(x)*log(x)")
-        self.new_expr(name="explog2", expression="e^x*ln(x)")
+        self.new_expr(name="explog2", expression="e^x*log(x)")
+        self.new_expr(name="expln1", expression="exp(x)*ln(x)")
+        self.new_expr(name="expln2", expression="e^x*ln(x)")
 
-        results=setup_expression_context(self.q)
+        rng = random.Random()
+        rng.seed()
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
                          results['expression_context']["sincos"])
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
@@ -319,13 +342,21 @@ class TestSetupExpressionContext(TestCase):
                          results['expression_context']["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
                          results['sympy_global_dict']["explog1"])
-        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+        self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          results['expression_context']["explog2"])
-        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+        self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          results['sympy_global_dict']["explog2"])
+        self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
+                         results['expression_context']["expln1"])
+        self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
+                         results['sympy_global_dict']["expln1"])
+        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+                         results['expression_context']["expln2"])
+        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+                         results['sympy_global_dict']["expln2"])
 
         self.add_allowed_sympy_commands_sets(['trig'])
-        results=setup_expression_context(self.q)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(sin(x)*cos(x),
                          results['expression_context']["sincos"])
         self.assertEqual(sin(x)*cos(x),
@@ -334,13 +365,21 @@ class TestSetupExpressionContext(TestCase):
                          results['expression_context']["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
                          results['sympy_global_dict']["explog1"])
-        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+        self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          results['expression_context']["explog2"])
-        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+        self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          results['sympy_global_dict']["explog2"])
+        self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
+                         results['expression_context']["expln1"])
+        self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
+                         results['sympy_global_dict']["expln1"])
+        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+                         results['expression_context']["expln2"])
+        self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
+                         results['sympy_global_dict']["expln2"])
        
         self.add_allowed_sympy_commands_sets(['explog'])
-        results=setup_expression_context(self.q)
+        results=setup_expression_context(self.q, rng=rng)
         self.assertEqual(sin(x)*cos(x),
                          results['expression_context']["sincos"])
         self.assertEqual(sin(x)*cos(x),
@@ -353,6 +392,14 @@ class TestSetupExpressionContext(TestCase):
                          results['expression_context']["explog2"])
         self.assertEqual(exp(x)*log(x),
                          results['sympy_global_dict']["explog2"])
+        self.assertEqual(exp(x)*ln(x),
+                         results['expression_context']["expln1"])
+        self.assertEqual(exp(x)*ln(x),
+                         results['sympy_global_dict']["expln1"])
+        self.assertEqual(exp(x)*ln(x),
+                         results['expression_context']["expln2"])
+        self.assertEqual(exp(x)*ln(x),
+                         results['sympy_global_dict']["expln2"])
 
         
     
@@ -367,8 +414,11 @@ class TestSetupExpressionContext(TestCase):
 
         self.add_allowed_sympy_commands_sets(['absminmax', 'other'])
 
+        rng = random.Random()
+        rng.seed()
+
         for i in range(10):
-            results=setup_expression_context(self.q)
+            results=setup_expression_context(self.q, rng=rng)
 
             expr_context = results['expression_context']
             n = expr_context['n'].return_expression()
@@ -456,7 +506,8 @@ class TestAnswerCodes(TestCase):
 
 class TestRenderQuestionText(TestCase):
     def setUp(self):
-        random.seed()
+        self.rng=random.Random()
+        self.rng.seed()
         qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="fun question",
@@ -478,7 +529,7 @@ class TestRenderQuestionText(TestCase):
             name="x",expression="x,y,z",
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
-        results=setup_expression_context(self.q)
+        results=setup_expression_context(self.q, rng=self.rng)
         self.expr_context = results["expression_context"]
 
 
@@ -755,7 +806,8 @@ class TestRenderQuestionText(TestCase):
 
 class TestRenderQuestion(TestCase):
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
         qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="question",
@@ -771,20 +823,21 @@ class TestRenderQuestion(TestCase):
             expression_type =Expression.RANDOM_EXPRESSION)
 
     def test_render_blank(self):
-        question_data=render_question(self.q, question_identifier="blank")
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier="blank")
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
         self.assertEqual(question_data["identifier"],"blank")
 
-        question_data=render_question(self.q, solution=True, 
+        question_data=render_question(self.q, rng=self.rng, solution=True, 
                                       question_identifier="blank_sol")
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
         self.assertEqual(question_data["identifier"],"blank_sol")
         
-        question_data=render_question(self.q, solution=False)
+        question_data=render_question(self.q, rng=self.rng, solution=False)
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
@@ -796,25 +849,26 @@ class TestRenderQuestion(TestCase):
         self.q.hint_text = "Because"
         self.q.save()
         
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"What?")
         self.assertTrue(question_data.get("help_available"))
         self.assertEqual(question_data["hint_text"], "Because")
         
-        question_data=render_question(self.q, solution=True)
+        question_data=render_question(self.q, rng=self.rng, solution=True)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"This.")
         self.assertFalse(question_data.get("help_available"))
         self.assertEqual(question_data.get("hint_text",""), "")
 
-        question_data=render_question(self.q, show_help=False)
+        question_data=render_question(self.q, rng=self.rng, show_help=False)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"What?")
         self.assertFalse(question_data.get("help_available"))
         self.assertEqual(question_data.get("hint_text",""), "")
 
-        question_data=render_question(self.q, user=AnonymousUser())
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser())
         self.assertTrue(question_data.get("help_available"))
         
 
@@ -830,7 +884,7 @@ class TestRenderQuestion(TestCase):
                                           solution_text="subsolution2",
                                           hint_text="subhint2")
 
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"Main question")
         self.assertTrue(question_data.get("help_available"))
@@ -858,10 +912,10 @@ class TestRenderQuestion(TestCase):
     def test_seed(self):
         self.q.question_text = "${{x}} = {{n}}$"
         self.q.save()
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         text = question_data["rendered_text"]
         seed = question_data["seed"]
-        question_data=render_question(self.q, seed=seed)
+        question_data=render_question(self.q, rng=self.rng, seed=seed)
         self.assertEqual(question_data["rendered_text"],text)
         self.assertEqual(question_data["seed"],seed)
         
@@ -871,19 +925,22 @@ class TestRenderQuestion(TestCase):
         self.q.solution_text = "This."
         self.q.save()
   
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, allow_solution_buttons=True)
+        question_data=render_question(self.q, rng=self.rng, 
+                                      allow_solution_buttons=True)
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, user=AnonymousUser())
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser())
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, user=AnonymousUser(),
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser(),
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
@@ -891,7 +948,8 @@ class TestRenderQuestion(TestCase):
                          "/assess/question/%s/inject_solution" % self.q.id)
 
 
-        question_data=render_question(self.q, user=AnonymousUser(),
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser(),
                                       allow_solution_buttons=False)
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
@@ -899,7 +957,8 @@ class TestRenderQuestion(TestCase):
 
         self.q.computer_graded=True
         self.q.save()
-        question_data=render_question(self.q, user=AnonymousUser(),
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser(),
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertFalse(question_data.get("enable_solution_button",False))
@@ -914,7 +973,8 @@ class TestRenderQuestion(TestCase):
         asmt = Assessment.objects.create(
             code="a", name="a", assessment_type=at)
         
-        question_data=render_question(self.q, user=AnonymousUser(),
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser(),
                                       assessment=asmt,
                                       allow_solution_buttons=True)
         self.assertFalse(question_data.get("show_solution_button",False))
@@ -923,7 +983,8 @@ class TestRenderQuestion(TestCase):
         at.question_privacy=0;
         at.solution_privacy=0;
         at.save()
-        question_data=render_question(self.q, user=AnonymousUser(),
+        question_data=render_question(self.q, rng=self.rng, 
+                                      user=AnonymousUser(),
                                       assessment=asmt,
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
@@ -941,11 +1002,13 @@ class TestRenderQuestion(TestCase):
         self.q.question_text = "{% answer ans %}"
         self.q.save()
         
-        question_data=render_question(self.q, question_identifier=identifier)
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier)
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
                                       readonly=True)
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' readonly>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
@@ -957,14 +1020,15 @@ class TestRenderQuestion(TestCase):
         previous_answer = "complete guess"
         prefilled_answers = []
         prefilled_answers.append({ 
-            'answer_code': answer_code,
+            'code': answer_code,
             'answer': previous_answer })
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
         self.q.question_text = "{% answer " + answer_code + " %}"
         self.q.save()
         
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
 
         self.assertTrue(question_data["success"])
@@ -972,10 +1036,11 @@ class TestRenderQuestion(TestCase):
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
         prefilled_answers[0]= { 
-            'answer_code': answer_code+"a",
+            'code': answer_code+"a",
             'answer': previous_answer }
 
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
         self.assertFalse(question_data['success'])
         self.assertTrue("Invalid previous answer" in question_data["error_message"])
@@ -984,12 +1049,13 @@ class TestRenderQuestion(TestCase):
 
 
         prefilled_answers[0]= { 
-            'answer_code': answer_code,
+            'code': answer_code,
             'answer': previous_answer }
         prefilled_answers.append({ 
-            'answer_code': answer_code,
+            'code': answer_code,
             'answer': previous_answer })
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
         self.assertFalse(question_data['success'])
         self.assertFalse("Invalid previous answer" in 
@@ -1002,7 +1068,7 @@ class TestRenderQuestion(TestCase):
         self.q.hint_text="hint"
         self.q.save()
 
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
@@ -1011,7 +1077,7 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
@@ -1021,19 +1087,19 @@ class TestRenderQuestion(TestCase):
         self.q.question_text="{% answer x %}"
         self.q.save()
 
-        question_data=render_question(self.q)
+        question_data=render_question(self.q, rng=self.rng)
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertTrue(question_data.get("help_available",False))
 
-        question_data=render_question(self.q, show_help=False)
+        question_data=render_question(self.q, rng=self.rng, show_help=False)
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertFalse(question_data.get("help_available",False))
 
-        question_data=render_question(self.q, auto_submit=True)
+        question_data=render_question(self.q, rng=self.rng, auto_submit=True)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertTrue(question_data.get("auto_submit",False))
@@ -1059,7 +1125,8 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng,
+                                      question_identifier=identifier,
                                       seed=seed, user=AnonymousUser())
 
         cgd = pickle.loads(
@@ -1073,11 +1140,12 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd.get('assessment_code'),None)
         self.assertEqual(cgd.get('assessment_seed'),None)
         self.assertEqual(cgd['answer_info'],
-                         {answer_identifier: 
-                          {'code': answer_code, 'points': 1, 
-                           'type': QuestionAnswerOption.EXPRESSION}})
+                         [{'identifier': answer_identifier,
+                           'code': answer_code, 'points': 1, 
+                           'type': QuestionAnswerOption.EXPRESSION}])
 
-        question_data=render_question(self.q, record_answers=False,
+        question_data=render_question(self.q, rng=self.rng,
+                                      record_answers=False,
                                       allow_solution_buttons=True,
                                       user=AnonymousUser())
         cgd = pickle.loads(
@@ -1085,7 +1153,8 @@ class TestRenderQuestion(TestCase):
         self.assertFalse(cgd['record_answers'])
         self.assertTrue(cgd['show_solution_button'])
          
-        question_data=render_question(self.q, record_answers=True,
+        question_data=render_question(self.q, rng=self.rng,
+                                      record_answers=True,
                                       allow_solution_buttons=False,
                                       user=AnonymousUser())
         cgd = pickle.loads(
@@ -1115,7 +1184,8 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q, question_identifier=identifier,
+        question_data=render_question(self.q, rng=self.rng,
+                                      question_identifier=identifier,
                                       seed=seed, assessment=asmt,
                                       assessment_seed=assessment_seed,
                                       question_set = question_set)
@@ -1131,7 +1201,8 @@ class TestRenderQuestion(TestCase):
 
 class TestShowSolutionButton(TestCase):
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
         qt = QuestionType.objects.create(name="question type")
         self.qs=[[],[],[]]
         for i in range(3):
@@ -1159,7 +1230,7 @@ class TestShowSolutionButton(TestCase):
             for jq in range(3):
                 for iu in range(3):
                     question_data = render_question(
-                        self.qs[iq][jq], question_identifier="q",
+                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
                         user=self.users[iu], allow_solution_buttons=True)
                                                     
                     if iu >= jq:
@@ -1170,14 +1241,14 @@ class TestShowSolutionButton(TestCase):
                                 'show_solution_button',False))
 
                     question_data = render_question(
-                        self.qs[iq][jq], question_identifier="q",
+                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
                         user=self.users[iu], allow_solution_buttons=False)
                     
                     self.assertFalse(question_data.get(
                             'show_solution_button',False))
 
                     question_data = render_question(
-                        self.qs[iq][jq], question_identifier="q",
+                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
                         user=self.users[iu])
                     
                     self.assertFalse(question_data.get(
@@ -1204,7 +1275,7 @@ class TestShowSolutionButton(TestCase):
                 for ia in range(3):
 
                     question_data = render_question(
-                        self.qs[0][jq], question_identifier="q",
+                        self.qs[0][jq], rng=self.rng, question_identifier="q",
                         user=self.users[iu], 
                         assessment=asmts[ia],
                         allow_solution_buttons=True)
@@ -1220,7 +1291,8 @@ class TestShowSolutionButton(TestCase):
 class TestGetQuestionList(TestCase):
 
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
         
         self.qt = QuestionType.objects.create(name="question type")
         self.q1  = Question.objects.create(
@@ -1255,7 +1327,7 @@ class TestGetQuestionList(TestCase):
     def test_one_question_per_question_set(self):
         
         for i in range(10):
-            question_list = get_question_list(self.asmt)
+            question_list = get_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             self.assertEqual(questions, [self.q1, self.q2, self.q3, self.q4])
             
@@ -1282,7 +1354,7 @@ class TestGetQuestionList(TestCase):
         options_used = [False, False, False, False]
 
         for i in range(100):
-            question_list = get_question_list(self.asmt)
+            question_list = get_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             self.assertTrue(questions in valid_options)
 
@@ -1303,7 +1375,7 @@ class TestGetQuestionList(TestCase):
         options_used = [False, False, False]
 
         for i in range(100):
-            question_list = get_question_list(self.asmt)
+            question_list = get_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             self.assertTrue(questions in valid_options)
 
@@ -1334,7 +1406,7 @@ class TestGetQuestionList(TestCase):
         options_used = [False, False, False, False]
 
         for i in range(100):
-            question_list = get_question_list(self.asmt)
+            question_list = get_question_list(self.asmt, rng=self.rng)
             
             points = [ql['points'] for ql in question_list]
             self.assertEqual(points, [7.3,5])
@@ -1354,7 +1426,8 @@ class TestGetQuestionList(TestCase):
 class TestRenderQuestionList(TestCase):
     
     def setUp(self):
-        random.seed()
+        self.rng = random.Random()
+        self.rng.seed()
    
         self.qt = QuestionType.objects.create(name="question type")
         self.q1  = Question.objects.create(
@@ -1419,7 +1492,7 @@ class TestRenderQuestionList(TestCase):
                     orders_used.append(False)
 
         for i in range(200):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             for question_dict in question_list:
                 self.assertEqual(question_dict['points'],"")
                 self.assertFalse(question_dict['previous_same_group'])
@@ -1440,7 +1513,7 @@ class TestRenderQuestionList(TestCase):
 
         qs = [self.q1, self.q2, self.q3, self.q4]
         for j in range(10):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             for (i,question_dict) in enumerate(question_list):
                 self.assertEqual(question_dict['question'], qs[i])
                 self.assertEqual(question_dict['question_set'], i+1)
@@ -1461,7 +1534,7 @@ class TestRenderQuestionList(TestCase):
                                                group="apple")
         qs = [self.q1, self.q2, self.q3, self.q4]
         for j in range(10):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             hit_first_group_member=False
             expected_next_group_member=None
             for (i,question_dict) in enumerate(question_list):
@@ -1492,7 +1565,7 @@ class TestRenderQuestionList(TestCase):
                                                group="appl")
 
         for j in range(10):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             hit_first_group_member=False
             expected_next_group_member=None
             for (i,question_dict) in enumerate(question_list):
@@ -1534,7 +1607,7 @@ class TestRenderQuestionList(TestCase):
         self.asmt.questionsetdetail_set.create(question_set=4,
                                                group="apple")
         for i in range(3):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
             psg = [ql['previous_same_group'] for ql in question_list]
@@ -1550,7 +1623,7 @@ class TestRenderQuestionList(TestCase):
                                                group="appl")
 
         for i in range(3):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
             psg = [ql['previous_same_group'] for ql in question_list]
@@ -1577,7 +1650,7 @@ class TestRenderQuestionList(TestCase):
                         False, False, False, False]
 
         for j in range(200):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
             questions = [ql['question'] for ql in question_list]
             
             self.assertTrue(questions in valid_options)
@@ -1594,7 +1667,7 @@ class TestRenderQuestionList(TestCase):
 
     def test_points(self):
         self.assertEqual(self.asmt.get_total_points(),0)
-        question_list, seed = render_question_list(self.asmt)
+        question_list, seed = render_question_list(self.asmt, rng=self.rng)
         
         points = [ql['points'] for ql in question_list]
         self.assertEqual(points,["","","",""])
@@ -1621,7 +1694,7 @@ class TestRenderQuestionList(TestCase):
         self.assertEqual(self.asmt.get_total_points(),12.3)
 
         for i in range(100):
-            question_list, seed = render_question_list(self.asmt)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng)
 
             points = [ql['points'] for ql in question_list]
             qs1 = question_list[0]['question_set']
@@ -1660,7 +1733,8 @@ class TestRenderQuestionList(TestCase):
         qs = [self.q1, self.q2, self.q3, self.q4]
 
         for j in range(3):
-            question_list, seed = render_question_list(self.asmt, solution=True)
+            question_list, seed = render_question_list(self.asmt, rng=self.rng,
+                                                       solution=True)
             questions = [ql['question'] for ql in question_list]
 
             self.assertTrue(questions in valid_options)
