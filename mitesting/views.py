@@ -126,7 +126,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       - assessment_code: code of any assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
       - assessment_seed: seed used to generate the assessment
-      - answer_info: codes, points and answer type of answers in question
+      - answer_info: list of codes, points and answer type of answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
     - number_attempts_[identifier]: the number of previous attempts answering

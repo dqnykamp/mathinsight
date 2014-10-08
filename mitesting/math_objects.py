@@ -389,19 +389,21 @@ def create_symbol_name_dict():
 
 def try_normalize_expr(expr):
     """
-    Attempt to normalized expression.
+    Attempt to normalize expression.
     If relational, subtract rhs from both sides.
     Use, doit, expand, then ratsimp to simplify rationals, then expand again
     """
     
-    if expr.is_Relational:
-        from sympy import StrictLessThan, LessThan
+    try:
+        if expr.is_Relational:
+            from sympy import StrictLessThan, LessThan
 
-        if isinstance(expr, StrictLessThan) or isinstance(expr,LessThan):
-            expr = expr.func(0, expr.rhs-expr.lhs)
-        else:
-            expr = expr.func(expr.lhs-expr.rhs,0)
-
+            if isinstance(expr, StrictLessThan) or isinstance(expr,LessThan):
+                expr = expr.func(0, expr.rhs-expr.lhs)
+            else:
+                expr = expr.func(expr.lhs-expr.rhs,0)
+    except AttributeError:
+        pass
 
     from mitesting.sympy_customized import bottom_up
     return bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
@@ -426,19 +428,23 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
                                     tuple_is_unordered=tuple_is_unordered,
                                     partial_tuple_matches=
                                     partial_tuple_matches)
-    elif expression1.is_Relational or expression2.is_Relational:
-        return 1*check_relational_equality(expression1, expression2)
-    elif isinstance(expression1, LinearEntity) or \
+    try:
+        if expression1.is_Relational or expression2.is_Relational:
+            return 1*check_relational_equality(expression1, expression2)
+    except AttributeError:
+        pass
+
+    if isinstance(expression1, LinearEntity) or \
          isinstance(expression2, LinearEntity):
         try:
             return 1*expression1.is_similar(expression2)
         except AttributeError:
             return 0
+
+    if expression1 == expression2:
+        return 1
     else:
-        if expression1 == expression2:
-            return 1
-        else:
-            return 0
+        return 0
 
 def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
                          partial_tuple_matches=False):
