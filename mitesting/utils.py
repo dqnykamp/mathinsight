@@ -262,12 +262,27 @@ def return_random_expression(expression_list, rng, index=None,
                          + "\nRequired format: expr1, expr2, ...")
     
 
+    
+    the_expression=None
     # if index isn't prescribed, generate randomly
     if index is None:
-        index = rng.randrange(len(parsed_list))
+        try:
+            index = rng.randrange(len(parsed_list))
+        except TypeError:
+            # if didn't specify index and parsed_list isn't a list,
+            # then use whole expression for function name
+            the_expression=parsed_list
+            index=0
 
-    the_expression = parsed_list[index]
-
+    # if didn't chose expression yet, get entry specified by index
+    if the_expression is None:
+        try:
+            the_expression = parsed_list[index]
+        except TypeError:
+            raise ValueError("Invalid format for random expression: "
+                             + expression_list
+                             + "\nRequired format: expr1, expr2, ...")
+    
     return (the_expression, index)
 
 

@@ -679,6 +679,7 @@ class Expression(models.Model):
     RANDOM_EXPRESSION = "RE"
     RANDOM_FUNCTION_NAME = "RF"
     FUNCTION = "FN"
+    FUNCTION_NAME = "FE"
     CONDITION = "CN"
     EXPRESSION = "EX"
     ORDERED_TUPLE = "OT"
@@ -690,6 +691,7 @@ class Expression(models.Model):
                 (EXPRESSION, "Expression"),
                 (RANDOM_NUMBER, "Rand number"),
                 (FUNCTION, "Function"),
+                (FUNCTION_NAME, "Function name"),
                 (CONDITION, "Required cond"),
                 )
          ),
@@ -853,12 +855,20 @@ class Expression(models.Model):
         e1, e2, ....
         where each "e" can be any legal mathematical expression.
 
+        FUNCTION_NAME
+        Expression should must parse to a single Symbol() 
+        (multiple characters are fine).  
+        The function name "f" will then be treated as undefined function
+        so that f(x) is function evaluation, not multipliation
+        
         RANDOM_FUNCTION_NAME
         Expression should be a list of expressions of the form
         f1, f2, ....
         where each "f" must parse to a single Symbol() 
         (multiple characters are fine).  
-        
+        The function name chosen will then be treated as undefined function
+        so that f(x) is function evaluation, not multipliation
+
         FUNCTION
         The expression field must be a mathematical expression
         and the function inputs field must be a tuple of symbols.
@@ -971,6 +981,14 @@ class Expression(models.Model):
                         raise IndexError("Insufficient entries for group: " \
                                              + self.group)
                     
+
+                    # math_expr should be a Symbol,
+                    # otherwise not a valid function name
+                    if not isinstance(math_expr,Symbol):
+                        raise ValueError("Invalid function name: %s " \
+                                         % math_expr)
+
+
                     # turn to function and add to user_function_dict
                     # should use:
                     # function_text = six.text_type(math_expr)
@@ -1053,6 +1071,25 @@ class Expression(models.Model):
                         math_expr = Tuple(*math_expr)
                     
 
+                if self.expression_type == self.FUNCTION_NAME:
+                    # math_expr should be a Symbol,
+                    # otherwise not a valid function name
+                    if not isinstance(math_expr,Symbol):
+                        raise ValueError("Invalid function name: %s " \
+                                         % math_expr)
+
+
+                    # turn to function and add to user_function_dict
+                    # should use:
+                    # function_text = six.text_type(math_expr)
+                    # but sympy doesn't yet accept unicode for function name
+                    function_text = str(math_expr)
+                    math_expr = Function(function_text)
+                    try:
+                        user_function_dict[function_text] = math_expr
+                    except TypeError:
+                        pass
+                    
                     
                 if self.expression_type == self.FUNCTION:
                     parsed_function = return_parsed_function(
