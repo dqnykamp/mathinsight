@@ -309,7 +309,7 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
     result = []
     for tok, nextTok in zip(tokens, tokens[1:]):
         result.append(tok)
-        # only change from standard: ingore and/or/not
+        # only change from standard: ignore and/or/not
         if ((tok[0] == NAME and tok[1] in ("and", "or", "not")) or
             (nextTok[0] == NAME and nextTok[1] in ("and", "or", "not"))):
             continue
