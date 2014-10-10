@@ -925,7 +925,8 @@ class Expression(models.Model):
             return_parsed_function
         from mitesting.sympy_customized import bottom_up
         from sympy.parsing.sympy_tokenize import TokenError
-        
+        from sympy.core.function import UndefinedFunction
+
         try:
             # if randomly selecting from a list,
             # determine if the index for the group was chosen already
@@ -982,9 +983,10 @@ class Expression(models.Model):
                                              + self.group)
                     
 
-                    # math_expr should be a Symbol,
+                    # math_expr should be a Symbol or an UndefinedFunction
                     # otherwise not a valid function name
-                    if not isinstance(math_expr,Symbol):
+                    if not (isinstance(math_expr,Symbol) or
+                            isinstance(math_expr,UndefinedFunction)):
                         raise ValueError("Invalid function name: %s " \
                                          % math_expr)
 
@@ -1072,9 +1074,10 @@ class Expression(models.Model):
                     
 
                 if self.expression_type == self.FUNCTION_NAME:
-                    # math_expr should be a Symbol,
+                    # math_expr should be a Symbol or an UndefinedFunction
                     # otherwise not a valid function name
-                    if not isinstance(math_expr,Symbol):
+                    if not (isinstance(math_expr,Symbol) or
+                            isinstance(math_expr,UndefinedFunction)):
                         raise ValueError("Invalid function name: %s " \
                                          % math_expr)
 
