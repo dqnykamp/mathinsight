@@ -911,7 +911,7 @@ class Expression(models.Model):
         Sympy conventions for sorting, after which the tuple
         is treated like an ORDERED_TUPLE
 
-        SORTED_TUPLE
+        RANDOM_ORDER_TUPLE
         Expression should be a tuple of the form e1, e2, ...
         or (e1, e2, ...)
         The order of the elements is randomized, after which the tuple
