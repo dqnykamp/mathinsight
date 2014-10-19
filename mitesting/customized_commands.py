@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from sympy import Tuple, sympify, Function, C, S
-from mitesting.sympy_customized import bottom_up
+from mitesting.sympy_customized import bottom_up, customized_sort_key
 
 class Abs(C.Abs):
     """
@@ -22,14 +22,14 @@ class Abs(C.Abs):
 def roots_tuple(f, *gens, **flags):
     """
     Finds symbolic roots of a univariate polynomial.
-    Returns a Tuple of the sorted roots (using sympify.sort_key)
+    Returns a Tuple of the sorted roots (using customized_sort_key)
     ignoring multiplicity
     
     """
 
     from sympy import roots
     rootslist = roots(f, *gens, **flags).keys()
-    rootslist = sorted(rootslist, key=lambda x: sympify(x).sort_key())
+    rootslist.sort(key=customized_sort_key)
 
     return Tuple(*rootslist)
 
@@ -40,7 +40,7 @@ def real_roots_tuple(f, *gens):
     """
     from sympy import roots
     rootslist = roots(f, *gens, filter='R').keys()
-    rootslist.sort()
+    rootslist.sort(key=customized_sort_key)
     return Tuple(*rootslist)
 
 

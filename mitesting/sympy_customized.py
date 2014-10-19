@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import sympify
+from sympy import sympify, default_sort_key
 from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
 import re
 import keyword
@@ -355,3 +355,21 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
         result.append(tokens[-1])
     return result
 
+
+def customized_sort_key(item, order=None):
+    """
+    Customized version of the sympy default_sort_key, modified so that
+    all expressions that are real numbers use the sort key for plain numbers.
+    In this way, numerical expressions are sorted in numerical order.
+    """
+    try:
+        x=sympify(item)
+    except:
+        pass
+    else:
+        if x.is_real:
+            # return sympy sort key for a number, where x is the coefficient
+            return  ((1, 0, 'Number'), (0, ()), (), x)
+
+    # otherwise return the default sympy sort key
+    return default_sort_key(item, order)

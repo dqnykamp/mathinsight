@@ -13,10 +13,10 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Symbol, Function, Tuple, default_sort_key, expand
+from sympy import Symbol, Function, Tuple, expand
 from django.db.models import Max
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr, parse_and_process
+from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key
 import six
 
 @python_2_unicode_compatible
@@ -1062,10 +1062,10 @@ class Expression(models.Model):
                     math_expr = Tuple(*math_expr)
                 elif self.expression_type == self.SORTED_TUPLE:
                     if isinstance(math_expr,list):
-                        math_expr.sort(key=default_sort_key)
+                        math_expr.sort(key=customized_sort_key)
                     elif isinstance(math_expr, Tuple):
                         math_expr = list(math_expr)
-                        math_expr.sort(key=default_sort_key)
+                        math_expr.sort(key=customized_sort_key)
                     math_expr = Tuple(*math_expr)
                 elif self.expression_type == self.ORDERED_TUPLE or \
                         self.expression_type == self.UNORDERED_TUPLE:
