@@ -219,6 +219,14 @@ def iif(cond, result_if_true, result_if_false):
         return ""
       
 
+def count(thelist, item):
+    """
+    Implementation of list count member function as a separate function
+    so that works with parse_expr and implicit multiplication transformation.
+    """
+    return thelist.count(item)
+
+
 """
 Turn off automatic evaluation of floats in the following sympy functions.
 Functions will still evaluate to floats when .evalf() is called

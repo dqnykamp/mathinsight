@@ -47,6 +47,7 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
          'if': iif,
          'len': len,
          'log': log, 'ln': ln, 'exp': exp, 
+         'count': count,
          'acosh': acosh, 'acos': acos, 'acosh': acosh, 
          'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
          'atan': atan, 'atan2': atan2, 'atanh': atanh, 
