@@ -323,7 +323,8 @@ def return_parsed_function(expression, function_inputs, name,
         raise ValueError("Invalid format for function: " + expression)
 
     if expand:
-        expr2 = bottom_up(expr2, expand)
+        from sympy import expand as sympy_expand
+        expr2 = bottom_up(expr2, sympy_expand)
     
     # parsed_function is a class that stores the expression
     # and the input list, substituting the function arguments
