@@ -367,7 +367,7 @@ def customized_sort_key(item, order=None):
     except:
         pass
     else:
-        if x.is_real:
+        if x.is_comparable:
             # return sympy sort key for a number, where x is the coefficient
             return  ((1, 0, 'Number'), (0, ()), (), x)
 
