@@ -277,10 +277,10 @@ class QuestionAnswerOption(models.Model):
         (EXPRESSION, "Expression"),
         (MULTIPLE_CHOICE, "Multiple Choice"),
         )
-    answer_code = models.SlugField(max_length=50)
     question = models.ForeignKey(Question)
     answer_type = models.IntegerField(choices = ANSWER_TYPE_CHOICES,
                                          default = EXPRESSION)
+    answer_code = models.SlugField(max_length=50)
     answer = models.CharField(max_length=400)
     percent_correct = models.IntegerField(default=100)
     feedback = models.TextField(blank=True,null=True)
