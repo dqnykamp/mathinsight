@@ -263,3 +263,36 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("10x99")
         self.assertEqual(expr, 10*Symbol("x99"))
         
+
+    def test_split_with_function(self):
+        from sympy import Symbol, Function
+        x=Symbol('x')
+        a=Symbol('a')
+        f=Function(str('f'))
+        fsym=Symbol('f')
+        
+        expr = parse_expr('af(x)', split_symbols=True)
+        self.assertEqual(expr, a*fsym*x)
+
+        expr = parse_expr('af(x)', split_symbols=True, 
+                          global_dict={'f': f})
+        self.assertEqual(expr, a*f(x))
+
+
+    def test_callable_symbol(self):
+        from sympy import Symbol
+        from mitesting.sympy_customized import SymbolCallable
+        
+        x=Symbol('x')
+        a=Symbol('a')
+        f=SymbolCallable(str('f'))
+        fsym=Symbol(str('f'))
+        
+        expr = parse_expr('af(x)', split_symbols=True)
+        self.assertEqual(expr, a*fsym*x)
+
+        expr = parse_expr('af(x)', split_symbols=True, 
+                          global_dict={'f': f})
+        self.assertEqual(expr, a*f(x))
+        self.assertEqual(expr, a*fsym(x))
+        

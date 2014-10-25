@@ -796,6 +796,100 @@ class TestGradeQuestionView(TestCase):
             self.assertTrue("is correct" in \
                                 results["answer_feedback"][ai])
 
+    def test_split_with_function_name(self):
+
+        self.q.expression_set.create(
+            name="afx", expression="a*f(x)")
+        
+        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %}"
+        self.q.save()
+        
+        self.new_answer(answer_code="ans1", answer="afx",
+                        split_symbols_on_compare = True)
+        self.new_answer(answer_code="ans2", answer="afx",
+                        split_symbols_on_compare = False)
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type answers: ")
+        
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
+
+        x = response.context['x']
+        f = response.context['f']
+        
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifiers[0]] \
+            = "a%s(%s)" % (f.return_expression(), x.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = "a%s(%s)" % (f.return_expression(), x.return_expression())
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        ai = answer_identifiers[0]
+        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue("is correct" in \
+                            results["answer_feedback"][ai])
+        ai = answer_identifiers[1]
+        self.assertFalse(results["answer_correct"][ai])
+        self.assertTrue("is incorrect" in \
+                            results["answer_feedback"][ai])
+        
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifiers[0]] \
+            = "a*%s(%s)" % (f.return_expression(), x.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = "a*%s(%s)" % (f.return_expression(), x.return_expression())
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        ai = answer_identifiers[0]
+        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue("is correct" in \
+                            results["answer_feedback"][ai])
+        ai = answer_identifiers[1]
+        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue("is correct" in \
+                            results["answer_feedback"][ai])
+        
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifiers[0]] \
+            = "a%s" % (f.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = "a%s" % (f.return_expression())
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        ai = answer_identifiers[0]
+        self.assertFalse(results["answer_correct"][ai])
+        self.assertTrue("is incorrect" in \
+                            results["answer_feedback"][ai])
+        ai = answer_identifiers[1]
+        self.assertFalse(results["answer_correct"][ai])
+        self.assertTrue("is incorrect" in \
+                            results["answer_feedback"][ai])
+        
+
+
+
+
     def test_evaluate_level_on_compare_x_plus_x(self):
         from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
             EVALUATE_FULL

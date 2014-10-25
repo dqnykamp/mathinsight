@@ -7,8 +7,8 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL, \
-    EVALUATE_FULL
-from sympy import Symbol, sympify, Function
+    EVALUATE_FULL, SymbolCallable
+from sympy import Symbol, sympify
 from numpy import arange, linspace
 import re
 import six
@@ -175,7 +175,7 @@ class TestExpressions(TestCase):
                                 expression_type = 
                                 Expression.RANDOM_FUNCTION_NAME)
             a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [Function(str(item)) for item in
+            self.assertTrue(a in [SymbolCallable(str(item)) for item in
                                   ("a","b","c","d","e","f")])
             test_global_dict["a"] = a
             self.assertEqual(global_dict, test_global_dict)
@@ -193,7 +193,7 @@ class TestExpressions(TestCase):
             f = expr3.evaluate(rng=self.rng, global_dict=global_dict, \
                                    user_function_dict=user_function_dict)\
                                    .return_expression()
-            self.assertTrue(f in [Function(str(item)) for item in
+            self.assertTrue(f in [SymbolCallable(str(item)) for item in
                                   ("this","that","the","other")])
             self.assertEqual( user_function_dict , { str(f): f})
             test_global_dict["f"] = f
@@ -227,7 +227,7 @@ class TestExpressions(TestCase):
                 random_group_indices=random_group_indices).return_expression()
 
             self.assertTrue((rw1,re1,rf1) in [
-                    (item, Symbol(item), Function(str(item)))
+                    (item, Symbol(item), SymbolCallable(str(item)))
                     for item in ["a","b","c","d","e"]])
 
             
@@ -259,7 +259,7 @@ class TestExpressions(TestCase):
                 random_group_indices=random_group_indices).return_expression()
 
             self.assertTrue((rw1,rf1) in [
-                    (item, Function(str(item)))
+                    (item, SymbolCallable(str(item)))
                     for item in ["a","b","c","d","e"]])
 
             if str(re1) != rw1:
@@ -354,6 +354,25 @@ class TestExpressions(TestCase):
         self.assertEqual(global_dict["fun3"](y,x), y**3-3*y-c*y*x)
         self.assertEqual(global_dict["fun3"](c,4), c**3-3*c-4*c**2)
         self.assertEqual(str(global_dict["fun3"]), "fun3")
+
+
+    def test_function_name(self):
+        x = Symbol('x')
+        global_dict={}
+        test_dict = {}
+        user_function_dict = {}
+
+        expr1=self.new_expr(name="f", expression="f",
+                            expression_type = Expression.FUNCTION_NAME)
+
+        f = expr1.evaluate(rng=self.rng, global_dict=global_dict, 
+                           user_function_dict=user_function_dict)\
+                 .return_expression()
+        self.assertEqual(f, SymbolCallable(str("f")))
+        test_dict["f"] = f
+        self.assertEqual(global_dict, test_dict)
+        self.assertEqual(user_function_dict, test_dict)
+        
 
         
     def test_required_condition_ne(self):

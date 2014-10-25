@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from sympy import sympify, default_sort_key
+from sympy.parsing.sympy_tokenize import NAME, OP
 from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
 import re
 import keyword
@@ -74,7 +75,6 @@ def parse_expr(s, global_dict=None, local_dict=None,
     
     from sympy.parsing.sympy_parser import \
         (auto_number, factorial_notation, convert_xor)
-    from sympy.parsing.sympy_parser import split_symbols as split_symbols_trans
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
 
     # Create new global dictionary so modifications don't affect original
@@ -213,7 +213,6 @@ def auto_symbol(tokens, local_dict, global_dict):
     only difference is that ignore python keywords and None
     so that the keywords and None will be turned into a symbol
     """
-    from sympy.parsing.sympy_tokenize import NAME, OP
     from sympy.core.basic import Basic
 
 
@@ -256,11 +255,29 @@ def auto_symbol(tokens, local_dict, global_dict):
     return result
 
 
+class SymbolCallable(Symbol):
+    pass
+
+def _token_callable(token, local_dict, global_dict, nextToken=None):
+    """
+    Predicate for whether a token name represents a callable function.
+
+    Essentially wraps ``callable``, but looks up the token name in the
+    locals and globals.
+    """
+    func = local_dict.get(token[1])
+    if not func:
+        func = global_dict.get(token[1])
+    return callable(func) and (not isinstance(func, Symbol)
+                               or isinstance(func, SymbolCallable))
+
+
 def implicit_multiplication(result, local_dict, global_dict):
     """Makes the multiplication operator optional in most cases.
 
-    Customized version: only difference is don't add multiplication
-    adjacent to and/or/not.
+    Customized version: 
+    1. don't add multiplication adjacent to and/or/not.
+    2. treat as SymbolCallable as callable
 
     Use this before :func:`implicit_application`, otherwise expressions like
     ``sin 2x`` will be parsed as ``x * sin(2)`` rather than ``sin(2*x)``.
@@ -275,13 +292,43 @@ def implicit_multiplication(result, local_dict, global_dict):
     """
     # These are interdependent steps, so we don't expose them separately
     from sympy.parsing.sympy_parser import _group_parentheses, \
-        _apply_functions, _flatten
+        _flatten
     for step in (_group_parentheses(implicit_multiplication),
                  _apply_functions,
                  _implicit_multiplication):
         result = step(result, local_dict, global_dict)
 
     result = _flatten(result)
+    return result
+
+
+def _apply_functions(tokens, local_dict, global_dict):
+    """Convert a NAME token + ParenthesisGroup into an AppliedFunction.
+
+    Note that ParenthesisGroups, if not applied to any function, are
+    converted back into lists of tokens.
+
+    Identical to sympy version.  Included here so calls customized
+    version of _token_callable.
+
+    """
+    from sympy.parsing.sympy_parser import ParenthesisGroup, AppliedFunction
+
+    result = []
+    symbol = None
+    for tok in tokens:
+        if tok[0] == NAME:
+            symbol = tok
+            result.append(tok)
+        elif isinstance(tok, ParenthesisGroup):
+            if symbol and _token_callable(symbol, local_dict, global_dict):
+                result[-1] = AppliedFunction(symbol, tok)
+                symbol = None
+            else:
+                result.extend(tok)
+        else:
+            symbol = None
+            result.append(tok)
     return result
 
 
@@ -304,8 +351,7 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
     - AppliedFunction next to an implicitly applied function ("sin(x)cos x")
 
     """
-    from sympy.parsing.sympy_parser import AppliedFunction, _token_callable
-    from sympy.parsing.sympy_tokenize import NAME, OP
+    from sympy.parsing.sympy_parser import AppliedFunction
     result = []
     for tok, nextTok in zip(tokens, tokens[1:]):
         result.append(tok)
@@ -354,6 +400,78 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
     if tokens:
         result.append(tokens[-1])
     return result
+
+
+def split_symbols_custom(predicate):
+    """Creates a transformation that splits symbol names.
+
+    ``predicate`` should return True if the symbol name is to be split.
+
+    For instance, to retain the default behavior but avoid splitting certain
+    symbol names, a predicate like this would work:
+
+
+    >>> from sympy.parsing.sympy_parser import (parse_expr, _token_splittable,
+    ... standard_transformations, implicit_multiplication,
+    ... split_symbols_custom)
+    >>> def can_split(symbol):
+    ...     if symbol not in ('list', 'of', 'unsplittable', 'names'):
+    ...             return _token_splittable(symbol)
+    ...     return False
+    ...
+    >>> transformation = split_symbols_custom(can_split)
+    >>> parse_expr('unsplittable', transformations=standard_transformations +
+    ... (transformation, implicit_multiplication))
+    unsplittable
+    """
+
+    def _split_symbols(tokens, local_dict, global_dict):
+        result = []
+        split = False
+        split_previous=False
+        for tok in tokens:
+            if split_previous:
+                # throw out closing parenthesis of Symbol that was split
+                split_previous=False
+                continue
+            split_previous=False
+            if tok[0] == NAME and tok[1] == 'Symbol':
+                split = True
+            elif split and tok[0] == NAME:
+                symbol = tok[1][1:-1]
+                if predicate(symbol):
+                    for char in symbol:
+                        if char in local_dict or char in global_dict:
+                            # Get rid of the call to Symbol
+                            del result[-2:]
+                            result.extend([(NAME, "%s" % char),
+                                           (NAME, 'Symbol'), (OP, '(')])
+                        else:
+                            result.extend([(NAME, "'%s'" % char), (OP, ')'),
+                                           (NAME, 'Symbol'), (OP, '(')])
+                    # Delete the last two tokens: get rid of the extraneous
+                    # Symbol( we just added
+                    # Also, set split_previous=True so will skip
+                    # the closing parenthesis of the original Symbol
+                    del result[-2:]
+                    split = False
+                    split_previous = True
+                    continue
+                else:
+                    split = False
+            result.append(tok)
+        return result
+    return _split_symbols
+
+
+#: Splits symbol names for implicit multiplication.
+#:
+#: Intended to let expressions like ``xyz`` be parsed as ``x*y*z``. Does not
+#: split Greek character names, so ``theta`` will *not* become
+#: ``t*h*e*t*a``. Generally this should be used with
+#: ``implicit_multiplication``.
+from sympy.parsing.sympy_parser import _token_splittable
+split_symbols_trans = split_symbols_custom(_token_splittable)
 
 
 def customized_sort_key(item, order=None):

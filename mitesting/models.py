@@ -16,7 +16,7 @@ import re
 from sympy import Symbol, Function, Tuple, expand
 from django.db.models import Max
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key
+from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable
 import six
 
 @python_2_unicode_compatible
@@ -991,12 +991,12 @@ class Expression(models.Model):
                                          % math_expr)
 
 
-                    # turn to function and add to user_function_dict
+                    # turn to SymbolCallable and add to user_function_dict
                     # should use:
                     # function_text = six.text_type(math_expr)
                     # but sympy doesn't yet accept unicode for function name
                     function_text = str(math_expr)
-                    math_expr = Function(function_text)
+                    math_expr = SymbolCallable(function_text)
                     try:
                         user_function_dict[function_text] = math_expr
                     except TypeError:
@@ -1082,12 +1082,12 @@ class Expression(models.Model):
                                          % math_expr)
 
 
-                    # turn to function and add to user_function_dict
+                    # turn to SymbolCallable and add to user_function_dict
                     # should use:
                     # function_text = six.text_type(math_expr)
                     # but sympy doesn't yet accept unicode for function name
                     function_text = str(math_expr)
-                    math_expr = Function(function_text)
+                    math_expr = SymbolCallable(function_text)
                     try:
                         user_function_dict[function_text] = math_expr
                     except TypeError:

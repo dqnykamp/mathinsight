@@ -7,9 +7,11 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
 from midocs.models import Page, Level
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list
+from mitesting.sympy_customized import SymbolCallable
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
-from sympy import Symbol, sympify, Function
+
+from sympy import Symbol, sympify
 import random
 
 
@@ -98,14 +100,14 @@ class TestSetupExpressionContext(TestCase):
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng)
             self.assertTrue(results['user_function_dict'] in  \
-                                [{item: Function(str(item))} for item in \
+                                [{item: SymbolCallable(str(item))} for item in \
                                      ['f','g','h','k']])
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
             x=Symbol('x')
             f = expression_context['f'].return_expression()
-            self.assertTrue(f in [Function(str(item)) for item in \
+            self.assertTrue(f in [SymbolCallable(str(item)) for item in \
                                       ['f','g','h','k']])
             self.assertEqual(expression_context['a'], 3*f(x)+2)
             self.assertEqual(results['sympy_global_dict']['f'], f)
