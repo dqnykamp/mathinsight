@@ -1096,9 +1096,9 @@ class Expression(models.Model):
                     
                 if self.expression_type == self.FUNCTION:
                     parsed_function = return_parsed_function(
-                        self.expression, self.function_inputs,
+                        self.expression, function_inputs=self.function_inputs,
                         name = self.name, global_dict=global_dict,
-                        expand = self.expand)
+                        expand = self.expand, default_value=math_expr)
 
                     # for FUNCTION, add parsed_function rather than
                     # math_expr to global dict

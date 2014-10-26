@@ -431,6 +431,23 @@ class TestSetupExpressionContext(TestCase):
                 self.assertEqual(max(0,n), expr_context['fun_n'])
 
 
+    def test_parsed_functions(self):
+        self.new_expr(name="f",expression="x^2",
+                      expression_type=Expression.FUNCTION,
+                      function_inputs="x")
+        
+        self.new_expr(name="f_y_1",expression="f(y)+1")
+        self.new_expr(name="f_1",expression="f+1")
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
+        x=Symbol('x')
+        y=Symbol('y')
+        self.assertEqual(expression_context['f'], x**2)
+        self.assertEqual(expression_context['f_y_1'], y**2+1)
+        self.assertEqual(expression_context['f_1'], x**2+1)
     
 
 class TestAnswerCodes(TestCase):

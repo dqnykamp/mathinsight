@@ -239,7 +239,6 @@ def return_random_word_and_plural(expression_list, rng, index=None):
     return (the_word, the_plural, index)
 
 
-
 def return_random_expression(expression_list, rng, index=None, 
                              global_dict=None, evaluate_level=None):
     """
@@ -287,12 +286,16 @@ def return_random_expression(expression_list, rng, index=None,
     return (the_expression, index)
 
 
-
+class ParsedFunction(Function):
+    pass
 
 def return_parsed_function(expression, function_inputs, name,
-                           global_dict=None, expand=False):
+                           global_dict=None, expand=False, 
+                           default_value=None):
     """
-    Parse expression into function of function_inputs.
+    Parse expression into function of function_inputs,
+    a subclass of ParsedFunction.
+
     The expression field must be a mathematical expression
     and the function inputs field must be a tuple of symbols.
     The expression will be then viewed as a function of the
@@ -301,7 +304,11 @@ def return_parsed_function(expression, function_inputs, name,
     except values from function_inputs will be ignored.
     If expand is true, expression will be expanded.
 
+    The .default argument returns default_value, if exists.
+    Else .default will be set to expression parsed with all
+    substitutions from global_dict.
     """
+
     input_list = [six.text_type(item.strip())
                   for item in function_inputs.split(",")]
     # if no inputs, make empty list so function with no arguments
@@ -325,17 +332,23 @@ def return_parsed_function(expression, function_inputs, name,
     if expand:
         from sympy import expand as sympy_expand
         expr2 = bottom_up(expr2, sympy_expand)
+
+    if default_value is None:
+        default_value = parse_and_process(expression, global_dict=global_dict)
+
     
     # parsed_function is a class that stores the expression
     # and the input list, substituting the function arguments
     # for the input_list symbols on evaluation
-    class parsed_function(Function):
+    class _parsed_function(ParsedFunction):
         # Store information for evaluation
         # On evaluation, it must take the number of arguments in input_list
         the_input_list = input_list
         nargs = len(input_list)
 
         expression = expr2
+
+        default=default_value
 
         # on evaluation replace any occurences of inputs in expression
         # with the values from the arguments
@@ -350,8 +363,9 @@ def return_parsed_function(expression, function_inputs, name,
             expr_sub=expr_sub.xreplace(replace_dict)
             return expr_sub
 
+
     # must assign to __name__ outside class definition 
     # so it overwrites default name
-    parsed_function.__name__ = str(name)
+    _parsed_function.__name__ = str(name)
 
-    return parsed_function
+    return _parsed_function

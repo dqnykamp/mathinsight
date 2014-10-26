@@ -308,25 +308,46 @@ def _apply_functions(tokens, local_dict, global_dict):
     Note that ParenthesisGroups, if not applied to any function, are
     converted back into lists of tokens.
 
-    Identical to sympy version.  Included here so calls customized
-    version of _token_callable.
-
+    Customized version that adds .default to end of ParsedFunctions
+    if they are not followed by a ParenthesisGroup.
+    In this way, a Function will behave like an Expression if
+    it is not followed by an argument.
     """
+
     from sympy.parsing.sympy_parser import ParenthesisGroup, AppliedFunction
+    from .utils import ParsedFunction
 
     result = []
     symbol = None
+    parsed_function = False
     for tok in tokens:
         if tok[0] == NAME:
             symbol = tok
             result.append(tok)
+
+            # check if tok represent a ParsedFunction
+            func = local_dict.get(tok[1])
+            if not func:
+                func = global_dict.get(tok[1])
+            if func:
+                try:
+                    if issubclass(func, ParsedFunction):
+                        parsed_function=True
+                except TypeError:
+                    pass
         elif isinstance(tok, ParenthesisGroup):
             if symbol and _token_callable(symbol, local_dict, global_dict):
                 result[-1] = AppliedFunction(symbol, tok)
                 symbol = None
             else:
                 result.extend(tok)
+            parsed_function=False
         else:
+            if parsed_function:
+                # if found parsed function not followed by ParenthesisGroup,
+                # then append .default
+                result[-1] = (NAME, "%s.default" % symbol[1])
+                parsed_function=False
             symbol = None
             result.append(tok)
     return result
