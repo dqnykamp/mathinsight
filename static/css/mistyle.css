@@ -1555,30 +1555,39 @@ article.geogebraweb table {
 
 }
 article.geogebraweb .EuclidianPanel th, 
-article.geogebraweb .EuclidianPanel td {
+article.geogebraweb .EuclidianPanel td,
+article.geogebraweb .gwt-SplitLayoutPanel th,
+article.geogebraweb .gwt-SplitLayoutPanel td {
     line-height: normal;
     vertical-align: baseline;
     padding: 0;
 }
-article.geogebraweb .EuclidianPanele thead th {
+
+article.geogebraweb .EuclidianPanel thead th,
+article.geogebraweb .gwt-SplitLayoutPanel thead th {
     border-width: medium;
     border-style: none;
 }
 
-article.geogebraweb .EuclidianPanel tbody th {
+article.geogebraweb .EuclidianPanel tbody th,
+article.geogebraweb .gwt-SplitLayoutPanel tbody th {
     border-width: medium;
     border-style: none;
 }
 
 
-article.geogebraweb .EuclidianPanel tbody td {
+article.geogebraweb .EuclidianPanel tbody td,
+article.geogebraweb .gwt-SplitLayoutPanel tbody td {
     border-width: medium;
     border-style: none;
 }
 
 
 article.geogebraweb .EuclidianPanel tbody tr:hover th,
-article.geogebraweb .EuclidianPanel tbody tr:hover td {
+article.geogebraweb .EuclidianPanel tbody tr:hover td,
+article.geogebraweb .gwt-SplitLayoutPanel tbody tr:hover th,
+article.geogebraweb .gwt-SplitLayoutPanel tbody tr:hover td
+{
     background: transparent;
 }
 
