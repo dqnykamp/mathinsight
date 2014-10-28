@@ -17,7 +17,7 @@ Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due
 
 <ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
 {% for question in rendered_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize}}) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{% question_body question.question_data %}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize_float}}) {% if question.current_credit %} (achieved: <a href="{% url 'mic-assessmentattemptquestion' course_thread_content.id attempt_number forloop.counter %}">{{question.current_credit}}%</a>{% if question.current_credit = 100 %} <img src="{{STATIC_URL}}admin/img/icon-yes.gif" alt="Complete" />{%endif%} ){%endif%}{%endif%}{% question_body question.question_data %}</li>
 {% endfor %}
 </ol>
 </section>
