@@ -1166,7 +1166,7 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
             (applet_identifier, appletobject.name)
         # extract the list within the braces returned by getValueString
         value = "/{(.*)}/.exec(%s)[1]" % value
-        javascript='jQuery("#%s").val(%s);\n' % (target, value)
+        javascript='try {\njQuery("#%s").val(%s);\n}\ncatch(e) {}\n' % (target, value)
     elif object_type=='Line':
         if len(related_objects)==2:
             point1=related_objects[0]
