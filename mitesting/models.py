@@ -1056,17 +1056,19 @@ class Expression(models.Model):
                 if self.expression_type == self.RANDOM_ORDER_TUPLE:
                     if isinstance(math_expr,list):
                         rng.shuffle(math_expr)
+                        math_expr = Tuple(*math_expr)
                     elif isinstance(math_expr, Tuple):
                         math_expr = list(math_expr)
                         rng.shuffle(math_expr)
-                    math_expr = Tuple(*math_expr)
+                        math_expr = Tuple(*math_expr)
                 elif self.expression_type == self.SORTED_TUPLE:
                     if isinstance(math_expr,list):
                         math_expr.sort(key=customized_sort_key)
+                        math_expr = Tuple(*math_expr)
                     elif isinstance(math_expr, Tuple):
                         math_expr = list(math_expr)
                         math_expr.sort(key=customized_sort_key)
-                    math_expr = Tuple(*math_expr)
+                        math_expr = Tuple(*math_expr)
                 elif self.expression_type == self.ORDERED_TUPLE or \
                         self.expression_type == self.UNORDERED_TUPLE:
                     if isinstance(math_expr,list):
