@@ -1075,7 +1075,9 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 (applet_identifier, object_name,
                  value)
         elif object_type=='Text':
-            value_string = "%s" % value
+            # don't use value, use objectvalue, so math_objects
+            # return latex expression
+            value_string = "%s" % objectvalue
             # escape \ for javascript
             value_string = value_string.replace('\\','\\\\')
             javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
