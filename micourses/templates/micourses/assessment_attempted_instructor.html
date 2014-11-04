@@ -12,7 +12,7 @@
 
 <p>Points: {{content.total_points}}<br/>
 Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} score achieved)<br/>
-Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
+Adjusted due date: <a href='{% url 'mic-instructoradjustedduedatecalculation' student.id content.id %}'>{{adjusted_due_date}}</a></p>
 
 <table id="attempt_table" class="basic rowclick">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th><th>Link</th></tr></thead>

@@ -1138,7 +1138,7 @@ def attendance_display_view(request):
 
 
 @login_required
-def adjusted_due_date_calculation_view(request, id):
+def adjusted_due_date_calculation_view(request, pk):
     courseuser = request.user.courseuser
     
     try:
@@ -1152,7 +1152,7 @@ def adjusted_due_date_calculation_view(request, id):
         # redirect to not enrolled page
         return HttpResponseRedirect(reverse('mic-notenrolled'))
 
-    content = get_object_or_404(CourseThreadContent, id=id)
+    content = get_object_or_404(CourseThreadContent, id=pk)
 
     initial_due_date = content.get_initial_due_date(courseuser)
     final_due_date = content.get_final_due_date(courseuser)
@@ -1172,6 +1172,52 @@ def adjusted_due_date_calculation_view(request, id):
           'content': content,
           'courseuser': courseuser,
           'student': courseuser, 
+          'calculation_list': calculation_list,
+          'adjusted_due_date': adjusted_due_date,
+          'initial_due_date': initial_due_date,
+          'final_due_date': final_due_date,
+          'noanalytics': noanalytics,
+          },
+         context_instance=RequestContext(request))
+
+
+@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
+def adjusted_due_date_calculation_instructor_view(request, student_id, pk):
+    courseuser = request.user.courseuser
+    
+    try:
+        course = courseuser.return_selected_course()
+    except MultipleObjectsReturned:
+        # courseuser is in multple active courses and hasn't selected one
+        # redirect to select course page
+        return HttpResponseRedirect(reverse('mic-selectcourse'))
+    except ObjectDoesNotExist:
+        # courseuser is not in an active course
+        # redirect to not enrolled page
+        return HttpResponseRedirect(reverse('mic-notenrolled'))
+
+    content = get_object_or_404(CourseThreadContent, id=pk)
+
+    student = get_object_or_404(course.enrolled_students, id=student_id)
+
+    initial_due_date = content.get_initial_due_date(student)
+    final_due_date = content.get_final_due_date(student)
+    
+    calculation_list = content.adjusted_due_date_calculation(student)
+    if calculation_list:
+        adjusted_due_date=calculation_list[-1]['resulting_date']
+    else:
+        adjusted_due_date= initial_due_date
+
+    # no Google analytics for course
+    noanalytics=True
+
+    return render_to_response \
+        ('micourses/adjusted_due_date_calculation_instructor.html', 
+         {'course': course,
+          'content': content,
+          'courseuser': courseuser,
+          'student': student, 
           'calculation_list': calculation_list,
           'adjusted_due_date': adjusted_due_date,
           'initial_due_date': initial_due_date,
