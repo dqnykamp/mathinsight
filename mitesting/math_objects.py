@@ -405,9 +405,26 @@ def try_normalize_expr(expr):
     except AttributeError:
         pass
 
-    from mitesting.sympy_customized import bottom_up
-    return bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
 
+    def _remove_one_coefficient(expr):
+        # remove a coefficent of a Mul that is just 1.0
+        from sympy import Mul
+        if expr.is_Mul and expr.args[0]==1:
+            if len(expr.args[1:])==1:
+                return expr.args[1]
+            else:
+                return Mul(*expr.args[1:])
+        else:
+            return expr
+
+    from mitesting.sympy_customized import bottom_up
+
+    # transformations to try to normalize
+    expr= bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
+    # remove any cofficients of 1.0
+    expr=bottom_up(expr, _remove_one_coefficient)
+    
+    return(expr)
 
 def check_equality(expression1, expression2, tuple_is_unordered=False, \
                    partial_tuple_matches=False):

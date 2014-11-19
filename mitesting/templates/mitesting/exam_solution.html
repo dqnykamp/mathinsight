@@ -16,7 +16,7 @@
 <ol class="exam_solutions">
 {% for solution in rendered_list %}
 {% comment %}{% if not forloop.first %}{% new_exam_page %}{% endif %}{% endcomment %}
-<li class="solution">{% if solution.points %}({{solution.points}} point{{solution.points|pluralize}}) {%endif%}
+<li class="solution">{% if solution.points %}({{solution.points}} point{{solution.points|pluralize_float}}) {%endif%}
 {% question_solution_body solution.question_data %}</li>
 {% endfor %}
 </ol>
