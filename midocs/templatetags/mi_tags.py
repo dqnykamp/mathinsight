@@ -1166,8 +1166,11 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
     elif object_type=='List':
         value = 'document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
-        # extract the list within the braces returned by getValueString
-        value = "/{(.*)}/.exec(%s)[1]" % value
+        # Extract the list within the braces returned by getValueString
+        # Replace all curly braces by parentheses so lists will be tuples
+        # Add comma at end so single element will still be a tuple (especially
+        # important for lists of lists)
+        value = "/{(.*)}/.exec(%s)[1].replace(/(\{)/g, '(').replace(/(\})/g, ')')+','" % value
         javascript='try {\njQuery("#%s").val(%s);\n}\ncatch(e) {\njQuery("#%s").val("");\n}\n' % (target, value, target)
     elif object_type=='Line':
         if len(related_objects)==2:
