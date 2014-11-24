@@ -396,7 +396,7 @@ def try_normalize_expr(expr):
     
     try:
         if expr.is_Relational:
-            from sympy import StrictLessThan, LessThan
+            from sympy import StrictLessThan, LessThan, Equality, Unequality
 
             # in attempt to normalize relational
             # 1. subtract sides so rhs is zero (lhs for less than inequalities)
@@ -408,7 +408,9 @@ def try_normalize_expr(expr):
                 term = lmr.args[0]
             else:
                 term = lmr
-            coeff = Abs(term.as_coeff_Mul()[0])
+            coeff = term.as_coeff_Mul()[0]
+            if not(isinstance(expr, Equality) or isinstance(expr,Unequality)):
+                coeff = Abs(coeff)
             if coeff:
                 lmr = lmr/coeff
 
