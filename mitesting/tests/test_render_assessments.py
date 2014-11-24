@@ -176,7 +176,7 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.RANDOM_NUMBER)
         self.new_expr(name="n", expression="(-10,10)", 
                       expression_type = Expression.RANDOM_NUMBER)
-        self.new_expr(name="x_not_equal_y", expression="x !=y", 
+        self.new_expr(name="x_not_equal_y", expression="x !== y", 
                       expression_type = Expression.CONDITION)
         self.new_expr(name="n_greater_than_m", expression="n > m", 
                       expression_type = Expression.CONDITION)
@@ -229,7 +229,7 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
-        self.assertTrue("Error in expression x" in expression_error['x'])
+        self.assertTrue("Error in expression: x" in expression_error['x'])
         self.assertEqual("??", results['expression_context']['x'])
         self.assertEqual(Symbol("??"), results['sympy_global_dict']['x'])
 
@@ -247,8 +247,8 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
-        self.assertTrue("Error in expression e2" in expression_error['e2'])
-        self.assertTrue("Error in expression e4" in expression_error['e4'])
+        self.assertTrue("Error in expression: e2" in expression_error['e2'])
+        self.assertTrue("Error in expression: e4" in expression_error['e4'])
         self.assertEqual(expression_error.get('e1'), None)
         self.assertEqual(expression_error.get('e3'), None)
         self.assertEqual(expression_error.get('e5'), None)

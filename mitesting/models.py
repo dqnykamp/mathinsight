@@ -1049,10 +1049,20 @@ class Expression(models.Model):
 
                 # if CONDITION is not met, raise exception
                 if self.expression_type == self.CONDITION:
-                    if not math_expr:
-                        raise Expression.FailedCondition(
-                            "Condition %s was not met" % self.name)
+                    try:
+                        if not math_expr:
+                            raise Expression.FailedCondition(
+                                "Condition %s was not met" % self.name)
+                    except TypeError:
+                        # symbolic will raise type error.  Consider test failed.
+                        message= "Could not determine truth value of required condition %s, evaluated as: %s" % (self.expression, math_expr)
+                        if re.search('!=[^=]',self.expression):
+                            message += "\nComparison != returns truth value only for numerical values.  Use !== to compare if two symbolic expressions are not identical."
+                        if re.search('[^<>!=]=[^=]',self.expression):
+                            message += "\nComparison = returns truth value only for numerical values.  Use == to compare if two symbolic expressions are identical."
+                        raise TypeError(message)
 
+                        
                 if self.expression_type == self.RANDOM_ORDER_TUPLE:
                     if isinstance(math_expr,list):
                         rng.shuffle(math_expr)
@@ -1151,7 +1161,7 @@ class Expression(models.Model):
                 global_dict[self.name] = Symbol('??')
 
             import sys
-            raise exc.__class__, "Error in expression %s\n%s" \
+            raise exc.__class__, "Error in expression: %s\n%s" \
                 % (self.name, exc), sys.exc_info()[2]
 
 class PlotFunction(models.Model):

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from django.utils.encoding import python_2_unicode_compatible
 
-from sympy import Tuple, Symbol, sympify
+from sympy import Tuple, Symbol, sympify, Abs
 from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
@@ -398,10 +398,24 @@ def try_normalize_expr(expr):
         if expr.is_Relational:
             from sympy import StrictLessThan, LessThan
 
-            if isinstance(expr, StrictLessThan) or isinstance(expr,LessThan):
-                expr = expr.func(0, expr.rhs-expr.lhs)
+            # in attempt to normalize relational
+            # 1. subtract sides so rhs is zero (lhs for less than inequalities)
+            # 2. try to find coefficient of first term and divide by it
+
+            lmr = (expr.lhs - expr.rhs).expand()
+            
+            if lmr.is_Add:
+                term = lmr.args[0]
             else:
-                expr = expr.func(expr.lhs-expr.rhs,0)
+                term = lmr
+            coeff = Abs(term.as_coeff_Mul()[0])
+            if coeff:
+                lmr = lmr/coeff
+
+            if isinstance(expr, StrictLessThan) or isinstance(expr,LessThan):
+                expr = expr.func(0, -lmr)
+            else:
+                expr = expr.func(lmr,0)
     except AttributeError:
         pass
 

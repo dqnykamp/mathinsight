@@ -296,3 +296,27 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, a*f(x))
         self.assertEqual(expr, a*fsym(x))
         
+
+    def test_relational(self):
+        from sympy import Symbol, Eq, Ne, Lt, Ge
+        
+        x=Symbol('x')
+        y=Symbol('y')
+        
+        expr = parse_expr("x=y")
+        self.assertEqual(expr, Eq(x,y))
+
+        expr = parse_expr("x==y")
+        self.assertEqual(expr, False)
+
+        expr = parse_expr("x != y")
+        self.assertEqual(expr, Ne(x,y))
+ 
+        expr = parse_expr("x !== y")
+        self.assertEqual(expr, True)
+       
+        expr = parse_expr("x < y")
+        self.assertEqual(expr, Lt(x,y))
+
+        expr = parse_expr("x >= y")
+        self.assertEqual(expr, Ge(x,y))

@@ -168,6 +168,25 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # replace unicode character for \cdot used in mathjax display with *
     s = re.sub(r'\u22c5', r'*', s)
 
+    # if expression contains an = sign (not an == or preceded by <, >, or !),
+    # change to an Eq
+    # (only last = sign is matched)
+    if re.search('[^<>!=]=[^=]',s):
+        s = '__Eq__(%s,%s)' % re.match('(.+)=(.+)',s).groups()
+        from sympy import Eq
+        new_global_dict['__Eq__'] = Eq
+    
+    # if expression contains a != sign (not !==)
+    # change to an Ne
+    # (only last != sign is matched)
+    if re.search('!=[^=]',s):
+        s = '__Ne__(%s,%s)' % re.match('(.+)!=(.+)',s).groups()
+        from sympy import Ne
+        new_global_dict['__Ne__'] = Ne
+
+    # change !== to !=
+    s = re.sub('!==','!=', s)
+    
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
             s, global_dict=new_global_dict, local_dict=local_dict, 

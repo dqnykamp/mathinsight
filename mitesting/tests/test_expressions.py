@@ -388,6 +388,8 @@ class TestExpressions(TestCase):
                                  expression_type = Expression.CONDITION)
             expr2c=self.new_expr(name="nonzero_n3",expression="Ne(n,0)",
                                  expression_type = Expression.CONDITION)
+            expr2d=self.new_expr(name="nonzero_n4",expression="n !== 0",
+                                 expression_type = Expression.CONDITION)
             if n == 0:
                 self.assertRaisesRegexp(Expression.FailedCondition,
                                         "Condition nonzero_n was not met",
@@ -401,16 +403,23 @@ class TestExpressions(TestCase):
                                         "Condition nonzero_n3 was not met",
                                         expr2c.evaluate, rng=self.rng,
                                         global_dict=global_dict)
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition nonzero_n4 was not met",
+                                        expr2d.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
             else:
-                expr2a_eval = expr2a.evaluate(rng=self.rng, global_dict=global_dict)\
+                expr2a_eval = expr2a.evaluate(rng=self.rng,global_dict=global_dict)\
                     .return_expression()
-                expr2b_eval = expr2b.evaluate(rng=self.rng, global_dict=global_dict)\
+                expr2b_eval = expr2b.evaluate(rng=self.rng,global_dict=global_dict)\
                     .return_expression()
-                expr2c_eval = expr2c.evaluate(rng=self.rng, global_dict=global_dict)\
+                expr2c_eval = expr2c.evaluate(rng=self.rng,global_dict=global_dict)\
+                    .return_expression()
+                expr2d_eval = expr2d.evaluate(rng=self.rng,global_dict=global_dict)\
                     .return_expression()
                 self.assertEqual(expr2a_eval, n)
                 self.assertTrue(expr2b_eval)
                 self.assertTrue(expr2c_eval)
+                self.assertTrue(expr2d_eval)
 
 
     def test_required_condition_equal(self):
@@ -426,6 +435,8 @@ class TestExpressions(TestCase):
                                  expression_type = Expression.CONDITION)
             expr2c=self.new_expr(name="mag2_n3",expression="n^2==4",
                                  expression_type = Expression.CONDITION)
+            expr2d=self.new_expr(name="mag2_n4",expression="n^2=4",
+                                 expression_type = Expression.CONDITION)
             if Abs(n) != 2:
                 self.assertRaisesRegexp(Expression.FailedCondition,
                                         "Condition mag2_n was not met",
@@ -439,6 +450,10 @@ class TestExpressions(TestCase):
                                         "Condition mag2_n3 was not met",
                                         expr2c.evaluate, rng=self.rng,
                                         global_dict=global_dict)
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition mag2_n4 was not met",
+                                        expr2d.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
             else:
                 expr2a_eval = expr2a.evaluate(rng=self.rng, global_dict=global_dict)\
                     .return_expression()
@@ -446,9 +461,98 @@ class TestExpressions(TestCase):
                     .return_expression()
                 expr2c_eval = expr2c.evaluate(rng=self.rng, global_dict=global_dict)\
                     .return_expression()
+                expr2d_eval = expr2d.evaluate(rng=self.rng, global_dict=global_dict)\
+                    .return_expression()
                 self.assertTrue(expr2a_eval)
                 self.assertTrue(expr2b_eval)
                 self.assertTrue(expr2c_eval)
+                self.assertTrue(expr2d_eval)
+
+
+    def test_required_condition_symbolic_versus_numeric_equality(self):
+        from sympy import Eq, Ne
+        global_dict={'Ne': Ne, 'Eq': Eq}
+        for i in range(10):
+            expr1=self.new_expr(name="xx",expression="x,y",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            expr2=self.new_expr(name="yy",expression="x,y",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            
+            expr3a=self.new_expr(name="equal1",expression="xx=yy",
+                                 expression_type = Expression.CONDITION)
+            expr3b=self.new_expr(name="equal2",expression="xx==yy",
+                                 expression_type = Expression.CONDITION)
+            expr3c=self.new_expr(name="equal3",expression="Eq(xx,yy)",
+                                 expression_type = Expression.CONDITION)
+            expr3d=self.new_expr(name="not_equal1",expression="xx!=yy",
+                                 expression_type = Expression.CONDITION)
+            expr3e=self.new_expr(name="not_equal2",expression="xx!==yy",
+                                 expression_type = Expression.CONDITION)
+            expr3f=self.new_expr(name="not_equal3",expression="Ne(xx,yy)",
+                                 expression_type = Expression.CONDITION)
+
+            x = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            y = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+   
+            if x==y:
+                expr3a_eval = expr3a.evaluate(rng=self.rng,global_dict=global_dict)\
+                                    .return_expression()
+                self.assertTrue(expr3a_eval)
+
+                expr3b_eval = expr3b.evaluate(rng=self.rng,global_dict=global_dict)\
+                                    .return_expression()
+                self.assertTrue(expr3b_eval)
+
+                expr3c_eval = expr3c.evaluate(rng=self.rng,global_dict=global_dict)\
+                                    .return_expression()
+                self.assertTrue(expr3c_eval)
+                
+
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition not_equal1 was not met",
+                                        expr3d.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition not_equal2 was not met",
+                                        expr3e.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition not_equal3 was not met",
+                                        expr3f.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
+
+
+            else:
+
+                self.assertRaisesRegexp(TypeError,
+                    "Could not determine truth value of required condition xx=yy",
+                    expr3a.evaluate, rng=self.rng,
+                    global_dict=global_dict)
+
+                self.assertRaisesRegexp(Expression.FailedCondition,
+                                        "Condition equal2 was not met",
+                                        expr3b.evaluate, rng=self.rng,
+                                        global_dict=global_dict)
+
+                self.assertRaisesRegexp(TypeError,
+                    "Could not determine truth value of required condition Eq\(xx,yy\)",
+                    expr3c.evaluate, rng=self.rng,
+                    global_dict=global_dict)
+
+                self.assertRaisesRegexp(TypeError,
+                    "Could not determine truth value of required condition xx!=yy",
+                    expr3d.evaluate, rng=self.rng,
+                    global_dict=global_dict)
+
+                expr3e_eval = expr3e.evaluate(rng=self.rng,global_dict=global_dict)\
+                                    .return_expression()
+                self.assertTrue(expr3e_eval)
+
+                self.assertRaisesRegexp(TypeError,
+                    "Could not determine truth value of required condition Ne\(xx,yy\)",
+                    expr3f.evaluate, rng=self.rng,
+                    global_dict=global_dict)
+
 
     def test_required_condition_complex_inequality(self):
         from sympy import Or, And, Lt, Gt, Le, Ge
@@ -777,16 +881,16 @@ class TestExpressions(TestCase):
         symqq = Symbol('??')
         global_dict={}
         expr1=self.new_expr(name="a", expression="(")
-        self.assertRaisesRegexp(ValueError, 'Error in expression a', 
+        self.assertRaisesRegexp(ValueError, 'Error in expression: a', 
                                 expr1.evaluate, rng=self.rng, 
                                 global_dict=global_dict)
         self.assertEqual(global_dict['a'],symqq)
-        self.assertRaisesRegexp(ValueError, 'Error in expression a', 
+        self.assertRaisesRegexp(ValueError, 'Error in expression: a', 
                                 expr1.evaluate, rng=self.rng)
 
         expr2=self.new_expr(name="b", expression="x-+/x", 
                             expression_type=Expression.CONDITION)
-        self.assertRaisesRegexp(ValueError, 'Error in expression b', 
+        self.assertRaisesRegexp(ValueError, 'Error in expression: b', 
                                 expr2.evaluate, rng=self.rng, 
                                 global_dict=global_dict)
         self.assertRaisesRegexp(ValueError, 'Invalid format for condition', 
@@ -796,7 +900,7 @@ class TestExpressions(TestCase):
 
         expr3=self.new_expr(name="c", expression="x[0]", 
                             expression_type=Expression.FUNCTION)
-        self.assertRaisesRegexp(ValueError, 'Error in expression c', 
+        self.assertRaisesRegexp(ValueError, 'Error in expression: c', 
                                 expr3.evaluate, rng=self.rng,
                                 global_dict=global_dict)
         self.assertRaisesRegexp(ValueError, 'Invalid format for function', 
@@ -808,7 +912,7 @@ class TestExpressions(TestCase):
         global_dict['sin']=sin
         expr4=self.new_expr(name="d", expression="(x+sin, y-sin)", 
                             expression_type=Expression.ORDERED_TUPLE)
-        self.assertRaisesRegexp(ValueError, 'Error in expression d', 
+        self.assertRaisesRegexp(ValueError, 'Error in expression: d', 
                                 expr4.evaluate, rng=self.rng,
                                 global_dict=global_dict)
         self.assertRaisesRegexp(ValueError, 'Invalid format for tuple', 
