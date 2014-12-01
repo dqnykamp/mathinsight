@@ -107,6 +107,9 @@ class QuestionView(DetailView):
         return context
 
 
+
+
+
 class GradeQuestionView(SingleObjectMixin, View):
     """
     Grade user responses for computer graded questions.
@@ -171,7 +174,7 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         # set up context from question expressions
         seed = computer_grade_data['seed']
-        # use local random generate to make sure threadsafe
+        # use local random generator to make sure threadsafe
         import random
         rng=random.Random()
         rng.seed(seed)
@@ -195,269 +198,9 @@ class GradeQuestionView(SingleObjectMixin, View):
                 'answer': 
                 response_data.get('answer_%s' % answer_identifier, "")})
         
-        points_achieved=0
-        total_points=0
-
-        from .sympy_customized import parse_and_process
-        from .math_objects import math_object
-        answer_results={}
-
-        answer_results['answer_feedback'] = {}
-        answer_results['answer_correct'] = {}
-        answer_results['identifier']=question_identifier
-        answer_results['feedback']=""
-
-        binary_feedback_correct = ' <img src="%sadmin/img/icon-yes.gif" alt="correct" />'\
-             % (settings.STATIC_URL)
-        binary_feedback_incorrect = ' <img src="%sadmin/img/icon-no.gif" alt="incorrect" />'\
-            % (settings.STATIC_URL)
-
-        # check correctness of each answer
-        for answer_num in range(len(answer_info)):
-            user_response = answer_user_responses[answer_num]["answer"]
-            answer_code = answer_info[answer_num]['code']
-            answer_points= answer_info[answer_num]['points']
-            answer_type = answer_info[answer_num]['type']
-            answer_identifier = answer_info[answer_num]['identifier']
-
-            total_points += answer_points
-            feedback = ""
-
-            percent_correct = 0
-
-            answer_option_used = None
-            
-            if answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:
-                try:
-                    the_answer = question.questionansweroption_set \
-                        .get(id = user_response)
-                except ObjectDoesNotExist:
-                    logger.warning("Multiple choice answer not found")
-                    answer_results['answer_feedback'][answer_identifier] \
-                        = "Cannot grade due to error in question"
-                    answer_results['answer_correct'][answer_identifier]=False
-                    continue
-                except ValueError:
-                    answer_results['answer_feedback'][answer_identifier] \
-                        = "No response"
-                    answer_results['answer_correct'][answer_identifier]=False
-                    continue
-                else:
-                    percent_correct = the_answer.percent_correct
-                    if percent_correct == 100:
-                        feedback = "Yes, you are correct."
-                    elif percent_correct > 0:
-                        feedback = 'Answer is not completely correct' \
-                            + ' but earns partial (%s%%) credit.' \
-                            % (the_answer.percent_correct)
-                    else:
-                        feedback = "No, you are incorrect."
-                        
-                # record any feedback from answer option used
-                try:
-                    feedback += " " +  the_answer.render_feedback(expr_context)
-                except:
-                    pass
-
-
-            elif answer_type == QuestionAnswerOption.EXPRESSION:
-
-                # get rid of any .methods, so can't call commands like
-                # .expand() or .factor()
-                import re
-                user_response = re.sub('\.[a-zA-Z]+', '', user_response)
-
-                near_match_percent_correct = 0
-                near_match_feedback=""
-
-                if not user_response:
-                    answer_results['answer_feedback'][answer_identifier] \
-                        = "No response"
-                    answer_results['answer_feedback']\
-                        [answer_identifier+"__binary_"] \
-                        = binary_feedback_incorrect
-                    answer_results['answer_correct'][answer_identifier]=False
-                    continue
-
-                # start with negative percent_correct so that will get 
-                # feedback from matched answers with 0 percent correct
-                percent_correct=-1
-
-                # compare with expressions associated with answer_code
-                for answer_option in question.questionansweroption_set \
-                        .filter(answer_code=answer_code, \
-                                    answer_type=QuestionAnswerOption.EXPRESSION):
-
-                    # find the expression associated with answer_option
-                    try:
-                        valid_answer=expr_context[answer_option.answer]
-                    except KeyError:
-                        continue
-
-                    # determine level of evaluation of answer_option
-                    evaluate_level = valid_answer.return_evaluate_level()
-
-                    try:
-                        user_response_parsed = parse_and_process(
-                            user_response, global_dict=global_dict, 
-                            split_symbols=answer_option
-                            .split_symbols_on_compare,
-                            evaluate_level=evaluate_level)
-                    except Exception as e:
-                        feedback = "Sorry.  Unable to understand the answer."
-                        break
-
-                    
-                    user_response_parsed=math_object(
-                        user_response_parsed,
-                        tuple_is_unordered=valid_answer.return_if_unordered(),
-                        output_no_delimiters= 
-                        valid_answer.return_if_output_no_delimiters(),
-                        use_ln=valid_answer.return_if_use_ln(),
-                        normalize_on_compare=answer_option.normalize_on_compare,
-                        match_partial_tuples_on_compare= 
-                        answer_option.match_partial_tuples_on_compare,
-                        evaluate_level=evaluate_level,
-                        n_digits = valid_answer.return_n_digits(),
-                        round_decimals = valid_answer.return_round_decimals())
-
-
-                    user_response_string=""
-                    from mitesting.sympy_customized import EVALUATE_NONE
-                    try:
-                        user_response_unevaluated =  parse_and_process(
-                            user_response, global_dict=global_dict, 
-                            split_symbols=answer_option
-                            .split_symbols_on_compare,
-                            evaluate_level=EVALUATE_NONE)
-                        user_response_unevaluated=math_object(
-                            user_response_unevaluated,
-                            output_no_delimiters=
-                            valid_answer.return_if_output_no_delimiters(),
-                            use_ln=valid_answer.return_if_use_ln(),
-                            evaluate_level=EVALUATE_NONE)
-                        user_response_string = str(user_response_unevaluated)
-                    except:
-                        pass
-                    
-                    if not user_response_string:
-                        try:
-                            user_response_string = str(user_response_parsed)
-                        except:
-                            user_response_string = "[error displaying answer]"
-                    
-
-                    correctness_of_answer = \
-                        user_response_parsed.compare_with_expression( \
-                        valid_answer.return_expression())
-                    this_percent_correct = \
-                        answer_option.percent_correct*correctness_of_answer
-                    this_near_match_percent_correct = \
-                        abs(answer_option.percent_correct*correctness_of_answer)
-                    if correctness_of_answer > 0 and correctness_of_answer <=1 \
-                       and  this_percent_correct  > percent_correct:
-                        if this_percent_correct == 100:
-                            feedback = \
-                                'Yes, $%s$ is correct.' % \
-                                user_response_string
-                        elif this_percent_correct > 0:
-                            feedback = '$%s$ is not completely correct but earns' \
-                                ' partial (%i%%) credit.' \
-                                % (user_response_string, 
-                                   this_percent_correct)
-                        percent_correct = this_percent_correct
-                        answer_option_used = answer_option
-
-                    elif correctness_of_answer<0 and correctness_of_answer>=-1 \
-                         and this_near_match_percent_correct  > \
-                         max(near_match_percent_correct,percent_correct):
-                        near_match_percent_correct =\
-                            this_near_match_percent_correct
-                        near_match_feedback = \
-                            "<br><small>(Your answer is mathematically equivalent to " 
-                        if near_match_percent_correct == 100:
-                            near_match_feedback += "the correct answer, "
-                        else:
-                            near_match_feedback  += \
-                                "an answer that is %i%% correct, " \
-                                % near_match_percent_correct
-                        near_match_feedback += "but "\
-                            " you must write your answer in a different form.)</small>" 
-                    if not feedback:
-                        feedback = 'No, $%s$ is incorrect.' \
-                            % user_response_string
-                        answer_option_used = answer_option
-
-                # since started with negative percent_correct
-                # make it zero if no matches
-                percent_correct = max(0, percent_correct)
-
-                # record any feedback from answer option used
-                try:
-                    feedback += " " + \
-                                answer_option_used.render_feedback(expr_context)
-                except:
-                    pass
-
-                if percent_correct < 100 and \
-                   near_match_percent_correct > percent_correct:
-                    feedback += near_match_feedback
-
-            else:
-                logger.warning("Unrecognized answer type: %s" % answer_type)
-                answer_results['answer_feedback'][answer_identifier] \
-                    = "Cannot grade due to error in question"
-                answer_results['answer_feedback']\
-                    [answer_identifier+"__binary_"] \
-                    = binary_feedback_incorrect
-                answer_results['answer_correct'][answer_identifier]=False
-                continue
-
-
-            # store (points achieved)*100 as integer for now
-            points_achieved += percent_correct * \
-                answer_points
-
-            answer_results['answer_feedback'][answer_identifier] \
-                = feedback
-            if percent_correct == 100:
-                answer_results['answer_feedback']\
-                    [answer_identifier+"__binary_"] \
-                    = binary_feedback_correct
-            elif percent_correct > 0:
-                answer_results['answer_feedback']\
-                    [answer_identifier+"__binary_"] \
-                    = ' <small>(%s%%)</small>' % int(round(percent_correct))
-            else:
-                answer_results['answer_feedback']\
-                    [answer_identifier+"__binary_"] \
-                    = binary_feedback_incorrect
-
-            answer_results['answer_correct'][answer_identifier]\
-                = (percent_correct == 100)
-
-        
-        # record if exactly correct, then normalize points achieved
-        if total_points:
-            answer_correct = (points_achieved == total_points*100)
-            points_achieved /= 100.0
-            credit = points_achieved/total_points
-        else:
-            answer_correct = False
-            points_achieved /= 100.0
-            credit = 0
-        answer_results['correct'] = answer_correct
-        if total_points == 0:
-            total_score_feedback = "<p>No points possible for question</p>"
-        elif answer_correct:
-            total_score_feedback = "<p>Answer is correct</p>"
-        elif points_achieved == 0:
-            total_score_feedback = "<p>Answer is incorrect</p>"
-        else:
-            total_score_feedback = '<p>Answer is %s%% correct'\
-                % int(round(credit*100))
-        answer_results['feedback'] = total_score_feedback + \
-            answer_results['feedback']
+        from .grade_question import grade_question
+        answer_results=grade_question(question, question_identifier, answer_info, 
+                                      answer_user_responses, expr_context, global_dict)
             
         # determine if question is part of an assessment
         assessment_code = computer_grade_data.get('assessment_code')
@@ -585,7 +328,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                  question_set=question_set,\
                  answer=json.dumps(answer_user_responses),\
                  identifier_in_answer = question_identifier, \
-                 seed=seed, credit=credit,\
+                 seed=seed, credit=answer_results['credit'],\
                  course_content_attempt=current_attempt,\
                  assessment=assessment, \
                  assessment_seed=assessment_seed)

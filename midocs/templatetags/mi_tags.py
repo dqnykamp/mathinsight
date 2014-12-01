@@ -1697,13 +1697,16 @@ class AppletNode(template.Node):
             except:
                 points = 1
 
+            group = kwargs.get('group_'+the_kw)
+
             answer_number = len(answer_data['answer_info'])+1
             answer_identifier = "%s_%s" % \
                 (answer_number, answer_data['question_identifier'])
             answer_field_name = 'answer_%s' % answer_identifier
             answer_data['answer_info'].append(\
                 {'code': answer_code, 'points': points, \
-                   'type': answer_type, 'identifier': answer_identifier })
+                 'type': answer_type, 'identifier': answer_identifier, \
+                 'group': group })
 
             # check if object is in prefilled_answers
             # if so, use that value for input box

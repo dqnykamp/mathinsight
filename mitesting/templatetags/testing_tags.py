@@ -859,6 +859,7 @@ class AnswerNode(template.Node):
             points=float(kwargs['points'])
         except:
             points=1
+        group = kwargs.get('group')
             
         try:
             answer_data = context['_answer_data_']
@@ -883,7 +884,7 @@ class AnswerNode(template.Node):
         answer_field_name = 'answer_%s' % answer_identifier
         answer_data['answer_info'].append(\
             {'code': self.answer_code, 'points': points, 
-             'type': answer_type, 'identifier': answer_identifier })
+             'type': answer_type, 'identifier': answer_identifier, 'group': group })
 
         if answer_data['readonly']:
             readonly_string = ' readonly'

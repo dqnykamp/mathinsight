@@ -319,8 +319,7 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results['enable_solution_button'])
         self.assertFalse(results.get('inject_solution_url',''),'')
         self.assertFalse(results['correct'])
-        self.assertEqual(results['answer_correct'],{})
-        self.assertEqual(results['answer_feedback'],{})
+        self.assertEqual(results['answers'],{})
         
     def test_bad_cgd(self):
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id)
@@ -366,10 +365,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
                                   {"cgd": cgd,
@@ -379,10 +377,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
     def test_multiple_correct_answers(self):
@@ -407,10 +404,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
                                   {"cgd": cgd,
@@ -420,10 +416,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
         # add second possible correct answer
@@ -449,10 +444,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
                                   {"cgd": cgd,
@@ -462,10 +456,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
@@ -476,10 +469,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
 
@@ -504,10 +496,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
                                   {"cgd": cgd,
@@ -517,12 +508,12 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertTrue("is not completely correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
@@ -533,10 +524,9 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertTrue("is incorrect" in results["answer_feedback"]\
-                            [answer_identifier])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
 
@@ -567,9 +557,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_correct"][ai])
+            self.assertTrue(results["answers"][ai]["answer_correct"])
             self.assertTrue("is correct" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
         answers["answer_" + answer_identifiers[0]] \
             = str(x.return_expression()+1)
@@ -582,13 +572,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
 
             
     def test_two_different_answers(self):
@@ -622,9 +612,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_correct"][ai])
+            self.assertTrue(results["answers"][ai]["answer_correct"])
             self.assertTrue("is correct" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
         answers["answer_" + answer_identifiers[1]] \
             = str(x.return_expression())
@@ -639,9 +629,9 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertFalse(results["answer_correct"][ai])
+            self.assertFalse(results["answers"][ai]["answer_correct"])
             self.assertTrue("is incorrect" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
 
         answers["answer_" + answer_identifiers[0]] \
@@ -657,13 +647,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
 
 
     def test_two_unequal_answers(self):
@@ -698,9 +688,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_correct"][ai])
+            self.assertTrue(results["answers"][ai]["answer_correct"])
             self.assertTrue("is correct" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
         answers["answer_" + answer_identifiers[0]] \
             = str(x.return_expression())
@@ -715,13 +705,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
 
 
     def test_split_symbols_on_compare(self):
@@ -764,17 +754,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 67% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[2]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         
 
         answers["answer_" + answer_identifiers[0]] \
@@ -792,9 +782,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_correct"][ai])
+            self.assertTrue(results["answers"][ai]["answer_correct"])
             self.assertTrue("is correct" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
     def test_split_with_function_name(self):
 
@@ -833,13 +823,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         
 
         answers = {"cgd": cgd,}
@@ -856,13 +846,13 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifiers[0]] \
@@ -878,13 +868,13 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("is incorrect" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         
 
 
@@ -1188,9 +1178,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
-            self.assertTrue(results["answer_correct"][ai])
+            self.assertTrue(results["answers"][ai]["answer_correct"])
             self.assertTrue("is correct" in \
-                                results["answer_feedback"][ai])
+                                results["answers"][ai]["answer_feedback"])
 
         answers["answer_" + answer_identifiers[0]] \
             = "%s^2-a^2" % x.return_expression()
@@ -1207,17 +1197,17 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 33% correct" in results["feedback"])
         ai = answer_identifiers[0]
-        self.assertTrue(results["answer_correct"][ai])
+        self.assertTrue(results["answers"][ai]["answer_correct"])
         self.assertTrue("is correct" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[1]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("answer in a different form" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
         ai = answer_identifiers[2]
-        self.assertFalse(results["answer_correct"][ai])
+        self.assertFalse(results["answers"][ai]["answer_correct"])
         self.assertTrue("answer in a different form" in \
-                            results["answer_feedback"][ai])
+                            results["answers"][ai]["answer_feedback"])
 
 
     def test_near_match_partial_correct(self):
@@ -1250,13 +1240,13 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is not completely correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("answer in a different form" in 
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
         self.q.expression_set.create(
@@ -1283,13 +1273,13 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is not completely correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (75%) credit" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("answer in a different form" in 
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
     def test_near_match_partial_correct2(self):
@@ -1323,15 +1313,15 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is not completely correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("that is 75% correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("answer in a different form" in 
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
     def test_user_function(self):
@@ -1364,9 +1354,9 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
     def test_user_sympy_dict(self):
@@ -1463,18 +1453,18 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("No response" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = ""
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("No response" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         
 
     def test_unparsable_answer(self):
@@ -1497,9 +1487,9 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("Unable to understand the answer" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
     def test_bad_answer_option(self):
@@ -1632,29 +1622,29 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue(results["answer_correct"][answer_identifier])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("are correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = "%s" % a2.id
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("are incorrect" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = "%s" % a3.id
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
-        self.assertFalse(results["answer_correct"][answer_identifier])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("not completely correct" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (50%) credit" in
-                        results["answer_feedback"][answer_identifier])
+                        results["answers"][answer_identifier]["answer_feedback"])
 
 
 

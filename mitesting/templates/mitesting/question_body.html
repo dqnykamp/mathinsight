@@ -119,18 +119,18 @@
 	  question_feedback.removeClass('error').removeClass('success');
       }
       
-      for(var answer_identifier in data['answer_feedback']) {
+      for(var answer_identifier in data['answers']) {
 	  var answer_feedback = jQuery("#answer_"+answer_identifier+"_feedback");
-	  answer_feedback.html(data['answer_feedback'][answer_identifier]);
-	  if(answer_identifier.indexOf("__binary_") == -1) {
-	      if(data['answer_correct'][answer_identifier]) {
-		  answer_feedback.removeClass('error').addClass('success');
-	      }
-	      else {
-		  answer_feedback.removeClass('success').addClass('error');
-	      }
-	      answer_feedback.filter("span").css({ display: 'inline-block'})
+	  var answer_feedback_binary = jQuery("#answer_"+answer_identifier+"__binary__feedback");
+	  answer_feedback.html(data['answers'][answer_identifier]['answer_feedback']);
+	  answer_feedback_binary.html(data['answers'][answer_identifier]['answer_feedback_binary']);
+	  if(data['answers'][answer_identifier]['answer_correct']) {
+	      answer_feedback.removeClass('error').addClass('success');
 	  }
+	  else {
+	      answer_feedback.removeClass('success').addClass('error');
+	  }
+	  answer_feedback.filter("span").css({ display: 'inline-block'})
       }
 
 	

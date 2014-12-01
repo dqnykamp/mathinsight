@@ -1161,7 +1161,8 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd['answer_info'],
                          [{'identifier': answer_identifier,
                            'code': answer_code, 'points': 1, 
-                           'type': QuestionAnswerOption.EXPRESSION}])
+                           'type': QuestionAnswerOption.EXPRESSION,
+                           'group': None}])
 
         question_data=render_question(self.q, rng=self.rng,
                                       record_answers=False,
