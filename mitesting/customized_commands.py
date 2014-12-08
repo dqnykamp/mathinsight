@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, Function, C, S
+from sympy import Tuple, sympify, Function, C, S, Basic
 from mitesting.sympy_customized import bottom_up, customized_sort_key
 
 class Abs(C.Abs):
@@ -225,6 +225,18 @@ def count(thelist, item):
     so that works with parse_expr and implicit multiplication transformation.
     """
     return thelist.count(item)
+
+
+
+class Point(C.Point):
+    def evalf(self, prec=None, **options):
+        coords = [x.evalf(prec, **options) for x in self.args]
+        return type(self)(*coords, evaluate=False)
+
+    def __new__(cls, *args, **kwargs):
+        kwargs["evaluate"]=False
+        return super(Point, cls).__new__(cls,*args, **kwargs) 
+
 
 
 """
