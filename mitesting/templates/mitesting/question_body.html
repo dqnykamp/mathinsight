@@ -89,10 +89,15 @@
   {% endif %}
   {% if question_data.enable_solution_button %}jQuery( "#question_{{question_data.identifier}}_show_solution").removeAttr("disabled");{%endif %}
   {% if question_data.show_solution_button %}jQuery( "#question_{{question_data.identifier}}_show_solution").click(function() {jQuery.post("{{question_data.inject_solution_url}}", "cgd={{question_data.computer_grade_data}}", process_solution_inject_{{question_data.identifier}});});{% endif %}
+  var question_{{question_data.identifier}}_processing=false;
   function post_form_{{question_data.identifier}}() {
-      var thepost = jQuery.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
+      if(!question_{{question_data.identifier}}_processing) {
+	  question_{{question_data.identifier}}_processing=true;
+	  jQuery("#question_{{question_data.identifier}}_submit").prop("disabled",true);
+	  var thepost = jQuery.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
 
-      thepost.done(process_graded_question_{{question_data.identifier}});
+	  thepost.done(process_graded_question_{{question_data.identifier}});
+      }
       
   }
 
@@ -135,6 +140,9 @@
       jQuery("#id_question_{{question_data.identifier}} input:checked").parent().addClass('highlight_answer');
 
 	MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
+      question_{{question_data.identifier}}_processing=false;
+      jQuery("#question_{{question_data.identifier}}_submit").prop("disabled",false);
+
     }
 
   function process_solution_inject_{{question_data.identifier}}(data) {
