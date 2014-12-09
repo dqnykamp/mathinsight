@@ -273,11 +273,13 @@ class Course(models.Model):
             if ctc.initial_due_date or ctc.final_due_date:
                 ctc.save()
 
-    def enrolled_students_ordered(self, active_only=True):
+    def enrolled_students_ordered(self, active_only=True, section=None):
         student_enrollments = self.courseenrollment_set.filter(role=STUDENT_ROLE)
         if active_only:
             student_enrollments = student_enrollments.filter(withdrew=False)
-
+        if section:
+            student_enrollments = student_enrollments.filter(section=section)
+        
         return self.enrolled_students.filter(courseenrollment__in=student_enrollments).order_by('user__last_name', 'user__first_name')
 
     def points_for_assessment_category(self, assessment_category):
@@ -392,30 +394,36 @@ class Course(models.Model):
         return sum(score_list)*cac.rescale_factor
  
 
+    def student_scores_for_assessment_category(self, student, cac):
+
+        cac_assessments = []
+        for ctc in self.coursethreadcontent_set\
+                .filter(assessment_category=cac.assessment_category):
+            ctc_points = ctc.total_points()
+            if ctc_points:
+                student_score = ctc.student_score(student)
+                if student_score:
+                    percent = student_score/ctc_points*100
+                else:
+                    percent = 0
+                assessment_results =  \
+                {'content': ctc,
+                 'assessment': ctc.thread_content.content_object,
+                 'points': ctc_points,
+                 'student_score': student_score,
+                 'percent': percent,
+                 }
+                cac_assessments.append(assessment_results)
+        return cac_assessments
+
     def student_scores_by_assessment_category(self, student):
         scores_by_category = []
         for cac in self.courseassessmentcategory_set.all():
 
-            cac_assessments = []
-            number_assessments=0
-            for ctc in self.coursethreadcontent_set\
-                    .filter(assessment_category=cac.assessment_category):
-                ctc_points = ctc.total_points()
-                if ctc_points:
-                    number_assessments+=1
-                    student_score = ctc.student_score(student)
-                    if student_score:
-                        percent = student_score/ctc_points*100
-                    else:
-                        percent = 0
-                    assessment_results =  \
-                    {'content': ctc,
-                     'assessment': ctc.thread_content.content_object,
-                     'points': ctc_points,
-                     'student_score': student_score,
-                     'percent': percent,
-                     }
-                    cac_assessments.append(assessment_results)
+            cac_assessments = self.student_scores_for_assessment_category(\
+                                                            student, cac)
+            number_assessments=len(cac_assessments)
+
             category_points = self.points_for_assessment_category \
                                (cac.assessment_category)
             category_student_score = \

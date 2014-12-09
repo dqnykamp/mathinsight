@@ -18,6 +18,7 @@
 {% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
 {% if courseuser.get_current_role == 'I' %}
 <a href="{% url 'mic-instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
+<a href="{% url 'mic-exportgradebook' %}">Export gradebook</a><br/>
 <a href="{% url 'mic-instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
 <a href="{% url 'mic-updateattendance' %}">Update attendance</a><br/>
 <a href = "{% url 'mic-updateindividualattendance' %}">Update individual attendance</a>
