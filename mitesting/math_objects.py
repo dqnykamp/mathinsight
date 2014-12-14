@@ -499,35 +499,33 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     """
 
     # if either isn't a tuple, replace with a tuple of length 1
-    if not isinstance(the_tuple1, Tuple):
+    if not isinstance(the_tuple1, Tuple) and not isinstance(the_tuple1,tuple):
         the_tuple1 = Tuple(the_tuple1)
-    if not isinstance(the_tuple2, Tuple):
+    if not isinstance(the_tuple2, Tuple) and not isinstance(the_tuple2,tuple):
         the_tuple2 = Tuple(the_tuple2)
-    
+
     # if tuple_is_unordered isn't set, demand exact equality
     if not tuple_is_unordered:
         if the_tuple1 == the_tuple2:
             return 1
         if not partial_tuple_matches:
             return 0
-        else:
 
-            def max_ordered_subsequence(t1, t2):
-                max_matched=0
-                for (i1,start_element) in enumerate(t1):
-                    try: 
-                        i2 = t2.index(start_element)
-                    except ValueError:
-                        continue
-                    matched = 1 + max_ordered_subsequence(t1[i1+1:],t2[i2+1:])
-                    max_matched=max(max_matched,matched)
-                return max_matched
+        # find length of largest common subsequence
+        m = len(the_tuple1)
+        n = len(the_tuple2)
 
-
-            # if partial matches, then look for maximum number of matches
-            # that occur in the same order
-            max_matched = max_ordered_subsequence(the_tuple1,the_tuple2)
-            return max_matched/max(len(the_tuple1),len(the_tuple2))
+        from sympy import zeros
+        C = zeros(m+1,n+1)
+        for i in range(m):
+            for j in range(n):
+                if the_tuple1[i] == the_tuple2[j]:
+                    C[i+1,j+1] = C[i,j] +1
+                else:
+                    C[i+1,j+1] = max(C[i+1,j],C[i,j+1])
+        
+        max_matched = float(C[m,n])  # float so don't get sympy rational
+        return max_matched/max(m,n)
 
 
     # if not ordered, check if match with any order
