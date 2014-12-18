@@ -878,8 +878,8 @@ class AnswerNode(template.Node):
             return return_error("Invalid answer blank: %s" % self.answer_code)
 
         answer_number = len(answer_data['answer_info'])+1
-        answer_identifier = "%s_%s" % (answer_number,
-                                       answer_data['question_identifier'])
+        question_identifier = answer_data['question_identifier']
+        answer_identifier = "%s_%s" % (answer_number, question_identifier)
         answer_field_name = 'answer_%s' % answer_identifier
         answer_data['answer_info'].append(\
             {'code': self.answer_code, 'points': points, 
@@ -911,10 +911,10 @@ class AnswerNode(template.Node):
             if given_answer is not None:
                 value_string = ' value="%s"' %  given_answer
                 
-            return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s /><br/><span class="info" id="%s_feedback"></span></span>' % \
+            return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s /><br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
                 (answer_field_name, answer_field_name,
                  size, readonly_string, value_string, 
-                 answer_field_name)
+                 question_identifier, answer_field_name)
 
         elif answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:
             try:
@@ -955,8 +955,8 @@ class AnswerNode(template.Node):
                          ans_id, selected_string, answer['rendered_answer'] )
                 html_string = '<select id="id_%s" name="%s" class="mi_select">%s</select>' % \
                               (answer_field_name, answer_field_name, html_string)
-                html_string = '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info" id="%s_feedback"></span></span>'  %\
-                              (html_string, answer_field_name)
+                html_string = '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>'  %\
+                              (html_string, question_identifier, answer_field_name)
             else:
                 for answer in rendered_answer_list:
                     ans_id = answer['answer_id']
@@ -971,8 +971,8 @@ class AnswerNode(template.Node):
                          answer['rendered_answer'] )
 
                 html_string = '<ul class="answerlist">%s</ul>' % html_string
-                html_string += '<div class="info" id="%s_feedback" ></div>' % \
-                               (answer_field_name)
+                html_string += '<div class="info answerfeedback_%s" id="%s_feedback" ></div>' % \
+                               (question_identifier, answer_field_name)
             
             return mark_safe(html_string)
         

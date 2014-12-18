@@ -152,6 +152,10 @@
       var question_feedback=jQuery("#question_{{question_data.identifier}}_feedback");
       question_feedback.html("Server error.  Failed to grade question.");
       question_feedback.removeClass('success').addClass('error');
+
+      var question_answer_feedbacks=jQuery('.answerfeedback_{{question_data.identifier}}')
+      question_answer_feedbacks.html("Server error.  Failed to grade question.");
+      question_answer_feedbacks.removeClass('success').addClass('error');
   }
 
   var processing_timeoutID_{{question_data.identifier}};
