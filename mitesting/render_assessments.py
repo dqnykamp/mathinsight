@@ -164,7 +164,7 @@ def render_question_text(render_data, solution=False):
     Use context specified by expression context and load in custom tags
     Optionally render "need help" information.
 
-    Input question data is a dictionary with the following keys
+    Input render_data is a dictionary with the following keys
     - question: the question to be rendered
     - expression_context: the template context used to render the text
     - show_help (optional): if true, render the "need help" information

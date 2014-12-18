@@ -5,7 +5,11 @@ from __future__ import division
 
 from django.conf import settings
 from mitesting.models import QuestionAnswerOption
+from django.core.exceptions import ObjectDoesNotExist
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 def compare_response_with_answer_code(user_response, the_answer_info, question,
                                       expr_context, global_dict):
@@ -33,7 +37,21 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             answer_result['answer_feedback'] \
                 = "No response"
             return answer_result
+        except TypeError:
+            logger.warning("Invalid option for multiple choice answer")
+            answer_result['answer_feedback'] \
+                = "Cannot grade due to error in question"
+            return answer_result
         else:
+        
+            # if multiple choice doesn't match given code
+            # then something is wrong
+            if the_answer.answer_code != answer_code:
+                logger.warning("Multiple choice answer answer code does not match")
+                answer_result['answer_feedback'] \
+                    = "Cannot grade due to error in question"
+                return answer_result
+
             percent_correct = the_answer.percent_correct
             if percent_correct == 100:
                 feedback = "Yes, you are correct."
@@ -80,10 +98,19 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         from .sympy_customized import parse_and_process
         from .math_objects import math_object
 
-        # compare with expressions associated with answer_code
-        for answer_option in question.questionansweroption_set \
+        answer_options=question.questionansweroption_set \
                 .filter(answer_code=answer_code, \
-                            answer_type=QuestionAnswerOption.EXPRESSION):
+                        answer_type=QuestionAnswerOption.EXPRESSION)
+
+        if(len(answer_options)==0):
+            logger.warning("Expression answer found with no matching options")
+            answer_result['answer_feedback'] \
+                = "Cannot grade due to error in question"
+            return answer_result
+            
+
+        # compare with expressions associated with answer_code
+        for answer_option in answer_options:
 
             # find the expression associated with answer_option
             try:
@@ -363,6 +390,29 @@ def match_max_ones(A):
     
 def grade_question_group(group_list, answer_user_responses, answer_info, question,
                          expr_context, global_dict, answer_results):
+    """
+    Grade a group of answers, where responses could match answers
+    in any sequence.
+
+    First, match as many answers with responses that get full credit.
+    Then, match answers with responses in order of decreasing percent credit.
+
+    Inputs:
+    - group_list: list of answer numbers in the given group
+    - answer_user_responses: list identifiers, codes and answers giving user's
+      response to questions
+    - answer_info: list of identifiers, codes, points, answer types,
+      and groups of answers in question
+    - question: the question in which answers are contained
+    - expr_context: the rendered expression context for the question
+    - global_dict: global dictionary to be used to parse user's responses
+    - answer_results: dictionary that records results of answers
+      (not just the ones from this group).  
+
+    Return the points achieved for this group, multipled by 100
+
+    """
+
 
     from sympy import zeros
 
@@ -440,17 +490,17 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
                 break
             
     # record answers in answer_results
-    points_achieved=0
+    points_achieved_times_100=0
     for match in answer_matches:
         answer_identifier = answer_info[group_list[match[0]]]['identifier']
         answer_results["answers"][answer_identifier] = \
                         answer_array[match[0]][match[1]]
                                                        
         answer_points = answer_info[group_list[match[0]]]['points']
-        points_achieved += answer_points*\
+        points_achieved_times_100 += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
 
-    return points_achieved
+    return points_achieved_times_100
 
 
 def grade_question(question, question_identifier, answer_info, 
