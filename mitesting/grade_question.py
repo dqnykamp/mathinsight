@@ -280,7 +280,6 @@ def match_max_ones(A):
     column and row indicies, respectively, and each i and j appear at most once.
     
     """
-    
     index_list = []
     removed_rows = []
     removed_cols = []
@@ -353,13 +352,12 @@ def match_max_ones(A):
         if not removed_nonzero_items:
             break
 
-
     # if removed all rows or columns of A, then we are done
     if(A.rows*A.cols==0):
         return index_list
 
     # in the remaining matrix A, each row and each column has at least two 1s.
-    # Take the first two of A, match it in turn with each column with a 1,
+    # Take the first row of A, match it in turn with each column with a 1,
     # compute the index_list from the remaining submatrix
     # Choose the alternative where index list is the largest
 
@@ -376,9 +374,11 @@ def match_max_ones(A):
 
     best_col = len_sublists.index(max(len_sublists))
 
-    index_list.append((0,best_col))
-    removed_rows.append(index_convert(0,removed_rows))
-    removed_cols.append(index_convert(best_col,removed_cols))
+    row = index_convert(0,removed_rows)
+    col = index_convert(best_col,removed_cols)
+    index_list.append((row,col))
+    removed_rows.append(row)
+    removed_cols.append(col)
 
     for pair in index_sublists[best_col]:
         row =index_convert(pair[0],removed_rows)
@@ -459,7 +459,6 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
         # partial credit matrix
         P = zeros(n_answers_left, n_answers_left)
 
-
         row=-1
         for response_num in range(n_answers):
             if response_num in responses_used:
@@ -488,7 +487,7 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
                 P.row_del(row)
                 P.col_del(col)
                 break
-            
+
     # record answers in answer_results
     points_achieved_times_100=0
     for match in answer_matches:

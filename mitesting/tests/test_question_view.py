@@ -714,6 +714,102 @@ class TestGradeQuestionView(TestCase):
                             results["answers"][ai]["answer_feedback"])
 
 
+    def test_question_group(self):
+        self.q.question_text="Type in either order: {% answer ans1 group='a' %}  {% answer ans2 group='a' %}"
+        self.q.save()
+        
+        self.new_answer(answer_code="ans1", answer="x")
+        self.new_answer(answer_code="ans2", answer="fun_x")
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type in either order: ")
+        
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifiers = sorted([a['identifier'] for a in 
+                                     computer_grade_data["answer_info"]])
+        
+        x = response.context['x']
+        fun_x = response.context['fun_x']
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifiers[0]] \
+            = str(x.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = str(fun_x.return_expression())
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        for ai in answer_identifiers:
+            self.assertTrue(results["answers"][ai]["answer_correct"])
+            self.assertTrue("is correct" in \
+                                results["answers"][ai]["answer_feedback"])
+
+        answers["answer_" + answer_identifiers[1]] \
+            = str(x.return_expression())
+        answers["answer_" + answer_identifiers[0]] \
+            = str(fun_x.return_expression())
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        for ai in answer_identifiers:
+            self.assertTrue(results["answers"][ai]["answer_correct"])
+            self.assertTrue("is correct" in \
+                                results["answers"][ai]["answer_feedback"])
+
+
+        answers["answer_" + answer_identifiers[0]] \
+            = str(x.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = str(x.return_expression())
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        ai = answer_identifiers[0]
+        self.assertTrue(results["answers"][ai]["answer_correct"])
+        self.assertTrue("is correct" in \
+                            results["answers"][ai]["answer_feedback"])
+        ai = answer_identifiers[1]
+        self.assertFalse(results["answers"][ai]["answer_correct"])
+        self.assertTrue("is incorrect" in \
+                            results["answers"][ai]["answer_feedback"])
+
+        answers["answer_" + answer_identifiers[0]] \
+            = str(fun_x.return_expression())
+        answers["answer_" + answer_identifiers[1]] \
+            = str(fun_x.return_expression())
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        ai = answer_identifiers[0]
+        self.assertTrue(results["answers"][ai]["answer_correct"])
+        self.assertTrue("is correct" in \
+                            results["answers"][ai]["answer_feedback"])
+        ai = answer_identifiers[1]
+        self.assertFalse(results["answers"][ai]["answer_correct"])
+        self.assertTrue("is incorrect" in \
+                            results["answers"][ai]["answer_feedback"])
+
+
     def test_split_symbols_on_compare(self):
         self.q.expression_set.create(
             name="two_a_x", expression="2*a*x", 
