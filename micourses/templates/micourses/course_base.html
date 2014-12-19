@@ -20,12 +20,14 @@
 <a href="{% url 'mic-instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
 <a href="{% url 'mic-exportgradebook' %}">Export gradebook</a><br/>
 <a href="{% url 'mic-instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
+{% if course.track_attendance %}
 <a href="{% url 'mic-updateattendance' %}">Update attendance</a><br/>
 <a href = "{% url 'mic-updateindividualattendance' %}">Update individual attendance</a>
+{%endif%}
 {%else%}
 <a href="{% url 'mic-contentlist' %}?{{week_date_parameters}}">Due dates by week</a><br/>
 <a href="{% url 'mic-studentgradebook' %}">Grades</a><br/>
-<a href="{% url 'mic-attendancedisplay' %}">Attendance record</a><br/>
+{% if course.track_attendance %}<a href="{% url 'mic-attendancedisplay' %}">Attendance record</a><br/>{% endif %}
 {%endif%}
 {% if course.tutoring_url %}<a href="{{course.tutoring_url}}">Tutoring options</a><br/>{% endif %}
 {% if courseuser.selected_course_enrollment.group %}

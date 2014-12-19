@@ -788,6 +788,7 @@ class CourseThreadContent(models.Model):
     course = models.ForeignKey(Course)
     thread_content = models.ForeignKey('mithreads.ThreadContent')
     instructions = models.TextField(blank=True, null=True)
+    assigned_date=models.DateField(blank=True, null=True)
     initial_due_date=models.DateField(blank=True, null=True)
     final_due_date=models.DateField(blank=True, null=True)
     assessment_category = models.ForeignKey(AssessmentCategory, 

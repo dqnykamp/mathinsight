@@ -8,10 +8,11 @@
 
 {% if multiple_courses %}<p><a href= "{% url 'mic-selectcourse' %}">Select other course</a></p>{% endif %}
 
+{% if course.update_attendance %}
 <h4>Attendance</h4>
 <p><a href="{% url 'mic-updateattendance' %}">Update attendance</a><br/>
 <a href = "{% url 'mic-updateindividualattendance' %}">Update individual attendance</a></p>
-
+{% endif %}
 
 
 <h4>Next items</h4>
