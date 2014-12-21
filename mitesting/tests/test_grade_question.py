@@ -197,6 +197,18 @@ class TestCompareResponse(TestCase):
         self.assertTrue(" incorrect" in answer_results["answer_feedback"])
         self.assertTrue("Bad idea." in answer_results["answer_feedback"])
 
+        answer_results=compare_response_with_answer_code\
+                        (user_response="foo", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue(" incorrect" in answer_results["answer_feedback"])
+        self.assertFalse("You got it!" in answer_results["answer_feedback"])
+        self.assertFalse("Getting close." in answer_results["answer_feedback"])
+        self.assertFalse("Bad idea." in answer_results["answer_feedback"])
+
 
     def test_split_symbols_on_compare(self):
         EXPRESSION = QuestionAnswerOption.EXPRESSION

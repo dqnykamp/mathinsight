@@ -210,7 +210,6 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             if not feedback:
                 feedback = 'No, $%s$ is incorrect.' \
                     % user_response_string
-                answer_option_used = answer_option
 
         # since started with negative percent_correct
         # make it zero if no matches
