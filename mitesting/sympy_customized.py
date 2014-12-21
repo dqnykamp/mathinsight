@@ -192,6 +192,24 @@ def parse_expr(s, global_dict=None, local_dict=None,
             s, global_dict=new_global_dict, local_dict=local_dict, 
             transformations=transformations, evaluate=evaluate))
 
+    # if expr is a Tuple, but s had implicit parentheses, 
+    # then return TupleNoParens
+    if isinstance(expr,Tuple):
+        ss=s.strip()
+        # implicit parens if doesn't start and end with parentheses
+        if not (ss.startswith("(") and ss.endswith(")")):
+            return TupleNoParens(*expr)
+
+        # implicit parens if initial opening paren doesn't match final closing paren
+        parenCtr=0
+        for (i,c) in enumerate(ss):
+            if c == "(":
+                parenCtr +=1
+            elif c == ")":
+                parenCtr -=1
+                if parenCtr == 0 and i != len(ss)-1:
+                    return TupleNoParens(*expr)
+
     return expr
 
 
@@ -531,3 +549,14 @@ def customized_sort_key(item, order=None):
 
     # otherwise return the default sympy sort key
     return default_sort_key(item, order)
+
+
+# Tuple but with no parentheses when printing with latex or str
+class TupleNoParens(Tuple):
+    def _latex(self, prtr):
+        return r", \quad ".join([ prtr._print(i) for i in self ])
+    def _sympystr(self,prtr):
+        if len(self) == 1:
+            return "%s," % prtr._print(self[0])
+        else:
+            return prtr.stringify(self, ", ")

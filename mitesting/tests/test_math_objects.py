@@ -396,29 +396,6 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(six.text_type(mobject), 
                          'e^{5.2 x} \\sin{\\left (2 \\pi x \\right )}')
         
-    def test_text_output_delimiters(self):
-        expr = sympify("(1,2,3)")
-        mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\begin{pmatrix}1, & 2, & 3\\end{pmatrix}')
-        mobject = math_object(expr, output_no_delimiters=True)
-        self.assertEqual(six.text_type(mobject), 
-                         '1,~ 2,~ 3')
-        mobject = math_object(expr, output_no_delimiters=False)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\begin{pmatrix}1, & 2, & 3\\end{pmatrix}')
-
-        expr = sympify("[1,2,3]")
-        mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\begin{bmatrix}1, & 2, & 3\\end{bmatrix}')
-        mobject = math_object(expr, output_no_delimiters=True)
-        self.assertEqual(six.text_type(mobject), 
-                         '1,~ 2,~ 3')
-        mobject = math_object(expr, output_no_delimiters=False)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\begin{bmatrix}1, & 2, & 3\\end{bmatrix}')
-        
 
     def test_text_lines(self):
         from sympy.geometry import Line

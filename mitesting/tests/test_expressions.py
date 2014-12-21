@@ -797,23 +797,29 @@ class TestExpressions(TestCase):
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
         self.assertEqual(expr2_eval, (a,b,c,a,c,d))
 
-    def test_output_no_delimiters(self):
+    def test_tuple_no_parentheses(self):
         from sympy.printing import latex
+        from mitesting.sympy_customized import TupleNoParens
+        from sympy import Tuple
         a=Symbol('a')
         b=Symbol('b')
         c=Symbol('c')
         global_dict={}
         expr1=self.new_expr(name="t1",expression="a,b,c")
         expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr1_eval), latex((a,b,c)))
-        expr2=self.new_expr(name="t1",expression="a,b,c",
-                            output_no_delimiters=True)
+        self.assertEqual(expr1_eval, TupleNoParens(a,b,c))
+        self.assertNotEqual(expr1_eval, Tuple(a,b,c))
+
+        expr2=self.new_expr(name="t1",expression="(a,b,c)")
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr2_eval), 'a,~ b,~ c')
-        expr3=self.new_expr(name="t1",expression="a,b,c",
-                            output_no_delimiters=False)
+        self.assertEqual(expr2_eval, Tuple(a,b,c))
+        self.assertNotEqual(expr2_eval, TupleNoParens(a,b,c))
+
+        expr3=self.new_expr(name="t1",expression="(a+1)*b,b,a*(1-c)")
         expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr3_eval), latex((a,b,c)))
+        self.assertEqual(expr3_eval, TupleNoParens((a+1)*b,b,a*(1-c)))
+        self.assertNotEqual(expr3_eval, Tuple((a+1)*b,b,a*(1-c)))
+
 
     def test_evaluate_false(self):
         global_dict={}

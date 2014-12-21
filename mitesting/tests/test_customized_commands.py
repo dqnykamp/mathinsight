@@ -190,7 +190,7 @@ class EvalfTests(SimpleTestCase):
         x = Symbol('x')
         self.assertEqual(evalf_expression(x),x)
         expr = 0.1213*x**2.239-332.323*x+23.72
-        expr_evalf = 0.121*x**2.24-332*x+23.7
+        expr_evalf = 0.121*x**2.24-332.0*x+23.7
         self.assertEqual(evalf_expression(expr,3),expr_evalf)
 
         from sympy import sin, exp
