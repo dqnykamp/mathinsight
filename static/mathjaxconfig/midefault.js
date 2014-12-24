@@ -1,5 +1,5 @@
 MathJax.Hub.Config({
-    tex2jax: {inlineMath: [["$","$"],["\\(","\\)"]]},
+    tex2jax: {inlineMath: [["$","$"],["\\(","\\)"],["`","`"]]},
     
     "HTML-CSS": { linebreaks: { automatic: true, width: "65% container" } },
     SVG: { linebreaks: { automatic: true, width: "65% container" } },
