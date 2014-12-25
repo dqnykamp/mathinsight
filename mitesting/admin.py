@@ -78,10 +78,9 @@ class AssessmentAdmin(reversion.VersionAdmin):
 
 class ExpressionInline(admin.TabularInline):
     model = Expression
-    fields = ('name', 'expression_type', 'expression', 'expand',
+    fields = ('name', 'expression_type', 'expression', 
               'evaluate_level', 'n_digits', 'round_decimals', 
-              'function_inputs', 'collapse_equal_tuple_elements',
-              'output_no_delimiters', 'group', 'sort_order')
+              'function_inputs', 'group', 'sort_order')
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,

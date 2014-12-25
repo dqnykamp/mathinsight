@@ -135,12 +135,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             user_response_parsed=math_object(
                 user_response_parsed,
                 tuple_is_unordered=valid_answer.return_if_unordered(),
-                output_no_delimiters= 
-                valid_answer.return_if_output_no_delimiters(),
-                use_ln=valid_answer.return_if_use_ln(),
                 normalize_on_compare=answer_option.normalize_on_compare,
-                match_partial_tuples_on_compare= 
-                answer_option.match_partial_tuples_on_compare,
+                match_partial_on_compare= 
+                answer_option.match_partial_on_compare,
                 evaluate_level=evaluate_level,
                 n_digits = valid_answer.return_n_digits(),
                 round_decimals = valid_answer.return_round_decimals())
@@ -156,9 +153,6 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     evaluate_level=EVALUATE_NONE)
                 user_response_unevaluated=math_object(
                     user_response_unevaluated,
-                    output_no_delimiters=
-                    valid_answer.return_if_output_no_delimiters(),
-                    use_ln=valid_answer.return_if_use_ln(),
                     evaluate_level=EVALUATE_NONE)
                 user_response_string = str(user_response_unevaluated)
             except:

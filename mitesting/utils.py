@@ -291,7 +291,7 @@ class ParsedFunction(Function):
     pass
 
 def return_parsed_function(expression, function_inputs, name,
-                           global_dict=None, expand=False, 
+                           global_dict=None, 
                            default_value=None):
     """
     Parse expression into function of function_inputs,
@@ -303,7 +303,6 @@ def return_parsed_function(expression, function_inputs, name,
     function input symbol(s). 
     Substitutions from global_dict will be made in expression
     except values from function_inputs will be ignored.
-    If expand is true, expression will be expanded.
 
     The .default argument returns default_value, if exists.
     Else .default will be set to expression parsed with all
@@ -329,10 +328,6 @@ def return_parsed_function(expression, function_inputs, name,
         expr2= parse_and_process(expression, global_dict=global_dict_sub)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
-
-    if expand:
-        from sympy import expand as sympy_expand
-        expr2 = bottom_up(expr2, sympy_expand)
 
     if default_value is None:
         default_value = parse_and_process(expression, global_dict=global_dict)
@@ -370,3 +365,91 @@ def return_parsed_function(expression, function_inputs, name,
     _parsed_function.__name__ = str(name)
 
     return _parsed_function
+
+
+def return_interval_expression(expression, global_dict=None, evaluate_level=None):
+    """
+    Look for combinations of opening ( or [, comma, and closing ) or ].
+    If find both, them replace with 
+    Interval(... , left_open===True/False, right_open===True/False)
+    and attempt to parse
+
+    With nested combinations of this pattern,
+    only the inner combination is converted to an Interval
+
+    returns 
+    - expression parsed with intervals
+
+    raises value error if interval limit is not real
+
+    for other errors, returns None
+
+    """
+
+    left_inds=[]
+    left_opens=[]
+    found_commas=[]
+    intervals_contained=[]
+    found_combinations=[]
+    
+    for (i,char) in enumerate(expression):
+        if char=='(' or char== "[":
+            left_opens.append(char=="(")
+            left_inds.append(i)
+            found_commas.append(False)
+            intervals_contained.append(False)
+        elif char==',':
+            if len(found_commas)>0:
+                found_commas[-1]=True
+        elif char==')' or char=="]":
+            if len(found_commas)>0:
+                found_interval = found_commas.pop()
+                interval_inside = intervals_contained.pop()
+                # only add interval if found command and 
+                # there is no interval contained inside
+                if found_interval:
+                    if not interval_inside:
+                        found_combinations.append({
+                            'left_open': left_opens.pop(),
+                            'left_ind': left_inds.pop(),
+                            'right_open': (char==")"), 'right_ind': i})
+                    # record fact that have interval inside parent
+                    if len(found_commas) >0:
+                        intervals_contained[-1]=True
+                else:
+                    left_opens.pop()
+                    left_inds.pop()
+                    if len(found_commas) > 0:
+                        # propogate presence of interval to parent
+                        intervals_contained[-1]=interval_inside
+                
+    last_ind=0
+    expr_interval=""
+    for interval in found_combinations:
+        left_ind=interval['left_ind']
+        right_ind=interval['right_ind']
+        left_open=interval['left_open']
+        right_open=interval['right_open']
+
+        expr_interval += expression[last_ind:left_ind]
+
+        # have to use === to specify keywords since 
+        # customized parse_expr convert = to Eq
+        expr_interval += " Interval(%s,left_open===%s, right_open===%s)" % \
+                 (expression[left_ind+1:right_ind],
+                  left_open, right_open)
+
+        last_ind=right_ind+1
+    expr_interval += expression[last_ind:]
+
+    new_global_dict = {}
+    if global_dict:
+        new_global_dict.update(global_dict)
+    from sympy import Interval
+    new_global_dict['Interval'] = Interval
+
+    try: 
+        return parse_and_process(expr_interval, global_dict=new_global_dict,
+                                 evaluate_level = evaluate_level)
+    except (TypeError, NotImplementedError, SyntaxError, TokenError):
+        return None

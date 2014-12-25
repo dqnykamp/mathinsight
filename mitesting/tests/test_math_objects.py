@@ -85,24 +85,6 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(six.text_type(mobject),'3 e^{2410 x}')
         
 
-    def test_use_ln(self):
-        expression = sympify("log(x)")
-        mobject = math_object(expression, use_ln=True)
-        self.assertEqual(mobject,expression)
-        self.assertEqual(six.text_type(mobject), '\\ln{\\left (x \\right )}')
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertTrue(mobject.return_if_use_ln())
-        mobject = math_object(expression, use_ln=False)
-        self.assertEqual(mobject,expression)
-        self.assertEqual(six.text_type(mobject), '\\log{\\left (x \\right )}')
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertFalse(mobject.return_if_use_ln())
-        mobject = math_object(expression)
-        self.assertEqual(mobject,expression)
-        self.assertEqual(six.text_type(mobject), '\\log{\\left (x \\right )}')
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertFalse(mobject.return_if_use_ln())
-
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
         expression = 1/x + 1/y
@@ -187,99 +169,29 @@ class MathObjectTests(SimpleTestCase):
         self.assertFalse(mobject.return_if_unordered())
 
 
-    def test_collapse_equal_tuple_elements(self):
-        expression = sympify(sympify("(1-z,x**2,1-z)"))
-        expression2 = sympify(sympify("(1-z,x**2)"))
-        mobject = math_object(expression)
-        self.assertEqual(mobject,expression)
-        self.assertNotEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
-
-        mobject = math_object(expression, collapse_equal_tuple_elements=True)
-        self.assertNotEqual(mobject,expression)
-        self.assertEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),0)
-        self.assertEqual(mobject.compare_with_expression(expression2),1)
-        
-        mobject = math_object(expression, collapse_equal_tuple_elements=False)
-        self.assertEqual(mobject,expression)
-        self.assertNotEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
-
-        expression = sympify(sympify("(1-z,1-z,1-z)"))
-        expression2 = sympify(sympify("1-z"))
-        mobject = math_object(expression)
-        self.assertEqual(mobject,expression)
-        self.assertNotEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
-
-        mobject = math_object(expression, collapse_equal_tuple_elements=True)
-        self.assertNotEqual(mobject,expression)
-        self.assertEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),0)
-        self.assertEqual(mobject.compare_with_expression(expression2),1)
-        
-        mobject = math_object(expression, collapse_equal_tuple_elements=False)
-        self.assertEqual(mobject,expression)
-        self.assertNotEqual(mobject,expression2)
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
-
-    def test_output_no_delimiters(self):
-        expression = sympify(sympify("(1-z,x**2,3*x*y)"))
-        mobject = math_object(expression)
-        self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertFalse(mobject.return_if_output_no_delimiters())
-        
-        mobject = math_object(expression, output_no_delimiters=True)
-        self.assertEqual(six.text_type(mobject), '- z + 1,~ x^{2},~ 3 x y')
-        self.assertTrue(mobject.return_if_output_no_delimiters())
-
-        mobject = math_object(expression, output_no_delimiters=False)
-        self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertFalse(mobject.return_if_output_no_delimiters())
-
     def test_copy_parameters_from(self):
         mobject = math_object("3*x", n_digits=5, round_decimals=0,
-                              use_ln = True, normalize_on_compare=False,
+                              normalize_on_compare=False,
                               split_symbols_on_compare=True,
-                              tuple_is_unordered=True,
-                              collapse_equal_tuple_elements=True,
-                              output_no_delimiters=False)
+                              tuple_is_unordered=True)
         self.assertEqual(mobject._parameters['n_digits'],5)
         self.assertEqual(mobject._parameters['round_decimals'],0)
-        self.assertTrue(mobject._parameters['use_ln'])
         self.assertFalse(mobject._parameters['normalize_on_compare'])
         self.assertTrue(mobject._parameters['split_symbols_on_compare'])
         self.assertTrue(mobject._parameters['tuple_is_unordered'])
-        self.assertTrue(mobject._parameters['collapse_equal_tuple_elements'])
-        self.assertFalse(mobject._parameters['output_no_delimiters'])
         self.assertTrue(mobject.return_if_unordered())
-        self.assertTrue(mobject.return_if_use_ln())
-        self.assertFalse(mobject.return_if_output_no_delimiters())
-        self.assertTrue(mobject.return_split_symbols_on_compare)
 
         mobject2 = math_object("3*x", n_digits=4, round_decimals=3,
-                               use_ln = False, normalize_on_compare=True,
+                               normalize_on_compare=True,
                                split_symbols_on_compare=False,
                                tuple_is_unordered=False,
-                               collapse_equal_tuple_elements=False,
-                               output_no_delimiters=True,
                                copy_parameters_from=mobject)
         self.assertEqual(mobject2._parameters['n_digits'],5)
         self.assertEqual(mobject2._parameters['round_decimals'],0)
-        self.assertTrue(mobject2._parameters['use_ln'])
         self.assertFalse(mobject2._parameters['normalize_on_compare'])
         self.assertTrue(mobject2._parameters['split_symbols_on_compare'])
         self.assertTrue(mobject2._parameters['tuple_is_unordered'])
-        self.assertTrue(mobject2._parameters['collapse_equal_tuple_elements'])
-        self.assertFalse(mobject2._parameters['output_no_delimiters'])
         self.assertTrue(mobject2.return_if_unordered())
-        self.assertTrue(mobject2.return_if_use_ln())
-        self.assertFalse(mobject2.return_if_output_no_delimiters())
         self.assertTrue(mobject2.return_split_symbols_on_compare)
 
     def test_comparison_operators(self):
@@ -407,29 +319,6 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expr, xvar = 's', yvar = 't')
         self.assertEqual(six.text_type(mobject), 
                          '- 2 s + t + 1 = 0')
-
-    def test_text_use_ln(self):
-        expr = sympify("log(2*z)")
-        mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\log{\\left (2 z \\right )}')
-        mobject = math_object(expr, use_ln=True)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\ln{\\left (2 z \\right )}')
-        mobject = math_object(expr, use_ln=False)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\log{\\left (2 z \\right )}')
-
-        expr = sympify("ln(-3*y)")
-        mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\log{\\left (- 3 y \\right )}')
-        mobject = math_object(expr, use_ln=True)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\ln{\\left (- 3 y \\right )}')
-        mobject = math_object(expr, use_ln=False)
-        self.assertEqual(six.text_type(mobject), 
-                         '\\log{\\left (- 3 y \\right )}')
 
     def test_text_symbols(self):
         expr = sympify("blacktriangle*bigstar")

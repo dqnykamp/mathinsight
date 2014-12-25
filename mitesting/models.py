@@ -13,10 +13,11 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Symbol, Function, Tuple, expand
+from sympy import Symbol, Function, Tuple
 from django.db.models import Max
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable
+from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen
+
 import six
 
 @python_2_unicode_compatible
@@ -287,7 +288,7 @@ class QuestionAnswerOption(models.Model):
 
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
-    match_partial_tuples_on_compare = models.BooleanField(default=False)
+    match_partial_on_compare = models.BooleanField(default=False)
 
     sort_order = models.FloatField(blank=True)
 
@@ -678,37 +679,43 @@ class Expression(models.Model):
     RANDOM_WORD = "RW"
     RANDOM_EXPRESSION = "RE"
     RANDOM_FUNCTION_NAME = "RF"
+    RANDOM_REAL_VARIABLE = "RR"
     FUNCTION = "FN"
     FUNCTION_NAME = "FE"
+    REAL_VARIABLE = "RV"
     CONDITION = "CN"
     EXPRESSION = "EX"
-    ORDERED_TUPLE = "OT"
     UNORDERED_TUPLE = "UT"
     SORTED_TUPLE = "ST"
     RANDOM_ORDER_TUPLE = "RT"
+    INTERVAL = "IN"
+    SET = "SE"
     EXPRESSION_TYPES = (
         ('General', (
-                (EXPRESSION, "Expression"),
-                (RANDOM_NUMBER, "Rand number"),
-                (FUNCTION, "Function"),
-                (FUNCTION_NAME, "Function name"),
-                (CONDITION, "Required cond"),
-                )
-         ),
-        ('Random from list', (
-                (RANDOM_WORD, "Rand word"),
-                (RANDOM_EXPRESSION, "Rand expr"),
-                (RANDOM_FUNCTION_NAME, "Rand fun name"),
-                )
-         ),
-        ('Tuples', (
-                (ORDERED_TUPLE, "Ordered tuple"),
-                (UNORDERED_TUPLE, "Unordered tuple"),
-                (SORTED_TUPLE, "Sorted tuple"),
-                (RANDOM_ORDER_TUPLE, "Rand order tuple"),
-                )
-         ),
+            (EXPRESSION, "Expression"),
+            (RANDOM_NUMBER, "Rand number"),
+            (FUNCTION, "Function"),
+            (FUNCTION_NAME, "Function name"),
+            (REAL_VARIABLE, "Real variable"),
+            (CONDITION, "Required cond"),
         )
+     ),
+        ('Random from list', (
+            (RANDOM_WORD, "Rand word"),
+            (RANDOM_EXPRESSION, "Rand expr"),
+            (RANDOM_FUNCTION_NAME, "Rand fun name"),
+            (RANDOM_REAL_VARIABLE, "Rand real var"),
+        )
+     ),
+        ('Tuples and sets', (
+            (UNORDERED_TUPLE, "Unordered tuple"),
+            (SORTED_TUPLE, "Sorted tuple"),
+            (RANDOM_ORDER_TUPLE, "Rand order tuple"),
+            (SET, "Set"),
+            (INTERVAL, "Interval"),
+        )
+     ),
+    )
 
     from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
         EVALUATE_FULL
@@ -724,7 +731,6 @@ class Expression(models.Model):
     expression_type = models.CharField(
         max_length=2, choices = EXPRESSION_TYPES, default=EXPRESSION)
     expression = models.CharField(max_length=1000)
-    expand = models.BooleanField(default=False)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)
     n_digits = models.IntegerField(blank=True, null=True,
@@ -734,12 +740,6 @@ class Expression(models.Model):
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
-    use_ln = models.BooleanField(default=False)
-
-    collapse_equal_tuple_elements=models.BooleanField(
-        default=False, verbose_name="elim dup tuple els")
-    output_no_delimiters = models.BooleanField(
-        default=False, verbose_name="no delims")
     group = models.CharField(max_length=50, blank=True, null=True)
     sort_order = models.FloatField(blank=True)
     class Meta:
@@ -789,8 +789,6 @@ class Expression(models.Model):
         is chosen from each list in the group.
 
         The following fields of Expression modify the returned result:
-        expand: if true, call .expand() on the expression or 
-           on each expression in a tuple
         n_digits: on display or comparison with other expression,
            round all numbers and number symbols in expression
            to n_digits significant digits
@@ -799,16 +797,6 @@ class Expression(models.Model):
            to round_decimals digits to right of decimal or,
            if negative, |round_digits| to left of decimal.
            If round_decimals <=0, also convert to integer
-        use_ln: if true, display all logarithms as ln(),
-           otherwise, display all logarithms as log()
-           (Entering logarithms as ln() or log() makes no difference.)
-        collapse_equal_tuple_elements: it true, then
-            when expression is a tuple and multiple elements
-            are equal, remove the duplicates elements.
-            If results is a single element, convert to singleton element.
-        output_no_delimiters: if true, and expression is a tuple,
-            display as comma separated values 
-            rather than with parentheses.
         evaluate_level: specify to what except the input is processed.
             Options are
             EVALUATE_NONE: expression is left as much as possible 
@@ -825,6 +813,13 @@ class Expression(models.Model):
         EXPRESSION
         The generic expression form.  The expression field
         must be a mathematical expression.
+
+        Expression in the form  of
+        e1, e2, ...  or (e1, e2, ...)
+        or [e1, e2, ... ]  or {e1, e2, ... }
+        will result in a TupleNoParen, Tuple, list, or set, respectively.
+        With the exception of the set, the result will be considered ordered
+        when compared with other expressions
 
         RANDOM_NUMBER
         Expression should be in the form (minval, maxvalue [, increment])
@@ -887,42 +882,44 @@ class Expression(models.Model):
         CONDITION
         Parsed like a generic EXPRESSION.  If it does not evaluate
         to true, an Expression.FailedCondition exception is raised.
-        
-        ORDERED_TUPLE
-        Expression should be a tuple of the form e1, e2, ...
-        or (e1, e2, ...)
-        The tuple is considered ordered so that it will
-        compare as equivalent to another tuple only if
-        the elements appear in the same order.
-        ORDERED_TUPLE is treated identical to EXPRESSION
-        except that a list is converted to a Tuple.
 
         UNORDERED_TUPLE
         Expression should be a tuple of the form e1, e2, ...
-        or (e1, e2, ...)
+        or (e1, e2, ...) or [e1, e2, ... ]
+        which will result in a TupleNoParen, Tuple, or list, respectively
         The tuple is considered unordered so that it will
         compare as equivalent to another tuple if both tuples
         contain the same elements regardless of order.
 
         SORTED_TUPLE
         Expression should be a tuple of the form e1, e2, ...
-        or (e1, e2, ...)
-        The elements in the tuple are sorted using
-        Sympy conventions for sorting, after which the tuple
-        is treated like an ORDERED_TUPLE
+        or (e1, e2, ...) or [e1, e2, ... ]
+        which will result in a TupleNoParen, Tuple, or list, respectively
+        The elements in the tuple are sorted using customized_sort_key
+        which attempts to all expression that are real numbers like numbers
 
         RANDOM_ORDER_TUPLE
         Expression should be a tuple of the form e1, e2, ...
-        or (e1, e2, ...)
-        The order of the elements is randomized, after which the tuple
-        is treated like an ORDERED_TUPLE
+        or (e1, e2, ...) or [e1, e2, ... ]
+        which will result in a TupleNoParen, Tuple, or list, respectively
+        The order of the elements is randomized.
+
+        SET
+        If expression is a tuple of the form e1, e2, ...
+        it is converted to a set to remove duplicate entries,
+        after which it is treaded like an UNORDERED_TUPLE
+
+        INTERVAL
+        Expressions of the form (a,b), (a,b], [a,b), and [a,b]
+        are converted to intervals as long as the limits are real variables
+
 
         """
 
     
         from mitesting.utils import return_random_number_sample, \
             return_random_expression, return_random_word_and_plural, \
-            return_parsed_function
+            return_parsed_function, return_interval_expression
         from mitesting.sympy_customized import bottom_up
         from sympy.parsing.sympy_tokenize import TokenError
         from sympy.core.function import UndefinedFunction
@@ -932,7 +929,8 @@ class Expression(models.Model):
             # determine if the index for the group was chosen already
             if self.expression_type in [self.RANDOM_WORD,
                                         self.RANDOM_EXPRESSION,
-                                        self.RANDOM_FUNCTION_NAME]:
+                                        self.RANDOM_FUNCTION_NAME,
+                                        self.RANDOM_REAL_VARIABLE]:
                 
                 if self.group:
                     try:
@@ -971,17 +969,16 @@ class Expression(models.Model):
                     
                     return (result[0], result[1])
                 
+                try:
+                    (math_expr, index) = return_random_expression(
+                        self.expression, index=group_index,
+                        global_dict=global_dict,
+                        evaluate_level = self.evaluate_level, rng=rng)
+                except IndexError:
+                    raise IndexError("Insufficient entries for group: " \
+                                             + self.group)
 
                 if self.expression_type == self.RANDOM_FUNCTION_NAME:
-                    try:
-                        (math_expr, index) = return_random_expression(
-                            self.expression, index=group_index,
-                            global_dict=global_dict,
-                            evaluate_level = self.evaluate_level, rng=rng)
-                    except IndexError:
-                        raise IndexError("Insufficient entries for group: " \
-                                             + self.group)
-                    
 
                     # math_expr should be a Symbol or an UndefinedFunction
                     # otherwise not a valid function name
@@ -1002,16 +999,20 @@ class Expression(models.Model):
                     except TypeError:
                         pass
                     
-                # if RANDOM_EXPRESSION
-                else:
+                elif self.expression_type == self.RANDOM_REAL_VARIABLE:
+                    # math_expr should be a Symbol
+                    # otherwise not a valid real variable
+                    if not isinstance(math_expr,Symbol):
+                        raise ValueError("Invalid real variable: %s " \
+                                         % math_expr)
+
+                    symbol_name = str(math_expr)
+                    math_expr=Symbol(symbol_name, real=True)
                     try:
-                        (math_expr, index) = return_random_expression(
-                            self.expression, index=group_index,
-                            global_dict=global_dict,
-                            evaluate_level = self.evaluate_level, rng=rng)
-                    except IndexError:
-                        raise IndexError("Insufficient entries for group: " \
-                                             + self.group)
+                        user_function_dict[symbol_name]=math_expr
+                    except TypeError:
+                        pass
+                    
                             
                 # record index chosen for group, if group exist
                 if self.group:
@@ -1026,15 +1027,30 @@ class Expression(models.Model):
 
             # if not randomly generating
             else:
-                try:
-                    math_expr = parse_and_process(
-                        self.expression, global_dict=global_dict,
+                
+                math_expr = None
+                expression = self.expression
+
+                # if interval, try replacing opening and closing parens with interval
+                if self.expression_type == self.INTERVAL:
+                    math_expr = return_interval_expression(
+                        expression, global_dict=global_dict, 
                         evaluate_level = self.evaluate_level)
+
+                try:
+                    if math_expr is None:
+                        math_expr = parse_and_process(
+                            expression, global_dict=global_dict,
+                            evaluate_level = self.evaluate_level)
                 except (TokenError, SyntaxError, TypeError, AttributeError):
                     if self.expression_type in [
-                        self.RANDOM_ORDER_TUPLE, self.ORDERED_TUPLE, 
+                        self.RANDOM_ORDER_TUPLE,
                         self.UNORDERED_TUPLE, self.SORTED_TUPLE]:
                         et = "tuple"
+                    elif self.expression_type == self.SET:
+                        et = "set"
+                    elif self.expression_type == self.INTERVAL:
+                        et = "interval"
                     elif self.expression_type == self.CONDITION:
                         et = "condition"
                     elif self.expression_type == self.FUNCTION:
@@ -1044,8 +1060,12 @@ class Expression(models.Model):
                     raise ValueError("Invalid format for %s: %s" \
                                          % (et, self.expression))
 
-                if self.expand:
-                    math_expr = bottom_up(math_expr, expand)
+
+                # If a set and didn't include braces, will be a TupleNoParen.
+                # In that case, convert to set and back to remove duplicates
+                if self.expression_type == self.SET and \
+                   isinstance(math_expr, TupleNoParen):
+                    math_expr = TupleNoParen(*set(math_expr))
 
                 # if CONDITION is not met, raise exception
                 if self.expression_type == self.CONDITION:
@@ -1066,24 +1086,33 @@ class Expression(models.Model):
                 if self.expression_type == self.RANDOM_ORDER_TUPLE:
                     if isinstance(math_expr,list):
                         rng.shuffle(math_expr)
-                        math_expr = Tuple(*math_expr)
                     elif isinstance(math_expr, Tuple):
+                        the_class=math_expr.__class__
                         math_expr = list(math_expr)
                         rng.shuffle(math_expr)
-                        math_expr = Tuple(*math_expr)
+                        math_expr = the_class(*math_expr)
                 elif self.expression_type == self.SORTED_TUPLE:
                     if isinstance(math_expr,list):
                         math_expr.sort(key=customized_sort_key)
-                        math_expr = Tuple(*math_expr)
                     elif isinstance(math_expr, Tuple):
+                        the_class=math_expr.__class__
                         math_expr = list(math_expr)
                         math_expr.sort(key=customized_sort_key)
-                        math_expr = Tuple(*math_expr)
-                elif self.expression_type == self.ORDERED_TUPLE or \
-                        self.expression_type == self.UNORDERED_TUPLE:
-                    if isinstance(math_expr,list):
-                        math_expr = Tuple(*math_expr)
-                    
+                        math_expr = the_class(*math_expr)
+
+                if self.expression_type == self.REAL_VARIABLE:
+                    # math_expr should be a Symbol
+                    # otherwise not valid for real variable
+                    if not isinstance(math_expr, Symbol):
+                        raise ValueError("Invalid real variable: %s " \
+                                         % math_expr)
+
+                    symbol_name = str(math_expr)
+                    math_expr=Symbol(symbol_name, real=True)
+                    try:
+                        user_function_dict[symbol_name]=math_expr
+                    except TypeError:
+                        pass
 
                 if self.expression_type == self.FUNCTION_NAME:
                     # math_expr should be a Symbol or an UndefinedFunction
@@ -1110,7 +1139,7 @@ class Expression(models.Model):
                     parsed_function = return_parsed_function(
                         self.expression, function_inputs=self.function_inputs,
                         name = self.name, global_dict=global_dict,
-                        expand = self.expand, default_value=math_expr)
+                        default_value=math_expr)
 
                     # for FUNCTION, add parsed_function rather than
                     # math_expr to global dict
@@ -1140,12 +1169,9 @@ class Expression(models.Model):
                 math_expr, 
                 n_digits=self.n_digits, 
                 round_decimals=self.round_decimals, 
-                use_ln=self.use_ln, 
                 evaluate_level = self.evaluate_level,
-                tuple_is_unordered=self.expression_type==self.UNORDERED_TUPLE,
-                collapse_equal_tuple_elements \
-                    =self.collapse_equal_tuple_elements, 
-                output_no_delimiters=self.output_no_delimiters)
+                tuple_is_unordered=(self.expression_type==self.UNORDERED_TUPLE
+                                    or self.expression_type==self.SET))
 
 
         # no additional processing for FailedCondition

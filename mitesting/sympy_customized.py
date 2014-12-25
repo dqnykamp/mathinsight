@@ -186,6 +186,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
     # change !== to !=
     s = re.sub('!==','!=', s)
+
+    # change === to = (so can assign keywords in functions like Interval)
+    s = re.sub('===','=', s)
     
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
@@ -193,12 +196,12 @@ def parse_expr(s, global_dict=None, local_dict=None,
             transformations=transformations, evaluate=evaluate))
 
     # if expr is a Tuple, but s had implicit parentheses, 
-    # then return TupleNoParens
+    # then return TupleNoParen
     if isinstance(expr,Tuple):
         ss=s.strip()
         # implicit parens if doesn't start and end with parentheses
         if not (ss.startswith("(") and ss.endswith(")")):
-            return TupleNoParens(*expr)
+            return TupleNoParen(*expr)
 
         # implicit parens if initial opening paren doesn't match final closing paren
         parenCtr=0
@@ -208,7 +211,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
             elif c == ")":
                 parenCtr -=1
                 if parenCtr == 0 and i != len(ss)-1:
-                    return TupleNoParens(*expr)
+                    return TupleNoParen(*expr)
 
     return expr
 
@@ -551,12 +554,8 @@ def customized_sort_key(item, order=None):
     return default_sort_key(item, order)
 
 
-# Tuple but with no parentheses when printing with latex or str
-class TupleNoParens(Tuple):
+# Tuple but with no parentheses when printing with latex
+class TupleNoParen(Tuple):
     def _latex(self, prtr):
         return r", \quad ".join([ prtr._print(i) for i in self ])
-    def _sympystr(self,prtr):
-        if len(self) == 1:
-            return "%s," % prtr._print(self[0])
-        else:
-            return prtr.stringify(self, ", ")
+

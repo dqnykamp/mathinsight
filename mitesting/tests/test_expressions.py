@@ -7,8 +7,8 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL, \
-    EVALUATE_FULL, SymbolCallable
-from sympy import Symbol, sympify
+    EVALUATE_FULL, SymbolCallable, TupleNoParen
+from sympy import Symbol, sympify, Tuple
 from numpy import arange, linspace
 import re
 import six
@@ -78,246 +78,6 @@ class TestExpressions(TestCase):
                                            for c in c_range])
 
             
-    def test_random_word(self):
-        for i in range(10):
-            global_dict={}
-            test_global_dict = {}
-
-            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
-                                expression_type = Expression.RANDOM_WORD)
-            expr1_eval = expr1.evaluate(rng=self.rng, global_dict=global_dict)
-            self.assertTrue(expr1_eval in [("a","as"),("b","bs"),("c","cs"),
-                                           ("d","ds"),("e","es"),("f","fs")])
-            test_global_dict["a"] = Symbol(expr1_eval[0])
-            self.assertEqual(global_dict, test_global_dict)
-
-            expr2=self.new_expr(name="b",
-                                expression="cat, (pony,ponies), (goose,geese)",
-                                expression_type = Expression.RANDOM_WORD)
-            expr2_eval = expr2.evaluate(rng=self.rng, global_dict=global_dict)
-            self.assertTrue(expr2_eval in [("cat","cats"),("pony","ponies"),
-                                           ("goose","geese")])
-            test_global_dict["b"] = Symbol(expr2_eval[0])
-            self.assertEqual(global_dict, test_global_dict)
-
-            expr3=self.new_expr(name="c",
-                                expression="\"the pit\",(&^%$#@!,_+*&<?),"
-                                + '(one, "one/two or more")',
-                                expression_type = Expression.RANDOM_WORD)
-            expr3_eval = expr3.evaluate(rng=self.rng, global_dict=global_dict)
-            self.assertTrue(expr3_eval in [
-                    ("the pit", "the pits"),('&^%$#@!','_+*&<?'),
-                    ('one', "one/two or more")])
-            test_global_dict["c"] = Symbol(re.sub(' ', '_', expr3_eval[0]))
-            self.assertEqual(global_dict, test_global_dict)
-
-
-    def test_random_expression(self):
-        x = Symbol('x')
-        for i in range(10):
-            global_dict={}
-            test_global_dict = {}
-
-            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
-                                expression_type = Expression.RANDOM_EXPRESSION)
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [sympify(item) for item in
-                                  ("a","b","c","d","e","f")])
-            test_global_dict["a"] = a
-            self.assertEqual(global_dict, test_global_dict)
-    
-            expr2=self.new_expr(name="b",expression="2*a*x, -3*a/x^3, a-x",
-                                expression_type = Expression.RANDOM_EXPRESSION)
-            b = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(b in [2*a*x, -3*a/x**3,a-x])
-            test_global_dict["b"] = b
-            self.assertEqual(global_dict, test_global_dict)
-
-            expr3=self.new_expr(name="c",expression="2*b^2, (a-b)/x",
-                                expression_type = Expression.RANDOM_EXPRESSION)
-            c = expr3.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(c in [2*b**2, (a-b)/x]),
-            test_global_dict["c"] = c
-            self.assertEqual(global_dict, test_global_dict)
-
-    def test_random_expression_evaluate_level(self):
-        from sympy import Derivative, Integral
-        x = Symbol('x')
-        global_dict={'Derivative': Derivative }
-
-        for i in range(10):
-            expr1=self.new_expr(name="a",expression=
-                                "x+x, Derivative(x^3,x), 5(x-3)",
-                                expression_type = Expression.RANDOM_EXPRESSION)
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
-
-            expr1.evaluate_level = EVALUATE_FULL
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
-
-            expr1.evaluate_level = EVALUATE_PARTIAL
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [2*x, Derivative(x**3,x), 5*x-15])
-            
-            expr1.evaluate_level = EVALUATE_NONE
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(six.text_type(a) in 
-                            ['x + x', 'Derivative(x**3, x)', '5*(x - 3)'])
-
-    def test_random_function_name(self):
-        x = Symbol('x')
-        for i in range(10):
-            global_dict={}
-            test_global_dict = {}
-
-            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
-                                expression_type = 
-                                Expression.RANDOM_FUNCTION_NAME)
-            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertTrue(a in [SymbolCallable(str(item)) for item in
-                                  ("a","b","c","d","e","f")])
-            test_global_dict["a"] = a
-            self.assertEqual(global_dict, test_global_dict)
-    
-            expr2=self.new_expr(name="b",expression="2*a(x)-4")
-            b = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-            self.assertEqual(b, 2*a(x)-4)
-            test_global_dict["b"] = b
-            self.assertEqual(global_dict, test_global_dict)
-
-            user_function_dict = {}
-            expr3=self.new_expr(name="f",expression="this, that, the,other",
-                                expression_type = 
-                                Expression.RANDOM_FUNCTION_NAME)
-            f = expr3.evaluate(rng=self.rng, global_dict=global_dict, \
-                                   user_function_dict=user_function_dict)\
-                                   .return_expression()
-            self.assertTrue(f in [SymbolCallable(str(item)) for item in
-                                  ("this","that","the","other")])
-            self.assertEqual( user_function_dict , { str(f): f})
-            test_global_dict["f"] = f
-            self.assertEqual(global_dict, test_global_dict)
-
-            
-    def test_random_list_groups_match(self):
-        for i in range(10):
-            random_group_indices = {}
-            global_dict = {}
-            expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
-                                expression_type = Expression.RANDOM_WORD,
-                                group="g1")
-            rw1 = expr1.evaluate(rng=self.rng, 
-                global_dict=global_dict, 
-                random_group_indices=random_group_indices)[0]
-            
-            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
-                                expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g1")
-            re1 = expr2.evaluate(rng=self.rng, 
-                global_dict=global_dict,
-                random_group_indices=random_group_indices).return_expression()
-            
-            expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
-                                expression_type =
-                                Expression.RANDOM_FUNCTION_NAME,
-                                group="g1")
-            rf1 = expr3.evaluate(rng=self.rng, 
-                global_dict=global_dict,
-                random_group_indices=random_group_indices).return_expression()
-
-            self.assertTrue((rw1,re1,rf1) in [
-                    (item, Symbol(item), SymbolCallable(str(item)))
-                    for item in ["a","b","c","d","e"]])
-
-            
-    def test_random_list_groups_some_match(self):
-        found_non_match=False
-        for i in range(100):
-            random_group_indices = {}
-            global_dict = {}
-            expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
-                                expression_type = Expression.RANDOM_WORD,
-                                group="g1")
-            rw1 = expr1.evaluate(rng=self.rng, 
-                global_dict=global_dict, 
-                random_group_indices=random_group_indices)[0]
-            
-            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
-                                expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g2")
-            re1 = expr2.evaluate(rng=self.rng, 
-                global_dict=global_dict,
-                random_group_indices=random_group_indices).return_expression()
-            
-            expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
-                                expression_type =
-                                Expression.RANDOM_FUNCTION_NAME,
-                                group="g1")
-            rf1 = expr3.evaluate(rng=self.rng, 
-                global_dict=global_dict,
-                random_group_indices=random_group_indices).return_expression()
-
-            self.assertTrue((rw1,rf1) in [
-                    (item, SymbolCallable(str(item)))
-                    for item in ["a","b","c","d","e"]])
-
-            if str(re1) != rw1:
-                found_non_match=True
-                break
-        
-        self.assertTrue(found_non_match)    
-            
-
-    def test_random_list_groups_different_lengths(self):
-        for i in range(10):
-            random_group_indices = {}
-            global_dict = {}
-            expr1=self.new_expr(name="rw1",expression="a,b,c",
-                                expression_type = Expression.RANDOM_WORD,
-                                group="g1")
-            rw1 = expr1.evaluate(rng=self.rng, 
-                global_dict=global_dict, 
-                random_group_indices=random_group_indices)[0]
-            
-            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
-                                expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g1")
-            re1 = expr2.evaluate(rng=self.rng, 
-                global_dict=global_dict,
-                random_group_indices=random_group_indices).return_expression()
-            
-            self.assertTrue((rw1,re1) in [
-                    (item, Symbol(item))
-                    for item in ["a","b","c"]])
-
-
-        with self.assertRaisesRegexp(IndexError, 
-                                     'Insufficient entries for group: g1'):
-            for i in range(100):
-                random_group_indices = {}
-                global_dict = {}
-                expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
-                                    expression_type = Expression.RANDOM_WORD,
-                                    group="g1")
-                rw1 = expr1.evaluate(rng=self.rng, 
-                    global_dict=global_dict, 
-                    random_group_indices=random_group_indices)[0]
-                
-                expr2=self.new_expr(name="re1",expression="a,b, c",
-                                    expression_type =
-                                    Expression.RANDOM_EXPRESSION,
-                                    group="g1")
-                re1 = expr2.evaluate(rng=self.rng,  \
-                    global_dict=global_dict, \
-                        random_group_indices=random_group_indices) \
-                        .return_expression()
-                    
-                self.assertTrue((rw1,re1) in [
-                        (item, Symbol(item))
-                        for item in ["a","b","c"]])
-            
-
     def test_function(self):
         x=Symbol('x')
         y=Symbol('y')
@@ -374,7 +134,32 @@ class TestExpressions(TestCase):
         self.assertEqual(user_function_dict, test_dict)
         
 
+    def test_real_variable(self):
+        x_gen = Symbol('x')
+        x_real = Symbol('x', real=True)
+        global_dict={}
+
+        expr1=self.new_expr(name="xreal", expression="x",
+                            expression_type = Expression.REAL_VARIABLE)
+        x1 = expr1.evaluate(rng=self.rng, global_dict=global_dict)\
+                 .return_expression()
+
+        expr2=self.new_expr(name="xgen", expression="x")
+        x2 = expr2.evaluate(rng=self.rng, global_dict=global_dict)\
+                 .return_expression()
+
+        self.assertEqual(x_real,x1)
+        self.assertEqual(x_gen,x2)
+        self.assertNotEqual(x_real,x2)
+        self.assertNotEqual(x_gen,x1)
         
+        expr3=self.new_expr(name="xmess", expression="x*y",
+                            expression_type = Expression.REAL_VARIABLE)
+        self.assertRaisesRegexp(ValueError, "Invalid real variable",
+                                expr3.evaluate, rng=self.rng,
+                                global_dict=global_dict)
+
+
     def test_required_condition_ne(self):
         from sympy import Ne
         for i in range(10):
@@ -637,22 +422,14 @@ class TestExpressions(TestCase):
         b=Symbol('b')
         c=Symbol('c')
         global_dict={}
-        expr1=self.new_expr(name="tuple1",expression="(a,b,c)", \
-                                expression_type=Expression.ORDERED_TUPLE)
+        expr1=self.new_expr(name="tuple1",expression="(a,b,c)")
         tuple1 = expr1.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(tuple1.compare_with_expression((a,b,c)),1)
         self.assertEqual(tuple1.compare_with_expression((a,c,b)),0)
         
-        expr2=self.new_expr(name="tuple2",expression="[b,c,a]", \
-                                expression_type=Expression.ORDERED_TUPLE)
+        expr2=self.new_expr(name="tuple2",expression="[b,c,a]")
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertEqual(tuple2,(b,c,a))
-        self.assertNotEqual(tuple2,[b,c,a])
-
-        expr3=self.new_expr(name="tuple3",expression="[b,c,a]")
-        tuple3 = expr3.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertNotEqual(tuple3,(b,c,a))
-        self.assertEqual(tuple3,[b,c,a])
+        self.assertEqual(tuple2,[b,c,a])
 
         
     def test_unordered_tuple(self):
@@ -671,9 +448,9 @@ class TestExpressions(TestCase):
         expr2=self.new_expr(name="tuple2",expression="[3*a,b-a,c^2]", \
                                 expression_type=Expression.UNORDERED_TUPLE)
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple2.compare_with_expression((3*a,b-a,c**2)),1)
-        self.assertEqual(tuple2.compare_with_expression((3*a,c**2,b-a)),1)
-        self.assertEqual(tuple2.compare_with_expression((b-a,c**2,3*a)),1)
+        self.assertEqual(tuple2.compare_with_expression([3*a,b-a,c**2]),1)
+        self.assertEqual(tuple2.compare_with_expression([3*a,c**2,b-a]),1)
+        self.assertEqual(tuple2.compare_with_expression([b-a,c**2,3*a]),1)
 
 
     def test_sorted_tuple(self):
@@ -689,7 +466,7 @@ class TestExpressions(TestCase):
         expr2=self.new_expr(name="tuple2",expression="[5,-1,b^2-a,c,b]", \
                                 expression_type=Expression.SORTED_TUPLE)
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple2.compare_with_expression((-1,5,b,c,b**2-a)),1)
+        self.assertEqual(tuple2.compare_with_expression([-1,5,b,c,b**2-a]),1)
 
 
     def test_random_order_tuple(self):
@@ -724,23 +501,6 @@ class TestExpressions(TestCase):
         self.assertTrue(found_different_order)
 
 
-    def test_expand(self):
-        x=Symbol('x')
-        global_dict={}
-        expr1=self.new_expr(name="expanded",expression="(x+1)*(x-1)",
-                            expand=True)
-        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertEqual(expr1_eval,x**2-1)
-
-        expr2=self.new_expr(name="nonexpanded",expression="(x+1)*(x-1)",
-                            expand=False)
-        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertNotEqual(expr2_eval,x**2-1)
-        
-        expr3=self.new_expr(name="nonexpanded2",expression="(x+1)*(x-1)")
-        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertNotEqual(expr3_eval,x**2-1)
-        
     def test_rounding(self):
         from sympy import pi
         x=Symbol('x')
@@ -762,65 +522,136 @@ class TestExpressions(TestCase):
         expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(expr3_eval.compare_with_expression(
                 (x+3.14)*(x-0.059)),1)
-        
-    def test_use_ln(self):
-        from sympy import log
-        global_dict={'log': log}
-        expr1=self.new_expr(name="a",expression="x*log(x)")
-        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr1_eval), 
-                         'x \\log{\\left (x \\right )}')
-        expr2=self.new_expr(name="b",expression="x*log(x)", use_ln=True)
-        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr2_eval), 
-                         'x \\ln{\\left (x \\right )}')
-        expr3=self.new_expr(name="c",expression="x*log(x)", use_ln=False)
-        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(six.text_type(expr3_eval), 
-                         'x \\log{\\left (x \\right )}')
-
-    def test_collapse_equal_tuple_elements(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
-        d=Symbol('d')
-        global_dict={}
-        expr1=self.new_expr(name="t1",expression="a,b,c,a,c,d")
-        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertEqual(expr1_eval, (a,b,c,a,c,d))
-        expr2=self.new_expr(name="t2",expression="a,b,c,a,c,d", 
-                            collapse_equal_tuple_elements=True)
-        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertEqual(expr2_eval, (a,b,c,d))
-        expr2=self.new_expr(name="t2",expression="a,b,c,a,c,d", 
-                            collapse_equal_tuple_elements=False)
-        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
-        self.assertEqual(expr2_eval, (a,b,c,a,c,d))
 
     def test_tuple_no_parentheses(self):
-        from sympy.printing import latex
-        from mitesting.sympy_customized import TupleNoParens
-        from sympy import Tuple
         a=Symbol('a')
         b=Symbol('b')
         c=Symbol('c')
         global_dict={}
         expr1=self.new_expr(name="t1",expression="a,b,c")
         expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(expr1_eval, TupleNoParens(a,b,c))
+        self.assertEqual(expr1_eval, TupleNoParen(a,b,c))
         self.assertNotEqual(expr1_eval, Tuple(a,b,c))
 
         expr2=self.new_expr(name="t1",expression="(a,b,c)")
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(expr2_eval, Tuple(a,b,c))
-        self.assertNotEqual(expr2_eval, TupleNoParens(a,b,c))
+        self.assertNotEqual(expr2_eval, TupleNoParen(a,b,c))
 
         expr3=self.new_expr(name="t1",expression="(a+1)*b,b,a*(1-c)")
         expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(expr3_eval, TupleNoParens((a+1)*b,b,a*(1-c)))
+        self.assertEqual(expr3_eval, TupleNoParen((a+1)*b,b,a*(1-c)))
         self.assertNotEqual(expr3_eval, Tuple((a+1)*b,b,a*(1-c)))
 
+    def test_sets(self):
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        d=Symbol('d')
+        global_dict={}
+        expr1=self.new_expr(name="t1",expression="b,c,a,c,d,a",
+                            expression_type=Expression.SET)
+        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertTrue(expr1_eval.return_if_unordered())
+        self.assertEqual(expr1_eval.compare_with_expression(
+            TupleNoParen(a,b,c,d)),1)
 
+        expr2=self.new_expr(name="t2",expression="{b,c,a,c,d,a}",
+                            expression_type=Expression.SET)
+        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr2_eval, {c,d,a,b})
+
+        expr3=self.new_expr(name="t3",expression="{b,c,a,c,d,a}")
+        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr3_eval, {c,d,a,b})
+
+    def test_single_interval(self):
+        from sympy import Interval
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        global_dict={'a': a, 'b': b}
+
+        expr1=self.new_expr(name="open", expression="(a,b)",
+                            expression_type=Expression.INTERVAL)
+        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr1_eval, \
+                         Interval(a,b,left_open=True, right_open=True))
+
+        expr2=self.new_expr(name="left_open", expression="(a,b]",
+                            expression_type=Expression.INTERVAL)
+        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr2_eval, \
+                         Interval(a,b,left_open=True, right_open=False))
+
+        expr3=self.new_expr(name="right_open", expression="[a,b)",
+                            expression_type=Expression.INTERVAL)
+        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr3_eval, \
+                         Interval(a,b,left_open=False, right_open=True))
+
+        expr4=self.new_expr(name="closed", expression="[a,b]",
+                            expression_type=Expression.INTERVAL)
+        expr4_eval=expr4.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr4_eval, \
+                         Interval(a,b,left_open=False, right_open=False))
+
+    def test_interval_combinations(self):
+        from sympy import Interval
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        global_dict={'a': a, 'b': b}
+
+        expr1=self.new_expr(name="inttuple", expression="[a,b),(1,3]",
+                            expression_type=Expression.INTERVAL)
+        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr1_eval, \
+            TupleNoParen(Interval(a,b,left_open=False, right_open=True),\
+                          Interval(1,3,left_open=True, right_open=False)))
+
+        expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
+                            expression_type=Expression.INTERVAL)
+        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr2_eval, \
+            Tuple(Interval(a,b,left_open=False, right_open=True),\
+                  Interval(1,3,left_open=True, right_open=False)))
+
+        expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
+                            expression_type=Expression.INTERVAL)
+        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr2_eval, \
+            Tuple(Interval(a,b,left_open=False, right_open=True),\
+                  Interval(1,3,left_open=True, right_open=False)))
+
+        expr3=self.new_expr(name="union", expression="[a,b)+(1,3]",
+                            expression_type=Expression.INTERVAL)
+        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
+        from sympy import Union
+        self.assertEqual(expr3_eval, \
+                Union(Interval(a,b,left_open=False, right_open=True),\
+                      Interval(1,3,left_open=True, right_open=False)))
+
+    def test_interval_errors(self):
+        from sympy import Interval
+        a=Symbol('a')
+        b=Symbol('b')
+        global_dict={'a': a, 'b': b}
+        expr1=self.new_expr(name="open", expression="(a,b)",
+                            expression_type=Expression.INTERVAL)
+        self.assertRaisesRegexp(ValueError, 'Only real intervals are supported',
+                                expr1.evaluate, rng=self.rng, 
+                                global_dict=global_dict)
+
+        global_dict={}
+        self.assertRaisesRegexp(ValueError, 'Only real intervals are supported',
+                                expr1.evaluate, rng=self.rng, 
+                                global_dict=global_dict)
+
+        expr2=self.new_expr(name="invalidint", expression="(1,2,3)",
+                            expression_type=Expression.INTERVAL)
+        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr2_eval, Tuple(1,2,3))
+
+        
     def test_evaluate_false(self):
         global_dict={}
         expr1=self.new_expr(name="s", expression="x+x*y*x+x")
@@ -917,7 +748,7 @@ class TestExpressions(TestCase):
         from sympy import sin
         global_dict['sin']=sin
         expr4=self.new_expr(name="d", expression="(x+sin, y-sin)", 
-                            expression_type=Expression.ORDERED_TUPLE)
+                            expression_type=Expression.UNORDERED_TUPLE)
         self.assertRaisesRegexp(ValueError, 'Error in expression: d', 
                                 expr4.evaluate, rng=self.rng,
                                 global_dict=global_dict)
@@ -925,6 +756,283 @@ class TestExpressions(TestCase):
                                 expr4.evaluate, rng=self.rng,
                                 global_dict=global_dict)
         self.assertEqual(global_dict['d'],symqq)
+
+
+class TestRandomFromList(TestCase):
+    def setUp(self):
+        self.rng = random.Random()
+        self.rng.seed()
+        qt = QuestionType.objects.create(name="question type")
+        self.q  = Question.objects.create(
+            name="fun question",
+            question_type = qt,
+            question_privacy = 0,
+            solution_privacy = 0
+            )
+            
+    def new_expr(self, **kwargs):
+        return Expression.objects.create(question=self.q, **kwargs)
+
+    def test_random_word(self):
+        for i in range(10):
+            global_dict={}
+            test_global_dict = {}
+
+            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
+                                expression_type = Expression.RANDOM_WORD)
+            expr1_eval = expr1.evaluate(rng=self.rng, global_dict=global_dict)
+            self.assertTrue(expr1_eval in [("a","as"),("b","bs"),("c","cs"),
+                                           ("d","ds"),("e","es"),("f","fs")])
+            test_global_dict["a"] = Symbol(expr1_eval[0])
+            self.assertEqual(global_dict, test_global_dict)
+
+            expr2=self.new_expr(name="b",
+                                expression="cat, (pony,ponies), (goose,geese)",
+                                expression_type = Expression.RANDOM_WORD)
+            expr2_eval = expr2.evaluate(rng=self.rng, global_dict=global_dict)
+            self.assertTrue(expr2_eval in [("cat","cats"),("pony","ponies"),
+                                           ("goose","geese")])
+            test_global_dict["b"] = Symbol(expr2_eval[0])
+            self.assertEqual(global_dict, test_global_dict)
+
+            expr3=self.new_expr(name="c",
+                                expression="\"the pit\",(&^%$#@!,_+*&<?),"
+                                + '(one, "one/two or more")',
+                                expression_type = Expression.RANDOM_WORD)
+            expr3_eval = expr3.evaluate(rng=self.rng, global_dict=global_dict)
+            self.assertTrue(expr3_eval in [
+                    ("the pit", "the pits"),('&^%$#@!','_+*&<?'),
+                    ('one', "one/two or more")])
+            test_global_dict["c"] = Symbol(re.sub(' ', '_', expr3_eval[0]))
+            self.assertEqual(global_dict, test_global_dict)
+
+
+    def test_random_expression(self):
+        x = Symbol('x')
+        for i in range(10):
+            global_dict={}
+            test_global_dict = {}
+
+            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [sympify(item) for item in
+                                  ("a","b","c","d","e","f")])
+            test_global_dict["a"] = a
+            self.assertEqual(global_dict, test_global_dict)
+    
+            expr2=self.new_expr(name="b",expression="2*a*x, -3*a/x^3, a-x",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            b = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(b in [2*a*x, -3*a/x**3,a-x])
+            test_global_dict["b"] = b
+            self.assertEqual(global_dict, test_global_dict)
+
+            expr3=self.new_expr(name="c",expression="2*b^2, (a-b)/x",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            c = expr3.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(c in [2*b**2, (a-b)/x]),
+            test_global_dict["c"] = c
+            self.assertEqual(global_dict, test_global_dict)
+
+    def test_random_expression_evaluate_level(self):
+        from sympy import Derivative, Integral
+        x = Symbol('x')
+        global_dict={'Derivative': Derivative }
+
+        for i in range(10):
+            expr1=self.new_expr(name="a",expression=
+                                "x+x, Derivative(x^3,x), 5(x-3)",
+                                expression_type = Expression.RANDOM_EXPRESSION)
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
+
+            expr1.evaluate_level = EVALUATE_FULL
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
+
+            expr1.evaluate_level = EVALUATE_PARTIAL
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [2*x, Derivative(x**3,x), 5*x-15])
+            
+            expr1.evaluate_level = EVALUATE_NONE
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(six.text_type(a) in 
+                            ['x + x', 'Derivative(x**3, x)', '5*(x - 3)'])
+
+    def test_random_function_name(self):
+        x = Symbol('x')
+        for i in range(10):
+            global_dict={}
+            test_global_dict = {}
+
+            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
+                                expression_type = 
+                                Expression.RANDOM_FUNCTION_NAME)
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [SymbolCallable(str(item)) for item in
+                                  ("a","b","c","d","e","f")])
+            test_global_dict["a"] = a
+            self.assertEqual(global_dict, test_global_dict)
+    
+            expr2=self.new_expr(name="b",expression="2*a(x)-4")
+            b = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertEqual(b, 2*a(x)-4)
+            test_global_dict["b"] = b
+            self.assertEqual(global_dict, test_global_dict)
+
+            user_function_dict = {}
+            expr3=self.new_expr(name="f",expression="this, that, the,other",
+                                expression_type = 
+                                Expression.RANDOM_FUNCTION_NAME)
+            f = expr3.evaluate(rng=self.rng, global_dict=global_dict, \
+                                   user_function_dict=user_function_dict)\
+                                   .return_expression()
+            self.assertTrue(f in [SymbolCallable(str(item)) for item in
+                                  ("this","that","the","other")])
+            self.assertEqual( user_function_dict , { str(f): f})
+            test_global_dict["f"] = f
+            self.assertEqual(global_dict, test_global_dict)
+
+            
+    def test_random_real_variable(self):
+        x = Symbol('x')
+        for i in range(10):
+            global_dict={}
+            test_global_dict={}
+            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
+                                expression_type = 
+                                Expression.RANDOM_REAL_VARIABLE)
+            a = expr1.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
+            self.assertTrue(a in [Symbol(str(item),real=True) for item in
+                                  ("a","b","c","d","e","f")])
+            test_global_dict["a"] = a
+            self.assertEqual(global_dict, test_global_dict)
+            
+            expr2=self.new_expr(name="amess", expression="a*b, c+d, e/f, g-h",
+                            expression_type = Expression.RANDOM_REAL_VARIABLE)
+            self.assertRaisesRegexp(ValueError, "Invalid real variable",
+                                    expr2.evaluate, rng=self.rng,
+                                    global_dict=global_dict)
+
+
+    def test_random_list_groups_match(self):
+        for i in range(10):
+            random_group_indices = {}
+            global_dict = {}
+            expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
+                                expression_type = Expression.RANDOM_WORD,
+                                group="g1")
+            rw1 = expr1.evaluate(rng=self.rng, 
+                global_dict=global_dict, 
+                random_group_indices=random_group_indices)[0]
+            
+            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
+                                expression_type = Expression.RANDOM_EXPRESSION,
+                                group="g1")
+            re1 = expr2.evaluate(rng=self.rng, 
+                global_dict=global_dict,
+                random_group_indices=random_group_indices).return_expression()
+            
+            expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
+                                expression_type =
+                                Expression.RANDOM_FUNCTION_NAME,
+                                group="g1")
+            rf1 = expr3.evaluate(rng=self.rng, 
+                global_dict=global_dict,
+                random_group_indices=random_group_indices).return_expression()
+
+            self.assertTrue((rw1,re1,rf1) in [
+                    (item, Symbol(item), SymbolCallable(str(item)))
+                    for item in ["a","b","c","d","e"]])
+
+            
+    def test_random_list_groups_some_match(self):
+        found_non_match=False
+        for i in range(100):
+            random_group_indices = {}
+            global_dict = {}
+            expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
+                                expression_type = Expression.RANDOM_WORD,
+                                group="g1")
+            rw1 = expr1.evaluate(rng=self.rng, 
+                global_dict=global_dict, 
+                random_group_indices=random_group_indices)[0]
+            
+            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
+                                expression_type = Expression.RANDOM_EXPRESSION,
+                                group="g2")
+            re1 = expr2.evaluate(rng=self.rng, 
+                global_dict=global_dict,
+                random_group_indices=random_group_indices).return_expression()
+            
+            expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
+                                expression_type =
+                                Expression.RANDOM_FUNCTION_NAME,
+                                group="g1")
+            rf1 = expr3.evaluate(rng=self.rng, 
+                global_dict=global_dict,
+                random_group_indices=random_group_indices).return_expression()
+
+            self.assertTrue((rw1,rf1) in [
+                    (item, SymbolCallable(str(item)))
+                    for item in ["a","b","c","d","e"]])
+
+            if str(re1) != rw1:
+                found_non_match=True
+                break
+        
+        self.assertTrue(found_non_match)    
+            
+
+    def test_random_list_groups_different_lengths(self):
+        for i in range(10):
+            random_group_indices = {}
+            global_dict = {}
+            expr1=self.new_expr(name="rw1",expression="a,b,c",
+                                expression_type = Expression.RANDOM_WORD,
+                                group="g1")
+            rw1 = expr1.evaluate(rng=self.rng, 
+                global_dict=global_dict, 
+                random_group_indices=random_group_indices)[0]
+            
+            expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
+                                expression_type = Expression.RANDOM_EXPRESSION,
+                                group="g1")
+            re1 = expr2.evaluate(rng=self.rng, 
+                global_dict=global_dict,
+                random_group_indices=random_group_indices).return_expression()
+            
+            self.assertTrue((rw1,re1) in [
+                    (item, Symbol(item))
+                    for item in ["a","b","c"]])
+
+
+        with self.assertRaisesRegexp(IndexError, 
+                                     'Insufficient entries for group: g1'):
+            for i in range(100):
+                random_group_indices = {}
+                global_dict = {}
+                expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
+                                    expression_type = Expression.RANDOM_WORD,
+                                    group="g1")
+                rw1 = expr1.evaluate(rng=self.rng, 
+                    global_dict=global_dict, 
+                    random_group_indices=random_group_indices)[0]
+                
+                expr2=self.new_expr(name="re1",expression="a,b, c",
+                                    expression_type =
+                                    Expression.RANDOM_EXPRESSION,
+                                    group="g1")
+                re1 = expr2.evaluate(rng=self.rng,  \
+                    global_dict=global_dict, \
+                        random_group_indices=random_group_indices) \
+                        .return_expression()
+                    
+                self.assertTrue((rw1,re1) in [
+                        (item, Symbol(item))
+                        for item in ["a","b","c"]])
+            
 
 
 class TestExpressionSortOrder(TestCase):
