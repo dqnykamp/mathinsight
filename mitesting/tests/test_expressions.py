@@ -637,12 +637,12 @@ class TestExpressions(TestCase):
         global_dict={'a': a, 'b': b}
         expr1=self.new_expr(name="open", expression="(a,b)",
                             expression_type=Expression.INTERVAL)
-        self.assertRaisesRegexp(ValueError, 'Only real intervals are supported',
+        self.assertRaisesRegexp(ValueError, "Variables used in intervals must be real",
                                 expr1.evaluate, rng=self.rng, 
                                 global_dict=global_dict)
 
         global_dict={}
-        self.assertRaisesRegexp(ValueError, 'Only real intervals are supported',
+        self.assertRaisesRegexp(ValueError, "Variables used in intervals must be real",
                                 expr1.evaluate, rng=self.rng, 
                                 global_dict=global_dict)
 
@@ -650,6 +650,11 @@ class TestExpressions(TestCase):
                             expression_type=Expression.INTERVAL)
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(expr2_eval, Tuple(1,2,3))
+
+        expr3=self.new_expr(name="invalidint2", expression="(1,2,3),[4,5]",
+                            expression_type=Expression.INTERVAL)
+        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
+        self.assertEqual(expr3_eval, TupleNoParen(Tuple(1,2,3),Interval(4,5)))
 
         
     def test_evaluate_false(self):

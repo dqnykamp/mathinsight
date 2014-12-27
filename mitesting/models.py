@@ -1033,9 +1033,17 @@ class Expression(models.Model):
 
                 # if interval, try replacing opening and closing parens with interval
                 if self.expression_type == self.INTERVAL:
-                    math_expr = return_interval_expression(
-                        expression, global_dict=global_dict, 
-                        evaluate_level = self.evaluate_level)
+                    try:
+                        math_expr = return_interval_expression(
+                            expression, global_dict=global_dict, 
+                            evaluate_level = self.evaluate_level)
+                    except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                        math_expr=None
+                    except ValueError as e:
+                        if "real intervals" in e.args[0]:
+                            raise ValueError("Variables used in intervals must be real")
+                        else:
+                            math_expr=None
 
                 try:
                     if math_expr is None:

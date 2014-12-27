@@ -382,13 +382,11 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
 
     raises value error if interval limit is not real
 
-    for other errors, returns None
-
     """
 
     left_inds=[]
     left_opens=[]
-    found_commas=[]
+    n_commas=[]
     intervals_contained=[]
     found_combinations=[]
     
@@ -396,14 +394,14 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
         if char=='(' or char== "[":
             left_opens.append(char=="(")
             left_inds.append(i)
-            found_commas.append(False)
+            n_commas.append(0)
             intervals_contained.append(False)
         elif char==',':
-            if len(found_commas)>0:
-                found_commas[-1]=True
+            if len(n_commas)>0:
+                n_commas[-1] += 1
         elif char==')' or char=="]":
-            if len(found_commas)>0:
-                found_interval = found_commas.pop()
+            if len(left_opens)>0:
+                found_interval = (n_commas.pop()==1)
                 interval_inside = intervals_contained.pop()
                 # only add interval if found command and 
                 # there is no interval contained inside
@@ -414,15 +412,15 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
                             'left_ind': left_inds.pop(),
                             'right_open': (char==")"), 'right_ind': i})
                     # record fact that have interval inside parent
-                    if len(found_commas) >0:
+                    if len(intervals_contained) >0:
                         intervals_contained[-1]=True
                 else:
                     left_opens.pop()
                     left_inds.pop()
-                    if len(found_commas) > 0:
+                    if len(intervals_contained) > 0:
                         # propogate presence of interval to parent
                         intervals_contained[-1]=interval_inside
-                
+
     last_ind=0
     expr_interval=""
     for interval in found_combinations:
@@ -448,8 +446,5 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
     from sympy import Interval
     new_global_dict['Interval'] = Interval
 
-    try: 
-        return parse_and_process(expr_interval, global_dict=new_global_dict,
-                                 evaluate_level = evaluate_level)
-    except (TypeError, NotImplementedError, SyntaxError, TokenError):
-        return None
+    return parse_and_process(expr_interval, global_dict=new_global_dict,
+                             evaluate_level = evaluate_level)
