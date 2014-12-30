@@ -89,6 +89,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         # feedback from matched answers with 0 percent correct
         percent_correct=-1
 
+        round_level_required = None
+        round_level_used = None
+        round_absolute = None
         near_match_percent_correct = 0
         near_match_feedback=""
         answer_option_used = None
@@ -97,7 +100,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
         from .sympy_customized import parse_and_process
         from .math_objects import math_object
-
+        from sympy import sympify
+        
         answer_options=question.questionansweroption_set \
                 .filter(answer_code=answer_code, \
                         answer_type=QuestionAnswerOption.EXPRESSION)
@@ -121,6 +125,21 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             # determine level of evaluation of answer_option
             evaluate_level = valid_answer.return_evaluate_level()
 
+            # determine if have partial credit for less rounding
+            round_partial_credit_digits=0
+            round_partial_credit_percent=0
+            if answer_option.round_partial_credit:
+                try:
+                    rnd=sympify(answer_option.round_partial_credit)
+                    if isinstance(rnd, tuple):
+                        round_partial_credit_digits = int(rnd[0])
+                    else:
+                        round_partial_credit_digits = int(rnd)
+                    if round_partial_credit_digits > 0:
+                        round_partial_credit_percent=int(rnd[1])
+                except (TypeError, IndexError, ValueError):
+                    pass
+
             try:
                 user_response_parsed = parse_and_process(
                     user_response, global_dict=global_dict, 
@@ -135,12 +154,14 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             user_response_parsed=math_object(
                 user_response_parsed,
                 tuple_is_unordered=valid_answer.return_if_unordered(),
+                round_on_compare=answer_option.round_on_compare,
+                round_absolute=answer_option.round_absolute,
+                round_partial_credit_digits=round_partial_credit_digits,
+                round_partial_credit_percent=round_partial_credit_percent,
                 normalize_on_compare=answer_option.normalize_on_compare,
                 match_partial_on_compare= 
                 answer_option.match_partial_on_compare,
-                evaluate_level=evaluate_level,
-                n_digits = valid_answer.return_n_digits(),
-                round_decimals = valid_answer.return_round_decimals())
+                evaluate_level=evaluate_level)
 
 
             user_response_string=""
@@ -165,15 +186,19 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     user_response_string = "[error displaying answer]"
 
 
-            correctness_of_answer = \
+            answer_results = \
                 user_response_parsed.compare_with_expression( \
                 valid_answer.return_expression())
             this_percent_correct = \
-                answer_option.percent_correct*correctness_of_answer
+                answer_option.percent_correct\
+                *answer_results['fraction_equal']
             this_near_match_percent_correct = \
-                abs(answer_option.percent_correct*correctness_of_answer)
-            if correctness_of_answer > 0 and correctness_of_answer <=1 \
-               and  this_percent_correct  > percent_correct:
+                        answer_option.percent_correct\
+                        *answer_results['fraction_equal_on_normalize']
+            if (answer_results['fraction_equal'] > 0 or \
+                (answer_results['round_level_used'] < \
+                 answer_results['round_level_required'])) \
+                and this_percent_correct  > percent_correct:
                 if this_percent_correct == 100:
                     feedback = \
                         'Yes, $%s$ is correct.' % \
@@ -185,8 +210,11 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                            this_percent_correct)
                 percent_correct = this_percent_correct
                 answer_option_used = answer_option
+                round_level_required = answer_results['round_level_required']
+                round_level_used = answer_results['round_level_used']
+                round_absolute = answer_results['round_absolute']
 
-            elif correctness_of_answer<0 and correctness_of_answer>=-1 \
+            elif answer_results['fraction_equal_on_normalize'] > 0 \
                  and this_near_match_percent_correct  > \
                  max(near_match_percent_correct,percent_correct):
                 near_match_percent_correct =\
@@ -215,6 +243,22 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         answer_option_used.render_feedback(expr_context)
         except:
             pass
+
+        print(round_level_used, round_level_required)
+
+        # record any feedback about rounding
+        if round_level_used is not None and round_level_required is not None \
+           and round_level_used < round_level_required:
+            if round_absolute:
+                round_place_used = pow(10,-round_level_used)
+                round_place_required = pow(10,-round_level_required)
+                if round_place_used >=1:
+                    round_place_used = int(round_place_used)
+                    if round_place_required >=1:
+                        round_place_required = int(round_place_required)
+                feedback += " Answer matched to the nearest %s place but matching to the %s place is required." % (round_place_used, round_place_required)
+            else:
+                feedback += " Answer matched to %s significant digits but %s significant digits are required." % (round_level_used, round_level_required)
 
         if percent_correct < 100 and \
            near_match_percent_correct > percent_correct:

@@ -121,8 +121,8 @@ class QuestionReferencePageInline(admin.TabularInline):
 class QuestionAnswerInline(admin.TabularInline):
     model = QuestionAnswerOption
     formfield_overrides = {
-        models.TextField: {'widget': forms.Textarea(attrs={'rows': 2, 
-                                                           'cols': 30})},
+        models.TextField: {'widget': forms.Textarea(attrs={'rows': 3, 
+                                                           'cols': 10})},
         }
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(QuestionAnswerInline, self).formfield_for_dbfield(
@@ -131,9 +131,15 @@ class QuestionAnswerInline(admin.TabularInline):
             field.widget.attrs['size'] = 10
             del field.widget.attrs['class']
         if db_field.name == 'answer':
-            field.widget = forms.Textarea(attrs={'rows': 2, 'cols': 30})
+            field.widget = forms.Textarea(attrs={'rows': 3, 'cols': 15})
         if db_field.name == 'sort_order':
             field.widget.attrs['size'] = 3
+        if db_field.name == 'round_on_compare':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
+        if db_field.name == 'round_partial_credit':
+            field.widget.attrs['size'] = 6
+            del field.widget.attrs['class']
         return field
 
 class QuestionAuthorInline(admin.TabularInline):

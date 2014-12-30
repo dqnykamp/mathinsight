@@ -14,18 +14,19 @@ class math_object(object):
     def __init__(self, expression, **parameters):
         """
         parameters implemented
-        n_digits: number of digits of precision to keep for all numerical
-            quantities (including symbols like pi) on display
-            or on comparison.  If neither n_digits or round_decimals
-            is set, then rationals, integers, and numerical
+        round_on_compare: number of digits or decimals to keep for all numerical
+            quantities (including symbols like pi) on comparison.  
+            If not set set, then rationals, integers, and numerical
             symbols are left as is.
-        round_decimals: number of decimals to keep for all numerical
-            quantities (including symbols like pi) on display
-            or on comparison.  
-            If round_decimals < 0, then also convert numbers to integers.
-            If neither n_digits or round_decimals
-            is set, then rationals, integers, and numerical
-            symbols are left as is.
+            If round_on_compare < 0 and round_absolute is True,
+            then also convert numbers to integers.
+        round_absolute: if True, then round_on_compare determines
+            number of decimals to keep.  Otherwise, round_on_compare determines
+            number of significant digits
+        round_partial_credit_digits: for how many digits of accuracy
+            less than round_on_compare will partial credit be given.
+        round_partial_credit_percent: by what percent the credit will be
+            multiplied by for each digit of accuracy less than round_on_compare
         normalize_on_compare: if True, then check for equality based
             on normalized versions of expressions.  Currently,
             normalizations involves trying to expand and call
@@ -143,56 +144,62 @@ class math_object(object):
     def _sympy_(self):
         return self._expression
 
-
-
     def return_expression(self):
         return self._expression
     def return_if_unordered(self):
         return self._parameters.get('tuple_is_unordered',False)
     def return_split_symbols_on_compare(self):
         return self._parameters.get('split_symbols_on_compare', False)
-    def return_n_digits(self):
-        return self._parameters.get('n_digits')
-    def return_round_decimals(self):
-        return self._parameters.get('round_decimals')
+    def return_round_on_compare(self):
+        return self._parameters.get('round_on_compare')
+    def return_round_absolute(self):
+        return self._parameters.get('round_absolute', False)
+    def return_round_partial_credit_digits(self):
+        return self._parameters.get('round_partial_credit_digits')
+    def return_round_partial_credit_percent(self):
+        return self._parameters.get('round_partial_credit_percent')
     def return_evaluate_level(self):
         from mitesting.sympy_customized import EVALUATE_FULL
         return self._parameters.get('evaluate_level', EVALUATE_FULL)
 
-    def eval_to_precision(self, expression):
+    def eval_to_comparison_precision(self, expression, 
+                                     additional_rounding=None):
         """
-        If parameter n_digits or round_decimals is set, 
+        If parameter round_on_compare is set, 
         evaluate all numbers and numbersymbols (like pi) 
         of expression to floats 
-        with n_digits of precision or round_decimals decimals.
-        Since rounding to decimals is last, it will convert
-        floats to integers is round_decimals <= 0.
-        If neither option is set, 
+        with either round_on_compare digits of precision (if not round_absolute)
+        or to round_on_compare decimals (if round_absolute)
+        It will convert floats to integers if round_absolute and 
+        round_on_compare <= 0.
+        If additional rounding is set, round_on_compare is reduced by 
+        that amount.
+        If round_on_compare is not set, 
         then normalize all floats to 14 digits of precision
         to increase consistency of floats in presence of roundoff errors.
         """
 
         modified=False
-        n_digits = self._parameters.get('n_digits')
-        if n_digits:
-            expression = evalf_expression(expression, n_digits)
-            modified = True
-        round_decimals = self._parameters.get('round_decimals')
-        if round_decimals is not None:
-            expression = round_expression(expression, 
-                                          round_decimals)
-            modified = True
+        round_on_compare = self._parameters.get('round_on_compare')
+        if round_on_compare is not None:
+            if additional_rounding:
+                try:
+                    round_on_compare -= int(additional_rounding)
+                except ValueError:
+                    pass
+            
+            round_absolute = self._parameters.get('round_absolute', False)
+            
+            if round_absolute:
+                expression = round_expression(expression, 
+                                              round_on_compare)
+                modified = True
+            elif round_on_compare > 0:
+                expression = evalf_expression(expression, round_on_compare)
+                modified = True
+
         if not modified:
             expression = normalize_floats(expression)
-            
-        return expression
-
-    def convert_expression(self):
-        """ 
-        Run eval_to_precision on object's expression
-        """
-        
-        expression=self.eval_to_precision(self._expression)
             
         return expression
 
@@ -211,11 +218,7 @@ class math_object(object):
         of line set to zero.
         """
         from sympy.geometry.line import LinearEntity
-        from mitesting.sympy_customized import EVALUATE_NONE
-        if self._parameters.get('evaluate_level') == EVALUATE_NONE:
-            expression = self._expression
-        else:
-            expression = self.convert_expression()
+        expression = self._expression
         symbol_name_dict = create_symbol_name_dict()
         
         if isinstance(expression, LinearEntity):
@@ -238,18 +241,103 @@ class math_object(object):
 
     def __float__(self):
         """
-        When outputting float, first convert expression,
-        which rounds expression corresponding to parameters
-        n_digits and/or round_decimals.
         Attempts to convert expression to a float.
         """
-        expression = self.convert_expression()
-        return float(expression)
+        return float(self._expression)
 
     def float(self):
         return self.__float__()
 
-    def compare_with_expression(self, new_expr):
+    def compare_with_expression(self, new_expr): 
+        """
+        Compare expression of object with new_expression.
+        Returns dictionary with keys:
+        - fraction_equal: the fraction of expressions that are equal.
+          If normalized_on_compare is set, then equality is based on
+          normalized expressions,
+          otherwise it is based on expressions themselves
+        - fraction_equal_on_normalize: the fraction of normalized expressions
+          that are equal (only if normalize_on_compare is not set)
+        - round_level_used: number of digits or decimals used to determine
+          fraction_equal
+        - round_level_required: number of digits or decimals needed 
+          for full credit
+        - round_absolute: if True, rounding based on number of decimals kept.
+          Otherwise, rounding based on number of significant digits.
+        """
+        round_level_required=self._parameters.get('round_on_compare')
+        round_level_used=round_level_required
+        round_absolute=self._parameters.get('round_absolute', False)
+
+        results = {'fraction_equal': 0, 'fraction_equal_on_normalize': 0,
+                   'round_level_used': round_level_used,
+                   'round_level_required': round_level_required,
+                   'round_absolute': round_absolute }
+
+        equality=self.compare_with_expression_sub(new_expr)
+        
+        if equality > 0:
+            results['fraction_equal']=equality
+        else:
+            results['fraction_equal_on_normalize']=abs(equality)
+
+        round_partial_credit_digits=self._parameters.get(\
+                                            "round_partial_credit_digits")
+
+        if equality==1 or not round_partial_credit_digits:
+            return results
+
+        # round off at most 10 more digits for partial credit
+        try:
+            round_partial_credit_digits=min(10,int(round_partial_credit_digits))
+        except ValueError:
+            return results
+
+        # don't go below 1 significant digit
+        if not round_absolute:
+            round_partial_credit_digits = min(round_level_required-1,
+                                              round_partial_credit_digits)
+
+        round_partial_credit_percent=self._parameters.get(\
+                                            "round_partial_credit_percent")
+
+        # multiply credit by round_partial_credit_fraction
+        # for each extra digit of rounding
+        try:
+            round_partial_credit_fraction = \
+                min(1.0, max(0.0, round_partial_credit_percent/100.0))
+        except TypeError:
+            round_partial_credit_fraction = 0.0
+
+        max_credit=1.0
+        credit_so_far = max(0,equality)
+        correct_with_rounding = False
+
+        for i in range(round_partial_credit_digits):
+            additional_rounding = i+1
+            max_credit *= round_partial_credit_fraction
+            
+            equality=self.compare_with_expression_sub(new_expr, \
+                                        additional_rounding=additional_rounding)
+            credit = equality*max_credit
+            
+            if credit > credit_so_far:
+                results['fraction_equal'] = credit
+                results['round_level_used'] = round_level_required \
+                                              - additional_rounding
+                credit_so_far = credit
+
+            # even if no credit for additional rounding
+            # record fact that found a match with additional rounding
+            elif credit_so_far==0 and equality==1 and not correct_with_rounding:
+                correct_with_rounding=True
+                results['round_level_used'] = round_level_required \
+                                              - additional_rounding
+
+        return results
+
+
+    def compare_with_expression_sub(self, new_expr, additional_rounding=None):
         """
         Compare expression of object with new_expression.
         Returns:
@@ -268,7 +356,8 @@ class math_object(object):
            but their normalized expressions are partially equal, then
            p indicates the fraction of normalized expressions that are equal
         In all determinations of equality, expressions are rounded to
-        the precision determined by n_digits and round_decimals, if set.
+        the precision determined by round_on_compare and round_absolute, if set,
+        minus any additional rounding specified.
         """
 
         from mitesting.sympy_customized import EVALUATE_NONE
@@ -286,18 +375,24 @@ class math_object(object):
                 lambda w: w if not w.func==ln else log(*w.args))
 
         # Calculate the normalized expressions for both expressions,
-        # rounded to precision as specified by n_digits and round_decimals
-        new_expr_normalize=self.eval_to_precision(try_normalize_expr(new_expr))
-        expression_normalize = self.eval_to_precision(\
-            try_normalize_expr(expression))
+        # rounded to precision as specified by 
+        # round_on_compare and round_absolute (with additional rounding)
+        new_expr_normalize=self.eval_to_comparison_precision(\
+                                    try_normalize_expr(new_expr),\
+                                    additional_rounding=additional_rounding)
+        expression_normalize = self.eval_to_comparison_precision(\
+                                try_normalize_expr(expression),\
+                                    additional_rounding=additional_rounding)
 
 
         # As long as evaluate is not False
-        # evaluate both expressions to precision as specified
-        # by n_digits and round_decimals
+        # evaluate both expressions to precision as specified by
+        # round_on_compare and round_absolute (with additional rounding)
         if self._parameters.get("evaluate_level") != EVALUATE_NONE:
-            new_expr = self.eval_to_precision(new_expr)
-            expression = self.eval_to_precision(expression)
+            new_expr = self.eval_to_comparison_precision(new_expr,
+                                additional_rounding=additional_rounding)
+            expression = self.eval_to_comparison_precision(expression, 
+                                additional_rounding=additional_rounding)
 
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         match_partial_on_compare = self._parameters.get(

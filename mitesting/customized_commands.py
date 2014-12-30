@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, Function, C, S, Basic
+from sympy import Tuple, sympify, Function, C, S, Basic, Float
 from mitesting.sympy_customized import bottom_up, customized_sort_key
 
 class Abs(C.Abs):
@@ -44,6 +44,30 @@ def real_roots_tuple(f, *gens):
     return Tuple(*rootslist)
 
 
+def _initial_evalf(w,n):
+    """ 
+    Convert every number to float with precision n
+    If number ends in 5, convert to high precision Float
+    and multiply by 1+epsilon so that it will round up correctly.
+    
+    """
+
+    if w.is_Number:
+        wstr=str(w)
+        if "." in wstr:
+            wstr = wstr.rstrip('0')
+            if wstr[-1]=="5":
+                # include extra call to str because bug
+                # in sympy where this doesn't work with unicode
+                w=Float(str(wstr), n+1)
+                one_plus_epsilon = S.One.evalf(n)\
+                                   +pow(10,1-n)
+                w *= one_plus_epsilon
+    try:
+        return w.evalf(n)
+    except:
+        return w
+
 def round_expression(expression, n=0, initial_n_digits=100):
     """
     Customized version of round
@@ -64,28 +88,23 @@ def round_expression(expression, n=0, initial_n_digits=100):
     
     expression = sympify(expression)
 
-    def initial_evalf(w):
-        try:
-            return w.evalf(initial_n_digits)
-        except:
-            return w
 
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(expression, initial_evalf, atoms=True)
+    expression =  bottom_up(expression, 
+            lambda w: _initial_evalf(w,initial_n_digits), atoms=True)
 
     # next, round numbers
     if n <= 0:
         from sympy import Integer
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Integer(round(w,n)),
+            lambda w: w if not w.is_Number else Integer(w.round(n)),
             atoms=True)
     else:
-        from sympy import Float
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Float(str(round(w,n))),
+            lambda w: w if not w.is_Number else Float(str(w.round(n))),
             atoms=True)
         
     return expression
@@ -109,19 +128,14 @@ def evalf_expression(expression, n=15):
 
     expression = sympify(expression)
     initial_n_digits = max(30, n+5)
-    
-    def initial_evalf(w):
-        try:
-            return w.evalf(initial_n_digits)
-        except:
-            return w
-
 
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(expression, initial_evalf, atoms=True)
+    expression =  bottom_up(expression, 
+            lambda w: _initial_evalf(w,initial_n_digits), atoms=True)
 
-    from sympy import Float
+    print(expression)
+
     expression =  bottom_up(
         expression,
         lambda w: w if not w.is_Number else Float(str(w.evalf(n))),
@@ -139,7 +153,6 @@ def normalize_floats(expression):
     if their conversion to string is the same
     """
     expression = sympify(expression)
-    from sympy import Float
     expression =  bottom_up(
         expression,
         lambda w: w if not w.is_Float else Float(str(w.evalf(14))),
