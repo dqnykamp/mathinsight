@@ -1089,3 +1089,45 @@ def pluralize_float(value, arg='s'):
         except TypeError: # len() of unsized object.
             pass
     return singular_suffix
+
+
+@register.filter
+def round(value, n=0):
+    from mitesting.math_objects import math_object
+
+    if isinstance(value,math_object):
+        expression=value.return_expression()
+        copy_from=value
+    else:
+        from sympy import sympify,SympifyError
+        try:
+            expression=sympify(value)
+        except SympifyError:
+            return value
+        copy_from=None
+
+    from mitesting.customized_commands import round_expression
+    
+    return math_object(round_expression(expression,n),
+                       copy_parameters_from=copy_from)
+
+@register.filter
+def evalf(value, n_digits=15):
+    from mitesting.math_objects import math_object
+
+    if isinstance(value,math_object):
+        expression=value.return_expression()
+        copy_from=value
+    else:
+        from sympy import sympify,SympifyError
+        try:
+            expression=sympify(value)
+        except SympifyError:
+            return value
+        copy_from=None
+
+    from mitesting.customized_commands import evalf_expression
+    
+    return math_object(evalf_expression(expression,n_digits),
+                       copy_parameters_from=copy_from)
+
