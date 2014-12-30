@@ -8,11 +8,15 @@ from django.template import Context
 from mitesting.grade_question import *
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption
 from mitesting.math_objects import math_object
+from mitesting.sympy_customized import parse_expr
 
 from sympy import Symbol, sympify
 import six
 import random
 
+EXPRESSION = QuestionAnswerOption.EXPRESSION
+MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
+        
 class TestCompareResponse(TestCase):
     def setUp(self):
         random.seed()
@@ -30,7 +34,6 @@ class TestCompareResponse(TestCase):
 
 
     def test_compare_multiple_choice(self):
-        MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
         global_dict={}
         expr_context=Context({})
 
@@ -70,7 +73,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results["answer_feedback"])
+        self.assertTrue("are correct" in answer_results["answer_feedback"])
         self.assertTrue("You got it!" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
@@ -114,7 +117,6 @@ class TestCompareResponse(TestCase):
 
 
     def test_basic_expression(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -139,7 +141,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results["answer_feedback"])
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
                         (user_response="xa", the_answer_info=answer_info,
@@ -148,12 +150,11 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results["answer_feedback"])
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
 
 
 
     def test_multiple_answers(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -173,7 +174,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results["answer_feedback"])
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
         self.assertTrue("You got it!" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
@@ -194,7 +195,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
-        self.assertTrue(" incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
         self.assertTrue("Bad idea." in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
@@ -204,14 +205,13 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
-        self.assertTrue(" incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
         self.assertFalse("You got it!" in answer_results["answer_feedback"])
         self.assertFalse("Getting close." in answer_results["answer_feedback"])
         self.assertFalse("Bad idea." in answer_results["answer_feedback"])
 
 
     def test_split_symbols_on_compare(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -232,7 +232,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results["answer_feedback"])
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
 
         the_ans.split_symbols_on_compare=False
         the_ans.save()
@@ -245,12 +245,321 @@ class TestCompareResponse(TestCase):
         self.assertEqual(answer_results['percent_correct'],50)
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
 
+    def test_round_on_compare(self):
+        global_dict={}
+        expr_context=Context({})
 
-    # add tests to grade ordered/unordered tuples/sets once have the new format set, including whether or not test partial match
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["aa"]=math_object(sympify("2.31313*a"))
 
-    # tests for n_digits/rounding.  Especially if ability to test with less precision for partial credit.
+        
+        the_ans=self.new_answer(answer_code="a", answer="aa",
+                                round_on_compare=4)
+        
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31328a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        the_ans.round_partial_credit="1"
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("matched to 3 significant digits" in answer_results["answer_feedback"])
+        self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
+
+
+        the_ans.round_partial_credit="1, 0"
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("matched to 3 significant digits" in answer_results["answer_feedback"])
+        self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
+
+        the_ans.round_partial_credit="1, 70"
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],70)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("70%" in answer_results["answer_feedback"])
+        self.assertTrue("matched to 3 significant digits" in answer_results["answer_feedback"])
+        self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.30228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("2 significant digits" not in answer_results["answer_feedback"])
+
+        the_ans.round_partial_credit="2, 70"
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.312315a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],70)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("70%" in answer_results["answer_feedback"])
+        self.assertTrue("matched to 3 significant digits" in answer_results["answer_feedback"])
+        self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.30228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(round(answer_results['percent_correct'],10),49)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("49%" in answer_results["answer_feedback"])
+        self.assertTrue("matched to 2 significant digits" in answer_results["answer_feedback"])
+        self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
+
+
+        the_ans.round_partial_credit="3, 70"
+        the_ans.round_absolute=True
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.313128a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.31338a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],70)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("matched to the nearest 0.001 place" in answer_results["answer_feedback"])
+        self.assertTrue("matching to the 0.0001 place is required" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.33228a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(round(answer_results['percent_correct'],10),34.3)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("34%" in answer_results["answer_feedback"])
+        self.assertTrue("matched to the nearest 0.1 place" in answer_results["answer_feedback"])
+        self.assertTrue("matching to the 0.0001 place is required" in answer_results["answer_feedback"])
+
+
+
+    def test_tuples(self):
+        global_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a,b,c"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,b,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c,b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
+        expr_context["a"]=math_object(parse_expr("a,b,c"), 
+                                      tuple_is_unordered=False)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c,b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
+        expr_context["a"]=math_object(parse_expr("a,b,c"), 
+                                      tuple_is_unordered=True)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c,b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+
+    def test_tuples_partial_match(self):
+        global_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a,b,c,d"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        the_ans.match_partial_on_compare=False
+        the_ans.save()
+        
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+        
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("50%" in answer_results["answer_feedback"])
+
+        
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,d,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("50%" in answer_results["answer_feedback"])
 
     
+        expr_context["a"]=math_object(parse_expr("a,b,c,d"), 
+                                      tuple_is_unordered=True)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,d,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],75)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("75%" in answer_results["answer_feedback"])
+
+    
+    def test_different_tuple_types(self):
+
+        global_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a,b,c"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(a,b,c)", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+
+        expr_context["a"]=math_object(parse_expr("(a,b,c)"))
+        
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,b,c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(a,b,c)", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
 class TestQuestionGroups(TestCase):
     def setUp(self):
         random.seed()
@@ -268,7 +577,6 @@ class TestQuestionGroups(TestCase):
 
     
     def test_small_group(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -315,12 +623,12 @@ class TestQuestionGroups(TestCase):
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id1]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id1]["answer_feedback"])
         self.assertTrue("The first answer" in answer_results['answers'][id1]["answer_feedback"])
         
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id2]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id2]["answer_feedback"])
         self.assertTrue("The second answer" in answer_results['answers'][id2]["answer_feedback"])
         
         # switch order of first two
@@ -343,12 +651,12 @@ class TestQuestionGroups(TestCase):
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id1]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id1]["answer_feedback"])
         self.assertTrue("The second answer" in answer_results['answers'][id1]["answer_feedback"])
         
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id2]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id2]["answer_feedback"])
         self.assertTrue("The first answer" in answer_results['answers'][id2]["answer_feedback"])
 
         # repeat first answer
@@ -371,11 +679,11 @@ class TestQuestionGroups(TestCase):
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id1]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id1]["answer_feedback"])
         
         self.assertFalse(answer_results['answers'][id2]['answer_correct'])
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],0)
-        self.assertTrue(" incorrect" in answer_results['answers'][id2]["answer_feedback"])
+        self.assertTrue("is incorrect" in answer_results['answers'][id2]["answer_feedback"])
 
 
         # repeat second answer
@@ -398,11 +706,11 @@ class TestQuestionGroups(TestCase):
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id1]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id1]["answer_feedback"])
         
         self.assertFalse(answer_results['answers'][id2]['answer_correct'])
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],0)
-        self.assertTrue(" incorrect" in answer_results['answers'][id2]["answer_feedback"])
+        self.assertTrue("is incorrect" in answer_results['answers'][id2]["answer_feedback"])
 
 
         # switch first and third answer
@@ -425,15 +733,14 @@ class TestQuestionGroups(TestCase):
 
         self.assertFalse(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],0)
-        self.assertTrue(" incorrect" in answer_results['answers'][id1]["answer_feedback"])
+        self.assertTrue("is incorrect" in answer_results['answers'][id1]["answer_feedback"])
         
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],100)
-        self.assertTrue(" correct" in answer_results['answers'][id2]["answer_feedback"])
+        self.assertTrue("is correct" in answer_results['answers'][id2]["answer_feedback"])
 
 
     def test_multiple_answers_no_overlapp(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -531,7 +838,6 @@ class TestQuestionGroups(TestCase):
 
 
     def test_multiple_answers_overlap1(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -625,7 +931,6 @@ class TestQuestionGroups(TestCase):
 
 
     def test_multiple_answers_overlap2(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -713,7 +1018,6 @@ class TestQuestionGroups(TestCase):
         
 
     def test_multiple_answers_partial_credit(self):
-        EXPRESSION = QuestionAnswerOption.EXPRESSION
         global_dict={}
         expr_context=Context({})
 
@@ -791,3 +1095,7 @@ class TestQuestionGroups(TestCase):
         self.assertEqual(answer_results['answers'][id2]['percent_correct'],0)
         self.assertFalse(answer_results['answers'][id3]['answer_correct'])
         self.assertEqual(answer_results['answers'][id3]['percent_correct'],50)
+
+
+
+# haven't tested grade_question function directly, but do via question_view

@@ -207,7 +207,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     feedback = '$%s$ is not completely correct but earns' \
                         ' partial (%i%%) credit.' \
                         % (user_response_string, 
-                           this_percent_correct)
+                           round(this_percent_correct))
+                        
                 percent_correct = this_percent_correct
                 answer_option_used = answer_option
                 round_level_required = answer_results['round_level_required']
@@ -226,7 +227,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 else:
                     near_match_feedback  += \
                         "an answer that is %i%% correct, " \
-                        % near_match_percent_correct
+                        % round(near_match_percent_correct)
                 near_match_feedback += "but "\
                     " you must write your answer in a different form.)</small>" 
             if not feedback:
@@ -243,8 +244,6 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         answer_option_used.render_feedback(expr_context)
         except:
             pass
-
-        print(round_level_used, round_level_required)
 
         # record any feedback about rounding
         if round_level_used is not None and round_level_required is not None \

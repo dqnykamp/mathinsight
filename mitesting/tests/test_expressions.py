@@ -424,8 +424,8 @@ class TestExpressions(TestCase):
         global_dict={}
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)")
         tuple1 = expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple1.compare_with_expression((a,b,c)),1)
-        self.assertEqual(tuple1.compare_with_expression((a,c,b)),0)
+        self.assertEqual(tuple1.compare_with_expression((a,b,c))['fraction_equal'],1)
+        self.assertEqual(tuple1.compare_with_expression((a,c,b))['fraction_equal'],0)
         
         expr2=self.new_expr(name="tuple2",expression="[b,c,a]")
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
@@ -440,17 +440,17 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)", \
                                 expression_type=Expression.UNORDERED_TUPLE)
         tuple1 = expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple1.compare_with_expression((a,b,c)),1)
-        self.assertEqual(tuple1.compare_with_expression((a,c,b)),1)
-        self.assertEqual(tuple1.compare_with_expression((b,c,a)),1)
-        self.assertEqual(tuple1.compare_with_expression((a,a,c,b)),0)
+        self.assertEqual(tuple1.compare_with_expression((a,b,c))['fraction_equal'],1)
+        self.assertEqual(tuple1.compare_with_expression((a,c,b))['fraction_equal'],1)
+        self.assertEqual(tuple1.compare_with_expression((b,c,a))['fraction_equal'],1)
+        self.assertEqual(tuple1.compare_with_expression((a,a,c,b))['fraction_equal'],0)
 
         expr2=self.new_expr(name="tuple2",expression="[3*a,b-a,c^2]", \
                                 expression_type=Expression.UNORDERED_TUPLE)
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple2.compare_with_expression([3*a,b-a,c**2]),1)
-        self.assertEqual(tuple2.compare_with_expression([3*a,c**2,b-a]),1)
-        self.assertEqual(tuple2.compare_with_expression([b-a,c**2,3*a]),1)
+        self.assertEqual(tuple2.compare_with_expression([3*a,b-a,c**2])['fraction_equal'],1)
+        self.assertEqual(tuple2.compare_with_expression([3*a,c**2,b-a])['fraction_equal'],1)
+        self.assertEqual(tuple2.compare_with_expression([b-a,c**2,3*a])['fraction_equal'],1)
 
 
     def test_sorted_tuple(self):
@@ -461,12 +461,12 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="tuple1",expression="(5,-1,b^2-a,c,b)", \
                                 expression_type=Expression.SORTED_TUPLE)
         tuple1 = expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple1.compare_with_expression((-1,5,b,c,b**2-a)),1)
+        self.assertEqual(tuple1.compare_with_expression((-1,5,b,c,b**2-a))['fraction_equal'],1)
 
         expr2=self.new_expr(name="tuple2",expression="[5,-1,b^2-a,c,b]", \
                                 expression_type=Expression.SORTED_TUPLE)
         tuple2 = expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(tuple2.compare_with_expression([-1,5,b,c,b**2-a]),1)
+        self.assertEqual(tuple2.compare_with_expression([-1,5,b,c,b**2-a])['fraction_equal'],1)
 
 
     def test_random_order_tuple(self):
@@ -501,28 +501,6 @@ class TestExpressions(TestCase):
         self.assertTrue(found_different_order)
 
 
-    def test_rounding(self):
-        from sympy import pi
-        x=Symbol('x')
-        global_dict={"pi": pi}
-        expr1=self.new_expr(name="a",expression="(x+pi)*(x-1/17)", 
-                            n_digits=3)
-        expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(expr1_eval.compare_with_expression(
-                (x+3.14)*(x-0.0588)),1)
-        
-        expr2=self.new_expr(name="b",expression="(x+pi)*(x-1/17)", 
-                            round_decimals=3)
-        expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(expr2_eval.compare_with_expression(
-                (x+3.142)*(x-0.059)),1)
-        
-        expr3=self.new_expr(name="c",expression="(x+pi)*(x-1/17)", 
-                            round_decimals=3,n_digits=3)
-        expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
-        self.assertEqual(expr3_eval.compare_with_expression(
-                (x+3.14)*(x-0.059)),1)
-
     def test_tuple_no_parentheses(self):
         a=Symbol('a')
         b=Symbol('b')
@@ -554,7 +532,7 @@ class TestExpressions(TestCase):
         expr1_eval=expr1.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertTrue(expr1_eval.return_if_unordered())
         self.assertEqual(expr1_eval.compare_with_expression(
-            TupleNoParen(a,b,c,d)),1)
+            TupleNoParen(a,b,c,d))['fraction_equal'],1)
 
         expr2=self.new_expr(name="t2",expression="{b,c,a,c,d,a}",
                             expression_type=Expression.SET)
@@ -667,9 +645,11 @@ class TestExpressions(TestCase):
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(six.text_type(expr2_eval), "x x y + x + x")
         self.assertEqual(expr2_eval.compare_with_expression(
-                expr1_eval.return_expression()),-1)
+                expr1_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr2_eval.compare_with_expression(
+                expr1_eval.return_expression())['fraction_equal_on_normalize'],1)
         self.assertEqual(expr1_eval.compare_with_expression(
-                expr2_eval.return_expression()),1)
+                expr2_eval.return_expression())['fraction_equal'],1)
 
     def test_evaluate_partial(self):
         from sympy import Derivative, Integral
@@ -683,9 +663,13 @@ class TestExpressions(TestCase):
         expr2_eval=expr2.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(expr2_eval.return_expression(), Derivative(x**2,x))
         self.assertEqual(expr2_eval.compare_with_expression(
-                expr1_eval.return_expression()),-1)
+                expr1_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr2_eval.compare_with_expression(
+                expr1_eval.return_expression())['fraction_equal_on_normalize'],1)
         self.assertEqual(expr1_eval.compare_with_expression(
-                expr2_eval.return_expression()),-1)
+                expr2_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr1_eval.compare_with_expression(
+                expr2_eval.return_expression())['fraction_equal_on_normalize'],1)
 
         expr3=self.new_expr(name="s3", expression="Integral(x^2,x)")
         expr3_eval=expr3.evaluate(rng=self.rng, global_dict=global_dict)
@@ -695,9 +679,14 @@ class TestExpressions(TestCase):
         expr4_eval=expr4.evaluate(rng=self.rng, global_dict=global_dict)
         self.assertEqual(expr4_eval.return_expression(), Integral(x**2,x))
         self.assertEqual(expr4_eval.compare_with_expression(
-                expr3_eval.return_expression()),-1)
+                expr3_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr4_eval.compare_with_expression(
+                expr3_eval.return_expression())['fraction_equal_on_normalize'],1)
         self.assertEqual(expr3_eval.compare_with_expression(
-                expr4_eval.return_expression()),-1)
+                expr4_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr3_eval.compare_with_expression(
+                expr4_eval.return_expression())['fraction_equal_on_normalize'],1)
+
 
     def test_function_global_dict(self):
         from sympy import sin

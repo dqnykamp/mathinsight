@@ -134,8 +134,6 @@ def evalf_expression(expression, n=15):
     expression =  bottom_up(expression, 
             lambda w: _initial_evalf(w,initial_n_digits), atoms=True)
 
-    print(expression)
-
     expression =  bottom_up(
         expression,
         lambda w: w if not w.is_Number else Float(str(w.evalf(n))),

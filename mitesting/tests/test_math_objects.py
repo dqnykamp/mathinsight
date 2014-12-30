@@ -19,71 +19,259 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression)
         self.assertEqual(mobject,expression)
         self.assertEqual(six.text_type(mobject), '5 x')
-        self.assertEqual(mobject.compare_with_expression(expression),1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.return_expression(), expression)
 
-    def test_n_digits(self):
+    def test_round_on_compare(self):
         expression = sympify("5*x/3")
         expression_rounded = sympify("1.667*x")
         expression_less_rounded = sympify("1.6667*x")
         expression_too_rounded = sympify("1.67*x")
-        mobject = math_object(expression, n_digits=4)
+
+        mobject = math_object(expression, round_on_compare=4)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression_rounded)
         self.assertNotEqual(mobject,expression_less_rounded)
         self.assertNotEqual(mobject,expression_too_rounded)
-        self.assertEqual(six.text_type(mobject), latex(expression_rounded))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression_rounded),1)
+        self.assertEqual(mobject.compare_with_expression(expression)\
+                         ['fraction_equal'],1)
+        self.assertFalse(mobject.compare_with_expression(expression)\
+                         ['round_absolute'])
+        self.assertEqual(mobject.compare_with_expression(expression_rounded)\
+                         ['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(\
-                expression_less_rounded),1)
+                            expression_less_rounded)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(\
-                expression_too_rounded),0)
+                            expression_too_rounded)['fraction_equal'],0)
         
-    def test_round_decimals(self):
+        mobject = math_object(expression, round_on_compare=4, 
+                              round_absolute=False)
+        self.assertEqual(mobject,expression)
+        self.assertNotEqual(mobject,expression_rounded)
+        self.assertNotEqual(mobject,expression_less_rounded)
+        self.assertNotEqual(mobject,expression_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expression)\
+                         ['fraction_equal'],1)
+        self.assertFalse(mobject.compare_with_expression(expression)\
+                         ['round_absolute'])
+        self.assertEqual(mobject.compare_with_expression(expression_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(\
+                            expression_less_rounded)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(\
+                            expression_too_rounded)['fraction_equal'],0)
+        
+
+    def test_round_on_compare_absolute(self):
         expression = sympify("115*sin(pi*x)/3")
         expression_rounded = sympify("38.333*sin(3.142*x)")
         expression_less_rounded = sympify("38.33333*sin(3.14159*x)")
         expression_too_rounded = sympify("38.33*sin(3.1412*x)")
-        mobject = math_object(expression, round_decimals=3)
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression_rounded)
         self.assertNotEqual(mobject,expression_less_rounded)
         self.assertNotEqual(mobject,expression_too_rounded)
-        self.assertEqual(six.text_type(mobject), latex(expression_rounded))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression_rounded),1)
+        self.assertEqual(mobject.compare_with_expression(expression)\
+                         ['fraction_equal'] ,1)
+        self.assertTrue(mobject.compare_with_expression(expression)\
+                         ['round_absolute'])
+        self.assertEqual(mobject.compare_with_expression(expression_rounded)\
+                         ['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(\
-                expression_less_rounded),1)
+                expression_less_rounded)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(\
-                expression_too_rounded),0)
+                expression_too_rounded)['fraction_equal'],0)
 
-    def test_n_digits_and_round_decimals(self):
-        expression = sympify("4115*sin(pi*x)/3")
-        expression_rounded = sympify("1371.67*sin(3.142*x)")
-        expression_less_rounded = sympify("1371.6666667*sin(3.14159265*x)")
-        expression_too_rounded1 = sympify("1371.7*sin(3.142*x)")
-        expression_too_rounded2 = sympify("1371.67*sin(3.14*x)")
-        mobject = math_object(expression, n_digits=6, round_decimals=3)
-        self.assertEqual(mobject,expression)
-        self.assertNotEqual(mobject,expression_rounded)
-        self.assertNotEqual(mobject,expression_less_rounded)
-        self.assertNotEqual(mobject,expression_too_rounded1)
-        self.assertNotEqual(mobject,expression_too_rounded2)
-        self.assertEqual(six.text_type(mobject), latex(expression_rounded))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression_rounded),1)
-        self.assertEqual(mobject.compare_with_expression(\
-                expression_less_rounded),1)
-        self.assertEqual(mobject.compare_with_expression(\
-                expression_too_rounded1),0)
-        self.assertEqual(mobject.compare_with_expression(\
-                expression_too_rounded2),0)
-        # for round_decimals<=0 should end with integer
-        mobject = math_object("19/7*exp(2414.2341*x)", n_digits=3, 
-                              round_decimals=0)
-        self.assertEqual(six.text_type(mobject),'3 e^{2410 x}')
-        
+
+    def test_round_on_compare_partial_credit(self):
+        expression = sympify("5*x/3")
+        expression_rounded = sympify("1.667*x")
+        expression_too_rounded = sympify("1.67*x")
+        expression_too_rounded2 = sympify("1.7*x")
+
+        mobject = math_object(expression, round_on_compare=4)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+
+        mobject = math_object(expression, round_on_compare=4, 
+                              round_partial_credit_digits=1)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+
+        mobject = math_object(expression, round_on_compare=4, 
+                              round_partial_credit_digits=1,
+                              round_partial_credit_percent=0)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+
+        mobject = math_object(expression, round_on_compare=4, 
+                              round_partial_credit_digits=1,
+                              round_partial_credit_percent=80)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+
+        mobject = math_object(expression, round_on_compare=4, 
+                              round_partial_credit_digits=2,
+                              round_partial_credit_percent=80)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],4)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],4)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0.8*0.8)
+        self.assertEqual(compare['round_level_used'],2)
+        self.assertEqual(compare['round_level_required'],4)
+
+
+    def test_round_on_compare_absolute_partial_credit(self):
+        expression = sympify("115*sin(pi*x)/3")
+        expression_rounded = sympify("38.333*sin(3.142*x)")
+        expression_too_rounded = sympify("38.33*sin(3.1412*x)")
+        expression_too_rounded2 = sympify("38.3*sin(3.141*x)")
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True)
+
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True,
+                              round_partial_credit_digits=1)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],2)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True,
+                              round_partial_credit_digits=1,
+                              round_partial_credit_percent=0)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],2)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+
+        mobject = math_object(expression, round_on_compare=3,
+                              round_absolute=True,
+                              round_partial_credit_digits=1,
+                              round_partial_credit_percent=80)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['round_level_used'],2)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+
+        mobject = math_object(expression, round_on_compare=3, 
+                              round_absolute=True,
+                              round_partial_credit_digits=2,
+                              round_partial_credit_percent=80)
+        compare=mobject.compare_with_expression(expression_rounded)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['round_level_used'],3)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['round_level_used'],2)
+        self.assertEqual(compare['round_level_required'],3)
+        compare=mobject.compare_with_expression(expression_too_rounded2)
+        self.assertEqual(compare['fraction_equal'],0.8*0.8)
+        self.assertEqual(compare['round_level_used'],1)
+        self.assertEqual(compare['round_level_required'],3)
+
+
+    def test_round_up_5(self):
+        expression = sympify("123.456")
+        expression_rounded = sympify("123.455")
+        mobject = math_object(expression, round_on_compare=2,
+                              round_absolute=True)
+        self.assertEqual(mobject.compare_with_expression(expression_rounded)\
+                         ['fraction_equal'],1)
+        # This shold work, but doesn't as .evalf doesn't work right
+        # mobject = math_object(expression, round_on_compare=5)
+        # self.assertEqual(mobject.compare_with_expression(expression_rounded)\
+        #                  ['fraction_equal'],1)
+
 
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
@@ -93,22 +281,24 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),-1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
 
         mobject = math_object(expression, normalize_on_compare=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
 
         mobject = math_object(expression, normalize_on_compare=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),-1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
 
         expression = x**2-y**2
         expression2 = (x+y)*(x-y)
@@ -116,22 +306,24 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),-1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
 
         mobject = math_object(expression, normalize_on_compare=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
 
         mobject = math_object(expression, normalize_on_compare=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),-1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
 
     def test_split_symbols_on_compare(self):
         mobject = math_object("x")
@@ -148,24 +340,24 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertFalse(mobject.return_if_unordered())
 
         mobject = math_object(expression, tuple_is_unordered=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),1)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
         self.assertTrue(mobject.return_if_unordered())
 
         mobject = math_object(expression, tuple_is_unordered=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
         self.assertEqual(six.text_type(mobject), latex(expression))
-        self.assertEqual(mobject.compare_with_expression(expression),1)
-        self.assertEqual(mobject.compare_with_expression(expression2),0)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertFalse(mobject.return_if_unordered())
 
 
@@ -220,39 +412,31 @@ class MathObjectTests(SimpleTestCase):
         self.assertFalse(mobject0 == True)
 
 
-    def test_eval_to_precision(self):
-        mobject = math_object(1, n_digits=5)
+    def test_eval_to_comparison_precision(self):
+        mobject = math_object(1, round_on_compare=5)
         expr = sympify("152052.3282*log(1325.234*z)")
         expr_rounded = sympify("152050*log(1325.2*z)")
         expr_too_rounded = sympify("152100*log(1325.2*z)")
-        self.assertEqual(mobject.eval_to_precision(expr), expr_rounded)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr_too_rounded)
+        self.assertEqual(mobject.eval_to_comparison_precision(expr), expr_rounded)
+        self.assertNotEqual(mobject.eval_to_comparison_precision(expr), expr)
+        self.assertNotEqual(mobject.eval_to_comparison_precision(expr), expr_too_rounded)
 
-        mobject = math_object(1, round_decimals=-1)
+        mobject = math_object(1, round_on_compare=-1, round_absolute=True)
         expr = sympify("152052.3282*log(1325.234*z)")
         expr_rounded = sympify("152050*log(1330*z)")
         expr_too_rounded = sympify("152100*log(1330*z)")
-        self.assertEqual(mobject.eval_to_precision(expr), expr_rounded)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr_too_rounded)
-
-        mobject = math_object(1, round_decimals=-1, n_digits=4)
-        expr = sympify("152052.3282*log(1325.234*z)")
-        expr_rounded = sympify("152100*log(1330*z)")
-        expr_too_rounded = sympify("152100*log(1300*z)")
-        self.assertEqual(mobject.eval_to_precision(expr), expr_rounded)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr)
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr_too_rounded)
+        self.assertEqual(mobject.eval_to_comparison_precision(expr), expr_rounded)
+        self.assertNotEqual(mobject.eval_to_comparison_precision(expr), expr)
+        self.assertNotEqual(mobject.eval_to_comparison_precision(expr), expr_too_rounded)
 
         mobject = math_object(1)
         expr = sympify("152052.3282*log(1325.234*z)")
         expr_rounded = sympify("152100*log(1330*z)")
-        self.assertNotEqual(mobject.eval_to_precision(expr), expr_rounded)
-        self.assertEqual(mobject.eval_to_precision(expr), expr)
+        self.assertNotEqual(mobject.eval_to_comparison_precision(expr), expr_rounded)
+        self.assertEqual(mobject.eval_to_comparison_precision(expr), expr)
 
-    def test_eval_to_precision_roundoff_error(self):
-        # test that eval_to_precision helps to normalize
+    def test_eval_to_comparison_precision_roundoff_error(self):
+        # test that eval_to_comparison_precision helps to normalize
         # in presence of round-off error
         mobject = math_object(1)
         expr1 = sympify((.1/.11 - .1/.12)*(.1/.11 + .1/.12))
@@ -260,42 +444,12 @@ class MathObjectTests(SimpleTestCase):
         # not equal due to roundoff error
         self.assertNotEqual(expr1,expr2)
         # equal when eval to precision
-        self.assertEqual(mobject.eval_to_precision(expr1),
-                          mobject.eval_to_precision(expr2))
+        self.assertEqual(mobject.eval_to_comparison_precision(expr1),
+                          mobject.eval_to_comparison_precision(expr2))
         # verify that keep exactly 14 digits of accuracy
-        self.assertEqual(mobject.eval_to_precision(expr1),
+        self.assertEqual(mobject.eval_to_comparison_precision(expr1),
                           0.13200183654729)
 
-    def test_convert_expression(self):
-        expr = sympify("152052.3282*log(1325.234*z)")
-        mobject = math_object(expr, n_digits=5)
-        expr_rounded = sympify("152050*log(1325.2*z)")
-        expr_too_rounded = sympify("152100*log(1325.2*z)")
-        self.assertEqual(mobject.convert_expression(), expr_rounded)
-        self.assertNotEqual(mobject.convert_expression(), expr)
-        self.assertNotEqual(mobject.convert_expression(), expr_too_rounded)
-
-        expr = sympify("152052.3282*log(1325.234*z)")
-        mobject = math_object(expr, round_decimals=-1)
-        expr_rounded = sympify("152050*log(1330*z)")
-        expr_too_rounded = sympify("152100*log(1330*z)")
-        self.assertEqual(mobject.convert_expression(), expr_rounded)
-        self.assertNotEqual(mobject.convert_expression(), expr)
-        self.assertNotEqual(mobject.convert_expression(), expr_too_rounded)
-
-        expr = sympify("152052.3282*log(1325.234*z)")
-        mobject = math_object(expr, round_decimals=-1, n_digits=4)
-        expr_rounded = sympify("152100*log(1330*z)")
-        expr_too_rounded = sympify("152100*log(1300*z)")
-        self.assertEqual(mobject.convert_expression(), expr_rounded)
-        self.assertNotEqual(mobject.convert_expression(), expr)
-        self.assertNotEqual(mobject.convert_expression(), expr_too_rounded)
-
-        expr = sympify("152052.3282*log(1325.234*z)")
-        mobject = math_object(expr)
-        expr_rounded = sympify("152100*log(1330*z)")
-        self.assertNotEqual(mobject.convert_expression(), expr_rounded)
-        self.assertEqual(mobject.convert_expression(), expr)
         
     def test_text_basics(self):
         mobject = math_object("7/9*x**2-3/5*x+33")
@@ -344,10 +498,10 @@ class MathObjectTests(SimpleTestCase):
         expr_augment = sympify("[1, 2*x, 4*sin(3*z),0]")
         expr_reduce = sympify("[1, 2*x]")
         mobject = math_object(expr)
-        self.assertEqual(mobject.compare_with_expression(expr),1)
-        self.assertEqual(mobject.compare_with_expression(expr_switch),0)
-        self.assertEqual(mobject.compare_with_expression(expr_augment),0)
-        self.assertEqual(mobject.compare_with_expression(expr_reduce),0)
+        self.assertEqual(mobject.compare_with_expression(expr)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_switch)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_augment)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_reduce)['fraction_equal'],0)
         
     def test_relational_equality(self):
         expr1 = sympify("3*x < 5")
@@ -369,65 +523,71 @@ class MathObjectTests(SimpleTestCase):
         expr17 = sympify("2*(8-3*x)+(x-1)*(x+1)-x^2 > 5")
 
         mobject = math_object(expr1)
-        self.assertEqual(mobject.compare_with_expression(expr1),1)
-        self.assertEqual(mobject.compare_with_expression(expr2),1)
-        self.assertEqual(mobject.compare_with_expression(expr3),0)
-        self.assertEqual(mobject.compare_with_expression(expr4),0)
-        self.assertEqual(mobject.compare_with_expression(expr5),0)
-        self.assertEqual(mobject.compare_with_expression(expr6),0)
-        self.assertEqual(mobject.compare_with_expression(expr7),0)
-        self.assertEqual(mobject.compare_with_expression(expr8),0)
-        self.assertEqual(mobject.compare_with_expression(expr9),0)
-        self.assertEqual(mobject.compare_with_expression(expr10),0)
-        self.assertEqual(mobject.compare_with_expression(expr11),0)
-        self.assertEqual(mobject.compare_with_expression(expr12),0)
-        self.assertEqual(mobject.compare_with_expression(expr13),-1)
-        self.assertEqual(mobject.compare_with_expression(expr14),-1)
-        self.assertEqual(mobject.compare_with_expression(expr15),-1)
-        self.assertEqual(mobject.compare_with_expression(expr16),-1)
-        self.assertEqual(mobject.compare_with_expression(expr17),-1)
+        self.assertEqual(mobject.compare_with_expression(expr1)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr8)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr9)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr10)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr11)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr12)['fraction_equal'],0)
+
+        self.assertEqual(mobject.compare_with_expression(expr13)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr13)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expr14)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr14)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expr15)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr15)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expr16)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr16)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expr17)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr17)['fraction_equal_on_normalize'],1)
 
         mobject = math_object(expr5)
-        self.assertEqual(mobject.compare_with_expression(expr1),0)
-        self.assertEqual(mobject.compare_with_expression(expr2),0)
-        self.assertEqual(mobject.compare_with_expression(expr3),0)
-        self.assertEqual(mobject.compare_with_expression(expr4),0)
-        self.assertEqual(mobject.compare_with_expression(expr5),1)
-        self.assertEqual(mobject.compare_with_expression(expr6),1)
-        self.assertEqual(mobject.compare_with_expression(expr7),0)
-        self.assertEqual(mobject.compare_with_expression(expr8),0)
-        self.assertEqual(mobject.compare_with_expression(expr9),0)
-        self.assertEqual(mobject.compare_with_expression(expr10),0)
-        self.assertEqual(mobject.compare_with_expression(expr11),0)
-        self.assertEqual(mobject.compare_with_expression(expr12),0)
+        self.assertEqual(mobject.compare_with_expression(expr1)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr7)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr8)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr9)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr10)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr11)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr12)['fraction_equal'],0)
         
         mobject = math_object(expr9)
-        self.assertEqual(mobject.compare_with_expression(expr1),0)
-        self.assertEqual(mobject.compare_with_expression(expr2),0)
-        self.assertEqual(mobject.compare_with_expression(expr3),0)
-        self.assertEqual(mobject.compare_with_expression(expr4),0)
-        self.assertEqual(mobject.compare_with_expression(expr5),0)
-        self.assertEqual(mobject.compare_with_expression(expr6),0)
-        self.assertEqual(mobject.compare_with_expression(expr7),0)
-        self.assertEqual(mobject.compare_with_expression(expr8),0)
-        self.assertEqual(mobject.compare_with_expression(expr9),1)
-        self.assertEqual(mobject.compare_with_expression(expr10),1)
-        self.assertEqual(mobject.compare_with_expression(expr11),0)
-        self.assertEqual(mobject.compare_with_expression(expr12),0)
+        self.assertEqual(mobject.compare_with_expression(expr1)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr8)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr9)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr10)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr11)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr12)['fraction_equal'],0)
 
         mobject = math_object(expr11)
-        self.assertEqual(mobject.compare_with_expression(expr1),0)
-        self.assertEqual(mobject.compare_with_expression(expr2),0)
-        self.assertEqual(mobject.compare_with_expression(expr3),0)
-        self.assertEqual(mobject.compare_with_expression(expr4),0)
-        self.assertEqual(mobject.compare_with_expression(expr5),0)
-        self.assertEqual(mobject.compare_with_expression(expr6),0)
-        self.assertEqual(mobject.compare_with_expression(expr7),0)
-        self.assertEqual(mobject.compare_with_expression(expr8),0)
-        self.assertEqual(mobject.compare_with_expression(expr9),0)
-        self.assertEqual(mobject.compare_with_expression(expr10),0)
-        self.assertEqual(mobject.compare_with_expression(expr11),1)
-        self.assertEqual(mobject.compare_with_expression(expr12),1)
+        self.assertEqual(mobject.compare_with_expression(expr1)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr8)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr9)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr10)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr11)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr12)['fraction_equal'],1)
 
 
     def test_line_equality(self):
@@ -439,11 +599,11 @@ class MathObjectTests(SimpleTestCase):
         expr4 = Line(Point(4,7), Point(1,1))
         expr5 = Line(Point(2,3), Point(3,4))
         mobject = math_object(expr1)
-        self.assertEqual(mobject.compare_with_expression(expr1),1)
-        self.assertEqual(mobject.compare_with_expression(expr2),1)
-        self.assertEqual(mobject.compare_with_expression(expr3),1)
-        self.assertEqual(mobject.compare_with_expression(expr4),1)
-        self.assertEqual(mobject.compare_with_expression(expr5),0)
+        self.assertEqual(mobject.compare_with_expression(expr1)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
 
     def test_evaluate_false(self):
         from mitesting.sympy_customized import parse_expr, EVALUATE_NONE, \
@@ -452,23 +612,24 @@ class MathObjectTests(SimpleTestCase):
         expr_evaluated = sympify(expr_string)
         expr_unevaluated = parse_expr(expr_string, evaluate=False)
         mobject = math_object(expr_unevaluated)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
-        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
 
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_NONE)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated),-1)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
         self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_NONE)
         
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_PARTIAL)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
-        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_PARTIAL)
 
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_FULL)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated),1)
-        self.assertEqual(six.text_type(mobject), latex(expr_evaluated))
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
         
 
@@ -479,8 +640,9 @@ class MathObjectTests(SimpleTestCase):
         expr = Derivative(x**2,x)
         expr2 = 2*x
         mobject = math_object(expr)
-        self.assertEqual(mobject.compare_with_expression(expr),1)
-        self.assertEqual(mobject.compare_with_expression(expr2),-1)
+        self.assertEqual(mobject.compare_with_expression(expr)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal_on_normalize'],1)
 
     def test_compare_with_sympy_expression(self):
         x=Symbol('x')

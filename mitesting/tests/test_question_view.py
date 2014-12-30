@@ -1420,6 +1420,123 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
 
+
+    def test_partial_correct_tuples(self):
+        expr=self.q.expression_set.create(
+            name="tuple", expression="a,b,c,d", 
+            expression_type = Expression.EXPRESSION)
+
+        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.save()
+        
+        self.new_answer(answer_code="ans", answer="tuple",
+                        match_partial_on_compare=True)
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type answers: ")
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifier] = "a, b, c,d"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+
+
+        answers["answer_" + answer_identifier] = "d, b, c"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+        self.assertTrue("partial (50%) credit" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+
+        expr.expression_type=Expression.UNORDERED_TUPLE
+        expr.save()
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 75% correct" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+        self.assertTrue("partial (75%) credit" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+
+    def test_sets(self):
+        expr=self.q.expression_set.create(
+            name="set", expression="a,b,c,d,a,c,a,a", 
+            expression_type = Expression.SET)
+
+        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.save()
+        
+        the_ans=self.new_answer(answer_code="ans", answer="set")
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type answers: ")
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifier] = "d, a, c, b"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+
+        
+        answers["answer_" + answer_identifier] = "a,b,c,d,a,c,a,a"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is incorrect" in
+                    results["answers"][answer_identifier]["answer_feedback"])
+
+        
+
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+        self.assertTrue("partial (50%) credit" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+
+
     def test_user_function(self):
         self.q.expression_set.create(
             name="f_x", expression="f(x)", 
