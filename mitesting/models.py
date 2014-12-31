@@ -737,10 +737,6 @@ class Expression(models.Model):
     expression = models.CharField(max_length=1000)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)
-    n_digits = models.IntegerField(blank=True, null=True,
-                                   verbose_name = "signif digits")
-    round_decimals = models.IntegerField(blank=True, null=True,
-                                         verbose_name = "round")
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
@@ -792,16 +788,8 @@ class Expression(models.Model):
         track of indices used for groups so that the same item number
         is chosen from each list in the group.
 
-        The following fields of Expression modify the returned result:
-        n_digits: on display or comparison with other expression,
-           round all numbers and number symbols in expression
-           to n_digits significant digits
-        round_decimals: on display or comparison with other expression,
-           round all numbers and number symbols in expression
-           to round_decimals digits to right of decimal or,
-           if negative, |round_digits| to left of decimal.
-           If round_decimals <=0, also convert to integer
-        evaluate_level: specify to what except the input is processed.
+        The evaluate_level field of Expression specifies to what except
+        the input is processed.
             Options are
             EVALUATE_NONE: expression is left as much as possible 
             in original form. Term and factors are reordered but not combined.
@@ -1179,8 +1167,6 @@ class Expression(models.Model):
             # return math_object of math_expr to context
             return math_object(
                 math_expr, 
-                n_digits=self.n_digits, 
-                round_decimals=self.round_decimals, 
                 evaluate_level = self.evaluate_level,
                 tuple_is_unordered=(self.expression_type==self.UNORDERED_TUPLE
                                     or self.expression_type==self.SET))

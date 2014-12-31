@@ -79,7 +79,7 @@ class AssessmentAdmin(reversion.VersionAdmin):
 class ExpressionInline(admin.TabularInline):
     model = Expression
     fields = ('name', 'expression_type', 'expression', 
-              'evaluate_level', 'n_digits', 'round_decimals', 
+              'evaluate_level', 
               'function_inputs', 'group', 'sort_order')
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -98,12 +98,6 @@ class ExpressionInline(admin.TabularInline):
             del field.widget.attrs['class']
         if db_field.name == 'sort_order':
             field.widget.attrs['size'] = 3
-        if db_field.name == 'n_digits':
-            field.widget.attrs['size'] = 3
-            del field.widget.attrs['class']
-        if db_field.name == 'round_decimals':
-            field.widget.attrs['size'] = 3
-            del field.widget.attrs['class']
         return field
 
 class PlotFunctionInline(admin.TabularInline):
