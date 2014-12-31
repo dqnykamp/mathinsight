@@ -1,9 +1,9 @@
-Django==1.6.5
+Django==1.6.8
 django-dajax==0.9.2
 django-haystack==2.1.0
-django-reversion==1.8.0
+django-reversion==1.8.5
 pyelasticsearch==0.6.1
 Pillow==2.4.0
-South==0.8.4
-sympy==0.7.5
+South==1.0
+sympy==0.7.6
 pyparsing==2.0.1
