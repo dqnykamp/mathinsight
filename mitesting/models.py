@@ -1188,17 +1188,6 @@ class Expression(models.Model):
             raise exc.__class__, "Error in expression: %s\n%s" \
                 % (self.name, exc), sys.exc_info()[2]
 
-class PlotFunction(models.Model):
-    function = models.SlugField(max_length=50)
-    figure = models.IntegerField()
-    question = models.ForeignKey(Question)
-    linestyle = models.CharField(max_length=10, blank=True, null=True)
-    linewidth = models.IntegerField(blank=True, null=True)
-    xmin = models.CharField(max_length=200, blank=True, null=True)
-    xmax = models.CharField(max_length=200, blank=True, null=True)
-    invert = models.BooleanField(default=False)
-    condition_to_show = models.CharField(max_length=200, blank=True, null=True)
-    
 
 class SympyCommandSet(models.Model):
     name = models.CharField(max_length=50, unique=True)

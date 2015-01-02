@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionAnswerOption, SympyCommandSet, PlotFunction, AssessmentBackgroundPage
+from mitesting.models import Question, Assessment,  QuestionAssigned, QuestionSetDetail, Expression, QuestionType, QuestionReferencePage, QuestionSubpart, QuestionAuthor, AssessmentType, QuestionAnswerOption, SympyCommandSet, AssessmentBackgroundPage
 from django.conf import settings
 import reversion
 
@@ -100,11 +100,6 @@ class ExpressionInline(admin.TabularInline):
             field.widget.attrs['size'] = 3
         return field
 
-class PlotFunctionInline(admin.TabularInline):
-    model = PlotFunction
-    formfield_overrides = {
-        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
-        }
 
 class QuestionSubpartInline(admin.StackedInline):
     model = QuestionSubpart
@@ -140,7 +135,7 @@ class QuestionAuthorInline(admin.TabularInline):
     model = QuestionAuthor
 
 class QuestionAdmin(reversion.VersionAdmin):
-    inlines = [QuestionSubpartInline,ExpressionInline, PlotFunctionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
+    inlines = [QuestionSubpartInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
     filter_horizontal = ['allowed_sympy_commands','allowed_user_sympy_commands',
                          'keywords','subjects']
     list_display = ("question_with_number","question_type", "computer_graded", "question_privacy", "solution_privacy")
