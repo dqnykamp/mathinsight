@@ -2,6 +2,12 @@
 {% load testing_tags %}
 
 {% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
 <div class="yma-grid">
   <div class="yma-g45 yma-gl">
     <div class="yma-gbox-left">

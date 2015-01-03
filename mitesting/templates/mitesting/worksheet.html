@@ -5,6 +5,12 @@
 
 
 {% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
 <h3>{{ assessment }}</h3>
 
 <section class="namesection"><div class="nameblank">{% if course %}{{ course }}<br/>{%endif%}

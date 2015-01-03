@@ -7,6 +7,12 @@
 {% block title %}{{ assessment_name }}{{ version_string }} - Math Insight{%endblock%}
 
 {% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
 
 <table class="examinfo"><tr><td>{{ course }}</td></tr>
 <tr><td>{{ assessment_name }}{{ version_string }}</td></tr>

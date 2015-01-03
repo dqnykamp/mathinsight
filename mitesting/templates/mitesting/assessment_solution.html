@@ -1,6 +1,12 @@
 {% extends "mitesting/assessment_base.html" %}{% load testing_tags %}
 
 {% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
 <h3>{{ assessment_name }}</h3>
 {% if course %}<h5>{{ course }}</h5>{%endif%}
 
