@@ -83,6 +83,8 @@
       event.preventDefault();
       post_form_{{question_data.identifier}}();
     });
+  {% else %}
+  jQuery( "#id_question_{{question_data.identifier}}").submit(false)
   {%endif%}  
   {% if question_data.auto_submit %}
   post_form_{{question_data.identifier}}();

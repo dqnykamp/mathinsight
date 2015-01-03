@@ -344,7 +344,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
         self.assertContains(response,"Invalid answer blank: fun_x")
-        self.assertFalse("computer_grade_data" in response.context["question_data"])
+        self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="fun_x", answer="fun_x")
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -1711,7 +1711,7 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer code: (function, abc)")
         self.assertNotContains(response, "Invalid answer blank")
-        self.assertFalse("computer_grade_data" in 
+        self.assertTrue("computer_grade_data" in 
                          response.context["question_data"])
 
         self.q.question_text="Type answer: {% answer function %}"
@@ -1720,13 +1720,13 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer code: (function, abc)")
         self.assertContains(response, "Invalid answer blank: function", count=2)
-        self.assertFalse("computer_grade_data" in response.context["question_data"])
+        self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="function", answer="fun_x")
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer code: (function, abc)")
         self.assertNotContains(response, "Invalid answer blank")
-        self.assertFalse("computer_grade_data" in response.context["question_data"])
+        self.assertTrue("computer_grade_data" in response.context["question_data"])
         
         bad_answer.delete()
         response = self.client.get("/assess/question/%s" % self.q.id)

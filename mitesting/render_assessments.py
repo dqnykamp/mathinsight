@@ -638,15 +638,16 @@ def render_question(question, rng, seed=None, solution=False,
         question_data['enable_solution_button'] = not question.computer_graded \
                         or  (question.show_solution_button_after_attempts == 0)
 
-    # if error or rendering a solution 
+    # if rendering a solution 
     # return without adding computer grading data
-    if not question_data['success'] or solution:
+    if solution:
         return question_data
     
     # if computer graded and answer data available,
-    # add submit button (unless auto_submit)
+    # add submit button (unless auto_submit or error)
     question_data['submit_button'] = question.computer_graded and\
-        answer_data['answer_info'] and (not auto_submit)
+        answer_data['answer_info'] and (not auto_submit) and\
+        question_data['success']
 
     # set up computer grade data to be sent back to server on submit
     # computer grade data contains
