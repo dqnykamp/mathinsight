@@ -126,13 +126,21 @@ def setup_expression_context(question, rng):
 
 def return_valid_answer_codes(question, expression_context): 
     """
-    Return a dictionary of all the valid answer codes from the answer options.
-    of question.  For an expression to valid, it must be in expression_context.
 
-    If an answer code appears multiple times, the last instances
+    Returns a tuple of two entries:
+
+    The first entry is a dictionary of all the valid answer codes 
+    from the answer options of question.  
+    The dictionary keys are the answer_codes and
+    the values are the answer_types.
+    In the case that the answer is a QuestionAnswerOption.EXPRESSION, 
+    it must be in expression_context.
+
+    The second entry is a list of expressions not found in expression context.
+
+    If an answer code appears multiple times, the last instance
     takes precedence.
 
-    Also, returns list of expressions not found in expression context
     """
     
     from mitesting.models import QuestionAnswerOption

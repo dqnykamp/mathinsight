@@ -1650,6 +1650,8 @@ class AppletNode(template.Node):
         #    answer_[object_name]=[answer_code]
         # 3. answer code must be a valid answer_code in answer_data
         # 4. the answer blank must not have been given a prefilled_answer
+        # If an applet object is a state variable, criteria 2 and 3
+        # are not required
 
         appletobjects = []
         if answer_data:
@@ -1677,27 +1679,40 @@ class AppletNode(template.Node):
             try:
                 answer_code =  kwargs_string[the_kw]
             except KeyError:
-                continue
+                # otherwise, check if object is a state variable
+                if appletobject.state_variable:
+                    answer_code=None
+                else:
+                    continue
 
-            # mark that found an changeable object for the_kw
-            del kwarg_answer_keys_not_matched[the_kw]
-                
-            # if answer_code is not a valid answer code
-            # skip this applet object but register error
-            try:
-                answer_type = answer_data['valid_answer_codes'][answer_code]
-            except KeyError:
-                answer_data['error']=True
-                answer_data['answer_errors'].append(\
-                    "Invalid answer code from applet: %s" % answer_code)
-                continue
+            if answer_code:
+            
+                # mark that found an changeable object for the_kw
+                del kwarg_answer_keys_not_matched[the_kw]
 
-            try:
-                points = float(kwargs['points_'+the_kw])
-            except:
-                points = 1
+                # if answer_code is not a valid answer code
+                # skip this applet object but register error
+                try:
+                    answer_type = answer_data['valid_answer_codes'][answer_code]
+                except KeyError:
+                    answer_data['error']=True
+                    answer_data['answer_errors'].append(\
+                        "Invalid answer code from applet: %s" % answer_code)
+                    continue
 
-            group = kwargs.get('group_'+the_kw)
+                try:
+                    points = float(kwargs['points_'+the_kw])
+                except:
+                    points = 1
+
+                group = kwargs.get('group_'+the_kw)
+
+            else:
+                # if only state variable and not in kwargs
+                answer_type=None
+                points=0
+                group=None
+
 
             answer_number = len(answer_data['answer_info'])+1
             answer_identifier = "%s_%s" % \
@@ -1725,14 +1740,14 @@ class AppletNode(template.Node):
             inputboxlist += '<input type="hidden" id="%s" maxlength="200" name="%s" size="20"%s />\n' % \
                 (inputbox_id, answer_field_name,  value_string)
 
-
-            if appletobject.category_for_capture != previous_category:
-                the_category = appletobject.category_for_capture
-                if the_category:
-                    inputboxlist += '<br/>%s:' % the_category
-                previous_category=the_category
-            inputboxlist += '<span id="%s__binary__feedback"></span>\n' % \
-                            answer_field_name
+            if answer_code: # if in kwargs, not just a state variable
+                if appletobject.category_for_capture != previous_category:
+                    the_category = appletobject.category_for_capture
+                    if the_category:
+                        inputboxlist += '<br/>%s:' % the_category
+                    previous_category=the_category
+                inputboxlist += '<span id="%s__binary__feedback"></span>\n' % \
+                                answer_field_name
 
             related_objects=[]
             if appletobject.related_objects:
@@ -1746,7 +1761,7 @@ class AppletNode(template.Node):
                         pass
 
             # capture value only if not prefilled_answers
-            if prefilled_answers_by_object.get(appletobject.pk) is None:
+            if appletobject.pk not in prefilled_answers_by_object:
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     capture_javascript += Geogebra_capture_object_javascript \
@@ -1777,11 +1792,9 @@ class AppletNode(template.Node):
                 prefilled_answers_by_object.get(appletobject.pk) 
             if the_prefilled_answer is not None:
                 # check if applet object is set to be captured
+                # or is a state variable
                 the_kw = "answer_%s" % appletobject.name
-                expression_for_object = kwargs.get(the_kw)
-                if expression_for_object is not None:
-                    expression_string =  kwargs_string.get(the_kw)
-
+                if the_kw in kwargs or appletobject.state_variable:
                     # target as it would have been in prefilled_answer
                     objectvalue = the_prefilled_answer
 

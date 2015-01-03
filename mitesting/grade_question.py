@@ -554,10 +554,16 @@ def grade_question(question, question_identifier, answer_info,
 
     # check correctness of each answer
     for answer_num in range(len(answer_info)):
+        answer_type = answer_info[answer_num]['type']
+
+        # if answer_type is None ignore
+        # (used for state variables from applets)
+        if answer_type is None:
+            continue
+
         user_response = answer_user_responses[answer_num]["answer"]
         answer_code = answer_info[answer_num]['code']
         answer_points= answer_info[answer_num]['points']
-        answer_type = answer_info[answer_num]['type']
         answer_identifier = answer_info[answer_num]['identifier']
         answer_group = answer_info[answer_num]['group']
         
