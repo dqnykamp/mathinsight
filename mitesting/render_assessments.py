@@ -24,7 +24,7 @@ def get_new_seed(rng):
     return str(rng.randint(0,1E8))
 
  
-def setup_expression_context(question, rng):
+def setup_expression_context(question, rng, seed=None):
     """
     Set up the question context by parsing all expressions for question.
     Returns context that contains all evaluated expressions 
@@ -33,8 +33,10 @@ def setup_expression_context(question, rng):
     Before evaluating expressions, initializes global dictionary
     with allowed sympy commands for the question.
 
-    Random expressions are based on state of random instance rng
-    Its state can be set via rng.seed(seed).
+    Random expressions are based on state of random instance rng set by seed.
+    If multiple attempts are required to meet all conditions,
+    new values of seed are randomly generated for each attempt.
+    The successful seed is returned.
 
     Return a dictionary with the following:
     - expression_context: a Context() with mappings from the expressions
@@ -44,8 +46,13 @@ def setup_expression_context(question, rng):
     - expression_error: dictionary of all error messages encountered
     - failed_conditions: True if failed conditions for all attempts
     - failed_condition_message: message of which expression last failed
+    - seed: seed used in last attempt to generate contenxt
     """
 
+    if seed is None:
+        seed=get_new_seed(rng)
+
+    rng.seed(seed)
 
     max_tries=500
     success=False
@@ -54,6 +61,11 @@ def setup_expression_context(question, rng):
     failed_condition_message=""
     failed_conditions=True
     for i in range(max_tries):
+
+        if i>0:
+            seed=get_new_seed(rng)
+            rng.seed(seed)
+
         expression_context = Context({})
         random_group_indices={}
         error_in_expressions = False
@@ -118,6 +130,7 @@ def setup_expression_context(question, rng):
         'sympy_global_dict': global_dict,
         'user_function_dict': user_function_dict,
         'expression_context': expression_context,
+        'seed': seed,
         }
 
 
@@ -485,7 +498,8 @@ def render_question(question, rng, seed=None, solution=False,
     rng.seed(seed)
 
     # first, setup context due to expressions from question
-    context_results = setup_expression_context(question, rng=rng)
+    context_results = setup_expression_context(question, rng=rng, seed=seed)
+    seed = context_results['seed']
 
     # if failed condition, then don't display the question
     # but instead give message that condition failed
@@ -497,7 +511,8 @@ def render_question(question, rng, seed=None, solution=False,
                 '<p>'+context_results['failed_condition_message']+'</p>'),
             'rendered_text': mark_safe(
                 "<p>Question cannot be displayed"
-                + " due to failed condition.</p>")
+                + " due to failed condition.</p>"),
+            'seed': seed,
         }
         return question_data
 
@@ -534,10 +549,10 @@ def render_question(question, rng, seed=None, solution=False,
     question_data = render_question_text(render_data, solution=solution)
 
     question_data.update({
-            'identifier': question_identifier,
-            'seed': seed,
-            'auto_submit': auto_submit,
-            })
+        'identifier': question_identifier,
+        'auto_submit': auto_submit,
+        'seed': seed,
+    })
 
     # if have prefilled answers, check to see that the number matches the
     # number of answer blanks (template tag already checked if
@@ -776,6 +791,9 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
                 applet_data=applet_data)
         
         question_dict['question_data']=question_data
+
+        # record actual seed used to generate question
+        question_dict['seed']=question_data['seed']
 
         # if have a latest attempt, look for maximum score on question_set
         current_score=None

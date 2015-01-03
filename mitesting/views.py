@@ -178,9 +178,8 @@ class GradeQuestionView(SingleObjectMixin, View):
         # use local random generator to make sure threadsafe
         import random
         rng=random.Random()
-        rng.seed(seed)
         from .render_assessments import setup_expression_context
-        context_results = setup_expression_context(question, rng=rng)
+        context_results = setup_expression_context(question, rng=rng, seed=seed)
 
         expr_context = context_results['expression_context']
 
