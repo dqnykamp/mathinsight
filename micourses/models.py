@@ -1172,7 +1172,7 @@ class StudentContentAttempt(models.Model):
          points = self.content.total_points()
          if score is None or points is None:
              return None
-         return int(score*100.0/points)
+         return int(round(score*100.0/points))
 
     def get_score(self, ignore_manual_score = False):
         # if a score is entered in, it overrides any question answers
@@ -1236,7 +1236,7 @@ class StudentContentAttempt(models.Model):
             else:
                 credit = question_answers.aggregate(credit=Max('credit'))['credit']
                 
-            return int(credit*100)
+            return int(round(credit*100))
         else:
             return 0
 
