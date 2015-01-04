@@ -38,7 +38,7 @@ Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due
   </form>
   {% else %}
   <form action="{{assessment.get_absolute_url}}" method="get">
-    <input type="hidden" name="seed" value="{{ assessment.get_new_seed }}">
+    <input type="hidden" name="seed" value="{{ new_seed }}">
     <input type="submit" value="Generate another sample of the questions" />
   </form>
   {%endif%}
