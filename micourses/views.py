@@ -378,8 +378,8 @@ class AssessmentAttempt(AssessmentAttempted):
         question_list = []
         for qd in rendered_question_list:
             question_dict={'points': qd['points'],
-                           'current_credit': qd['current_credit'],
-                           'current_score': qd['current_score'],
+                           'current_credit': qd['question_data']['current_credit'],
+                           'current_score': qd['question_data']['current_score'],
                            'direct_link':\
                                mark_safe('<a href="%s?seed=%s" class="assessment">try it</a>' \
                                              % (qd['question'].get_absolute_url(), qd['seed']))
@@ -450,8 +450,8 @@ class AssessmentAttemptQuestion(AssessmentAttempt):
         context['attempt'] = self.attempt
         context['attempt_number'] = self.attempt_number
         context['points'] = self.question_dict['points']
-        context['score'] = self. question_dict['current_score']
-        context['current_credit'] = self.question_dict['current_credit']
+        context['score'] = self. question_dict['question_data']['current_score']
+        context['current_credit'] = self.question_dict['question_data']['current_credit']
         context['question_number'] = self.question_number
 
         answer_list=[]

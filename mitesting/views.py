@@ -149,6 +149,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       including the current attempt
     - enable_solution_button: true if should enable the button to reveal
       the solution
+    - attempt_credit: fraction question is correct on this attempt
 
     If record_answers is set to true and user is logged in, then record
     users answers, associating answer with a course if associated with a course
@@ -344,6 +345,11 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         if current_attempt:
             feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
+
+            current_credit =current_attempt\
+                .get_percent_credit_question_set(question_set)
+            answer_results['current_credit']=current_credit
+
 
         answer_results['feedback'] += "<p>%s</p>" % feedback_message
         
@@ -614,8 +620,6 @@ class AssessmentView(DetailView):
 
         context['success'] = success
         
-        
-
         context['generate_assessment_link'] = False
         context['show_solution_link'] = False
         
@@ -642,6 +646,11 @@ class AssessmentView(DetailView):
         context['course'] = self.course
         context['course_thread_content'] = self.course_thread_content
         context['attempt_number'] = self.attempt_number
+
+        # add attempt url to rendered_list question_data
+        if self.course_thread_content:
+            for (ind,q) in enumerate(rendered_list):
+                q["question_data"]["attempt_url"] = reverse('mic-assessmentattemptquestion', kwargs={'pk': self.course_thread_content.id, 'attempt_number': self.attempt_number, 'question_number': ind+1} )
 
         # get list of the question numbers in assessment
         # if question_numbers specified in GET parameters

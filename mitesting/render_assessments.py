@@ -756,9 +756,11 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
       - seed: the seed to use to render the question
       - question_data: dictionary containing the information needed to
         display the question with question_body.html template.
-        This dictionary is what is returned by render_question.
-      - current_credit: the percent credit achieved in current attempt
-      - current_score: the score (points) achieved in the current attempt
+        This dictionary is what is returned by render_question, supplemented by
+        - points: copy of above points
+        - current_credit: the percent credit achieved in current attempt
+        - current_score: the score (points) achieved in the current attempt
+        - attempt_url: url to current attempt for the question
       - group: the group the question set belongs to
       - previous_same_group: true if the previous question if from the
         same question group as the current question
@@ -812,8 +814,11 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
         else:
             current_credit = None
 
-        question_dict['current_score']=current_score
-        question_dict['current_credit']=current_credit
+        # record information about score and points in question_data
+        # so is available in question_body.html template
+        question_data['points']=question_dict['points']
+        question_data['current_score']=current_score
+        question_data['current_credit']=current_credit
 
         try:
             question_group = assessment.questionsetdetail_set.get\

@@ -14,7 +14,8 @@
 
 <section class="quiz_main">
 {% for question in rendered_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">{% if question.points %}({{question.points}} point{{question.points|pluralize_float}}) {%endif%}{% question_body question.question_data %}</li>
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
+{% question_body question.question_data %}</li>
 {% endfor %}
 </ol>
 </section>
