@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import permission_required
 from mitesting.models import Assessment
 from mitesting.views import QuestionView, \
     GradeQuestionView, InjectQuestionSolutionView, \
-    AssessmentView
+    AssessmentView, GenerateNewAssessmentAttemptView
 from mitesting.permissions import user_can_administer_assessment_decorator
 
 class GenerateAssessmentView(DetailView):
@@ -49,6 +49,9 @@ urlpatterns = patterns(
         AssessmentView.as_view()),
     url(r'^(?P<assessment_code>\w+)/solution$',
         AssessmentView.as_view(solution=True), name='mit-assessmentsolution'),
+    url(r'^(?P<assessment_code>\w+)/generatenewattempt$', \
+        GenerateNewAssessmentAttemptView.as_view(), \
+        name='mit-generatenewassessmentattempt'),
     url(r'^(?P<assessment_code>\w+)/avoid$','assessment_avoid_question_view', name='mit-assessmentavoidquestion'),
     url(r'^(?P<slug>\w+)/generate$', GenerateAssessmentView.as_view(), name='mit-assessmentgenerate'),
     

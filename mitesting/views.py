@@ -679,20 +679,7 @@ class AssessmentView(DetailView):
         return self.render_to_response(context)
 
 
-    def post(self, request, *args, **kwargs):
-        """
-        Through post can generate new attempt.
-        Need to test and fix this.
-        """
-        self.object = self.get_object()
-        new_attempt = request.POST.get('new_attempt',False)
-        self.determine_seed_version(user=request.user,
-                                    new_attempt=new_attempt)
-        context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
-
-
-    def determine_seed_version(self, user, seed=None, new_attempt=False):
+    def determine_seed_version(self, user, seed=None):
         """
         
         Need to fix and test this.
@@ -744,28 +731,12 @@ class AssessmentView(DetailView):
                 self.attempt_number = attempts.count()
                 # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
 
-                if new_attempt:
-                    # if new_attempt, create another attempt
-                    self.attempt_number += 1
-                    self.version = str(self.attempt_number)
-                    if self.course_thread_content.individualize_by_student:
-                        self.version= "%s_%s" % (courseuser.user.username, 
-                                                 self.version)
-                    seed = "%s_%s_%s" % (self.course.code, self.object.id, 
-                                         self.version)
-
-                    try:
-                        self.current_attempt = \
-                            self.course_thread_content.studentcontentattempt_set\
-                            .create(student=courseuser, seed=seed)
-                    except IntegrityError:
-                        raise 
 
 
                 # if instructor and seed is set from GET/POST
                 # then use that seed and don't link to attempt
                 # (i.e., skip this processing)
-                elif not (courseuser.get_current_role() == 'I' and \
+                if not (courseuser.get_current_role() == 'I' and \
                           seed_from_get_post):
 
                     # else try to find latest attempt
@@ -795,6 +766,66 @@ class AssessmentView(DetailView):
                             .create(student=courseuser, seed=seed)
 
         self.seed=seed
+
+
+class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
+    """
+    Generate new assessment attempt then redirect to assessement view.
+    Must be a post.
+
+
+    """
+
+    model = Assessment
+    slug_url_kwarg = 'assessment_code'
+    slug_field = 'code'
+
+    def post(self, request, *args, **kwargs):
+        """
+        Through post can generate new attempt.
+        Need to test and fix this.
+        """
+        self.object = self.get_object()
+
+        # First determine if user is enrolled in an course
+        try:
+            courseuser = request.user.courseuser
+            course = courseuser.return_selected_course()
+        except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
+            # if not in course, just redirect to the assessment url
+            return HttpResponseRedirect(reverse('mit-assessment',
+                            kwargs={'assessment_code': self.object.code }))
+
+        assessment_content_type = ContentType.objects.get(model='assessment')
+
+        try:
+            # Find the course version of the specific assessment
+            course_thread_content=course.coursethreadcontent_set.get\
+                            (thread_content__object_id=self.object.id,\
+                        thread_content__content_type=assessment_content_type)
+        except ObjectDoesNotExist:
+            # if can't find, just redirect to the assessment url
+            return HttpResponseRedirect(reverse('mit-assessment',
+                            kwargs={'assessment_code': self.object.code }))
+
+
+        attempts = course_thread_content.studentcontentattempt_set\
+                                        .filter(student=courseuser) 
+
+        attempt_number = attempts.count()+1
+        version = str(attempt_number)
+        if course_thread_content.individualize_by_student:
+            version= "%s_%s" % (courseuser.user.username, 
+                                version)
+        seed = "%s_%s_%s" % (course.code, self.object.id, 
+                             version)
+
+        current_attempt = course_thread_content.studentcontentattempt_set\
+                                    .create(student=courseuser, seed=seed)
+
+        # redirect to assessment url
+        return HttpResponseRedirect(reverse('mit-assessment', kwargs={'assessment_code': self.object.code }))
+
 
 
 def assessment_avoid_question_view(request, assessment_code):
