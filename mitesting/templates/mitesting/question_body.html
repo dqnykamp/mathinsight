@@ -147,8 +147,8 @@
       jQuery("#id_question_{{question_data.identifier}} input:radio").parent().removeClass('highlight_answer');
       jQuery("#id_question_{{question_data.identifier}} input:checked").parent().addClass('highlight_answer');
 
-      jQuery('#{{question_data.identifier}}_credit_info').removeClass("hidden_feedback");
       if('current_credit' in data) {
+	  jQuery('#{{question_data.identifier}}_credit_info').removeClass("hidden_feedback");
 	  jQuery('#{{question_data.identifier}}_current_credit').html(Math.round(data['current_credit']));
 	  if(data['current_credit']==100) {
 	      jQuery('#{{question_data.identifier}}_complete_icon').removeClass("hidden_feedback");

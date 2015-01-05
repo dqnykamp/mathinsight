@@ -17,8 +17,10 @@ from sympy import Symbol, Function, Tuple
 from django.db.models import Max
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen
-
 import six
+import logging
+
+logger = logging.getLogger(__name__)
 
 @python_2_unicode_compatible
 class QuestionType(models.Model):

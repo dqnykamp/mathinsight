@@ -63,7 +63,7 @@ MathJax.Hub.Config({
 {% endif %}
 {% if question_numbers %}<p>Question numbers: {{ question_numbers }}</p>{% endif %}
 <p>{% if generate_assessment_link %}<a href="{% url 'mit-assessmentgenerate' assessment.code %}">Generate assessment</a><br/>
-Current seed: {{seed}}<br/>
+<small>Current seed: {{seed}}</small><br/>
 {%endif%}
 {% if show_solution_link %}<a href="{% url 'mit-assessmentsolution' assessment.code %}?{{request.GET.urlencode}}">View solution</a>{%endif%}</p>
 
