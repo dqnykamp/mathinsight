@@ -1649,7 +1649,6 @@ class AppletNode(template.Node):
         # 2. the applet tag must contain a kwargs of the form
         #    answer_[object_name]=[answer_code]
         # 3. answer code must be a valid answer_code in answer_data
-        # 4. the answer blank must not have been given a prefilled_answer
         # If an applet object is a state variable, criteria 2 and 3
         # are not required
 
@@ -1730,7 +1729,7 @@ class AppletNode(template.Node):
                 try:
                     the_answer_dict = prefilled_answers[answer_number-1]
                     if the_answer_dict["code"] == answer_code:
-                        value_string = 'value="%s"' % the_answer_dict["answer"]
+                        value_string = ' value="%s"' % the_answer_dict["answer"]
                         prefilled_answers_by_object[appletobject.pk] \
                             = the_answer_dict["answer"]
                 except (KeyError, IndexError, TypeError):
@@ -1760,13 +1759,11 @@ class AppletNode(template.Node):
                     except:
                         pass
 
-            # capture value only if not prefilled_answers
-            if appletobject.pk not in prefilled_answers_by_object:
-                if applet.applet_type.code == "Geogebra" \
-                        or applet.applet_type.code == "GeogebraWeb":
-                    capture_javascript += Geogebra_capture_object_javascript \
-                        (context, appletobject, applet_identifier, 
-                         inputbox_id, related_objects)
+            if applet.applet_type.code == "Geogebra" \
+                    or applet.applet_type.code == "GeogebraWeb":
+                capture_javascript += Geogebra_capture_object_javascript \
+                    (context, appletobject, applet_identifier, 
+                     inputbox_id, related_objects)
 
         # if there was a kwarg of form answer_xxxx that was not a
         # changeable object, register the error

@@ -11,6 +11,9 @@ import json
 import re
 import sys
 import six
+import logging
+
+logger = logging.getLogger(__name__)
 
 """
 Change to deal with:
@@ -557,11 +560,14 @@ def render_question(question, rng, seed=None, solution=False,
     # if have prefilled answers, check to see that the number matches the
     # number of answer blanks (template tag already checked if
     # the answer_codes matched for those answers that were found)
+    # If so, log warning but otherwise ignore.
     if prefilled_answers:
         if len(prefilled_answers) != len(answer_data["answer_info"]):
-            answer_data["error"]=True
-            answer_data["answer_errors"].append(
-                "Invalid number of previous answers")
+            message = "Invalid number of previous answers.\nQuestion: %s"\
+                      % question
+            if assessment:
+                message += "\nAssessment: %s" % assessment
+            logger.warning(message)
     
 
     # If render or expression error, combine all error messages
@@ -782,16 +788,30 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
 
         question = question_dict['question']
         question_set = question_dict['question_set']
+        prefilled_answers=None
+
+        # if have current attempt, load latest answers from that attempt
+        if current_attempt:
+            try:
+                latest_answers=current_attempt.questionstudentanswer_set.\
+                    filter(user=user, seed=question_dict["seed"]).latest()
+            except ObjectDoesNotExist:
+                latest_answers=None
+
+            if latest_answers:
+                import json
+                prefilled_answers = json.loads(latest_answers.answer)
 
         question_data = render_question(
             question, rng=rng, seed=question_dict["seed"],solution=solution,
-                question_identifier=identifier,
-                user=user, show_help=not solution,
-                assessment=assessment, question_set=question_set,
-                assessment_seed=seed, 
-                record_answers=True,
-                allow_solution_buttons=assessment.allow_solution_buttons,
-                applet_data=applet_data)
+            question_identifier=identifier,
+            user=user, show_help=not solution,
+            assessment=assessment, question_set=question_set,
+            assessment_seed=seed, 
+            record_answers=True,
+            allow_solution_buttons=assessment.allow_solution_buttons,
+            applet_data=applet_data,
+            prefilled_answers=prefilled_answers)
         
         question_dict['question_data']=question_data
 
