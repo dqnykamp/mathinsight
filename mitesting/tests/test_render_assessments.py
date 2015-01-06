@@ -1076,11 +1076,7 @@ class TestRenderQuestion(TestCase):
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
-        self.assertFalse(question_data['success'])
-        self.assertFalse("Invalid previous answer" in 
-                         question_data["error_message"])
-        self.assertTrue("Invalid number of previous answer" in 
-                        question_data["error_message"])
+        self.assertTrue(question_data['success'])
         
  
     def test_buttons(self):
