@@ -488,10 +488,22 @@ def try_normalize_expr(expr):
         else:
             return expr
 
+    def normalize_transformations(w):
+        # same as
+        #    lambda w: w.doit().expand().ratsimp().expand()
+        # except catch Polynomial error that could be triggered by ratsimp()
+        from sympy import PolynomialError
+        w=w.doit().expand()
+        try:
+            w=w.ratsimp().expand()
+        except PolynomialError:
+            pass
+        return w
+    
     from mitesting.sympy_customized import bottom_up
 
     # transformations to try to normalize
-    expr= bottom_up(expr, lambda w: w.doit().expand().ratsimp().expand())
+    expr= bottom_up(expr, normalize_transformations)
     # remove any cofficients of 1.0
     expr=bottom_up(expr, _remove_one_coefficient)
     

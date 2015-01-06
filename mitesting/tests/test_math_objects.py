@@ -688,3 +688,11 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(3)
         self.assertEqual(mobject,3)
         self.assertEqual(3,mobject)
+
+
+
+    def test_normalize_catch_polynomial_error(self):
+        from mitesting.customized_commands import iif
+        x = Symbol('x')
+        expr = iif(x>1,1,0)
+        self.assertEqual(expr,try_normalize_expr(expr))
