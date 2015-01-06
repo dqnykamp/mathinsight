@@ -16,6 +16,7 @@ import random
 
 EXPRESSION = QuestionAnswerOption.EXPRESSION
 MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
+FUNCTION = QuestionAnswerOption.FUNCTION
         
 class TestCompareResponse(TestCase):
     def setUp(self):
@@ -558,6 +559,113 @@ class TestCompareResponse(TestCase):
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
         self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+    def test_function(self):
+        from mitesting.utils import return_parsed_function
+        from mitesting.customized_commands import iif
+
+        global_dict={'if': iif}
+        expr_context=Context({'_sympy_global_dict_': global_dict })
+
+        answer_info={'code': 'a', 'type': FUNCTION}
+        f=return_parsed_function("x-1", function_inputs="x", name="f",
+                                 global_dict=global_dict)
+        expr_context["f"]=math_object(1)
+        global_dict["f"]=f
+
+        the_ans=self.new_answer(answer_code="a", answer="f",
+                                answer_type=FUNCTION)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="0", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="1", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="1.5", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("50%" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="2.8", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        f=return_parsed_function("if(x^2<1,0, if(x^2=1,1, 0.5))", 
+                                 function_inputs="x", name="f",
+                                 global_dict=global_dict)
+        global_dict["f"]=f
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="1-2", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="10", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("50%" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="0.5", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="x+a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, global_dict=global_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
 
 
 class TestQuestionGroups(TestCase):

@@ -412,7 +412,7 @@ class TestExpressions(TestCase):
         self.assertEqual(global_dict["quadratic"], a*z**2+b*z+c)
 
         expr2=self.new_expr(name="linear",expression="a*y-b", \
-                                expression_type=Expression.EXPRESSION)
+                                expression_type=Expression.GENERIC)
         linear=expr2.evaluate(rng=self.rng, global_dict=global_dict).return_expression()
         self.assertEqual(linear,a*y-b)
         self.assertEqual(global_dict["linear"], a*y-b)

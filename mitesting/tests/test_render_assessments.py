@@ -470,57 +470,115 @@ class TestAnswerCodes(TestCase):
 
         EXPRESSION = QuestionAnswerOption.EXPRESSION
         MULTIPLE_CHOICE = QuestionAnswerOption.MULTIPLE_CHOICE
+        FUNCTION = QuestionAnswerOption.FUNCTION
 
         self.assertEqual(return_valid_answer_codes(self.q, expr_context),
-                         ({},[]))
+                         ({},[],[]))
 
         self.new_answer(answer_code="h", answer="hh", answer_type=EXPRESSION)
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{})
-        self.assertTrue("Invalid answer code" in invalid_answers[0])
+        self.assertEqual(invalid_answers, [('h','hh')])
+        self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
         expr_context["h"]=1
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{})
-        self.assertTrue("Invalid answer code" in invalid_answers[0])
-
+        self.assertEqual(invalid_answers, [('h','hh')])
+        self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
         expr_context["hh"]=1
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": EXPRESSION })
         self.assertEqual(invalid_answers, [])
+        self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
         self.assertEqual(invalid_answers, [])
+        self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="m", answer="mm", answer_type=EXPRESSION)
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
-        self.assertTrue("Invalid answer code" in invalid_answers[0])
+        self.assertEqual(invalid_answers, [('m','mm')])
+        self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
         expr_context["mm"]=1
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes, 
                          {"m": EXPRESSION,"h": MULTIPLE_CHOICE})
         self.assertEqual(invalid_answers, [])
+        self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="n", answer="", answer_type=MULTIPLE_CHOICE)
-        (valid_answer_codes, invalid_answers) = \
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes, 
                          {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
                           'n': MULTIPLE_CHOICE })
         self.assertEqual(invalid_answers, [])
+        self.assertEqual(invalid_answer_messages, [])
 
+        self.new_answer(answer_code="p", answer="pp", answer_type=FUNCTION)
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(invalid_answers, [('p','pp')])
+        self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
+
+        expr_context["pp"]=1
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(invalid_answers, [('p','pp')])
+        self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
+
+        global_dict={}
+        expr_context["_sympy_global_dict_"]=global_dict
+        global_dict['pp']=sympify("x")
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(invalid_answers, [('p','pp')])
+        self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
+
+        global_dict={}
+        expr_context["_sympy_global_dict_"]=global_dict
+        global_dict['pp']=1
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(invalid_answers, [('p','pp')])
+        self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
+
+        from mitesting.utils import return_parsed_function
+        pp=return_parsed_function("x^2", function_inputs="x",
+                                  name="pp", global_dict=global_dict)
+        global_dict["pp"]=pp
+        (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
+            return_valid_answer_codes(self.q, expr_context)
+        self.assertEqual(valid_answer_codes, 
+                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
+                          'n': MULTIPLE_CHOICE, "p": FUNCTION, })
+        self.assertEqual(invalid_answers, [])
+        self.assertEqual(invalid_answer_messages, [])
 
 
 class TestRenderQuestionText(TestCase):
@@ -1127,10 +1185,10 @@ class TestRenderQuestion(TestCase):
         answer_identifier = "1_%s" % (identifier)
         self.q.expression_set.create(
             name="expr1", expression="n*x", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.q.expression_set.create(
             name="expr2", expression="n^2-x", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.q.questionansweroption_set.create(answer_code=answer_code,
                                                answer="expr1")
         self.q.questionansweroption_set.create(answer_code="another",

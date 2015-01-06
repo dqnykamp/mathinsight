@@ -424,7 +424,7 @@ class TestGradeQuestionView(TestCase):
         # add second possible correct answer
         self.q.expression_set.create(
             name="two_n", expression="2*n", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         ans2=self.new_answer(answer_code="ans", answer="two_n")
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -813,7 +813,7 @@ class TestGradeQuestionView(TestCase):
     def test_split_symbols_on_compare(self):
         self.q.expression_set.create(
             name="two_a_x", expression="2*a*x", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
         self.q.save()
@@ -981,7 +981,7 @@ class TestGradeQuestionView(TestCase):
             EVALUATE_FULL
         expr=self.q.expression_set.create(
             name="x_plus_x", expression="x+x", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.q.question_text="{% answer x_plus_x %}"
         self.q.save()
         self.new_answer(answer_code="x_plus_x", answer="x_plus_x")
@@ -1064,7 +1064,7 @@ class TestGradeQuestionView(TestCase):
             EVALUATE_FULL
         expr=self.q.expression_set.create(
             name="ans", expression="6x+9", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.q.question_text="{% answer ans %}"
         self.q.save()
         self.new_answer(answer_code="ans", answer="ans")
@@ -1147,7 +1147,7 @@ class TestGradeQuestionView(TestCase):
             EVALUATE_FULL
         expr=self.q.expression_set.create(
             name="deriv", expression="4x^3", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.q.question_text="{% answer deriv %}"
         self.q.save()
         self.new_answer(answer_code="deriv", answer="deriv")
@@ -1238,7 +1238,7 @@ class TestGradeQuestionView(TestCase):
     def test_normalize_on_compare(self):
         self.q.expression_set.create(
             name="product", expression="(x+a)(x-a)", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
         self.q.save()
@@ -1309,7 +1309,7 @@ class TestGradeQuestionView(TestCase):
     def test_near_match_partial_correct(self):
         self.q.expression_set.create(
             name="product", expression="(x+a)(x-a)x", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
@@ -1347,7 +1347,7 @@ class TestGradeQuestionView(TestCase):
 
         self.q.expression_set.create(
             name="product2", expression="(x+a)(x^2-a*x)", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
         self.new_answer(answer_code="ans", answer="product2",
                         normalize_on_compare = True, percent_correct=75)
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -1381,7 +1381,7 @@ class TestGradeQuestionView(TestCase):
     def test_near_match_partial_correct2(self):
         self.q.expression_set.create(
             name="product", expression="(x+a)(x-a)", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
@@ -1424,7 +1424,7 @@ class TestGradeQuestionView(TestCase):
     def test_partial_correct_tuples(self):
         expr=self.q.expression_set.create(
             name="tuple", expression="a,b,c,d", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
@@ -1540,7 +1540,7 @@ class TestGradeQuestionView(TestCase):
     def test_user_function(self):
         self.q.expression_set.create(
             name="f_x", expression="f(x)", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answers: {% answer ans %}"
         self.q.save()
@@ -1578,7 +1578,7 @@ class TestGradeQuestionView(TestCase):
 
         self.q.expression_set.create(
             name="exp_x", expression="exp(x)", 
-            expression_type = Expression.EXPRESSION)
+            expression_type = Expression.GENERIC)
 
         self.q.question_text="Type answer: {% answer exp_x %}"
         self.q.save()
@@ -1709,7 +1709,8 @@ class TestGradeQuestionView(TestCase):
         bad_answer=self.new_answer(answer_code="function", answer="abc")
 
         response = self.client.get("/assess/question/%s" % self.q.id)
-        self.assertContains(response, "Invalid answer code: (function, abc)")
+        self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
+        self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertNotContains(response, "Invalid answer blank")
         self.assertTrue("computer_grade_data" in 
                          response.context["question_data"])
@@ -1718,13 +1719,15 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
-        self.assertContains(response, "Invalid answer code: (function, abc)")
+        self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
+        self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertContains(response, "Invalid answer blank: function", count=2)
         self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="function", answer="fun_x")
         response = self.client.get("/assess/question/%s" % self.q.id)
-        self.assertContains(response, "Invalid answer code: (function, abc)")
+        self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
+        self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertNotContains(response, "Invalid answer blank")
         self.assertTrue("computer_grade_data" in response.context["question_data"])
         

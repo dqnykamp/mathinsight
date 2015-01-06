@@ -98,7 +98,6 @@ def setup_expression_context(question, rng, seed=None):
                     error_in_expressions = True
                     expression_error[expression.name] = six.text_type(exc)
                     expression_context[expression.name] = '??'
-
                 else:
                     # if random word, add singular and plural to context
                     if expression.expression_type == expression.RANDOM_WORD:
@@ -142,44 +141,68 @@ def setup_expression_context(question, rng, seed=None):
 
 def return_valid_answer_codes(question, expression_context): 
     """
+    For question and expression_content, determine valid answer codes 
+    and their answer types (where type is from last instance of answer code).
+    Also determine any invalid answer options
+    
+    Returns a tuple with the following three components:
 
-    Returns a tuple of two entries:
+    1. A dictionary of all the valid answer codes 
+       from the answer options of question.  
+       The dictionary keys are the answer_codes and
+       the values are the answer_types.
 
-    The first entry is a dictionary of all the valid answer codes 
-    from the answer options of question.  
-    The dictionary keys are the answer_codes and
-    the values are the answer_types.
-    In the case that the answer is a QuestionAnswerOption.EXPRESSION, 
-    it must be in expression_context.
+       In the case that the answer is a QuestionAnswerOption.EXPRESSION, 
+       it must be in expression_context.
+       In the case that the answer is a QuesitonAnswerOption.FUNCTION,
+       the answer in expression_context must be a Expression.FUNCTION
 
-    The second entry is a list of expressions not found in expression context.
+    2. A list of tuples (answer_codes, answer) from any invalid answer options
 
-    If an answer code appears multiple times, the last instance
-    takes precedence.
+    3. A list error messages for any invalid answer options
+ 
 
     """
     
-    from mitesting.models import QuestionAnswerOption
-
+    from mitesting.models import QuestionAnswerOption, Expression
+    from mitesting.utils import ParsedFunction
     valid_answer_codes = {}
     invalid_answers = []
+    invalid_answer_messages = []
     for option in question.questionansweroption_set.all():
 
-        if option.answer_type==QuestionAnswerOption.EXPRESSION and \
-                option.answer not in expression_context:
-            invalid_answers.append(
-                "(%s, %s)" % (option.answer_code, option.answer))
-        else:
+        answer_valid=True
+        if option.answer_type==QuestionAnswerOption.EXPRESSION:
+            if option.answer not in expression_context:
+                answer_valid=False
+                error_message =  "Invalid answer option of expression type with code <tt>%s</tt>: " % option.answer_code
+                error_message += "answer <tt>%s</tt> is not the name of an expression." % option.answer
+
+        elif option.answer_type==QuestionAnswerOption.FUNCTION:
+            try:
+                expression = expression_context['_sympy_global_dict_']\
+                             [option.answer]
+            except KeyError:
+                answer_valid=False
+                error_message =  "Invalid answer option of function type with code <tt>%s</tt>: " % option.answer_code
+                error_message += "answer <tt>%s</tt> is not the name of an expression." % option.answer
+            else:
+                try:
+                    is_function=issubclass(expression, ParsedFunction)
+                except TypeError:
+                    is_function=False
+                if not is_function:
+                    answer_valid=False
+                    error_message =  "Invalid answer option of function type with code <tt>%s</tt>: " % option.answer_code
+                    error_message += "expression <tt>%s</tt> is not a function." % option.answer
+           
+        if answer_valid:
             valid_answer_codes[option.answer_code] = option.answer_type
-
-    if invalid_answers:
-        if len(invalid_answers) > 1:
-            invalid_answers = ["Invalid answer codes: " + \
-                                   ", ".join(invalid_answers),]
         else:
-            invalid_answers = ["Invalid answer code: " +  invalid_answers[0],]
+            invalid_answers.append((option.answer_code, option.answer))
+            invalid_answer_messages.append(error_message)
 
-    return (valid_answer_codes, invalid_answers)
+    return (valid_answer_codes, invalid_answers, invalid_answer_messages)
 
 
 def render_question_text(render_data, solution=False):
@@ -533,8 +556,8 @@ def render_question(question, rng, seed=None, solution=False,
     # 1. possible answer_codes that are valid
     # 2. the answer_codes that actually appear in the question
     # 3. the multiple choices that actually appear in the question
-    (valid_answer_codes, invalid_answers) = return_valid_answer_codes(
-        question, render_data['expression_context'])
+    (valid_answer_codes, invalid_answers, invalid_answer_messages) =\
+        return_valid_answer_codes(question, render_data['expression_context'])
 
     answer_data = { 'valid_answer_codes': valid_answer_codes,
                     'answer_info': [],
@@ -543,7 +566,7 @@ def render_question(question, rng, seed=None, solution=False,
                     'prefilled_answers': prefilled_answers,
                     'readonly': readonly,
                     'error': bool(invalid_answers),
-                    'answer_errors': invalid_answers,
+                    'answer_errors': invalid_answer_messages,
                     'rng': rng
                     }
 

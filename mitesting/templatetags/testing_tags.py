@@ -601,7 +601,8 @@ class AnswerNode(template.Node):
         except (KeyError, IndexError, TypeError):
             pass
 
-        if answer_type == QuestionAnswerOption.EXPRESSION:
+        if answer_type == QuestionAnswerOption.EXPRESSION or \
+           answer_type == QuestionAnswerOption.FUNCTION:
 
             value_string = ''
             if given_answer is not None:

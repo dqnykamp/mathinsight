@@ -69,7 +69,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             pass
 
 
-    elif answer_type == QuestionAnswerOption.EXPRESSION:
+    elif answer_type == QuestionAnswerOption.EXPRESSION or \
+         answer_type == QuestionAnswerOption.FUNCTION:
 
         # get rid of any .methods, so can't call commands like
         # .expand() or .factor()
@@ -104,7 +105,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         
         answer_options=question.questionansweroption_set \
                 .filter(answer_code=answer_code, \
-                        answer_type=QuestionAnswerOption.EXPRESSION)
+                        answer_type=answer_type)
 
         if(len(answer_options)==0):
             logger.warning("Expression answer found with no matching options")
@@ -186,9 +187,41 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     user_response_string = "[error displaying answer]"
 
 
-            answer_results = \
-                user_response_parsed.compare_with_expression( \
-                valid_answer.return_expression())
+            if answer_type == QuestionAnswerOption.FUNCTION:
+                f=expr_context['_sympy_global_dict_'][answer_option.answer]
+                f_float=None
+                try:
+                    f=f(user_response_parsed)
+                except Exception as e:
+                    logger.warning("Exception raised when evaluating function for question answer option: %s" % e)
+                    fraction_equal=0
+                else:
+                    try:
+                        f_float = float(f)
+                    except TypeError:
+                        # try converting Eq and Ne to regular python functions
+                        # that demand exact equality of expressions
+                        from sympy import Eq, Ne
+                        f=f.replace(Eq, lambda x,y: x==y)
+                        f=f.replace(Ne, lambda x,y: x!=y)
+
+                        try:
+                            f_float = float(f)
+                        except TypeError as e:
+                            logger.warning("Exception raised when converting function to float for question answer option: %s" % e)
+                            fraction_equal=0
+                if f_float is not None:
+                    fraction_equal = max(0,min(1,f_float))
+
+                answer_results = {'fraction_equal': fraction_equal,
+                                  'fraction_equal_on_normalize': 0,
+                                  'round_level_used': 0,
+                                  'round_level_required': 0,
+                                  'round_absolute': False }
+            else:
+                answer_results = \
+                    user_response_parsed.compare_with_expression( \
+                                        valid_answer.return_expression())
             this_percent_correct = \
                 answer_option.percent_correct\
                 *answer_results['fraction_equal']
@@ -262,6 +295,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         if percent_correct < 100 and \
            near_match_percent_correct > percent_correct:
             feedback += near_match_feedback
+
 
 
     else:

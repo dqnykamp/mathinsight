@@ -276,9 +276,11 @@ class QuestionReferencePage(models.Model):
 class QuestionAnswerOption(models.Model):
     EXPRESSION = 0
     MULTIPLE_CHOICE = 1
+    FUNCTION = 2
     ANSWER_TYPE_CHOICES = (
         (EXPRESSION, "Expression"),
         (MULTIPLE_CHOICE, "Multiple Choice"),
+        (FUNCTION, "Function"),
         )
     question = models.ForeignKey(Question)
     answer_type = models.IntegerField(choices = ANSWER_TYPE_CHOICES,
@@ -690,7 +692,7 @@ class Expression(models.Model):
     FUNCTION_NAME = "FE"
     REAL_VARIABLE = "RV"
     CONDITION = "CN"
-    EXPRESSION = "EX"
+    GENERIC = "EX"
     UNORDERED_TUPLE = "UT"
     SORTED_TUPLE = "ST"
     RANDOM_ORDER_TUPLE = "RT"
@@ -698,7 +700,7 @@ class Expression(models.Model):
     SET = "SE"
     EXPRESSION_TYPES = (
         ('General', (
-            (EXPRESSION, "Expression"),
+            (GENERIC, "Generic"),
             (RANDOM_NUMBER, "Rand number"),
             (FUNCTION, "Function"),
             (FUNCTION_NAME, "Function name"),
@@ -735,7 +737,7 @@ class Expression(models.Model):
 
     name = models.SlugField(max_length=50)
     expression_type = models.CharField(
-        max_length=2, choices = EXPRESSION_TYPES, default=EXPRESSION)
+        max_length=2, choices = EXPRESSION_TYPES, default=GENERIC)
     expression = models.CharField(max_length=1000)
     evaluate_level = models.IntegerField(choices = EVALUATE_CHOICES,
                                          default = EVALUATE_FULL)
@@ -804,7 +806,7 @@ class Expression(models.Model):
             
         expression_type specific information
         ------------------------------------
-        EXPRESSION
+        GENERIC
         The generic expression form.  The expression field
         must be a mathematical expression.
 
@@ -864,7 +866,7 @@ class Expression(models.Model):
         The expression will be then viewed as a function of the
         function input symbol(s). 
         A math object containing the evaluated expression 
-        is returned, so it is displayed like a generic EXPRESSION.
+        is returned, so it is displayed like a GENERIC.
         However, a function with inpues given by function_inputs
         is added to global_dict.  In this way, when included in 
         subsequent expressions, the expression
@@ -874,7 +876,7 @@ class Expression(models.Model):
         without the arguments being supplied.)
 
         CONDITION
-        Parsed like a generic EXPRESSION.  If it does not evaluate
+        Parsed like a GENERIC.  If it does not evaluate
         to true, an Expression.FailedCondition exception is raised.
 
         UNORDERED_TUPLE
@@ -935,7 +937,7 @@ class Expression(models.Model):
                     group_index = None
 
                 # treat RANDOM_WORD as special case
-                # as it involves two output and hasn't been
+                # as it involves two outputs and hasn't been
                 # parsed by sympy
                 # Complete all processing and return
                 if self.expression_type == self.RANDOM_WORD:
