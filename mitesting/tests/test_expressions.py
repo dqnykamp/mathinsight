@@ -916,14 +916,14 @@ class TestRandomFromList(TestCase):
             global_dict = {}
             expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
                                 expression_type = Expression.RANDOM_WORD,
-                                group="g1")
+                                random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 global_dict=global_dict, 
                 random_group_indices=random_group_indices)[0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g1")
+                                random_list_group="g1")
             re1 = expr2.evaluate(rng=self.rng, 
                 global_dict=global_dict,
                 random_group_indices=random_group_indices).return_expression()
@@ -931,7 +931,7 @@ class TestRandomFromList(TestCase):
             expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
                                 expression_type =
                                 Expression.RANDOM_FUNCTION_NAME,
-                                group="g1")
+                                random_list_group="g1")
             rf1 = expr3.evaluate(rng=self.rng, 
                 global_dict=global_dict,
                 random_group_indices=random_group_indices).return_expression()
@@ -948,14 +948,14 @@ class TestRandomFromList(TestCase):
             global_dict = {}
             expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
                                 expression_type = Expression.RANDOM_WORD,
-                                group="g1")
+                                random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 global_dict=global_dict, 
                 random_group_indices=random_group_indices)[0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g2")
+                                random_list_group="g2")
             re1 = expr2.evaluate(rng=self.rng, 
                 global_dict=global_dict,
                 random_group_indices=random_group_indices).return_expression()
@@ -963,7 +963,7 @@ class TestRandomFromList(TestCase):
             expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
                                 expression_type =
                                 Expression.RANDOM_FUNCTION_NAME,
-                                group="g1")
+                                random_list_group="g1")
             rf1 = expr3.evaluate(rng=self.rng, 
                 global_dict=global_dict,
                 random_group_indices=random_group_indices).return_expression()
@@ -985,14 +985,14 @@ class TestRandomFromList(TestCase):
             global_dict = {}
             expr1=self.new_expr(name="rw1",expression="a,b,c",
                                 expression_type = Expression.RANDOM_WORD,
-                                group="g1")
+                                random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 global_dict=global_dict, 
                 random_group_indices=random_group_indices)[0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
-                                group="g1")
+                                random_list_group="g1")
             re1 = expr2.evaluate(rng=self.rng, 
                 global_dict=global_dict,
                 random_group_indices=random_group_indices).return_expression()
@@ -1003,13 +1003,13 @@ class TestRandomFromList(TestCase):
 
 
         with self.assertRaisesRegexp(IndexError, 
-                                     'Insufficient entries for group: g1'):
+                                     'Insufficient entries for random list group: g1'):
             for i in range(100):
                 random_group_indices = {}
                 global_dict = {}
                 expr1=self.new_expr(name="rw1",expression="a,b,c,d,e",
                                     expression_type = Expression.RANDOM_WORD,
-                                    group="g1")
+                                    random_list_group="g1")
                 rw1 = expr1.evaluate(rng=self.rng, 
                     global_dict=global_dict, 
                     random_group_indices=random_group_indices)[0]
@@ -1017,7 +1017,7 @@ class TestRandomFromList(TestCase):
                 expr2=self.new_expr(name="re1",expression="a,b, c",
                                     expression_type =
                                     Expression.RANDOM_EXPRESSION,
-                                    group="g1")
+                                    random_list_group="g1")
                 re1 = expr2.evaluate(rng=self.rng,  \
                     global_dict=global_dict, \
                         random_group_indices=random_group_indices) \

@@ -80,7 +80,7 @@ class ExpressionInline(admin.TabularInline):
     model = Expression
     fields = ('name', 'expression_type', 'expression', 
               'evaluate_level', 
-              'function_inputs', 'group', 'sort_order')
+              'function_inputs', 'random_list_group', 'sort_order')
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,
@@ -93,7 +93,7 @@ class ExpressionInline(admin.TabularInline):
         if db_field.name == 'function_inputs':
             field.widget.attrs['size'] = 5
             del field.widget.attrs['class']
-        if db_field.name == 'group':
+        if db_field.name == 'random_list_group':
             field.widget.attrs['size'] = 2
             del field.widget.attrs['class']
         if db_field.name == 'sort_order':

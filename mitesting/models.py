@@ -744,7 +744,7 @@ class Expression(models.Model):
     question = models.ForeignKey(Question)
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
-    group = models.CharField(max_length=50, blank=True, null=True)
+    random_list_group = models.CharField(max_length=50, blank=True, null=True)
     sort_order = models.FloatField(blank=True)
     class Meta:
         ordering = ['sort_order','id']
@@ -789,8 +789,8 @@ class Expression(models.Model):
         For entries selected randomly from lists,
         (RANDOM_WORD, RANDOM_EXPRESSION, RANDOM_FUNCTION_NAME),
         the dictionary random_group_indices is used to keep
-        track of indices used for groups so that the same item number
-        is chosen from each list in the group.
+        track of indices used for random_list_groups so that
+        the same item number is chosen from each list in the group.
 
         The evaluate_level field of Expression specifies to what except
         the input is processed.
@@ -922,15 +922,16 @@ class Expression(models.Model):
 
         try:
             # if randomly selecting from a list,
-            # determine if the index for the group was chosen already
+            # determine if the index for random_list_group was chosen already
             if self.expression_type in [self.RANDOM_WORD,
                                         self.RANDOM_EXPRESSION,
                                         self.RANDOM_FUNCTION_NAME,
                                         self.RANDOM_REAL_VARIABLE]:
                 
-                if self.group:
+                if self.random_list_group:
                     try:
-                        group_index = random_group_indices.get(self.group)
+                        group_index = random_group_indices.get(\
+                                                self.random_list_group)
                     except AttributeError:
                         group_index = None
                 else:
@@ -945,13 +946,14 @@ class Expression(models.Model):
                         result = return_random_word_and_plural( 
                             self.expression, index=group_index, rng=rng)
                     except IndexError:
-                        raise IndexError("Insufficient entries for group: " \
-                                             + self.group)
+                        raise IndexError("Insufficient entries for random list group: " \
+                                             + self.random_list_group)
 
-                    # record index chosen for group, if group exist
-                    if self.group:
+                    # record index chosen for random list group, if group exist
+                    if self.random_list_group:
                         try:
-                            random_group_indices[self.group]=result[2]
+                            random_group_indices[self.random_list_group]\
+                                =result[2]
                         except TypeError:
                             pass
 
@@ -971,8 +973,8 @@ class Expression(models.Model):
                         global_dict=global_dict,
                         evaluate_level = self.evaluate_level, rng=rng)
                 except IndexError:
-                    raise IndexError("Insufficient entries for group: " \
-                                             + self.group)
+                    raise IndexError("Insufficient entries for random list group: " \
+                                             + self.random_list_group)
 
                 if self.expression_type == self.RANDOM_FUNCTION_NAME:
 
@@ -1010,10 +1012,10 @@ class Expression(models.Model):
                         pass
                     
                             
-                # record index chosen for group, if group exist
-                if self.group:
+                # record index chosen for random list group, if group exist
+                if self.random_list_group:
                     try:
-                        random_group_indices[self.group]=index
+                        random_group_indices[self.random_list_group]=index
                     except TypeError:
                         pass
 
