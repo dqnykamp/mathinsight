@@ -448,3 +448,85 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
 
     return parse_and_process(expr_interval, global_dict=new_global_dict,
                              evaluate_level = evaluate_level)
+
+
+def replace_equals(s):
+    """
+    Replace = and != in s with symbols to be parsed by sympy
+
+    replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
+    then replace != (not !==) with __Ne__(lhs,rhs)
+
+    __Eq__ and __Ne__ must then be mapped to sympy Eq and Ne when parsing
+    
+    To find lhs and rhs, looks for unmatched parentheses 
+    or the presence of certain characters no in parentheses
+
+    Repeats the procedure until can't find more = or !=
+    or until lhs or rhs is blank
+
+    """
+
+    import re
+    break_chars=",&|!=<>" # character that signal end of expression if not in ()
+
+    for i in range(2):
+        if i==0:
+            pattern = re.compile('[^<>!=](=)[^=]')
+            len_op=1
+            new_op='__Eq__(%s,%s)'
+        else:
+            pattern = re.compile('[^<>!=](!=)[^=]')
+            len_op=2
+            new_op='__Ne__(%s,%s)'
+
+        while True:
+            mo= pattern.search(s)
+            if not mo:
+                break
+            ind = mo.start(0)+1
+
+            # find location of first ( before ind not matched by )
+            # or at a comma not enclosed in ()
+            n_closepar=0
+            begin_pos=0
+            for (j,c) in enumerate(s[ind-1::-1]):
+                if c==")":
+                    n_closepar+=1
+                elif c=="(":
+                    n_closepar-=1
+                    if n_closepar ==-1:
+                        begin_pos=ind-j
+                        break
+                elif c in break_chars and n_closepar==0:
+                    begin_pos=ind-j
+                    break
+
+            lhs = s[begin_pos:ind]
+            lhs =lhs.strip()
+
+            n_openpar=0
+            end_pos=len(s)
+            for (j,c) in enumerate(s[ind+len_op:]):
+                if c=="(":
+                    n_openpar+= 1
+                elif c==")":
+                    n_openpar-=1
+                    if n_openpar==-1:
+                        end_pos=ind+j+len_op
+                        break
+                elif c in break_chars and n_openpar==0:
+                    end_pos=ind+j+len_op
+                    break
+
+            rhs = s[ind+len_op:end_pos]
+            rhs = rhs.strip()
+
+            # stop if lhs or rhs are just spaces
+            if lhs=="" or rhs=="":
+                break
+            else:
+                s = s[:begin_pos] + (new_op % (lhs,rhs)) + s[end_pos:]
+
+    return s
+

@@ -156,6 +156,11 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr('if(4>3,x,y)', global_dict=sub_dict),x)
         self.assertEqual(parse_expr('if(-4>3,y,x^2)', 
                                     global_dict=sub_dict),x**2)
+        f = parse_expr('if(x=1,2,if(x>1,3,0))',global_dict=sub_dict)
+        self.assertEqual(f.subs(x,1),2)
+        self.assertEqual(f.subs(x,-1),0)
+        self.assertEqual(f.subs(x,2),3)
+        
 
     def test_no_evaluate(self):
         expr_no_evaluate = parse_expr("x + x - lambda + 2*lambda",
@@ -298,7 +303,7 @@ class ParseExprTests(SimpleTestCase):
         
 
     def test_relational(self):
-        from sympy import Symbol, Eq, Ne, Lt, Ge
+        from sympy import Symbol, Eq, Ne, Lt, Ge, Or, And
         
         x=Symbol('x')
         y=Symbol('y')
@@ -320,3 +325,9 @@ class ParseExprTests(SimpleTestCase):
 
         expr = parse_expr("x >= y")
         self.assertEqual(expr, Ge(x,y))
+
+        expr = parse_expr("x=y | x^2 != y")
+        self.assertEqual(expr,Or(Eq(x,y),Ne(x**2,y)))
+        
+        expr = parse_expr("(x=1)=(y=2)")
+        self.assertEqual(expr,Eq(Eq(x,1),Eq(y,2)))
