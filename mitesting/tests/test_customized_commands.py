@@ -382,3 +382,13 @@ class InlineIfTests(SimpleTestCase):
         x = Symbol('x')
         self.assertEqual(iif(((x+1)*(x-1)).expand() == x**2-1,
                               3*x, 1-x), 3*x)
+
+    def test_inline_if_function(self):
+        x=Symbol('x')
+        f = lambda x: iif(x < 1, 1-x, x**2+1)
+        self.assertEqual(f(0),1)
+        tenth=sympify('1/10')
+        self.assertEqual(f(9*tenth),tenth)
+        self.assertEqual(f(1),2)
+        self.assertEqual(f(2),5)
+        

@@ -221,14 +221,9 @@ def iif(cond, result_if_true, result_if_false):
     """
     Inline if statement
     """
-    try:
-        if(cond):
-            return result_if_true
-        else:
-            return result_if_false
-    except:
-        return ""
-      
+    from sympy import Piecewise
+    return Piecewise((result_if_true,cond),(result_if_false,True))
+
 
 def count(thelist, item):
     """
