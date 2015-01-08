@@ -80,7 +80,8 @@ def setup_expression_context(question, rng, seed=None):
         # Also adds standard symbols to dictionary.
         global_dict = question.return_sympy_global_dict()
         try:
-            for expression in question.expression_set.all():
+            for expression in question.expression_set\
+                                      .filter(post_user_response=False):
                 try:
                     expression_evaluated=expression.evaluate(
                         global_dict=global_dict, 
@@ -109,6 +110,25 @@ def setup_expression_context(question, rng, seed=None):
                         expression_context[expression.name] \
                             = expression_evaluated
 
+
+            for (i, expression) in enumerate(question.expression_set\
+                                      .filter(post_user_response=True)):
+                try:
+                    expression_evaluated=expression.evaluate(
+                        global_dict=global_dict, 
+                        user_function_dict=user_function_dict,
+                        random_group_indices=random_group_indices,
+                        rng=rng, post_user_number=i)
+
+                # record exception and allow to continue processing expressions
+                except Exception as exc:
+                    error_in_expressions = True
+                    expression_error[expression.name] = six.text_type(exc)
+                    expression_context[expression.name] = '??'
+                else:
+                    expression_context[expression.name] = expression_evaluated
+
+
             # if make it through all expressions without encountering
             # a failed condition, then record fact and
             # break out of loop
@@ -119,6 +139,7 @@ def setup_expression_context(question, rng, seed=None):
         # message in case it is final pass through loop
         except expression.FailedCondition as exc:
             failed_condition_message = exc.args[0]
+
 
     # add sympy global dictionary to expression context
     # so that expr template tag has access to it
@@ -592,6 +613,9 @@ def render_question(question, rng, seed=None, solution=False,
                 message += "\nAssessment: %s" % assessment
             logger.warning(message)
     
+
+    # determine if any answers are assigned to expressions
+
 
     # If render or expression error, combine all error messages
     # for display in question template.

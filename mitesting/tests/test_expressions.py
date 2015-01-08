@@ -1074,3 +1074,16 @@ class TestExpressionSortOrder(TestCase):
 
         e7 = q.expression_set.create(name="g", expression="g")
         self.assertEqual(e7.sort_order, 12)
+
+# add test with post user response
+
+
+"""
+post user response tests
+
+Test required condition is invalid
+
+Test that user response comes after others (maybe above instead?)
+
+
+"""

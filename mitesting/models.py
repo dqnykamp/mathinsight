@@ -745,9 +745,10 @@ class Expression(models.Model):
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
     random_list_group = models.CharField(max_length=50, blank=True, null=True)
+    post_user_response = models.BooleanField(default=False)
     sort_order = models.FloatField(blank=True)
     class Meta:
-        ordering = ['sort_order','id']
+        ordering = ['post_user_response','sort_order','id']
 
     class FailedCondition(Exception):
         pass
@@ -768,7 +769,8 @@ class Expression(models.Model):
 
 
     def evaluate(self, rng, global_dict=None, user_function_dict=None,
-                 random_group_indices=None):
+                 random_group_indices=None, process_post_user=False,
+                 post_user_number=None):
         """
         Return evaluated expression and add result to dicts.
         Add sympy version of result to global_dict with key self.name.
@@ -911,8 +913,7 @@ class Expression(models.Model):
 
 
         """
-
-    
+        
         from mitesting.utils import return_random_number_sample, \
             return_random_expression, return_random_word_and_plural, \
             return_parsed_function, return_interval_expression
@@ -920,7 +921,18 @@ class Expression(models.Model):
         from sympy.parsing.sympy_tokenize import TokenError
         from sympy.core.function import UndefinedFunction
 
+    
         try:
+            if self.post_user_response:
+                # cannot have a required condition as a post user reponse
+                if self.expression_type == self.CONDITION:
+                   raise ValueError("Cannot have a required condition be flagged as post user response")
+                if self.expression_type == self.RANDOM_WORD:
+                   raise ValueError("Cannot have a random word be flagged as post user response")
+                if not process_post_user:
+                    return math_object(0, deferred=True, name=self.name,
+                                       id="deferred_%s" % post_user_number)
+
             # if randomly selecting from a list,
             # determine if the index for random_list_group was chosen already
             if self.expression_type in [self.RANDOM_WORD,
@@ -1172,7 +1184,7 @@ class Expression(models.Model):
             # for all expression_types (except RANDOM WORD)
             # return math_object of math_expr to context
             return math_object(
-                math_expr, 
+                math_expr, name=self.name,
                 evaluate_level = self.evaluate_level,
                 tuple_is_unordered=(self.expression_type==self.UNORDERED_TUPLE
                                     or self.expression_type==self.SET))

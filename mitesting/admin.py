@@ -80,7 +80,8 @@ class ExpressionInline(admin.TabularInline):
     model = Expression
     fields = ('name', 'expression_type', 'expression', 
               'evaluate_level', 
-              'function_inputs', 'random_list_group', 'sort_order')
+              'function_inputs', 'random_list_group',
+              'post_user_response', 'sort_order')
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,

@@ -8,6 +8,7 @@ from sympy import Tuple, Symbol, sympify, Abs
 from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
+from django.utils.safestring import mark_safe
 
 @python_2_unicode_compatible
 class math_object(object):
@@ -217,6 +218,13 @@ class math_object(object):
         In addition, if expression is a LinearEntity, then display as equation
         of line set to zero.
         """
+
+        if self._parameters.get('deferred'):
+            output = "[to be determined]"
+            output = "<span class='math_object_%s'>%s</span>" % \
+                     (self._parameters.get('id'), output)
+            return mark_safe(output)
+
         from sympy.geometry.line import LinearEntity
         expression = self._expression
         symbol_name_dict = create_symbol_name_dict()
