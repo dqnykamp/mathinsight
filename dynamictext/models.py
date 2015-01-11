@@ -11,8 +11,6 @@ from django.utils.safestring import mark_safe
 from django.core.exceptions import ObjectDoesNotExist
 import pickle
 
-default_placeholder_text="[??]"
-
 @python_2_unicode_compatible
 class DynamicText(models.Model):
     contained_in_content_type = models.ForeignKey(ContentType)
@@ -29,27 +27,28 @@ class DynamicText(models.Model):
     def __str__(self):
         return  "%s in %s" % (self.number, self.contained_in_object)
 
-    def render(self, context=None, include_container=False,
-               placeholder_text=None):
-        if context:
-            nodelist=pickle.loads(self.nodelisttext)
-            content= nodelist.render(context)
-        else:
-            if placeholder_text is None:
-                content=default_placeholder_text
-            else:
-                content=placeholder_text
+    def render(self, context, include_container=False,
+               instance_identifier=""):
+        nodelist=pickle.loads(self.nodelisttext)
+        content= nodelist.render(context)
+
         if include_container:
-            content = "<span id='dt_%s_%s_%s'>%s</span>" % \
-                      (self.contained_in_content_type.pk,
-                       self.contained_in_object_id, self.number, content)
+            span_id="id_%s" % self.return_identifier(instance_identifier)
+            content = "<span id='%s'>%s</span>" % \
+                      (span_id, content)
             content=mark_safe(content)
         return content
 
-    def return_javascript_render_function(self, mathjax=False):
-        span_id = "dt_%s_%s_%s" % \
-                  (self.contained_in_content_type.pk,
-                   self.contained_in_object_id, self.number)
+    def return_identifier(self, instance_identifier=""):
+        return "dt_%s_%s_%s_%s" % \
+            (self.contained_in_content_type.pk,
+             self.contained_in_object_id, self.number,
+             instance_identifier)
+        
+
+    def return_javascript_render_function(self, mathjax=False, 
+                                          instance_identifier=""):
+        span_id = "id_%s" % self.return_identifier(instance_identifier)
         function_string='jQuery("#%s").html(html_string);' % span_id
         if mathjax:
             function_string+='MathJax.Hub.Queue(["Typeset",MathJax.Hub,"%s"]);'\
