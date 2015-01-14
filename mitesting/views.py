@@ -95,7 +95,8 @@ class QuestionView(DetailView):
             allow_solution_buttons=True,
             solution=self.solution,
             show_help = show_help,
-            applet_data=applet_data)
+            applet_data=applet_data,
+            show_post_user_errors=True)
 
         context['applet_data'] = applet_data
 
@@ -176,18 +177,7 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         # set up context from question expressions
         seed = computer_grade_data['seed']
-        # use local random generator to make sure threadsafe
-        import random
-        rng=random.Random()
-        from .render_assessments import setup_expression_context
-        context_results = setup_expression_context(question, rng=rng, seed=seed)
-
-        expr_context = context_results['expression_context']
-
-        function_dict = context_results['user_function_dict']
-        global_dict = question.return_sympy_global_dict(user_response=True)
-        global_dict.update(function_dict)
-
+        
         answer_info = computer_grade_data['answer_info']
         
         answer_user_responses = []
@@ -200,8 +190,10 @@ class GradeQuestionView(SingleObjectMixin, View):
                 response_data.get('answer_%s' % answer_identifier, "")})
         
         from .grade_question import grade_question
-        answer_results=grade_question(question, question_identifier, answer_info, 
-                                      answer_user_responses, expr_context, global_dict)
+        answer_results=grade_question(question=question,
+                question_identifier=question_identifier,
+                answer_info=answer_info, 
+                answer_user_responses=answer_user_responses, seed=seed)
             
         # determine if question is part of an assessment
         assessment_code = computer_grade_data.get('assessment_code')
@@ -590,12 +582,20 @@ class AssessmentView(DetailView):
         import random
         rng=random.Random()
 
+        # show post user response errors only if instructor permissions
+        if user_has_given_assessment_permission_level(
+                self.request.user, 2):
+            show_post_user_errors=True
+        else:
+            show_post_user_errors=False
+
         from .render_assessments import render_question_list, get_new_seed
         (rendered_list,self.seed)=render_question_list(
             self.object, rng=rng, seed=self.seed, user=self.request.user, 
             solution=self.solution,
             current_attempt=self.current_attempt,
-            applet_data = applet_data)
+            applet_data = applet_data,
+            show_post_user_errors=show_post_user_errors)
 
         # if question_only is set, then view only that question
         if self.kwargs.get('question_only'):

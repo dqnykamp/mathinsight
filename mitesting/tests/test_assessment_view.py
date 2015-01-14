@@ -530,6 +530,85 @@ class TestAssessmentView(TestCase):
         self.assertTemplateUsed(response, "mitesting/assessment_solution.html")
 
 
+    def test_errors(self):
+        self.q1.expression_set.create(name="xyz",expression="x*y*z")
+        self.q1.questionansweroption_set.create(answer_code="xyz", answer="xyz")
+        self.q1.question_text="{% answer xyz %}"
+        self.q1.computer_graded=True
+        self.q1.save()
+
+        self.asmt.fixed_order=True
+        self.asmt.save()
+
+        submit_button_html = '<input type="submit" id="question_qa0_submit" class="mi_answer_submit" value="Submit" >'
+
+        response = self.client.get("/assess/the_test")
+        self.assertContains(response, submit_button_html, html=True)
+        
+
+        top_error_base= '<section class="error"><h4>Errors encountered</h4><p>%s</p></section>'
+
+        self.q1.question_text="{% answer xyz %}{% badtag %}"
+        self.q1.save()
+
+        response = self.client.get("/assess/the_test")
+
+        self.assertNotContains(response, submit_button_html, html=True)
+
+        top_error_message="Errors occurred in the following questions: 1"
+        self.assertContains(response, top_error_base % top_error_message,
+                            html=True)
+        
+        error_message="<li>Error in question template: Invalid block tag: 'badtag'</li>"
+        self.assertContains(response, error_message, html=True)
+
+        
+        abc=self.q1.expression_set.create(name="abc", expression="(")
+        self.q1.question_text="{% answer xyz %}abc={{abc}}"
+        self.q1.save()
+        
+        response = self.client.get("/assess/the_test")
+   
+        self.assertContains(response, top_error_base % top_error_message,
+                            html=True)
+        
+        error_message = '<li>Error in expression: abc<br/>Invalid format for expression: (</li>'
+        self.assertContains(response, error_message, html=True)
+
+        self.assertNotContains(response, submit_button_html, html=True)
+
+        self.assertContains(response, 'abc=??')
+
+
+        # test if post_user_response errors occur only if user has
+        # instructor permissions
+        
+        abc.post_user_response=True
+        abc.save()
+        
+        response = self.client.get("/assess/the_test")
+   
+        self.assertNotContains(response, top_error_base % top_error_message,
+                               html=True)
+        self.assertNotContains(response, error_message, html=True)
+        self.assertContains(response, submit_button_html, html=True)
+        self.assertContains(response, 'abc=??')
+
+
+        u=User.objects.create_user("user1", password="pass")
+        self.client.login(username="user1",password="pass")
+        p=Permission.objects.get(codename = "administer_assessment")
+        u.user_permissions.add(p)
+
+        response = self.client.get("/assess/the_test")
+
+        self.assertNotContains(response, top_error_base % top_error_message,
+                            html=True)
+        self.assertContains(response, error_message, html=True)
+        self.assertContains(response, submit_button_html, html=True)
+        self.assertContains(response, 'abc=??')
+
+
 class TestAssessmentViewPermissions(TestCase):
 
     def setUp(self):

@@ -265,6 +265,49 @@ class TestQuestionView(TestCase):
             self.client.logout()
 
 
+    def test_errors(self):
+        self.q.expression_set.create(name="xyz",expression="x*y*z")
+        self.q.questionansweroption_set.create(answer_code="xyz", answer="xyz")
+        self.q.question_text="{% answer xyz %}"
+        self.q.computer_graded=True
+        self.q.save()
+
+        submit_button_html = '<input type="submit" id="question_qv_submit" class="mi_answer_submit" value="Submit" >'
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        self.assertContains(response, submit_button_html, html=True)
+        
+        self.q.question_text="{% answer xyz %}{% badtag %}"
+        self.q.save()
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        self.assertNotContains(response, submit_button_html, html=True)
+
+        error_message="<li>Error in question template: Invalid block tag: 'badtag'</li>"
+        self.assertContains(response, error_message, html=True)
+
+        abc=self.q.expression_set.create(name="abc", expression="(")
+        self.q.question_text="{% answer xyz %}abc={{abc}}"
+        self.q.save()
+        
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        
+        error_message = '<li>Error in expression: abc<br/>Invalid format for expression: (</li>'
+        self.assertContains(response, error_message, html=True)
+        self.assertNotContains(response, submit_button_html, html=True)
+        self.assertContains(response, 'abc=??')
+
+        abc.post_user_response=True
+        abc.save()
+        
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response, error_message, html=True)
+        self.assertContains(response, submit_button_html, html=True)
+        self.assertContains(response, 'abc=??')
+
+
 class TestGradeQuestionView(TestCase):
     def setUp(self):
         random.seed()
@@ -1862,6 +1905,130 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("partial (50%) credit" in
                         results["answers"][answer_identifier]["answer_feedback"])
 
+
+    def test_function_answer(self):
+        self.q.expression_set.create(name="crit",
+            expression="if(And(x > 0, x<10),1, if(Abs(x)<15, 0.5,0))", 
+            function_inputs="x",
+            expression_type = Expression.FUNCTION)
+        commands = SympyCommandSet.objects.create(
+                name = 'commands', commands='if, And, Abs')
+        self.q.allowed_sympy_commands.add(commands)
+        self.new_answer(answer_code="ans", answer="crit",
+                        answer_type=QuestionAnswerOption.FUNCTION)
+
+        self.q.question_text="Meet the criterion: {% answer ans %}"
+        self.q.save()
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: 9})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: 5})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: 10})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("not completely correct" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+        self.assertTrue("partial (50%) credit" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: -20})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
+
+
+    def test_post_user_response(self):
+        self.q.question_text="One thing: {% answer fun_x assign_to_expression='good_try' %}, then double it: {% answer double_me %}"
+        
+        self.new_answer(answer_code="fun_x", answer="fun_x")
+
+        self.q.expression_set.create(name="double_me",\
+                        expression="2*good_try", post_user_response=True)
+
+        self.new_answer(answer_code="double_me", answer="double_me")
+
+        self.q.save()
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
+
+        fun_x = response.context['fun_x']
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier1:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier2:
+                                   str(fun_x.return_expression()*2)})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier1]["answer_feedback"])
+
+        self.assertTrue("is correct" in results["answers"][answer_identifier2]["answer_feedback"])
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier1:
+                                   "3*x(y-z)",
+                                   "answer_%s" % answer_identifier2:
+                                   "6*x*(y-z)"})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 50% correct" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier1]["answer_feedback"])
+
+        self.assertTrue("is correct" in results["answers"][answer_identifier2]["answer_feedback"])
 
 
 class TestInjectQuestionSolutionView(TestCase):

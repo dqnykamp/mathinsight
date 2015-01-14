@@ -219,12 +219,6 @@ class math_object(object):
         of line set to zero.
         """
 
-        if self._parameters.get('deferred'):
-            output = "[to be determined]"
-            output = "<span class='math_object_%s'>%s</span>" % \
-                     (self._parameters.get('id'), output)
-            return mark_safe(output)
-
         from sympy.geometry.line import LinearEntity
         expression = self._expression
         symbol_name_dict = create_symbol_name_dict()

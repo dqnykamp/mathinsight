@@ -124,7 +124,10 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 continue
 
             # determine level of evaluation of answer_option
-            evaluate_level = valid_answer.return_evaluate_level()
+            try:
+                evaluate_level = valid_answer.return_evaluate_level()
+            except AttributeError:
+                continue
 
             # determine if have partial credit for less rounding
             round_partial_credit_digits=0
@@ -573,7 +576,33 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
 
 
 def grade_question(question, question_identifier, answer_info, 
-                   answer_user_responses, expr_context, global_dict):
+                   answer_user_responses, seed):
+
+    # use local random generator to make sure threadsafe
+    import random
+    rng=random.Random()
+
+    from .render_assessments import setup_expression_context
+
+    # first obtain context from just the normal expressions
+    context_results = setup_expression_context(question, rng=rng, seed=seed,
+                                    user_responses = answer_user_responses)
+    expr_context=context_results['expression_context']
+    user_function_dict = expr_context['_user_function_dict_']
+
+
+    # render any dynamic text from question
+    from dynamictext.models import DynamicText
+    num_dts = DynamicText.return_number_for_object(question)
+    dynamictext_html=[]
+    for i in range(num_dts):
+        dt = DynamicText.return_dynamictext(question,i)
+        rendered_text=dt.render(context=expr_context, 
+                                instance_identifier=question_identifier)
+        function_name = "%s_dynamictext_update" % \
+                        dt.return_identifier(question_identifier)
+        dynamictext_html.append((function_name,rendered_text))
+        
 
     points_achieved=0
     total_points=0
@@ -583,7 +612,7 @@ def grade_question(question, question_identifier, answer_info,
     answer_results['identifier']=question_identifier
     answer_results['feedback']=""
     answer_results['answers'] = {}
-
+    answer_results['dynamictext'] = dynamictext_html
     question_groups = {}
 
     # check correctness of each answer
@@ -610,7 +639,7 @@ def grade_question(question, question_identifier, answer_info,
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 global_dict=global_dict)
+                 global_dict=user_function_dict)
 
             points_achieved += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
@@ -629,9 +658,8 @@ def grade_question(question, question_identifier, answer_info,
             group_list=question_groups[group], 
             answer_user_responses=answer_user_responses,
             answer_info=answer_info, question=question,
-            expr_context=expr_context, global_dict=global_dict,
+            expr_context=expr_context, global_dict=user_function_dict,
             answer_results=answer_results)
-
 
         
     # record if exactly correct, then normalize points achieved

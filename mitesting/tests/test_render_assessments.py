@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
+from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
 from midocs.models import Page, Level
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list
 from mitesting.sympy_customized import SymbolCallable
@@ -35,14 +35,12 @@ class TestSetupExpressionContext(TestCase):
         rng = random.Random()
         rng.seed(0)
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
         self.assertEqual(expression_context['the_x'], Symbol('x'))
-        self.assertEqual(results['sympy_global_dict']['the_x'], Symbol('x'))
-        self.assertEqual(expression_context['_sympy_global_dict_'],
-                         results['sympy_global_dict'])
+        self.assertEqual(expression_context['_sympy_global_dict_']['the_x'], Symbol('x'))
 
     def test_with_composed_expressions(self):
         self.new_expr(name="expr",expression="x*x")
@@ -52,7 +50,7 @@ class TestSetupExpressionContext(TestCase):
         rng = random.Random()
         rng.seed(1)
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
@@ -62,9 +60,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expression_context['expr'], x**2)
         self.assertEqual(expression_context['expr2'], x**2/y)
         self.assertEqual(expression_context['expr3'], 5*x**2/y + x**2*z)
-        self.assertEqual(results['sympy_global_dict']['expr'], x**2)
-        self.assertEqual(results['sympy_global_dict']['expr2'], x**2/y)
-        self.assertEqual(results['sympy_global_dict']['expr3'],
+        self.assertEqual(expression_context['_sympy_global_dict_']['expr'], x**2)
+        self.assertEqual(expression_context['_sympy_global_dict_']['expr2'], x**2/y)
+        self.assertEqual(expression_context['_sympy_global_dict_']['expr3'],
                          5*x**2/y + x**2*z)
 
  
@@ -76,7 +74,7 @@ class TestSetupExpressionContext(TestCase):
         rng = random.Random()
         rng.seed(2)
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
@@ -85,8 +83,8 @@ class TestSetupExpressionContext(TestCase):
         z=Symbol('z')
         self.assertEqual(expression_context['a'], x+y)
         self.assertEqual(expression_context['b'], 3*z/y)
-        self.assertEqual(results['sympy_global_dict']['a'], x+y)
-        self.assertEqual(results['sympy_global_dict']['b'], 3*z/y)
+        self.assertEqual(expression_context['_sympy_global_dict_']['a'], x+y)
+        self.assertEqual(expression_context['_sympy_global_dict_']['b'], 3*z/y)
 
 
     def test_with_function_names(self):
@@ -99,7 +97,7 @@ class TestSetupExpressionContext(TestCase):
 
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng)
-            self.assertTrue(results['user_function_dict'] in  \
+            self.assertTrue(results['expression_context']['_user_function_dict_'] in  \
                                 [{item: SymbolCallable(str(item))} for item in \
                                      ['f','g','h','k']])
             self.assertFalse(results['failed_conditions'])
@@ -110,8 +108,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(f in [SymbolCallable(str(item)) for item in \
                                       ['f','g','h','k']])
             self.assertEqual(expression_context['a'], 3*f(x)+2)
-            self.assertEqual(results['sympy_global_dict']['f'], f)
-            self.assertEqual(results['sympy_global_dict']['a'], 3*f(x)+2)
+            self.assertEqual(expression_context['_sympy_global_dict_']['f'], f)
+            self.assertEqual(expression_context['_sympy_global_dict_']['a'], 3*f(x)+2)
 
     
     def test_conditions(self):
@@ -131,7 +129,7 @@ class TestSetupExpressionContext(TestCase):
 
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng)
-            self.assertEqual(results['user_function_dict'], {})
+            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -143,8 +141,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(n != 0)
             self.assertTrue(m in range(-4, 5))
             self.assertTrue(n in range(-4, 5))
-            self.assertEqual(results['sympy_global_dict']['m'], m)
-            self.assertEqual(results['sympy_global_dict']['n'], n)
+            self.assertEqual(expression_context['_sympy_global_dict_']['m'], m)
+            self.assertEqual(expression_context['_sympy_global_dict_']['n'], n)
 
     def test_fail_conditions(self):
         self.new_expr(name="n", expression="(-4,4)", 
@@ -156,7 +154,7 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
 
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertTrue(results['failed_conditions'])
         self.assertEqual("Condition n_greater_than_4 was not met",
                          results['failed_condition_message'])
@@ -164,7 +162,7 @@ class TestSetupExpressionContext(TestCase):
         expression_context = results['expression_context']
         n = expression_context['n'].return_expression()
         self.assertTrue(n in range(-4, 5))
-        self.assertEqual(results['sympy_global_dict']['n'], n)
+        self.assertEqual(expression_context['_sympy_global_dict_']['n'], n)
 
 
     def test_repeatable_results(self):
@@ -189,7 +187,7 @@ class TestSetupExpressionContext(TestCase):
             seed=get_new_seed(rng=rng)
             rng.seed(seed)
             results=setup_expression_context(self.q, rng=rng)
-            self.assertEqual(results['user_function_dict'], {})
+            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -209,7 +207,7 @@ class TestSetupExpressionContext(TestCase):
             #try again with same seed
             rng.seed(seed)
             results=setup_expression_context(self.q, rng=rng)
-            self.assertEqual(results['user_function_dict'], {})
+            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -225,13 +223,30 @@ class TestSetupExpressionContext(TestCase):
 
         self.new_expr(name="x", expression="(")
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
         self.assertTrue("Error in expression: x" in expression_error['x'])
         self.assertEqual("??", results['expression_context']['x'])
-        self.assertEqual(Symbol("??"), results['sympy_global_dict']['x'])
+        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_global_dict_']['x'])
+
+    def test_with_error_post_user(self):
+        rng = random.Random()
+        rng.seed()
+
+        self.new_expr(name="x", expression="(", post_user_response=True)
+        results=setup_expression_context(self.q, rng=rng)
+        self.assertFalse(results['failed_conditions'])
+        self.assertFalse(results['error_in_expressions'])
+        self.assertTrue(results['error_in_expressions_post_user'])
+        self.assertEqual(results['expression_error'],{})
+        expression_error = results['expression_error_post_user']
+        self.assertTrue("Error in expression: x" in expression_error['x'])
+        self.assertEqual("??", results['expression_context']['x'])
+        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_global_dict_']['x'])
+
+
 
     def test_with_multiple_errors(self):
         self.new_expr(name="e1", expression="3*x^2/z")
@@ -243,7 +258,7 @@ class TestSetupExpressionContext(TestCase):
         rng = random.Random()
         rng.seed()
         results=setup_expression_context(self.q, rng=rng)
-        self.assertEqual(results['user_function_dict'], {})
+        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
@@ -261,9 +276,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expr_context['e3'], q*3*x**2/z+z)
         self.assertEqual(expr_context['e4'], "??")
         self.assertEqual(expr_context['e5'],q/(3*x**2/z)+(q*3*x**2/z+z)/q)
-        self.assertEqual(Symbol("??"), results['sympy_global_dict']['e2'])
-        self.assertEqual(Symbol("??"), results['sympy_global_dict']['e2'])
-        self.assertEqual(Symbol("??"), results['sympy_global_dict']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
 
 
     def add_allowed_sympy_commands_sets(self, command_sets, 
@@ -336,72 +351,76 @@ class TestSetupExpressionContext(TestCase):
         rng = random.Random()
         rng.seed()
         results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
+
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
-                         results['expression_context']["sincos"])
+                         expression_context["sincos"])
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
-                         results['sympy_global_dict']["sincos"])
+                         expression_context['_sympy_global_dict_']["sincos"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         results['expression_context']["explog1"])
+                         expression_context["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         results['sympy_global_dict']["explog1"])
+                         expression_context['_sympy_global_dict_']["explog1"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         results['expression_context']["explog2"])
+                         expression_context["explog2"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         results['sympy_global_dict']["explog2"])
+                         expression_context['_sympy_global_dict_']["explog2"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         results['expression_context']["expln1"])
+                         expression_context["expln1"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         results['sympy_global_dict']["expln1"])
+                         expression_context['_sympy_global_dict_']["expln1"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         results['expression_context']["expln2"])
+                         expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         results['sympy_global_dict']["expln2"])
+                         expression_context['_sympy_global_dict_']["expln2"])
 
         self.add_allowed_sympy_commands_sets(['trig'])
         results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
         self.assertEqual(sin(x)*cos(x),
-                         results['expression_context']["sincos"])
+                         expression_context["sincos"])
         self.assertEqual(sin(x)*cos(x),
-                         results['sympy_global_dict']["sincos"])
+                         expression_context['_sympy_global_dict_']["sincos"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         results['expression_context']["explog1"])
+                         expression_context["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         results['sympy_global_dict']["explog1"])
+                         expression_context['_sympy_global_dict_']["explog1"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         results['expression_context']["explog2"])
+                         expression_context["explog2"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         results['sympy_global_dict']["explog2"])
+                         expression_context['_sympy_global_dict_']["explog2"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         results['expression_context']["expln1"])
+                         expression_context["expln1"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         results['sympy_global_dict']["expln1"])
+                         expression_context['_sympy_global_dict_']["expln1"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         results['expression_context']["expln2"])
+                         expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         results['sympy_global_dict']["expln2"])
+                         expression_context['_sympy_global_dict_']["expln2"])
        
         self.add_allowed_sympy_commands_sets(['explog'])
         results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
         self.assertEqual(sin(x)*cos(x),
-                         results['expression_context']["sincos"])
+                         expression_context["sincos"])
         self.assertEqual(sin(x)*cos(x),
-                         results['sympy_global_dict']["sincos"])
+                         expression_context['_sympy_global_dict_']["sincos"])
         self.assertEqual(exp(x)*log(x),
-                         results['expression_context']["explog1"])
+                         expression_context["explog1"])
         self.assertEqual(exp(x)*log(x),
-                         results['sympy_global_dict']["explog1"])
+                         expression_context['_sympy_global_dict_']["explog1"])
         self.assertEqual(exp(x)*log(x),
-                         results['expression_context']["explog2"])
+                         expression_context["explog2"])
         self.assertEqual(exp(x)*log(x),
-                         results['sympy_global_dict']["explog2"])
+                         expression_context['_sympy_global_dict_']["explog2"])
         self.assertEqual(exp(x)*ln(x),
-                         results['expression_context']["expln1"])
+                         expression_context["expln1"])
         self.assertEqual(exp(x)*ln(x),
-                         results['sympy_global_dict']["expln1"])
+                         expression_context['_sympy_global_dict_']["expln1"])
         self.assertEqual(exp(x)*ln(x),
-                         results['expression_context']["expln2"])
+                         expression_context["expln2"])
         self.assertEqual(exp(x)*ln(x),
-                         results['sympy_global_dict']["expln2"])
+                         expression_context['_sympy_global_dict_']["expln2"])
 
         
     
@@ -450,6 +469,177 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expression_context['f_1'], x**2+1)
     
 
+class TestSetupExpressionContextUserResponse(TestCase):
+    def setUp(self):
+        random.seed()
+        qt = QuestionType.objects.create(name="question type")
+        self.q  = Question.objects.create(
+            name="fun question",
+            question_type = qt,
+            question_privacy = 2,
+            solution_privacy = 2,
+            )
+            
+    def new_expr(self, **kwargs):
+        return Expression.objects.create(question=self.q, **kwargs)
+
+    def new_expr_from_answer(self, **kwargs):
+        return ExpressionFromAnswer.objects.create(question=self.q, **kwargs)
+    
+    def test_expressions_from_answers(self):
+        self.new_expr(name="a",expression="y+x^2")
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                                  answer_number=1)
+        self.new_expr(name="c",expression="b+y", post_user_response=True)
+        self.new_expr(name="d",expression="b+y")
+
+        user_responses=[]
+        user_responses.append({'identifier': 0,
+                              'code': "borig",
+                              'answer': "x+1" })
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        x=Symbol('x')
+        y=Symbol('y')
+        b=Symbol('b')
+        
+        from sympy import Add
+        self.assertEqual(expression_context['a'], y+x**2)
+        self.assertEqual(expression_context['b'], Add(x,1,evaluate=False))
+        self.assertEqual(expression_context['c'], x+y+1)
+        self.assertEqual(expression_context['d'], y+b)
+
+        
+    def test_use_user_function_dict_not_global(self):
+        self.new_expr(name="a",expression="y+x^2")
+        self.new_expr(name="f",expression="g", 
+                      expression_type = Expression.FUNCTION_NAME)
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                                  answer_number=1)
+        self.new_expr_from_answer(name="c", answer_code="corig",
+                                  answer_number=2)
+
+        user_responses=[]
+        user_responses.append({'identifier': 0,
+                              'code': "borig",
+                              'answer': "a" })
+        user_responses.append({'identifier': 0,
+                              'code': "corig",
+                              'answer': "g" })
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('a'))
+        self.assertEqual(expression_context['c'], SymbolCallable('g'))
+
+
+    def test_no_response(self):
+        self.new_expr(name="a",expression="y+x^2")
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                                  answer_number=1)
+
+        user_responses=[]
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('[?]'))
+
+
+    def test_invalid_response(self):
+        self.new_expr(name="a",expression="y+x^2")
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                                  answer_number=1)
+
+        user_responses=[]
+        user_responses.append({'identifier': 0,
+                              'code': "borig",
+                              'answer': ")" })
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('[?]'))
+
+  
+    def test_multiple_choice(self):
+        import pickle
+        answer_dict = {123: 'hello', 456: 'bye', 921: 'later'}
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                        answer_number=1, answer_data=pickle.dumps(answer_dict),
+                        answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
+
+        user_responses=[]
+        user_responses.append({'identifier': 0,
+                              'code': "borig",
+                              'answer': "456" })
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('bye'))
+
+        user_responses[0]={'identifier': 0,
+                           'code': "borig",
+                           'answer': "1" }
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('[?]'))
+
+        user_responses[0]={'identifier': 0,
+                           'code': "borig",
+                           'answer': "x" }
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['b'], Symbol('[?]'))
+
+    def test_undefined_user_response(self):
+        self.new_expr_from_answer(name="b", answer_code="borig",
+                                  answer_number=1)
+        self.new_expr(name="c",expression="b==_undefined_",
+                      post_user_response=True)
+
+        user_responses=[]
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['c'], True)
+        
+
+        user_responses.append({'identifier': 0,
+                              'code': "borig",
+                              'answer': "x+1" })
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng,
+                                         user_responses=user_responses)
+        expression_context = results['expression_context']
+        self.assertEqual(expression_context['c'], False)
+
+        
+
 class TestAnswerCodes(TestCase):
     def setUp(self):
         random.seed()
@@ -492,21 +682,21 @@ class TestAnswerCodes(TestCase):
         expr_context["hh"]=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": EXPRESSION })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="m", answer="mm", answer_type=EXPRESSION)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": MULTIPLE_CHOICE})
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('m','mm')])
         self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
@@ -514,35 +704,28 @@ class TestAnswerCodes(TestCase):
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE})
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="n", answer="", answer_type=MULTIPLE_CHOICE)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="p", answer="pp", answer_type=FUNCTION)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
         expr_context["pp"]=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -551,9 +734,7 @@ class TestAnswerCodes(TestCase):
         global_dict['pp']=sympify("x")
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -562,9 +743,7 @@ class TestAnswerCodes(TestCase):
         global_dict['pp']=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -574,9 +753,7 @@ class TestAnswerCodes(TestCase):
         global_dict["pp"]=pp
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes, 
-                         {"m": EXPRESSION,"h": MULTIPLE_CHOICE,
-                          'n': MULTIPLE_CHOICE, "p": FUNCTION, })
+        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, 'p': {'answer_type': FUNCTION, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
@@ -1119,8 +1296,7 @@ class TestRenderQuestion(TestCase):
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)
-        self.assertFalse(question_data['success'])
-        self.assertTrue("Invalid previous answer" in question_data["error_message"])
+        self.assertTrue(question_data['success'])
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
@@ -1216,7 +1392,8 @@ class TestRenderQuestion(TestCase):
                          [{'identifier': answer_identifier,
                            'code': answer_code, 'points': 1, 
                            'type': QuestionAnswerOption.EXPRESSION,
-                           'group': None}])
+                           'group': None, 'assign_to_expression': None,
+                           'prefilled_answer': None}])
 
         question_data=render_question(self.q, rng=self.rng,
                                       record_answers=False,
@@ -1272,6 +1449,133 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd['assessment_seed'], assessment_seed)
         self.assertEqual(cgd['question_set'], question_set)
 
+
+    def test_errors(self):
+        self.q.expression_set.create(
+            name="n", expression=")", 
+            post_user_response=True)
+
+        question_data=render_question(self.q, rng=self.rng)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["error_message"],"")
+        
+        question_data=render_question(self.q, rng=self.rng,
+                                      show_post_user_errors=False)
+        self.assertTrue(question_data["success"])
+        self.assertEqual(question_data["error_message"],"")
+        
+        question_data=render_question(self.q, rng=self.rng, 
+                                      show_post_user_errors=True)
+        self.assertTrue(question_data["success"])
+        self.assertTrue("Error in expression" in question_data["error_message"])
+
+        self.q.expression_set.create(name="m", expression=")")
+
+        question_data=render_question(self.q, rng=self.rng)
+        self.assertFalse(question_data["success"])
+        self.assertTrue("Error in expression" in question_data["error_message"])
+
+
+    def test_dynamictext(self):
+        from dynamictext.models import DynamicText
+        self.q.question_text="{% dynamictext %}Hello{%enddynamictext %}"
+        self.q.save()
+
+        self.assertEqual(DynamicText.return_number_for_object(self.q), 1)
+        dt = DynamicText.return_dynamictext(self.q,0)
+        qid = "thisqid"
+        dtid = dt.return_identifier(instance_identifier=qid)
+
+        question_data=render_question(self.q, rng=self.rng,
+                                      question_identifier=qid)
+        self.assertHTMLEqual('<span id="id_%s">Hello</span>' % dtid,
+                             question_data['rendered_text'])
+
+        self.assertTrue(dt.return_javascript_render_function(
+            mathjax=True, instance_identifier=qid)
+                        in question_data['dynamictext_javascript'])
+        
+        self.q.question_text="Is this {% dynamictext %}dynamic{%enddynamictext %} text? {% dynamictext %}Yes.{%enddynamictext%}"
+        self.q.save()
+        
+        self.assertEqual(DynamicText.return_number_for_object(self.q), 2)
+        dt0 = DynamicText.return_dynamictext(self.q,0)
+        dt1 = DynamicText.return_dynamictext(self.q,1)
+        qid = "thisqid"
+        dt0id = dt0.return_identifier(instance_identifier=qid)
+        dt1id = dt1.return_identifier(instance_identifier=qid)
+
+        question_data=render_question(self.q, rng=self.rng,
+                                      question_identifier=qid)
+        self.assertHTMLEqual('Is this <span id="id_%s">dynamic</span> text? <span id="id_%s">Yes.</span>' % (dt0id, dt1id),
+                             question_data['rendered_text'])
+
+        self.assertTrue(dt0.return_javascript_render_function(
+            mathjax=True, instance_identifier=qid)
+                        in question_data['dynamictext_javascript'])
+        self.assertTrue(dt1.return_javascript_render_function(
+            mathjax=True, instance_identifier=qid)
+                        in question_data['dynamictext_javascript'])
+        
+    def test_assign_to_expression(self):
+        self.q.expression_set.create(name="n", expression="y")
+        self.q.expression_set.create(name="m", expression="apple+1",
+                                     post_user_response=True)
+
+        identifier="abc"
+        answer_code='z'
+        response = "x+1"
+        prefilled_answers = []
+        prefilled_answers.append({ 
+            'code': answer_code,
+            'answer': response })
+
+        self.q.questionansweroption_set.create(answer_code=answer_code, 
+                                               answer="n")
+        self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
+        self.q.save()
+        
+
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
+                                      prefilled_answers=prefilled_answers)
+
+        self.assertTrue(question_data["success"])
+        self.assertTrue('n=y,' in question_data["rendered_text"])
+        self.assertTrue('apple=x + 1,' in question_data["rendered_text"])
+        self.assertTrue('m=x + 2,' in question_data["rendered_text"])
+        
+
+    def test_assign_to_expression_multiple_choice(self):
+
+        identifier="abc"
+        answer_code='z'
+        option1=self.q.questionansweroption_set.create(
+            answer_code=answer_code, answer="banana",
+            answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
+        option2=self.q.questionansweroption_set.create(
+            answer_code=answer_code, answer="carrot",
+            answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
+        option3=self.q.questionansweroption_set.create(
+            answer_code=answer_code, answer="steak",
+            answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
+
+        prefilled_answers = []
+        prefilled_answers.append({ 
+            'code': answer_code,
+            'answer': str(option3.id) })
+
+        self.q.question_text = "{% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}"
+        self.q.save()
+        
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
+                                      prefilled_answers=prefilled_answers)
+
+        self.assertTrue(question_data["success"])
+        self.assertTrue('apple=steak' in question_data["rendered_text"])
+
+        
 
 class TestShowSolutionButton(TestCase):
     def setUp(self):

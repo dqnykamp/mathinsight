@@ -92,6 +92,51 @@ class Question(models.Model):
     question_with_number.admin_order_field = 'id'
     question_with_number.short_description = "Question"
 
+    def save(self, *args, **kwargs):
+        super(Question, self).save(*args, **kwargs) 
+
+        # update expression from answers from question text and subparts
+        # update dynamic text from question and solution text and subparts
+        
+        # just assume every answer code is valid 
+        valid_answer_codes = {}
+        for ao in self.questionansweroption_set.all():
+            answer_dict = {'answer_type': ao.answer_type,
+                           'split_symbols_on_compare':
+                           ao.split_symbols_on_compare
+            }
+            valid_answer_codes[ao.answer_code]=answer_dict
+
+
+        import random
+        rng=random.Random()
+
+        answer_data = { 'valid_answer_codes': valid_answer_codes,
+                        'answer_info': [],
+                        'question': self,
+                        'question_identifier': "",
+                        'prefilled_answers': [],
+                        'error': False,
+                        'answer_errors': [],
+                        'readonly': False,
+                        'rng': rng,
+                    }
+
+        update_context = Context({'question': self, 
+                                  '_process_dynamictext': True,
+                                  '_dynamictext_object': self,
+                                  '_process_expressions_from_answers': True,
+                                  '_answer_data_': answer_data,
+                              })
+
+
+        from dynamictext.models import DynamicText
+        DynamicText.initialize(self)
+        self.expressionfromanswer_set.all().delete()
+        from mitesting.render_assessments import render_question_text
+        render_results=render_question_text({'question': self, 
+                              'expression_context': update_context})
+
     def user_can_view(self, user, solution=True):
         permission_level=return_user_assessment_permission_level(user)
         privacy_level=self.return_privacy_level(solution)
@@ -927,11 +972,6 @@ class Expression(models.Model):
                 # cannot have a required condition as a post user reponse
                 if self.expression_type == self.CONDITION:
                    raise ValueError("Cannot have a required condition be flagged as post user response")
-                if self.expression_type == self.RANDOM_WORD:
-                   raise ValueError("Cannot have a random word be flagged as post user response")
-                if not process_post_user:
-                    return math_object(0, deferred=True, name=self.name,
-                                       id="deferred_%s" % post_user_number)
 
             # if randomly selecting from a list,
             # determine if the index for random_list_group was chosen already
@@ -1207,10 +1247,27 @@ class Expression(models.Model):
                 % (self.name, exc), sys.exc_info()[2]
 
 
+@python_2_unicode_compatible
+class ExpressionFromAnswer(models.Model):
+    name = models.SlugField(max_length=100)
+    question = models.ForeignKey(Question)
+    answer_code = models.SlugField(max_length=50)
+    answer_number = models.IntegerField()
+    split_symbols_on_compare = models.BooleanField(default=True)
+    answer_type = models.IntegerField(default=QuestionAnswerOption.EXPRESSION)
+    answer_data = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ("name", "question","answer_number")
+    
+    def __str__(self): 
+        return  self.name
+
+
+@python_2_unicode_compatible
 class SympyCommandSet(models.Model):
     name = models.CharField(max_length=50, unique=True)
     commands = models.TextField()
     default = models.BooleanField(default=False)
-
-    def __unicode__(self):
+    def __str__(self):
         return self.name

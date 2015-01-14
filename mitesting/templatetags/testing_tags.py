@@ -21,6 +21,9 @@ from django.utils.encoding import smart_text
 import json
 from math import floor, ceil
 from django.utils.safestring import mark_safe
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 register=Library()
@@ -556,8 +559,6 @@ class AnswerNode(template.Node):
             points=1
         group = kwargs.get('group')
 
-        assign_to_expression = kwargs.get('assign_to_expression')    
-
         try:
             answer_data = context['_answer_data_']
         except KeyError:
@@ -571,7 +572,9 @@ class AnswerNode(template.Node):
         
         # answer code should be a code defined in the question answer options
         try:
-            answer_type = answer_data['valid_answer_codes'][self.answer_code]
+            answer_code_dict = answer_data['valid_answer_codes']\
+                               [self.answer_code]
+            answer_type=answer_code_dict['answer_type']
         except KeyError:
             return return_error("Invalid answer blank: %s" % self.answer_code)
 
@@ -579,16 +582,26 @@ class AnswerNode(template.Node):
         question_identifier = answer_data['question_identifier']
         answer_identifier = "%s_%s" % (answer_number, question_identifier)
         answer_field_name = 'answer_%s' % answer_identifier
-        answer_data['answer_info'].append(\
-            {'code': self.answer_code, 'points': points, 
-             'type': answer_type, 'identifier': answer_identifier,
-             'group': group, 'assign_to_expression': assign_to_expression })
 
         if answer_data['readonly']:
             readonly_string = ' readonly'
         else:
             readonly_string = ''
 
+        assign_to_expression = kwargs.get('assign_to_expression')
+        expressionfromanswer = None
+        if assign_to_expression and \
+           context.get("_process_expressions_from_answers"):
+            question=context.get('question')
+            if question:
+                expressionfromanswer, created= \
+                    question.expressionfromanswer_set.get_or_create(
+                        name=assign_to_expression, answer_code=self.answer_code,
+                        answer_number=answer_number,
+                        split_symbols_on_compare=\
+                        answer_code_dict['split_symbols_on_compare'],
+                        answer_type=answer_type,
+                    )
         given_answer=None
         try:
             prefilled_answers = answer_data['prefilled_answers']
@@ -597,12 +610,17 @@ class AnswerNode(template.Node):
             if the_answer_dict["code"] == self.answer_code:
                 given_answer = the_answer_dict["answer"]
             else:
-                answer_data['error'] = True
-                answer_data['answer_errors'].append(
-                    "Invalid previous answer: %s != %s" % 
-                (the_answer_dict["code"], self.answer_code))
+                logger.warning("Invalid previous answer for question %s: %s != %s" % 
+                    (answer_data.get("question"), the_answer_dict["code"], 
+                     self.answer_code))
         except (KeyError, IndexError, TypeError):
             pass
+
+        answer_data['answer_info'].append(\
+            {'code': self.answer_code, 'points': points, 
+             'type': answer_type, 'identifier': answer_identifier,
+             'group': group, 'assign_to_expression': assign_to_expression,
+             'prefilled_answer': given_answer})
 
         if answer_type == QuestionAnswerOption.EXPRESSION or \
            answer_type == QuestionAnswerOption.FUNCTION:
@@ -639,6 +657,15 @@ class AnswerNode(template.Node):
                 rendered_answer_list.append({
                         'answer_id': answer.id,
                         'rendered_answer': rendered_answer})
+
+            if expressionfromanswer:
+                mc_answer_dict = {}
+                for a in rendered_answer_list:
+                    mc_answer_dict[a['answer_id']]=a['rendered_answer']
+                import pickle
+                expressionfromanswer.answer_data=pickle.dumps(mc_answer_dict)
+                expressionfromanswer.save()
+
             answer_data['rng'].shuffle(rendered_answer_list)
         
             html_string = ""

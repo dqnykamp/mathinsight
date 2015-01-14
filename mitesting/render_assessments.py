@@ -27,7 +27,7 @@ def get_new_seed(rng):
     return str(rng.randint(0,1E8))
 
  
-def setup_expression_context(question, rng, seed=None):
+def setup_expression_context(question, rng, seed=None, user_responses=None):
     """
     Set up the question context by parsing all expressions for question.
     Returns context that contains all evaluated expressions 
@@ -41,15 +41,31 @@ def setup_expression_context(question, rng, seed=None):
     new values of seed are randomly generated for each attempt.
     The successful seed is returned.
 
+    The first step is to evaluate normal expressions, i.e., those that
+    have not been flagged as post user response.
+
+    user_responses is a list of dictionaries of user responses to answers
+    embedded in the question.  If any answers have been marked to be
+    asssigned to expressions, the second step is to parse those responses
+    using user_function_dict for global_dict and assign the result
+    to the corresponding expression.
+
+    The third step is to evaluate any expressions flagged as being 
+    post user response.
+
+    Both the global_dict and user_function_dict are added to the
+    expression context.
+
     Return a dictionary with the following:
     - expression_context: a Context() with mappings from the expressions
-    - sympy_global_dict: the final global_dict from all expressions
-    - user_function_dict: results of any RANDOM_FUNCTION_NAME expressions
-    - error_in_expressions: True if encountered any errors in expressions
-    - expression_error: dictionary of all error messages encountered
+    - error_in_expressions: True if encountered any errors in normal expressions
+    - error_in_expressions_post_user: the same but for post user expressions
+    - expression_error: dictionary of error messages from normal expressions
+    - expression_error_post_user: the same but for post user expressions
     - failed_conditions: True if failed conditions for all attempts
     - failed_condition_message: message of which expression last failed
     - seed: seed used in last attempt to generate contenxt
+
     """
 
     if seed is None:
@@ -60,9 +76,9 @@ def setup_expression_context(question, rng, seed=None):
     max_tries=500
     success=False
 
-
     failed_condition_message=""
     failed_conditions=True
+
     for i in range(max_tries):
 
         if i>0:
@@ -73,13 +89,18 @@ def setup_expression_context(question, rng, seed=None):
         random_group_indices={}
         error_in_expressions = False
         expression_error = {}
-        user_function_dict = {}
 
         # initialize global dictionary using the comamnds
         # found in allowed_sympy_commands.
         # Also adds standard symbols to dictionary.
         global_dict = question.return_sympy_global_dict()
+        user_function_dict = question.return_sympy_global_dict(
+            user_response=True)
         try:
+
+            from mitesting.models import Expression
+            # first processes the expressions that aren't flagged
+            # as post user response
             for expression in question.expression_set\
                                       .filter(post_user_response=False):
                 try:
@@ -90,7 +111,7 @@ def setup_expression_context(question, rng, seed=None):
                         rng=rng)
 
                 # on FailedCondition, reraise to stop evaluating expressions
-                except expression.FailedCondition:
+                except Expression.FailedCondition:
                     raise
 
                 # for any other exception, record exception and
@@ -110,25 +131,6 @@ def setup_expression_context(question, rng, seed=None):
                         expression_context[expression.name] \
                             = expression_evaluated
 
-
-            for (i, expression) in enumerate(question.expression_set\
-                                      .filter(post_user_response=True)):
-                try:
-                    expression_evaluated=expression.evaluate(
-                        global_dict=global_dict, 
-                        user_function_dict=user_function_dict,
-                        random_group_indices=random_group_indices,
-                        rng=rng, post_user_number=i)
-
-                # record exception and allow to continue processing expressions
-                except Exception as exc:
-                    error_in_expressions = True
-                    expression_error[expression.name] = six.text_type(exc)
-                    expression_context[expression.name] = '??'
-                else:
-                    expression_context[expression.name] = expression_evaluated
-
-
             # if make it through all expressions without encountering
             # a failed condition, then record fact and
             # break out of loop
@@ -137,21 +139,97 @@ def setup_expression_context(question, rng, seed=None):
 
         # on FailedCondition, continue loop, but record
         # message in case it is final pass through loop
-        except expression.FailedCondition as exc:
+        except Expression.FailedCondition as exc:
             failed_condition_message = exc.args[0]
 
-
-    # add sympy global dictionary to expression context
-    # so that expr template tag has access to it
+    # add state to expression context as convenience to 
+    # reset state if not generating regular expression
+    # Also, sympy global dict is accessed from template tags
     expression_context['_sympy_global_dict_'] = global_dict
+    expression_context['_user_function_dict_'] = user_function_dict
+
+    error_in_expressions_post_user = False
+    expression_error_post_user = {}
+
+    # if haven't failed conditions, process user responses and 
+    # expressions flagged as post user response
+    if not failed_conditions:
+        # next processes any user responses
+        # that are assigned to expressions
+        from mitesting.sympy_customized import EVALUATE_NONE
+        from mitesting.math_objects import math_object
+        from mitesting.sympy_customized import parse_and_process
+        from mitesting.models import QuestionAnswerOption
+        from sympy import Symbol
+        import pickle
+
+        # ExpressionFromAnswer contains information about any
+        # answers that were assigned to expressions
+        for expression in question.expressionfromanswer_set.all():
+            # will assign Symbol('[?]') if no response given for answer
+            # or if error in parsing response
+            math_expr= Symbol('[?]')
+
+            answer_number=expression.answer_number
+            try:
+                response=user_responses[answer_number-1]
+            except (IndexError, TypeError):
+                pass
+            else:
+                if response['code']==expression.answer_code:
+                    if expression.answer_type==\
+                       QuestionAnswerOption.MULTIPLE_CHOICE:
+                        mc_dict=pickle.loads(expression.answer_data)
+                        try:
+                            response_text=mc_dict[int(response['answer'])]
+                        except (ValueError, KeyError):
+                            response_text="[?]"
+                        math_expr=Symbol(response_text)
+                    else:
+                        try:
+                            math_expr =  parse_and_process(
+                                response['answer'], 
+                                global_dict=user_function_dict, 
+                                split_symbols=\
+                                expression.split_symbols_on_compare,
+                                evaluate_level=EVALUATE_NONE
+                            )
+                        except:
+                            pass
+            global_dict[expression.name]=math_expr
+            expression_context[expression.name] = \
+                math_object(math_expr, evaluate_level=EVALUATE_NONE)
+
+        # add Symbol(['?']) to global_dict with key _undefined_
+        # so that can test for it in remaining expressions
+        global_dict['_undefined_']=Symbol('[?]')
+
+        # last, process expressions flagged as post user response
+        for (i, expression) in enumerate(question.expression_set\
+                                  .filter(post_user_response=True)):
+            try:
+                expression_evaluated=expression.evaluate(
+                    global_dict=global_dict, 
+                    user_function_dict=user_function_dict,
+                    random_group_indices=random_group_indices,
+                    rng=rng, post_user_number=i)
+
+            # record exception and allow to continue processing expressions
+            except Exception as exc:
+                error_in_expressions_post_user = True
+                expression_error_post_user[expression.name] = six.text_type(exc)
+                expression_context[expression.name] = '??'
+            else:
+                expression_context[expression.name] = expression_evaluated
+
 
     results = {
         'error_in_expressions': error_in_expressions,
         'expression_error': expression_error,
+        'error_in_expressions_post_user': error_in_expressions_post_user,
+        'expression_error_post_user': expression_error_post_user,
         'failed_conditions': failed_conditions,
         'failed_condition_message': failed_condition_message,
-        'sympy_global_dict': global_dict,
-        'user_function_dict': user_function_dict,
         'expression_context': expression_context,
         'seed': seed,
         }
@@ -171,7 +249,7 @@ def return_valid_answer_codes(question, expression_context):
     1. A dictionary of all the valid answer codes 
        from the answer options of question.  
        The dictionary keys are the answer_codes and
-       the values are the answer_types.
+       the values are a dictionary of the answer_types and split symbols.
 
        In the case that the answer is a QuestionAnswerOption.EXPRESSION, 
        it must be in expression_context.
@@ -218,7 +296,9 @@ def return_valid_answer_codes(question, expression_context):
                     error_message += "expression <tt>%s</tt> is not a function." % option.answer
            
         if answer_valid:
-            valid_answer_codes[option.answer_code] = option.answer_type
+            valid_answer_codes[option.answer_code] = \
+                {'answer_type': option.answer_type,
+                 'split_symbols_on_compare': option.split_symbols_on_compare }
         else:
             invalid_answers.append((option.answer_code, option.answer))
             invalid_answer_messages.append(error_message)
@@ -261,7 +341,7 @@ def render_question_text(render_data, solution=False):
     expr_context = render_data['expression_context']
 
     render_results = {'question': question, 'render_error_messages': [] }
-    template_string_base = "{% load testing_tags mi_tags humanize %}"
+    template_string_base = "{% load testing_tags mi_tags dynamictext humanize %}"
 
 
     # render solution or question, recording any error in rendering template
@@ -445,7 +525,9 @@ def render_question(question, rng, seed=None, solution=False,
                     readonly=False, auto_submit=False, 
                     record_answers=True,
                     allow_solution_buttons=False,
-                    applet_data=None):
+                    applet_data=None,
+                    show_post_user_errors=False,
+                ):
 
     """
     Render question or solution by compiling text in expression context
@@ -486,7 +568,9 @@ def render_question(question, rng, seed=None, solution=False,
     - allow_solution_buttons: if true, allow a solution button to be displayed
       on computer graded questions
     - applet_data: dictionary of information about applets embedded in text
-    
+    - show_post_user_errors: if true, display errors when evaluating
+      expressions flagged as being post user response.  Even if showing
+      errors, such an error does not cause the rendering success to be False
 
     The output is a question_data dictionary.  With the exception of
     question, success, rendered_text, and error_message, all entries
@@ -544,9 +628,10 @@ def render_question(question, rng, seed=None, solution=False,
 
     rng.seed(seed)
 
-    # first, setup context due to expressions from question
-    context_results = setup_expression_context(question, rng=rng, seed=seed)
-    seed = context_results['seed']
+    # first, setup context due to expressions from question.
+    # include any prefilled responses to answers
+    context_results = setup_expression_context(question, rng=rng, seed=seed,
+                                        user_responses=prefilled_answers)
 
     # if failed condition, then don't display the question
     # but instead give message that condition failed
@@ -563,6 +648,9 @@ def render_question(question, rng, seed=None, solution=False,
         }
         return question_data
 
+    # set seed to be successful seed from rendering context
+    seed = context_results['seed']
+
     render_data = {
         'question': question, 'show_help': show_help, 
         'expression_context': context_results['expression_context'],
@@ -573,6 +661,26 @@ def render_question(question, rng, seed=None, solution=False,
     # to avoid overwriting expressions
     render_data['expression_context']['_applet_data_'] = applet_data
 
+    # set up dynamic text
+    # context variables used for dynamic text tags
+    from dynamictext.models import DynamicText
+    render_data['expression_context']['_dynamictext_object']=question
+    render_data['expression_context']['_dynamictext_instance_identifier']\
+        = question_identifier
+    # javascript used to update dynamic text
+    num_dts = DynamicText.return_number_for_object(question)
+    dynamictext_javascript=""
+    for i in range(num_dts):
+        dt = DynamicText.return_dynamictext(question,i)
+        javascript_function=dt.return_javascript_render_function(
+            mathjax=True, instance_identifier=question_identifier)
+        dynamictext_javascript += "%s_dynamictext_update= %s\n" % \
+                                  (dt.return_identifier(question_identifier),
+                                   javascript_function)
+    if dynamictext_javascript:
+        dynamictext_javascript = mark_safe("\n<script>\n%s</script>\n" % \
+                                           dynamictext_javascript)
+        
     # answer data to keep track of
     # 1. possible answer_codes that are valid
     # 2. the answer_codes that actually appear in the question
@@ -599,6 +707,7 @@ def render_question(question, rng, seed=None, solution=False,
         'identifier': question_identifier,
         'auto_submit': auto_submit,
         'seed': seed,
+        'dynamictext_javascript': dynamictext_javascript,
     })
 
     # if have prefilled answers, check to see that the number matches the
@@ -614,17 +723,26 @@ def render_question(question, rng, seed=None, solution=False,
             logger.warning(message)
     
 
-    # determine if any answers are assigned to expressions
-
-
     # If render or expression error, combine all error messages
     # for display in question template.
     question_data['error_message'] = ''
 
+    question_data['success'] = True
+
+    # errors from post user expression don't cause success to be marked as false
+    # so that one can still submit new responses
+    if (context_results.get('error_in_expressions_post_user')
+        and show_post_user_errors):
+        errors = context_results['expression_error_post_user']
+        for expr in errors.keys():
+            question_data['error_message'] += '<li>' + \
+                    re.sub(r"\n", r"<br/>", errors[expr]) + '</li>'
+
     if question_data.get('render_error') \
             or context_results.get('error_in_expressions')\
             or answer_data.get('error'):
-
+        # any other error trigger failure
+        # which prevents responses from being submitted
         question_data['success']=False
         if context_results.get('error_in_expressions'):
             errors = context_results['expression_error']
@@ -641,11 +759,9 @@ def render_question(question, rng, seed=None, solution=False,
                 question_data['error_message'] += \
                     '<li>%s</li>' % error_message
 
+    if question_data['error_message']:
         question_data['error_message'] = mark_safe(\
             "<ul>" + question_data['error_message'] + "</ul>")
-
-    else:
-        question_data['success'] = True
 
 
 
@@ -776,7 +892,8 @@ def get_question_list(assessment, rng):
 
 
 def render_question_list(assessment, rng, seed=None, user=None, solution=False,
-                         current_attempt=None, applet_data=None):
+                         current_attempt=None, applet_data=None,
+                         show_post_user_errors=False):
     """
     Generate list of rendered questions or solutions for assessment.
 
@@ -798,6 +915,8 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
     - current_attempt: information about score so far on computer scored
       assessments (need to fix and test)
     - applet_data: dictionary of information about applets embedded in text
+    - show_post_user_errors: if true, show errors in expressions that are
+      flagged as post user response
 
     Outputs:
     - seed that used to generate assessment (the input seed unless it was None)
@@ -858,7 +977,8 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
             record_answers=True,
             allow_solution_buttons=assessment.allow_solution_buttons,
             applet_data=applet_data,
-            prefilled_answers=prefilled_answers)
+            prefilled_answers=prefilled_answers,
+            show_post_user_errors=show_post_user_errors)
         
         question_dict['question_data']=question_data
 
