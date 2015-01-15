@@ -924,12 +924,14 @@ class CourseThreadContent(models.Model):
         except:
             return self.final_due_date
 
-    def adjusted_due_date(self, student):
+    def adjusted_due_date(self, student=None):
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
 
         # if only one of due date or final due date is specified,
         # use that one
+        
+        # if no student specified, use initial due date
 
         due_date = self.get_initial_due_date(student)
         final_due_date = self.get_final_due_date(student)
@@ -942,6 +944,9 @@ class CourseThreadContent(models.Model):
         elif not final_due_date:
             return due_date
         
+        if not student:
+            return due_date
+            
         today = datetime.date.today()
         
         course = self.course        
