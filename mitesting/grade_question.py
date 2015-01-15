@@ -201,7 +201,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 else:
                     try:
                         f_float = float(f)
-                    except TypeError:
+                    except (TypeError, AttributeError):
                         # try converting Eq and Ne to regular python functions
                         # that demand exact equality of expressions
                         from sympy import Eq, Ne
@@ -210,7 +210,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
                         try:
                             f_float = float(f)
-                        except TypeError as e:
+                        except (TypeError, AttributeError) as e:
                             logger.warning("Exception raised when converting function to float for question answer option: %s" % e)
                             fraction_equal=0
                 if f_float is not None:
