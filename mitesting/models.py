@@ -743,6 +743,8 @@ class Expression(models.Model):
     RANDOM_ORDER_TUPLE = "RT"
     INTERVAL = "IN"
     SET = "SE"
+    MATRIX="MX"
+    VECTOR="VC"
     EXPRESSION_TYPES = (
         ('General', (
             (GENERIC, "Generic"),
@@ -766,6 +768,11 @@ class Expression(models.Model):
             (RANDOM_ORDER_TUPLE, "Rand order tuple"),
             (SET, "Set"),
             (INTERVAL, "Interval"),
+        )
+     ),
+        ('Matrix and vector', (
+            (MATRIX, "Matrix"),
+            (VECTOR, "Vector"),
         )
      ),
     )
@@ -956,12 +963,26 @@ class Expression(models.Model):
         Expressions of the form (a,b), (a,b], [a,b), and [a,b]
         are converted to intervals as long as the limits are real variables
 
+        MATRIX
+        Expression must be in the form 
+        a b c
+        d e f
+        g h i
+        which is converted into a matrix.  
+        Spaces are the column delimiters.
+        Newlines are the row delimiters.
+
+        VECTOR
+        Any Tuples (not TupleNoParens) are converted to column Matrices
+        so that matrix vector-multiplication works.
+
 
         """
         
         from mitesting.utils import return_random_number_sample, \
             return_random_expression, return_random_word_and_plural, \
-            return_parsed_function, return_interval_expression
+            return_parsed_function, return_interval_expression, \
+            return_matrix_expression
         from mitesting.sympy_customized import bottom_up
         from sympy.parsing.sympy_tokenize import TokenError
         from sympy.core.function import UndefinedFunction
@@ -1095,6 +1116,15 @@ class Expression(models.Model):
                         else:
                             math_expr=None
 
+                elif self.expression_type == self.MATRIX:
+                    try:
+                        math_expr = return_matrix_expression(
+                            expression, global_dict=global_dict, 
+                            evaluate_level = self.evaluate_level)
+                    except ValueError as e:
+                        raise ValueError("Invalid format for matrix\n%s" % e.args[0])
+                    except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                        raise ValueError("Invalid format for matrix")
                 try:
                     if math_expr is None:
                         math_expr = parse_and_process(
@@ -1124,6 +1154,13 @@ class Expression(models.Model):
                 if self.expression_type == self.SET and \
                    isinstance(math_expr, TupleNoParen):
                     math_expr = TupleNoParen(*set(math_expr))
+
+                # if VECTOR, convert Tuples to column matrices
+                if self.expression_type == self.VECTOR:
+                    from mitesting.customized_commands import MatrixFromTuple
+                    math_expr = math_expr.replace(Tuple,MatrixFromTuple)
+                    from sympy import latex
+                    print(latex(math_expr))
 
                 # if CONDITION is not met, raise exception
                 if self.expression_type == self.CONDITION:

@@ -245,6 +245,25 @@ class Point(C.Point):
 
 
 
+class MatrixFromTuple(object):
+    """
+    Returns matrix from Tuple.
+    When printing via latex, prints as a vector (tuple)
+
+    """
+    def __new__(cls, *args, **kwargs):
+        from sympy import Matrix
+        matrix = Matrix(list(args))
+
+        def _latex(self, prtr):
+            return r"\left ( %s\right )" % \
+                r", \quad ".join([ prtr._print(i) for i in self.transpose().tolist()[0] ])
+
+        import types
+        matrix._latex=types.MethodType(_latex,matrix)
+        return matrix
+
+
 """
 Turn off automatic evaluation of floats in the following sympy functions.
 Functions will still evaluate to floats when .evalf() is called

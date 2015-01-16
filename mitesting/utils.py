@@ -450,6 +450,23 @@ def return_interval_expression(expression, local_dict=None, evaluate_level=None)
                              evaluate_level = evaluate_level)
 
 
+def return_matrix_expression(expression, global_dict=None, evaluate_level=None):
+
+    import re
+    
+    expr_matrix=re.sub(r" *\n *", "],[", expression)
+    expr_matrix="Matrix([[" + re.sub(r" +", ",", expr_matrix)+"]])"
+    
+    new_global_dict = {}
+    if global_dict:
+        new_global_dict.update(global_dict)
+    from sympy import Matrix
+    new_global_dict['Matrix'] = Matrix
+
+    return parse_and_process(expr_matrix, global_dict=new_global_dict,
+                             evaluate_level = evaluate_level)
+    
+
 def replace_boolean_equals(s):
     """
     Replace and/&, or/|, =, and != in s with symbols to be parsed by sympy

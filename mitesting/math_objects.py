@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from django.utils.encoding import python_2_unicode_compatible
 
-from sympy import Tuple, Symbol, sympify, Abs
+from sympy import Tuple, Symbol, sympify, Abs, Matrix
 from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
@@ -57,7 +57,11 @@ class math_object(object):
         
         """
 
-        self._expression=sympify(expression)
+        # don't sympify matrices so retains MatrixFromVector modifications
+        if isinstance(expression, Matrix):
+            self._expression=expression
+        else:
+            self._expression=sympify(expression)
         self._parameters = parameters
 
         # overwrite all parameters from copy_parameters_from object
