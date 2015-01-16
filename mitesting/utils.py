@@ -450,36 +450,56 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
                              evaluate_level = evaluate_level)
 
 
-def replace_equals(s):
+def replace_boolean_equals(s):
     """
-    Replace = and != in s with symbols to be parsed by sympy
+    Replace and/&, or/|, =, and != in s with symbols to be parsed by sympy
 
-    replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
+    1. Replace and with & and or with |
+    
+    2. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
 
-    __Eq__ and __Ne__ must then be mapped to sympy Eq and Ne when parsing
+    3. replace & (not an &&) with __And__(lhs,rhs), 
+    then replace | (not ||) with __Or__(lhs,rhs).
+
+    __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
+    Eq, Ne, And, and Or when parsing
     
     To find lhs and rhs, looks for unmatched parentheses 
     or the presence of certain characters no in parentheses
 
-    Repeats the procedure until can't find more = or !=
+    Repeats the procedure until can't find more =, !=, &, or |
     or until lhs or rhs is blank
+
+
 
     """
 
     import re
     break_chars=",&|!=<>" # character that signal end of expression if not in ()
 
-    for i in range(2):
+    # replace and/or with &/|
+    s=re.sub(r'\band\b',r'&', s)
+    s=re.sub(r'\bor\b',r'|', s)
+
+    for i in range(4):
         if i==0:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
             new_op='__Eq__(%s,%s)'
-        else:
+        elif i==1:
             pattern = re.compile('[^<>!=](!=)[^=]')
             len_op=2
             new_op='__Ne__(%s,%s)'
-
+        elif i==2:
+            pattern = re.compile('[^&](&)[^&]')
+            len_op=1
+            new_op='__And__(%s,%s)'
+        elif i==3:
+            pattern = re.compile('[^\|](\|)[^\|]')
+            len_op=1
+            new_op='__Or__(%s,%s)'
+            
         while True:
             mo= pattern.search(s)
             if not mo:
@@ -529,4 +549,3 @@ def replace_equals(s):
                 s = s[:begin_pos] + (new_op % (lhs,rhs)) + s[end_pos:]
 
     return s
-

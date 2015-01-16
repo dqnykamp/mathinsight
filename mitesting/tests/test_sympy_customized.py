@@ -188,19 +188,11 @@ class ParseExprTests(SimpleTestCase):
         global_dict = {'a': sympify(1), 'b': sympify(2), 'c': sympify(3),
                        'd': sympify(4)}
         expr = parse_expr("a and b and c and d", global_dict=global_dict)
-        self.assertEqual(expr, 4)
+        self.assertEqual(expr, True)
         global_dict['b'] = sympify(0)
         expr = parse_expr("a and b and c and d", global_dict=global_dict)
-        self.assertEqual(expr, 0)
-        expr = parse_expr("a and not b and c and d", global_dict=global_dict)
-        self.assertEqual(expr, 4)
-        expr = parse_expr("a b and c d", global_dict=global_dict)
-        self.assertEqual(expr, 0)
-        expr = parse_expr("a b or c d", global_dict=global_dict)
-        self.assertEqual(expr, 12)
-        expr = parse_expr("ab or cd", global_dict=global_dict, 
-                          split_symbols=True)
-        self.assertEqual(expr, 12)
+        self.assertEqual(expr, False)
+
 
     def test_parse_and_process(self):
         x=Symbol('x')
@@ -331,3 +323,10 @@ class ParseExprTests(SimpleTestCase):
         
         expr = parse_expr("(x=1)=(y=2)")
         self.assertEqual(expr,Eq(Eq(x,1),Eq(y,2)))
+
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        z=Symbol('z')
+        expr = parse_expr("x-1=y+c and (y/a=x(z) or a^2 != (b+2)(c-1)/2)")
+        self.assertEqual(expr, And(Eq(x-1,y+c), Or(Eq(y/a,x*z), Ne(a**2,(b+2)*(c-1)/2))))

@@ -337,3 +337,13 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(fun(x,s), x**2-s+5)
         self.assertEqual(fun.default, s**2-t+5)
         
+
+class TestReplaceBooleanEquals(SimpleTestCase):
+    def test_replace_boolean_equals(self):
+        s='x-1=y+c and (y/a=f(z) or a^2 != (b+2)(v-1)/2)'
+        s_replace = '__And__(__Eq__(x-1,y+c),(__Or__(__Eq__(y/a,f(z)),__Ne__(a^2,(b+2)(v-1)/2))))'
+        self.assertEqual(replace_boolean_equals(s),s_replace)
+
+        s='(x=y & y=z) | a != b'
+        s_replace = '__Or__((__And__(__Eq__(x,y),__Eq__(y,z))),__Ne__(a,b))'
+        self.assertEqual(replace_boolean_equals(s),s_replace)

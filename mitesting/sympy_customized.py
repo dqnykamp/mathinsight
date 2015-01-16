@@ -168,14 +168,20 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # replace unicode character for \cdot used in mathjax display with *
     s = re.sub(r'\u22c5', r'*', s)
 
-    # replace = with __Eq__(lhs,rhs) 
-    # and != with __Ne__(lhs,rhs)
-    from mitesting.utils import replace_equals
-    s=replace_equals(s)
+    # replace
+    #      =  with __Eq__(lhs,rhs)
+    #      != with __Ne__(lhs,rhs)
+    #   and/& with __And__(lhs,rhs)
+    #    or/| with __Or__(lhs,rhs)
+    from mitesting.utils import replace_boolean_equals
+    s=replace_boolean_equals(s)
 
-    from sympy import Eq, Ne
+    # map those replace booleans and equals to sympy functions
+    from sympy import Eq, Ne, And, Or
     new_global_dict['__Eq__'] = Eq
     new_global_dict['__Ne__'] = Ne
+    new_global_dict['__And__'] = And
+    new_global_dict['__Or__'] = Or
     
     # change !== to !=
     s = re.sub('!==','!=', s)
