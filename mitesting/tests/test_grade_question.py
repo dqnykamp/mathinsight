@@ -35,7 +35,7 @@ class TestCompareResponse(TestCase):
 
 
     def test_compare_multiple_choice(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': MULTIPLE_CHOICE}
@@ -43,7 +43,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response=1, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -58,7 +58,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response=true_id, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -70,7 +70,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response=true_id, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -80,7 +80,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response=false_id, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -90,7 +90,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response=maybe_id, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -101,7 +101,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response={"garbage":"garbage"}, the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -110,7 +110,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -118,7 +118,7 @@ class TestCompareResponse(TestCase):
 
 
     def test_basic_expression(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -126,7 +126,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="hello", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
         
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -138,7 +138,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="ax", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -147,7 +147,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="xa", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -156,7 +156,7 @@ class TestCompareResponse(TestCase):
 
 
     def test_multiple_answers(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -171,7 +171,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="ax", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -181,7 +181,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="bx", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -192,7 +192,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="cx", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -202,7 +202,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="foo", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -213,7 +213,7 @@ class TestCompareResponse(TestCase):
 
 
     def test_split_symbols_on_compare(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -229,7 +229,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2ax", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -241,13 +241,13 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2ax", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
 
     def test_round_on_compare(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -260,7 +260,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31328a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -269,7 +269,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -281,7 +281,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -296,7 +296,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -310,7 +310,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],70)
@@ -323,7 +323,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.30228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -336,7 +336,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.312315a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],70)
@@ -348,7 +348,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.30228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(round(answer_results['percent_correct'],10),49)
@@ -365,7 +365,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.313128a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -375,7 +375,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.31338a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],70)
@@ -386,7 +386,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.33228a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(round(answer_results['percent_correct'],10),34.3)
@@ -398,7 +398,7 @@ class TestCompareResponse(TestCase):
 
 
     def test_tuples(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -409,7 +409,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,b,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -418,7 +418,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c,b", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -430,7 +430,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c,b", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -442,7 +442,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c,b", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -450,7 +450,7 @@ class TestCompareResponse(TestCase):
     
 
     def test_tuples_partial_match(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -461,7 +461,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -473,7 +473,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -485,7 +485,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -496,7 +496,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,d,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -510,7 +510,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,d,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],75)
@@ -520,7 +520,7 @@ class TestCompareResponse(TestCase):
     
     def test_different_tuple_types(self):
 
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
@@ -531,7 +531,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="(a,b,c)", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
 
         self.assertFalse(answer_results['answer_correct'])
@@ -544,7 +544,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="a,b,c", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
 
         self.assertFalse(answer_results['answer_correct'])
@@ -554,7 +554,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="(a,b,c)", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -565,14 +565,14 @@ class TestCompareResponse(TestCase):
         from mitesting.utils import return_parsed_function
         from mitesting.customized_commands import iif
 
-        global_dict={'if': iif}
-        expr_context=Context({'_sympy_global_dict_': global_dict })
+        local_dict={'if': iif}
+        expr_context=Context({'_sympy_local_dict_': local_dict })
 
         answer_info={'code': 'a', 'type': FUNCTION}
         f=return_parsed_function("x-1", function_inputs="x", name="f",
-                                 global_dict=global_dict)
+                                 local_dict=local_dict)
         expr_context["f"]=math_object(1)
-        global_dict["f"]=f
+        local_dict["f"]=f
 
         the_ans=self.new_answer(answer_code="a", answer="f",
                                 answer_type=FUNCTION)
@@ -580,7 +580,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="0", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -589,7 +589,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="1", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -598,7 +598,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="1.5", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -608,7 +608,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -617,7 +617,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="2.8", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -626,13 +626,13 @@ class TestCompareResponse(TestCase):
 
         f=return_parsed_function("if(x^2<1,0, if(x^2=1,1, 0.5))", 
                                  function_inputs="x", name="f",
-                                 global_dict=global_dict)
-        global_dict["f"]=f
+                                 local_dict=local_dict)
+        local_dict["f"]=f
 
         answer_results=compare_response_with_answer_code\
                         (user_response="1-2", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
@@ -641,7 +641,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="10", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
@@ -651,7 +651,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="0.5", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -660,7 +660,7 @@ class TestCompareResponse(TestCase):
         answer_results=compare_response_with_answer_code\
                         (user_response="x+a", the_answer_info=answer_info,
                          question=self.q, 
-                         expr_context=expr_context, global_dict=global_dict)
+                         expr_context=expr_context, local_dict=local_dict)
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
@@ -685,7 +685,7 @@ class TestQuestionGroups(TestCase):
 
     
     def test_small_group(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
 
@@ -724,7 +724,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,200)
@@ -752,7 +752,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,200)
@@ -780,7 +780,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,100)
@@ -807,7 +807,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,100)
@@ -834,7 +834,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,100)
@@ -849,7 +849,7 @@ class TestQuestionGroups(TestCase):
 
 
     def test_multiple_answers_no_overlapp(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
 
@@ -891,7 +891,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,300)
@@ -911,7 +911,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,200)
@@ -931,7 +931,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,300)
@@ -946,7 +946,7 @@ class TestQuestionGroups(TestCase):
 
 
     def test_multiple_answers_overlap1(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
 
@@ -986,7 +986,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,200)
@@ -1006,7 +1006,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,300)
@@ -1026,7 +1026,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,200)
@@ -1039,7 +1039,7 @@ class TestQuestionGroups(TestCase):
 
 
     def test_multiple_answers_overlap2(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
 
@@ -1088,7 +1088,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,400)
@@ -1110,7 +1110,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,300)
@@ -1126,7 +1126,7 @@ class TestQuestionGroups(TestCase):
         
 
     def test_multiple_answers_partial_credit(self):
-        global_dict={}
+        local_dict={}
         expr_context=Context({})
 
 
@@ -1166,7 +1166,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
         self.assertEqual(points_times_100,300)
@@ -1190,7 +1190,7 @@ class TestQuestionGroups(TestCase):
         points_times_100 = grade_question_group(
             group_list=group_list, answer_user_responses=answer_user_responses, 
             answer_info=answer_info, question=self.q,
-            expr_context=expr_context, global_dict=global_dict, 
+            expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
 
 

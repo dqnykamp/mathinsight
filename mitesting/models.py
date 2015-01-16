@@ -180,7 +180,7 @@ class Question(models.Model):
         from .render_assessments import get_new_seed
         return get_new_seed()
 
-    def return_sympy_global_dict(self, user_response=False):
+    def return_sympy_local_dict(self, user_response=False):
         """
         Return dictionary containing sympy command mappings for 
         parsing expressions.
@@ -188,12 +188,12 @@ class Question(models.Model):
         then use the commands from allowed_user_sympy_commands.
         Otherwise use commands from allowed_sympy_commands.
         """
-        from .utils import return_sympy_global_dict
+        from .utils import return_sympy_local_dict
         if user_response and self.customize_user_sympy_commands:
-            return return_sympy_global_dict(
+            return return_sympy_local_dict(
                 [a.commands for a in \
                      self.allowed_user_sympy_commands.all()])
-        return return_sympy_global_dict(
+        return return_sympy_local_dict(
             [a.commands for a in self.allowed_sympy_commands.all()])
     
 
@@ -813,24 +813,24 @@ class Expression(models.Model):
         super(Expression, self).save(*args, **kwargs)
 
 
-    def evaluate(self, rng, global_dict=None, user_function_dict=None,
+    def evaluate(self, rng, local_dict=None, user_function_dict=None,
                  random_group_indices=None, process_post_user=False,
                  post_user_number=None):
         """
         Return evaluated expression and add result to dicts.
-        Add sympy version of result to global_dict with key self.name.
+        Add sympy version of result to local_dict with key self.name.
         If result is a function name that user may enter to answer 
         question, then add function to user_function_dict.
 
         Result is calculated based on expression_type.
 
         In all cases, except RANDOM_WORD, the expression is first
-        parsed with sympy, making the substitution from global_dict. 
+        parsed with sympy, making the substitution from local_dict. 
         The resulting math_object returned. The sympy expression is
-        added to global_dict[self.name] so that its value will
+        added to local_dict[self.name] so that its value will
         be substituted in following expressions.
         
-        If error occurs, add Symbol("??") to global_dict,
+        If error occurs, add Symbol("??") to local_dict,
         don't add to user_function_dict, and raise an exception
 
         For entries selected randomly from lists,
@@ -886,7 +886,7 @@ class Expression(models.Model):
         For random words, a tuple is returned of the form
         (singular form, plural_form).
         If the singular form can be successfully converted to 
-        a sympy Symbol(), then it is added to global_dict[self.name].
+        a sympy Symbol(), then it is added to local_dict[self.name].
         
         RANDOM_EXPRESSION
         Expression should be a list of expressions of the form
@@ -915,7 +915,7 @@ class Expression(models.Model):
         A math object containing the evaluated expression 
         is returned, so it is displayed like a GENERIC.
         However, a function with inpues given by function_inputs
-        is added to global_dict.  In this way, when included in 
+        is added to local_dict.  In this way, when included in 
         subsequent expressions, the expression
         will act like a function, with the values of the 
         function input symbol(s) being replaced by the arguments
@@ -1013,7 +1013,7 @@ class Expression(models.Model):
                     word_text=re.sub(' ', '_', result[0])
                     sympy_word = Symbol(word_text)
                     try:
-                        global_dict[self.name]=sympy_word
+                        local_dict[self.name]=sympy_word
                     except TypeError:
                         pass
                     
@@ -1022,7 +1022,7 @@ class Expression(models.Model):
                 try:
                     (math_expr, index) = return_random_expression(
                         self.expression, index=group_index,
-                        global_dict=global_dict,
+                        local_dict=local_dict,
                         evaluate_level = self.evaluate_level, rng=rng)
                 except IndexError:
                     raise IndexError("Insufficient entries for random list group: " \
@@ -1073,7 +1073,7 @@ class Expression(models.Model):
 
             elif self.expression_type == self.RANDOM_NUMBER:
                 math_expr = return_random_number_sample(
-                    self.expression, global_dict=global_dict, rng=rng)
+                    self.expression, local_dict=local_dict, rng=rng)
 
             # if not randomly generating
             else:
@@ -1085,7 +1085,7 @@ class Expression(models.Model):
                 if self.expression_type == self.INTERVAL:
                     try:
                         math_expr = return_interval_expression(
-                            expression, global_dict=global_dict, 
+                            expression, local_dict=local_dict, 
                             evaluate_level = self.evaluate_level)
                     except (TypeError, NotImplementedError, SyntaxError, TokenError):
                         math_expr=None
@@ -1098,7 +1098,7 @@ class Expression(models.Model):
                 try:
                     if math_expr is None:
                         math_expr = parse_and_process(
-                            expression, global_dict=global_dict,
+                            expression, local_dict=local_dict,
                             evaluate_level = self.evaluate_level)
                 except (TokenError, SyntaxError, TypeError, AttributeError):
                     if self.expression_type in [
@@ -1196,13 +1196,13 @@ class Expression(models.Model):
                 if self.expression_type == self.FUNCTION:
                     parsed_function = return_parsed_function(
                         self.expression, function_inputs=self.function_inputs,
-                        name = self.name, global_dict=global_dict,
+                        name = self.name, local_dict=local_dict,
                         default_value=math_expr)
 
                     # for FUNCTION, add parsed_function rather than
                     # math_expr to global dict
                     try:
-                        global_dict[self.name] = parsed_function   
+                        local_dict[self.name] = parsed_function   
                     except TypeError:
                         pass
 
@@ -1212,12 +1212,12 @@ class Expression(models.Model):
                 try:
                     # convert list to Tuple
                     if isinstance(math_expr,list):
-                        global_dict[self.name] = Tuple(*math_expr)
+                        local_dict[self.name] = Tuple(*math_expr)
                     # for boolean, convert to sympy integer
                     elif isinstance(math_expr,bool):
-                        global_dict[self.name] = sympify(int(math_expr))
+                        local_dict[self.name] = sympify(int(math_expr))
                     else:
-                        global_dict[self.name] = math_expr
+                        local_dict[self.name] = math_expr
                 except TypeError:
                     pass
 
@@ -1233,14 +1233,14 @@ class Expression(models.Model):
         # no additional processing for FailedCondition
         except self.FailedCondition:
             raise
-        # on any other exception, add "??" to  global_dict for self.name
+        # on any other exception, add "??" to  local_dict for self.name
         # add name of expression to error message
         except Exception as exc:
             # don't want to raise another exception 
-            # so test if global_dict is a dictionary rather
+            # so test if local_dict is a dictionary rather
             # than just trying to assign
-            if isinstance(global_dict, dict):
-                global_dict[self.name] = Symbol('??')
+            if isinstance(local_dict, dict):
+                local_dict[self.name] = Symbol('??')
 
             import sys
             raise exc.__class__, "Error in expression: %s\n%s" \

@@ -40,7 +40,7 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
         self.assertEqual(expression_context['the_x'], Symbol('x'))
-        self.assertEqual(expression_context['_sympy_global_dict_']['the_x'], Symbol('x'))
+        self.assertEqual(expression_context['_sympy_local_dict_']['the_x'], Symbol('x'))
 
     def test_with_composed_expressions(self):
         self.new_expr(name="expr",expression="x*x")
@@ -60,9 +60,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expression_context['expr'], x**2)
         self.assertEqual(expression_context['expr2'], x**2/y)
         self.assertEqual(expression_context['expr3'], 5*x**2/y + x**2*z)
-        self.assertEqual(expression_context['_sympy_global_dict_']['expr'], x**2)
-        self.assertEqual(expression_context['_sympy_global_dict_']['expr2'], x**2/y)
-        self.assertEqual(expression_context['_sympy_global_dict_']['expr3'],
+        self.assertEqual(expression_context['_sympy_local_dict_']['expr'], x**2)
+        self.assertEqual(expression_context['_sympy_local_dict_']['expr2'], x**2/y)
+        self.assertEqual(expression_context['_sympy_local_dict_']['expr3'],
                          5*x**2/y + x**2*z)
 
  
@@ -83,8 +83,8 @@ class TestSetupExpressionContext(TestCase):
         z=Symbol('z')
         self.assertEqual(expression_context['a'], x+y)
         self.assertEqual(expression_context['b'], 3*z/y)
-        self.assertEqual(expression_context['_sympy_global_dict_']['a'], x+y)
-        self.assertEqual(expression_context['_sympy_global_dict_']['b'], 3*z/y)
+        self.assertEqual(expression_context['_sympy_local_dict_']['a'], x+y)
+        self.assertEqual(expression_context['_sympy_local_dict_']['b'], 3*z/y)
 
 
     def test_with_function_names(self):
@@ -108,8 +108,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(f in [SymbolCallable(str(item)) for item in \
                                       ['f','g','h','k']])
             self.assertEqual(expression_context['a'], 3*f(x)+2)
-            self.assertEqual(expression_context['_sympy_global_dict_']['f'], f)
-            self.assertEqual(expression_context['_sympy_global_dict_']['a'], 3*f(x)+2)
+            self.assertEqual(expression_context['_sympy_local_dict_']['f'], f)
+            self.assertEqual(expression_context['_sympy_local_dict_']['a'], 3*f(x)+2)
 
     
     def test_conditions(self):
@@ -141,8 +141,8 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(n != 0)
             self.assertTrue(m in range(-4, 5))
             self.assertTrue(n in range(-4, 5))
-            self.assertEqual(expression_context['_sympy_global_dict_']['m'], m)
-            self.assertEqual(expression_context['_sympy_global_dict_']['n'], n)
+            self.assertEqual(expression_context['_sympy_local_dict_']['m'], m)
+            self.assertEqual(expression_context['_sympy_local_dict_']['n'], n)
 
     def test_fail_conditions(self):
         self.new_expr(name="n", expression="(-4,4)", 
@@ -162,7 +162,7 @@ class TestSetupExpressionContext(TestCase):
         expression_context = results['expression_context']
         n = expression_context['n'].return_expression()
         self.assertTrue(n in range(-4, 5))
-        self.assertEqual(expression_context['_sympy_global_dict_']['n'], n)
+        self.assertEqual(expression_context['_sympy_local_dict_']['n'], n)
 
 
     def test_repeatable_results(self):
@@ -229,7 +229,7 @@ class TestSetupExpressionContext(TestCase):
         expression_error = results['expression_error']
         self.assertTrue("Error in expression: x" in expression_error['x'])
         self.assertEqual("??", results['expression_context']['x'])
-        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_global_dict_']['x'])
+        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_local_dict_']['x'])
 
     def test_with_error_post_user(self):
         rng = random.Random()
@@ -244,7 +244,7 @@ class TestSetupExpressionContext(TestCase):
         expression_error = results['expression_error_post_user']
         self.assertTrue("Error in expression: x" in expression_error['x'])
         self.assertEqual("??", results['expression_context']['x'])
-        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_global_dict_']['x'])
+        self.assertEqual(Symbol("??"), results['expression_context']['_sympy_local_dict_']['x'])
 
 
 
@@ -276,9 +276,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expr_context['e3'], q*3*x**2/z+z)
         self.assertEqual(expr_context['e4'], "??")
         self.assertEqual(expr_context['e5'],q/(3*x**2/z)+(q*3*x**2/z+z)/q)
-        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
-        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
-        self.assertEqual(Symbol("??"), expr_context['_sympy_global_dict_']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_local_dict_']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_local_dict_']['e2'])
+        self.assertEqual(Symbol("??"), expr_context['_sympy_local_dict_']['e2'])
 
 
     def add_allowed_sympy_commands_sets(self, command_sets, 
@@ -316,28 +316,28 @@ class TestSetupExpressionContext(TestCase):
             else:
                 self.q.allowed_sympy_commands.add(scs_other)
 
-    def test_initial_sympy_global_dict(self):
+    def test_initial_sympy_local_dict(self):
         from mitesting.customized_commands import sin, cos, log, exp
-        self.assertEqual(self.q.return_sympy_global_dict(), {})
-        self.assertEqual(self.q.return_sympy_global_dict(user_response=True), 
+        self.assertEqual(self.q.return_sympy_local_dict(), {})
+        self.assertEqual(self.q.return_sympy_local_dict(user_response=True), 
                          {})
-        self.assertEqual(self.q.return_sympy_global_dict(user_response=False),
+        self.assertEqual(self.q.return_sympy_local_dict(user_response=False),
                          {})
 
         self.add_allowed_sympy_commands_sets(['trig'])
-        self.assertEqual(self.q.return_sympy_global_dict()['cos'],cos)
+        self.assertEqual(self.q.return_sympy_local_dict()['cos'],cos)
         self.assertEqual(
-            self.q.return_sympy_global_dict(user_response=True)['cos'], cos)
+            self.q.return_sympy_local_dict(user_response=True)['cos'], cos)
         self.assertEqual(
-            self.q.return_sympy_global_dict(user_response=False)['cos'], cos)
+            self.q.return_sympy_local_dict(user_response=False)['cos'], cos)
 
         self.q.customize_user_sympy_commands=True
         self.q.save()
-        self.assertEqual(self.q.return_sympy_global_dict()['cos'],cos)
+        self.assertEqual(self.q.return_sympy_local_dict()['cos'],cos)
         with self.assertRaises(KeyError):
-            self.q.return_sympy_global_dict(user_response=True)['cos']
+            self.q.return_sympy_local_dict(user_response=True)['cos']
         self.assertEqual(
-            self.q.return_sympy_global_dict(user_response=False)['cos'], cos)
+            self.q.return_sympy_local_dict(user_response=False)['cos'], cos)
 
     def test_command_set_inclusion(self):
         x=Symbol('x')
@@ -356,23 +356,23 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
                          expression_context["sincos"])
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
-                         expression_context['_sympy_global_dict_']["sincos"])
+                         expression_context['_sympy_local_dict_']["sincos"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
                          expression_context["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         expression_context['_sympy_global_dict_']["explog1"])
+                         expression_context['_sympy_local_dict_']["explog1"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          expression_context["explog2"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         expression_context['_sympy_global_dict_']["explog2"])
+                         expression_context['_sympy_local_dict_']["explog2"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
                          expression_context["expln1"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         expression_context['_sympy_global_dict_']["expln1"])
+                         expression_context['_sympy_local_dict_']["expln1"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
                          expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         expression_context['_sympy_global_dict_']["expln2"])
+                         expression_context['_sympy_local_dict_']["expln2"])
 
         self.add_allowed_sympy_commands_sets(['trig'])
         results=setup_expression_context(self.q, rng=rng)
@@ -380,23 +380,23 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(sin(x)*cos(x),
                          expression_context["sincos"])
         self.assertEqual(sin(x)*cos(x),
-                         expression_context['_sympy_global_dict_']["sincos"])
+                         expression_context['_sympy_local_dict_']["sincos"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
                          expression_context["explog1"])
         self.assertEqual(Symbol('exp')*Symbol('log')*x**2,
-                         expression_context['_sympy_global_dict_']["explog1"])
+                         expression_context['_sympy_local_dict_']["explog1"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
                          expression_context["explog2"])
         self.assertEqual(Symbol('e')**x*Symbol('log')*x,
-                         expression_context['_sympy_global_dict_']["explog2"])
+                         expression_context['_sympy_local_dict_']["explog2"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
                          expression_context["expln1"])
         self.assertEqual(Symbol('exp')*Symbol('ln')*x**2,
-                         expression_context['_sympy_global_dict_']["expln1"])
+                         expression_context['_sympy_local_dict_']["expln1"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
                          expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
-                         expression_context['_sympy_global_dict_']["expln2"])
+                         expression_context['_sympy_local_dict_']["expln2"])
        
         self.add_allowed_sympy_commands_sets(['explog'])
         results=setup_expression_context(self.q, rng=rng)
@@ -404,23 +404,23 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(sin(x)*cos(x),
                          expression_context["sincos"])
         self.assertEqual(sin(x)*cos(x),
-                         expression_context['_sympy_global_dict_']["sincos"])
+                         expression_context['_sympy_local_dict_']["sincos"])
         self.assertEqual(exp(x)*log(x),
                          expression_context["explog1"])
         self.assertEqual(exp(x)*log(x),
-                         expression_context['_sympy_global_dict_']["explog1"])
+                         expression_context['_sympy_local_dict_']["explog1"])
         self.assertEqual(exp(x)*log(x),
                          expression_context["explog2"])
         self.assertEqual(exp(x)*log(x),
-                         expression_context['_sympy_global_dict_']["explog2"])
+                         expression_context['_sympy_local_dict_']["explog2"])
         self.assertEqual(exp(x)*ln(x),
                          expression_context["expln1"])
         self.assertEqual(exp(x)*ln(x),
-                         expression_context['_sympy_global_dict_']["expln1"])
+                         expression_context['_sympy_local_dict_']["expln1"])
         self.assertEqual(exp(x)*ln(x),
                          expression_context["expln2"])
         self.assertEqual(exp(x)*ln(x),
-                         expression_context['_sympy_global_dict_']["expln2"])
+                         expression_context['_sympy_local_dict_']["expln2"])
 
         
     
@@ -729,18 +729,18 @@ class TestAnswerCodes(TestCase):
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
-        global_dict={}
-        expr_context["_sympy_global_dict_"]=global_dict
-        global_dict['pp']=sympify("x")
+        local_dict={}
+        expr_context["_sympy_local_dict_"]=local_dict
+        local_dict['pp']=sympify("x")
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
-        global_dict={}
-        expr_context["_sympy_global_dict_"]=global_dict
-        global_dict['pp']=1
+        local_dict={}
+        expr_context["_sympy_local_dict_"]=local_dict
+        local_dict['pp']=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
@@ -749,8 +749,8 @@ class TestAnswerCodes(TestCase):
 
         from mitesting.utils import return_parsed_function
         pp=return_parsed_function("x^2", function_inputs="x",
-                                  name="pp", global_dict=global_dict)
-        global_dict["pp"]=pp
+                                  name="pp", local_dict=local_dict)
+        local_dict["pp"]=pp
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, 'p': {'answer_type': FUNCTION, 'split_symbols_on_compare': True} })

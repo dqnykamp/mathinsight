@@ -102,13 +102,13 @@ class ExprNode(Node):
 
         expression = force_unicode(self.expression.resolve(context))
 
-        global_dict = context["_sympy_global_dict_"]
+        local_dict = context["_sympy_local_dict_"]
 
         from mitesting.math_objects import math_object
         from mitesting.sympy_customized import parse_and_process
 
         expression = parse_and_process(expression,
-                                       global_dict=global_dict)
+                                       local_dict=local_dict)
 
         expression=math_object(expression, **kwargs)
 

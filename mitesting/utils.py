@@ -10,7 +10,7 @@ from sympy.parsing.sympy_tokenize import TokenError
 import six
 
 
-def return_sympy_global_dict(allowed_sympy_commands=[]):
+def return_sympy_local_dict(allowed_sympy_commands=[]):
     """
     Make a whitelist of allowed commands sympy and customized commands.
     Argument allowed_sympy_commands is an iterable containing
@@ -64,28 +64,28 @@ def return_sympy_global_dict(allowed_sympy_commands=[]):
             [item.strip() for item in commandstring.split(",")])
 
     # create the dictionary
-    global_dict = {}
+    local_dict = {}
 
     for command in allowed_commands:
         try:
             # attempt to match command with localized command
-            global_dict[str(command)]=localized_commands[command]
+            local_dict[str(command)]=localized_commands[command]
         except KeyError:
             try:
                 # if command isn't found in localized command
                 # then attempt to match with standard sympy command
-                global_dict[str(command)]=all_sympy_commands[command]
+                local_dict[str(command)]=all_sympy_commands[command]
             except KeyError:
                 pass
 
-    return global_dict
+    return local_dict
 
 
 
-def return_random_number_sample(expression, rng, global_dict=None):
+def return_random_number_sample(expression, rng, local_dict=None):
     """
     Returns a randomly generated number based on string.
-    Expression is first parsed via sympy using global_dict, if specified.
+    Expression is first parsed via sympy using local_dict, if specified.
     Resulting expression should be a tuple: (minval, maxval, [increment])
     If increment is omitted, set it to 1.
     Result will be number generated uniformly from numbers
@@ -95,7 +95,7 @@ def return_random_number_sample(expression, rng, global_dict=None):
     
     try:
         number_params = parse_and_process(expression, 
-                                          global_dict=global_dict)
+                                          local_dict=local_dict)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random number: " + expression + "\nRequired format: (minval, maxval, [increment])")
 
@@ -241,10 +241,10 @@ def return_random_word_and_plural(expression_list, rng, index=None):
 
 
 def return_random_expression(expression_list, rng, index=None, 
-                             global_dict=None, evaluate_level=None):
+                             local_dict=None, evaluate_level=None):
     """
     Return an expression from a string containing comma-separated list.
-    Expression_list is first parsed with sympy using global_dict, if given.
+    Expression_list is first parsed with sympy using local_dict, if given.
     If index is given, that item from the list is returned.
     If index is none, items is chosen randomly and uniformly from
     all entries.
@@ -255,7 +255,7 @@ def return_random_expression(expression_list, rng, index=None,
     
     try:
         parsed_list = parse_and_process(expression_list, 
-                                        global_dict=global_dict,
+                                        local_dict=local_dict,
                                         evaluate_level=evaluate_level)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random expression: "
@@ -291,7 +291,7 @@ class ParsedFunction(Function):
     pass
 
 def return_parsed_function(expression, function_inputs, name,
-                           global_dict=None, 
+                           local_dict=None, 
                            default_value=None):
     """
     Parse expression into function of function_inputs,
@@ -301,12 +301,12 @@ def return_parsed_function(expression, function_inputs, name,
     and the function inputs field must be a tuple of symbols.
     The expression will be then viewed as a function of the
     function input symbol(s). 
-    Substitutions from global_dict will be made in expression
+    Substitutions from local_dict will be made in expression
     except values from function_inputs will be ignored.
 
     The .default argument returns default_value, if exists.
     Else .default will be set to expression parsed with all
-    substitutions from global_dict.
+    substitutions from local_dict.
     """
 
     input_list = [six.text_type(item.strip())
@@ -315,22 +315,22 @@ def return_parsed_function(expression, function_inputs, name,
     if input_list == ['']:
         input_list = []
 
-    # if any input variables are in global_dict,
-    # remove them from global_dict so they will not be substituted
-    if global_dict:
-        global_dict_sub = dict((key, global_dict[key]) 
-                               for key in global_dict.keys()
+    # if any input variables are in local_dict,
+    # remove them from local_dict so they will not be substituted
+    if local_dict:
+        local_dict_sub = dict((key, local_dict[key]) 
+                               for key in local_dict.keys()
                                if key not in input_list)
     else:
-        global_dict_sub = None
+        local_dict_sub = None
 
     try:
-        expr2= parse_and_process(expression, global_dict=global_dict_sub)
+        expr2= parse_and_process(expression, local_dict=local_dict_sub)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
 
     if default_value is None:
-        default_value = parse_and_process(expression, global_dict=global_dict)
+        default_value = parse_and_process(expression, local_dict=local_dict)
 
     
     # parsed_function is a class that stores the expression
@@ -367,7 +367,7 @@ def return_parsed_function(expression, function_inputs, name,
     return _parsed_function
 
 
-def return_interval_expression(expression, global_dict=None, evaluate_level=None):
+def return_interval_expression(expression, local_dict=None, evaluate_level=None):
     """
     Look for combinations of opening ( or [, comma, and closing ) or ].
     If find both, them replace with 
@@ -440,13 +440,13 @@ def return_interval_expression(expression, global_dict=None, evaluate_level=None
         last_ind=right_ind+1
     expr_interval += expression[last_ind:]
 
-    new_global_dict = {}
-    if global_dict:
-        new_global_dict.update(global_dict)
+    new_local_dict = {}
+    if local_dict:
+        new_local_dict.update(local_dict)
     from sympy import Interval
-    new_global_dict['Interval'] = Interval
+    new_local_dict['Interval'] = Interval
 
-    return parse_and_process(expr_interval, global_dict=new_global_dict,
+    return parse_and_process(expr_interval, local_dict=new_local_dict,
                              evaluate_level = evaluate_level)
 
 

@@ -10,34 +10,34 @@ import six
 import random
 
 class TestDicts(SimpleTestCase):
-    def test_sympy_global_dict(self):
+    def test_sympy_local_dict(self):
 
-        global_dict = return_sympy_global_dict()
-        self.assertEqual(global_dict, {})
+        local_dict = return_sympy_local_dict()
+        self.assertEqual(local_dict, {})
 
         from mitesting.customized_commands import Abs
-        global_dict = return_sympy_global_dict(["Abs"])
-        global_dict2 = {}
-        global_dict2['Abs']=Abs
-        self.assertEqual(global_dict, global_dict2)
+        local_dict = return_sympy_local_dict(["Abs"])
+        local_dict2 = {}
+        local_dict2['Abs']=Abs
+        self.assertEqual(local_dict, local_dict2)
 
-        global_dict = return_sympy_global_dict(["Abs", "floor, ceiling"])
+        local_dict = return_sympy_local_dict(["Abs", "floor, ceiling"])
         from sympy import floor, ceiling
-        global_dict2['ceiling']=ceiling
-        global_dict2['floor']=floor
-        self.assertEqual(global_dict, global_dict2)
+        local_dict2['ceiling']=ceiling
+        local_dict2['floor']=floor
+        self.assertEqual(local_dict, local_dict2)
 
-        global_dict = return_sympy_global_dict(["Abs", "floor, ceiling",
+        local_dict = return_sympy_local_dict(["Abs", "floor, ceiling",
                                                 "min, max, Min, Max",
                                                 "nothingvalid", "if"])
         from mitesting.customized_commands import min_including_tuples,\
             max_including_tuples, iif
-        global_dict2['min']=min_including_tuples
-        global_dict2['Min']=min_including_tuples
-        global_dict2['max']=max_including_tuples
-        global_dict2['Max']=max_including_tuples
-        global_dict2['if']=iif
-        self.assertEqual(global_dict, global_dict2)
+        local_dict2['min']=min_including_tuples
+        local_dict2['Min']=min_including_tuples
+        local_dict2['max']=max_including_tuples
+        local_dict2['Max']=max_including_tuples
+        local_dict2['if']=iif
+        self.assertEqual(local_dict, local_dict2)
 
 
         
@@ -76,10 +76,10 @@ class TestRandomNumber(SimpleTestCase):
                 break
         self.assertTrue(achieved_max)
     
-    def test_with_global_dict(self):
-        global_dict = {"x": sympify(-2), "y": sympify(2)}
+    def test_with_local_dict(self):
+        local_dict = {"x": sympify(-2), "y": sympify(2)}
         the_num = return_random_number_sample("(x,y)", rng=self.rng,
-                                              global_dict=global_dict)
+                                              local_dict=local_dict)
         self.assertTrue(the_num in range(-2,3))
     
     def test_raises_useful_exceptions(self):
@@ -209,19 +209,19 @@ class TestRandomExpression(SimpleTestCase):
         expr = return_random_expression("x^3, x^2+2*x*y", rng=self.rng)
         self.assertTrue(expr[0] in [x**3, x**2+2*x*y])
 
-    def test_with_global_dict(self):
+    def test_with_local_dict(self):
         x=Symbol("x")
         y=Symbol("y")
-        global_dict = {"v1": x, "v2": y}
+        local_dict = {"v1": x, "v2": y}
         expr = return_random_expression("v1+v2, v1/v2", rng=self.rng,
-                                        global_dict=global_dict)
+                                        local_dict=local_dict)
         self.assertTrue(expr[0] in [x+y, x/y])
 
         from sympy import sin, cos
         u = Symbol("u")
-        global_dict = {"f": sin, "g": cos, "x": u }
+        local_dict = {"f": sin, "g": cos, "x": u }
         expr = return_random_expression("f(x), g(x)", rng=self.rng,
-                                        global_dict=global_dict)
+                                        local_dict=local_dict)
         self.assertTrue(expr[0] in [sin(u),cos(u)])
 
     def test_with_given_index(self):
@@ -248,15 +248,15 @@ class TestParsedFunction(SimpleTestCase):
         fun = return_parsed_function("x*y*z - a/y", "y", name="f")
         self.assertEqual(fun(w), sympify("x*w*z-a/w"))
         self.assertEqual(six.text_type(fun), "f")
-    def test_function_global_dict(self):
+    def test_function_local_dict(self):
         u=Symbol('u')
         b=Symbol('b')
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
-                                     global_dict={"a": b})
+                                     local_dict={"a": b})
         self.assertEqual(fun(u), sympify("x*u*z-b/u"))
         self.assertEqual(six.text_type(fun), "f1g")
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
-                                     global_dict={"y": b})
+                                     local_dict={"y": b})
         self.assertEqual(fun(u), sympify("x*u*z-a/u"))
 
     def test_function_multiple_inputs(self):
@@ -292,9 +292,9 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(fun1(fun2(x)), 3*x**2*(x**2 - 1))
         self.assertEqual(fun2(fun1(x)),9*x**2*(x - 1)**2)
         
-        # compose via global_dict
+        # compose via local_dict
         fun2 = return_parsed_function("f(x)^2","x",name="g", 
-                                      global_dict={'f': fun1})
+                                      local_dict={'f': fun1})
         self.assertEqual(fun2(x),9*x**2*(x - 1)**2)
     
         

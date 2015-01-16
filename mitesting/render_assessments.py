@@ -47,13 +47,13 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
     user_responses is a list of dictionaries of user responses to answers
     embedded in the question.  If any answers have been marked to be
     asssigned to expressions, the second step is to parse those responses
-    using user_function_dict for global_dict and assign the result
+    using user_function_dict for local_dict and assign the result
     to the corresponding expression.
 
     The third step is to evaluate any expressions flagged as being 
     post user response.
 
-    Both the global_dict and user_function_dict are added to the
+    Both the local_dict and user_function_dict are added to the
     expression context.
 
     Return a dictionary with the following:
@@ -93,8 +93,8 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
         # initialize global dictionary using the comamnds
         # found in allowed_sympy_commands.
         # Also adds standard symbols to dictionary.
-        global_dict = question.return_sympy_global_dict()
-        user_function_dict = question.return_sympy_global_dict(
+        local_dict = question.return_sympy_local_dict()
+        user_function_dict = question.return_sympy_local_dict(
             user_response=True)
         try:
 
@@ -105,7 +105,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                                       .filter(post_user_response=False):
                 try:
                     expression_evaluated=expression.evaluate(
-                        global_dict=global_dict, 
+                        local_dict=local_dict, 
                         user_function_dict=user_function_dict,
                         random_group_indices=random_group_indices,
                         rng=rng)
@@ -145,7 +145,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
     # add state to expression context as convenience to 
     # reset state if not generating regular expression
     # Also, sympy global dict is accessed from template tags
-    expression_context['_sympy_global_dict_'] = global_dict
+    expression_context['_sympy_local_dict_'] = local_dict
     expression_context['_user_function_dict_'] = user_function_dict
 
     error_in_expressions_post_user = False
@@ -189,27 +189,27 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                         try:
                             math_expr =  parse_and_process(
                                 response['answer'], 
-                                global_dict=user_function_dict, 
+                                local_dict=user_function_dict, 
                                 split_symbols=\
                                 expression.split_symbols_on_compare,
                                 evaluate_level=EVALUATE_NONE
                             )
                         except:
                             pass
-            global_dict[expression.name]=math_expr
+            local_dict[expression.name]=math_expr
             expression_context[expression.name] = \
                 math_object(math_expr, evaluate_level=EVALUATE_NONE)
 
-        # add Symbol(['?']) to global_dict with key _undefined_
+        # add Symbol(['?']) to local_dict with key _undefined_
         # so that can test for it in remaining expressions
-        global_dict['_undefined_']=Symbol('[?]')
+        local_dict['_undefined_']=Symbol('[?]')
 
         # last, process expressions flagged as post user response
         for (i, expression) in enumerate(question.expression_set\
                                   .filter(post_user_response=True)):
             try:
                 expression_evaluated=expression.evaluate(
-                    global_dict=global_dict, 
+                    local_dict=local_dict, 
                     user_function_dict=user_function_dict,
                     random_group_indices=random_group_indices,
                     rng=rng, post_user_number=i)
@@ -279,7 +279,7 @@ def return_valid_answer_codes(question, expression_context):
 
         elif option.answer_type==QuestionAnswerOption.FUNCTION:
             try:
-                expression = expression_context['_sympy_global_dict_']\
+                expression = expression_context['_sympy_local_dict_']\
                              [option.answer]
             except KeyError:
                 answer_valid=False

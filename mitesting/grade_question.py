@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def compare_response_with_answer_code(user_response, the_answer_info, question,
-                                      expr_context, global_dict):
+                                      expr_context, local_dict):
 
     answer_code = the_answer_info['code']
     answer_type = the_answer_info['type']
@@ -146,7 +146,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
             try:
                 user_response_parsed = parse_and_process(
-                    user_response, global_dict=global_dict, 
+                    user_response, local_dict=local_dict, 
                     split_symbols=answer_option
                     .split_symbols_on_compare,
                     evaluate_level=evaluate_level)
@@ -172,7 +172,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             from mitesting.sympy_customized import EVALUATE_NONE
             try:
                 user_response_unevaluated =  parse_and_process(
-                    user_response, global_dict=global_dict, 
+                    user_response, local_dict=local_dict, 
                     split_symbols=answer_option
                     .split_symbols_on_compare,
                     evaluate_level=EVALUATE_NONE)
@@ -191,7 +191,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
 
             if answer_type == QuestionAnswerOption.FUNCTION:
-                f=expr_context['_sympy_global_dict_'][answer_option.answer]
+                f=expr_context['_sympy_local_dict_'][answer_option.answer]
                 f_float=None
                 try:
                     f=f(user_response_parsed)
@@ -462,7 +462,7 @@ def match_max_ones(A):
 
     
 def grade_question_group(group_list, answer_user_responses, answer_info, question,
-                         expr_context, global_dict, answer_results):
+                         expr_context, local_dict, answer_results):
     """
     Grade a group of answers, where responses could match answers
     in any sequence.
@@ -478,7 +478,7 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
       and groups of answers in question
     - question: the question in which answers are contained
     - expr_context: the rendered expression context for the question
-    - global_dict: global dictionary to be used to parse user's responses
+    - local_dict: global dictionary to be used to parse user's responses
     - answer_results: dictionary that records results of answers
       (not just the ones from this group).  
 
@@ -503,7 +503,7 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 global_dict=global_dict)
+                 local_dict=local_dict)
             )
     
 
@@ -639,7 +639,7 @@ def grade_question(question, question_identifier, answer_info,
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 global_dict=user_function_dict)
+                 local_dict=user_function_dict)
 
             points_achieved += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
@@ -658,7 +658,7 @@ def grade_question(question, question_identifier, answer_info,
             group_list=question_groups[group], 
             answer_user_responses=answer_user_responses,
             answer_info=answer_info, question=question,
-            expr_context=expr_context, global_dict=user_function_dict,
+            expr_context=expr_context, local_dict=user_function_dict,
             answer_results=answer_results)
 
         

@@ -23,19 +23,19 @@ class BottomUpTests(SimpleTestCase):
 class ParseExprTests(SimpleTestCase):
 
 
-    def test_basics_with_empty_global_dict(self):
+    def test_basics_with_empty_local_dict(self):
         x = Symbol('x')
         y = Symbol('y')
-        self.assertEqual(parse_expr("5x", global_dict={}), 5*x)
-        global_dict = {}
-        self.assertEqual(parse_expr("3y^2", global_dict=global_dict),
+        self.assertEqual(parse_expr("5x", local_dict={}), 5*x)
+        local_dict = {}
+        self.assertEqual(parse_expr("3y^2", local_dict=local_dict),
                           3*y**2)
-        # verify global_dict is still empty
-        self.assertEqual(global_dict, {})
-        self.assertEqual(parse_expr("log(x)", global_dict={}),
+        # verify local_dict is still empty
+        self.assertEqual(local_dict, {})
+        self.assertEqual(parse_expr("log(x)", local_dict={}),
                           Symbol('log')*x)
 
-    def test_basics_with_no_global_dict(self):
+    def test_basics_with_no_local_dict(self):
         x = Symbol('x')
         self.assertEqual(parse_expr("5x"), 5*x)
         self.assertEqual(parse_expr("3x^2"), 3*x**2)
@@ -43,10 +43,10 @@ class ParseExprTests(SimpleTestCase):
         
     def test_implicit_convert_xor(self):
         x = Symbol('x')
-        self.assertEqual(parse_expr("3x^2/5", global_dict={}), 
+        self.assertEqual(parse_expr("3x^2/5", local_dict={}), 
                           sympify("3*x**2/5"))
         self.assertEqual(
-            normalize_floats(parse_expr("3x^2/5.", global_dict={})), 
+            normalize_floats(parse_expr("3x^2/5.", local_dict={})), 
             normalize_floats(0.6*x**2))
 
     def test_implicit_multiplication(self):
@@ -76,12 +76,12 @@ class ParseExprTests(SimpleTestCase):
     def test_e_with_split_symbols(self):
         from sympy import E, exp
         x = Symbol('x')
-        self.assertEqual(parse_expr("3*x*e^x", global_dict={'e': E}),
+        self.assertEqual(parse_expr("3*x*e^x", local_dict={'e': E}),
                           3*x*exp(x))
-        self.assertEqual(parse_expr("3x*e^x", global_dict={'e': E}),
+        self.assertEqual(parse_expr("3x*e^x", local_dict={'e': E}),
                           3*x*exp(x))
         self.assertEqual(parse_expr("3xe^x", split_symbols=True,
-                                     global_dict={'e': E}),
+                                     local_dict={'e': E}),
                           3*x*exp(x))
         
     def test_with_tuples(self):
@@ -153,10 +153,10 @@ class ParseExprTests(SimpleTestCase):
         from mitesting.customized_commands import iif
         x = Symbol('x')
         sub_dict = {'if': iif}
-        self.assertEqual(parse_expr('if(4>3,x,y)', global_dict=sub_dict),x)
+        self.assertEqual(parse_expr('if(4>3,x,y)', local_dict=sub_dict),x)
         self.assertEqual(parse_expr('if(-4>3,y,x^2)', 
-                                    global_dict=sub_dict),x**2)
-        f = parse_expr('if(x=1,2,if(x>1,3,0))',global_dict=sub_dict)
+                                    local_dict=sub_dict),x**2)
+        f = parse_expr('if(x=1,2,if(x>1,3,0))',local_dict=sub_dict)
         self.assertEqual(f.subs(x,1),2)
         self.assertEqual(f.subs(x,-1),0)
         self.assertEqual(f.subs(x,2),3)
@@ -185,12 +185,12 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("False or not True"), False)
         self.assertEqual(parse_expr("not False or not True"), True)
 
-        global_dict = {'a': sympify(1), 'b': sympify(2), 'c': sympify(3),
+        local_dict = {'a': sympify(1), 'b': sympify(2), 'c': sympify(3),
                        'd': sympify(4)}
-        expr = parse_expr("a and b and c and d", global_dict=global_dict)
+        expr = parse_expr("a and b and c and d", local_dict=local_dict)
         self.assertEqual(expr, True)
-        global_dict['b'] = sympify(0)
-        expr = parse_expr("a and b and c and d", global_dict=global_dict)
+        local_dict['b'] = sympify(0)
+        expr = parse_expr("a and b and c and d", local_dict=local_dict)
         self.assertEqual(expr, False)
 
 
@@ -202,12 +202,12 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_and_process("xy", split_symbols=True)
         self.assertEqual(expr, x*y)
         expr = parse_and_process("var1*var2", 
-                                 global_dict = {'var1':x, 'var2': y})
+                                 local_dict = {'var1':x, 'var2': y})
         self.assertEqual(expr, x*y)
 
     def test_parse_and_process_evaluate_level(self):
         from sympy import Derivative
-        global_dict = {'Derivative': Derivative}
+        local_dict = {'Derivative': Derivative}
         x=Symbol('x')
         y=Symbol('y')
         expr = parse_and_process("2+x+x", 
@@ -215,13 +215,13 @@ class ParseExprTests(SimpleTestCase):
         self.assertNotEqual(expr, 2+x+x)
         self.assertEqual(repr(expr), 'x + x + 2')
         
-        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
+        expr = parse_and_process("Derivative(x^2,x)", local_dict= local_dict,
                                  evaluate_level = EVALUATE_PARTIAL)
         self.assertEqual(Derivative(x**2,x), expr)
-        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict,
+        expr = parse_and_process("Derivative(x^2,x)", local_dict= local_dict,
                                  evaluate_level = EVALUATE_FULL)
         self.assertEqual(2*x, expr)
-        expr = parse_and_process("Derivative(x^2,x)", global_dict= global_dict)
+        expr = parse_and_process("Derivative(x^2,x)", local_dict= local_dict)
         self.assertEqual(2*x, expr)
 
     def test_prevent_octal(self):
@@ -272,7 +272,7 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, a*fsym*x)
 
         expr = parse_expr('af(x)', split_symbols=True, 
-                          global_dict={'f': f})
+                          local_dict={'f': f})
         self.assertEqual(expr, a*f(x))
 
 
@@ -289,7 +289,7 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, a*fsym*x)
 
         expr = parse_expr('af(x)', split_symbols=True, 
-                          global_dict={'f': f})
+                          local_dict={'f': f})
         self.assertEqual(expr, a*f(x))
         self.assertEqual(expr, a*fsym(x))
         
