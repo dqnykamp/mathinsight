@@ -687,8 +687,9 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
     """
     Check if two matrices are equal
 
-    If partial_matches is set, then check if just some elements
-    match and return the fraction that match. 
+    If partial_matches is set and matrices are the same size,
+    then check if just some elements match 
+    and return the fraction that match. 
 
     Return 
     1   if exact match
@@ -706,7 +707,7 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
     if the_matrix1 == the_matrix2:
         return 1
 
-    if not partial_matches:
+    if not partial_matches or the_matrix1.shape != the_matrix2.shape:
         return 0
         
     n_matches=0
@@ -718,9 +719,7 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
             except IndexError:
                 pass
 
-    return n_matches/max(the_matrix1.rows*the_matrix1.cols,
-                         the_matrix2.rows*the_matrix2.cols)
-    
+    return n_matches/(the_matrix1.rows*the_matrix1.cols)
     
 
 # given inheritance structure of sympy

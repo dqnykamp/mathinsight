@@ -650,7 +650,7 @@ class TestCompareResponse(TestCase):
         the_ans.save()
 
         answer_results=compare_response_with_answer_code\
-                        (user_response="(a,b,c)", the_answer_info=answer_info,
+                        (user_response="(a,b,c,q)", the_answer_info=answer_info,
                          question=self.q, 
                          expr_context=expr_context, local_dict=local_dict)
 
@@ -661,7 +661,7 @@ class TestCompareResponse(TestCase):
 
     
         answer_results=compare_response_with_answer_code\
-                        (user_response="(b,c,d)", the_answer_info=answer_info,
+                        (user_response="(a,b,c)", the_answer_info=answer_info,
                          question=self.q, 
                          expr_context=expr_context, local_dict=local_dict)
 
