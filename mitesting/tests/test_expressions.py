@@ -511,15 +511,27 @@ class TestExpressions(TestCase):
         self.assertEqual(expr1_eval, TupleNoParen(a,b,c))
         self.assertNotEqual(expr1_eval, Tuple(a,b,c))
 
-        expr2=self.new_expr(name="t1",expression="(a,b,c)")
+        expr2=self.new_expr(name="t2",expression="(a,b,c)")
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
         self.assertEqual(expr2_eval, Tuple(a,b,c))
         self.assertNotEqual(expr2_eval, TupleNoParen(a,b,c))
 
-        expr3=self.new_expr(name="t1",expression="(a+1)*b,b,a*(1-c)")
+        expr3=self.new_expr(name="t3",expression="(a+1)*b,b,a*(1-c)")
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
         self.assertEqual(expr3_eval, TupleNoParen((a+1)*b,b,a*(1-c)))
         self.assertNotEqual(expr3_eval, Tuple((a+1)*b,b,a*(1-c)))
+
+        expr4=self.new_expr(name="t4",expression="t1")
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr4_eval, TupleNoParen(a,b,c))
+        self.assertNotEqual(expr4_eval, Tuple(a,b,c))
+
+        expr5=self.new_expr(name="t5",expression="t2")
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr5_eval, Tuple(a,b,c))
+        self.assertNotEqual(expr5_eval, TupleNoParen(a,b,c))
+
+        
 
     def test_sets(self):
         a=Symbol('a')

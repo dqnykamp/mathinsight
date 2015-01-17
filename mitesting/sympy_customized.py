@@ -197,20 +197,18 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # if expr is a Tuple, but s had implicit parentheses, 
     # then return TupleNoParen
     if isinstance(expr,Tuple):
-        ss=s.strip()
-        # implicit parens if doesn't start and end with parentheses
-        if not (ss.startswith("(") and ss.endswith(")")):
-            return TupleNoParen(*expr)
-
-        # implicit parens if initial opening paren doesn't match final closing paren
+        # implicit parens if there is a comma that is not inside
+        # matching parentheses
         parenCtr=0
-        for (i,c) in enumerate(ss):
+        for (i,c) in enumerate(s):
             if c == "(":
                 parenCtr +=1
             elif c == ")":
                 parenCtr -=1
-                if parenCtr == 0 and i != len(ss)-1:
-                    return TupleNoParen(*expr)
+            elif c == ",":
+                if parenCtr==0:
+                    expr = TupleNoParen(*expr)
+                    break
 
     return expr
 

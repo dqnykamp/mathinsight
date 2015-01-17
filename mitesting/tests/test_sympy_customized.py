@@ -330,3 +330,43 @@ class ParseExprTests(SimpleTestCase):
         z=Symbol('z')
         expr = parse_expr("x-1=y+c and (y/a=x(z) or a^2 != (b+2)(c-1)/2)")
         self.assertEqual(expr, And(Eq(x-1,y+c), Or(Eq(y/a,x*z), Ne(a**2,(b+2)*(c-1)/2))))
+
+    def test_tuple_no_parens(self):
+        from mitesting.sympy_customized import TupleNoParen
+
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+
+        expr = parse_expr("(a,b,c)")
+        self.assertEqual(expr, Tuple(a,b,c))
+        self.assertNotEqual(expr, TupleNoParen(a,b,c))
+
+        expr = parse_expr("a,b,c")
+        self.assertEqual(expr, TupleNoParen(a,b,c))
+        self.assertNotEqual(expr, Tuple(a,b,c))
+
+        local_dict = {'t1': Tuple(a,b,c), 't2': TupleNoParen(a,b,c),
+                      't3': (a,b,c)}
+
+        expr=parse_expr("t1", local_dict=local_dict)
+        self.assertEqual(expr, Tuple(a,b,c))
+
+        expr=parse_expr("t2", local_dict=local_dict)
+        self.assertEqual(expr, TupleNoParen(a,b,c))
+
+        expr=parse_expr("t3", local_dict=local_dict)
+        self.assertEqual(expr, Tuple(a,b,c))
+
+        def f(x,y):
+            return Tuple(x+y,x-y)
+        local_dict = {'f': f}
+        expr=parse_expr("f(a,b)", local_dict=local_dict)
+        self.assertEqual(expr, Tuple(a+b,a-b))
+
+        def f(x,y):
+            return TupleNoParen(x+y,x-y)
+        local_dict = {'f': f}
+        expr=parse_expr("f(a,b)", local_dict=local_dict)
+        self.assertEqual(expr, TupleNoParen(a+b,a-b))
+
