@@ -6,7 +6,7 @@ from __future__ import division
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
-from mitesting.models import Question, QuestionAnswerOption
+from mitesting.models import Question, QuestionAnswerOption, Expression
 from mitesting.render_assessments import get_new_seed, render_question
 from mitesting.forms import MultipleChoiceQuestionForm
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -549,10 +549,18 @@ class AnswerNode(template.Node):
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
         
-        try: 
+        try:
             size=int(kwargs['size'])
         except:
             size=20
+        try:
+            rows=int(kwargs['rows'])
+        except:
+            rows=3
+        try:
+            cols=int(kwargs['cols'])
+        except:
+            cols=20
         try:
             points=float(kwargs['points'])
         except:
@@ -575,6 +583,7 @@ class AnswerNode(template.Node):
             answer_code_dict = answer_data['valid_answer_codes']\
                                [self.answer_code]
             answer_type=answer_code_dict['answer_type']
+            expression_type=answer_code_dict.get('expression_type')
         except KeyError:
             return return_error("Invalid answer blank: %s" % self.answer_code)
 
@@ -620,18 +629,29 @@ class AnswerNode(template.Node):
             {'code': self.answer_code, 'points': points, 
              'type': answer_type, 'identifier': answer_identifier,
              'group': group, 'assign_to_expression': assign_to_expression,
-             'prefilled_answer': given_answer})
+             'prefilled_answer': given_answer,
+             'expression_type': expression_type})
 
         if answer_type == QuestionAnswerOption.EXPRESSION or \
            answer_type == QuestionAnswerOption.FUNCTION:
-
+            
             value_string = ''
-            if given_answer is not None:
-                value_string = ' value="%s"' %  given_answer
+
+            if expression_type == Expression.MATRIX:
+                if given_answer is not None:
+                    value_string = given_answer                
+                input_html = '<span class="matrix"><textarea class=mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea></span>' %\
+                    (answer_field_name, answer_field_name,
+                     rows, cols, value_string)
+            else:
+                if given_answer is not None:
+                    value_string = ' value="%s"' %  given_answer
+                input_html = '<input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s />' % \
+                    (answer_field_name, answer_field_name,
+                     size, readonly_string, value_string, )
                 
-            return '<span style="vertical-align: middle; display: inline-block;"><input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s /><br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
-                (answer_field_name, answer_field_name,
-                 size, readonly_string, value_string, 
+            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
+                (input_html,
                  question_identifier, answer_field_name)
 
         elif answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:

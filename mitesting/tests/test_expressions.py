@@ -646,7 +646,91 @@ class TestExpressions(TestCase):
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
         self.assertEqual(expr3_eval, TupleNoParen(Tuple(1,2,3),Interval(4,5)))
 
+    def test_matrix(self):
+        from sympy import Matrix
+        a=Symbol('a')
+        b=Symbol('b')
+        local_dict={}
+
+        expr1=self.new_expr(name="A", expression="\n 1 2\na b\na-b 1 \na -b\n ",
+                            expression_type=Expression.MATRIX)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        A=Matrix([[1,2],[a,b],[a-b,1],[a,-b]])
+        self.assertEqual(expr1_eval, A)
+
+
+        expr2=self.new_expr(name="two_A", expression="2A")
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr2_eval, 2*A)
         
+
+        expr3=self.new_expr(name="v", expression="a\n5",
+                            expression_type=Expression.MATRIX)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        v = Matrix([a,5])
+        self.assertEqual(expr3_eval, v)
+
+        expr4=self.new_expr(name="Av", expression="A*v")
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr4_eval, A*v)
+        
+        expr5=self.new_expr(name="Av", expression="A*v",
+                            expression_type=Expression.MATRIX)
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr5_eval, A*v)
+        
+        expr6=self.new_expr(name="err", expression="1 2 3\n1 2",
+                            expression_type=Expression.MATRIX)
+        self.assertRaisesRegexp(ValueError, "Invalid format for matrix\nGot rows of variable lengths",
+                                expr6.evaluate, rng=self.rng, 
+                                local_dict=local_dict)
+
+
+    def test_vector(self):
+        from sympy import Matrix, latex
+        a=Symbol('a')
+        b=Symbol('b')
+        local_dict={}
+
+        expr1=self.new_expr(name="x", expression="(a,b,1,2) ",
+                            expression_type=Expression.VECTOR)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        x=Matrix([a,b,1,2])
+        xvec = Tuple(a,b,1,2)
+        self.assertEqual(expr1_eval, x)
+        self.assertEqual(str(expr1_eval), latex(xvec))
+        
+        expr2=self.new_expr(name="two_x", expression="2*x")
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr2_eval, 2*x)
+        two_xvec = Tuple(2*a,2*b,2,4)
+        self.assertEqual(str(expr2_eval), latex(two_xvec))
+        
+        expr3=self.new_expr(name="colv", expression="a\nb\n1\n2",
+                            expression_type=Expression.MATRIX)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4=self.new_expr(name="two_colv", expression="2*colv",
+                            expression_type=Expression.VECTOR)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr4_eval, 2*x)
+        self.assertEqual(str(expr4_eval), latex(two_xvec))
+        
+        expr5=self.new_expr(name="A", expression="2 0 3 0\n0 0 a 0",
+                            expression_type=Expression.MATRIX)
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        expr6=self.new_expr(name="Ax", expression="A*x")
+        expr6_eval=expr6.evaluate(rng=self.rng, local_dict=local_dict)
+        Ax=Matrix([2*a+3,a])
+        self.assertEqual(expr6_eval,Ax)
+
+        expr7=self.new_expr(name="two_A_no_vec", expression="2*A",
+                           expression_type=Expression.VECTOR)
+        expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)
+        two_A=Matrix([[4,0,6,0],[0,0,2*a,0]])
+        self.assertEqual(expr7_eval,two_A)
+        self.assertEqual(str(expr7_eval),latex(two_A))
+
+
     def test_evaluate_false(self):
         local_dict={}
         expr1=self.new_expr(name="s", expression="x+x*y*x+x")

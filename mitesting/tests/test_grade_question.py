@@ -533,7 +533,6 @@ class TestCompareResponse(TestCase):
                          question=self.q, 
                          expr_context=expr_context, local_dict=local_dict)
 
-
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
@@ -559,6 +558,129 @@ class TestCompareResponse(TestCase):
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
         self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+    def test_matrix(self):
+        from mitesting.utils import return_matrix_expression
+
+        local_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'A', 'type': EXPRESSION, 
+                     'expression_type': Expression.MATRIX}
+        expr_context["A"]=math_object(return_matrix_expression("a b\nc d"))
+        
+        the_ans=self.new_answer(answer_code="A", answer="A")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="\na b  \n  c    d  \n  ",
+                         the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="q b\nc d", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="q b\nc d", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],75)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("75%" in answer_results["answer_feedback"])
+
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a b\nc", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("Invalid matrix: Got rows of variable lengths" in answer_results["answer_feedback"])
+
+
+    def test_vector(self):
+        from mitesting.utils import return_matrix_expression
+        from mitesting.customized_commands import \
+            MatrixFromTuple, MatrixAsVector
+        from sympy import Tuple, Matrix
+
+        local_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'v', 'type': EXPRESSION, 
+                     'expression_type': Expression.VECTOR}
+        tuple_expr=parse_expr("(a,b,c,d)")
+        vector_expr=tuple_expr.replace(Tuple,MatrixFromTuple)
+        matrix_expr=Matrix(vector_expr)
+        
+        expr_context["v_tuple"]=math_object(tuple_expr)
+        expr_context["v_vector"]=math_object(vector_expr)
+        expr_context["v_matrix"]=math_object(matrix_expr)
+        
+        the_ans=self.new_answer(answer_code="v", answer="v_vector")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(a,b,c,d)",
+                         the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(a,b,c)", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],75)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("75%" in answer_results["answer_feedback"])
+
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(b,c,d)", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
+        the_ans.answer="v_matrix"
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="(a,b,c,d)", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+        self.assertTrue("Your answer is mathematically equivalent to the correct answer" in answer_results['answer_feedback'])    
 
 
     def test_function(self):

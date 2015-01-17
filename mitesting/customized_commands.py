@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, Function, C, S, Basic, Float
+from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix
 from mitesting.sympy_customized import bottom_up, customized_sort_key
 
 class Abs(C.Abs):
@@ -244,24 +244,29 @@ class Point(C.Point):
         return super(Point, cls).__new__(cls,*args, **kwargs) 
 
 
+class MatrixAsVector(Matrix):
+    """
+    Matrix that prints like a vector with latex.
+    Simply outputs all elements, separated by commands and in parentheses.
+    Produces reasonable results only for column or row matrices.
+    
+    """
+    def _latex(self, prtr):
+        # flattened list of elements
+        elts = [item for sublist in self.tolist() for item in sublist] 
+        return r"\left ( %s\right )" % \
+            r", \quad ".join([ prtr._print(i) for i in elts ])
+        
 
 class MatrixFromTuple(object):
     """
-    Returns matrix from Tuple.
-    When printing via latex, prints as a vector (tuple)
+    Returns MatrixAsVector from Tuple.
 
     """
     def __new__(cls, *args, **kwargs):
-        from sympy import Matrix
-        matrix = Matrix(list(args))
+        return MatrixAsVector(list(args))
+        
 
-        def _latex(self, prtr):
-            return r"\left ( %s\right )" % \
-                r", \quad ".join([ prtr._print(i) for i in self.transpose().tolist()[0] ])
-
-        import types
-        matrix._latex=types.MethodType(_latex,matrix)
-        return matrix
 
 
 """

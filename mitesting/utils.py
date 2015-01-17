@@ -367,7 +367,8 @@ def return_parsed_function(expression, function_inputs, name,
     return _parsed_function
 
 
-def return_interval_expression(expression, local_dict=None, evaluate_level=None):
+def return_interval_expression(expression, local_dict=None, evaluate_level=None,
+                               split_symbols=None):
     """
     Look for combinations of opening ( or [, comma, and closing ) or ].
     If find both, them replace with 
@@ -447,24 +448,36 @@ def return_interval_expression(expression, local_dict=None, evaluate_level=None)
     new_local_dict['Interval'] = Interval
 
     return parse_and_process(expr_interval, local_dict=new_local_dict,
-                             evaluate_level = evaluate_level)
+                             evaluate_level = evaluate_level,
+                             split_symbols=split_symbols)
 
 
-def return_matrix_expression(expression, global_dict=None, evaluate_level=None):
+def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
+                             split_symbols=None):
 
     import re
     
-    expr_matrix=re.sub(r" *\n *", "],[", expression)
+    expr_matrix=re.sub(r" *\n *", "],[", expression.strip())
     expr_matrix="Matrix([[" + re.sub(r" +", ",", expr_matrix)+"]])"
     
-    new_global_dict = {}
-    if global_dict:
-        new_global_dict.update(global_dict)
+    new_local_dict = {}
+    if local_dict:
+        new_local_dict.update(local_dict)
     from sympy import Matrix
-    new_global_dict['Matrix'] = Matrix
+    new_local_dict['Matrix'] = Matrix
 
-    return parse_and_process(expr_matrix, global_dict=new_global_dict,
-                             evaluate_level = evaluate_level)
+    expr= parse_and_process(expr_matrix, local_dict=new_local_dict,
+                             evaluate_level = evaluate_level,
+                             split_symbols=split_symbols)
+
+    # If expression was a Matrix already, then have a 1x1 matrix
+    # whose only element is a matrix.
+    # In that case, return just the inner matrix
+    if expr.rows==1 and expr.cols==1:
+        if isinstance(expr[0,0], Matrix):
+            expr=expr[0,0]
+    
+    return expr
     
 
 def replace_boolean_equals(s):

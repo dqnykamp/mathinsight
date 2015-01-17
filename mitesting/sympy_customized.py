@@ -5,7 +5,7 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, factorial
+from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix
 import re
 import keyword
 
@@ -26,10 +26,14 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
        that contain other lists
     """
     try:
-        if isinstance(rv, list):
-            rv = [bottom_up(a, F, atoms, nonbasic) for a in rv]
-        elif isinstance(rv, tuple):
-            rv = tuple([bottom_up(a, F, atoms, nonbasic) for a in rv])
+        if isinstance(rv, list) or isinstance(rv,tuple):
+            rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
+        elif isinstance(rv, Tuple):
+            rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
+        elif isinstance(rv,Matrix):
+            rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
+            if nonbasic:
+                rv=F(rv)
         elif rv.args:
             args = tuple([bottom_up(a, F, atoms, nonbasic)
                 for a in rv.args])

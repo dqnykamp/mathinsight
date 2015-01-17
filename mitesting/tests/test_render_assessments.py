@@ -680,52 +680,57 @@ class TestAnswerCodes(TestCase):
         self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
         expr_context["hh"]=1
+        correct_valid_answer_codes= {"h": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} }
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
+        correct_valid_answer_codes= {"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} }
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="m", answer="mm", answer_type=EXPRESSION)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [('m','mm')])
         self.assertTrue("Invalid answer option of expression type" in invalid_answer_messages[0])
 
-        expr_context["mm"]=1
+        from mitesting.math_objects import math_object
+        expr_context["mm"]=math_object('x', expression_type=Expression.INTERVAL)
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
+        correct_valid_answer_codes["m"] ={'answer_type': EXPRESSION, 'split_symbols_on_compare': True, 'expression_type': Expression.INTERVAL}
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="n", answer="", answer_type=MULTIPLE_CHOICE)
+        correct_valid_answer_codes['n'] = {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} 
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="p", answer="pp", answer_type=FUNCTION)
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
         expr_context["pp"]=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -734,7 +739,7 @@ class TestAnswerCodes(TestCase):
         local_dict['pp']=sympify("x")
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -743,7 +748,7 @@ class TestAnswerCodes(TestCase):
         local_dict['pp']=1
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [('p','pp')])
         self.assertTrue("Invalid answer option of function type" in invalid_answer_messages[0])
 
@@ -751,9 +756,10 @@ class TestAnswerCodes(TestCase):
         pp=return_parsed_function("x^2", function_inputs="x",
                                   name="pp", local_dict=local_dict)
         local_dict["pp"]=pp
+        correct_valid_answer_codes["p"] = {'answer_type': FUNCTION, 'split_symbols_on_compare': True}
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
-        self.assertEqual(valid_answer_codes,{"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, "m": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True}, 'n': {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True}, 'p': {'answer_type': FUNCTION, 'split_symbols_on_compare': True} })
+        self.assertEqual(valid_answer_codes, correct_valid_answer_codes)
         self.assertEqual(invalid_answers, [])
         self.assertEqual(invalid_answer_messages, [])
 
@@ -1393,7 +1399,8 @@ class TestRenderQuestion(TestCase):
                            'code': answer_code, 'points': 1, 
                            'type': QuestionAnswerOption.EXPRESSION,
                            'group': None, 'assign_to_expression': None,
-                           'prefilled_answer': None}])
+                           'prefilled_answer': None,
+                           'expression_type': Expression.GENERIC}])
 
         question_data=render_question(self.q, rng=self.rng,
                                       record_answers=False,
@@ -1534,7 +1541,6 @@ class TestRenderQuestion(TestCase):
                                                answer="n")
         self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
         self.q.save()
-        
 
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,

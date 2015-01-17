@@ -8,6 +8,7 @@ from sympy import Tuple, Symbol, sympify, Abs, Matrix
 from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
+from .sympy_customized import bottom_up
 from django.utils.safestring import mark_safe
 
 @python_2_unicode_compatible
@@ -57,11 +58,8 @@ class math_object(object):
         
         """
 
-        # don't sympify matrices so retains MatrixFromVector modifications
-        if isinstance(expression, Matrix):
-            self._expression=expression
-        else:
-            self._expression=sympify(expression)
+
+        self._expression=sympify(expression)
         self._parameters = parameters
 
         # overwrite all parameters from copy_parameters_from object
@@ -166,6 +164,8 @@ class math_object(object):
     def return_evaluate_level(self):
         from mitesting.sympy_customized import EVALUATE_FULL
         return self._parameters.get('evaluate_level', EVALUATE_FULL)
+    def return_expression_type(self):
+        return self._parameters.get('expression_type')
 
     def eval_to_comparison_precision(self, expression, 
                                      additional_rounding=None):
@@ -374,7 +374,6 @@ class math_object(object):
         # convert customized ln command to customized log command
         if self._parameters.get("evaluate_level") != EVALUATE_NONE:
             from .customized_commands import log, ln
-            from .sympy_customized import bottom_up
             expression = bottom_up(expression, 
                 lambda w: w if not w.func==ln else log(*w.args))
             new_expr = bottom_up(new_expr, 
@@ -452,9 +451,43 @@ def try_normalize_expr(expr):
     """
     Attempt to normalize expression.
     If relational, subtract rhs from both sides.
+    Convert any MatrixAsVector to Matrix
     Use, doit, expand, then ratsimp to simplify rationals, then expand again
     """
     
+    def _remove_one_coefficient(expr):
+        # remove a coefficent of a Mul that is just 1.0
+        from sympy import Mul
+        if expr.is_Mul and expr.args[0]==1:
+            if len(expr.args[1:])==1:
+                return expr.args[1]
+            else:
+                return Mul(*expr.args[1:])
+        else:
+            return expr
+
+    def normalize_transformations(w):
+        # same as
+        #    lambda w: w.doit().expand().ratsimp().expand()
+        # except catch Polynomial error that could be triggered by ratsimp()
+        # and catch attribute error for objects like Interval
+        from sympy import PolynomialError
+        w=w.doit()
+        try:
+            w= w.expand()
+        except AttributeError:
+            pass
+        try:
+            w=w.ratsimp().expand()
+        except (AttributeError,PolynomialError):
+            pass
+        return w
+
+    from mitesting.customized_commands import MatrixAsVector
+    expr=bottom_up(expr, 
+        lambda w: w if not isinstance(w,Matrix) else MatrixAsVector(w),
+                   nonbasic=True)
+
     try:
         if expr.is_Relational:
             from sympy import StrictLessThan, LessThan, Equality, Unequality
@@ -482,31 +515,6 @@ def try_normalize_expr(expr):
     except AttributeError:
         pass
 
-
-    def _remove_one_coefficient(expr):
-        # remove a coefficent of a Mul that is just 1.0
-        from sympy import Mul
-        if expr.is_Mul and expr.args[0]==1:
-            if len(expr.args[1:])==1:
-                return expr.args[1]
-            else:
-                return Mul(*expr.args[1:])
-        else:
-            return expr
-
-    def normalize_transformations(w):
-        # same as
-        #    lambda w: w.doit().expand().ratsimp().expand()
-        # except catch Polynomial error that could be triggered by ratsimp()
-        from sympy import PolynomialError
-        w=w.doit().expand()
-        try:
-            w=w.ratsimp().expand()
-        except PolynomialError:
-            pass
-        return w
-    
-    from mitesting.sympy_customized import bottom_up
 
     # transformations to try to normalize
     expr= bottom_up(expr, normalize_transformations)
@@ -537,6 +545,10 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
 
     if isinstance(expression1, set) or isinstance(expression2, set):
         return check_set_equality(expression1, expression2, 
+                                  partial_matches=partial_matches)
+
+    if isinstance(expression1, Matrix) or isinstance(expression2, Matrix):
+        return check_matrix_equality(expression1, expression2, 
                                   partial_matches=partial_matches)
 
     try:
@@ -669,6 +681,46 @@ def check_set_equality(the_set1, the_set2, partial_matches=False):
         return 0
     
     return len(the_set1.intersection(the_set2))/max(len(the_set1),len(the_set2))
+
+    
+def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
+    """
+    Check if two matrices are equal
+
+    If partial_matches is set, then check if just some elements
+    match and return the fraction that match. 
+
+    Return 
+    1   if exact match
+    p   number p, 0 < p < 1, if partial_matches is set and fracction
+        p of elements match.  Denominator of fraction is max rows*cols
+        of both matrices
+    0   otherwise
+    """
+
+    # if not the same class, then not equal.
+    # This means MatrixAsVector and Matrix are not equal
+    if the_matrix1.__class__ != the_matrix2.__class__:
+        return 0
+    
+    if the_matrix1 == the_matrix2:
+        return 1
+
+    if not partial_matches:
+        return 0
+        
+    n_matches=0
+    for row in range(the_matrix1.rows):
+        for col in range(the_matrix2.cols):
+            try:
+                if the_matrix1[row,col] == the_matrix2[row,col]:
+                    n_matches +=1
+            except IndexError:
+                pass
+
+    return n_matches/max(the_matrix1.rows*the_matrix1.cols,
+                         the_matrix2.rows*the_matrix2.cols)
+    
     
 
 # given inheritance structure of sympy

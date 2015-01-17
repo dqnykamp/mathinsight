@@ -1692,7 +1692,10 @@ class AppletNode(template.Node):
                 # if answer_code is not a valid answer code
                 # skip this applet object but register error
                 try:
-                    answer_type = answer_data['valid_answer_codes'][answer_code]
+                    answer_code_dict = answer_data['valid_answer_codes']\
+                                       [self.answer_code]
+                    answer_type=answer_code_dict['answer_type']
+                    expression_type = answer_code_dict.get('expression_type')
                 except KeyError:
                     answer_data['error']=True
                     answer_data['answer_errors'].append(\
@@ -1709,6 +1712,7 @@ class AppletNode(template.Node):
             else:
                 # if only state variable and not in kwargs
                 answer_type=None
+                expression_type=None
                 points=0
                 group=None
 
@@ -1720,7 +1724,7 @@ class AppletNode(template.Node):
             answer_data['answer_info'].append(\
                 {'code': answer_code, 'points': points, \
                  'type': answer_type, 'identifier': answer_identifier, \
-                 'group': group })
+                 'group': group, 'expression_type': expression_type })
 
             # check if object is in prefilled_answers
             # if so, use that value for input box

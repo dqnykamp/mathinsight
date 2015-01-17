@@ -299,6 +299,14 @@ def return_valid_answer_codes(question, expression_context):
             valid_answer_codes[option.answer_code] = \
                 {'answer_type': option.answer_type,
                  'split_symbols_on_compare': option.split_symbols_on_compare }
+            try:
+                expression_type=expression_context[option.answer]\
+                    .return_expression_type()
+            except (KeyError,AttributeError):
+                pass
+            else:
+                valid_answer_codes[option.answer_code]['expression_type'] \
+                    = expression_type
         else:
             invalid_answers.append((option.answer_code, option.answer))
             invalid_answer_messages.append(error_message)
@@ -617,8 +625,9 @@ def render_question(question, rng, seed=None, solution=False,
       - question_set
       - assessment_seed
       - assessment_code (of assessment from input)
-      - answer_info: list of codes, points, and answer type of the answers 
-        in question
+      - answer_info: list of codes, points, answer type, identifier, 
+        group, assigned expression, prefilled answer, and expression type
+        of the answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
    """

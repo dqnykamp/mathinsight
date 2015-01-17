@@ -22,6 +22,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# make sure sympification doesn't turn matrices to immutable
+from sympy.core.sympify import converter as sympify_converter
+from sympy import MatrixBase
+sympify_converter[MatrixBase] = lambda x: x
+
 @python_2_unicode_compatible
 class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -1030,7 +1035,7 @@ class Expression(models.Model):
                         except TypeError:
                             pass
 
-                    # attempt to add word to global dictionary
+                    # attempt to add word to local dictionary
                     word_text=re.sub(' ', '_', result[0])
                     sympy_word = Symbol(word_text)
                     try:
@@ -1119,7 +1124,7 @@ class Expression(models.Model):
                 elif self.expression_type == self.MATRIX:
                     try:
                         math_expr = return_matrix_expression(
-                            expression, global_dict=global_dict, 
+                            expression, local_dict=local_dict, 
                             evaluate_level = self.evaluate_level)
                     except ValueError as e:
                         raise ValueError("Invalid format for matrix\n%s" % e.args[0])
@@ -1155,12 +1160,25 @@ class Expression(models.Model):
                    isinstance(math_expr, TupleNoParen):
                     math_expr = TupleNoParen(*set(math_expr))
 
+
                 # if VECTOR, convert Tuples to column matrices
+                # and convert column and row matrices to MatrixAsVector
+                # which latexs as a vector
                 if self.expression_type == self.VECTOR:
-                    from mitesting.customized_commands import MatrixFromTuple
+                    from mitesting.customized_commands import \
+                        MatrixFromTuple, MatrixAsVector
+                    from sympy import Matrix
+
                     math_expr = math_expr.replace(Tuple,MatrixFromTuple)
-                    from sympy import latex
-                    print(latex(math_expr))
+                    
+                    def to_matrix_as_vector(w):
+                        if isinstance(w,Matrix) and (w.cols==1 or w.rows==1):
+                            return MatrixAsVector(w)
+                        return w
+                                
+                    math_expr=bottom_up(math_expr,to_matrix_as_vector,
+                                        nonbasic=True)
+
 
                 # if CONDITION is not met, raise exception
                 if self.expression_type == self.CONDITION:
@@ -1237,14 +1255,14 @@ class Expression(models.Model):
                         default_value=math_expr)
 
                     # for FUNCTION, add parsed_function rather than
-                    # math_expr to global dict
+                    # math_expr to local dict
                     try:
                         local_dict[self.name] = parsed_function   
                     except TypeError:
                         pass
 
             # for all expression_types except FUNCTION (and RANDOM WORD)
-            # add math_expr to global dict
+            # add math_expr to local dict
             if not self.expression_type == self.FUNCTION:
                 try:
                     # convert list to Tuple
@@ -1264,7 +1282,8 @@ class Expression(models.Model):
                 math_expr, name=self.name,
                 evaluate_level = self.evaluate_level,
                 tuple_is_unordered=(self.expression_type==self.UNORDERED_TUPLE
-                                    or self.expression_type==self.SET))
+                                    or self.expression_type==self.SET),
+                expression_type=self.expression_type)
 
 
         # no additional processing for FailedCondition

@@ -1580,6 +1580,112 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
 
+    def test_intervals(self):
+        self.q.expression_set.create(name="r", expression="r",
+                                     expression_type=Expression.REAL_VARIABLE)
+        self.q.expression_set.create(
+            name="interval1", expression="(0,1)", 
+            expression_type = Expression.INTERVAL)
+        self.q.expression_set.create(
+            name="interval2", expression="(5,r]", 
+            expression_type = Expression.INTERVAL)
+        self.q.expression_set.create(
+            name="interval3", expression="[0,1]", 
+            expression_type = Expression.INTERVAL)
+
+        self.q.question_text="Type intervals: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
+        self.q.save()
+        
+        self.new_answer(answer_code="ans1", answer="interval1")
+        self.new_answer(answer_code="ans2", answer="interval2")
+        self.new_answer(answer_code="ans3", answer="interval3")
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type intervals: ")
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
+        answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifier1] = "(0,1)"
+        answers["answer_" + answer_identifier2] = "(5,r]"
+        answers["answer_" + answer_identifier3] = "[0,1]"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier3]["answer_correct"])
+
+        answers["answer_" + answer_identifier3] = "[0,a]"
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertFalse(results["answers"][answer_identifier3]["answer_correct"])
+        self.assertTrue("variables used in intervals must be real" in
+                        results["answers"][answer_identifier3]["answer_feedback"])
+
+
+
+    def test_matrix_vector(self):
+        self.q.expression_set.create(name="A", expression="1 2\ny z",
+                                     expression_type=Expression.MATRIX)
+        self.q.expression_set.create(name="x1", expression="(y,z)",
+                                     expression_type=Expression.VECTOR)
+        self.q.expression_set.create(name="x2", expression="y\nz",
+                                     expression_type=Expression.MATRIX)
+
+        self.q.question_text="Type answers: {% answer ans1 rows=5 cols=5 %} {% answer ans2 %} {% answer ans3 rows=5 cols=2%}"
+        
+        self.q.save()
+
+        self.new_answer(answer_code="ans1", answer="A")
+        self.new_answer(answer_code="ans2", answer="x1")
+        self.new_answer(answer_code="ans3", answer="x2")
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
+        answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
+
+        self.assertContains(response,"Type answers: ")
+        matrix1_input_html='<span class="matrix"><textarea class=mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier1, answer_identifier1, 5, 5)
+        matrix2_input_html='<span class="matrix"><textarea class=mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier3, answer_identifier3, 5, 2)
+        standard_input_html ='<input class="mi_answer" type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="20" />' % (answer_identifier2, answer_identifier2)
+        self.assertContains(response, matrix1_input_html, html=True)
+        self.assertContains(response, matrix2_input_html, html=True)
+        self.assertContains(response, standard_input_html, html=True)
+
+        answers = {"cgd": cgd,}
+        answers["answer_" + answer_identifier1] = "\n 1 2 \n y  z  \n"
+        answers["answer_" + answer_identifier2] = "(y,z)"
+        answers["answer_" + answer_identifier3] = "y\nz"
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier3]["answer_correct"])
+
+
+
     def test_user_function(self):
         self.q.expression_set.create(
             name="f_x", expression="f(x)", 

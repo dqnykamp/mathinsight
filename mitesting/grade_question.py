@@ -4,8 +4,9 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.conf import settings
-from mitesting.models import QuestionAnswerOption
+from mitesting.models import QuestionAnswerOption, Expression
 from django.core.exceptions import ObjectDoesNotExist
+from sympy.parsing.sympy_tokenize import TokenError
 
 import logging
 
@@ -144,16 +145,56 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 except (TypeError, IndexError, ValueError):
                     pass
 
+            user_response_parsed=None
+            
+            expression_type = the_answer_info.get('expression_type')
+
             try:
-                user_response_parsed = parse_and_process(
-                    user_response, local_dict=local_dict, 
-                    split_symbols=answer_option
-                    .split_symbols_on_compare,
-                    evaluate_level=evaluate_level)
+                if expression_type == Expression.MATRIX:
+                    from mitesting.utils import return_matrix_expression
+                    try:
+                        user_response_parsed =return_matrix_expression(
+                            user_response, local_dict=local_dict, 
+                            split_symbols=answer_option
+                            .split_symbols_on_compare,
+                            evaluate_level=evaluate_level)
+                    except ValueError as e:
+                        feedback = "Invalid matrix: %s" % e.args[0]
+                        break
+                elif expression_type == Expression.INTERVAL:
+                    from mitesting.utils import return_interval_expression
+                    try:
+                        user_response_parsed =return_interval_expression(
+                            user_response, local_dict=local_dict, 
+                            split_symbols=answer_option
+                            .split_symbols_on_compare,
+                            evaluate_level=evaluate_level)
+                    except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                        pass
+                    except ValueError as e:
+                        if "real intervals" in e.args[0]:
+                            feedback="Cannot evaluate answer; variables used in intervals must be real."
+                            break
+                            
+                if user_response_parsed is None:
+                    user_response_parsed = parse_and_process(
+                        user_response, local_dict=local_dict, 
+                        split_symbols=answer_option
+                        .split_symbols_on_compare,
+                        evaluate_level=evaluate_level)
             except Exception as e:
                 feedback = "Sorry.  Unable to understand the answer."
                 break
 
+            # if VECTOR, convert Tuples to column MatrixAsVector
+            # which latexs as a vector
+            if expression_type == Expression.VECTOR:
+                from mitesting.customized_commands import \
+                    MatrixFromTuple
+                from sympy import Tuple
+
+                user_response_parsed = user_response_parsed\
+                    .replace(Tuple,MatrixFromTuple)
 
             user_response_parsed=math_object(
                 user_response_parsed,
@@ -169,13 +210,38 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
 
             user_response_string=""
+            user_response_unevaluated=None
             from mitesting.sympy_customized import EVALUATE_NONE
             try:
-                user_response_unevaluated =  parse_and_process(
-                    user_response, local_dict=local_dict, 
-                    split_symbols=answer_option
-                    .split_symbols_on_compare,
-                    evaluate_level=EVALUATE_NONE)
+                if expression_type == Expression.MATRIX:
+                    from mitesting.utils import return_matrix_expression
+                    user_response_unevaluated =return_matrix_expression(
+                        user_response, local_dict=local_dict, 
+                        split_symbols=answer_option
+                        .split_symbols_on_compare,
+                        evaluate_level=EVALUATE_NONE)
+                elif expression_type == Expression.INTERVAL:
+                    try:
+                        from mitesting.utils import return_interval_expression
+                        user_response_unevaluated =return_interval_expression(
+                            user_response, local_dict=local_dict, 
+                            split_symbols=answer_option
+                            .split_symbols_on_compare,
+                            evaluate_level=EVALUATE_NONE)
+                    except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                        pass
+                    except ValueError as e:
+                        if "real intervals" in e.args[0]:
+                            feedback="Variables used in intervals must be real"
+                            break
+                            
+                if user_response_unevaluated is None:
+                    user_response_unevaluated =  parse_and_process(
+                        user_response, local_dict=local_dict, 
+                        split_symbols=answer_option
+                        .split_symbols_on_compare,
+                        evaluate_level=EVALUATE_NONE)
+
                 user_response_unevaluated=math_object(
                     user_response_unevaluated,
                     evaluate_level=EVALUATE_NONE)
@@ -196,7 +262,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 try:
                     f=f(user_response_parsed)
                 except Exception as e:
-                    logger.warning("Exception raised when evaluating function for question answer option: %s" % e)
+                    #logger.warning("Exception raised when evaluating function for question answer option: %s" % e)
                     fraction_equal=0
                 else:
                     try:
