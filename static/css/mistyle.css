@@ -1850,21 +1850,25 @@ table.rowclick tr td a {
     content: "";
     position: absolute;
     left: -6px;
-    top: 0;
+    top: -6px;
     border: 1px solid #000;
     border-right: 0px;
     width: 6px;
     height: 100%;
+    padding-top: 6px;
+    padding-bottom: 3px;
 }
 .matrix:after {
     content: "";
     position: absolute;
     right: -6px;
-    top: 0;
+    top: -6px;
     border: 1px solid #000;
     border-left: 0px;
     width: 6px;
     height: 100%;
+    padding-top: 6px;
+    padding-bottom: 3px;
 }
 
 .matrix td {
