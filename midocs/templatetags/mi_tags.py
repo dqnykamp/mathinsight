@@ -1085,9 +1085,9 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                  value_string)  
         elif object_type=='Function':
             from sympy import Symbol
-            global_dict=context["_sympy_global_dict_"]
+            local_dict=context["_sympy_local_dict_"]
             try:
-                the_fun = global_dict[str(objectvalue_string)]
+                the_fun = local_dict[str(objectvalue_string)]
             except KeyError:
                 return ""
             try:
@@ -1098,9 +1098,9 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 return ""
         elif object_type=='Function2D':
             from sympy import Symbol
-            global_dict=context["_sympy_global_dict_"]
+            local_dict=context["_sympy_local_dict_"]
             try:
-                the_fun = global_dict[str(objectvalue_string)]
+                the_fun = local_dict[str(objectvalue_string)]
             except KeyError:
                 return ""
             try:
@@ -1693,7 +1693,7 @@ class AppletNode(template.Node):
                 # skip this applet object but register error
                 try:
                     answer_code_dict = answer_data['valid_answer_codes']\
-                                       [self.answer_code]
+                                       [answer_code]
                     answer_type=answer_code_dict['answer_type']
                     expression_type = answer_code_dict.get('expression_type')
                 except KeyError:
