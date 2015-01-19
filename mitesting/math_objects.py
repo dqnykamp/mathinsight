@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 from django.utils.encoding import python_2_unicode_compatible
 
-from sympy import Tuple, Symbol, sympify, Abs, Matrix
+from sympy import Tuple, Symbol, sympify, Abs, Matrix, Derivative
 from sympy.core.relational import Relational, Equality, Unequality
 from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
@@ -451,7 +451,8 @@ def try_normalize_expr(expr):
     """
     Attempt to normalize expression.
     If relational, subtract rhs from both sides.
-    Convert any MatrixAsVector to Matrix
+    Convert any subclass of Matrix to Matrix.
+    Convert any subclass of Derivative to Derivative
     Use, doit, expand, then ratsimp to simplify rationals, then expand again
     """
     
@@ -483,10 +484,13 @@ def try_normalize_expr(expr):
             pass
         return w
 
-    from mitesting.customized_commands import MatrixAsVector
     expr=bottom_up(expr, 
-        lambda w: w if not isinstance(w,Matrix) else MatrixAsVector(w),
+        lambda w: w if not isinstance(w,Matrix) else Matrix(w),
                    nonbasic=True)
+
+    from sympy import Derivative
+    expr=bottom_up(expr, 
+        lambda w: w if not isinstance(w,Derivative) else Derivative(*w.args))
 
     try:
         if expr.is_Relational:

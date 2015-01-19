@@ -696,3 +696,37 @@ class MathObjectTests(SimpleTestCase):
         x = Symbol('x')
         expr = iif(x>1,1,0)
         self.assertEqual(expr,try_normalize_expr(expr))
+
+
+    def test_derivative_notations(self):
+        from sympy import Derivative, Function
+        from mitesting.sympy_customized import DerivativePrimeNotation, \
+            DerivativeSimplifiedNotation
+
+        f=Function(str('f'))
+        x=Symbol('x')
+        expression = Derivative(f(x),x)
+        expression2 = DerivativePrimeNotation(f,x)
+        expression3 = DerivativeSimplifiedNotation(f(x),x)
+
+        mobject = math_object(expression)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal_on_normalize'],1)
+
+        mobject = math_object(expression, normalize_on_compare=True)
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal'],1)
+
+        mobject = math_object(expression2)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal_on_normalize'],1)
+
+        mobject = math_object(expression2, normalize_on_compare=True)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal'],1)
+

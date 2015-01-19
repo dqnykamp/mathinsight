@@ -5,7 +5,9 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix
+from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr
+from sympy.core.function import UndefinedFunction
+
 import re
 import keyword
 
@@ -172,6 +174,28 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # replace unicode character for \cdot used in mathjax display with *
     s = re.sub(r'\u22c5', r'*', s)
 
+    # replace f'(x) with DerivativePrimeNotation(f(x),x)
+    if split_symbols:
+        pattern=r"([a-zA-Z])'\ *\("
+    else:
+        pattern=r"([a-zA-Z_][a-zA-Z0-9_]*)'\ *\("
+    s = re.sub(pattern, r' __DerivativePrimeNotation__(\1,', s)
+
+    new_global_dict['__DerivativePrimeNotation__'] = DerivativePrimeNotation
+
+    # replace df/dx with DerivativeSimplifiedNotation(f(x),x)
+    if split_symbols:
+        pattern = r"d([a-zA-Z]) */ *d([a-zA-Z])"
+        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
+    else:
+        pattern = r"\bd([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
+        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
+        pattern = r"([0-9])d([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
+        s = re.sub(pattern, r'\1 __DerivativeSimplifiedNotation__(\2(\3),\3)', s)
+
+
+    new_global_dict['__DerivativeSimplifiedNotation__'] = DerivativeSimplifiedNotation
+
     # replace
     #      =  with __Eq__(lhs,rhs)
     #      != with __Ne__(lhs,rhs)
@@ -192,7 +216,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
     # change === to = (so can assign keywords in functions like Interval)
     s = re.sub('===','=', s)
-    
+
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
             s, global_dict=new_global_dict, local_dict=local_dict, 
@@ -560,3 +584,63 @@ class TupleNoParen(Tuple):
     def _latex(self, prtr):
         return r", \quad ".join([ prtr._print(i) for i in self ])
 
+
+class DerivativePrimeSimple(Derivative):
+    def _latex(self, prtr):
+        # if is a derivative of a single variable
+        # of a single function of that variable
+        # then latex using prime notation
+        if len(self.variables)==1:
+            variable = self.variables[0]
+            expr = self.expr
+            fn = expr.func
+
+            if isinstance(fn,Symbol) or isinstance(fn,UndefinedFunction):
+                if len(expr.args)==1 and expr.args[0]==variable:
+                    return "%s'(%s)" % (fn, variable)
+
+        return prtr._print_Derivative(self)
+            
+
+class DerivativePrimeNotation(Expr):
+    def __new__(cls, fn, argument, dummy_symbol='x'):
+        if not (isinstance(fn,Symbol) or isinstance(fn,UndefinedFunction)):
+            raise ValueError('Prime notation for derivative can only be use for undefined functions')
+        
+        if argument._diff_wrt:
+            return DerivativePrimeSimple(fn(argument),argument)
+
+        return super(DerivativePrimeNotation,cls)\
+            .__new__(cls, fn,argument, dummy_symbol)
+
+    def __init__(self, fn, argument, dummy_symbol='x'):
+        self.fn=fn
+        self.argument=argument
+        self.dummy_symbol = sympify(dummy_symbol)
+
+    def _latex(self, prtr):
+        return r"%s'\left(%s\right)" % (self.fn, prtr._print(self.argument))
+
+    def doit(self, **hints):
+        from sympy import Subs
+        xx=self.dummy_symbol
+        return Subs(Derivative(self.fn(xx),xx), xx, self.argument).doit(**hints)
+
+            
+class DerivativeSimplifiedNotation(Derivative):
+    def _latex(self, prtr):
+        # if is a derivative of a single variable
+        # of a single function of that variable
+        # then latex using simplified notation
+        if len(self.variables)==1:
+            variable = self.variables[0]
+            expr = self.expr
+            fn = expr.func
+
+            from sympy.core.function import UndefinedFunction
+            if isinstance(fn,Symbol) or isinstance(fn,UndefinedFunction):
+                if len(expr.args)==1 and expr.args[0]==variable:
+                    return "\\frac{d %s}{d %s}" % (fn, variable)
+
+        return prtr._print_Derivative(self)
+            

@@ -370,3 +370,64 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("f(a,b)", local_dict=local_dict)
         self.assertEqual(expr, TupleNoParen(a+b,a-b))
 
+
+    def test_derivative_prime_notation(self):
+        from sympy import Symbol, Function, Derivative, latex
+        from mitesting.sympy_customized import SymbolCallable, \
+            DerivativePrimeNotation, DerivativePrimeSimple
+        
+        f=Function(str('f'))
+        g=SymbolCallable(str('g'))
+        x=Symbol('x')
+        y=Symbol('y')
+        
+        fn=Function(str('fn'))
+        
+        local_dict={'f': f, 'g': g, 'fn': fn}
+        
+        expr=parse_expr("f'(x)+g'(y)", local_dict=local_dict)
+        self.assertEqual(expr, DerivativePrimeSimple(f(x),x)
+                         +DerivativePrimeSimple(g(y),y))
+        self.assertEqual(latex(expr), "f'(x) + g'(y)")
+
+        expr=parse_expr("yf'(x)", local_dict=local_dict, split_symbols=True)
+        self.assertEqual(expr, y*DerivativePrimeSimple(f(x),x))
+
+        expr=parse_expr("2f'(x)", local_dict=local_dict)
+        self.assertEqual(expr, 2*DerivativePrimeSimple(f(x),x))
+
+        expr=parse_expr("fn'(x)", local_dict=local_dict)
+        self.assertEqual(expr, DerivativePrimeSimple(fn(x),x))
+
+        expr=parse_expr("2f'(x*y)", local_dict=local_dict)
+        self.assertEqual(expr, 2*DerivativePrimeNotation(f,x*y))
+        from sympy import Subs
+        self.assertEqual(expr.doit(), 2*Subs(Derivative(f(x),x),x,x*y))
+        
+
+    def test_derivative_simplified_notation(self):
+        from sympy import Symbol, Function, Derivative, latex
+        from mitesting.sympy_customized import SymbolCallable, \
+            DerivativeSimplifiedNotation
+        
+        f=Function(str('f'))
+        g=SymbolCallable(str('g'))
+        x=Symbol('x')
+        y=Symbol('y')
+        fn=Function(str('fn'))
+        xx=Symbol('xx')
+        local_dict={'f': f, 'g': g, 'fn': fn, 'xx': xx}
+        
+        expr=parse_expr("df/dx+dg/dy", local_dict=local_dict)
+        self.assertEqual(expr, DerivativeSimplifiedNotation(f(x),x)
+                         +DerivativeSimplifiedNotation(g(y),y))
+        self.assertEqual(latex(expr), "\\frac{d f}{d x} + \\frac{d g}{d y}")
+
+        expr=parse_expr("ydf/dxy", local_dict=local_dict, split_symbols=True)
+        self.assertEqual(expr, y**2*DerivativeSimplifiedNotation(f(x),x))
+        
+        expr=parse_expr("ydf/dxy", local_dict=local_dict)
+        self.assertEqual(expr, Symbol('ydf')/Symbol('dxy'))
+
+        expr=parse_expr("3dfn/dxx", local_dict=local_dict)
+        self.assertEqual(expr, 3*DerivativeSimplifiedNotation(fn(xx),xx))
