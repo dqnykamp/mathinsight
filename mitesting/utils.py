@@ -506,7 +506,6 @@ def replace_boolean_equals(s):
     """
 
     import re
-    break_chars=",&|!=<>" # character that signal end of expression if not in ()
 
     # replace and/or with &/|
     s=re.sub(r'\band\b',r'&', s)
@@ -517,18 +516,26 @@ def replace_boolean_equals(s):
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
             new_op='__Eq__(%s,%s)'
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
         elif i==1:
             pattern = re.compile('[^<>!=](!=)[^=]')
             len_op=2
             new_op='__Ne__(%s,%s)'
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
         elif i==2:
             pattern = re.compile('[^&](&)[^&]')
             len_op=1
             new_op='__And__(%s,%s)'
+            # characters that signal end of expression if not in ()
+            break_chars=",&|" 
         elif i==3:
             pattern = re.compile('[^\|](\|)[^\|]')
             len_op=1
             new_op='__Or__(%s,%s)'
+            # characters that signal end of expression if not in ()
+            break_chars=",&|" 
             
         while True:
             mo= pattern.search(s)

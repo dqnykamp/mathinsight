@@ -347,3 +347,7 @@ class TestReplaceBooleanEquals(SimpleTestCase):
         s='(x=y & y=z) | a != b'
         s_replace = '__Or__((__And__(__Eq__(x,y),__Eq__(y,z))),__Ne__(a,b))'
         self.assertEqual(replace_boolean_equals(s),s_replace)
+
+        s='n <-1 or n > 1'
+        s_replace ='__Or__(n <-1,n > 1)'
+        self.assertEqual(replace_boolean_equals(s),s_replace)
