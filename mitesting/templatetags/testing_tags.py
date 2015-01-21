@@ -380,13 +380,9 @@ def question_solution_body(question_data):
 def _render_question(question, rng, seed, context):
 
 
-    try: 
-        questions_rendered = context['questions_rendered']
-    except KeyError:
-        questions_rendered = 0
-
+    questions_rendered = context.get('_questions_rendered',0)
     questions_rendered += 1
-    context['questions_rendered'] = questions_rendered
+    context['_questions_rendered'] = questions_rendered
 
     # use qtag in identifier since coming from tag
     identifier = "qtag_%s" % questions_rendered
@@ -459,7 +455,7 @@ class QuestionNode(template.Node):
 def display_question(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise TemplateSyntaxError("%r tag requires at least one arguments" \
+        raise TemplateSyntaxError("%r tag requires at least one argument" \
                                       % bits[0])
     
     question_id=parser.compile_filter(bits[1])

@@ -380,8 +380,8 @@ class TestCompareResponse(TestCase):
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],70)
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
-        self.assertTrue("matched to the nearest 0.001 place" in answer_results["answer_feedback"])
-        self.assertTrue("matching to the 0.0001 place is required" in answer_results["answer_feedback"])
+        self.assertTrue("matched to the nearest 0.001's place" in answer_results["answer_feedback"])
+        self.assertTrue("matching to the 0.0001's place is required" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
                         (user_response="2.33228a", the_answer_info=answer_info,
@@ -392,8 +392,8 @@ class TestCompareResponse(TestCase):
         self.assertEqual(round(answer_results['percent_correct'],10),34.3)
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
         self.assertTrue("34%" in answer_results["answer_feedback"])
-        self.assertTrue("matched to the nearest 0.1 place" in answer_results["answer_feedback"])
-        self.assertTrue("matching to the 0.0001 place is required" in answer_results["answer_feedback"])
+        self.assertTrue("matched to the nearest 0.1's place" in answer_results["answer_feedback"])
+        self.assertTrue("matching to the 0.0001's place is required" in answer_results["answer_feedback"])
 
 
 
