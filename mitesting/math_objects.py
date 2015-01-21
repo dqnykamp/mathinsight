@@ -245,6 +245,12 @@ class math_object(object):
                 
         return output
 
+    def __int__(self):
+        """
+        Attempts to convert expression to an int.
+        """
+        return int(self._expression)
+
     def __float__(self):
         """
         Attempts to convert expression to a float.

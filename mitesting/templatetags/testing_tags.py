@@ -39,36 +39,15 @@ class PluralizeWordNode(Node):
         use_plural=False
         thevalue = self.value.resolve(context)
         try:
-            if int(thevalue) != 1:
+            if round(float(thevalue),3) != 1.0:
                 use_plural=True
-        except:
+        except (ValueError, TypeError):
             pass
 
-        # except ValueError: # Invalid string that's not a number.
-        #     pass
-        # except TypeError: # Value isn't a string or a number; maybe it's a list?
-        #     try:
-        #         if len(thevalue) != 1:
-        #             use_plural=True
-        #     except TypeError: # len() of unsized object.
-        #         pass
-    
         if use_plural:
             return self.word_plural.resolve(context)
         else:
             return self.word.resolve(context)
-        # if use_plural:
-        #     try:
-        #         return template.Variable(self.word+"_plural").resolve(context)
-            
-        #     except:
-        #         return ""
-
-        # else:
-        #     try:
-        #         return  template.Variable(self.word).resolve(context)
-        #     except:
-        #         return ""
 
 
 @register.tag
@@ -105,10 +84,11 @@ class ExprNode(Node):
         local_dict = context["_sympy_local_dict_"]
 
         from mitesting.math_objects import math_object
-        from mitesting.sympy_customized import parse_and_process
+        from mitesting.sympy_customized import parse_and_process, EVALUATE_NONE
 
         expression = parse_and_process(expression,
-                                       local_dict=local_dict)
+                                       local_dict=local_dict,
+                                       evaluate_level=EVALUATE_NONE)
 
         expression=math_object(expression, **kwargs)
 
