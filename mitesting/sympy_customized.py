@@ -626,6 +626,9 @@ class DerivativePrimeNotation(Expr):
         xx=self.dummy_symbol
         return Subs(Derivative(self.fn(xx),xx), xx, self.argument).doit(**hints)
 
+    def _hashable_content(self):
+        # don't include dummy_symbol when determining equality
+        return (self.fn, self.argument)
             
 class DerivativeSimplifiedNotation(Derivative):
     def _latex(self, prtr):

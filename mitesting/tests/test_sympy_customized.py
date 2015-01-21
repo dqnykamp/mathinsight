@@ -404,6 +404,15 @@ class ParseExprTests(SimpleTestCase):
         from sympy import Subs
         self.assertEqual(expr.doit(), 2*Subs(Derivative(f(x),x),x,x*y))
         
+        expr2=parse_expr("2f'(x*y, dummy_symbol==='t')", local_dict=local_dict)
+        self.assertEqual(expr,expr2)
+        self.assertEqual(expr.doit(),expr2.doit())
+        
+        expr3=parse_expr("2f'(x*y, dummy_symbol==='s')", local_dict=local_dict)
+        self.assertEqual(expr3,expr2)
+        self.assertEqual(expr3.doit(),expr2.doit())
+        
+
 
     def test_derivative_simplified_notation(self):
         from sympy import Symbol, Function, Derivative, latex
