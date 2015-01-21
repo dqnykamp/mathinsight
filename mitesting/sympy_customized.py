@@ -603,7 +603,7 @@ class DerivativePrimeSimple(Derivative):
             
 
 class DerivativePrimeNotation(Expr):
-    def __new__(cls, fn, argument, dummy_symbol='x'):
+    def __new__(cls, fn, argument, dummy_variable='x'):
         if not (isinstance(fn,Symbol) or isinstance(fn,UndefinedFunction)):
             raise ValueError('Prime notation for derivative can only be use for undefined functions')
         
@@ -611,23 +611,23 @@ class DerivativePrimeNotation(Expr):
             return DerivativePrimeSimple(fn(argument),argument)
 
         return super(DerivativePrimeNotation,cls)\
-            .__new__(cls, fn,argument, dummy_symbol)
+            .__new__(cls, fn,argument, dummy_variable)
 
-    def __init__(self, fn, argument, dummy_symbol='x'):
+    def __init__(self, fn, argument, dummy_variable='x'):
         self.fn=fn
         self.argument=argument
-        self.dummy_symbol = sympify(dummy_symbol)
+        self.dummy_variable = sympify(dummy_variable)
 
     def _latex(self, prtr):
         return r"%s'\left(%s\right)" % (self.fn, prtr._print(self.argument))
 
     def doit(self, **hints):
         from sympy import Subs
-        xx=self.dummy_symbol
+        xx=self.dummy_variable
         return Subs(Derivative(self.fn(xx),xx), xx, self.argument).doit(**hints)
 
     def _hashable_content(self):
-        # don't include dummy_symbol when determining equality
+        # don't include dummy_variable when determining equality
         return (self.fn, self.argument)
             
 class DerivativeSimplifiedNotation(Derivative):
