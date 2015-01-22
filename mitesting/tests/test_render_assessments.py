@@ -506,9 +506,9 @@ class TestSetupExpressionContextUserResponse(TestCase):
         y=Symbol('y')
         b=Symbol('b')
         
-        from sympy import Add
+        from mitesting.sympy_customized import AddUnsort
         self.assertEqual(expression_context['a'], y+x**2)
-        self.assertEqual(expression_context['b'], Add(x,1,evaluate=False))
+        self.assertEqual(expression_context['b'], AddUnsort(x,1,evaluate=False))
         self.assertEqual(expression_context['c'], x+y+1)
         self.assertEqual(expression_context['d'], y+b)
 

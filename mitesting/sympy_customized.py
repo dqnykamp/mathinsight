@@ -5,7 +5,7 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr
+from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr, Add, Mul
 from sympy.core.function import UndefinedFunction
 
 import re
@@ -105,11 +105,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # If evaluate==False, then operators could be included
     # so must add them to global_dict if not present
     if evaluate==False:
-        from sympy import Add, Mul, Pow
+        from sympy import Pow
         if 'Add' not in new_global_dict:
-            new_global_dict['Add'] = Add
+            new_global_dict['Add'] = AddUnsort
         if 'Mul' not in new_global_dict:
-            new_global_dict['Mul'] = Mul
+            new_global_dict['Mul'] = MulUnsort
         if 'Pow' not in new_global_dict:
             new_global_dict['Pow'] = Pow
 
@@ -237,6 +237,19 @@ def parse_expr(s, global_dict=None, local_dict=None,
                 if parenCtr==0:
                     expr = TupleNoParen(*expr)
                     break
+
+    # if evaluate, then 
+    # replace any AddUnsorts with Adds
+    # and replace MulUnsorts with Muls
+    def replaceUnsorts(w):
+        if isinstance(w, AddUnsort):
+            return Add(*w.args)
+        if isinstance(w, MulUnsort):
+            return Mul(*w.args)
+        return w
+
+    if evaluate:
+        expr=bottom_up(expr, replaceUnsorts)
 
     return expr
 
@@ -647,3 +660,238 @@ class DerivativeSimplifiedNotation(Derivative):
 
         return prtr._print_Derivative(self)
             
+class AddUnsort(Add):
+    """
+    An Add object that displays terms in original order entered.
+    Even if not created with evaluate=False, will show original args.
+    """
+
+    def __init__(self, *args, **options):
+        self.original_args = sympify(args)
+        super(AddUnsort,self).__init__()
+
+    def doit(self, **hints):
+        return Add(*self.args)
+
+    def __eq__(self, other):
+        # For AddUnsort, original args must be the same
+        if isinstance(other, AddUnsort):
+            if self.original_args == other.original_args:
+                return True
+            else:
+                return False
+
+        # For Add, equal if the sorted/combined args are equal to original_args
+        if isinstance(other,Add):
+            if list(self.original_args) == other.as_ordered_terms():
+                return True
+            else:
+                return False
+        return super(AddUnsort, self).__eq__(other)
+
+
+    def _latex(self, prtr):
+        # identical to _print_Add from latex.py with self=prtr and expr=self
+        # except set terms from original_args
+        from sympy.core.function import _coeff_isneg
+        terms = list(self.original_args)
+
+        tex = prtr._print(terms[0])
+
+        for term in terms[1:]:
+            if not _coeff_isneg(term):
+                tex += " + " + prtr._print(term)
+            else:
+                tex += " - " + prtr._print(-term)
+
+        return tex
+
+    def _sympystr(self, prtr):
+        # identical to _print_Add from str.py with self=prtr and expr=self
+        # except set terms from original_args
+        from sympy.printing.precedence import precedence
+        terms = list(self.original_args)
+
+        PREC = precedence(self)
+        l = []
+        for term in terms:
+            t = prtr._print(term)
+            if t.startswith('-'):
+                sign = "-"
+                t = t[1:]
+            else:
+                sign = "+"
+            if precedence(term) < PREC:
+                l.extend([sign, "(%s)" % t])
+            else:
+                l.extend([sign, t])
+        sign = l.pop(0)
+        if sign == '+':
+            sign = ""
+        return sign + ' '.join(l)
+
+        
+class MulUnsort(Mul):
+    """
+    An Mul object that displays factors in original order entered.
+    Even if not created with evaluate=False, will show original args.
+    """
+
+    def __init__(self, *args, **options):
+        self.original_args = sympify(args)
+        super(MulUnsort,self).__init__()
+
+    def doit(self, **hints):
+        return Mul(*self.args)
+
+    def __eq__(self, other):
+        # For MulUnsort, original args must be the same
+        if isinstance(other, MulUnsort):
+            if self.original_args == other.original_args:
+                return True
+            else:
+                return False
+
+        # For Mul, equal if the sorted/combined args are equal to original_args
+        if isinstance(other,Mul):
+            if list(self.original_args) == other.as_ordered_factors():
+                return True
+            else:
+                return False
+        return super(MulUnsort, self).__eq__(other)
+
+
+    def _latex(self,prtr):
+        # identical to _print_Mul from latex.py with self=prtr and expr=self
+        # except set args = original_args
+        from sympy import S
+        coeff, _ = self.as_coeff_Mul()
+
+        if not coeff.is_negative:
+            tex = ""
+        else:
+            self = -self
+            tex = "- "
+
+        from sympy.simplify import fraction
+        numer, denom = fraction(self, exact=True)
+        separator = prtr._settings['mul_symbol_latex']
+        numbersep = prtr._settings['mul_symbol_latex_numbers']
+
+        def convert(self):
+            if not self.is_Mul:
+                return str(prtr._print(self))
+            else:
+                _tex = last_term_tex = ""
+
+                args=self.original_args
+                for i, term in enumerate(args):
+                    term_tex = prtr._print(term)
+
+                    if prtr._needs_mul_brackets(term, last=(i == len(args) - 1)):
+                        term_tex = r"\left(%s\right)" % term_tex
+
+                    if re.search("[0-9][} ]*$", last_term_tex) and \
+                            re.match("[{ ]*[-+0-9]", term_tex):
+                        # between two numbers
+                        _tex += numbersep
+                    elif _tex:
+                        _tex += separator
+
+                    _tex += term_tex
+                    last_term_tex = term_tex
+                return _tex
+
+        if denom is S.One:
+            # use the original selfession here, since fraction() may have
+            # altered it when producing numer and denom
+            tex += convert(self)
+        else:
+            snumer = convert(numer)
+            sdenom = convert(denom)
+            ldenom = len(sdenom.split())
+            ratio = prtr._settings['long_frac_ratio']
+            if prtr._settings['fold_short_frac'] \
+                    and ldenom <= 2 and not "^" in sdenom:
+                # handle short fractions
+                if prtr._needs_mul_brackets(numer, last=False):
+                    tex += r"\left(%s\right) / %s" % (snumer, sdenom)
+                else:
+                    tex += r"%s / %s" % (snumer, sdenom)
+            elif len(snumer.split()) > ratio*ldenom:
+                # handle long fractions
+                if prtr._needs_mul_brackets(numer, last=True):
+                    tex += r"\frac{1}{%s}%s\left(%s\right)" \
+                        % (sdenom, separator, snumer)
+                elif numer.is_Mul:
+                    # split a long numerator
+                    a = S.One
+                    b = S.One
+                    for x in numer.args:
+                        if prtr._needs_mul_brackets(x, last=False) or \
+                                len(convert(a*x).split()) > ratio*ldenom or \
+                                (b.is_commutative is x.is_commutative is False):
+                            b *= x
+                        else:
+                            a *= x
+                    if prtr._needs_mul_brackets(b, last=True):
+                        tex += r"\frac{%s}{%s}%s\left(%s\right)" \
+                            % (convert(a), sdenom, separator, convert(b))
+                    else:
+                        tex += r"\frac{%s}{%s}%s%s" \
+                            % (convert(a), sdenom, separator, convert(b))
+                else:
+                    tex += r"\frac{1}{%s}%s%s" % (sdenom, separator, snumer)
+            else:
+                tex += r"\frac{%s}{%s}" % (snumer, sdenom)
+
+        return tex
+
+    def _sympystr(self, prtr):
+         # identical to _print_Mul from str.py with prtr=prtr and self=prtr
+        # except set args = original_args and print factors of 1
+
+        from sympy import S
+        from sympy.printing.precedence import precedence
+        from sympy.core.mul import _keep_coeff
+
+        prec = precedence(self)
+
+        c, e = self.as_coeff_Mul()
+        if c < 0:
+            self = _keep_coeff(-c, e)
+            sign = "-"
+        else:
+            sign = ""
+
+        a = []  # items in the numerator
+        b = []  # items that are in the denominator (if any)
+
+        args = self.original_args
+
+        # Gather args for numerator/denominator
+        for item in args:
+            if item.is_commutative and item.is_Pow and item.exp.is_Rational and item.exp.is_negative:
+                if item.exp != -1:
+                    b.append(Pow(item.base, -item.exp, evaluate=False))
+                else:
+                    b.append(Pow(item.base, -item.exp))
+            elif item.is_Rational and item is not S.Infinity:
+                #if item.p != 1:
+                a.append(Rational(item.p))
+                if item.q != 1:
+                    b.append(Rational(item.q))
+            else:
+                a.append(item)
+
+        a = a or [S.One]
+
+        a_str = list(map(lambda x: prtr.parenthesize(x, prec), a))
+        b_str = list(map(lambda x: prtr.parenthesize(x, prec), b))
+
+        if len(b) == 0:
+            return sign + '*'.join(a_str)
+        elif len(b) == 1:
+            return sign + '*'.join(a_str) + "/" + b_str[0]
+        else:
+            return sign + '*'.join(a_str) + "/(%s)" % '*'.join(b_str)

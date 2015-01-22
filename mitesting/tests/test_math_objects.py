@@ -492,6 +492,13 @@ class MathObjectTests(SimpleTestCase):
         self.assertRaises(TypeError, float, mobject)
 
 
+    def test_int_conversion(self):
+        mobject = math_object("3*2/5")
+        self.assertEqual(int(mobject), 1)
+        mobject = math_object("3*x/5")
+        self.assertRaises(TypeError, int, mobject)
+
+
     def test_list_equality(self):
         expr = sympify("[1, 2*x, 4*sin(3*z)]")
         expr_switch = sympify("[2*x, 1, 4*sin(3*z)]")

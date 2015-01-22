@@ -739,13 +739,13 @@ class TestExpressions(TestCase):
         expr2=self.new_expr(name="s2", expression="x+x*y*x+x", 
                             evaluate_level=EVALUATE_NONE)
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
-        self.assertEqual(six.text_type(expr2_eval), "x x y + x + x")
+        self.assertEqual(six.text_type(expr2_eval), "x + x y x + x")
         self.assertEqual(expr2_eval.compare_with_expression(
                 expr1_eval.return_expression())['fraction_equal'],0)
         self.assertEqual(expr2_eval.compare_with_expression(
                 expr1_eval.return_expression())['fraction_equal_on_normalize'],1)
         self.assertEqual(expr1_eval.compare_with_expression(
-                expr2_eval.return_expression())['fraction_equal'],1)
+                expr2_eval.return_expression())['fraction_equal_on_normalize'],1)
 
     def test_evaluate_partial(self):
         from sympy import Derivative, Integral

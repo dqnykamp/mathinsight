@@ -163,14 +163,28 @@ class ParseExprTests(SimpleTestCase):
         
 
     def test_no_evaluate(self):
-        expr_no_evaluate = parse_expr("x + x - lambda + 2*lambda",
+        expr_no_evaluate = parse_expr("x - lambda + x + 2*lambda",
                                       evaluate=False)
-        expr = parse_expr("x + x - lambda + 2*lambda")
+        expr = parse_expr("x - lambda + x + 2*lambda")
         expr_with_evaluate = parse_expr("x + x - lambda + 2*lambda",
                                         evaluate=True)
         self.assertNotEqual(expr_no_evaluate, expr)
         self.assertEqual(expr, expr_with_evaluate)
-        self.assertEqual(repr(expr_no_evaluate),'-lambda + 2*lambda + x + x')
+        self.assertEqual(repr(expr_no_evaluate),'x - lambda + x + 2*lambda')
+
+        expr1=parse_expr("2+y*x", evaluate=False)
+        expr2=parse_expr("2+y*x")
+        expr3=parse_expr("x*y+2", evaluate=False)
+        expr4=parse_expr("foo", local_dict={'foo': expr1})
+        self.assertNotEqual(expr1,expr2)
+        self.assertEqual(expr2,expr3)
+        self.assertNotEqual(expr1,expr3)
+        self.assertEqual(expr2,expr4)
+        self.assertNotEqual(expr1,expr4)
+        self.assertEqual(repr(expr1), '2 + y*x')
+        self.assertEqual(repr(expr4), 'y*x + 2')
+
+        
 
     def test_factorial(self):
         from sympy import factorial
@@ -210,10 +224,10 @@ class ParseExprTests(SimpleTestCase):
         local_dict = {'Derivative': Derivative}
         x=Symbol('x')
         y=Symbol('y')
-        expr = parse_and_process("2+x+x", 
+        expr = parse_and_process("x+2+y*x+x*y", 
                                  evaluate_level=EVALUATE_NONE)
         self.assertNotEqual(expr, 2+x+x)
-        self.assertEqual(repr(expr), 'x + x + 2')
+        self.assertEqual(repr(expr), 'x + 2 + y*x + x*y')
         
         expr = parse_and_process("Derivative(x^2,x)", local_dict= local_dict,
                                  evaluate_level = EVALUATE_PARTIAL)
@@ -440,3 +454,4 @@ class ParseExprTests(SimpleTestCase):
 
         expr=parse_expr("3dfn/dxx", local_dict=local_dict)
         self.assertEqual(expr, 3*DerivativeSimplifiedNotation(fn(xx),xx))
+
