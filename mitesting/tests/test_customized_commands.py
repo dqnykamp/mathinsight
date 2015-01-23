@@ -398,8 +398,8 @@ class DiffSubsTests(SimpleTestCase):
         y=Symbol('y')
         z=Symbol('z')
 
-        self.assertEqual(DiffSubs(x*y-1,x,z,1).doit(), z*y-y)
+        self.assertEqual(DiffSubs(x*y-1,x,z,1).doit(), y-z*y)
         from sympy import latex
         self.assertEqual(latex(DiffSubs(2*x,x,y,z)),
-            '\\left. 2 x \\right|_{\\substack{ x=z }}^{\\substack{ x=y }}')
+            '\\left. 2 x \\right|_{\\substack{ x=y }}^{\\substack{ x=z }}')
 

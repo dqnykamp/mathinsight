@@ -281,11 +281,11 @@ class DiffSubs(Expr):
         return obj
 
     def doit(self):
-        return self.sub1.doit() - self.sub2.doit()
+        return self.sub2.doit() - self.sub1.doit()
 
     def evalf(self, prec=None, **options):
-        return self.sub1.doit().evalf(prec, **options)\
-            -self.sub2.doit().evalf(prec, **options)
+        return self.sub2.doit().evalf(prec, **options)\
+            -self.sub1.doit().evalf(prec, **options)
 
     def _latex(self, prtr):
         expr, old, new1 = self.sub1.args
@@ -299,7 +299,7 @@ class DiffSubs(Expr):
         latex_old = (prtr._print(e) for e in old)
         latex_subs2 = r'\\ '.join(
             e[0] + '=' + e[1] for e in zip(latex_old, latex_new2))
-        return r'\left. %s \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs2, latex_subs1)
+        return r'\left. %s \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs1, latex_subs2)
 
 
 
