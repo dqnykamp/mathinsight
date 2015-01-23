@@ -7,7 +7,7 @@ from django.test import SimpleTestCase
 from mitesting.sympy_customized import bottom_up, parse_expr, \
     parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL
 from mitesting.customized_commands import normalize_floats
-from sympy import Symbol, diff, Tuple, sympify, Integer
+from sympy import Symbol, diff, Tuple, sympify, Integer, latex
 
 class BottomUpTests(SimpleTestCase):
     
@@ -184,8 +184,25 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(repr(expr1), '2 + y*x')
         self.assertEqual(repr(expr4), 'x*y + 2')
 
+        expr=parse_expr("1*x*1", evaluate=False)
+        self.assertEqual(repr(expr), '1*x*1')
+        self.assertEqual(latex(expr), '1 x 1')
+        
+        expr=parse_expr("0+x+0", evaluate=False)
+        self.assertEqual(repr(expr), '0 + x + 0')
+        self.assertEqual(latex(expr), '0 + x + 0')
         
 
+        # test with leading minus sign in Mul
+        expr=parse_expr("4*(-4*x+1)", evaluate=False)
+        self.assertEqual(repr(expr), '4*(-4*x + 1)')
+        self.assertEqual(latex(expr), '4 \\left(- 4 x + 1\\right)')
+
+        expr=parse_expr("-1*(-4*x+1)", evaluate=False)
+        self.assertEqual(repr(expr), '-1*(-4*x + 1)')
+        self.assertEqual(latex(expr), '- 1 \\left(- 4 x + 1\\right)')
+
+        
     def test_factorial(self):
         from sympy import factorial
         expr = parse_expr("x!")
@@ -267,7 +284,6 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, 81)
 
     def test_prevent_hexadecimal(self):
-        from sympy import Symbol
         expr = parse_expr("0x99")
         self.assertEqual(expr, 0)
         
@@ -276,7 +292,7 @@ class ParseExprTests(SimpleTestCase):
         
 
     def test_split_with_function(self):
-        from sympy import Symbol, Function
+        from sympy import Function
         x=Symbol('x')
         a=Symbol('a')
         f=Function(str('f'))
@@ -291,7 +307,6 @@ class ParseExprTests(SimpleTestCase):
 
 
     def test_callable_symbol(self):
-        from sympy import Symbol
         from mitesting.sympy_customized import SymbolCallable
         
         x=Symbol('x')
@@ -313,7 +328,7 @@ class ParseExprTests(SimpleTestCase):
         
 
     def test_relational(self):
-        from sympy import Symbol, Eq, Ne, Lt, Ge, Or, And
+        from sympy import Eq, Ne, Lt, Ge, Or, And
         
         x=Symbol('x')
         y=Symbol('y')
@@ -390,7 +405,7 @@ class ParseExprTests(SimpleTestCase):
 
 
     def test_derivative_prime_notation(self):
-        from sympy import Symbol, Function, Derivative, latex
+        from sympy import Function, Derivative
         from mitesting.sympy_customized import SymbolCallable, \
             DerivativePrimeNotation, DerivativePrimeSimple
         
@@ -433,7 +448,7 @@ class ParseExprTests(SimpleTestCase):
 
 
     def test_derivative_simplified_notation(self):
-        from sympy import Symbol, Function, Derivative, latex
+        from sympy import Function, Derivative
         from mitesting.sympy_customized import SymbolCallable, \
             DerivativeSimplifiedNotation
         

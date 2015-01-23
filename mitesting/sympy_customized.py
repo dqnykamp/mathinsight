@@ -5,7 +5,7 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr, Add, Mul
+from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr, Add, Mul, S
 from sympy.core.function import UndefinedFunction
 
 import re
@@ -72,7 +72,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
         and add split_symbols transformation if split_symbols is True.
     4.  Allows substitution of python keywords like 'lambda', 'as", or "if" 
         via local/global_dict.
-    5.  Remove leading 0s from numbers so not interpretted as octal numbers.
+    5.  Remove leading 0s from numbers so not interpreted as octal numbers.
     6.  Convert leading 0x to 0*x so not interpreeted as hexadecimal numbers.
     7.  Call sympify after parse_expr so that tuples will be 
         converted to Sympy Tuples.  (A bug in parse_expr that this
@@ -107,9 +107,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
     if evaluate==False:
         from sympy import Pow
         if 'Add' not in new_global_dict:
-            new_global_dict['Add'] = AddUnsort
+            new_global_dict['Add'] = AddUnsortInitial
         if 'Mul' not in new_global_dict:
-            new_global_dict['Mul'] = MulUnsort
+            new_global_dict['Mul'] = MulUnsortInitial
         if 'Pow' not in new_global_dict:
             new_global_dict['Pow'] = Pow
 
@@ -665,6 +665,31 @@ class DerivativeSimplifiedNotation(Derivative):
 
         return prtr._print_Derivative(self)
             
+
+class AddUnsortInitial(Expr):
+    """
+    returns an unevaluated AddUnsort with 0 terms included
+    """
+    def __new__(cls, *args, **options):
+        # always set evaluate to false
+        options['evaluate']=False
+        original_args = sympify(args)
+        new_args=[]
+        zero_placeholder=Symbol('_0_')
+        for w in args:
+            if w==0:
+                new_args.append(zero_placeholder)
+            else:
+                new_args.append(w)
+        args= tuple(sympify(new_args))
+
+        obj=AddUnsort(*args, **options)
+        
+        if obj.is_Add:
+            obj.original_args=original_args
+            obj._args=original_args
+        return obj
+
 class AddUnsort(Add):
     """
     An Add object that displays terms in original order entered.
@@ -735,7 +760,32 @@ class AddUnsort(Add):
             sign = ""
         return sign + ' '.join(l)
 
+
+class MulUnsortInitial(Expr):
+    """
+    returns an unevaluated MulUnsort with 1 factors included
+    """
+    def __new__(cls, *args, **options):
+        # always set evaluate to false
+        options['evaluate']=False
+        original_args = sympify(args)
+        new_args=[]
+        one_placeholder=Symbol('_1_')
+        for w in args:
+            if w==1:
+                new_args.append(one_placeholder)
+            else:
+                new_args.append(w)
+        args= tuple(sympify(new_args))
+
+        obj=MulUnsort(*args, **options)
         
+        if obj.is_Mul:
+            obj.original_args=original_args
+            obj._args=original_args
+        return obj
+
+
 class MulUnsort(Mul):
     """
     An Mul object that displays factors in original order entered.
@@ -768,14 +818,18 @@ class MulUnsort(Mul):
 
     def _latex(self,prtr):
         # identical to _print_Mul from latex.py with self=prtr and expr=self
-        # except set args = original_args
+        # except set args = original_args 
+        # and create MulUnsort when have leading negative
+
         from sympy import S
         coeff, _ = self.as_coeff_Mul()
 
         if not coeff.is_negative:
             tex = ""
         else:
-            self = -self
+            new_args=[-self.original_args[0]]
+            new_args.extend(self.original_args[1:])
+            self = MulUnsortInitial(*new_args)
             tex = "- "
 
         from sympy.simplify import fraction
@@ -808,7 +862,7 @@ class MulUnsort(Mul):
                 return _tex
 
         if denom is S.One:
-            # use the original selfession here, since fraction() may have
+            # use the original expression here, since fraction() may have
             # altered it when producing numer and denom
             tex += convert(self)
         else:
@@ -853,21 +907,29 @@ class MulUnsort(Mul):
         return tex
 
     def _sympystr(self, prtr):
-         # identical to _print_Mul from str.py with prtr=prtr and self=prtr
-        # except set args = original_args and print factors of 1
+        # identical to _print_Mul from str.py with prtr=prtr and self=prtr
+        # except set args = original_arg, print factors of 1
+        # and create MulUnsort when have leading negative
+
+        if not isinstance(self,MulUnsort):
+            return prtr._print_Mul(self)
 
         from sympy import S
         from sympy.printing.precedence import precedence
-        from sympy.core.mul import _keep_coeff
 
         prec = precedence(self)
 
-        c, e = self.as_coeff_Mul()
-        if c < 0:
-            self = _keep_coeff(-c, e)
-            sign = "-"
-        else:
+        coeff, _ = self.as_coeff_Mul()
+
+        if not coeff.is_negative:
             sign = ""
+        else:
+            new_args=[-self.original_args[0]]
+            new_args.extend(self.original_args[1:])
+            self = MulUnsortInitial(*new_args, evaluate=False)
+            sign = "-"
+            if not self.is_Mul:
+                return "-" + prtr._print(self)
 
         a = []  # items in the numerator
         b = []  # items that are in the denominator (if any)
