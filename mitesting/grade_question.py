@@ -277,7 +277,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         try:
                             f_float = float(f)
                         except (TypeError, AttributeError) as e:
-                            logger.warning("Exception raised when converting function to float for question answer option: %s" % e)
+                            #logger.warning("Exception raised when converting function to float for question answer option: %s" % e)
                             fraction_equal=0
                 if f_float is not None:
                     fraction_equal = max(0,min(1,f_float))

@@ -336,7 +336,8 @@ def auto_symbol(tokens, local_dict, global_dict):
 class SymbolCallable(Symbol):
     pass
 
-def _token_callable(token, local_dict, global_dict, nextToken=None):
+def _token_callable(token, local_dict, global_dict, nextToken=None, 
+                    include_symbol_callable=True):
     """
     Predicate for whether a token name represents a callable function.
 
@@ -347,7 +348,7 @@ def _token_callable(token, local_dict, global_dict, nextToken=None):
     if func is None:
         func = global_dict.get(token[1])
     return callable(func) and (not isinstance(func, Symbol)
-                               or isinstance(func, SymbolCallable))
+            or (include_symbol_callable and isinstance(func, SymbolCallable)))
 
 
 def implicit_multiplication(result, local_dict, global_dict):
@@ -435,7 +436,8 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
     """Implicitly adds '*' tokens.
 
     Customized version: only difference is don't add multiplication
-    adjacent to and/or/not.
+    adjacent to and/or/not and don't include SymbolCallable as callable
+    except before parentheses.
 
     Cases:
 
@@ -486,13 +488,16 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
             # Constant followed by parenthesis
             result.append((OP, '*'))
         elif (tok[0] == NAME and
-              not _token_callable(tok, local_dict, global_dict) and
+              not _token_callable(tok, local_dict, global_dict,
+                                  include_symbol_callable=False) and
               nextTok[0] == NAME and
-              not _token_callable(nextTok, local_dict, global_dict)):
+              not _token_callable(nextTok, local_dict, global_dict, 
+                                  include_symbol_callable=False)):
             # Constant followed by constant
             result.append((OP, '*'))
         elif (tok[0] == NAME and
-              not _token_callable(tok, local_dict, global_dict) and
+              not _token_callable(tok, local_dict, global_dict, 
+                                  include_symbol_callable=False) and
               (isinstance(nextTok, AppliedFunction) or nextTok[0] == NAME)):
             # Constant followed by (implicitly applied) function
             result.append((OP, '*'))

@@ -306,6 +306,10 @@ class ParseExprTests(SimpleTestCase):
                           local_dict={'f': f})
         self.assertEqual(expr, a*f(x))
         self.assertEqual(expr, a*fsym(x))
+
+        expr = parse_expr('afx', split_symbols=True, 
+                          local_dict={'f': f})
+        self.assertEqual(expr, a*f*x)
         
 
     def test_relational(self):
