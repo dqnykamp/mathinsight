@@ -344,7 +344,7 @@ def _token_callable(token, local_dict, global_dict, nextToken=None):
     locals and globals.
     """
     func = local_dict.get(token[1])
-    if not func:
+    if func is None:
         func = global_dict.get(token[1])
     return callable(func) and (not isinstance(func, Symbol)
                                or isinstance(func, SymbolCallable))
@@ -405,9 +405,9 @@ def _apply_functions(tokens, local_dict, global_dict):
 
             # check if tok represent a ParsedFunction
             func = local_dict.get(tok[1])
-            if not func:
+            if func is None:
                 func = global_dict.get(tok[1])
-            if func:
+            if func is not None:
                 try:
                     if issubclass(func, ParsedFunction):
                         parsed_function=True

@@ -455,3 +455,8 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("3dfn/dxx", local_dict=local_dict)
         self.assertEqual(expr, 3*DerivativeSimplifiedNotation(fn(xx),xx))
 
+
+    def test_subs_relational(self):
+        from sympy import Eq
+        x=Symbol('x')
+        self.assertEqual(parse_expr("2*z", local_dict={"z": Eq(x,3)}),2*Eq(x,3))
