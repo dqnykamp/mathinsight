@@ -392,3 +392,14 @@ class InlineIfTests(SimpleTestCase):
         self.assertEqual(f(1),2)
         self.assertEqual(f(2),5)
         
+class DiffSubsTests(SimpleTestCase):
+    def test_diffsubs(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+
+        self.assertEqual(DiffSubs(x*y-1,x,z,1).doit(), z*y-y)
+        from sympy import latex
+        self.assertEqual(latex(DiffSubs(2*x,x,y,z)),
+            '\\left. 2 x \\right|_{\\substack{ x=z }}^{\\substack{ x=y }}')
+

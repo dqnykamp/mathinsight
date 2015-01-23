@@ -182,7 +182,7 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr2,expr4)
         self.assertNotEqual(expr1,expr4)
         self.assertEqual(repr(expr1), '2 + y*x')
-        self.assertEqual(repr(expr4), 'y*x + 2')
+        self.assertEqual(repr(expr4), 'x*y + 2')
 
         
 

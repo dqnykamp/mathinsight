@@ -49,6 +49,7 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
          'log': log, 'ln': ln, 'exp': exp, 
          'count': count,
          'Point': Point,
+         'DiffSubs': DiffSubs,
          'acosh': acosh, 'acos': acos, 'acosh': acosh, 
          'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
          'atan': atan, 'atan2': atan2, 'atanh': atanh, 

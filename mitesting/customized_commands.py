@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix
+from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix, Expr, Subs
 from mitesting.sympy_customized import bottom_up, customized_sort_key
 
 class Abs(C.Abs):
@@ -266,6 +266,40 @@ class MatrixFromTuple(object):
     def __new__(cls, *args, **kwargs):
         return MatrixAsVector(list(args))
         
+
+class DiffSubs(Expr):
+    """
+    Difference of substituting two different values of variables
+    into an expression.
+    """
+
+    def __new__(cls, expr, variables, point1, point2, 
+                 **assumptions):
+        obj = Expr.__new__(cls, expr, variables, point1, point2)
+        obj.sub1 = Subs(expr, variables, point1, **assumptions)
+        obj.sub2 = Subs(expr, variables, point2, **assumptions)
+        return obj
+
+    def doit(self):
+        return self.sub1.doit() - self.sub2.doit()
+
+    def evalf(self, prec=None, **options):
+        return self.sub1.doit().evalf(prec, **options)\
+            -self.sub2.doit().evalf(prec, **options)
+
+    def _latex(self, prtr):
+        expr, old, new1 = self.sub1.args
+        latex_expr = prtr._print(expr)
+        latex_old = (prtr._print(e) for e in old)
+        latex_new1 = (prtr._print(e) for e in new1)
+        new2 = self.sub2.args[2]
+        latex_new2 = (prtr._print(e) for e in new2)
+        latex_subs1 = r'\\ '.join(
+            e[0] + '=' + e[1] for e in zip(latex_old, latex_new1))
+        latex_old = (prtr._print(e) for e in old)
+        latex_subs2 = r'\\ '.join(
+            e[0] + '=' + e[1] for e in zip(latex_old, latex_new2))
+        return r'\left. %s \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs2, latex_subs1)
 
 
 
