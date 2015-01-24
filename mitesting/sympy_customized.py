@@ -5,7 +5,7 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, factorial, Matrix, Derivative, Expr, Add, Mul, S
+from sympy import Tuple, Float, Symbol, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S
 from sympy.core.function import UndefinedFunction
 
 import re
@@ -36,6 +36,16 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
             rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
             if nonbasic:
                 rv=F(rv)
+        elif isinstance(rv, AddUnsort):
+            args = tuple([bottom_up(a, F, atoms, nonbasic)
+                for a in rv.original_args])
+            rv = AddUnsortInitial(*args)
+            rv = F(rv)
+        elif isinstance(rv, MulUnsort):
+            args = tuple([bottom_up(a, F, atoms, nonbasic)
+                for a in rv.original_args])
+            rv = MulUnsortInitial(*args)
+            rv = F(rv)
         elif rv.args:
             args = tuple([bottom_up(a, F, atoms, nonbasic)
                 for a in rv.args])
@@ -105,7 +115,6 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # If evaluate==False, then operators could be included
     # so must add them to global_dict if not present
     if evaluate==False:
-        from sympy import Pow
         if 'Add' not in new_global_dict:
             new_global_dict['Add'] = AddUnsortInitial
         if 'Mul' not in new_global_dict:
@@ -817,9 +826,12 @@ class MulUnsort(Mul):
 
 
     def _latex(self,prtr):
-        # identical to _print_Mul from latex.py with self=prtr and expr=self
-        # except set args = original_args 
-        # and create MulUnsort when have leading negative
+        """
+        identical to _print_Mul from latex.py with self=prtr and expr=self except
+        - set args = original_args 
+        - create MulUnsort when have leading negative
+        - wrap negative number factors in parentheses
+        """
 
         from sympy import S
         coeff, _ = self.as_coeff_Mul()
@@ -837,6 +849,38 @@ class MulUnsort(Mul):
         separator = prtr._settings['mul_symbol_latex']
         numbersep = prtr._settings['mul_symbol_latex_numbers']
 
+
+        def _needs_mul_brackets(expr, first=False, last=False):
+            """
+            Returns True if the expression needs to be wrapped in brackets when
+            printed as part of a Mul, False otherwise. This is True for Add,
+            but also for some container objects that would not need brackets
+            when appearing last in a Mul, e.g. an Integral. ``last=True``
+            specifies that this expr is the last to appear in a Mul.
+            ``first=True`` specifies that this expr is the first to appear in a Mul.
+            """
+            from sympy import Integral, Piecewise, Product, Sum
+            from sympy.core.function import _coeff_isneg
+
+            if expr.is_Add:
+                return True
+            elif expr.is_Relational:
+                return True
+            elif expr.is_Mul:
+                if not first and _coeff_isneg(expr):
+                    return True
+            elif expr.is_number:
+                if not first and expr < 0:
+                    return True
+
+            if (not last and
+                any([expr.has(x) for x in (Integral, Piecewise, Product, Sum)])):
+                return True
+
+            return False
+
+
+
         def convert(self):
             if not self.is_Mul:
                 return str(prtr._print(self))
@@ -847,7 +891,8 @@ class MulUnsort(Mul):
                 for i, term in enumerate(args):
                     term_tex = prtr._print(term)
 
-                    if prtr._needs_mul_brackets(term, last=(i == len(args) - 1)):
+                    if _needs_mul_brackets(term, first=(i == 0),
+                                                last=(i == len(args) - 1)):
                         term_tex = r"\left(%s\right)" % term_tex
 
                     if re.search("[0-9][} ]*$", last_term_tex) and \
@@ -873,13 +918,13 @@ class MulUnsort(Mul):
             if prtr._settings['fold_short_frac'] \
                     and ldenom <= 2 and not "^" in sdenom:
                 # handle short fractions
-                if prtr._needs_mul_brackets(numer, last=False):
+                if _needs_mul_brackets(numer, last=False):
                     tex += r"\left(%s\right) / %s" % (snumer, sdenom)
                 else:
                     tex += r"%s / %s" % (snumer, sdenom)
             elif len(snumer.split()) > ratio*ldenom:
                 # handle long fractions
-                if prtr._needs_mul_brackets(numer, last=True):
+                if _needs_mul_brackets(numer, last=True):
                     tex += r"\frac{1}{%s}%s\left(%s\right)" \
                         % (sdenom, separator, snumer)
                 elif numer.is_Mul:
@@ -887,13 +932,13 @@ class MulUnsort(Mul):
                     a = S.One
                     b = S.One
                     for x in numer.args:
-                        if prtr._needs_mul_brackets(x, last=False) or \
+                        if _needs_mul_brackets(x, last=False) or \
                                 len(convert(a*x).split()) > ratio*ldenom or \
                                 (b.is_commutative is x.is_commutative is False):
                             b *= x
                         else:
                             a *= x
-                    if prtr._needs_mul_brackets(b, last=True):
+                    if _needs_mul_brackets(b, last=True):
                         tex += r"\frac{%s}{%s}%s\left(%s\right)" \
                             % (convert(a), sdenom, separator, convert(b))
                     else:

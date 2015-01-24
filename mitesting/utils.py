@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mitesting.customized_commands import *
-from mitesting.sympy_customized import parse_and_process
+from mitesting.sympy_customized import parse_and_process, bottom_up
 from sympy import Tuple, Function, Symbol
 from sympy.parsing.sympy_tokenize import TokenError
 import six
@@ -293,7 +293,7 @@ class ParsedFunction(Function):
 
 def return_parsed_function(expression, function_inputs, name,
                            local_dict=None, 
-                           default_value=None):
+                           default_value=None, evaluate_level=None):
     """
     Parse expression into function of function_inputs,
     a subclass of ParsedFunction.
@@ -326,12 +326,14 @@ def return_parsed_function(expression, function_inputs, name,
         local_dict_sub = None
 
     try:
-        expr2= parse_and_process(expression, local_dict=local_dict_sub)
+        expr2= parse_and_process(expression, local_dict=local_dict_sub,
+                                 evaluate_level=evaluate_level)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
 
     if default_value is None:
-        default_value = parse_and_process(expression, local_dict=local_dict)
+        default_value = parse_and_process(expression, local_dict=local_dict,
+                                          evaluate_level=evaluate_level)
 
     
     # parsed_function is a class that stores the expression
@@ -357,7 +359,9 @@ def return_parsed_function(expression, function_inputs, name,
             replace_dict={}
             for i in range(len(cls.the_input_list)):
                 replace_dict[Symbol(cls.the_input_list[i])] =  args[i]
-            expr_sub=expr_sub.xreplace(replace_dict)
+            expr_sub=bottom_up(expr_sub,
+                lambda w: w if w not in replace_dict else replace_dict[w],
+                               atoms=True)
             return expr_sub
 
 

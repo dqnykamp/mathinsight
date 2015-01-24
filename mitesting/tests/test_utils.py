@@ -338,6 +338,16 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(fun.default, s**2-t+5)
         
 
+    def test_no_evaluate(self):
+        from mitesting.models import Expression
+        from sympy import latex
+        z=Symbol('z')
+        fun = return_parsed_function("3*x*-1*1*x-1+0-3+x","x", name="f",
+                                     evaluate_level=Expression.EVALUATE_NONE)
+        self.assertEqual(repr(fun(z)), '3*z*(-1)*1*z - 1 + 0 - 3 + z')
+        self.assertEqual(latex(fun(z)), '3 z \\left(-1\\right) 1 z - 1 + 0 - 3 + z')
+        
+
 class TestReplaceBooleanEquals(SimpleTestCase):
     def test_replace_boolean_equals(self):
         s='x-1=y+c and (y/a=f(z) or a^2 != (b+2)(v-1)/2)'

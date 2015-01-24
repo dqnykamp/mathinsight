@@ -747,6 +747,25 @@ class TestExpressions(TestCase):
         self.assertEqual(expr1_eval.compare_with_expression(
                 expr2_eval.return_expression())['fraction_equal_on_normalize'],1)
 
+    def test_evaluate_false_function(self):
+        local_dict={}
+        expr1=self.new_expr(name="f", expression="x+x*y*x+x*1+0", function_inputs="x",
+                            expression_type=Expression.FUNCTION, evaluate_level=EVALUATE_NONE)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(six.text_type(expr1_eval), "x + x y x + x 1 + 0")
+        expr2=self.new_expr(name="f_z", expression="f(z)", 
+                            evaluate_level=EVALUATE_NONE)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(six.text_type(expr2_eval), "z + z y z + z 1 + 0")
+        expr3=self.new_expr(name="f_z_eval", expression="f(z)")
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(six.text_type(expr3_eval), "y z^{2} + 2 z")
+
+        self.assertEqual(expr2_eval.compare_with_expression(
+                expr3_eval.return_expression())['fraction_equal'],0)
+        self.assertEqual(expr2_eval.compare_with_expression(
+                expr3_eval.return_expression())['fraction_equal_on_normalize'],1)
+
     def test_evaluate_partial(self):
         from sympy import Derivative, Integral
         x=Symbol('x')

@@ -203,6 +203,12 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(expr), '- 1 \\left(- 4 x + 1\\right)')
 
         
+        # parentheses around negative numbers or expressions with negative sign
+        expr=parse_expr("4*2*-1*x*-x",evaluate=False)
+        self.assertEqual(repr(expr), '4*2*(-1)*x*(-x)')
+        self.assertEqual(latex(expr), '4 \\cdot 2 \\left(-1\\right) x \\left(- x\\right)')
+
+        
     def test_factorial(self):
         from sympy import factorial
         expr = parse_expr("x!")

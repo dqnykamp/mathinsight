@@ -619,7 +619,8 @@ class MathObjectTests(SimpleTestCase):
         expr_evaluated = sympify(expr_string)
         expr_unevaluated = parse_expr(expr_string, evaluate=False)
         mobject = math_object(expr_unevaluated)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
         self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
 
@@ -630,12 +631,14 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_NONE)
         
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_PARTIAL)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
         self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_PARTIAL)
 
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_FULL)
-        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
         self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
         

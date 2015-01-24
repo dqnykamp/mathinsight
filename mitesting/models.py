@@ -1252,7 +1252,8 @@ class Expression(models.Model):
                     parsed_function = return_parsed_function(
                         self.expression, function_inputs=self.function_inputs,
                         name = self.name, local_dict=local_dict,
-                        default_value=math_expr)
+                        default_value=math_expr, 
+                        evaluate_level = self.evaluate_level)
 
                     # for FUNCTION, add parsed_function rather than
                     # math_expr to local dict
