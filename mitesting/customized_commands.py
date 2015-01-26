@@ -299,7 +299,7 @@ class DiffSubs(Expr):
         latex_old = (prtr._print(e) for e in old)
         latex_subs2 = r'\\ '.join(
             e[0] + '=' + e[1] for e in zip(latex_old, latex_new2))
-        return r'\left. %s \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs1, latex_subs2)
+        return r'\left. %s \vphantom{\Large I} \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs1, latex_subs2)
 
 
 

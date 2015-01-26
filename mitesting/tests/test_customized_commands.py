@@ -401,5 +401,5 @@ class DiffSubsTests(SimpleTestCase):
         self.assertEqual(DiffSubs(x*y-1,x,z,1).doit(), y-z*y)
         from sympy import latex
         self.assertEqual(latex(DiffSubs(2*x,x,y,z)),
-            '\\left. 2 x \\right|_{\\substack{ x=y }}^{\\substack{ x=z }}')
+            r'\left. 2 x \vphantom{\Large I} \right|_{\substack{ x=y }}^{\substack{ x=z }}')
 
