@@ -403,3 +403,5 @@ class DiffSubsTests(SimpleTestCase):
         self.assertEqual(latex(DiffSubs(2*x,x,y,z)),
             r'\left. 2 x \vphantom{\Large I} \right|_{\substack{ x=y }}^{\substack{ x=z }}')
 
+        from mitesting.sympy_customized import AddUnsortInitial
+        self.assertEqual(DiffSubs(2*x,x,1,2).as_difference(), AddUnsortInitial(4,-2))
