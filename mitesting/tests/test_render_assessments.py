@@ -1221,7 +1221,7 @@ class TestRenderQuestion(TestCase):
                                       user=AnonymousUser(),
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
-        self.assertFalse(question_data.get("enable_solution_button",False))
+        self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
                          "/assess/question/%s/inject_solution" % self.q.id)
 

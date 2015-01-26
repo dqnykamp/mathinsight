@@ -108,6 +108,7 @@ class TestQuestionView(TestCase):
         self.assertNotContains(response, "Show solution")
 
         self.q.computer_graded=True
+        self.q.show_solution_button_after_attempts=3
         self.q.save()
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response, "Show solution")
@@ -1903,6 +1904,7 @@ class TestGradeQuestionView(TestCase):
             '<input type="button" class="mi_show_solution" value="Show solution"'
 
         self.q.question_text="Type answer: {% answer function %}"
+        self.q.show_solution_button_after_attempts=3
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")

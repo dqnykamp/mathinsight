@@ -75,7 +75,7 @@ class Question(models.Model):
         'SympyCommandSet', blank=True, null=True,
         related_name='question_set_user')
     computer_graded=models.BooleanField(default=False)
-    show_solution_button_after_attempts=models.IntegerField(default=3)
+    show_solution_button_after_attempts=models.IntegerField(default=0)
     keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
     subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
     authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor')
