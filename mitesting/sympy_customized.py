@@ -463,6 +463,7 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
     """
     from sympy.parsing.sympy_parser import AppliedFunction
     result = []
+    prevTok = (None, None)
     for tok, nextTok in zip(tokens, tokens[1:]):
         result.append(tok)
         # only change from standard: ignore and/or/not
@@ -493,6 +494,7 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
             result.append((OP, '*'))
         elif (tok[0] == NAME and
               not _token_callable(tok, local_dict, global_dict) and
+              not (prevTok[0] == OP and prevTok[1] == '.') and
               nextTok[0] == OP and nextTok[1] == '('):
             # Constant followed by parenthesis
             result.append((OP, '*'))
@@ -510,6 +512,7 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
               (isinstance(nextTok, AppliedFunction) or nextTok[0] == NAME)):
             # Constant followed by (implicitly applied) function
             result.append((OP, '*'))
+        prevTok=tok
     if tokens:
         result.append(tokens[-1])
     return result

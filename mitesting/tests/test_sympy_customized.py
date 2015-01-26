@@ -515,3 +515,7 @@ class ParseExprTests(SimpleTestCase):
         from sympy import Eq
         x=Symbol('x')
         self.assertEqual(parse_expr("2*z", local_dict={"z": Eq(x,3)}),2*Eq(x,3))
+
+
+    def test_implicit_mult_with_attribute(self):
+        self.assertEqual(parse_expr("(1/2).evalf()"), 0.5)
