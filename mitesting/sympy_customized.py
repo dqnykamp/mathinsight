@@ -699,6 +699,58 @@ class AddUnsortInitial(Expr):
             obj._args=original_args
         return obj
 
+
+def _get_coeff(a):
+    # Get first argument from Mul.
+    # Handle nested Muls and use original_args for MulUnsort.
+    while a.is_Mul:
+        if isinstance(a,MulUnsort):
+            a=a.original_args[0]
+        else:
+            a=a.args[0]
+    return a
+
+def _coeff_isneg(a):
+    # modified from sympy to handle nested Muls
+    # and use original_args for MulUnsort
+    a=_get_coeff(a)
+    return a.is_Number and a.is_negative
+
+def fraction_MulUnsort(expr, exact=False):
+    # modified from sympy fraction to return MulUnsort
+    # not put extra 1's in the denominator
+    expr = sympify(expr)
+    numer, denom = [], []
+
+    from sympy.functions import exp
+
+    for term in MulUnsort.make_args(expr):
+        if term.is_commutative and (term.is_Pow or term.func is exp):
+            b, ex = term.as_base_exp()
+            if ex.is_negative:
+                if ex is S.NegativeOne:
+                    denom.append(b)
+                else:
+                    denom.append(Pow(b, -ex))
+            elif ex.is_positive:
+                numer.append(term)
+            elif not exact and ex.is_Mul:
+                n, d = term.as_numer_denom()
+                numer.append(n)
+                denom.append(d)
+            else:
+                numer.append(term)
+        elif term.is_Rational:
+            n, d = term.as_numer_denom()
+            numer.append(n)
+            if d !=1:
+                denom.append(d)
+        else:
+            numer.append(term)
+
+    return MulUnsortInitial(*numer), MulUnsortInitial(*denom)
+
+
 class AddUnsort(Add):
     """
     An Add object that displays terms in original order entered.
@@ -728,11 +780,18 @@ class AddUnsort(Add):
                 return False
         return super(AddUnsort, self).__eq__(other)
 
+    def __neg__(self):
+        # create a MulUnsort with an initial factor of -1 set to not
+        # be displayed
+        obj= MulUnsortInitial(S.NegativeOne, self)
+        obj.display_initial_negative_one=False
+        return obj
 
     def _latex(self, prtr):
         # identical to _print_Add from latex.py with self=prtr and expr=self
-        # except set terms from original_args
-        from sympy.core.function import _coeff_isneg
+        # except get terqms from original_args
+        # and use customized _coeff_isneg
+
         terms = list(self.original_args)
 
         tex = prtr._print(terms[0])
@@ -778,6 +837,9 @@ class MulUnsortInitial(Expr):
         # always set evaluate to false
         options['evaluate']=False
         original_args = sympify(args)
+        if len(original_args)==1:
+            return original_args[0]
+
         new_args=[]
         one_placeholder=Symbol('_1_')
         for w in args:
@@ -797,12 +859,13 @@ class MulUnsortInitial(Expr):
 
 class MulUnsort(Mul):
     """
-    An Mul object that displays factors in original order entered.
+    A Mul object that displays factors in original order entered.
     Even if not created with evaluate=False, will show original args.
     """
 
     def __init__(self, *args, **options):
         self.original_args = sympify(args)
+        self.display_initial_negative_one = True
         super(MulUnsort,self).__init__()
 
     def doit(self, **hints):
@@ -824,28 +887,44 @@ class MulUnsort(Mul):
                 return False
         return super(MulUnsort, self).__eq__(other)
 
+    def __neg__(self):
+        # keep track if an initial factor of -1 was originally added, 
+        # and should be displayed
+        # or was just added to switch the sign, and should not be displayed
+        if not self.display_initial_negative_one and self.original_args[0]==-1:
+            return MulUnsortInitial(*self.original_args[1:])
+        arg0=_get_coeff(self)
+        if arg0.is_Number and arg0.is_negative:
+            return MulUnsortInitial(-self.original_args[0], 
+                                    *self.original_args[1:])
+        obj= MulUnsortInitial(S.NegativeOne, *self.original_args)
+        obj.display_initial_negative_one=False
+        return obj
 
     def _latex(self,prtr):
         """
-        identical to _print_Mul from latex.py with self=prtr and expr=self except
+        based on _print_Mul from latex.py with self=prtr and expr=self
+        
+        Differences
         - set args = original_args 
-        - create MulUnsort when have leading negative
+        - create MulUnsort when construction fractions
         - wrap negative number factors in parentheses
+        - display initial factor of -1 if didn't come from negation
+        - don't break apart large fractions
         """
 
-        from sympy import S
-        coeff, _ = self.as_coeff_Mul()
+        tex = ""
 
-        if not coeff.is_negative:
-            tex = ""
-        else:
-            new_args=[-self.original_args[0]]
-            new_args.extend(self.original_args[1:])
-            self = MulUnsortInitial(*new_args)
-            tex = "- "
+        # don't display the initial factor of negative one 
+        # if just came from negation
+        if not self.display_initial_negative_one and self.original_args[0]==-1:
+            tex = "-"
+            self = MulUnsortInitial(*self.original_args[1:])
 
-        from sympy.simplify import fraction
-        numer, denom = fraction(self, exact=True)
+            if not self.is_Mul:
+                return tex + prtr._print(self)
+
+        numer, denom = fraction_MulUnsort(self, exact=True)
         separator = prtr._settings['mul_symbol_latex']
         numbersep = prtr._settings['mul_symbol_latex_numbers']
 
@@ -860,7 +939,6 @@ class MulUnsort(Mul):
             ``first=True`` specifies that this expr is the first to appear in a Mul.
             """
             from sympy import Integral, Piecewise, Product, Sum
-            from sympy.core.function import _coeff_isneg
 
             if expr.is_Add:
                 return True
@@ -869,7 +947,7 @@ class MulUnsort(Mul):
             elif expr.is_Mul:
                 if not first and _coeff_isneg(expr):
                     return True
-            elif expr.is_number:
+            elif expr.is_Number:
                 if not first and expr < 0:
                     return True
 
@@ -905,6 +983,7 @@ class MulUnsort(Mul):
                     _tex += term_tex
                     last_term_tex = term_tex
                 return _tex
+        
 
         if denom is S.One:
             # use the original expression here, since fraction() may have
@@ -914,7 +993,6 @@ class MulUnsort(Mul):
             snumer = convert(numer)
             sdenom = convert(denom)
             ldenom = len(sdenom.split())
-            ratio = prtr._settings['long_frac_ratio']
             if prtr._settings['fold_short_frac'] \
                     and ldenom <= 2 and not "^" in sdenom:
                 # handle short fractions
@@ -922,56 +1000,39 @@ class MulUnsort(Mul):
                     tex += r"\left(%s\right) / %s" % (snumer, sdenom)
                 else:
                     tex += r"%s / %s" % (snumer, sdenom)
-            elif len(snumer.split()) > ratio*ldenom:
-                # handle long fractions
-                if _needs_mul_brackets(numer, last=True):
-                    tex += r"\frac{1}{%s}%s\left(%s\right)" \
-                        % (sdenom, separator, snumer)
-                elif numer.is_Mul:
-                    # split a long numerator
-                    a = S.One
-                    b = S.One
-                    for x in numer.args:
-                        if _needs_mul_brackets(x, last=False) or \
-                                len(convert(a*x).split()) > ratio*ldenom or \
-                                (b.is_commutative is x.is_commutative is False):
-                            b *= x
-                        else:
-                            a *= x
-                    if _needs_mul_brackets(b, last=True):
-                        tex += r"\frac{%s}{%s}%s\left(%s\right)" \
-                            % (convert(a), sdenom, separator, convert(b))
-                    else:
-                        tex += r"\frac{%s}{%s}%s%s" \
-                            % (convert(a), sdenom, separator, convert(b))
-                else:
-                    tex += r"\frac{1}{%s}%s%s" % (sdenom, separator, snumer)
             else:
                 tex += r"\frac{%s}{%s}" % (snumer, sdenom)
 
         return tex
 
     def _sympystr(self, prtr):
-        # identical to _print_Mul from str.py with prtr=prtr and self=prtr
-        # except set args = original_arg, print factors of 1
-        # and create MulUnsort when have leading negative
+        """
+        identical to _print_Mul from str.py with self=prtr and expr=self except
+        - set args = original_args 
+        - create MulUnsort when have leading negative
+        - display initial factor of -1 if didn't come from negation
+        """
 
         if not isinstance(self,MulUnsort):
             return prtr._print_Mul(self)
 
-        from sympy import S
         from sympy.printing.precedence import precedence
 
         prec = precedence(self)
 
-        coeff, _ = self.as_coeff_Mul()
-
+        coeff = self.original_args[0]
+        
         if not coeff.is_negative:
             sign = ""
         else:
-            new_args=[-self.original_args[0]]
+            # don't display the initial factor of negative one 
+            # if just came from negation
+            if not self.display_initial_negative_one and coeff==-1:
+                new_args=[]
+            else:
+                new_args=[-coeff]
             new_args.extend(self.original_args[1:])
-            self = MulUnsortInitial(*new_args, evaluate=False)
+            self = MulUnsortInitial(*new_args)
             sign = "-"
             if not self.is_Mul:
                 return "-" + prtr._print(self)
@@ -1007,3 +1068,10 @@ class MulUnsort(Mul):
             return sign + '*'.join(a_str) + "/" + b_str[0]
         else:
             return sign + '*'.join(a_str) + "/(%s)" % '*'.join(b_str)
+
+    @classmethod
+    def make_args(cls, expr):
+        if isinstance(expr, cls):
+            return expr.original_args
+        else:
+            return (expr,)

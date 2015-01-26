@@ -196,11 +196,11 @@ class ParseExprTests(SimpleTestCase):
         # test with leading minus sign in Mul
         expr=parse_expr("4*(-4*x+1)", evaluate=False)
         self.assertEqual(repr(expr), '4*(-4*x + 1)')
-        self.assertEqual(latex(expr), '4 \\left(- 4 x + 1\\right)')
+        self.assertEqual(latex(expr), '4 \\left(-4 x + 1\\right)')
 
         expr=parse_expr("-1*(-4*x+1)", evaluate=False)
         self.assertEqual(repr(expr), '-1*(-4*x + 1)')
-        self.assertEqual(latex(expr), '- 1 \\left(- 4 x + 1\\right)')
+        self.assertEqual(latex(expr), '-1 \\left(-4 x + 1\\right)')
 
         
         # parentheses around negative numbers or expressions with negative sign
@@ -208,7 +208,37 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(repr(expr), '4*2*(-1)*x*(-x)')
         self.assertEqual(latex(expr), '4 \\cdot 2 \\left(-1\\right) x \\left(- x\\right)')
 
-        
+        # subtracting and adding a negative
+        from sympy import Integral
+        expr=parse_expr("5*Integral(t,(t,0,1))+(-1)*Integral(t^2,(t,1,2))", 
+                        evaluate=False,
+                        local_dict={'Integral': Integral})
+        self.assertEqual(latex(expr), 
+                '5 \\int_{0}^{1} t\\, dt - 1 \\int_{1}^{2} t^{2}\\, dt')
+
+        expr=parse_expr("5*Integral(t,(t,0,1))-Integral(t^2,(t,1,2))",
+                        evaluate=False,
+                        local_dict={'Integral': Integral})
+        self.assertEqual(latex(expr), 
+                    '5 \\int_{0}^{1} t\\, dt - \\int_{1}^{2} t^{2}\\, dt')
+
+        expr=parse_expr("5*x*y*3-3*y*x*5-7-x", evaluate=False)
+        self.assertEqual(latex(expr), '5 x y 3 - 3 y x 5 - 7 - x')
+
+        expr=parse_expr("-5*x*x*3-3*x-x*3-3-x", evaluate=False)
+        self.assertEqual(latex(expr), '-5 x x 3 - 3 x - x 3 - 3 - x')
+
+        expr=parse_expr("5*x*x*3+-3*x+-x*3+-3+-x", evaluate=False)
+        self.assertEqual(latex(expr), '5 x x 3 - 3 x - x 3 - 3 - x')
+
+        expr=parse_expr("5*x*x*3--3*x--x*3--3--x", evaluate=False)
+        self.assertEqual(latex(expr), '5 x x 3 + 3 x + x 3 + 3 + x')
+
+        expr=parse_expr("1*x*x/(x*x)-1*x*x/(x*x)+-1*x*x/(-x*x)", evaluate=False)
+        self.assertEqual(latex(expr), 
+            '\\frac{1 x x}{x x} - \\frac{1 x x}{x x} - \\frac{1 x x}{- x x}')
+
+
     def test_factorial(self):
         from sympy import factorial
         expr = parse_expr("x!")
