@@ -1692,8 +1692,9 @@ LatexCmds['\u221a'] = P(MathCommand, function(_, _super) {
       }
     }
     if ((fs > 0) && (bh > 0)) {
-      scale(block.ggbPrev(), 1, bh/fs);
-
+        if (block.ggbPrev) {
+            scale(block.ggbPrev(), 1, bh/fs);
+        }
       if (this.tries) {
         delete this.tries;
       }

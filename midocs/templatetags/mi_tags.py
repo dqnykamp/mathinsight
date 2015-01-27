@@ -1225,13 +1225,13 @@ def GeogebraWeb_link(context, applet, applet_identifier, width, height):
     #    (applet_identifier, width, height, applet_identifier, applet.encoded_content)
     html_string += '<div class="javascriptapplet"><div class="geogebrawebapplet" id="container%s" style="min-width:%spx;min-height:%spx"></div></div>\n' % \
         (applet_identifier, width, height)
-    script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,%s,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false};\n' % \
+    script_string += 'var parameters%s = {"id":"%s","width":%s,"height":%s,%s,"ggbBase64":"%s","language":"en","country":"US","isPreloader":false,"screenshotGenerator":false,"preventFocus":false,"fixApplet":false};\n' % \
                    (applet_identifier, applet_identifier, width, height, applet_parameter_string, applet.encoded_content)
     script_string += 'var applet%s = new GGBApplet( parameters%s, true);\n' % \
                      (applet_identifier, applet_identifier)
                 
-    script_string += "applet%s.setJavaCodebase('%sgeogebra/Java/4.2', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
-    script_string += "applet%s.setHTML5Codebase('%sgeogebra/HTML5/4.4/web/', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
+    script_string += "applet%s.setJavaCodebase('%sgeogebra/Java/5.0', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
+    script_string += "applet%s.setHTML5Codebase('%sgeogebra/HTML5/5.0/web/', 'true');" % (applet_identifier, context.get("STATIC_URL","/static/"))
     #html_string += "applet.setPreviewImage('GeoGebra/files/material-49718.png', 'GeoGebra/images/GeoGebra_loading.png');"
 
     #script_string += "window.onload = function() {\napplet%s.inject('container%s', 'auto');\n}" % (applet_identifier, applet_identifier)
