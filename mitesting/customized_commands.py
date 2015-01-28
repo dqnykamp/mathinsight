@@ -73,7 +73,11 @@ def modified_round(w, p=0):
     sympy expr.round() function modified so that gives extra digits
     in it representation when p <= 0
     """
-    from mpmath.libmp import prec_to_dps
+    try:
+        from mpmath.libmp import prec_to_dps
+    except ImportError:
+        from sympy.mpmath.libmp import prec_to_dps
+
     from sympy.core.expr import _mag
     from sympy import Pow, Rational, Integer
 
