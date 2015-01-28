@@ -103,6 +103,7 @@ class RoundingTests(SimpleTestCase):
         self.assertEqual(str(round_expression(1.0)), "1")
         self.assertEqual(str(round_expression(-5.0,0)), "-5")
         self.assertEqual(str(round_expression(3.7)), "4")
+        self.assertEqual(str(round_expression(96.23,-2)), "100")
     
     def test_round_expression_with_symbolic_expressions(self):
         x = Symbol('x')

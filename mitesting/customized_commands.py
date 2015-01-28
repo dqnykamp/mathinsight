@@ -68,6 +68,62 @@ def _initial_evalf(w,n):
     except:
         return w
 
+def modified_round(w, p=0):
+    """
+    sympy expr.round() function modified so that gives extra digits
+    in it representation when p <= 0
+    """
+    from mpmath.libmp import prec_to_dps
+    from sympy.core.expr import _mag
+    from sympy import Pow, Rational, Integer
+
+    x = w
+    if not x.is_number:
+        raise TypeError('%s is not a number' % type(x))
+    if x in (S.NaN, S.Infinity, S.NegativeInfinity, S.ComplexInfinity):
+        return x
+    if not x.is_real:
+        i, r = x.as_real_imag()
+        return i.round(p) + S.ImaginaryUnit*r.round(p)
+    if not x:
+        return x
+    p = int(p)
+
+    precs = [f._prec for f in x.atoms(C.Float)]
+    dps = prec_to_dps(max(precs)) if precs else None
+
+    mag_first_dig = _mag(x)
+    allow = digits_needed = mag_first_dig + p
+    if p <= 0:
+        allow += 1
+        digits_needed += 1
+    if dps is not None and allow > dps:
+        allow = dps
+    mag = Pow(10, p)  # magnitude needed to bring digit p to units place
+    xwas = x
+    x += 1/(2*mag)  # add the half for rounding
+    i10 = 10*mag*x.n((dps if dps is not None else digits_needed) + 1)
+    if i10.is_negative:
+        x = xwas - 1/(2*mag)  # should have gone the other way
+        i10 = 10*mag*x.n((dps if dps is not None else digits_needed) + 1)
+        rv = -(Integer(-i10)//10)
+    else:
+        rv = Integer(i10)//10
+    q = 1
+    if p > 0:
+        q = mag
+    elif p < 0:
+        rv /= mag
+    rv = Rational(rv, q)
+    if rv.is_Integer:
+        # use str or else it won't be a float
+        return C.Float(str(rv), digits_needed)
+    else:
+        if not allow and rv > w:
+            allow += 1
+        return C.Float(rv, allow)
+
+
 def round_expression(expression, n=0, initial_n_digits=100):
     """
     Customized version of round
@@ -99,12 +155,12 @@ def round_expression(expression, n=0, initial_n_digits=100):
         from sympy import Integer
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Integer(w.round(n)),
+            lambda w: w if not w.is_Number else Integer(modified_round(w,n)),
             atoms=True)
     else:
         expression =  bottom_up(
             expression,
-            lambda w: w if not w.is_Number else Float(str(w.round(n))),
+            lambda w: w if not w.is_Number else Float(str(modified_round(w,n))),
             atoms=True)
         
     return expression
