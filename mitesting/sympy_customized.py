@@ -614,6 +614,13 @@ class TupleNoParen(Tuple):
     def _latex(self, prtr):
         return r", \quad ".join([ prtr._print(i) for i in self ])
 
+    def __getitem__(self,key):
+        result = super(TupleNoParen,self).__getitem__(key)
+        # convert slice back to TupleNoParen
+        if isinstance(key,slice):
+            return self.__class__(*result)
+        else:
+            return result
 
 class DerivativePrimeSimple(Derivative):
     def _latex(self, prtr):

@@ -439,6 +439,22 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("f(a,b)", local_dict=local_dict)
         self.assertEqual(expr, TupleNoParen(a+b,a-b))
 
+        tuple1=parse_expr("a,b,c")
+        tuple2=parse_expr("t[:2]", local_dict={'t': tuple1})
+        self.assertEqual(tuple2, TupleNoParen(a,b))
+
+        tuple1=parse_expr("(a,b,c)")
+        tuple2=parse_expr("t[:2]", local_dict={'t': tuple1})
+        self.assertEqual(tuple2, Tuple(a,b))
+        
+        tuple1=parse_expr("(a,(b,a),c)")
+        tuple2=parse_expr("t[1]", local_dict={'t': tuple1})
+        self.assertEqual(tuple2, Tuple(b,a))
+        
+        
+
+        
+
 
     def test_derivative_prime_notation(self):
         from sympy import Function, Derivative
