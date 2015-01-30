@@ -1547,7 +1547,9 @@ article.applethighlight {
 article.videohighlight {
     padding: 10px;
 }
-article.geogebraweb table {
+article.geogebraweb table,
+div.geogebrawebapplet table
+ {
     margin: 0px;
     width: auto;
     border-width: medium;
@@ -1555,38 +1557,53 @@ article.geogebraweb table {
 
 }
 article.geogebraweb .EuclidianPanel th, 
+div.geogebrawebapplet .EuclidianPanel th, 
 article.geogebraweb .EuclidianPanel td,
+div.geogebrawebapplet .EuclidianPanel td,
 article.geogebraweb .gwt-SplitLayoutPanel th,
-article.geogebraweb .gwt-SplitLayoutPanel td {
+div.geogebrawebapplet .gwt-SplitLayoutPanel th,
+article.geogebraweb .gwt-SplitLayoutPanel td,
+div.geogebrawebapplet .gwt-SplitLayoutPanel td
+ {
     line-height: normal;
     vertical-align: baseline;
     padding: 0;
 }
 
 article.geogebraweb .EuclidianPanel thead th,
-article.geogebraweb .gwt-SplitLayoutPanel thead th {
+div.geogebrawebapplet .EuclidianPanel thead th,
+article.geogebraweb .gwt-SplitLayoutPanel thead th,
+div.geogebrawebapplet .gwt-SplitLayoutPanel thead th {
     border-width: medium;
     border-style: none;
 }
 
 article.geogebraweb .EuclidianPanel tbody th,
-article.geogebraweb .gwt-SplitLayoutPanel tbody th {
+div.geogebrawebapplet .EuclidianPanel tbody th,
+article.geogebraweb .gwt-SplitLayoutPanel tbody th,
+div.geogebrawebapplet .gwt-SplitLayoutPanel tbody th {
     border-width: medium;
     border-style: none;
 }
 
 
 article.geogebraweb .EuclidianPanel tbody td,
-article.geogebraweb .gwt-SplitLayoutPanel tbody td {
+div.geogebrawebapplet .EuclidianPanel tbody td,
+article.geogebraweb .gwt-SplitLayoutPanel tbody td,
+div.geogebrawebapplet .gwt-SplitLayoutPanel tbody td {
     border-width: medium;
     border-style: none;
 }
 
 
 article.geogebraweb .EuclidianPanel tbody tr:hover th,
+div.geogebrawebapplet .EuclidianPanel tbody tr:hover th,
 article.geogebraweb .EuclidianPanel tbody tr:hover td,
+div.geogebrawebapplet .EuclidianPanel tbody tr:hover td,
 article.geogebraweb .gwt-SplitLayoutPanel tbody tr:hover th,
-article.geogebraweb .gwt-SplitLayoutPanel tbody tr:hover td
+div.geogebrawebapplet .gwt-SplitLayoutPanel tbody tr:hover th,
+article.geogebraweb .gwt-SplitLayoutPanel tbody tr:hover td,
+div.geogebrawebapplet .gwt-SplitLayoutPanel tbody tr:hover td
 {
     background: transparent;
 }
