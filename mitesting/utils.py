@@ -485,16 +485,22 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     return expr
     
 
-def replace_boolean_equals(s):
+def replace_boolean_equals_in(s):
     """
-    Replace and/&, or/|, =, and != in s with symbols to be parsed by sympy
-
-    1. Replace and with & and or with |
+    Replace and/&, or/|, =, != and "in" contain in s
+    with operators to be parsed by sympy
     
+    1. Replace 
+       - and with &
+       - or with |
+       - in with placeholder symbole
+
     2. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
 
-    3. replace & (not an &&) with __And__(lhs,rhs), 
+    3. replace in placeholder with (rhs).contains(lhs)
+   
+    4. replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
 
     __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
@@ -503,7 +509,7 @@ def replace_boolean_equals(s):
     To find lhs and rhs, looks for unmatched parentheses 
     or the presence of certain characters no in parentheses
 
-    Repeats the procedure until can't find more =, !=, &, or |
+    Repeats the procedure until can't find more =, !=, &, |, or in
     or until lhs or rhs is blank
 
 
@@ -516,29 +522,53 @@ def replace_boolean_equals(s):
     s=re.sub(r'\band\b',r'&', s)
     s=re.sub(r'\bor\b',r'|', s)
 
-    for i in range(4):
+    # replace in with __in_op_pl__
+    s=re.sub(r'\bin\b', r'___in_op_pl___', s)
+
+    for i in range(5):
         if i==0:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
             new_op='__Eq__(%s,%s)'
+            reverse_arguments=False
+            # characters captured in pattern to left of operator
+            loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
         elif i==1:
             pattern = re.compile('[^<>!=](!=)[^=]')
             len_op=2
             new_op='__Ne__(%s,%s)'
+            reverse_arguments=False
+            # characters captured in pattern to left of operator
+            loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
         elif i==2:
+            pattern = re.compile('(___in_op_pl___)')
+            len_op=14
+            new_op='(%s).contains(%s)'
+            reverse_arguments=True
+            # characters captured in pattern to left of operator
+            loffset=0
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==3:
             pattern = re.compile('[^&](&)[^&]')
             len_op=1
             new_op='__And__(%s,%s)'
+            reverse_arguments=False
+            # characters captured in pattern to left of operator
+            loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|" 
-        elif i==3:
+        elif i==4:
             pattern = re.compile('[^\|](\|)[^\|]')
             len_op=1
             new_op='__Or__(%s,%s)'
+            reverse_arguments=False
+            # characters captured in pattern to left of operator
+            loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|" 
             
@@ -546,16 +576,17 @@ def replace_boolean_equals(s):
             mo= pattern.search(s)
             if not mo:
                 break
-            ind = mo.start(0)+1
+            ind = mo.start(0)+loffset
 
-            # find location of first ( before ind not matched by )
+            # find location of first ( before and not matched by )
             # or at a comma not enclosed in ()
+            # count braces as parens, don't keep track of them separately
             n_closepar=0
             begin_pos=0
             for (j,c) in enumerate(s[ind-1::-1]):
-                if c==")":
+                if c==")" or c=="}":
                     n_closepar+=1
-                elif c=="(":
+                elif c=="(" or c=="{":
                     n_closepar-=1
                     if n_closepar ==-1:
                         begin_pos=ind-j
@@ -570,9 +601,9 @@ def replace_boolean_equals(s):
             n_openpar=0
             end_pos=len(s)
             for (j,c) in enumerate(s[ind+len_op:]):
-                if c=="(":
+                if c=="(" or c=="{":
                     n_openpar+= 1
-                elif c==")":
+                elif c==")" or c=="}":
                     n_openpar-=1
                     if n_openpar==-1:
                         end_pos=ind+j+len_op
@@ -588,6 +619,10 @@ def replace_boolean_equals(s):
             if lhs=="" or rhs=="":
                 break
             else:
-                s = s[:begin_pos] + (new_op % (lhs,rhs)) + s[end_pos:]
+                if reverse_arguments:
+                    new_command_string = new_op % (rhs,lhs)
+                else:
+                    new_command_string = new_op % (lhs,rhs)
+                s = s[:begin_pos] + new_command_string + s[end_pos:]
 
     return s

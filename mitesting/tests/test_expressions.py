@@ -534,6 +534,7 @@ class TestExpressions(TestCase):
         
 
     def test_sets(self):
+        from sympy import FiniteSet
         a=Symbol('a')
         b=Symbol('b')
         c=Symbol('c')
@@ -549,11 +550,12 @@ class TestExpressions(TestCase):
         expr2=self.new_expr(name="t2",expression="{b,c,a,c,d,a}",
                             expression_type=Expression.SET)
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
-        self.assertEqual(expr2_eval, {c,d,a,b})
+        self.assertEqual(expr2_eval, FiniteSet(c,d,a,b))
 
         expr3=self.new_expr(name="t3",expression="{b,c,a,c,d,a}")
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
-        self.assertEqual(expr3_eval, {c,d,a,b})
+        self.assertEqual(expr3_eval, FiniteSet(c,d,a,b))
+
 
     def test_single_interval(self):
         from sympy import Interval
@@ -645,6 +647,37 @@ class TestExpressions(TestCase):
                             expression_type=Expression.INTERVAL)
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
         self.assertEqual(expr3_eval, TupleNoParen(Tuple(1,2,3),Interval(4,5)))
+
+
+    def test_contains(self):
+        from sympy import Interval, FiniteSet, Or, And
+
+        a=Symbol('a')
+        b=Symbol('b')
+        x=Symbol('x')
+
+        local_dict={'a': a, 'b': b}
+        expr1=self.new_expr(name="expr1", expression="x in (1,2)",
+                            expression_type=Expression.INTERVAL)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr1_eval,
+                Interval(1,2,left_open=True,right_open=True).contains(x))
+        self.assertEqual(expr1_eval,  And(x < 2, x >1))
+
+        expr2=self.new_expr(name="expr2", expression="x in {1,2,a,b}")
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        self.assertEqual(expr2_eval, FiniteSet(1,2,a,b).contains(x))
+        
+        expr3=self.new_expr(name="expr3", 
+                            expression="x in {1,2,a,b} or x in [3,4]",
+                            expression_type=Expression.INTERVAL)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+                         
+        self.assertEqual(expr3_eval, 
+                Or(Interval(3,4).contains(x), FiniteSet(1,2,a,b).contains(x)))
+        self.assertEqual(expr3_eval, 
+                Or(And(x<=4,x>=3), FiniteSet(1,2,a,b).contains(x)))
+
 
     def test_matrix(self):
         from sympy import Matrix

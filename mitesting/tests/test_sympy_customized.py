@@ -535,3 +535,12 @@ class ParseExprTests(SimpleTestCase):
 
     def test_implicit_mult_with_attribute(self):
         self.assertEqual(parse_expr("(1/2).evalf()"), 0.5)
+
+    def test_contains(self):
+        from sympy import Interval, FiniteSet
+        x=Symbol('x')
+        expr=parse_expr("x in Interval(1,2)", local_dict={'Interval':Interval})
+        self.assertEqual(expr, Interval(1,2).contains(x))
+
+        expr=parse_expr("x in {1,2,3}")
+        self.assertEqual(expr, FiniteSet(1,2,3).contains(x))

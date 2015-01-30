@@ -348,16 +348,27 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(latex(fun(z)), '3 z \\left(-1\\right) 1 z - 1 + 0 - 3 + z')
         
 
-class TestReplaceBooleanEquals(SimpleTestCase):
+class TestReplaceBooleanEqualsIn(SimpleTestCase):
     def test_replace_boolean_equals(self):
         s='x-1=y+c and (y/a=f(z) or a^2 != (b+2)(v-1)/2)'
         s_replace = '__And__(__Eq__(x-1,y+c),(__Or__(__Eq__(y/a,f(z)),__Ne__(a^2,(b+2)(v-1)/2))))'
-        self.assertEqual(replace_boolean_equals(s),s_replace)
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
 
         s='(x=y & y=z) | a != b'
         s_replace = '__Or__((__And__(__Eq__(x,y),__Eq__(y,z))),__Ne__(a,b))'
-        self.assertEqual(replace_boolean_equals(s),s_replace)
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
 
         s='n <-1 or n > 1'
         s_replace ='__Or__(n <-1,n > 1)'
-        self.assertEqual(replace_boolean_equals(s),s_replace)
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
+
+
+    def test_replace_in(self):
+        s='x in {1,2,3}'
+        s_replace = '({1,2,3}).contains(x)'
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
+
+        s='y in Interval(a,b) or x in {1,2,3}'
+        s_replace = '__Or__((Interval(a,b)).contains(y),({1,2,3}).contains(x))'
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
+

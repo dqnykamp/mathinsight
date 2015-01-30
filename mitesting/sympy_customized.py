@@ -210,8 +210,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
     #      != with __Ne__(lhs,rhs)
     #   and/& with __And__(lhs,rhs)
     #    or/| with __Or__(lhs,rhs)
-    from mitesting.utils import replace_boolean_equals
-    s=replace_boolean_equals(s)
+    #     in  with (rhs).contains(lhs)
+    from mitesting.utils import replace_boolean_equals_in
+    s=replace_boolean_equals_in(s)
 
     # map those replace booleans and equals to sympy functions
     from sympy import Eq, Ne, And, Or
@@ -220,6 +221,12 @@ def parse_expr(s, global_dict=None, local_dict=None,
     new_global_dict['__And__'] = And
     new_global_dict['__Or__'] = Or
     
+    # change {} to __FiniteSet__()
+    s = re.sub(r'{',r' __FiniteSet__(', s)
+    s = re.sub(r'}', r')', s)
+    from sympy import FiniteSet
+    new_global_dict['__FiniteSet__'] = FiniteSet
+
     # change !== to !=
     s = re.sub('!==','!=', s)
 
@@ -313,7 +320,7 @@ def auto_symbol(tokens, local_dict, global_dict):
         if tokNum == NAME:
             name = tokVal
 
-            if (name in ['True', 'False', 'and', 'or', 'not']
+            if (name in ['True', 'False', 'and', 'or', 'not', 'in']
                 or name in local_dict
                 # Don't convert attribute access
                 or (prevTok[0] == OP and prevTok[1] == '.')
@@ -489,7 +496,8 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
               and tok[1] == ')' and nextTok[1] == '('):
             # Close parenthesis followed by an open parenthesis
             result.append((OP, '*'))
-        elif (isinstance(tok, AppliedFunction) and nextTok[0] == NAME):
+        elif (isinstance(tok, AppliedFunction) and nextTok[0] == NAME and
+              nextTok[1] not in ['and', 'or', 'not', 'in']):
             # Applied function followed by implicitly applied function
             result.append((OP, '*'))
         elif (tok[0] == NAME and
@@ -501,14 +509,17 @@ def _implicit_multiplication(tokens, local_dict, global_dict):
         elif (tok[0] == NAME and
               not _token_callable(tok, local_dict, global_dict,
                                   include_symbol_callable=False) and
+              tok[1] not in ['and', 'or', 'not', 'in'] and
               nextTok[0] == NAME and
               not _token_callable(nextTok, local_dict, global_dict, 
-                                  include_symbol_callable=False)):
+                                  include_symbol_callable=False) and
+              nextTok[1] not in ['and', 'or', 'not', 'in']):
             # Constant followed by constant
             result.append((OP, '*'))
         elif (tok[0] == NAME and
               not _token_callable(tok, local_dict, global_dict, 
                                   include_symbol_callable=False) and
+              tok[1] not in ['and', 'or', 'not', 'in'] and
               (isinstance(nextTok, AppliedFunction) or nextTok[0] == NAME)):
             # Constant followed by (implicitly applied) function
             result.append((OP, '*'))
