@@ -348,6 +348,12 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(latex(fun(z)), '3 z \\left(-1\\right) 1 z - 1 + 0 - 3 + z')
         
 
+    def test_evaluate_after_substitutions(self):
+        t=Symbol("t")
+        fun = return_parsed_function("(x-2*t).is_Number", "x", name="f")
+        self.assertTrue(fun(2*t+5))
+        self.assertFalse(fun(3*t))
+
 class TestReplaceBooleanEqualsIn(SimpleTestCase):
     def test_replace_boolean_equals(self):
         s='x-1=y+c and (y/a=f(z) or a^2 != (b+2)(v-1)/2)'
