@@ -12,6 +12,34 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def check_function_answer(f,user_response_parsed):
+
+    f_float=None
+    try:
+        f=f(user_response_parsed)
+    except Exception as e:
+        fraction_equal=0
+    else:
+        try:
+            f_float = float(f)
+        except (TypeError, AttributeError):
+            # try converting Eq and Ne to regular python functions
+            # that demand exact equality of expressions
+            from sympy import Eq, Ne
+            f=f.replace(Eq, lambda x,y: x==y)
+            f=f.replace(Ne, lambda x,y: x!=y)
+
+            try:
+                f_float = float(f)
+            except (TypeError, AttributeError) as e:
+                fraction_equal=0
+    if f_float is not None:
+        fraction_equal = max(0,min(1,f_float))
+
+    return fraction_equal
+
+
 def compare_response_with_answer_code(user_response, the_answer_info, question,
                                       expr_context, local_dict):
 
@@ -123,6 +151,13 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 valid_answer=expr_context[answer_option.answer]
             except KeyError:
                 continue
+
+
+            try:
+                valid_alternates = expr_context['_alternate_exprs_'] \
+                                   [answer_option.answer]
+            except KeyError:
+                valid_alternates = []
 
             # determine level of evaluation of answer_option
             try:
@@ -257,30 +292,20 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
 
             if answer_type == QuestionAnswerOption.FUNCTION:
-                f=expr_context['_sympy_local_dict_'][answer_option.answer]
-                f_float=None
+                f_options = [expr_context['_sympy_local_dict_']\
+                             [answer_option.answer],]
                 try:
-                    f=f(user_response_parsed)
-                except Exception as e:
-                    #logger.warning("Exception raised when evaluating function for question answer option: %s" % e)
-                    fraction_equal=0
-                else:
-                    try:
-                        f_float = float(f)
-                    except (TypeError, AttributeError):
-                        # try converting Eq and Ne to regular python functions
-                        # that demand exact equality of expressions
-                        from sympy import Eq, Ne
-                        f=f.replace(Eq, lambda x,y: x==y)
-                        f=f.replace(Ne, lambda x,y: x!=y)
+                    f_options.extend(expr_context['_alternate_funcs_']\
+                                     [answer_option.answer])
+                except KeyError:
+                    pass
 
-                        try:
-                            f_float = float(f)
-                        except (TypeError, AttributeError) as e:
-                            #logger.warning("Exception raised when converting function to float for question answer option: %s" % e)
-                            fraction_equal=0
-                if f_float is not None:
-                    fraction_equal = max(0,min(1,f_float))
+                fraction_equal=0
+                for f in f_options:
+                    fraction_equal = max(fraction_equal,
+                                         check_function_answer(
+                                             f, user_response_parsed))
+                
 
                 answer_results = {'fraction_equal': fraction_equal,
                                   'fraction_equal_on_normalize': 0,
@@ -288,9 +313,22 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                                   'round_level_required': 0,
                                   'round_absolute': False }
             else:
-                answer_results = \
-                    user_response_parsed.compare_with_expression( \
-                                        valid_answer.return_expression())
+                answer_options=[valid_answer,]
+                answer_options.extend(valid_alternates)
+                fraction_equal=-1
+                fraction_equal_on_normalize=-1
+                answer_results={}
+                for ao in answer_options:
+                    results=user_response_parsed.compare_with_expression( 
+                        ao.return_expression())
+                    if results['fraction_equal'] > fraction_equal \
+                       or (results['fraction_equal'] == fraction_equal \
+                           and results['fraction_equal_on_normalize']  \
+                           >= fraction_equal_on_normalize):
+                        answer_results=results
+                        fraction_equal=results['fraction_equal']
+                        fraction_equal_on_normalize\
+                            =results['fraction_equal_on_normalize']
             this_percent_correct = \
                 answer_option.percent_correct\
                 *answer_results['fraction_equal']

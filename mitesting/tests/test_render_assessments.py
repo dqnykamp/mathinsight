@@ -469,6 +469,39 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expression_context['f_1'], x**2+1)
     
 
+
+    def test_expression_with_alternates(self):
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        x=Symbol('x')
+        y=Symbol('y')
+        self.new_expr(name="a",expression="a,b,c",
+                      expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        self.new_expr(name="x_a",expression="x+a")
+        self.new_expr(name="f",expression="x^2+a", 
+                      expression_type=Expression.FUNCTION,
+                      function_inputs="x")
+        self.new_expr(name="f_y",expression="f(y)")
+        
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
+
+        self.assertEqual(expression_context['a'], a)
+        self.assertEqual(expression_context['x_a'], x+a)
+        self.assertEqual(expression_context['f'], x**2+a)
+        self.assertEqual(expression_context['f_y'], y**2+a)
+        
+        alternate_exprs=expression_context['_alternate_exprs_']
+        self.assertEqual(alternate_exprs['a'], [b,c])
+        self.assertEqual(alternate_exprs['x_a'], [x+b, x+c])
+        self.assertEqual(alternate_exprs['f'], [x**2+b, x**2+c])
+        self.assertEqual(alternate_exprs['f_y'], [y**2+b, y**2+c])
+
+
 class TestSetupExpressionContextUserResponse(TestCase):
     def setUp(self):
         random.seed()

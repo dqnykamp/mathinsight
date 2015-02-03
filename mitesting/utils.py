@@ -4,11 +4,11 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mitesting.customized_commands import *
-from mitesting.sympy_customized import parse_and_process, bottom_up
+from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen
 from sympy import Tuple, Function, Symbol
 from sympy.parsing.sympy_tokenize import TokenError
 import six
-
+import re
 
 def return_sympy_local_dict(allowed_sympy_commands=[]):
     """
@@ -629,3 +629,320 @@ def replace_boolean_equals_in(s):
                 s = s[:begin_pos] + new_command_string + s[end_pos:]
 
     return s
+
+
+
+def evaluate_expression(the_expr, rng, 
+                        local_dict=None, user_function_dict=None,
+                        random_group_indices=None,
+                        new_alternate_dicts=[],
+                        new_alternate_exprs=[]):
+
+    from sympy.core.function import UndefinedFunction
+    from mitesting.math_objects import math_object
+
+    # if randomly selecting from a list,
+    # determine if the index for random_list_group was chosen already
+    if the_expr.expression_type in [the_expr.RANDOM_WORD,
+                                the_expr.RANDOM_EXPRESSION,
+                                the_expr.RANDOM_FUNCTION_NAME,
+                                the_expr.RANDOM_REAL_VARIABLE]:
+
+        if the_expr.random_list_group:
+            try:
+                group_index = random_group_indices.get(\
+                                        the_expr.random_list_group)
+            except AttributeError:
+                group_index = None
+        else:
+            group_index = None
+
+        # treat RANDOM_WORD as special case
+        # as it involves two outputs and hasn't been
+        # parsed by sympy
+        # Complete all processing and return
+        if the_expr.expression_type == the_expr.RANDOM_WORD:
+            try:
+                result = return_random_word_and_plural( 
+                    the_expr.expression, index=group_index, rng=rng)
+            except IndexError:
+                raise IndexError("Insufficient entries for random list group: " \
+                                     + the_expr.random_list_group)
+
+            # record index chosen for random list group, if group exist
+            if the_expr.random_list_group:
+                try:
+                    random_group_indices[the_expr.random_list_group]\
+                        =result[2]
+                except TypeError:
+                    pass
+
+            # attempt to add word to local dictionary
+            word_text=re.sub(' ', '_', result[0])
+            sympy_word = Symbol(word_text)
+            try:
+                local_dict[the_expr.name]=sympy_word
+            except TypeError:
+                pass
+
+            return (result[0], result[1])
+
+        try:
+            (math_expr, index) = return_random_expression(
+                the_expr.expression, index=group_index,
+                local_dict=local_dict,
+                evaluate_level = the_expr.evaluate_level, rng=rng)
+        except IndexError:
+            raise IndexError("Insufficient entries for random list group: " \
+                                     + the_expr.random_list_group)
+
+        if the_expr.expression_type == the_expr.RANDOM_FUNCTION_NAME:
+
+            # math_expr should be a Symbol or an UndefinedFunction
+            # otherwise not a valid function name
+            if not (isinstance(math_expr,Symbol) or
+                    isinstance(math_expr,UndefinedFunction)):
+                raise ValueError("Invalid function name: %s " \
+                                 % math_expr)
+
+
+            # turn to SymbolCallable and add to user_function_dict
+            # should use:
+            # function_text = six.text_type(math_expr)
+            # but sympy doesn't yet accept unicode for function name
+            function_text = str(math_expr)
+            math_expr = SymbolCallable(function_text)
+            try:
+                user_function_dict[function_text] = math_expr
+            except TypeError:
+                pass
+
+        elif the_expr.expression_type == the_expr.RANDOM_REAL_VARIABLE:
+            # math_expr should be a Symbol
+            # otherwise not a valid real variable
+            if not isinstance(math_expr,Symbol):
+                raise ValueError("Invalid real variable: %s " \
+                                 % math_expr)
+
+            symbol_name = str(math_expr)
+            math_expr=Symbol(symbol_name, real=True)
+            try:
+                user_function_dict[symbol_name]=math_expr
+            except TypeError:
+                pass
+
+
+        # record index chosen for random list group, if group exist
+        if the_expr.random_list_group:
+            try:
+                random_group_indices[the_expr.random_list_group]=index
+            except TypeError:
+                pass
+
+    elif the_expr.expression_type == the_expr.RANDOM_NUMBER:
+        math_expr = return_random_number_sample(
+            the_expr.expression, local_dict=local_dict, rng=rng)
+
+    # if not randomly generating
+    else:
+
+        math_expr = None
+        expression = the_expr.expression
+
+        # if interval, try replacing opening and closing parens with interval
+        if the_expr.expression_type == the_expr.INTERVAL:
+            try:
+                math_expr = return_interval_expression(
+                    expression, local_dict=local_dict, 
+                    evaluate_level = the_expr.evaluate_level)
+            except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                math_expr=None
+            except ValueError as e:
+                if "real intervals" in e.args[0]:
+                    raise ValueError("Variables used in intervals must be real")
+                else:
+                    math_expr=None
+
+        elif the_expr.expression_type == the_expr.MATRIX:
+            try:
+                math_expr = return_matrix_expression(
+                    expression, local_dict=local_dict, 
+                    evaluate_level = the_expr.evaluate_level)
+            except ValueError as e:
+                raise ValueError("Invalid format for matrix\n%s" % e.args[0])
+            except (TypeError, NotImplementedError, SyntaxError, TokenError):
+                raise ValueError("Invalid format for matrix")
+        try:
+            if math_expr is None:
+                math_expr = parse_and_process(
+                    expression, local_dict=local_dict,
+                    evaluate_level = the_expr.evaluate_level)
+        except (TokenError, SyntaxError, TypeError, AttributeError):
+            if the_expr.expression_type in [
+                the_expr.RANDOM_ORDER_TUPLE,
+                the_expr.UNORDERED_TUPLE, the_expr.SORTED_TUPLE]:
+                et = "tuple"
+            elif the_expr.expression_type == the_expr.SET:
+                et = "set"
+            elif the_expr.expression_type == the_expr.INTERVAL:
+                et = "interval"
+            elif the_expr.expression_type == the_expr.CONDITION:
+                et = "condition"
+            elif the_expr.expression_type == the_expr.FUNCTION:
+                et = "function"
+            elif the_expr.expression_type == the_expr.EXPRESSION_WITH_ALTERNATES:
+                et = "expression with alternates"
+            else:
+                et = "expression"
+            raise ValueError("Invalid format for %s: %s" \
+                                 % (et, the_expr.expression))
+
+
+        # If a set and didn't include braces, will be a TupleNoParen.
+        # In that case, convert to set and back to remove duplicates
+        if the_expr.expression_type == the_expr.SET and \
+           isinstance(math_expr, TupleNoParen):
+            math_expr = TupleNoParen(*set(math_expr))
+
+
+        # if VECTOR, convert Tuples to column matrices
+        # and convert column and row matrices to MatrixAsVector
+        # which latexs as a vector
+        if the_expr.expression_type == the_expr.VECTOR:
+            from mitesting.customized_commands import \
+                MatrixFromTuple, MatrixAsVector
+            from sympy import Matrix
+
+            math_expr = math_expr.replace(Tuple,MatrixFromTuple)
+
+            def to_matrix_as_vector(w):
+                if isinstance(w,Matrix) and (w.cols==1 or w.rows==1):
+                    return MatrixAsVector(w)
+                return w
+
+            math_expr=bottom_up(math_expr,to_matrix_as_vector,
+                                nonbasic=True)
+
+
+        # if CONDITION is not met, raise exception
+        if the_expr.expression_type == the_expr.CONDITION:
+            try:
+                if not math_expr:
+                    from mitesting.models import Expression
+                    raise Expression.FailedCondition(
+                        "Condition %s was not met" % the_expr.name)
+            except TypeError:
+                # symbolic will raise type error.  Consider test failed.
+                message= "Could not determine truth value of required condition %s, evaluated as: %s" % (the_expr.expression, math_expr)
+                if re.search('!=[^=]',the_expr.expression):
+                    message += "\nComparison != returns truth value only for numerical values.  Use !== to compare if two symbolic expressions are not identical."
+                if re.search('[^<>!=]=[^=]',the_expr.expression):
+                    message += "\nComparison = returns truth value only for numerical values.  Use == to compare if two symbolic expressions are identical."
+                raise TypeError(message)
+
+
+        if the_expr.expression_type == the_expr.RANDOM_ORDER_TUPLE:
+            if isinstance(math_expr,list):
+                rng.shuffle(math_expr)
+            elif isinstance(math_expr, Tuple):
+                the_class=math_expr.__class__
+                math_expr = list(math_expr)
+                rng.shuffle(math_expr)
+                math_expr = the_class(*math_expr)
+        elif the_expr.expression_type == the_expr.SORTED_TUPLE:
+            if isinstance(math_expr,list):
+                math_expr.sort(key=customized_sort_key)
+            elif isinstance(math_expr, Tuple):
+                the_class=math_expr.__class__
+                math_expr = list(math_expr)
+                math_expr.sort(key=customized_sort_key)
+                math_expr = the_class(*math_expr)
+
+        if the_expr.expression_type == the_expr.REAL_VARIABLE:
+            # math_expr should be a Symbol
+            # otherwise not valid for real variable
+            if not isinstance(math_expr, Symbol):
+                raise ValueError("Invalid real variable: %s " \
+                                 % math_expr)
+
+            symbol_name = str(math_expr)
+            math_expr=Symbol(symbol_name, real=True)
+            try:
+                user_function_dict[symbol_name]=math_expr
+            except TypeError:
+                pass
+
+        if the_expr.expression_type == the_expr.FUNCTION_NAME:
+            # math_expr should be a Symbol or an UndefinedFunction
+            # otherwise not a valid function name
+            if not (isinstance(math_expr,Symbol) or
+                    isinstance(math_expr,UndefinedFunction)):
+                raise ValueError("Invalid function name: %s " \
+                                 % math_expr)
+
+
+            # turn to SymbolCallable and add to user_function_dict
+            # should use:
+            # function_text = six.text_type(math_expr)
+            # but sympy doesn't yet accept unicode for function name
+            function_text = str(math_expr)
+            math_expr = SymbolCallable(function_text)
+            try:
+                user_function_dict[function_text] = math_expr
+            except TypeError:
+                pass
+
+
+        if the_expr.expression_type == the_expr.FUNCTION:
+            parsed_function = return_parsed_function(
+                the_expr.expression, function_inputs=the_expr.function_inputs,
+                name = the_expr.name, local_dict=local_dict,
+                default_value=math_expr, 
+                evaluate_level = the_expr.evaluate_level)
+
+            # for FUNCTION, add parsed_function rather than
+            # math_expr to local dict
+            try:
+                local_dict[the_expr.name] = parsed_function   
+            except TypeError:
+                pass
+
+        # if EXPRESSION_WITH_ALTERNATES and is TupleNoParen,
+        # then add all but first entry to new_alternates_[dicts/exprs]
+        # and let math_expr be the first entry
+        if the_expr.expression_type == the_expr.EXPRESSION_WITH_ALTERNATES:
+            if isinstance(math_expr, TupleNoParen):
+                for e in math_expr[1:]:
+                    alt_dict = local_dict.copy()
+                    alt_dict[the_expr.name] = e
+                    new_alternate_dicts.append(alt_dict)
+                    new_alternate_exprs.append(math_object(
+                        e, name=the_expr.name,
+                        evaluate_level = the_expr.evaluate_level,
+                        expression_type=the_expr.expression_type))
+                math_expr=math_expr[0]
+
+    # for all expression_types except FUNCTION (and RANDOM WORD)
+    # add math_expr to local dict
+    if not the_expr.expression_type == the_expr.FUNCTION:
+        try:
+            # convert list to Tuple
+            if isinstance(math_expr,list):
+                local_dict[the_expr.name] = Tuple(*math_expr)
+            # for boolean, convert to sympy integer
+            elif isinstance(math_expr,bool):
+                local_dict[the_expr.name] = sympify(int(math_expr))
+            else:
+                local_dict[the_expr.name] = math_expr
+        except TypeError:
+            pass
+
+    # for all expression_types (except RANDOM WORD)
+    # return math_object of math_expr to context
+    return math_object(
+        math_expr, name=the_expr.name,
+        evaluate_level = the_expr.evaluate_level,
+        tuple_is_unordered=(the_expr.expression_type==the_expr.UNORDERED_TUPLE
+                            or the_expr.expression_type==the_expr.SET),
+        expression_type=the_expr.expression_type)
+

@@ -127,7 +127,7 @@ class TestCompareResponse(TestCase):
                         (user_response="hello", the_answer_info=answer_info,
                          question=self.q, 
                          expr_context=expr_context, local_dict=local_dict)
-        
+
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
         self.assertTrue("error" in answer_results["answer_feedback"])

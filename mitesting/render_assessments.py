@@ -56,6 +56,19 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
     Both the local_dict and user_function_dict are added to the
     expression context.
 
+    In addition, if some expressions were EXPRESSION_WITH_ALTERNATES,
+    then the following are created:
+    - alternate_dicts: a list of local_dicts with different alternates
+    - alternate_exprs: a dictionary indexed by expression name, where each
+      entry is a list of alternate versions of the expression.  This will 
+      be created starting with the first EXPRESSION_WITH_ALTERNATES,
+      and will continue being created for all subsequent expressions. 
+    - alternate_funcs: a dictionary indexed by expression name, where each
+      entry is a list of alternate versions of a FUNCTION.  This will be
+      created for all FUNCTIONS once the first EXPRESSION_WITH_ALTERNATES
+      is encountered.
+    These lists and dictionaries are added to the expression context.
+
     Return a dictionary with the following:
     - expression_context: a Context() with mappings from the expressions
     - error_in_expressions: True if encountered any errors in normal expressions
@@ -96,6 +109,9 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
         local_dict = question.return_sympy_local_dict()
         user_function_dict = question.return_sympy_local_dict(
             user_response=True)
+        alternate_dicts = []
+        alternate_exprs = {}
+        alternate_funcs = {}
         try:
 
             from mitesting.models import Expression
@@ -104,9 +120,10 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
             for expression in question.expression_set\
                                       .filter(post_user_response=False):
                 try:
-                    expression_evaluated=expression.evaluate(
+                    evaluate_results=expression.evaluate(
                         local_dict=local_dict, 
                         user_function_dict=user_function_dict,
+                        alternate_dicts = alternate_dicts, 
                         random_group_indices=random_group_indices,
                         rng=rng)
 
@@ -123,13 +140,21 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                 else:
                     # if random word, add singular and plural to context
                     if expression.expression_type == expression.RANDOM_WORD:
+                        expression_evaluated\
+                            =evaluate_results['expression_evaluated']
                         expression_context[expression.name] \
                             = expression_evaluated[0]
                         expression_context[expression.name + "_plural"] \
                             = expression_evaluated[1]
                     else:
                         expression_context[expression.name] \
-                            = expression_evaluated
+                            = evaluate_results['expression_evaluated']
+                        # the following lists will be empty until the
+                        # first EXPRESSION_WITH_ALTERNATES is encountered
+                        alternate_exprs[expression.name] \
+                            = evaluate_results['alternate_exprs']
+                        alternate_funcs[expression.name] \
+                            = evaluate_results['alternate_funcs']
 
             # if make it through all expressions without encountering
             # a failed condition, then record fact and
@@ -147,6 +172,9 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
     # Also, sympy global dict is accessed from template tags
     expression_context['_sympy_local_dict_'] = local_dict
     expression_context['_user_function_dict_'] = user_function_dict
+    expression_context['_alternate_dicts_'] = alternate_dicts
+    expression_context['_alternate_exprs_'] = alternate_exprs
+    expression_context['_alternate_funcs_'] = alternate_funcs
 
     error_in_expressions_post_user = False
     expression_error_post_user = {}
@@ -196,23 +224,31 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                             )
                         except:
                             pass
+            # add expression to local_dict and any alternate_dicts
+            # that may have been created.
             local_dict[expression.name]=math_expr
+            for alt_dict in alternate_dicts:
+                alt_dict[expression.name]=math_expr
+            # add to context 
             expression_context[expression.name] = \
                 math_object(math_expr, evaluate_level=EVALUATE_NONE)
 
         # add Symbol(['?']) to local_dict with key _undefined_
         # so that can test for it in remaining expressions
         local_dict['_undefined_']=Symbol('[?]')
+        for alt_dict in alternate_dicts:
+            alt_dict['_undefined_']=Symbol('[?]')
 
         # last, process expressions flagged as post user response
         for (i, expression) in enumerate(question.expression_set\
                                   .filter(post_user_response=True)):
             try:
-                expression_evaluated=expression.evaluate(
+                evaluate_results=expression.evaluate(
                     local_dict=local_dict, 
                     user_function_dict=user_function_dict,
+                    alternate_dicts=alternate_dicts,
                     random_group_indices=random_group_indices,
-                    rng=rng, post_user_number=i)
+                    rng=rng)
 
             # record exception and allow to continue processing expressions
             except Exception as exc:
@@ -220,7 +256,14 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                 expression_error_post_user[expression.name] = six.text_type(exc)
                 expression_context[expression.name] = '??'
             else:
-                expression_context[expression.name] = expression_evaluated
+                expression_context[expression.name] \
+                    = evaluate_results['expression_evaluated']
+                # the following lists will be empty until the
+                # first EXPRESSION_WITH_ALTERNATES is encountered
+                alternate_exprs[expression.name] \
+                    = evaluate_results['alternate_exprs']
+                alternate_funcs[expression.name] \
+                    = evaluate_results['alternate_funcs']
 
 
     results = {

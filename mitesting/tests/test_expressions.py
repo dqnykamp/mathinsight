@@ -33,19 +33,19 @@ class TestExpressions(TestCase):
         local_dict={}
 
         expr_x=self.new_expr(name="the_x",expression="x")
-        expr_eval = expr_x.evaluate(rng=self.rng, local_dict=local_dict)
+        expr_eval = expr_x.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr_eval, math_object("x"))
         self.assertEqual(local_dict, {"the_x": Symbol('x')})
 
         expr_comb=self.new_expr(name="comb",expression="the_x^2")
-        expr_eval2 = expr_comb.evaluate(rng=self.rng, local_dict=local_dict)
+        expr_eval2 = expr_comb.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr_eval2, math_object("x^2"))
         self.assertEqual(local_dict, {"the_x": Symbol('x'), 
                                        "comb": Symbol('x')**2})
 
     def test_with_no_local_dict(self):
         expr_x=self.new_expr(name="the_x",expression="x*y")
-        expr_eval = expr_x.evaluate(rng=self.rng)
+        expr_eval = expr_x.evaluate(rng=self.rng)['expression_evaluated']
         self.assertEqual(expr_eval, math_object("x*y"))
         
 
@@ -56,14 +56,14 @@ class TestExpressions(TestCase):
 
             expr1=self.new_expr(name="a",expression="(1,10)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            expr1_eval = expr1.evaluate(rng=self.rng, local_dict=local_dict)
+            expr1_eval = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             self.assertTrue(expr1_eval in [math_object(n) for n in range(1,11)])
             test_local_dict["a"] = expr1_eval.return_expression()
             self.assertEqual(local_dict, test_local_dict)
 
             expr2=self.new_expr(name="b",expression="(-2.7,0.9, 0.1)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            expr2_eval = expr2.evaluate(rng=self.rng, local_dict=local_dict)
+            expr2_eval = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             self.assertTrue(expr2_eval in [math_object(round(b,1))
                                            for b in arange(-2.7,1.0, 0.1)])
             test_local_dict["b"] = expr2_eval.return_expression()
@@ -71,7 +71,7 @@ class TestExpressions(TestCase):
 
             expr3=self.new_expr(name="c",expression="(b,a, 0.5)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            expr3_eval = expr3.evaluate(rng=self.rng, local_dict=local_dict)
+            expr3_eval = expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             c_range = arange(expr2_eval.return_expression(),
                              expr1_eval.return_expression()+0.01, 0.5)
             self.assertTrue(expr3_eval in [math_object(round(c,1))
@@ -89,7 +89,7 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="fun",expression="x^3- 3x",
                             function_inputs="x",
                             expression_type = Expression.FUNCTION)
-        fun=expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        fun=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(fun, x**3-3*x)
         self.assertEqual(local_dict["fun"](y), y**3-3*y)
         self.assertEqual(str(local_dict["fun"]), "fun")
@@ -97,7 +97,7 @@ class TestExpressions(TestCase):
         expr2 = self.new_expr(name="fun2",expression="x-y- c*x*y+y^2",
                             function_inputs="x,y",
                             expression_type = Expression.FUNCTION)
-        fun2=expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        fun2=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(fun2, x-y-c*x*y+y**2)
         self.assertEqual(local_dict["fun2"](x,y), x-y-c*x*y+y**2)
         self.assertEqual(local_dict["fun2"](y,x), y-x-c*x*y+x**2)
@@ -108,7 +108,7 @@ class TestExpressions(TestCase):
         expr3=self.new_expr(name="fun3",expression="fun(x)- c*x*y",
                             function_inputs="x,y",
                             expression_type = Expression.FUNCTION)
-        fun3=expr3.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        fun3=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(fun3, x**3-3*x -c*x*y)
         self.assertEqual(local_dict["fun3"](x,y), x**3-3*x-c*x*y)
         self.assertEqual(local_dict["fun3"](y,x), y**3-3*y-c*y*x)
@@ -126,7 +126,7 @@ class TestExpressions(TestCase):
                             expression_type = Expression.FUNCTION_NAME)
 
         f = expr1.evaluate(rng=self.rng, local_dict=local_dict, 
-                           user_function_dict=user_function_dict)\
+                           user_function_dict=user_function_dict)['expression_evaluated']\
                  .return_expression()
         self.assertEqual(f, SymbolCallable(str("f")))
         test_dict["f"] = f
@@ -141,11 +141,11 @@ class TestExpressions(TestCase):
 
         expr1=self.new_expr(name="xreal", expression="x",
                             expression_type = Expression.REAL_VARIABLE)
-        x1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)\
+        x1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                  .return_expression()
 
         expr2=self.new_expr(name="xgen", expression="x")
-        x2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)\
+        x2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                  .return_expression()
 
         self.assertEqual(x_real,x1)
@@ -166,7 +166,7 @@ class TestExpressions(TestCase):
             local_dict={'Ne': Ne}
             expr1=self.new_expr(name="n",expression="(-1,1)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            n = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            n = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             expr2a=self.new_expr(name="nonzero_n",expression="n",
                                  expression_type = Expression.CONDITION)
             expr2b=self.new_expr(name="nonzero_n2",expression="n != 0",
@@ -193,13 +193,13 @@ class TestExpressions(TestCase):
                                         expr2d.evaluate, rng=self.rng,
                                         local_dict=local_dict)
             else:
-                expr2a_eval = expr2a.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr2a_eval = expr2a.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2b_eval = expr2b.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr2b_eval = expr2b.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2c_eval = expr2c.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr2c_eval = expr2c.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2d_eval = expr2d.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr2d_eval = expr2d.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
                 self.assertEqual(expr2a_eval, n)
                 self.assertTrue(expr2b_eval)
@@ -213,7 +213,7 @@ class TestExpressions(TestCase):
             local_dict={'Eq': Eq, 'Abs': Abs}
             expr1=self.new_expr(name="n",expression="(-2,2)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            n = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            n = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             expr2a=self.new_expr(name="mag2_n",expression="Abs(n)==2",
                                  expression_type = Expression.CONDITION)
             expr2b=self.new_expr(name="mag2_n2",expression="Eq(Abs(n),2)",
@@ -240,13 +240,13 @@ class TestExpressions(TestCase):
                                         expr2d.evaluate, rng=self.rng,
                                         local_dict=local_dict)
             else:
-                expr2a_eval = expr2a.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr2a_eval = expr2a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2b_eval = expr2b.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr2b_eval = expr2b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2c_eval = expr2c.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr2c_eval = expr2c.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr2d_eval = expr2d.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr2d_eval = expr2d.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
                 self.assertTrue(expr2a_eval)
                 self.assertTrue(expr2b_eval)
@@ -276,19 +276,19 @@ class TestExpressions(TestCase):
             expr3f=self.new_expr(name="not_equal3",expression="Ne(xx,yy)",
                                  expression_type = Expression.CONDITION)
 
-            x = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
-            y = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            x = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
+            y = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
    
             if x==y:
-                expr3a_eval = expr3a.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr3a_eval = expr3a.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                                     .return_expression()
                 self.assertTrue(expr3a_eval)
 
-                expr3b_eval = expr3b.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr3b_eval = expr3b.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                                     .return_expression()
                 self.assertTrue(expr3b_eval)
 
-                expr3c_eval = expr3c.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr3c_eval = expr3c.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                                     .return_expression()
                 self.assertTrue(expr3c_eval)
                 
@@ -329,7 +329,7 @@ class TestExpressions(TestCase):
                     expr3d.evaluate, rng=self.rng,
                     local_dict=local_dict)
 
-                expr3e_eval = expr3e.evaluate(rng=self.rng,local_dict=local_dict)\
+                expr3e_eval = expr3e.evaluate(rng=self.rng,local_dict=local_dict)['expression_evaluated']\
                                     .return_expression()
                 self.assertTrue(expr3e_eval)
 
@@ -346,10 +346,10 @@ class TestExpressions(TestCase):
                          'Le': Le, 'Ge': Ge}
             expr1=self.new_expr(name="n",expression="(-5,5)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            n = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            n = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             expr2=self.new_expr(name="m",expression="(-5,5)",
                                 expression_type = Expression.RANDOM_NUMBER)
-            m = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            m = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
 
             expr3a=self.new_expr(name="inequality1a",expression="Or(m<-1,n>2)",
                                  expression_type = Expression.CONDITION)
@@ -366,9 +366,9 @@ class TestExpressions(TestCase):
                                         expr3b.evaluate, rng=self.rng,
                                         local_dict=local_dict)
             else:
-                expr3a_eval = expr3a.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr3a_eval = expr3a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr3b_eval = expr3b.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr3b_eval = expr3b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
                 self.assertTrue(expr3a_eval)
                 self.assertTrue(expr3b_eval)
@@ -390,9 +390,9 @@ class TestExpressions(TestCase):
                                         expr4b.evaluate, rng=self.rng,
                                         local_dict=local_dict)
             else:
-                expr4a_eval = expr4a.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr4a_eval = expr4a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
-                expr4b_eval = expr4b.evaluate(rng=self.rng, local_dict=local_dict)\
+                expr4b_eval = expr4b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                     .return_expression()
                 self.assertTrue(expr4a_eval)
                 self.assertTrue(expr4b_eval)
@@ -407,13 +407,13 @@ class TestExpressions(TestCase):
         local_dict={}
         
         expr1=self.new_expr(name="quadratic",expression="a*z^2+b*z+c")
-        quadratic=expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        quadratic=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(quadratic,a*z**2+b*z+c)
         self.assertEqual(local_dict["quadratic"], a*z**2+b*z+c)
 
         expr2=self.new_expr(name="linear",expression="a*y-b", \
                                 expression_type=Expression.GENERIC)
-        linear=expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        linear=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(linear,a*y-b)
         self.assertEqual(local_dict["linear"], a*y-b)
         
@@ -423,12 +423,12 @@ class TestExpressions(TestCase):
         c=Symbol('c')
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)")
-        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(tuple1.compare_with_expression((a,b,c))['fraction_equal'],1)
         self.assertEqual(tuple1.compare_with_expression((a,c,b))['fraction_equal'],0)
         
         expr2=self.new_expr(name="tuple2",expression="[b,c,a]")
-        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
         self.assertEqual(tuple2,[b,c,a])
 
         
@@ -439,7 +439,7 @@ class TestExpressions(TestCase):
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)", \
                                 expression_type=Expression.UNORDERED_TUPLE)
-        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(tuple1.compare_with_expression((a,b,c))['fraction_equal'],1)
         self.assertEqual(tuple1.compare_with_expression((a,c,b))['fraction_equal'],1)
         self.assertEqual(tuple1.compare_with_expression((b,c,a))['fraction_equal'],1)
@@ -447,7 +447,7 @@ class TestExpressions(TestCase):
 
         expr2=self.new_expr(name="tuple2",expression="[3*a,b-a,c^2]", \
                                 expression_type=Expression.UNORDERED_TUPLE)
-        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(tuple2.compare_with_expression([3*a,b-a,c**2])['fraction_equal'],1)
         self.assertEqual(tuple2.compare_with_expression([3*a,c**2,b-a])['fraction_equal'],1)
         self.assertEqual(tuple2.compare_with_expression([b-a,c**2,3*a])['fraction_equal'],1)
@@ -460,12 +460,12 @@ class TestExpressions(TestCase):
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(5,-1,b^2-a,c,b)", \
                                 expression_type=Expression.SORTED_TUPLE)
-        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(tuple1.compare_with_expression((-1,5,b,c,b**2-a))['fraction_equal'],1)
 
         expr2=self.new_expr(name="tuple2",expression="[5,-1,b^2-a,c,b]", \
                                 expression_type=Expression.SORTED_TUPLE)
-        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(tuple2.compare_with_expression([-1,5,b,c,b**2-a])['fraction_equal'],1)
 
 
@@ -479,7 +479,7 @@ class TestExpressions(TestCase):
         tuple_orig = (5, -1, b**2-a,c,b)
         found_different_order = False
         for i in range(100):
-            tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             for j in range(5):
                 self.assertTrue(tuple1[j] in tuple_orig)
             if tuple1 != tuple_orig:
@@ -492,7 +492,7 @@ class TestExpressions(TestCase):
         tuple_orig = (5, -1, b**2-a,c,b)
         found_different_order = False
         for i in range(100):
-            tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            tuple2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             for j in range(5):
                 self.assertTrue(tuple2[j] in tuple_orig)
             if tuple2 != tuple_orig:
@@ -507,27 +507,27 @@ class TestExpressions(TestCase):
         c=Symbol('c')
         local_dict={}
         expr1=self.new_expr(name="t1",expression="a,b,c")
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval, TupleNoParen(a,b,c))
         self.assertNotEqual(expr1_eval, Tuple(a,b,c))
 
         expr2=self.new_expr(name="t2",expression="(a,b,c)")
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, Tuple(a,b,c))
         self.assertNotEqual(expr2_eval, TupleNoParen(a,b,c))
 
         expr3=self.new_expr(name="t3",expression="(a+1)*b,b,a*(1-c)")
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval, TupleNoParen((a+1)*b,b,a*(1-c)))
         self.assertNotEqual(expr3_eval, Tuple((a+1)*b,b,a*(1-c)))
 
         expr4=self.new_expr(name="t4",expression="t1")
-        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval, TupleNoParen(a,b,c))
         self.assertNotEqual(expr4_eval, Tuple(a,b,c))
 
         expr5=self.new_expr(name="t5",expression="t2")
-        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr5_eval, Tuple(a,b,c))
         self.assertNotEqual(expr5_eval, TupleNoParen(a,b,c))
 
@@ -542,18 +542,18 @@ class TestExpressions(TestCase):
         local_dict={}
         expr1=self.new_expr(name="t1",expression="b,c,a,c,d,a",
                             expression_type=Expression.SET)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertTrue(expr1_eval.return_if_unordered())
         self.assertEqual(expr1_eval.compare_with_expression(
             TupleNoParen(a,b,c,d))['fraction_equal'],1)
 
         expr2=self.new_expr(name="t2",expression="{b,c,a,c,d,a}",
                             expression_type=Expression.SET)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, FiniteSet(c,d,a,b))
 
         expr3=self.new_expr(name="t3",expression="{b,c,a,c,d,a}")
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval, FiniteSet(c,d,a,b))
 
 
@@ -565,25 +565,25 @@ class TestExpressions(TestCase):
 
         expr1=self.new_expr(name="open", expression="(a,b)",
                             expression_type=Expression.INTERVAL)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval, \
                          Interval(a,b,left_open=True, right_open=True))
 
         expr2=self.new_expr(name="left_open", expression="(a,b]",
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, \
                          Interval(a,b,left_open=True, right_open=False))
 
         expr3=self.new_expr(name="right_open", expression="[a,b)",
                             expression_type=Expression.INTERVAL)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval, \
                          Interval(a,b,left_open=False, right_open=True))
 
         expr4=self.new_expr(name="closed", expression="[a,b]",
                             expression_type=Expression.INTERVAL)
-        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval, \
                          Interval(a,b,left_open=False, right_open=False))
 
@@ -595,28 +595,28 @@ class TestExpressions(TestCase):
 
         expr1=self.new_expr(name="inttuple", expression="[a,b),(1,3]",
                             expression_type=Expression.INTERVAL)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval, \
             TupleNoParen(Interval(a,b,left_open=False, right_open=True),\
                           Interval(1,3,left_open=True, right_open=False)))
 
         expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, \
             Tuple(Interval(a,b,left_open=False, right_open=True),\
                   Interval(1,3,left_open=True, right_open=False)))
 
         expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, \
             Tuple(Interval(a,b,left_open=False, right_open=True),\
                   Interval(1,3,left_open=True, right_open=False)))
 
         expr3=self.new_expr(name="union", expression="[a,b)+(1,3]",
                             expression_type=Expression.INTERVAL)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         from sympy import Union
         self.assertEqual(expr3_eval, \
                 Union(Interval(a,b,left_open=False, right_open=True),\
@@ -640,12 +640,12 @@ class TestExpressions(TestCase):
 
         expr2=self.new_expr(name="invalidint", expression="(1,2,3)",
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, Tuple(1,2,3))
 
         expr3=self.new_expr(name="invalidint2", expression="(1,2,3),[4,5]",
                             expression_type=Expression.INTERVAL)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval, TupleNoParen(Tuple(1,2,3),Interval(4,5)))
 
 
@@ -659,19 +659,19 @@ class TestExpressions(TestCase):
         local_dict={'a': a, 'b': b}
         expr1=self.new_expr(name="expr1", expression="x in (1,2)",
                             expression_type=Expression.INTERVAL)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval,
                 Interval(1,2,left_open=True,right_open=True).contains(x))
         self.assertEqual(expr1_eval,  And(x < 2, x >1))
 
         expr2=self.new_expr(name="expr2", expression="x in {1,2,a,b}")
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, FiniteSet(1,2,a,b).contains(x))
         
         expr3=self.new_expr(name="expr3", 
                             expression="x in {1,2,a,b} or x in [3,4]",
                             expression_type=Expression.INTERVAL)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
                          
         self.assertEqual(expr3_eval, 
                 Or(Interval(3,4).contains(x), FiniteSet(1,2,a,b).contains(x)))
@@ -687,29 +687,29 @@ class TestExpressions(TestCase):
 
         expr1=self.new_expr(name="A", expression="\n 1 2\na b\na-b 1 \na -b\n ",
                             expression_type=Expression.MATRIX)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         A=Matrix([[1,2],[a,b],[a-b,1],[a,-b]])
         self.assertEqual(expr1_eval, A)
 
 
         expr2=self.new_expr(name="two_A", expression="2A")
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, 2*A)
         
 
         expr3=self.new_expr(name="v", expression="a\n5",
                             expression_type=Expression.MATRIX)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         v = Matrix([a,5])
         self.assertEqual(expr3_eval, v)
 
         expr4=self.new_expr(name="Av", expression="A*v")
-        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval, A*v)
         
         expr5=self.new_expr(name="Av", expression="A*v",
                             expression_type=Expression.MATRIX)
-        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr5_eval, A*v)
         
         expr6=self.new_expr(name="err", expression="1 2 3\n1 2",
@@ -727,38 +727,38 @@ class TestExpressions(TestCase):
 
         expr1=self.new_expr(name="x", expression="(a,b,1,2) ",
                             expression_type=Expression.VECTOR)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         x=Matrix([a,b,1,2])
         xvec = Tuple(a,b,1,2)
         self.assertEqual(expr1_eval, x)
         self.assertEqual(str(expr1_eval), latex(xvec))
         
         expr2=self.new_expr(name="two_x", expression="2*x")
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, 2*x)
         two_xvec = Tuple(2*a,2*b,2,4)
         self.assertEqual(str(expr2_eval), latex(two_xvec))
         
         expr3=self.new_expr(name="colv", expression="a\nb\n1\n2",
                             expression_type=Expression.MATRIX)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         expr4=self.new_expr(name="two_colv", expression="2*colv",
                             expression_type=Expression.VECTOR)
-        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval, 2*x)
         self.assertEqual(str(expr4_eval), latex(two_xvec))
         
         expr5=self.new_expr(name="A", expression="2 0 3 0\n0 0 a 0",
                             expression_type=Expression.MATRIX)
-        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)
+        expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         expr6=self.new_expr(name="Ax", expression="A*x")
-        expr6_eval=expr6.evaluate(rng=self.rng, local_dict=local_dict)
+        expr6_eval=expr6.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         Ax=Matrix([2*a+3,a])
         self.assertEqual(expr6_eval,Ax)
 
         expr7=self.new_expr(name="two_A_no_vec", expression="2*A",
                            expression_type=Expression.VECTOR)
-        expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)
+        expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         two_A=Matrix([[4,0,6,0],[0,0,2*a,0]])
         self.assertEqual(expr7_eval,two_A)
         self.assertEqual(str(expr7_eval),latex(two_A))
@@ -767,11 +767,11 @@ class TestExpressions(TestCase):
     def test_evaluate_false(self):
         local_dict={}
         expr1=self.new_expr(name="s", expression="x+x*y*x+x")
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(six.text_type(expr1_eval), "x^{2} y + 2 x")
         expr2=self.new_expr(name="s2", expression="x+x*y*x+x", 
                             evaluate_level=EVALUATE_NONE)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(six.text_type(expr2_eval), "x + x y x + x")
         self.assertEqual(expr2_eval.compare_with_expression(
                 expr1_eval.return_expression())['fraction_equal'],0)
@@ -784,14 +784,14 @@ class TestExpressions(TestCase):
         local_dict={}
         expr1=self.new_expr(name="f", expression="x+x*y*x+x*1+0", function_inputs="x",
                             expression_type=Expression.FUNCTION, evaluate_level=EVALUATE_NONE)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(six.text_type(expr1_eval), "x + x y x + x 1 + 0")
         expr2=self.new_expr(name="f_z", expression="f(z)", 
                             evaluate_level=EVALUATE_NONE)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(six.text_type(expr2_eval), "z + z y z + z 1 + 0")
         expr3=self.new_expr(name="f_z_eval", expression="f(z)")
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(six.text_type(expr3_eval), "y z^{2} + 2 z")
 
         self.assertEqual(expr2_eval.compare_with_expression(
@@ -804,11 +804,11 @@ class TestExpressions(TestCase):
         x=Symbol('x')
         local_dict={'Derivative': Derivative, 'Integral': Integral}
         expr1=self.new_expr(name="s", expression="Derivative(x^2,x)")
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval.return_expression(), 2*x)
         expr2=self.new_expr(name="s2", expression="Derivative(x^2,x)", 
                             evaluate_level=EVALUATE_PARTIAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval.return_expression(), Derivative(x**2,x))
         self.assertEqual(expr2_eval.compare_with_expression(
                 expr1_eval.return_expression())['fraction_equal'],0)
@@ -820,11 +820,11 @@ class TestExpressions(TestCase):
                 expr2_eval.return_expression())['fraction_equal_on_normalize'],1)
 
         expr3=self.new_expr(name="s3", expression="Integral(x^2,x)")
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval.return_expression(), x**3/3)
         expr4=self.new_expr(name="s4", expression="Integral(x^2,x)", 
                             evaluate_level=EVALUATE_PARTIAL)
-        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval.return_expression(), Integral(x**2,x))
         self.assertEqual(expr4_eval.compare_with_expression(
                 expr3_eval.return_expression())['fraction_equal'],0)
@@ -840,16 +840,16 @@ class TestExpressions(TestCase):
         from sympy import sin
         x=Symbol('x')
         expr1=self.new_expr(name="s", expression="x*sin(x)")
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict={})
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict={})['expression_evaluated']
         self.assertEqual(expr1_eval, x**2*Symbol('sin'))
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict={'sin':sin})
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict={'sin':sin})['expression_evaluated']
         self.assertEqual(expr1_eval, x*sin(x))
 
 
     def test_greek(self):
         expr = self.new_expr(name="greek", 
                              expression="lambda*gamma/delta + epsilon")
-        expr_eval=expr.evaluate(rng=self.rng)
+        expr_eval=expr.evaluate(rng=self.rng)['expression_evaluated']
         self.assertEqual(expr_eval, Symbol('lambda')*Symbol('gamma') \
                              / Symbol('delta') + Symbol('epsilon'))
         self.assertEqual(six.text_type(expr_eval),
@@ -900,6 +900,164 @@ class TestExpressions(TestCase):
         self.assertEqual(local_dict['d'],symqq)
 
 
+    def test_alternate_expressions(self):
+        c=Symbol('c')
+        C=Symbol('C')
+        d=Symbol('d')
+        D=Symbol('D')
+        x=Symbol('x')
+
+        local_dict={}
+        alternate_dicts=[]
+
+        expr1=self.new_expr(name="c", expression="c,C,d,D",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr1_eval['expression_evaluated'], c)
+        self.assertEqual(local_dict, {'c': c})
+
+        self.assertEqual(expr1_eval['alternate_exprs'], [C,d,D])
+        self.assertEqual(alternate_dicts[0], {'c': C})
+        self.assertEqual(alternate_dicts[1], {'c': d})
+        self.assertEqual(alternate_dicts[2], {'c': D})
+
+        expr2=self.new_expr(name="v_c", expression="x+c")
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr2_eval['expression_evaluated'], x+c)
+        self.assertEqual(local_dict, {'c': c, 'v_c': x+c})
+
+        self.assertEqual(expr2_eval['alternate_exprs'], [x+C,x+d,x+D])
+        self.assertEqual(alternate_dicts[0], {'c': C, 'v_c': x+C})
+        self.assertEqual(alternate_dicts[1], {'c': d, 'v_c': x+d})
+        self.assertEqual(alternate_dicts[2], {'c': D, 'v_c': x+D})
+
+
+    def test_alternate_expressions_compounded(self):
+        c=Symbol('c')
+        C=Symbol('C')
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+
+        local_dict={}
+        alternate_dicts=[]
+
+        expr1=self.new_expr(name="c", expression="c,C",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr1_eval['expression_evaluated'], c)
+        self.assertEqual(local_dict, {'c': c})
+
+        self.assertEqual(expr1_eval['alternate_exprs'], [C,])
+        self.assertEqual(alternate_dicts[0], {'c': C})
+
+        expr2=self.new_expr(name="v_c", expression="x+c, y+c, z+c",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr2_eval['expression_evaluated'], x+c)
+        self.assertEqual(local_dict, {'c': c, 'v_c': x+c})
+
+        self.assertEqual(expr2_eval['alternate_exprs'], [x+C, y+c, y+C,z+c,z+C])
+
+        self.assertEqual(alternate_dicts[0], {'c': C, 'v_c': x+C})
+        self.assertEqual(alternate_dicts[1], {'c': c, 'v_c': y+c})
+        self.assertEqual(alternate_dicts[2], {'c': C, 'v_c': y+C})
+        self.assertEqual(alternate_dicts[3], {'c': c, 'v_c': z+c})
+        self.assertEqual(alternate_dicts[4], {'c': C, 'v_c': z+C})
+
+
+    def test_alternate_expressions_compounded_2(self):
+        c=Symbol('c')
+        C=Symbol('C')
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+        a=Symbol('a')
+        b=Symbol('b')
+
+        local_dict={}
+        alternate_dicts=[]
+
+        expr1=self.new_expr(name="c", expression="c,C",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr1_eval['expression_evaluated'], c)
+        self.assertEqual(local_dict, {'c': c})
+
+        self.assertEqual(expr1_eval['alternate_exprs'], [C,])
+        self.assertEqual(alternate_dicts[0], {'c': C})
+
+        expr2=self.new_expr(name="v", expression="x, y, z",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr2_eval['expression_evaluated'], x)
+        self.assertEqual(local_dict, {'c': c, 'v': x})
+
+        self.assertEqual(expr2_eval['alternate_exprs'], [x, y, y,z,z])
+
+        self.assertEqual(alternate_dicts[0], {'c': C, 'v': x})
+        self.assertEqual(alternate_dicts[1], {'c': c, 'v': y})
+        self.assertEqual(alternate_dicts[2], {'c': C, 'v': y})
+        self.assertEqual(alternate_dicts[3], {'c': c, 'v': z})
+        self.assertEqual(alternate_dicts[4], {'c': C, 'v': z})
+
+        expr3=self.new_expr(name="v_c", expression="v+c")
+        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr3_eval['expression_evaluated'], x+c)
+        self.assertEqual(local_dict, {'c': c, 'v': x, 'v_c': x+c})
+        
+        self.assertEqual(expr3_eval['alternate_exprs'], [x+C, y+c, y+C,z+c,z+C])
+
+        self.assertEqual(alternate_dicts[0], {'c': C, 'v': x, 'v_c': x+C})
+        self.assertEqual(alternate_dicts[1], {'c': c, 'v': y, 'v_c': y+c})
+        self.assertEqual(alternate_dicts[2], {'c': C, 'v': y, 'v_c': y+C})
+        self.assertEqual(alternate_dicts[3], {'c': c, 'v': z, 'v_c': z+c})
+        self.assertEqual(alternate_dicts[4], {'c': C, 'v': z, 'v_c': z+C})
+
+        expr4=self.new_expr(name="v_c_a", expression="v+c+a, v+c+b",
+                        expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict,
+                                  alternate_dicts=alternate_dicts)
+        self.assertEqual(expr4_eval['expression_evaluated'], x+c+a)
+        self.assertEqual(local_dict, {'c': c, 'v': x, 'v_c': x+c, 
+                                      'v_c_a': x+c+a})
+
+        self.assertEqual(expr4_eval['alternate_exprs'],
+                         [x+C+a, y+c+a, y+C+a, z+c+a, z+C+a,
+                          x+c+b, x+C+b, y+c+b, y+C+b, z+c+b, z+C+b])
+
+        self.assertEqual(alternate_dicts[0], {'c': C, 'v': x, 'v_c': x+C, 
+                                              'v_c_a': x+C+a})
+        self.assertEqual(alternate_dicts[1], {'c': c, 'v': y, 'v_c': y+c, 
+                                              'v_c_a': y+c+a})
+        self.assertEqual(alternate_dicts[2], {'c': C, 'v': y, 'v_c': y+C, 
+                                              'v_c_a': y+C+a})
+        self.assertEqual(alternate_dicts[3], {'c': c, 'v': z, 'v_c': z+c, 
+                                              'v_c_a': z+c+a})
+        self.assertEqual(alternate_dicts[4], {'c': C, 'v': z, 'v_c': z+C, 
+                                              'v_c_a': z+C+a})
+        self.assertEqual(alternate_dicts[5], {'c': c, 'v': x, 'v_c': x+c, 
+                                              'v_c_a': x+c+b})
+        self.assertEqual(alternate_dicts[6], {'c': C, 'v': x, 'v_c': x+C, 
+                                              'v_c_a': x+C+b})
+        self.assertEqual(alternate_dicts[7], {'c': c, 'v': y, 'v_c': y+c, 
+                                              'v_c_a': y+c+b})
+        self.assertEqual(alternate_dicts[8], {'c': C, 'v': y, 'v_c': y+C, 
+                                              'v_c_a': y+C+b})
+        self.assertEqual(alternate_dicts[9], {'c': c, 'v': z, 'v_c': z+c, 
+                                              'v_c_a': z+c+b})
+        self.assertEqual(alternate_dicts[10], {'c': C, 'v': z, 'v_c': z+C, 
+                                               'v_c_a': z+C+b})
+
+
+
 class TestRandomFromList(TestCase):
     def setUp(self):
         self.rng = random.Random()
@@ -922,7 +1080,7 @@ class TestRandomFromList(TestCase):
 
             expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
                                 expression_type = Expression.RANDOM_WORD)
-            expr1_eval = expr1.evaluate(rng=self.rng, local_dict=local_dict)
+            expr1_eval = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             self.assertTrue(expr1_eval in [("a","as"),("b","bs"),("c","cs"),
                                            ("d","ds"),("e","es"),("f","fs")])
             test_local_dict["a"] = Symbol(expr1_eval[0])
@@ -931,7 +1089,7 @@ class TestRandomFromList(TestCase):
             expr2=self.new_expr(name="b",
                                 expression="cat, (pony,ponies), (goose,geese)",
                                 expression_type = Expression.RANDOM_WORD)
-            expr2_eval = expr2.evaluate(rng=self.rng, local_dict=local_dict)
+            expr2_eval = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             self.assertTrue(expr2_eval in [("cat","cats"),("pony","ponies"),
                                            ("goose","geese")])
             test_local_dict["b"] = Symbol(expr2_eval[0])
@@ -941,7 +1099,7 @@ class TestRandomFromList(TestCase):
                                 expression="\"the pit\",(&^%$#@!,_+*&<?),"
                                 + '(one, "one/two or more")',
                                 expression_type = Expression.RANDOM_WORD)
-            expr3_eval = expr3.evaluate(rng=self.rng, local_dict=local_dict)
+            expr3_eval = expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
             self.assertTrue(expr3_eval in [
                     ("the pit", "the pits"),('&^%$#@!','_+*&<?'),
                     ('one', "one/two or more")])
@@ -957,7 +1115,7 @@ class TestRandomFromList(TestCase):
 
             expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
                                 expression_type = Expression.RANDOM_EXPRESSION)
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [sympify(item) for item in
                                   ("a","b","c","d","e","f")])
             test_local_dict["a"] = a
@@ -965,14 +1123,14 @@ class TestRandomFromList(TestCase):
     
             expr2=self.new_expr(name="b",expression="2*a*x, -3*a/x^3, a-x",
                                 expression_type = Expression.RANDOM_EXPRESSION)
-            b = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            b = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(b in [2*a*x, -3*a/x**3,a-x])
             test_local_dict["b"] = b
             self.assertEqual(local_dict, test_local_dict)
 
             expr3=self.new_expr(name="c",expression="2*b^2, (a-b)/x",
                                 expression_type = Expression.RANDOM_EXPRESSION)
-            c = expr3.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            c = expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(c in [2*b**2, (a-b)/x]),
             test_local_dict["c"] = c
             self.assertEqual(local_dict, test_local_dict)
@@ -986,19 +1144,19 @@ class TestRandomFromList(TestCase):
             expr1=self.new_expr(name="a",expression=
                                 "x+x, Derivative(x^3,x), 5(x-3)",
                                 expression_type = Expression.RANDOM_EXPRESSION)
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
 
             expr1.evaluate_level = EVALUATE_FULL
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [2*x, 3*x**2, 5*x-15])
 
             expr1.evaluate_level = EVALUATE_PARTIAL
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [2*x, Derivative(x**3,x), 5*x-15])
             
             expr1.evaluate_level = EVALUATE_NONE
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(six.text_type(a) in 
                             ['x + x', 'Derivative(x**3, x)', '5*(x - 3)'])
 
@@ -1011,14 +1169,14 @@ class TestRandomFromList(TestCase):
             expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
                                 expression_type = 
                                 Expression.RANDOM_FUNCTION_NAME)
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [SymbolCallable(str(item)) for item in
                                   ("a","b","c","d","e","f")])
             test_local_dict["a"] = a
             self.assertEqual(local_dict, test_local_dict)
     
             expr2=self.new_expr(name="b",expression="2*a(x)-4")
-            b = expr2.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            b = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertEqual(b, 2*a(x)-4)
             test_local_dict["b"] = b
             self.assertEqual(local_dict, test_local_dict)
@@ -1028,7 +1186,7 @@ class TestRandomFromList(TestCase):
                                 expression_type = 
                                 Expression.RANDOM_FUNCTION_NAME)
             f = expr3.evaluate(rng=self.rng, local_dict=local_dict, \
-                                   user_function_dict=user_function_dict)\
+                                   user_function_dict=user_function_dict)['expression_evaluated']\
                                    .return_expression()
             self.assertTrue(f in [SymbolCallable(str(item)) for item in
                                   ("this","that","the","other")])
@@ -1045,7 +1203,7 @@ class TestRandomFromList(TestCase):
             expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
                                 expression_type = 
                                 Expression.RANDOM_REAL_VARIABLE)
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict).return_expression()
+            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
             self.assertTrue(a in [Symbol(str(item),real=True) for item in
                                   ("a","b","c","d","e","f")])
             test_local_dict["a"] = a
@@ -1067,14 +1225,14 @@ class TestRandomFromList(TestCase):
                                 random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 local_dict=local_dict, 
-                random_group_indices=random_group_indices)[0]
+                random_group_indices=random_group_indices)['expression_evaluated'][0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
                                 random_list_group="g1")
             re1 = expr2.evaluate(rng=self.rng, 
                 local_dict=local_dict,
-                random_group_indices=random_group_indices).return_expression()
+                random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
             
             expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
                                 expression_type =
@@ -1082,7 +1240,7 @@ class TestRandomFromList(TestCase):
                                 random_list_group="g1")
             rf1 = expr3.evaluate(rng=self.rng, 
                 local_dict=local_dict,
-                random_group_indices=random_group_indices).return_expression()
+                random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
 
             self.assertTrue((rw1,re1,rf1) in [
                     (item, Symbol(item), SymbolCallable(str(item)))
@@ -1099,14 +1257,14 @@ class TestRandomFromList(TestCase):
                                 random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 local_dict=local_dict, 
-                random_group_indices=random_group_indices)[0]
+                random_group_indices=random_group_indices)['expression_evaluated'][0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
                                 random_list_group="g2")
             re1 = expr2.evaluate(rng=self.rng, 
                 local_dict=local_dict,
-                random_group_indices=random_group_indices).return_expression()
+                random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
             
             expr3=self.new_expr(name="rf1",expression="a,b, c ,d,e", 
                                 expression_type =
@@ -1114,7 +1272,7 @@ class TestRandomFromList(TestCase):
                                 random_list_group="g1")
             rf1 = expr3.evaluate(rng=self.rng, 
                 local_dict=local_dict,
-                random_group_indices=random_group_indices).return_expression()
+                random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
 
             self.assertTrue((rw1,rf1) in [
                     (item, SymbolCallable(str(item)))
@@ -1136,14 +1294,14 @@ class TestRandomFromList(TestCase):
                                 random_list_group="g1")
             rw1 = expr1.evaluate(rng=self.rng, 
                 local_dict=local_dict, 
-                random_group_indices=random_group_indices)[0]
+                random_group_indices=random_group_indices)['expression_evaluated'][0]
             
             expr2=self.new_expr(name="re1",expression="a,b, c ,d, e",
                                 expression_type = Expression.RANDOM_EXPRESSION,
                                 random_list_group="g1")
             re1 = expr2.evaluate(rng=self.rng, 
                 local_dict=local_dict,
-                random_group_indices=random_group_indices).return_expression()
+                random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
             
             self.assertTrue((rw1,re1) in [
                     (item, Symbol(item))
@@ -1160,7 +1318,7 @@ class TestRandomFromList(TestCase):
                                     random_list_group="g1")
                 rw1 = expr1.evaluate(rng=self.rng, 
                     local_dict=local_dict, 
-                    random_group_indices=random_group_indices)[0]
+                    random_group_indices=random_group_indices)['expression_evaluated'][0]
                 
                 expr2=self.new_expr(name="re1",expression="a,b, c",
                                     expression_type =
@@ -1168,7 +1326,7 @@ class TestRandomFromList(TestCase):
                                     random_list_group="g1")
                 re1 = expr2.evaluate(rng=self.rng,  \
                     local_dict=local_dict, \
-                        random_group_indices=random_group_indices) \
+                        random_group_indices=random_group_indices)['expression_evaluated'] \
                         .return_expression()
                     
                 self.assertTrue((rw1,re1) in [
