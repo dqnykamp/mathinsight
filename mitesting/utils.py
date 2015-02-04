@@ -732,7 +732,7 @@ def evaluate_expression(the_expr, rng,
                 pass
 
 
-        # record index chosen for random list group, if group exist
+        # record index chosen for random list group, if group exists
         if the_expr.random_list_group:
             try:
                 random_group_indices[the_expr.random_list_group]=index

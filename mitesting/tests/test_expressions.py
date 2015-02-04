@@ -999,7 +999,7 @@ class TestExpressions(TestCase):
         self.assertEqual(expr2_eval['expression_evaluated'], x)
         self.assertEqual(local_dict, {'c': c, 'v': x})
 
-        self.assertEqual(expr2_eval['alternate_exprs'], [x, y, y,z,z])
+        self.assertEqual(expr2_eval['alternate_exprs'], [y, z])
 
         self.assertEqual(alternate_dicts[0], {'c': C, 'v': x})
         self.assertEqual(alternate_dicts[1], {'c': c, 'v': y})

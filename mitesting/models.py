@@ -1012,6 +1012,8 @@ class Expression(models.Model):
         
         from mitesting.utils import evaluate_expression
 
+        rng_initial_state = rng.getstate()
+
         new_alternate_dict_list=[]
         new_alternate_expr_list=[]
         new_alternate_func_list=[]
@@ -1059,6 +1061,11 @@ class Expression(models.Model):
         alternate_funcs=[]
         for alt_dict in alternate_dicts:
             try:
+                # initial rng to its state before generating
+                # the original version of the expression
+                # to ensure get same random selections with alternate dicts.
+                rng.setstate(rng_initial_state)
+                
                 new_alternate_dicts_sub=[]
                 new_alternate_exprs_sub=[]
                 
@@ -1072,13 +1079,15 @@ class Expression(models.Model):
                     new_alternate_dicts=new_alternate_dicts_sub,
                     new_alternate_exprs=new_alternate_exprs_sub)
 
-                alternate_exprs.append(expression_evaluated_sub)
+                if expression_evaluated_sub != expression_evaluated \
+                   and expression_evaluated_sub not in alternate_exprs:
+                    alternate_exprs.append(expression_evaluated_sub)
 
-                if self.expression_type==self.FUNCTION:
-                    try:
-                        alternate_funcs.append(alt_dict[self.name])
-                    except KeyError:
-                        pass
+                    if self.expression_type==self.FUNCTION:
+                        try:
+                            alternate_funcs.append(alt_dict[self.name])
+                        except KeyError:
+                            pass
 
                 # If additional alternates are created,
                 # they are appended to new list of lists
@@ -1101,7 +1110,9 @@ class Expression(models.Model):
                     pass
             for alt_list in new_alternate_expr_list:
                 try:
-                    alternate_exprs.append(alt_list[ind])
+                    ae=alt_list[ind]
+                    if ae not in alternate_exprs:
+                        alternate_exprs.append(ae)
                 except IndexError:
                     pass
         
