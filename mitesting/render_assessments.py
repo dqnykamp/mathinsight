@@ -292,7 +292,8 @@ def return_valid_answer_codes(question, expression_context):
     1. A dictionary of all the valid answer codes 
        from the answer options of question.  
        The dictionary keys are the answer_codes and
-       the values are a dictionary of the answer_types and split symbols.
+       the values are a dictionary of the answer_types, split symbols,
+       and expression_type.
 
        In the case that the answer is a QuestionAnswerOption.EXPRESSION, 
        it must be in expression_context.
@@ -339,17 +340,18 @@ def return_valid_answer_codes(question, expression_context):
                     error_message += "expression <tt>%s</tt> is not a function." % option.answer
            
         if answer_valid:
-            valid_answer_codes[option.answer_code] = \
-                {'answer_type': option.answer_type,
-                 'split_symbols_on_compare': option.split_symbols_on_compare }
-            try:
-                expression_type=expression_context[option.answer]\
-                    .return_expression_type()
-            except (KeyError,AttributeError):
-                pass
-            else:
-                valid_answer_codes[option.answer_code]['expression_type'] \
-                    = expression_type
+            if option.answer_code not in valid_answer_codes:
+                valid_answer_codes[option.answer_code] = \
+                    {'answer_type': option.answer_type,
+                     'split_symbols_on_compare': option.split_symbols_on_compare }
+                try:
+                    expression_type=expression_context[option.answer]\
+                        .return_expression_type()
+                except (KeyError,AttributeError):
+                    pass
+                else:
+                    valid_answer_codes[option.answer_code]['expression_type'] \
+                        = expression_type
         else:
             invalid_answers.append((option.answer_code, option.answer))
             invalid_answer_messages.append(error_message)

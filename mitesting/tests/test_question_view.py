@@ -573,6 +573,51 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
+    def test_multiple_correct_answers_mix_types(self):
+        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.save()
+        
+        self.q.expression_set.create(
+            name="g",expression="x == y", function_inputs="x",
+            expression_type = Expression.FUNCTION)
+
+        self.new_answer(answer_code="ans", answer="n")
+        self.new_answer(answer_code="ans", answer="g",
+                        answer_type=QuestionAnswerOption.FUNCTION)
+        
+        response = self.client.get("/assess/question/%s" % self.q.id)
+        self.assertContains(response,"Type the answer: ")
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        n = response.context['n']
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier:
+                                       str(n.return_expression())})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "y"})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+
 
     def test_repeat_same_answer(self):
         self.q.question_text="Type the same answer twice: {% answer ans %}  {% answer ans %}"

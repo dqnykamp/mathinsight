@@ -721,7 +721,7 @@ class TestAnswerCodes(TestCase):
         self.assertEqual(invalid_answer_messages, [])
 
         self.new_answer(answer_code="h", answer="", answer_type=MULTIPLE_CHOICE)
-        correct_valid_answer_codes= {"h": {'answer_type': MULTIPLE_CHOICE, 'split_symbols_on_compare': True} }
+        correct_valid_answer_codes= {"h": {'answer_type': EXPRESSION, 'split_symbols_on_compare': True} }
         (valid_answer_codes, invalid_answers, invalid_answer_messages) = \
             return_valid_answer_codes(self.q, expr_context)
         self.assertEqual(valid_answer_codes, correct_valid_answer_codes)

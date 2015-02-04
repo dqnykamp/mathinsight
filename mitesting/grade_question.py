@@ -110,7 +110,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         except:
             pass
 
-
+    # if either EXPRESSION or FUNCTION, then use all options 
+    # that are EXPRESSION or FUNCTION
     elif answer_type == QuestionAnswerOption.EXPRESSION or \
          answer_type == QuestionAnswerOption.FUNCTION:
 
@@ -144,10 +145,11 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         from .sympy_customized import parse_and_process
         from .math_objects import math_object
         from sympy import sympify
-        
+        from django.db.models import Q
         answer_options=question.questionansweroption_set \
-                .filter(answer_code=answer_code, \
-                        answer_type=answer_type)
+                .filter(answer_code=answer_code) \
+                .filter(Q(answer_type=QuestionAnswerOption.EXPRESSION)
+                        | Q(answer_type=QuestionAnswerOption.FUNCTION))
 
         if(len(answer_options)==0):
             logger.warning("Expression answer found with no matching options")
@@ -303,7 +305,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     user_response_string = "[error displaying answer]"
 
 
-            if answer_type == QuestionAnswerOption.FUNCTION:
+            if answer_option.answer_type == QuestionAnswerOption.FUNCTION:
                 f_options = [expr_context['_sympy_local_dict_']\
                              [answer_option.answer],]
                 try:
