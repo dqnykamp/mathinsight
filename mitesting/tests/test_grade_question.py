@@ -788,6 +788,72 @@ class TestCompareResponse(TestCase):
         self.assertEqual(answer_results['percent_correct'],0)
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
+        f=return_parsed_function("x.func", 
+                                 function_inputs="x", name="f",
+                                 local_dict=local_dict)
+
+        local_dict["f"]=f
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="1-2", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+
+        f=return_parsed_function("x==y", 
+                                 function_inputs="x", name="f",
+                                 local_dict=local_dict)
+
+        local_dict["f"]=f
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="y", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="z", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+
+        f=return_parsed_function("x=y", 
+                                 function_inputs="x", name="f",
+                                 local_dict=local_dict)
+
+        local_dict["f"]=f
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="y", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="z", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
 
 class TestQuestionGroups(TestCase):

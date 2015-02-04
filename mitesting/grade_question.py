@@ -19,25 +19,38 @@ def check_function_answer(f,user_response_parsed):
     try:
         f=f(user_response_parsed)
     except Exception as e:
-        fraction_equal=0
+        return 0
     else:
+        # before attempting to convert to float,
+        # check if f returns a boolean, 
+        # in which case mark as completely correct or incorrect
+        from sympy import S
+        if f is S.BooleanTrue:
+            return 1
+        elif f is S.BooleanFalse:
+            return 0
+
         try:
             f_float = float(f)
         except (TypeError, AttributeError):
             # try converting Eq and Ne to regular python functions
             # that demand exact equality of expressions
             from sympy import Eq, Ne
-            f=f.replace(Eq, lambda x,y: x==y)
-            f=f.replace(Ne, lambda x,y: x!=y)
-
             try:
-                f_float = float(f)
-            except (TypeError, AttributeError) as e:
-                fraction_equal=0
-    if f_float is not None:
-        fraction_equal = max(0,min(1,f_float))
+                f=f.replace(Eq, lambda x,y: x==y)
+                f=f.replace(Ne, lambda x,y: x!=y)
+                
+                # again check if Boolean before attempting to convert to float
+                if f is S.BooleanTrue:
+                    return 1
+                elif f is S.BooleanFalse:
+                    return 0
 
-    return fraction_equal
+                f_float = float(f)
+            except (TypeError, AttributeError):
+                return 0
+                
+    return max(0,min(1,f_float))
 
 
 def compare_response_with_answer_code(user_response, the_answer_info, question,
@@ -151,7 +164,6 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 valid_answer=expr_context[answer_option.answer]
             except KeyError:
                 continue
-
 
             try:
                 valid_alternates = expr_context['_alternate_exprs_'] \
