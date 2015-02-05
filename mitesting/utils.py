@@ -632,6 +632,121 @@ def replace_boolean_equals_in(s):
 
 
 
+def replace_simplified_derivatives(s, local_dict, global_dict, 
+                                   split_symbols=False):
+    """
+    Convert expressions such as f'(x) to DerivativePrimeNotation
+    and expressions such as df/dx to DerivativeSimplifiedNotation
+
+    If for df/dx, f is not in the local/global dict,
+    or it is in the dicts as a Symbol,
+    then f is converted to __f_for_deriv__ which is mapped in local_dict
+    to SymbolCallable('f')
+    If, on the other hand, f is in the local/global dict as
+    an object that it not callable, then df/dx is replaced 
+    with Derivative(f,x)
+    
+    Derivatives are converted to __DerivativePrimeNotation__.
+    __DerivativeSimplfiedNotation__, and __Derivative__
+    which are mapped via global_dict
+
+    """
+
+    from mitesting.sympy_customized import DerivativePrimeNotation, \
+        DerivativeSimplifiedNotation
+
+    # replace f'(x) with DerivativePrimeNotation(f(x),x)
+    if split_symbols:
+        pattern=r"([a-zA-Z])'\ *\("
+    else:
+        pattern=r"([a-zA-Z_][a-zA-Z0-9_]*)'\ *\("
+    s = re.sub(pattern, r' __DerivativePrimeNotation__(\1,', s)
+
+    global_dict['__DerivativePrimeNotation__'] = DerivativePrimeNotation
+ 
+
+
+    functions_differentiated = set()
+    functions_differentiated_dvar = {}
+    # replace df/dx with DerivativeSimplifiedNotation(f(x),x)
+    if split_symbols:
+        pattern = r"d([a-zA-Z]) */ *d([a-zA-Z])"  # single letter like dx/dt
+        # first find all matches and record functions differentiated
+        for match in re.findall(pattern, s):
+            functions_differentiated.add(match[0])
+            dvars=functions_differentiated_dvar.get(match[0], set())
+            dvars.add(match[1])
+            functions_differentiated_dvar[match[0]]=dvars
+        # then substitute
+        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
+    else:
+        # possibly multiple letter pattern like dabc/dxyz
+        pattern = r"\bd([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
+        # first find all matches and record functions differentiated
+        for match in re.findall(pattern, s):
+            functions_differentiated.add(match[0])
+            dvars=functions_differentiated_dvar.get(match[0], set())
+            dvars.add(match[1])
+            functions_differentiated_dvar[match[0]]=dvars
+        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
+
+        # possibly multiple letter pattern with number like 10dabc/dxyz
+        pattern = r"([0-9])d([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
+        # first find all matches and record functions differentiated
+        for match in re.findall(pattern, s):
+            functions_differentiated.add(match[1])
+            dvars=functions_differentiated_dvar.get(match[1], set())
+            dvars.add(match[2])
+            functions_differentiated_dvar[match[1]]=dvars
+        s = re.sub(pattern, r'\1 __DerivativeSimplifiedNotation__(\2(\3),\3)', s)
+
+    global_dict['__DerivativeSimplifiedNotation__'] = DerivativeSimplifiedNotation
+
+
+    # if functions aren't in local/global dict,
+    # or they are in dicts as symbols,
+    # then create a SymbolCallable version
+    # so that Derivative(x(t),t) does not become Derivative(x*t,t)
+    # with implicit multiplication transformation
+    for fun in functions_differentiated:
+        fun_mapped=None
+        new_symbol=None
+        if fun in local_dict:
+            fun_mapped=local_dict[fun]
+        elif fun in global_dict:
+            fun_mapped=global_dict[fun]
+
+        if fun_mapped is None:
+            new_symbol = SymbolCallable(str(fun))
+        else:
+            try:
+                if fun_mapped.__class__ == Symbol:
+                    new_symbol=SymbolCallable(str(fun_mapped))
+            except AttributeError:
+                pass
+
+        if new_symbol is None:
+            if not callable(fun_mapped):
+                # if not differentiating with response to callable
+                # convert to regular derivative and don't attempt
+                # to evaluate at the variable of differentiation
+                for dvar in functions_differentiated_dvar[fun]:
+                    s=re.sub(r'__DerivativeSimplifiedNotation__\(%s\(%s\)' \
+                             % (fun, dvar),
+                             r'__Derivative__('+fun, s)
+
+                from sympy import Derivative
+                global_dict['__Derivative__'] = Derivative
+
+        else:
+            fun_obscured = "__%s_for_deriv__" % fun
+            s=re.sub(r'__DerivativeSimplifiedNotation__\('+fun, 
+                      r'__DerivativeSimplifiedNotation__('+fun_obscured, s)
+            local_dict[fun_obscured]=new_symbol
+    return s
+
+
+
 def evaluate_expression(the_expr, rng, 
                         local_dict=None, user_function_dict=None,
                         random_group_indices=None,
@@ -945,4 +1060,3 @@ def evaluate_expression(the_expr, rng,
         tuple_is_unordered=(the_expr.expression_type==the_expr.UNORDERED_TUPLE
                             or the_expr.expression_type==the_expr.SET),
         expression_type=the_expr.expression_type)
-

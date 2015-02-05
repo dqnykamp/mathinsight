@@ -506,7 +506,7 @@ class ParseExprTests(SimpleTestCase):
         
         f=Function(str('f'))
         g=SymbolCallable(str('g'))
-        x=Symbol('x')
+        x=Symbol(str('x'))
         y=Symbol('y')
         fn=Function(str('fn'))
         xx=Symbol('xx')
@@ -525,6 +525,43 @@ class ParseExprTests(SimpleTestCase):
 
         expr=parse_expr("3dfn/dxx", local_dict=local_dict)
         self.assertEqual(expr, 3*DerivativeSimplifiedNotation(fn(xx),xx))
+
+        expr=parse_expr("df/dx+dg/dy")
+        self.assertEqual(expr, DerivativeSimplifiedNotation(f(x),x)
+                         +DerivativeSimplifiedNotation(g(y),y))
+        self.assertEqual(latex(expr), "\\frac{d f}{d x} + \\frac{d g}{d y}")
+
+        expr=parse_expr("dvar/dy", local_dict={'var': x})
+        self.assertEqual(expr, DerivativeSimplifiedNotation(x(y),y))
+        self.assertEqual(latex(expr), "\\frac{d x}{d y}")
+
+        expr=parse_expr("dx/dx")
+        self.assertEqual(expr, DerivativeSimplifiedNotation(x(x),x))
+        self.assertEqual(latex(expr), "\\frac{d x}{d x}")
+        self.assertEqual(expr.doit(),1)
+
+        expr=parse_expr("dvar/dx", local_dict={'var': x})
+        self.assertEqual(expr, DerivativeSimplifiedNotation(x(x),x))
+        self.assertEqual(latex(expr), "\\frac{d x}{d x}")
+        self.assertEqual(expr.doit(),1)
+
+        expr=parse_expr("dvar/dx", local_dict={'var': x*x})
+        self.assertEqual(expr, Derivative(x**2,x))
+        self.assertEqual(latex(expr), "\\frac{d}{d x} x^{2}")
+        self.assertEqual(expr.doit(), 2*x)
+
+        from sympy import sin, cos
+        expr=parse_expr("dvar/dx", local_dict={'var': sin })
+        self.assertEqual(expr, DerivativeSimplifiedNotation(sin(x),x))
+        self.assertEqual(latex(expr), "\\frac{d}{d x} \\sin{\\left (x \\right )}")
+        self.assertEqual(expr.doit(), cos(x))
+
+        expr=parse_expr("dvar/dx", local_dict={'var': sin(x) })
+        self.assertEqual(expr, Derivative(sin(x),x))
+
+        expr=parse_expr("dvar/dx", local_dict={'var': x+y+1 })
+        self.assertEqual(expr, Derivative(x+y+1,x))
+        
 
 
     def test_subs_relational(self):

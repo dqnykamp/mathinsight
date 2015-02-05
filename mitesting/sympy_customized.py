@@ -94,9 +94,14 @@ def parse_expr(s, global_dict=None, local_dict=None,
     from sympy.parsing.sympy_parser import parse_expr as sympy_parse_expr
 
     # Create new global dictionary so modifications don't affect original
-    new_global_dict = {}
     if global_dict:
-        new_global_dict.update(global_dict)
+        new_global_dict = global_dict.copy()
+    else:
+        new_global_dict ={}
+    if local_dict:
+        new_local_dict = local_dict.copy()
+    else:
+        new_local_dict = {}
 
     # Since Symbol could be added by auto_symbol
     # and Integer, Float, or Rational could be added by auto_number
@@ -148,12 +153,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
             new_global_dict['_'+kword+'_'] = new_global_dict[kword]
             del new_global_dict[kword]
             kword_found=True
-        if local_dict and kword in local_dict:
-            local_dict_old=local_dict
-            local_dict = {}
-            local_dict.update(local_dict_old)
-            local_dict['_'+kword+'_'] = local_dict[kword]
-            del local_dict[kword]
+        if new_local_dict and kword in new_local_dict:
+            new_local_dict['_'+kword+'_'] = new_local_dict[kword]
+            del new_local_dict[kword]
             kword_found=True
         if kword_found:
             s = re.sub(r'\b'+kword+r'\b', '_'+kword+'_', s)
@@ -183,27 +185,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # replace unicode character for \cdot used in mathjax display with *
     s = re.sub(r'\u22c5', r'*', s)
 
-    # replace f'(x) with DerivativePrimeNotation(f(x),x)
-    if split_symbols:
-        pattern=r"([a-zA-Z])'\ *\("
-    else:
-        pattern=r"([a-zA-Z_][a-zA-Z0-9_]*)'\ *\("
-    s = re.sub(pattern, r' __DerivativePrimeNotation__(\1,', s)
-
-    new_global_dict['__DerivativePrimeNotation__'] = DerivativePrimeNotation
-
-    # replace df/dx with DerivativeSimplifiedNotation(f(x),x)
-    if split_symbols:
-        pattern = r"d([a-zA-Z]) */ *d([a-zA-Z])"
-        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
-    else:
-        pattern = r"\bd([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
-        s = re.sub(pattern, r' __DerivativeSimplifiedNotation__(\1(\2),\2)', s)
-        pattern = r"([0-9])d([a-zA-Z_][a-zA-Z0-9_]*) */ *d([a-zA-Z_][a-zA-Z0-9_]*)"
-        s = re.sub(pattern, r'\1 __DerivativeSimplifiedNotation__(\2(\3),\3)', s)
-
-
-    new_global_dict['__DerivativeSimplifiedNotation__'] = DerivativeSimplifiedNotation
+    from mitesting.utils import replace_simplified_derivatives
+    s= replace_simplified_derivatives(s, local_dict=new_local_dict, 
+                                   global_dict=new_global_dict, 
+                                   split_symbols=split_symbols)
 
     # replace
     #      =  with __Eq__(lhs,rhs)
@@ -235,7 +220,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
-            s, global_dict=new_global_dict, local_dict=local_dict, 
+            s, global_dict=new_global_dict, local_dict=new_local_dict, 
             transformations=transformations, evaluate=evaluate))
 
     # if expr is a Tuple, but s had implicit parentheses, 
@@ -680,7 +665,7 @@ class DerivativePrimeNotation(Expr):
             
 class DerivativeSimplifiedNotation(Derivative):
     def _latex(self, prtr):
-        # if is a derivative of a single variable
+        # if is a derivative with respect to a single variable
         # of a single function of that variable
         # then latex using simplified notation
         if len(self.variables)==1:
@@ -695,6 +680,21 @@ class DerivativeSimplifiedNotation(Derivative):
 
         return prtr._print_Derivative(self)
             
+    def doit(self, **hints):
+        # Special case of dx/dx is represented as Derivative(x(x),x).
+        # Should simplify to 1 on doit
+        if len(self.variables)==1:
+            variable = self.variables[0]
+            expr = self.expr
+            fn = expr.func
+            
+            from sympy.core.function import UndefinedFunction
+            if isinstance(fn,Symbol) or isinstance(fn,UndefinedFunction):
+                if len(expr.args)==1 and expr.args[0]==variable:
+                    if str(fn)==str(variable):
+                        return 1
+
+        return super(DerivativeSimplifiedNotation,self).doit(**hints)
 
 class AddUnsortInitial(Expr):
     """
