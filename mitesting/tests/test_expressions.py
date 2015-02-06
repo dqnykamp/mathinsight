@@ -720,7 +720,8 @@ class TestExpressions(TestCase):
 
 
     def test_vector(self):
-        from sympy import Matrix, latex
+        from sympy import Matrix
+        from mitesting.sympy_customized import latex
         a=Symbol('a')
         b=Symbol('b')
         local_dict={}

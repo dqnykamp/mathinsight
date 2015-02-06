@@ -6,9 +6,8 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from sympy import Tuple, Symbol, sympify, Abs, Matrix, Derivative
 from sympy.core.relational import Relational, Equality, Unequality
-from sympy.printing import latex
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
-from .sympy_customized import bottom_up
+from .sympy_customized import bottom_up, latex
 from django.utils.safestring import mark_safe
 
 @python_2_unicode_compatible

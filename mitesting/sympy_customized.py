@@ -7,6 +7,7 @@ from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
 from sympy import Tuple, Float, Symbol, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S
 from sympy.core.function import UndefinedFunction
+from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 
 import re
 import keyword
@@ -1096,3 +1097,17 @@ class MulUnsort(Mul):
             return expr.original_args
         else:
             return (expr,)
+
+
+class LatexPrinter(sympy_LatexPrinter):
+    def _print_And(self, e):
+        args = sorted(e.args, key=default_sort_key)
+        return self._print_LogOp(args, r"~\text{and}~")
+
+    def _print_Or(self, e):
+        args = sorted(e.args, key=default_sort_key)
+        return self._print_LogOp(args, r"~\text{or}~")
+
+
+def latex(expr, **settings):
+    return LatexPrinter(settings).doprint(expr)

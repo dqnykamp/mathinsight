@@ -400,7 +400,7 @@ class DiffSubsTests(SimpleTestCase):
         z=Symbol('z')
 
         self.assertEqual(DiffSubs(x*y-1,x,z,1).doit(), y-z*y)
-        from sympy import latex
+        from mitesting.sympy_customized import latex
         self.assertEqual(latex(DiffSubs(2*x,x,y,z)),
             r'\left. 2 x \vphantom{\Large I} \right|_{\substack{ x=y }}^{\substack{ x=z }}')
 

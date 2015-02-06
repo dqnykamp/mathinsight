@@ -5,9 +5,9 @@ from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.sympy_customized import bottom_up, parse_expr, \
-    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL
+    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL, latex
 from mitesting.customized_commands import normalize_floats
-from sympy import Symbol, diff, Tuple, sympify, Integer, latex
+from sympy import Symbol, diff, Tuple, sympify, Integer
 
 class BottomUpTests(SimpleTestCase):
     
@@ -260,6 +260,8 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("a and b and c and d", local_dict=local_dict)
         self.assertEqual(expr, False)
 
+        self.assertEqual(latex(parse_expr("a and b")), r'a ~\text{and}~ b')
+        self.assertEqual(latex(parse_expr("a or b")), r'a ~\text{or}~ b')
 
     def test_parse_and_process(self):
         x=Symbol('x')

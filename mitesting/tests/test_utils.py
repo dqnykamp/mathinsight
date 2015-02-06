@@ -340,7 +340,7 @@ class TestParsedFunction(SimpleTestCase):
 
     def test_no_evaluate(self):
         from mitesting.models import Expression
-        from sympy import latex
+        from mitesting.sympy_customized import latex
         z=Symbol('z')
         fun = return_parsed_function("3*x*-1*1*x-1+0-3+x","x", name="f",
                                      evaluate_level=Expression.EVALUATE_NONE)

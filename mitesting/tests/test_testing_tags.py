@@ -8,7 +8,7 @@ from django.test import SimpleTestCase
 from mitesting.math_objects import *
 from django.template import TemplateSyntaxError, Context, Template
 from sympy import Symbol, diff, Tuple, sympify
-from sympy.printing import latex
+from mitesting.sympy_customized import latex
 import random
 
 class MathObjectTests(SimpleTestCase):
