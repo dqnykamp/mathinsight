@@ -220,8 +220,10 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                                 local_dict=user_function_dict, 
                                 split_symbols=\
                                 expression.split_symbols_on_compare,
-                                evaluate_level=EVALUATE_NONE
+                                evaluate_level=EVALUATE_NONE,
+                                assume_real_variables=expression.real_variables,
                             )
+
                         except:
                             pass
             # add expression to local_dict and any alternate_dicts

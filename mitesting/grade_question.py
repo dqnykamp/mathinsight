@@ -179,6 +179,13 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             except AttributeError:
                 continue
 
+            # determine if should assume real variables when parsing
+            try:
+                assume_real_variables \
+                    = valid_answer.return_assume_real_variables()
+            except AttributeError:
+                continue
+
             # determine if have partial credit for less rounding
             round_partial_credit_digits=0
             round_partial_credit_percent=0
@@ -206,18 +213,20 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                             user_response, local_dict=local_dict, 
                             split_symbols=answer_option
                             .split_symbols_on_compare,
-                            evaluate_level=evaluate_level)
+                            evaluate_level=evaluate_level,
+                            assume_real_variables=assume_real_variables)
                     except ValueError as e:
                         feedback = "Invalid matrix: %s" % e.args[0]
                         break
                 elif expression_type == Expression.INTERVAL:
-                    from mitesting.utils import return_interval_expression
                     try:
-                        user_response_parsed =return_interval_expression(
+                        user_response_parsed =parse_and_process(
                             user_response, local_dict=local_dict, 
                             split_symbols=answer_option
                             .split_symbols_on_compare,
-                            evaluate_level=evaluate_level)
+                            evaluate_level=evaluate_level,
+                            replace_symmetric_intervals=True,
+                            assume_real_variables=assume_real_variables)
                     except (TypeError, NotImplementedError, SyntaxError, TokenError):
                         pass
                     except ValueError as e:
@@ -230,7 +239,15 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         user_response, local_dict=local_dict, 
                         split_symbols=answer_option
                         .split_symbols_on_compare,
-                        evaluate_level=evaluate_level)
+                        evaluate_level=evaluate_level,
+                        assume_real_variables=assume_real_variables)
+            except ValueError as e:
+                if "real intervals" in e.args[0]:
+                    feedback="Cannot evaluate answer; variables used in intervals must be real."
+                    break
+                else:
+                    feedback = "Sorry.  Unable to understand the answer."
+                    break
             except Exception as e:
                 feedback = "Sorry.  Unable to understand the answer."
                 break
@@ -268,15 +285,17 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         user_response, local_dict=local_dict, 
                         split_symbols=answer_option
                         .split_symbols_on_compare,
-                        evaluate_level=EVALUATE_NONE)
+                        evaluate_level=EVALUATE_NONE,
+                        assume_real_variables=assume_real_variables)
                 elif expression_type == Expression.INTERVAL:
                     try:
-                        from mitesting.utils import return_interval_expression
-                        user_response_unevaluated =return_interval_expression(
+                        user_response_unevaluated = parse_and_process(
                             user_response, local_dict=local_dict, 
                             split_symbols=answer_option
                             .split_symbols_on_compare,
-                            evaluate_level=EVALUATE_NONE)
+                            evaluate_level=EVALUATE_NONE,
+                            replace_symmetric_intervals=True,
+                            assume_real_variables=assume_real_variables)
                     except (TypeError, NotImplementedError, SyntaxError, TokenError):
                         pass
                     except ValueError as e:
@@ -289,7 +308,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         user_response, local_dict=local_dict, 
                         split_symbols=answer_option
                         .split_symbols_on_compare,
-                        evaluate_level=EVALUATE_NONE)
+                        evaluate_level=EVALUATE_NONE,
+                        assume_real_variables=assume_real_variables)
 
                 user_response_unevaluated=math_object(
                     user_response_unevaluated,

@@ -45,7 +45,10 @@ class math_object(object):
             regardless of order
         evaluate_level: if EVALUATE_NONE, then don't process the expression
             before displaying or comparing with another expression
-            Value can be retrieved with return_evaluate_level.            
+            Value can be retrieved with return_evaluate_level.
+        assume_real_variables: if True, then expression was marked as
+            assuming undefined variables were real.
+            Value can be retrieved with return_assume_real_variables
         copy_parameters_from: objects from which to copy parameters.
             If set to an object with a dictionary with a _parameters attribute,
             all parameters are passed into function are ignored 
@@ -163,6 +166,8 @@ class math_object(object):
     def return_evaluate_level(self):
         from mitesting.sympy_customized import EVALUATE_FULL
         return self._parameters.get('evaluate_level', EVALUATE_FULL)
+    def return_assume_real_variables(self):
+        return self._parameters.get('assume_real_variables', False)
     def return_expression_type(self):
         return self._parameters.get('expression_type')
 

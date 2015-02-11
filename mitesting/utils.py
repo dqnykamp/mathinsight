@@ -242,7 +242,8 @@ def return_random_word_and_plural(expression_list, rng, index=None):
 
 
 def return_random_expression(expression_list, rng, index=None, 
-                             local_dict=None, evaluate_level=None):
+                             local_dict=None, evaluate_level=None,
+                             assume_real_variables=False):
     """
     Return an expression from a string containing comma-separated list.
     Expression_list is first parsed with sympy using local_dict, if given.
@@ -255,9 +256,10 @@ def return_random_expression(expression_list, rng, index=None,
     """
     
     try:
-        parsed_list = parse_and_process(expression_list, 
-                                        local_dict=local_dict,
-                                        evaluate_level=evaluate_level)
+        parsed_list = parse_and_process(
+            expression_list, local_dict=local_dict,
+            evaluate_level=evaluate_level,
+            assume_real_variables=assume_real_variables)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random expression: "
                          + expression_list
@@ -293,7 +295,8 @@ class ParsedFunction(Function):
 
 def return_parsed_function(expression, function_inputs, name,
                            local_dict=None, 
-                           default_value=None, evaluate_level=None):
+                           default_value=None, evaluate_level=None,
+                           assume_real_variables=False):
     """
     Parse expression into function of function_inputs,
     a subclass of ParsedFunction.
@@ -328,13 +331,15 @@ def return_parsed_function(expression, function_inputs, name,
     # test evaluate with the local_dict_sub to check for errors in format
     try:
         expr2= parse_and_process(expression, local_dict=local_dict_sub,
-                                 evaluate_level=evaluate_level)
+                                 evaluate_level=evaluate_level,
+                                 assume_real_variables=assume_real_variables)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
 
     if default_value is None:
-        default_value = parse_and_process(expression, local_dict=local_dict,
-                                          evaluate_level=evaluate_level)
+        default_value = parse_and_process(
+            expression, local_dict=local_dict, evaluate_level=evaluate_level,
+            assume_real_variables=assume_real_variables)
 
     expression_string=expression
     
@@ -350,6 +355,7 @@ def return_parsed_function(expression, function_inputs, name,
         unparsed_expression = expression_string
         local_dict = local_dict_sub
         the_evaluate_level = evaluate_level
+        real_variables = assume_real_variables
 
         default=default_value
 
@@ -366,7 +372,8 @@ def return_parsed_function(expression, function_inputs, name,
 
             return parse_and_process(cls.unparsed_expression,
                                      local_dict=eval_local_dict,
-                                     evaluate_level=cls.the_evaluate_level)
+                                     evaluate_level=cls.the_evaluate_level,
+                                     assume_real_variables=cls.real_variables)
 
     # must assign to __name__ outside class definition 
     # so it overwrites default name
@@ -375,21 +382,22 @@ def return_parsed_function(expression, function_inputs, name,
     return _parsed_function
 
 
-def return_interval_expression(expression, local_dict=None, evaluate_level=None,
-                               split_symbols=None):
+def replace_intervals(expression, replace_symmetric=True):
     """
     Look for combinations of opening ( or [, comma, and closing ) or ].
     If find both, them replace with 
-    Interval(... , left_open===True/False, right_open===True/False)
-    and attempt to parse
+    __Interval__(... , left_open===True/False, right_open===True/False).
 
     With nested combinations of this pattern,
     only the inner combination is converted to an Interval
 
-    returns 
-    - expression parsed with intervals
+    If replace_symmetric=True, then open intervals of form (1,2) 
+    and closed intervals of form [1,2] are converted.
+    Otherwise, only half-open intervals are converted,
+    and open/closed intervals are untouched.
 
-    raises value error if interval limit is not real
+    returns 
+    - string with __Intervals__()
 
     """
 
@@ -438,30 +446,25 @@ def return_interval_expression(expression, local_dict=None, evaluate_level=None,
         left_open=interval['left_open']
         right_open=interval['right_open']
 
+        if not replace_symmetric and left_open==right_open:
+            continue
+
         expr_interval += expression[last_ind:left_ind]
 
         # have to use === to specify keywords since 
-        # customized parse_expr convert = to Eq
-        expr_interval += " Interval(%s,left_open===%s, right_open===%s)" % \
+        # customized parse_expr converts = to Eq
+        expr_interval += " __Interval__(%s,left_open===%s, right_open===%s)" % \
                  (expression[left_ind+1:right_ind],
                   left_open, right_open)
 
         last_ind=right_ind+1
     expr_interval += expression[last_ind:]
 
-    new_local_dict = {}
-    if local_dict:
-        new_local_dict.update(local_dict)
-    from sympy import Interval
-    new_local_dict['Interval'] = Interval
-
-    return parse_and_process(expr_interval, local_dict=new_local_dict,
-                             evaluate_level = evaluate_level,
-                             split_symbols=split_symbols)
+    return expr_interval
 
 
 def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
-                             split_symbols=None):
+                             split_symbols=None, assume_real_variables=False):
 
     import re
     
@@ -475,8 +478,9 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     new_local_dict['Matrix'] = Matrix
 
     expr= parse_and_process(expr_matrix, local_dict=new_local_dict,
-                             evaluate_level = evaluate_level,
-                             split_symbols=split_symbols)
+                            evaluate_level = evaluate_level,
+                            split_symbols=split_symbols,
+                            assume_real_variables=assume_real_variables)
 
     # If expression was a Matrix already, then have a 1x1 matrix
     # whose only element is a matrix.
@@ -488,7 +492,7 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     return expr
     
 
-def replace_boolean_equals_in(s):
+def replace_boolean_equals_in(s, evaluate=True):
     """
     Replace and/&, or/|, =, != and "in" contain in s
     with operators to be parsed by sympy
@@ -501,7 +505,9 @@ def replace_boolean_equals_in(s):
     2. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
 
-    3. replace in placeholder with (rhs).contains(lhs)
+    3. replace in placeholder with (rhs).contains(lhs),
+       or, if evaluate=False, with (rhs).contains(lhs, evaluate=False)
+
    
     4. replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
@@ -534,6 +540,7 @@ def replace_boolean_equals_in(s):
             len_op=1
             new_op='__Eq__(%s,%s)'
             reverse_arguments=False
+            replace_rhs_intervals=False
             # characters captured in pattern to left of operator
             loffset=1
             # characters that signal end of expression if not in ()
@@ -543,6 +550,7 @@ def replace_boolean_equals_in(s):
             len_op=2
             new_op='__Ne__(%s,%s)'
             reverse_arguments=False
+            replace_rhs_intervals=False
             # characters captured in pattern to left of operator
             loffset=1
             # characters that signal end of expression if not in ()
@@ -550,8 +558,12 @@ def replace_boolean_equals_in(s):
         elif i==2:
             pattern = re.compile('(___in_op_pl___)')
             len_op=14
-            new_op='(%s).contains(%s)'
+            if evaluate:
+                new_op='(%s).contains(%s)'
+            else:
+                new_op='(%s).contains(%s, evaluate=False)'
             reverse_arguments=True
+            replace_rhs_intervals=True
             # characters captured in pattern to left of operator
             loffset=0
             # characters that signal end of expression if not in ()
@@ -561,6 +573,7 @@ def replace_boolean_equals_in(s):
             len_op=1
             new_op='__And__(%s,%s)'
             reverse_arguments=False
+            replace_rhs_intervals=False
             # characters captured in pattern to left of operator
             loffset=1
             # characters that signal end of expression if not in ()
@@ -570,6 +583,7 @@ def replace_boolean_equals_in(s):
             len_op=1
             new_op='__Or__(%s,%s)'
             reverse_arguments=False
+            replace_rhs_intervals=False
             # characters captured in pattern to left of operator
             loffset=1
             # characters that signal end of expression if not in ()
@@ -583,13 +597,13 @@ def replace_boolean_equals_in(s):
 
             # find location of first ( before and not matched by )
             # or at a comma not enclosed in ()
-            # count braces as parens, don't keep track of them separately
+            # count braces and brackets as parens, don't track them separately
             n_closepar=0
             begin_pos=0
             for (j,c) in enumerate(s[ind-1::-1]):
-                if c==")" or c=="}":
+                if c==")" or c=="}" or c=="]":
                     n_closepar+=1
-                elif c=="(" or c=="{":
+                elif c=="(" or c=="{" or c=="[":
                     n_closepar-=1
                     if n_closepar ==-1:
                         begin_pos=ind-j
@@ -604,9 +618,9 @@ def replace_boolean_equals_in(s):
             n_openpar=0
             end_pos=len(s)
             for (j,c) in enumerate(s[ind+len_op:]):
-                if c=="(" or c=="{":
+                if c=="(" or c=="{" or c=="[":
                     n_openpar+= 1
-                elif c==")" or c=="}":
+                elif c==")" or c=="}" or c=="]":
                     n_openpar-=1
                     if n_openpar==-1:
                         end_pos=ind+j+len_op
@@ -622,6 +636,8 @@ def replace_boolean_equals_in(s):
             if lhs=="" or rhs=="":
                 break
             else:
+                if replace_rhs_intervals:
+                    rhs = replace_intervals(rhs, replace_symmetric=True)
                 if reverse_arguments:
                     new_command_string = new_op % (rhs,lhs)
                 else:
@@ -633,7 +649,8 @@ def replace_boolean_equals_in(s):
 
 
 def replace_simplified_derivatives(s, local_dict, global_dict, 
-                                   split_symbols=False):
+                                   split_symbols=False,
+                                   assume_real_variables=False):
     """
     Convert expressions such as f'(x) to DerivativePrimeNotation
     and expressions such as df/dx to DerivativeSimplifiedNotation
@@ -717,11 +734,17 @@ def replace_simplified_derivatives(s, local_dict, global_dict,
             fun_mapped=global_dict[fun]
 
         if fun_mapped is None:
-            new_symbol = SymbolCallable(str(fun))
+            if assume_real_variables:
+                new_symbol = SymbolCallable(str(fun), real=True)
+            else:
+                new_symbol = SymbolCallable(str(fun))
         else:
             try:
                 if fun_mapped.__class__ == Symbol:
-                    new_symbol=SymbolCallable(str(fun_mapped))
+                    if assume_real_variables:
+                        new_symbol=SymbolCallable(str(fun_mapped), real=True)
+                    else:
+                        new_symbol=SymbolCallable(str(fun_mapped))
             except AttributeError:
                 pass
 
@@ -760,8 +783,7 @@ def evaluate_expression(the_expr, rng,
     # determine if the index for random_list_group was chosen already
     if the_expr.expression_type in [the_expr.RANDOM_WORD,
                                 the_expr.RANDOM_EXPRESSION,
-                                the_expr.RANDOM_FUNCTION_NAME,
-                                the_expr.RANDOM_REAL_VARIABLE]:
+                                the_expr.RANDOM_FUNCTION_NAME]:
 
         if the_expr.random_list_group:
             try:
@@ -806,7 +828,8 @@ def evaluate_expression(the_expr, rng,
             (math_expr, index) = return_random_expression(
                 the_expr.expression, index=group_index,
                 local_dict=local_dict,
-                evaluate_level = the_expr.evaluate_level, rng=rng)
+                evaluate_level = the_expr.evaluate_level, rng=rng,
+                assume_real_variables=the_expr.real_variables)
         except IndexError:
             raise IndexError("Insufficient entries for random list group: " \
                                      + the_expr.random_list_group)
@@ -826,23 +849,12 @@ def evaluate_expression(the_expr, rng,
             # function_text = six.text_type(math_expr)
             # but sympy doesn't yet accept unicode for function name
             function_text = str(math_expr)
-            math_expr = SymbolCallable(function_text)
+            if the_expr.real_variables:
+                math_expr = SymbolCallable(function_text, real=True)
+            else:
+                math_expr = SymbolCallable(function_text)
             try:
                 user_function_dict[function_text] = math_expr
-            except TypeError:
-                pass
-
-        elif the_expr.expression_type == the_expr.RANDOM_REAL_VARIABLE:
-            # math_expr should be a Symbol
-            # otherwise not a valid real variable
-            if not isinstance(math_expr,Symbol):
-                raise ValueError("Invalid real variable: %s " \
-                                 % math_expr)
-
-            symbol_name = str(math_expr)
-            math_expr=Symbol(symbol_name, real=True)
-            try:
-                user_function_dict[symbol_name]=math_expr
             except TypeError:
                 pass
 
@@ -867,9 +879,12 @@ def evaluate_expression(the_expr, rng,
         # if interval, try replacing opening and closing parens with interval
         if the_expr.expression_type == the_expr.INTERVAL:
             try:
-                math_expr = return_interval_expression(
-                    expression, local_dict=local_dict, 
-                    evaluate_level = the_expr.evaluate_level)
+                math_expr = parse_and_process(
+                    expression, local_dict=local_dict,
+                    evaluate_level = the_expr.evaluate_level,
+                    replace_symmetric_intervals=True,
+                    assume_real_variables=the_expr.real_variables)
+
             except (TypeError, NotImplementedError, SyntaxError, TokenError):
                 math_expr=None
             except ValueError as e:
@@ -882,7 +897,8 @@ def evaluate_expression(the_expr, rng,
             try:
                 math_expr = return_matrix_expression(
                     expression, local_dict=local_dict, 
-                    evaluate_level = the_expr.evaluate_level)
+                    evaluate_level = the_expr.evaluate_level,
+                    assume_real_variables = the_expr.real_variables)
             except ValueError as e:
                 raise ValueError("Invalid format for matrix\n%s" % e.args[0])
             except (TypeError, NotImplementedError, SyntaxError, TokenError):
@@ -891,7 +907,8 @@ def evaluate_expression(the_expr, rng,
             if math_expr is None:
                 math_expr = parse_and_process(
                     expression, local_dict=local_dict,
-                    evaluate_level = the_expr.evaluate_level)
+                    evaluate_level = the_expr.evaluate_level,
+                    assume_real_variables = the_expr.real_variables)
         except (TokenError, SyntaxError, TypeError, AttributeError):
             if the_expr.expression_type in [
                 the_expr.RANDOM_ORDER_TUPLE,
@@ -911,7 +928,11 @@ def evaluate_expression(the_expr, rng,
                 et = "expression"
             raise ValueError("Invalid format for %s: %s" \
                                  % (et, the_expr.expression))
-
+        except ValueError as e:
+            if "real intervals" in e.args[0]:
+                raise ValueError("Variables used in intervals must be real")
+            else:
+                raise
 
         # If a set and didn't include braces, will be a TupleNoParen.
         # In that case, convert to set and back to remove duplicates
@@ -973,20 +994,6 @@ def evaluate_expression(the_expr, rng,
                 math_expr.sort(key=customized_sort_key)
                 math_expr = the_class(*math_expr)
 
-        if the_expr.expression_type == the_expr.REAL_VARIABLE:
-            # math_expr should be a Symbol
-            # otherwise not valid for real variable
-            if not isinstance(math_expr, Symbol):
-                raise ValueError("Invalid real variable: %s " \
-                                 % math_expr)
-
-            symbol_name = str(math_expr)
-            math_expr=Symbol(symbol_name, real=True)
-            try:
-                user_function_dict[symbol_name]=math_expr
-            except TypeError:
-                pass
-
         if the_expr.expression_type == the_expr.FUNCTION_NAME:
             # math_expr should be a Symbol or an UndefinedFunction
             # otherwise not a valid function name
@@ -1001,7 +1008,10 @@ def evaluate_expression(the_expr, rng,
             # function_text = six.text_type(math_expr)
             # but sympy doesn't yet accept unicode for function name
             function_text = str(math_expr)
-            math_expr = SymbolCallable(function_text)
+            if the_expr.real_variables:
+                math_expr = SymbolCallable(function_text,real=True)
+            else:
+                math_expr = SymbolCallable(function_text)
             try:
                 user_function_dict[function_text] = math_expr
             except TypeError:
@@ -1013,7 +1023,8 @@ def evaluate_expression(the_expr, rng,
                 the_expr.expression, function_inputs=the_expr.function_inputs,
                 name = the_expr.name, local_dict=local_dict,
                 default_value=math_expr, 
-                evaluate_level = the_expr.evaluate_level)
+                evaluate_level = the_expr.evaluate_level,
+                assume_real_variables = the_expr.real_variables)
 
             # for FUNCTION, add parsed_function rather than
             # math_expr to local dict
@@ -1034,7 +1045,8 @@ def evaluate_expression(the_expr, rng,
                     new_alternate_exprs.append(math_object(
                         e, name=the_expr.name,
                         evaluate_level = the_expr.evaluate_level,
-                        expression_type=the_expr.expression_type))
+                        expression_type=the_expr.expression_type,
+                        assume_real_variables = the_expr.real_variables))
                 math_expr=math_expr[0]
 
     # for all expression_types except FUNCTION (and RANDOM WORD)
@@ -1059,4 +1071,5 @@ def evaluate_expression(the_expr, rng,
         evaluate_level = the_expr.evaluate_level,
         tuple_is_unordered=(the_expr.expression_type==the_expr.UNORDERED_TUPLE
                             or the_expr.expression_type==the_expr.SET),
-        expression_type=the_expr.expression_type)
+        expression_type=the_expr.expression_type,
+        assume_real_variables = the_expr.real_variables)

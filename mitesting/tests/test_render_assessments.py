@@ -39,8 +39,8 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['the_x'], Symbol('x'))
-        self.assertEqual(expression_context['_sympy_local_dict_']['the_x'], Symbol('x'))
+        self.assertEqual(expression_context['the_x'], Symbol('x', real=True))
+        self.assertEqual(expression_context['_sympy_local_dict_']['the_x'], Symbol('x', real=True))
 
     def test_with_composed_expressions(self):
         self.new_expr(name="expr",expression="x*x")
@@ -54,9 +54,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
-        x=Symbol('x')
-        y=Symbol('y')
-        z=Symbol('z')
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
         self.assertEqual(expression_context['expr'], x**2)
         self.assertEqual(expression_context['expr2'], x**2/y)
         self.assertEqual(expression_context['expr3'], 5*x**2/y + x**2*z)
@@ -78,9 +78,9 @@ class TestSetupExpressionContext(TestCase):
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
-        x=Symbol('x')
-        y=Symbol('y')
-        z=Symbol('z')
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
         self.assertEqual(expression_context['a'], x+y)
         self.assertEqual(expression_context['b'], 3*z/y)
         self.assertEqual(expression_context['_sympy_local_dict_']['a'], x+y)
@@ -98,14 +98,14 @@ class TestSetupExpressionContext(TestCase):
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng)
             self.assertTrue(results['expression_context']['_user_function_dict_'] in  \
-                                [{item: SymbolCallable(str(item))} for item in \
+                                [{item: SymbolCallable(str(item),real=True)} for item in \
                                      ['f','g','h','k']])
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
-            x=Symbol('x')
+            x=Symbol('x', real=True)
             f = expression_context['f'].return_expression()
-            self.assertTrue(f in [SymbolCallable(str(item)) for item in \
+            self.assertTrue(f in [SymbolCallable(str(item), real=True) for item in \
                                       ['f','g','h','k']])
             self.assertEqual(expression_context['a'], 3*f(x)+2)
             self.assertEqual(expression_context['_sympy_local_dict_']['f'], f)
@@ -133,7 +133,7 @@ class TestSetupExpressionContext(TestCase):
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
-            x=Symbol('x')
+            x=Symbol('x', real=True)
             m = expression_context['m'].return_expression()
             n = expression_context['n'].return_expression()
             self.assertTrue(m > n)
@@ -197,9 +197,9 @@ class TestSetupExpressionContext(TestCase):
             n=expression_context["n"]
             self.assertTrue(x != y)
             self.assertTrue(n > m)
-            self.assertTrue(x in [Symbol(item) for item in 
+            self.assertTrue(x in [Symbol(item, real=True) for item in 
                                   ["x","y","z","u","v","w"]])
-            self.assertTrue(y in [Symbol(item) for item in 
+            self.assertTrue(y in [Symbol(item, real=True) for item in 
                                   ["x","y","z","u","v","w"]])
             self.assertTrue(m in range(-10,11))
             self.assertTrue(n in range(-10,11))
@@ -267,8 +267,8 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(expression_error.get('e1'), None)
         self.assertEqual(expression_error.get('e3'), None)
         self.assertEqual(expression_error.get('e5'), None)
-        x=Symbol("x")
-        z=Symbol("z")
+        x=Symbol("x", real=True)
+        z=Symbol("z", real=True)
         q=Symbol("??")
         expr_context=results['expression_context']
         self.assertEqual(expr_context['e1'], 3*x**2/z)
@@ -342,11 +342,11 @@ class TestSetupExpressionContext(TestCase):
     def test_command_set_inclusion(self):
         x=Symbol('x')
         from mitesting.customized_commands import sin, cos, log, exp, ln
-        self.new_expr(name="sincos", expression="sin(x)*cos(x)")
-        self.new_expr(name="explog1", expression="exp(x)*log(x)")
-        self.new_expr(name="explog2", expression="e^x*log(x)")
-        self.new_expr(name="expln1", expression="exp(x)*ln(x)")
-        self.new_expr(name="expln2", expression="e^x*ln(x)")
+        self.new_expr(name="sincos", expression="sin(x)*cos(x)", real_variables=False)
+        self.new_expr(name="explog1", expression="exp(x)*log(x)", real_variables=False)
+        self.new_expr(name="explog2", expression="e^x*log(x)", real_variables=False)
+        self.new_expr(name="expln1", expression="exp(x)*ln(x)", real_variables=False)
+        self.new_expr(name="expln2", expression="e^x*ln(x)", real_variables=False)
 
         rng = random.Random()
         rng.seed()
@@ -462,8 +462,8 @@ class TestSetupExpressionContext(TestCase):
         rng.seed(1)
         results=setup_expression_context(self.q, rng=rng)
         expression_context = results['expression_context']
-        x=Symbol('x')
-        y=Symbol('y')
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
         self.assertEqual(expression_context['f'], x**2)
         self.assertEqual(expression_context['f_y_1'], y**2+1)
         self.assertEqual(expression_context['f_1'], x**2+1)
@@ -471,11 +471,11 @@ class TestSetupExpressionContext(TestCase):
 
 
     def test_expression_with_alternates(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
-        x=Symbol('x')
-        y=Symbol('y')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
         self.new_expr(name="a",expression="a,b,c",
                       expression_type=Expression.EXPRESSION_WITH_ALTERNATES)
         self.new_expr(name="x_a",expression="x+a")
@@ -535,9 +535,9 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        x=Symbol('x')
-        y=Symbol('y')
-        b=Symbol('b')
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        b=Symbol('b', real=True)
         
         from mitesting.sympy_customized import AddUnsort
         self.assertEqual(expression_context['a'], y+x**2)
@@ -567,8 +567,8 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('a'))
-        self.assertEqual(expression_context['c'], SymbolCallable('g'))
+        self.assertEqual(expression_context['b'], Symbol('a', real=True))
+        self.assertEqual(expression_context['c'], SymbolCallable('g', real=True))
 
 
     def test_no_response(self):

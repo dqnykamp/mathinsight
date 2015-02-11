@@ -57,6 +57,19 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("5*x"), 5*x)
         self.assertEqual(parse_expr("5 x y"), 5*x*y)
 
+    def test_assume_real(self):
+        x = Symbol('x')
+        y = Symbol('y')
+        x_real = Symbol('x', real=True)
+        y_real = Symbol('y', real=True)
+        
+        self.assertEqual(parse_expr("5 x y-y^3/x"), 5*x*y-y**3/x)
+        self.assertEqual(parse_expr("5 x y-y^3/x", assume_real_variables=False),
+                         5*x*y-y**3/x)
+        self.assertEqual(parse_expr("5 x y-y^3/x", assume_real_variables=True),
+                         5*x_real*y_real-y_real**3/x_real)
+        
+
     def test_split_symbols(self):
         x = Symbol('x')
         y = Symbol('y')
@@ -64,6 +77,16 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("5xy"), 5*xy)
         self.assertEqual(parse_expr("5xy", split_symbols=False), 5*xy)
         self.assertEqual(parse_expr("5xy", split_symbols=True), 5*x*y)
+
+        x = Symbol('x', real=True)
+        y = Symbol('y', real=True)
+        xy = Symbol('xy', real=True)
+        expr=parse_expr("5xy", assume_real_variables=True)
+        self.assertEqual(expr, 5*xy)
+        expr=parse_expr("5xy", split_symbols=False, assume_real_variables=True)
+        self.assertEqual(expr, 5*xy)
+        expr=parse_expr("5xy", split_symbols=True, assume_real_variables=True)
+        self.assertEqual(expr, 5*x*y)
 
 
     def test_rationals_floats(self):
@@ -576,10 +599,83 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("(1/2).evalf()"), 0.5)
 
     def test_contains(self):
-        from sympy import Interval, FiniteSet
+        from sympy import Or
+        from mitesting.sympy_customized import Interval, FiniteSet
         x=Symbol('x')
-        expr=parse_expr("x in Interval(1,2)", local_dict={'Interval':Interval})
-        self.assertEqual(expr, Interval(1,2).contains(x))
+        expr=parse_expr("x in (1,2)")
+        self.assertEqual(expr, Interval(1,2, left_open=True, right_open=True).contains(x))
+        self.assertEqual(latex(expr), r'x > 1 ~\text{and}~ x < 2')
+
+        expr=parse_expr("x in (1,2)", evaluate=False)
+        self.assertEqual(expr, Interval(1,2, left_open=True, right_open=True).contains(x, evaluate=False))
+        self.assertEqual(latex(expr), r'x \in \left(1, 2\right)')
+
+        expr=parse_expr("1 in [1,2]")
+        self.assertEqual(expr, True)
+
+        expr=parse_expr("1 in [1,2]", evaluate=False)
+        self.assertEqual(expr, Interval(1,2).contains(1, evaluate=False))
+        self.assertEqual(latex(expr), r'1 \in \left[1, 2\right]')
 
         expr=parse_expr("x in {1,2,3}")
         self.assertEqual(expr, FiniteSet(1,2,3).contains(x))
+
+        expr=parse_expr("x in {1,2,x}")
+        self.assertEqual(expr, True)
+
+        expr=parse_expr("x in {1,2,x}", evaluate=False)
+        self.assertEqual(expr, FiniteSet(1,2,x).contains(x, evaluate=False))
+        self.assertEqual(latex(expr), r'x \in \left\{1, 2, x\right\}')
+
+        a=Symbol('a')
+        b=Symbol('b')
+        expr=parse_expr("x in {a,b} or x in (1,2]")
+        self.assertEqual(expr, Or(FiniteSet(a,b).contains(x),Interval(1,2, left_open=True).contains(x)))
+
+        from mitesting.customized_commands import iif
+        expr=parse_expr("if(x in {a,b}, 1, 0)", local_dict={'x': a, 'if': iif})
+        self.assertEqual(expr,1)
+        
+
+    def test_intervals(self):
+        from mitesting.sympy_customized import Interval
+        a=Symbol('a')
+        b=Symbol('b')
+
+        self.assertEqual(parse_expr("(a,b)"), Tuple(a,b))
+        self.assertEqual(parse_expr("[a,b]"), [a,b])
+        
+
+        self.assertRaisesRegexp(ValueError, "Only real intervals",
+                                parse_expr, "(a,b)", 
+                                replace_symmetric_intervals=True)
+        self.assertRaisesRegexp(ValueError, "Only real intervals",
+                                parse_expr, "[a,b]", 
+                                replace_symmetric_intervals=True)
+        self.assertRaisesRegexp(ValueError, "Only real intervals",
+                                parse_expr, "(a,b]")
+        self.assertRaisesRegexp(ValueError, "Only real intervals",
+                                parse_expr, "[a,b)")
+
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+
+        expr=parse_expr("(a,b)", replace_symmetric_intervals=True,
+                        assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b,left_open=True,
+                                                      right_open=True))
+        expr=parse_expr("[a,b]", replace_symmetric_intervals=True,
+                        assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b))
+
+        expr=parse_expr("(a,b]", assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b, left_open=True))
+        expr=parse_expr("(a,b]", replace_symmetric_intervals=True,
+                        assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b, left_open=True))
+
+        expr=parse_expr("[a,b)", assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b, right_open=True))
+        expr=parse_expr("[a,b)", replace_symmetric_intervals=True,
+                        assume_real_variables=True)
+        self.assertEqual(expr, Interval(a,b, right_open=True))

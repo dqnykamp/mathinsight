@@ -967,13 +967,13 @@ class TestGradeQuestionView(TestCase):
         num = response.context['num']
         
         from sympy import Symbol
-        if xx==Symbol("w"):
+        if xx==Symbol("w", real=True):
             xx2 = "y"
             xx3 = "z"
-        elif xx==Symbol("y"):
+        elif xx==Symbol("y",real=True):
             xx2 = "x"
             xx3 = "z"
-        elif xx==Symbol("z"):
+        elif xx==Symbol("z",real=True):
             xx2 = "x"
             xx3 = "y"
 
@@ -1893,38 +1893,58 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_intervals(self):
-        self.q.expression_set.create(name="r", expression="r",
-                                     expression_type=Expression.REAL_VARIABLE)
         self.q.expression_set.create(
             name="interval1", expression="(0,1)", 
             expression_type = Expression.INTERVAL)
         self.q.expression_set.create(
+            name="interval1a", expression="(0,1)")
+        self.q.expression_set.create(
             name="interval2", expression="(5,r]", 
             expression_type = Expression.INTERVAL)
         self.q.expression_set.create(
+            name="interval2a", expression="(5,r]")
+        self.q.expression_set.create(
             name="interval3", expression="[0,1]", 
             expression_type = Expression.INTERVAL)
+        self.q.expression_set.create(
+            name="interval3a", expression="[0,1]")
+        self.q.expression_set.create(
+            name="interval3b", expression="[0,1]", 
+            expression_type = Expression.INTERVAL,
+            real_variables=False)
 
-        self.q.question_text="Type intervals: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
+        self.q.question_text="Type intervals: {% answer ans1 %} {% answer ans1a %} {% answer ans2 %} {% answer ans2a %} {% answer ans3 %} {% answer ans3a %} {% answer ans3b %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="interval1")
+        self.new_answer(answer_code="ans1a", answer="interval1a")
         self.new_answer(answer_code="ans2", answer="interval2")
+        self.new_answer(answer_code="ans2a", answer="interval2a")
         self.new_answer(answer_code="ans3", answer="interval3")
+        self.new_answer(answer_code="ans3a", answer="interval3a")
+        self.new_answer(answer_code="ans3b", answer="interval3b")
 
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response,"Type intervals: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
-        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
-        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
-        answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
+        answer_identifier1=computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier1a=computer_grade_data["answer_info"][1]['identifier']
+        answer_identifier2=computer_grade_data["answer_info"][2]['identifier']
+        answer_identifier2a=computer_grade_data["answer_info"][3]['identifier']
+        answer_identifier3=computer_grade_data["answer_info"][4]['identifier']
+        answer_identifier3a=computer_grade_data["answer_info"][5]['identifier']
+        answer_identifier3b=computer_grade_data["answer_info"][6]['identifier']
 
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier1] = "(0,1)"
+        answers["answer_" + answer_identifier1a] = "(0,1)"
         answers["answer_" + answer_identifier2] = "(5,r]"
+        answers["answer_" + answer_identifier2a] = "(5,r]"
         answers["answer_" + answer_identifier3] = "[0,1]"
+        answers["answer_" + answer_identifier3a] = "[0,1]"
+        answers["answer_" + answer_identifier3b] = "[0,1]"
         
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
 
@@ -1932,20 +1952,36 @@ class TestGradeQuestionView(TestCase):
         results = json.loads(response.content)
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier1a]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2a]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier3]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier3a]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier3b]["answer_correct"])
+
+
 
         answers["answer_" + answer_identifier3] = "[0,a]"
+        answers["answer_" + answer_identifier3a] = "[0,a]"
+        answers["answer_" + answer_identifier3b] = "[0,a]"
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
 
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)
         self.assertFalse(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier1a]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2a]["answer_correct"])
         self.assertFalse(results["answers"][answer_identifier3]["answer_correct"])
-        self.assertTrue("variables used in intervals must be real" in
+        self.assertFalse(results["answers"][answer_identifier3a]["answer_correct"])
+        self.assertFalse(results["answers"][answer_identifier3b]["answer_correct"])
+        self.assertFalse("variables used in intervals must be real" in
                         results["answers"][answer_identifier3]["answer_feedback"])
+        self.assertFalse("variables used in intervals must be real" in
+                         results["answers"][answer_identifier3a]["answer_feedback"])
+        self.assertTrue("variables used in intervals must be real" in
+                        results["answers"][answer_identifier3b]["answer_feedback"])
 
 
 
@@ -2393,6 +2429,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
+
     def test_post_user_response(self):
         self.q.question_text="One thing: {% answer fun_x assign_to_expression='good_try' %}, then double it: {% answer double_me %}"
         
@@ -2449,6 +2486,66 @@ class TestGradeQuestionView(TestCase):
 
         self.assertTrue("is correct" in results["answers"][answer_identifier2]["answer_feedback"])
 
+
+    def test_post_user_response_real(self):
+        self.q.question_text="try1: {% answer a1 assign_to_expression='try1' %}, try2: {% answer a2 assign_to_expression='try2' real=True %}, try3: {% answer a3 assign_to_expression='try3' real=False %}, try1a: {% answer try2a %}, try1a: {% answer try2a %}, try3a: {% answer try3a %}"
+        
+        self.new_answer(answer_code="a1", answer="fun_x")
+        self.new_answer(answer_code="a2", answer="fun_x")
+        self.new_answer(answer_code="a3", answer="fun_x")
+
+
+        self.q.expression_set.create(name="try1a",\
+                        expression="try1", post_user_response=True)
+        self.q.expression_set.create(name="try2a",\
+                        expression="try2", post_user_response=True)
+        self.q.expression_set.create(name="try3a",\
+                        expression="try3", post_user_response=True)
+
+        self.new_answer(answer_code="try1a", answer="try1a")
+        self.new_answer(answer_code="try2a", answer="try2a")
+        self.new_answer(answer_code="try3a", answer="try3a")
+
+        self.q.save()
+
+        response = self.client.get("/assess/question/%s" % self.q.id)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
+        answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
+        answer_identifier1a= computer_grade_data["answer_info"][3]['identifier']
+        answer_identifier2a= computer_grade_data["answer_info"][4]['identifier']
+        answer_identifier3a= computer_grade_data["answer_info"][5]['identifier']
+
+        fun_x = response.context['fun_x']
+        
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier1:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier2:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier3:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier1a:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier2a:
+                                   str(fun_x.return_expression()),
+                                   "answer_%s" % answer_identifier3a:
+                                   str(fun_x.return_expression()),
+                               })
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+
+        self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier3]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier1a]["answer_correct"])
+        self.assertTrue(results["answers"][answer_identifier2a]["answer_correct"])
+        self.assertFalse(results["answers"][answer_identifier3a]["answer_correct"])
 
 class TestInjectQuestionSolutionView(TestCase):
     def setUp(self):

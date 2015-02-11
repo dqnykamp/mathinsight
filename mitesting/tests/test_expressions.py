@@ -7,7 +7,8 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL, \
-    EVALUATE_FULL, SymbolCallable, TupleNoParen
+    EVALUATE_FULL, SymbolCallable, TupleNoParen, Interval, \
+    FiniteSet
 from sympy import Symbol, sympify, Tuple
 from numpy import arange, linspace
 import re
@@ -30,23 +31,25 @@ class TestExpressions(TestCase):
         return Expression.objects.create(question=self.q, **kwargs)
 
     def test_x(self):
+        x=Symbol('x', real=True)
         local_dict={}
 
         expr_x=self.new_expr(name="the_x",expression="x")
         expr_eval = expr_x.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr_eval, math_object("x"))
-        self.assertEqual(local_dict, {"the_x": Symbol('x')})
+        self.assertEqual(expr_eval, x)
+        self.assertEqual(local_dict, {"the_x": x})
 
         expr_comb=self.new_expr(name="comb",expression="the_x^2")
         expr_eval2 = expr_comb.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr_eval2, math_object("x^2"))
-        self.assertEqual(local_dict, {"the_x": Symbol('x'), 
-                                       "comb": Symbol('x')**2})
+        self.assertEqual(expr_eval2, x**2)
+        self.assertEqual(local_dict, {"the_x": x,"comb": x**2})
 
     def test_with_no_local_dict(self):
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
         expr_x=self.new_expr(name="the_x",expression="x*y")
         expr_eval = expr_x.evaluate(rng=self.rng)['expression_evaluated']
-        self.assertEqual(expr_eval, math_object("x*y"))
+        self.assertEqual(expr_eval, x*y)
         
 
     def test_random_number(self):
@@ -79,10 +82,10 @@ class TestExpressions(TestCase):
 
             
     def test_function(self):
-        x=Symbol('x')
-        y=Symbol('y')
-        z=Symbol('z')
-        c=Symbol('c')
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         test_local_dict = {}
         
@@ -117,7 +120,7 @@ class TestExpressions(TestCase):
 
 
     def test_function_name(self):
-        x = Symbol('x')
+        x = Symbol('x', real=True)
         local_dict={}
         test_dict = {}
         user_function_dict = {}
@@ -128,7 +131,7 @@ class TestExpressions(TestCase):
         f = expr1.evaluate(rng=self.rng, local_dict=local_dict, 
                            user_function_dict=user_function_dict)['expression_evaluated']\
                  .return_expression()
-        self.assertEqual(f, SymbolCallable(str("f")))
+        self.assertEqual(f, SymbolCallable(str("f"), real=True))
         test_dict["f"] = f
         self.assertEqual(local_dict, test_dict)
         self.assertEqual(user_function_dict, test_dict)
@@ -139,26 +142,25 @@ class TestExpressions(TestCase):
         x_real = Symbol('x', real=True)
         local_dict={}
 
-        expr1=self.new_expr(name="xreal", expression="x",
-                            expression_type = Expression.REAL_VARIABLE)
+        expr1=self.new_expr(name="xreal", expression="x")
         x1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                  .return_expression()
 
-        expr2=self.new_expr(name="xgen", expression="x")
+        expr2=self.new_expr(name="xgen", expression="x", real_variables=False)
         x2 = expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
+                 .return_expression()
+
+        expr3=self.new_expr(name="xgen", expression="x", real_variables=True)
+        x3 = expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']\
                  .return_expression()
 
         self.assertEqual(x_real,x1)
         self.assertEqual(x_gen,x2)
+        self.assertEqual(x_real,x3)
+        self.assertNotEqual(x_gen,x3)
         self.assertNotEqual(x_real,x2)
         self.assertNotEqual(x_gen,x1)
         
-        expr3=self.new_expr(name="xmess", expression="x*y",
-                            expression_type = Expression.REAL_VARIABLE)
-        self.assertRaisesRegexp(ValueError, "Invalid real variable",
-                                expr3.evaluate, rng=self.rng,
-                                local_dict=local_dict)
-
 
     def test_required_condition_ne(self):
         from sympy import Ne
@@ -399,11 +401,11 @@ class TestExpressions(TestCase):
                 
     
     def test_expression(self):
-        y=Symbol('y')
-        z=Symbol('z')
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         
         expr1=self.new_expr(name="quadratic",expression="a*z^2+b*z+c")
@@ -418,9 +420,9 @@ class TestExpressions(TestCase):
         self.assertEqual(local_dict["linear"], a*y-b)
         
     def test_ordered_tuple(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)")
         tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
@@ -433,9 +435,9 @@ class TestExpressions(TestCase):
 
         
     def test_unordered_tuple(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(a,b,c)", \
                                 expression_type=Expression.UNORDERED_TUPLE)
@@ -454,9 +456,9 @@ class TestExpressions(TestCase):
 
 
     def test_sorted_tuple(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(5,-1,b^2-a,c,b)", \
                                 expression_type=Expression.SORTED_TUPLE)
@@ -470,9 +472,9 @@ class TestExpressions(TestCase):
 
 
     def test_random_order_tuple(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(5,-1,b^2-a,c,b)", \
                                 expression_type=Expression.RANDOM_ORDER_TUPLE)
@@ -502,9 +504,9 @@ class TestExpressions(TestCase):
 
 
     def test_tuple_no_parentheses(self):
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
         local_dict={}
         expr1=self.new_expr(name="t1",expression="a,b,c")
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
@@ -534,11 +536,10 @@ class TestExpressions(TestCase):
         
 
     def test_sets(self):
-        from sympy import FiniteSet
-        a=Symbol('a')
-        b=Symbol('b')
-        c=Symbol('c')
-        d=Symbol('d')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
+        d=Symbol('d', real=True)
         local_dict={}
         expr1=self.new_expr(name="t1",expression="b,c,a,c,d,a",
                             expression_type=Expression.SET)
@@ -558,7 +559,6 @@ class TestExpressions(TestCase):
 
 
     def test_single_interval(self):
-        from sympy import Interval
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)
         local_dict={'a': a, 'b': b}
@@ -567,122 +567,216 @@ class TestExpressions(TestCase):
                             expression_type=Expression.INTERVAL)
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr1_eval, \
-                         Interval(a,b,left_open=True, right_open=True))
+            Interval(a,b,left_open=True, right_open=True))
+
+        expr1b=self.new_expr(name="open", expression="(a,b)")
+        expr1b_eval=expr1b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr1b_eval, Tuple(a,b))
 
         expr2=self.new_expr(name="left_open", expression="(a,b]",
                             expression_type=Expression.INTERVAL)
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr2_eval, \
-                         Interval(a,b,left_open=True, right_open=False))
+            Interval(a,b,left_open=True, right_open=False))
+
+        expr2b=self.new_expr(name="left_open", expression="(a,b]")
+        expr2b_eval=expr2b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr2b_eval, \
+            Interval(a,b,left_open=True, right_open=False))
 
         expr3=self.new_expr(name="right_open", expression="[a,b)",
                             expression_type=Expression.INTERVAL)
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr3_eval, \
-                         Interval(a,b,left_open=False, right_open=True))
+            Interval(a,b,left_open=False, right_open=True))
+
+        expr3b=self.new_expr(name="right_open", expression="[a,b)")
+        expr3b_eval=expr3b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr3b_eval, \
+            Interval(a,b,left_open=False, right_open=True))
 
         expr4=self.new_expr(name="closed", expression="[a,b]",
                             expression_type=Expression.INTERVAL)
         expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         self.assertEqual(expr4_eval, \
-                         Interval(a,b,left_open=False, right_open=False))
+            Interval(a,b,left_open=False, right_open=False))
+
+        expr4b=self.new_expr(name="closed", expression="[a,b]")
+        expr4b_eval=expr4b.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr4b_eval, [a,b])
 
     def test_interval_combinations(self):
-        from sympy import Interval
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)
         local_dict={'a': a, 'b': b}
 
-        expr1=self.new_expr(name="inttuple", expression="[a,b),(1,3]",
+        interval_string = "[a,b),(1,3],(a,3),[1,b]"
+        interval_expression = TupleNoParen(
+            Interval(a,b,left_open=False, right_open=True),\
+            Interval(1,3,left_open=True, right_open=False),\
+            Interval(a,3,left_open=True, right_open=True),\
+            Interval(1,b,left_open=False, right_open=False))
+        interval_partial_expression = TupleNoParen(
+            Interval(a,b,left_open=False, right_open=True),\
+            Interval(1,3,left_open=True, right_open=False),\
+            Tuple(a,3),[1,b])
+        
+        expr1=self.new_expr(name="inttuple", expression=interval_string,
                             expression_type=Expression.INTERVAL)
-        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr1_eval, \
-            TupleNoParen(Interval(a,b,left_open=False, right_open=True),\
-                          Interval(1,3,left_open=True, right_open=False)))
+        expr1_eval=expr1.evaluate(rng=self.rng)['expression_evaluated']
+        self.assertEqual(expr1_eval, interval_expression)
 
-        expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
-                            expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr2_eval, \
-            Tuple(Interval(a,b,left_open=False, right_open=True),\
-                  Interval(1,3,left_open=True, right_open=False)))
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)\
+                    ['expression_evaluated']
+        self.assertEqual(expr1_eval, interval_expression)
 
-        expr2=self.new_expr(name="inttuple2", expression="([a,b),(1,3])",
+        expr1a=self.new_expr(name="inttuple", expression=interval_string)
+        expr1a_eval=expr1a.evaluate(rng=self.rng)['expression_evaluated']
+        self.assertEqual(expr1a_eval, interval_partial_expression)
+
+        expr1b=self.new_expr(name="inttuple", expression=interval_string,
+                             expression_type=Expression.INTERVAL,
+                             real_variables=False)
+        expr1b_eval=expr1b.evaluate(rng=self.rng, local_dict=local_dict)\
+                    ['expression_evaluated']
+        self.assertEqual(expr1b_eval, interval_expression)
+
+
+        interval_string = "(%s)" % interval_string
+        interval_expression = Tuple(*interval_expression)
+        interval_partial_expression = Tuple(*interval_partial_expression)
+
+        expr2=self.new_expr(name="inttuple2", expression=interval_string,
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr2_eval, \
-            Tuple(Interval(a,b,left_open=False, right_open=True),\
-                  Interval(1,3,left_open=True, right_open=False)))
+        expr2_eval=expr2.evaluate(rng=self.rng)['expression_evaluated']
+        self.assertEqual(expr2_eval,interval_expression)
+
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)\
+                    ['expression_evaluated']
+        self.assertEqual(expr2_eval, interval_expression)
+
+        expr2a=self.new_expr(name="inttuple2", expression=interval_string)
+        expr2a_eval=expr2a.evaluate(rng=self.rng, local_dict=local_dict)\
+                    ['expression_evaluated']
+        self.assertEqual(expr2a_eval, interval_partial_expression)
+
 
         expr3=self.new_expr(name="union", expression="[a,b)+(1,3]",
                             expression_type=Expression.INTERVAL)
-        expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        expr3_eval=expr3.evaluate(rng=self.rng)['expression_evaluated']
         from sympy import Union
         self.assertEqual(expr3_eval, \
                 Union(Interval(a,b,left_open=False, right_open=True),\
                       Interval(1,3,left_open=True, right_open=False)))
 
     def test_interval_errors(self):
-        from sympy import Interval
         a=Symbol('a')
         b=Symbol('b')
         local_dict={'a': a, 'b': b}
         expr1=self.new_expr(name="open", expression="(a,b)",
+                            expression_type=Expression.INTERVAL,
+                            real_variables=False)
+        expr1a=self.new_expr(name="open", expression="(a,b)",
                             expression_type=Expression.INTERVAL)
         self.assertRaisesRegexp(ValueError, "Variables used in intervals must be real",
                                 expr1.evaluate, rng=self.rng, 
+                                local_dict=local_dict)
+        self.assertRaisesRegexp(ValueError, "Variables used in intervals must be real",
+                                expr1a.evaluate, rng=self.rng, 
                                 local_dict=local_dict)
 
         local_dict={}
         self.assertRaisesRegexp(ValueError, "Variables used in intervals must be real",
                                 expr1.evaluate, rng=self.rng, 
                                 local_dict=local_dict)
+        expr1a_eval=expr1a.evaluate(rng=self.rng, local_dict=local_dict)\
+                     ['expression_evaluated']
+        self.assertEqual(expr1a_eval, 
+                Interval(Symbol('a',real=True),
+                                       Symbol('b',real=True),
+                                       left_open=True,right_open=True)),
+                         
 
         expr2=self.new_expr(name="invalidint", expression="(1,2,3)",
                             expression_type=Expression.INTERVAL)
-        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)\
+                    ['expression_evaluated']
         self.assertEqual(expr2_eval, Tuple(1,2,3))
 
-        expr3=self.new_expr(name="invalidint2", expression="(1,2,3),[4,5]",
+        expr3=self.new_expr(name="invalidint2", expression="[1,2,3],[4,5]",
                             expression_type=Expression.INTERVAL)
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr3_eval, TupleNoParen(Tuple(1,2,3),Interval(4,5)))
+        self.assertEqual(expr3_eval, TupleNoParen([1,2,3],Interval(4,5)))
 
 
     def test_contains(self):
-        from sympy import Interval, FiniteSet, Or, And
+        from sympy import Or, And
+        from mitesting.sympy_customized import latex
 
-        a=Symbol('a')
-        b=Symbol('b')
-        x=Symbol('x')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        x=Symbol('x', real=True)
 
         local_dict={'a': a, 'b': b}
         expr1=self.new_expr(name="expr1", expression="x in (1,2)",
-                            expression_type=Expression.INTERVAL)
+                            expression_type=Expression.INTERVAL, 
+                            evaluate_level=EVALUATE_NONE)
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        self.assertEqual(expr1_eval,
-                Interval(1,2,left_open=True,right_open=True).contains(x))
-        self.assertEqual(expr1_eval,  And(x < 2, x >1))
+        self.assertEqual(expr1_eval, Interval(1,2,left_open=True,right_open=True).contains(x, evaluate=False))
+        self.assertNotEqual(expr1_eval,  And(x < 2, x >1))
+        self.assertEqual(latex(expr1_eval), r"x \in \left(1, 2\right)")
 
-        expr2=self.new_expr(name="expr2", expression="x in {1,2,a,b}")
+        expr1a=self.new_expr(name="expr1a", expression="x in (1,2)",
+                            expression_type=Expression.INTERVAL)
+        expr1a_eval=expr1a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr1a_eval,
+                Interval(1,2,left_open=True,right_open=True).contains(x))
+        self.assertEqual(expr1a_eval,  And(x < 2, x >1))
+
+        expr2=self.new_expr(name="expr2", expression="x in {1,2,a,b}", 
+                            evaluate_level=EVALUATE_NONE)
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr2_eval, FiniteSet(1,2,a,b).contains(x, evaluate=False))
         self.assertEqual(expr2_eval, FiniteSet(1,2,a,b).contains(x))
-        
+
+        expr2a=self.new_expr(name="expr2a", expression="x in {1,2,a,b}")
+        expr2a_eval=expr2a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr2a_eval, FiniteSet(1,2,a,b).contains(x))
+        self.assertEqual(expr2a_eval, FiniteSet(1,2,a,b).contains(x, evaluate=False))
+
         expr3=self.new_expr(name="expr3", 
                             expression="x in {1,2,a,b} or x in [3,4]",
-                            expression_type=Expression.INTERVAL)
+                            expression_type=Expression.INTERVAL, 
+                            evaluate_level=EVALUATE_NONE)
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr3_eval, 
+                         Or(Interval(3,4).contains(x,evaluate=False), 
+               FiniteSet(1,2,a,b).contains(x)))
                          
-        self.assertEqual(expr3_eval, 
-                Or(Interval(3,4).contains(x), FiniteSet(1,2,a,b).contains(x)))
-        self.assertEqual(expr3_eval, 
-                Or(And(x<=4,x>=3), FiniteSet(1,2,a,b).contains(x)))
+        expr3a=self.new_expr(name="expr3a", 
+                            expression="x in {1,2,a,b} or x in [3,4]",
+                            expression_type=Expression.INTERVAL)
+        expr3a_eval=expr3a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+                         
+        self.assertEqual(expr3a_eval, 
+            Or(Interval(3,4).contains(x), FiniteSet(1,2,a,b).contains(x)))
+        self.assertEqual(expr3a_eval, 
+            Or(And(x<=4,x>=3), FiniteSet(1,2,a,b).contains(x)))
 
+        expr4=self.new_expr(name="expr4", expression="x in {1,2,x}", 
+                            evaluate_level=EVALUATE_NONE)
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr4_eval, FiniteSet(1,2,x).contains(x, evaluate=False))
+        self.assertEqual(latex(expr4_eval), r'x \in \left\{1, 2, x\right\}')
 
+        expr4a=self.new_expr(name="expr4a", expression="x in {1,2,x}")
+        expr4a_eval=expr4a.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr4a_eval, True)
+        
     def test_matrix(self):
         from sympy import Matrix
-        a=Symbol('a')
-        b=Symbol('b')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
         local_dict={}
 
         expr1=self.new_expr(name="A", expression="\n 1 2\na b\na-b 1 \na -b\n ",
@@ -722,8 +816,8 @@ class TestExpressions(TestCase):
     def test_vector(self):
         from sympy import Matrix
         from mitesting.sympy_customized import latex
-        a=Symbol('a')
-        b=Symbol('b')
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
         local_dict={}
 
         expr1=self.new_expr(name="x", expression="(a,b,1,2) ",
@@ -802,7 +896,7 @@ class TestExpressions(TestCase):
 
     def test_evaluate_partial(self):
         from sympy import Derivative, Integral
-        x=Symbol('x')
+        x=Symbol('x', real=True)
         local_dict={'Derivative': Derivative, 'Integral': Integral}
         expr1=self.new_expr(name="s", expression="Derivative(x^2,x)")
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
@@ -839,10 +933,10 @@ class TestExpressions(TestCase):
 
     def test_function_local_dict(self):
         from sympy import sin
-        x=Symbol('x')
+        x=Symbol('x', real=True)
         expr1=self.new_expr(name="s", expression="x*sin(x)")
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict={})['expression_evaluated']
-        self.assertEqual(expr1_eval, x**2*Symbol('sin'))
+        self.assertEqual(expr1_eval, x**2*Symbol('sin', real=True))
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict={'sin':sin})['expression_evaluated']
         self.assertEqual(expr1_eval, x*sin(x))
 
@@ -851,8 +945,8 @@ class TestExpressions(TestCase):
         expr = self.new_expr(name="greek", 
                              expression="lambda*gamma/delta + epsilon")
         expr_eval=expr.evaluate(rng=self.rng)['expression_evaluated']
-        self.assertEqual(expr_eval, Symbol('lambda')*Symbol('gamma') \
-                             / Symbol('delta') + Symbol('epsilon'))
+        self.assertEqual(expr_eval, Symbol('lambda', real=True)*Symbol('gamma', real=True) \
+                             / Symbol('delta', real=True) + Symbol('epsilon', real=True))
         self.assertEqual(six.text_type(expr_eval),
                          r'\epsilon + \frac{\gamma \lambda}{\delta}')
 
@@ -902,11 +996,11 @@ class TestExpressions(TestCase):
 
 
     def test_alternate_expressions(self):
-        c=Symbol('c')
-        C=Symbol('C')
-        d=Symbol('d')
-        D=Symbol('D')
-        x=Symbol('x')
+        c=Symbol('c', real=True)
+        C=Symbol('C', real=True)
+        d=Symbol('d', real=True)
+        D=Symbol('D', real=True)
+        x=Symbol('x', real=True)
 
         local_dict={}
         alternate_dicts=[]
@@ -936,11 +1030,11 @@ class TestExpressions(TestCase):
 
 
     def test_alternate_expressions_compounded(self):
-        c=Symbol('c')
-        C=Symbol('C')
-        x=Symbol('x')
-        y=Symbol('y')
-        z=Symbol('z')
+        c=Symbol('c', real=True)
+        C=Symbol('C', real=True)
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
 
         local_dict={}
         alternate_dicts=[]
@@ -972,13 +1066,13 @@ class TestExpressions(TestCase):
 
 
     def test_alternate_expressions_compounded_2(self):
-        c=Symbol('c')
-        C=Symbol('C')
-        x=Symbol('x')
-        y=Symbol('y')
-        z=Symbol('z')
-        a=Symbol('a')
-        b=Symbol('b')
+        c=Symbol('c', real=True)
+        C=Symbol('C', real=True)
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
 
         local_dict={}
         alternate_dicts=[]
@@ -1109,7 +1203,7 @@ class TestRandomFromList(TestCase):
 
 
     def test_random_expression(self):
-        x = Symbol('x')
+        x = Symbol('x', real=True)
         for i in range(10):
             local_dict={}
             test_local_dict = {}
@@ -1117,7 +1211,7 @@ class TestRandomFromList(TestCase):
             expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
                                 expression_type = Expression.RANDOM_EXPRESSION)
             a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
-            self.assertTrue(a in [sympify(item) for item in
+            self.assertTrue(a in [Symbol(item, real=True) for item in
                                   ("a","b","c","d","e","f")])
             test_local_dict["a"] = a
             self.assertEqual(local_dict, test_local_dict)
@@ -1138,7 +1232,7 @@ class TestRandomFromList(TestCase):
 
     def test_random_expression_evaluate_level(self):
         from sympy import Derivative, Integral
-        x = Symbol('x')
+        x = Symbol('x', real=True)
         local_dict={'Derivative': Derivative }
 
         for i in range(10):
@@ -1162,7 +1256,7 @@ class TestRandomFromList(TestCase):
                             ['x + x', 'Derivative(x**3, x)', '5*(x - 3)'])
 
     def test_random_function_name(self):
-        x = Symbol('x')
+        x = Symbol('x', real=True)
         for i in range(10):
             local_dict={}
             test_local_dict = {}
@@ -1171,7 +1265,7 @@ class TestRandomFromList(TestCase):
                                 expression_type = 
                                 Expression.RANDOM_FUNCTION_NAME)
             a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
-            self.assertTrue(a in [SymbolCallable(str(item)) for item in
+            self.assertTrue(a in [SymbolCallable(str(item),real=True) for item in
                                   ("a","b","c","d","e","f")])
             test_local_dict["a"] = a
             self.assertEqual(local_dict, test_local_dict)
@@ -1189,33 +1283,13 @@ class TestRandomFromList(TestCase):
             f = expr3.evaluate(rng=self.rng, local_dict=local_dict, \
                                    user_function_dict=user_function_dict)['expression_evaluated']\
                                    .return_expression()
-            self.assertTrue(f in [SymbolCallable(str(item)) for item in
+            self.assertTrue(f in [SymbolCallable(str(item), real=True) for item in
                                   ("this","that","the","other")])
             self.assertEqual( user_function_dict , { str(f): f})
             test_local_dict["f"] = f
             self.assertEqual(local_dict, test_local_dict)
 
             
-    def test_random_real_variable(self):
-        x = Symbol('x')
-        for i in range(10):
-            local_dict={}
-            test_local_dict={}
-            expr1=self.new_expr(name="a",expression="a,b, c ,d,e,  f",
-                                expression_type = 
-                                Expression.RANDOM_REAL_VARIABLE)
-            a = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
-            self.assertTrue(a in [Symbol(str(item),real=True) for item in
-                                  ("a","b","c","d","e","f")])
-            test_local_dict["a"] = a
-            self.assertEqual(local_dict, test_local_dict)
-            
-            expr2=self.new_expr(name="amess", expression="a*b, c+d, e/f, g-h",
-                            expression_type = Expression.RANDOM_REAL_VARIABLE)
-            self.assertRaisesRegexp(ValueError, "Invalid real variable",
-                                    expr2.evaluate, rng=self.rng,
-                                    local_dict=local_dict)
-
 
     def test_random_list_groups_match(self):
         for i in range(10):
@@ -1244,7 +1318,8 @@ class TestRandomFromList(TestCase):
                 random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
 
             self.assertTrue((rw1,re1,rf1) in [
-                    (item, Symbol(item), SymbolCallable(str(item)))
+                    (item, Symbol(item, real=True), 
+                     SymbolCallable(str(item), real=True))
                     for item in ["a","b","c","d","e"]])
 
             
@@ -1276,7 +1351,7 @@ class TestRandomFromList(TestCase):
                 random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
 
             self.assertTrue((rw1,rf1) in [
-                    (item, SymbolCallable(str(item)))
+                    (item, SymbolCallable(str(item), real=True))
                     for item in ["a","b","c","d","e"]])
 
             if str(re1) != rw1:
@@ -1303,11 +1378,9 @@ class TestRandomFromList(TestCase):
             re1 = expr2.evaluate(rng=self.rng, 
                 local_dict=local_dict,
                 random_group_indices=random_group_indices)['expression_evaluated'].return_expression()
-            
             self.assertTrue((rw1,re1) in [
-                    (item, Symbol(item))
+                    (item, Symbol(item, real=True))
                     for item in ["a","b","c"]])
-
 
         with self.assertRaisesRegexp(IndexError, 
                                      'Insufficient entries for random list group: g1'):
@@ -1331,7 +1404,7 @@ class TestRandomFromList(TestCase):
                         .return_expression()
                     
                 self.assertTrue((rw1,re1) in [
-                        (item, Symbol(item))
+                        (item, Symbol(item, real=True))
                         for item in ["a","b","c"]])
             
 

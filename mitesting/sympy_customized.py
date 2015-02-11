@@ -9,6 +9,9 @@ from sympy import Tuple, Float, Symbol, Rational, Integer, Pow, factorial, Matri
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 
+from sympy import Interval as sympy_Interval
+from sympy import FiniteSet as sympy_FiniteSet
+
 import re
 import keyword
 
@@ -67,7 +70,9 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
 
 
 def parse_expr(s, global_dict=None, local_dict=None, 
-               split_symbols=False, evaluate=True):
+               split_symbols=False, evaluate=True,
+               replace_symmetric_intervals=False,
+               assume_real_variables=False):
     """
     Customized version of sympy parse_expr with the following modifications.
     1.  Add Integer, Float, Rational, Symbol, and factorial
@@ -77,7 +82,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
         and factorial could be added by factorial_notation.)
     2.  Use a customized version of the auto_symbol transformation 
         so that python keywords like "lambda", "as" and "if" 
-        will be parsed to symbols
+        will be parsed to symbols.
+        If assume_real_variables, the symbols created in this way will be real.
     3.  In addition, use auto_number, factorial notation, convert_xor
         and implicit_multiplication transformations by default, 
         and add split_symbols transformation if split_symbols is True.
@@ -137,8 +143,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # implicit multiplication: allows use of 5x for 5*x
     # If split_symbols is True, then include split_symbols
     # transformation so that can use xy for x*y
-    transformations = (auto_symbol, auto_number, factorial_notation,\
-                           convert_xor)
+    if assume_real_variables:
+        transformations=(auto_symbol_real,)
+    else:
+        transformations=(auto_symbol,)
+    transformations += (auto_number, factorial_notation, convert_xor)
     if split_symbols:
         transformations += (split_symbols_trans, )
     transformations += (implicit_multiplication, )
@@ -187,9 +196,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s = re.sub(r'\u22c5', r'*', s)
 
     from mitesting.utils import replace_simplified_derivatives
-    s= replace_simplified_derivatives(s, local_dict=new_local_dict, 
-                                   global_dict=new_global_dict, 
-                                   split_symbols=split_symbols)
+    s= replace_simplified_derivatives(
+        s, local_dict=new_local_dict, global_dict=new_global_dict, 
+        split_symbols=split_symbols,
+        assume_real_variables=assume_real_variables)
 
     # replace
     #      =  with __Eq__(lhs,rhs)
@@ -197,8 +207,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
     #   and/& with __And__(lhs,rhs)
     #    or/| with __Or__(lhs,rhs)
     #     in  with (rhs).contains(lhs)
-    from mitesting.utils import replace_boolean_equals_in
-    s=replace_boolean_equals_in(s)
+    from mitesting.utils import replace_boolean_equals_in, replace_intervals
+
+    s=replace_boolean_equals_in(s, evaluate=evaluate)
+    s=replace_intervals(s, replace_symmetric=replace_symmetric_intervals)
 
     # map those replace booleans and equals to sympy functions
     from sympy import Eq, Ne, And, Or
@@ -206,11 +218,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     new_global_dict['__Ne__'] = Ne
     new_global_dict['__And__'] = And
     new_global_dict['__Or__'] = Or
+    new_global_dict['__Interval__'] = Interval
     
     # change {} to __FiniteSet__()
     s = re.sub(r'{',r' __FiniteSet__(', s)
     s = re.sub(r'}', r')', s)
-    from sympy import FiniteSet
     new_global_dict['__FiniteSet__'] = FiniteSet
 
     # change !== to !=
@@ -241,8 +253,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
                     break
 
     # if evaluate, then 
-    # replace any AddUnsorts with Adds
-    # and replace MulUnsorts with Muls
+    # - replace AddUnsorts with Adds
+    # - replace MulUnsorts with Muls
     def replaceUnsorts(w):
         if isinstance(w, AddUnsort):
             return Add(*w.args)
@@ -258,7 +270,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
 
 def parse_and_process(s, global_dict=None, local_dict=None,
-                      split_symbols=False, evaluate_level=None):
+                      split_symbols=False, evaluate_level=None,
+                      replace_symmetric_intervals=False,
+                      assume_real_variables=False):
     """
     Parse expression and optionally call doit, evaluate_level is full. 
     If evaluate_level = EVALUATE_NONE, then parse
@@ -272,10 +286,11 @@ def parse_and_process(s, global_dict=None, local_dict=None,
     else:
         evaluate = True
 
-    expression = parse_expr(s, global_dict=global_dict,
-                            local_dict=local_dict,
-                            split_symbols=split_symbols,
-                            evaluate=evaluate)
+    expression = parse_expr(
+        s, global_dict=global_dict, local_dict=local_dict,
+        split_symbols=split_symbols, evaluate=evaluate,
+        replace_symmetric_intervals=replace_symmetric_intervals,
+        assume_real_variables=assume_real_variables)
 
     if evaluate_level == EVALUATE_FULL or evaluate_level is None:
         try: 
@@ -294,7 +309,6 @@ def auto_symbol(tokens, local_dict, global_dict):
     so that the keywords and None will be turned into a symbol
     """
     from sympy.core.basic import Basic
-
 
     result = []
     prevTok = (None, None)
@@ -325,6 +339,58 @@ def auto_symbol(tokens, local_dict, global_dict):
                 (NAME, 'Symbol'),
                 (OP, '('),
                 (NAME, repr(str(name))),
+                (OP, ')'),
+            ])
+        else:
+            result.append((tokNum, tokVal))
+
+        prevTok = (tokNum, tokVal)
+
+    return result
+
+def auto_symbol_real(tokens, local_dict, global_dict):
+    """Inserts calls to ``Symbol`` for undefined variables,
+    designating them as real
+
+    Customized verison of auto symbol
+    only other difference is that ignore python keywords and None
+    so that the keywords and None will be turned into a symbol
+    """
+    from sympy.core.basic import Basic
+
+    result = []
+    prevTok = (None, None)
+
+    tokens.append((None, None))  # so zip traverses all tokens
+    for tok, nextTok in zip(tokens, tokens[1:]):
+        tokNum, tokVal = tok
+        nextTokNum, nextTokVal = nextTok
+        if tokNum == NAME:
+            name = tokVal
+
+            if (name in ['True', 'False', 'and', 'or', 'not', 'in']
+                or name in local_dict
+                # Don't convert attribute access
+                or (prevTok[0] == OP and prevTok[1] == '.')
+                # Don't convert keyword arguments
+                or (prevTok[0] == OP and prevTok[1] in ('(', ',')
+                    and nextTokNum == OP and nextTokVal == '=')):
+                result.append((NAME, name))
+                continue
+            elif name in global_dict:
+                obj = global_dict[name]
+                if isinstance(obj, (Basic, type)) or callable(obj):
+                    result.append((NAME, name))
+                    continue
+
+            result.extend([
+                (NAME, 'Symbol'),
+                (OP, '('),
+                (NAME, repr(str(name))),
+                (OP, ','),
+                (NAME, 'real'),
+                (OP, '='),
+                (NAME, 'True'),
                 (OP, ')'),
             ])
         else:
@@ -520,36 +586,36 @@ def split_symbols_custom(predicate):
 
     ``predicate`` should return True if the symbol name is to be split.
 
-    For instance, to retain the default behavior but avoid splitting certain
-    symbol names, a predicate like this would work:
+    Modified from sympy to check if Symbol is specified to be real,
+    so that Symbol('xy',real=True) splits to 
+    Symbol('x',real=True)Symbol('y',real=True)
 
-
-    >>> from sympy.parsing.sympy_parser import (parse_expr, _token_splittable,
-    ... standard_transformations, implicit_multiplication,
-    ... split_symbols_custom)
-    >>> def can_split(symbol):
-    ...     if symbol not in ('list', 'of', 'unsplittable', 'names'):
-    ...             return _token_splittable(symbol)
-    ...     return False
-    ...
-    >>> transformation = split_symbols_custom(can_split)
-    >>> parse_expr('unsplittable', transformations=standard_transformations +
-    ... (transformation, implicit_multiplication))
-    unsplittable
     """
 
     def _split_symbols(tokens, local_dict, global_dict):
         result = []
         split = False
-        split_previous=False
-        for tok in tokens:
+        split_previous=0
+        splitting_real = False
+        for (i,tok) in enumerate(tokens):
             if split_previous:
                 # throw out closing parenthesis of Symbol that was split
-                split_previous=False
+                split_previous-=1
                 continue
             split_previous=False
             if tok[0] == NAME and tok[1] == 'Symbol':
                 split = True
+                # check if real=True
+                splitting_real=False
+                try:
+                    if tokens[i+3][0] == OP and tokens[i+3][1] == "," \
+                       and tokens[i+4][0] == NAME and tokens[i+4][1] == "real" \
+                       and tokens[i+5][0] == OP and tokens[i+5][1] == "=" \
+                       and tokens[i+6][0] == NAME and tokens[i+6][1] == "True":
+                        splitting_real=True
+                except IndexError:
+                    pass
+
             elif split and tok[0] == NAME:
                 symbol = tok[1][1:-1]
                 if predicate(symbol):
@@ -560,21 +626,33 @@ def split_symbols_custom(predicate):
                             result.extend([(NAME, "%s" % char),
                                            (NAME, 'Symbol'), (OP, '(')])
                         else:
-                            result.extend([(NAME, "'%s'" % char), (OP, ')'),
-                                           (NAME, 'Symbol'), (OP, '(')])
+                            if splitting_real:
+                                result.extend([(NAME, "'%s'" % char), (OP, ','),
+                                               (NAME, 'real'), (OP, '='),
+                                               (NAME, 'True'), (OP, ')'),
+                                               (NAME, 'Symbol'), (OP, '(')])
+                            else:
+                                result.extend([(NAME, "'%s'" % char), (OP, ')'),
+                                               (NAME, 'Symbol'), (OP, '(')])
                     # Delete the last two tokens: get rid of the extraneous
                     # Symbol( we just added
-                    # Also, set split_previous=True so will skip
-                    # the closing parenthesis of the original Symbol
+                    # Also, set split_previous so will skip
+                    # the closing parenthesis (and possibly, real=True)
+                    # of the original Symbol
                     del result[-2:]
                     split = False
-                    split_previous = True
+                    if splitting_real:
+                        split_previous=5
+                    else:
+                        split_previous=1
                     continue
                 else:
                     split = False
             result.append(tok)
+
         return result
     return _split_symbols
+
 
 
 #: Splits symbol names for implicit multiplication.
@@ -1111,3 +1189,20 @@ class LatexPrinter(sympy_LatexPrinter):
 
 def latex(expr, **settings):
     return LatexPrinter(settings).doprint(expr)
+
+
+class Interval(sympy_Interval):
+    def contains(self, other, evaluate=True):
+        if evaluate:
+            return super(Interval,self).contains(other)
+        else:
+            from sympy import Contains
+            return Contains(other, self, evaluate=False)
+
+class FiniteSet(sympy_FiniteSet):
+    def contains(self, other, evaluate=True):
+        if evaluate:
+            return super(FiniteSet,self).contains(other)
+        else:
+            from sympy import Contains
+            return Contains(other, self, evaluate=False)

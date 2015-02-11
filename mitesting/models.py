@@ -737,10 +737,8 @@ class Expression(models.Model):
     RANDOM_WORD = "RW"
     RANDOM_EXPRESSION = "RE"
     RANDOM_FUNCTION_NAME = "RF"
-    RANDOM_REAL_VARIABLE = "RR"
     FUNCTION = "FN"
     FUNCTION_NAME = "FE"
-    REAL_VARIABLE = "RV"
     CONDITION = "CN"
     GENERIC = "EX"
     UNORDERED_TUPLE = "UT"
@@ -757,7 +755,6 @@ class Expression(models.Model):
             (RANDOM_NUMBER, "Rand number"),
             (FUNCTION, "Function"),
             (FUNCTION_NAME, "Function name"),
-            (REAL_VARIABLE, "Real variable"),
             (CONDITION, "Required cond"),
         )
      ),
@@ -765,7 +762,6 @@ class Expression(models.Model):
             (RANDOM_WORD, "Rand word"),
             (RANDOM_EXPRESSION, "Rand expr"),
             (RANDOM_FUNCTION_NAME, "Rand fun name"),
-            (RANDOM_REAL_VARIABLE, "Rand real var"),
         )
      ),
         ('Tuples and sets', (
@@ -804,6 +800,7 @@ class Expression(models.Model):
     function_inputs = models.CharField(max_length=50, blank=True,
                                        null=True)
     random_list_group = models.CharField(max_length=50, blank=True, null=True)
+    real_variables = models.BooleanField(default=True)
     post_user_response = models.BooleanField(default=False)
     sort_order = models.FloatField(blank=True)
     class Meta:
@@ -1131,6 +1128,7 @@ class ExpressionFromAnswer(models.Model):
     split_symbols_on_compare = models.BooleanField(default=True)
     answer_type = models.IntegerField(default=QuestionAnswerOption.EXPRESSION)
     answer_data = models.TextField(null=True)
+    real_variables = models.BooleanField(default=True)
 
     class Meta:
         unique_together = ("name", "question","answer_number")

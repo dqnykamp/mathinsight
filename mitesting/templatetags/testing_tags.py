@@ -418,6 +418,7 @@ class AnswerNode(template.Node):
            context.get("_process_expressions_from_answers"):
             question=context.get('question')
             if question:
+                assume_real_variables = kwargs.get('real', True)
                 expressionfromanswer, created= \
                     question.expressionfromanswer_set.get_or_create(
                         name=assign_to_expression, answer_code=self.answer_code,
@@ -425,6 +426,7 @@ class AnswerNode(template.Node):
                         split_symbols_on_compare=\
                         answer_code_dict['split_symbols_on_compare'],
                         answer_type=answer_type,
+                        real_variables = assume_real_variables,
                     )
         given_answer=None
         try:

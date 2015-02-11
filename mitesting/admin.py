@@ -82,6 +82,8 @@ class ExpressionInline(admin.TabularInline):
               'evaluate_level', 
               'function_inputs', 'random_list_group',
               'post_user_response', 'sort_order')
+    # for now, don't have real_variables showing,
+    # as don't have reason for non-real variables
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         field = super(ExpressionInline, self).formfield_for_dbfield(db_field,

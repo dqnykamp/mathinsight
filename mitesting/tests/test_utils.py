@@ -209,6 +209,12 @@ class TestRandomExpression(SimpleTestCase):
         expr = return_random_expression("x^3, x^2+2*x*y", rng=self.rng)
         self.assertTrue(expr[0] in [x**3, x**2+2*x*y])
 
+        x=Symbol("x", real=True)
+        y=Symbol("y", real=True)
+        expr = return_random_expression("x^3, x^2+2*x*y", rng=self.rng,
+                                        assume_real_variables=True)
+        self.assertTrue(expr[0] in [x**3, x**2+2*x*y])
+
     def test_with_local_dict(self):
         x=Symbol("x")
         y=Symbol("y")
@@ -374,7 +380,11 @@ class TestReplaceBooleanEqualsIn(SimpleTestCase):
         s_replace = '({1,2,3}).contains(x)'
         self.assertEqual(replace_boolean_equals_in(s),s_replace)
 
-        s='y in Interval(a,b) or x in {1,2,3}'
-        s_replace = '__Or__((Interval(a,b)).contains(y),({1,2,3}).contains(x))'
+        s='y in (a,b) or x in {1,2,3}'
+        s_replace = '__Or__(( __Interval__(a,b,left_open===True, right_open===True)).contains(y),({1,2,3}).contains(x))'
+        self.assertEqual(replace_boolean_equals_in(s),s_replace)
+
+        s='y in (a,b] or x in {1,2,3}'
+        s_replace = '__Or__(( __Interval__(a,b,left_open===True, right_open===False)).contains(y),({1,2,3}).contains(x))'
         self.assertEqual(replace_boolean_equals_in(s),s_replace)
 
