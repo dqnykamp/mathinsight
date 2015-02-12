@@ -374,6 +374,8 @@ class ParseExprTests(SimpleTestCase):
         a=Symbol('a')
         f=SymbolCallable(str('f'))
         fsym=Symbol(str('f'))
+
+        self.assertEqual(f,fsym)
         
         expr = parse_expr('af(x)', split_symbols=True)
         self.assertEqual(expr, a*fsym*x)
@@ -387,6 +389,8 @@ class ParseExprTests(SimpleTestCase):
                           local_dict={'f': f})
         self.assertEqual(expr, a*f*x)
         
+        expr = parse_expr('f in {fsym,y,z}', local_dict={'f': f, 'fsym': fsym})
+        self.assertEqual(expr, True)
 
     def test_relational(self):
         from sympy import Eq, Ne, Lt, Ge, Or, And

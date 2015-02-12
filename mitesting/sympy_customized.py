@@ -402,7 +402,13 @@ def auto_symbol_real(tokens, local_dict, global_dict):
 
 
 class SymbolCallable(Symbol):
-    pass
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if isinstance(other, Symbol):
+            return str(self)==str(other)
+        return False
+
 
 def _token_callable(token, local_dict, global_dict, nextToken=None, 
                     include_symbol_callable=True):
@@ -1206,3 +1212,35 @@ class FiniteSet(sympy_FiniteSet):
         else:
             from sympy import Contains
             return Contains(other, self, evaluate=False)
+            
+    # use sympy dev version of contains so that
+    # SymbolCallable('x') is in { Symbol('x'), 1 }
+    def _contains(self, other):
+        """
+        Tests whether an element, other, is in the set.
+
+        Relies on Python's set class. This tests for object equality
+        All inputs are sympified
+
+        Examples
+        ========
+
+        >>> from sympy import FiniteSet
+        >>> 1 in FiniteSet(1, 2)
+        True
+        >>> 5 in FiniteSet(1, 2)
+        False
+
+        """
+        from sympy import Eq
+        from sympy.logic.boolalg import true, false
+        r = false
+        for e in self._elements:
+            t = Eq(e, other, evaluate=True)
+            if isinstance(t, Eq):
+                t = t.simplify()
+            if t == true:
+                return t
+            elif t != false:
+                r = None
+        return r
