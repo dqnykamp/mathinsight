@@ -7,11 +7,11 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
 from midocs.models import Page, Level
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list
-from mitesting.sympy_customized import SymbolCallable
+from mitesting.sympy_customized import SymbolCallable, Symbol
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
 
-from sympy import Symbol, sympify
+from sympy import sympify
 import random
 
 
@@ -575,6 +575,8 @@ class TestSetupExpressionContextUserResponse(TestCase):
         self.new_expr(name="a",expression="y+x^2")
         self.new_expr_from_answer(name="b", answer_code="borig",
                                   answer_number=1)
+        self.new_expr_from_answer(name="c", answer_code="corig",
+                                  answer_number=2, default_value="_default_")
 
         user_responses=[]
 
@@ -583,17 +585,23 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('[?]'))
+        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
+        self.assertEqual(expression_context['c'], Symbol('_default_'))
 
 
     def test_invalid_response(self):
         self.new_expr(name="a",expression="y+x^2")
         self.new_expr_from_answer(name="b", answer_code="borig",
                                   answer_number=1)
+        self.new_expr_from_answer(name="c", answer_code="corig",
+                                  answer_number=2, default_value="_default_")
 
         user_responses=[]
         user_responses.append({'identifier': 0,
                               'code': "borig",
+                              'answer': ")" })
+        user_responses.append({'identifier': 1,
+                              'code': "corig",
                               'answer': ")" })
 
         rng = random.Random()
@@ -601,7 +609,8 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('[?]'))
+        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
+        self.assertEqual(expression_context['c'], Symbol('_default_'))
 
   
     def test_multiple_choice(self):
@@ -632,7 +641,7 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('[?]'))
+        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
 
         user_responses[0]={'identifier': 0,
                            'code': "borig",
@@ -643,33 +652,7 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('[?]'))
-
-    def test_undefined_user_response(self):
-        self.new_expr_from_answer(name="b", answer_code="borig",
-                                  answer_number=1)
-        self.new_expr(name="c",expression="b==_undefined_",
-                      post_user_response=True)
-
-        user_responses=[]
-
-        rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
-                                         user_responses=user_responses)
-        expression_context = results['expression_context']
-        self.assertEqual(expression_context['c'], True)
-        
-
-        user_responses.append({'identifier': 0,
-                              'code': "borig",
-                              'answer': "x+1" })
-        rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
-                                         user_responses=user_responses)
-        expression_context = results['expression_context']
-        self.assertEqual(expression_context['c'], False)
+        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
 
         
 
@@ -1584,6 +1567,29 @@ class TestRenderQuestion(TestCase):
         self.assertTrue('apple=x + 1,' in question_data["rendered_text"])
         self.assertTrue('m=x + 2,' in question_data["rendered_text"])
         
+
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
+                                      prefilled_answers=[])
+
+        self.assertTrue(question_data["success"])
+        self.assertTrue('n=y,' in question_data["rendered_text"])
+        self.assertTrue('apple=\uff3f,' in question_data["rendered_text"])
+        self.assertTrue('m=\uff3f + 1,' in question_data["rendered_text"])
+        
+        self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' assign_to_expression_default='???' %}, apple={{apple}}, m={{m}},"
+        self.q.save()
+
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
+                                      prefilled_answers=[])
+
+        self.assertTrue(question_data["success"])
+        self.assertTrue('n=y,' in question_data["rendered_text"])
+        self.assertTrue('apple=???,' in question_data["rendered_text"])
+        self.assertTrue('m=??? + 1,' in question_data["rendered_text"])
+
+
 
     def test_assign_to_expression_multiple_choice(self):
 

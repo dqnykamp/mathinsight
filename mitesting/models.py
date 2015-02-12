@@ -13,10 +13,10 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Symbol, Function, Tuple
+from sympy import Function, Tuple
 from django.db.models import Max
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen
+from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen, Symbol
 import six
 import logging
 
@@ -132,6 +132,7 @@ class Question(models.Model):
                                   '_dynamictext_object': self,
                                   '_process_expressions_from_answers': True,
                                   '_answer_data_': answer_data,
+                                  '_sympy_local_dict_': {},
                               })
 
 
@@ -1129,6 +1130,7 @@ class ExpressionFromAnswer(models.Model):
     answer_type = models.IntegerField(default=QuestionAnswerOption.EXPRESSION)
     answer_data = models.TextField(null=True)
     real_variables = models.BooleanField(default=True)
+    default_value = models.CharField(max_length=20, default="_long_underscore_")
 
     class Meta:
         unique_together = ("name", "question","answer_number")

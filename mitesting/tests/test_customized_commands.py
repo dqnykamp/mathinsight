@@ -5,7 +5,8 @@ from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.customized_commands import *
-from sympy import Symbol, diff, Tuple, sympify
+from sympy import diff, Tuple, sympify
+from mitesting.sympy_customized import Symbol
 import random
 
 
@@ -112,7 +113,8 @@ class RoundingTests(SimpleTestCase):
         expr_round = 2*x**3-3*x+5
         self.assertEqual(round_expression(expr),expr_round)
         from sympy import sin, exp
-        z = Symbol('z')
+        from sympy import Symbol as sympy_Symbol
+        z = sympy_Symbol('z')
 
         # round expressions can take strings, as it calls sympify first
         self.assertEqual(round_expression("3.93*sin(3.1*z)"), 4*sin(3*z))
@@ -195,7 +197,8 @@ class EvalfTests(SimpleTestCase):
         self.assertEqual(evalf_expression(expr,3),expr_evalf)
 
         from sympy import sin, exp
-        z = Symbol('z')
+        from sympy import Symbol as sympy_Symbol
+        z = sympy_Symbol('z')
 
         # evalf expressions can take strings, as it calls sympify first
         self.assertEqual(evalf_expression("3.99*sin(3.12*z)",2), 4*sin(3.1*z))
@@ -295,7 +298,8 @@ class NormalizeFloatsTests(SimpleTestCase):
 
 
         from sympy import sin, exp
-        z = Symbol('z')
+        from sympy import Symbol as sympy_Symbol
+        z = sympy_Symbol('z')
 
         # normalize expressions can take strings, as it calls sympify first
         self.assertEqual(normalize_floats("3.99*sin(3.12*z)"), 3.99*sin(3.12*z))

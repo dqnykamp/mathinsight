@@ -4,8 +4,8 @@ from __future__ import absolute_import
 from __future__ import division
 
 from mitesting.customized_commands import *
-from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen
-from sympy import Tuple, Function, Symbol
+from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen, Symbol
+from sympy import Tuple, Function
 from sympy.parsing.sympy_tokenize import TokenError
 import six
 import re

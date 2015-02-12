@@ -419,6 +419,9 @@ class AnswerNode(template.Node):
             question=context.get('question')
             if question:
                 assume_real_variables = kwargs.get('real', True)
+                default_value = kwargs.get('assign_to_expression_default',
+                                           '_long_underscore_')
+
                 expressionfromanswer, created= \
                     question.expressionfromanswer_set.get_or_create(
                         name=assign_to_expression, answer_code=self.answer_code,
@@ -427,6 +430,7 @@ class AnswerNode(template.Node):
                         answer_code_dict['split_symbols_on_compare'],
                         answer_type=answer_type,
                         real_variables = assume_real_variables,
+                        default_value=default_value,
                     )
         given_answer=None
         try:

@@ -4,10 +4,10 @@ from __future__ import absolute_import
 from __future__ import division
 from django.utils.encoding import python_2_unicode_compatible
 
-from sympy import Tuple, Symbol, sympify, Abs, Matrix, Derivative
+from sympy import Tuple, sympify, Abs, Matrix, Derivative
 from sympy.core.relational import Relational, Equality, Unequality
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
-from .sympy_customized import bottom_up, latex
+from mitesting.sympy_customized import bottom_up, latex, Symbol
 from django.utils.safestring import mark_safe
 
 @python_2_unicode_compatible
@@ -448,11 +448,16 @@ def create_symbol_name_dict():
     symbol_name_dict = {}
     for symbol in symbol_list:
         symbol_name_dict[eval("Symbol('%s')" % symbol)] = '\\%s' % symbol
+        symbol_name_dict[eval("Symbol('%s', real=True)" % symbol)] = '\\%s' % symbol
 
     symbol_name_dict[Symbol('heart')] = '\\heartsuit'
     symbol_name_dict[Symbol('club')] = '\\clubsuit'
     symbol_name_dict[Symbol('diamond')] = '\\diamondsuit'
     symbol_name_dict[Symbol('spade')] = '\\spadesuit'
+    symbol_name_dict[Symbol('heart', real=True)] = '\\heartsuit'
+    symbol_name_dict[Symbol('club', real=True)] = '\\clubsuit'
+    symbol_name_dict[Symbol('diamond', real=True)] = '\\diamondsuit'
+    symbol_name_dict[Symbol('spade', real=True)] = '\\spadesuit'
 
     return symbol_name_dict
 

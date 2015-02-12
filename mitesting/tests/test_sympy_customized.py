@@ -5,9 +5,10 @@ from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.sympy_customized import bottom_up, parse_expr, \
-    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL, latex
+    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL, latex, \
+    Symbol
 from mitesting.customized_commands import normalize_floats
-from sympy import Symbol, diff, Tuple, sympify, Integer
+from sympy import diff, Tuple, sympify, Integer
 
 class BottomUpTests(SimpleTestCase):
     
@@ -44,7 +45,7 @@ class ParseExprTests(SimpleTestCase):
     def test_implicit_convert_xor(self):
         x = Symbol('x')
         self.assertEqual(parse_expr("3x^2/5", local_dict={}), 
-                          sympify("3*x**2/5"))
+                          x**2*sympify("3/5"))
         self.assertEqual(
             normalize_floats(parse_expr("3x^2/5.", local_dict={})), 
             normalize_floats(0.6*x**2))
@@ -91,7 +92,7 @@ class ParseExprTests(SimpleTestCase):
 
     def test_rationals_floats(self):
         x = Symbol('x')
-        self.assertEqual(parse_expr("3x^2/5"), sympify("3*x**2/5"))
+        self.assertEqual(parse_expr("3x^2/5"), x**2*sympify("3/5"))
         self.assertEqual(
             normalize_floats(parse_expr("3x^2/5.")), 
             normalize_floats(0.6*x**2))

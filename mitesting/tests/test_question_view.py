@@ -966,7 +966,7 @@ class TestGradeQuestionView(TestCase):
         xx = response.context['xx']
         num = response.context['num']
         
-        from sympy import Symbol
+        from mitesting.sympy_customized import Symbol
         if xx==Symbol("w", real=True):
             xx2 = "y"
             xx3 = "z"

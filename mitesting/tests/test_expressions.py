@@ -8,8 +8,8 @@ from mitesting.models import Expression, Question, QuestionType
 from mitesting.math_objects import math_object
 from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL, \
     EVALUATE_FULL, SymbolCallable, TupleNoParen, Interval, \
-    FiniteSet
-from sympy import Symbol, sympify, Tuple
+    FiniteSet, Symbol
+from sympy import sympify, Tuple
 from numpy import arange, linspace
 import re
 import six

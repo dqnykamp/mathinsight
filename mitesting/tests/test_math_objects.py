@@ -6,8 +6,8 @@ import six
 
 from django.test import SimpleTestCase
 from mitesting.math_objects import *
-from sympy import Symbol, diff, Tuple, sympify
-from mitesting.sympy_customized import latex
+from sympy import diff, Tuple, sympify
+from mitesting.sympy_customized import latex, Symbol
 import random
 
 class MathObjectTests(SimpleTestCase):
@@ -475,11 +475,21 @@ class MathObjectTests(SimpleTestCase):
                          '- 2 s + t + 1 = 0')
 
     def test_text_symbols(self):
-        expr = sympify("blacktriangle*bigstar")
+        from mitesting.sympy_customized import parse_expr
+        expr = parse_expr("blacktriangle*bigstar")
         mobject = math_object(expr)
         self.assertEqual(six.text_type(mobject), 
                          '\\bigstar \\blacktriangle')
-        expr = sympify("2*x*Box - 3*y*lozenge")
+        expr = parse_expr("2*x*Box - 3*y*lozenge")
+        mobject = math_object(expr)
+        self.assertEqual(six.text_type(mobject), 
+                         '2 \\Box x - 3 \\lozenge y')
+
+        expr = parse_expr("blacktriangle*bigstar", assume_real_variables=True)
+        mobject = math_object(expr)
+        self.assertEqual(six.text_type(mobject), 
+                         '\\bigstar \\blacktriangle')
+        expr = parse_expr("2*x*Box - 3*y*lozenge", assume_real_variables=True)
         mobject = math_object(expr)
         self.assertEqual(six.text_type(mobject), 
                          '2 \\Box x - 3 \\lozenge y')
@@ -616,7 +626,7 @@ class MathObjectTests(SimpleTestCase):
         from mitesting.sympy_customized import parse_expr, EVALUATE_NONE, \
             EVALUATE_PARTIAL, EVALUATE_FULL
         expr_string="x-x+x*x/x"
-        expr_evaluated = sympify(expr_string)
+        expr_evaluated = Symbol('x')
         expr_unevaluated = parse_expr(expr_string, evaluate=False)
         mobject = math_object(expr_unevaluated)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)

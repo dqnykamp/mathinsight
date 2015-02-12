@@ -5,7 +5,8 @@ from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.utils import *
-from sympy import Symbol, sympify
+from sympy import sympify
+from mitesting.sympy_customized import Symbol
 import six
 import random
 
@@ -251,19 +252,26 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(six.text_type(fun), "f")
     def test_function_other_variables(self):
         w=Symbol('w')
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+        a=Symbol('a')
         fun = return_parsed_function("x*y*z - a/y", "y", name="f")
-        self.assertEqual(fun(w), sympify("x*w*z-a/w"))
+        self.assertEqual(fun(w), x*w*z-a/w)
         self.assertEqual(six.text_type(fun), "f")
     def test_function_local_dict(self):
         u=Symbol('u')
+        a=Symbol('a')
         b=Symbol('b')
+        x=Symbol('x')
+        z=Symbol('z')
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
                                      local_dict={"a": b})
-        self.assertEqual(fun(u), sympify("x*u*z-b/u"))
+        self.assertEqual(fun(u), x*u*z-b/u)
         self.assertEqual(six.text_type(fun), "f1g")
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
                                      local_dict={"y": b})
-        self.assertEqual(fun(u), sympify("x*u*z-a/u"))
+        self.assertEqual(fun(u), x*u*z-a/u)
 
     def test_function_multiple_inputs(self):
         x=Symbol('x')

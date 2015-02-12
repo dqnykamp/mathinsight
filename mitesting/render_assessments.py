@@ -186,17 +186,19 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
         # that are assigned to expressions
         from mitesting.sympy_customized import EVALUATE_NONE
         from mitesting.math_objects import math_object
-        from mitesting.sympy_customized import parse_and_process
+        from mitesting.sympy_customized import parse_and_process, Symbol
         from mitesting.models import QuestionAnswerOption
-        from sympy import Symbol
         import pickle
 
         # ExpressionFromAnswer contains information about any
         # answers that were assigned to expressions
         for expression in question.expressionfromanswer_set.all():
-            # will assign Symbol('[?]') if no response given for answer
-            # or if error in parsing response
-            math_expr= Symbol('[?]')
+            # will assign Symbol(default_value) if no response given for answer
+            # or if error in parsing respons
+            default_value= re.sub('_long_underscore_', '\uff3f',
+                                  expression.default_value)
+
+            math_expr= Symbol(default_value)
 
             answer_number=expression.answer_number
             try:
@@ -211,7 +213,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                         try:
                             response_text=mc_dict[int(response['answer'])]
                         except (ValueError, KeyError):
-                            response_text="[?]"
+                            response_text=default_value
                         math_expr=Symbol(response_text)
                     else:
                         try:
@@ -223,7 +225,6 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                                 evaluate_level=EVALUATE_NONE,
                                 assume_real_variables=expression.real_variables,
                             )
-
                         except:
                             pass
             # add expression to local_dict and any alternate_dicts
@@ -234,12 +235,6 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
             # add to context 
             expression_context[expression.name] = \
                 math_object(math_expr, evaluate_level=EVALUATE_NONE)
-
-        # add Symbol(['?']) to local_dict with key _undefined_
-        # so that can test for it in remaining expressions
-        local_dict['_undefined_']=Symbol('[?]')
-        for alt_dict in alternate_dicts:
-            alt_dict['_undefined_']=Symbol('[?]')
 
         # last, process expressions flagged as post user response
         for (i, expression) in enumerate(question.expression_set\

@@ -5,12 +5,14 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Symbol, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S
+from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
+from django.utils.safestring import mark_safe
 
 from sympy import Interval as sympy_Interval
 from sympy import FiniteSet as sympy_FiniteSet
+from sympy import Symbol as sympy_Symbol
 
 import re
 import keyword
@@ -304,7 +306,7 @@ def parse_and_process(s, global_dict=None, local_dict=None,
 def auto_symbol(tokens, local_dict, global_dict):
     """Inserts calls to ``Symbol`` for undefined variables.
     
-    Customized verison of auto symbol
+    Customized version of auto symbol
     only difference is that ignore python keywords and None
     so that the keywords and None will be turned into a symbol
     """
@@ -334,7 +336,6 @@ def auto_symbol(tokens, local_dict, global_dict):
                 if isinstance(obj, (Basic, type)) or callable(obj):
                     result.append((NAME, name))
                     continue
-
             result.extend([
                 (NAME, 'Symbol'),
                 (OP, '('),
@@ -345,14 +346,13 @@ def auto_symbol(tokens, local_dict, global_dict):
             result.append((tokNum, tokVal))
 
         prevTok = (tokNum, tokVal)
-
     return result
 
 def auto_symbol_real(tokens, local_dict, global_dict):
     """Inserts calls to ``Symbol`` for undefined variables,
     designating them as real
 
-    Customized verison of auto symbol
+    Customized version of auto symbol
     only other difference is that ignore python keywords and None
     so that the keywords and None will be turned into a symbol
     """
@@ -401,6 +401,20 @@ def auto_symbol_real(tokens, local_dict, global_dict):
     return result
 
 
+
+class Symbol(sympy_Symbol):
+    def __str__(self):
+        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
+    def _sympystr(self, prtr):
+        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
+
+    def _latex(self, prtr):
+        if self in prtr._settings['symbol_names']:
+            return prtr._settings['symbol_names'][self]
+
+        return prtr._deal_with_super_sub(self.name)
+
+        
 class SymbolCallable(Symbol):
     def __eq__(self, other):
         if self is other:
@@ -1184,6 +1198,11 @@ class MulUnsort(Mul):
 
 
 class LatexPrinter(sympy_LatexPrinter):
+    emptyPrinter = unicode
+    def __init__(self, settings=None):
+        super(LatexPrinter,self).__init__(settings)
+        self._str = unicode
+
     def _print_And(self, e):
         args = sorted(e.args, key=default_sort_key)
         return self._print_LogOp(args, r"~\text{and}~")
@@ -1192,6 +1211,18 @@ class LatexPrinter(sympy_LatexPrinter):
         args = sorted(e.args, key=default_sort_key)
         return self._print_LogOp(args, r"~\text{or}~")
 
+    def doprint(self, expr):
+        tex = self._str(self._print(expr))
+
+        if self._settings['mode'] == 'plain':
+            return tex
+        elif self._settings['mode'] == 'inline':
+            return r"$%s$" % tex
+        elif self._settings['itex']:
+            return r"$$%s$$" % tex
+        else:
+            env_str = self._settings['mode']
+            return r"\begin{%s}%s\end{%s}" % (env_str, tex, env_str)
 
 def latex(expr, **settings):
     return LatexPrinter(settings).doprint(expr)

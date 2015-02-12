@@ -8,9 +8,9 @@ from django.template import Context
 from mitesting.grade_question import *
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr
+from mitesting.sympy_customized import parse_expr, Symbol
 
-from sympy import Symbol, sympify
+from sympy import sympify
 import six
 import random
 
@@ -133,7 +133,7 @@ class TestCompareResponse(TestCase):
         self.assertTrue("error" in answer_results["answer_feedback"])
 
         self.new_answer(answer_code="a", answer="ax")
-        expr_context["ax"]=math_object(sympify("a*x"))
+        expr_context["ax"]=math_object(Symbol("a")*Symbol("x"))
         
         answer_results=compare_response_with_answer_code\
                         (user_response="ax", the_answer_info=answer_info,
@@ -158,15 +158,15 @@ class TestCompareResponse(TestCase):
     def test_multiple_answers(self):
         local_dict={}
         expr_context=Context({})
-
+        x=Symbol('x')
         answer_info={'code': 'a', 'type': EXPRESSION}
         
         self.new_answer(answer_code="a", answer="ax", feedback="You got it!")
-        expr_context["ax"]=math_object(sympify("a*x"))
+        expr_context["ax"]=math_object(Symbol('a')*x)
         self.new_answer(answer_code="a", answer="bx", feedback="Getting close.", percent_correct=50)
-        expr_context["bx"]=math_object(sympify("b*x"))
+        expr_context["bx"]=math_object(Symbol('b')*x)
         self.new_answer(answer_code="a", answer="cx", feedback="Bad idea.", percent_correct=0)
-        expr_context["cx"]=math_object(sympify("c*x"))
+        expr_context["cx"]=math_object(Symbol('c')*x)
 
         answer_results=compare_response_with_answer_code\
                         (user_response="ax", the_answer_info=answer_info,
@@ -217,8 +217,8 @@ class TestCompareResponse(TestCase):
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
-        expr_context["two_a_x"]=math_object(sympify("2*a*x"))
-        expr_context["two_ax"]=math_object(sympify("2*ax"))
+        expr_context["two_a_x"]=math_object(2*Symbol('a')*Symbol('x'))
+        expr_context["two_ax"]=math_object(2*Symbol('ax'))
 
         
         the_ans=self.new_answer(answer_code="a", answer="two_a_x")
@@ -251,7 +251,7 @@ class TestCompareResponse(TestCase):
         expr_context=Context({})
 
         answer_info={'code': 'a', 'type': EXPRESSION}
-        expr_context["aa"]=math_object(sympify("2.31313*a"))
+        expr_context["aa"]=math_object(2.31313*Symbol("a"))
 
         
         the_ans=self.new_answer(answer_code="a", answer="aa",
@@ -875,6 +875,10 @@ class TestQuestionGroups(TestCase):
     def test_small_group(self):
         local_dict={}
         expr_context=Context({})
+        x=Symbol('x')
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
 
 
         # set up three answers, two in the same group
@@ -884,19 +888,19 @@ class TestQuestionGroups(TestCase):
         answer_info.append({'code': 'a', 'type': EXPRESSION, 'group': 'foo',
                             'identifier': id1, 'points': 1})
         self.new_answer(answer_code="a", answer="ax", feedback="The first answer")
-        expr_context["ax"]=math_object(sympify("a*x"))
+        expr_context["ax"]=math_object(a*x)
 
         id2='second_one'
         answer_info.append({'code': 'b', 'type': EXPRESSION, 'group': 'foo',
                             'identifier': id2, 'points': 1})
         self.new_answer(answer_code="b", answer="bx", feedback="The second answer")
-        expr_context["bx"]=math_object(sympify("b*x"))
+        expr_context["bx"]=math_object(b*x)
 
         id3='third_one'
         answer_info.append({'code': 'c', 'type': EXPRESSION, 'identifier': id3,
                             'points': 1})
         self.new_answer(answer_code="c", answer="cx", feedback="Answer not in group")
-        expr_context["cx"]=math_object(sympify("c*x"))
+        expr_context["cx"]=math_object(c*x)
 
         
         answer_user_responses=[]
@@ -1039,8 +1043,12 @@ class TestQuestionGroups(TestCase):
     def test_multiple_answers_no_overlapp(self):
         local_dict={}
         expr_context=Context({})
-
-
+        x=Symbol('x')
+        y=Symbol('y')
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        
         # set up three answers in group with multiple acceptable answers each
         answer_info=[]
         id1='first_one'
@@ -1056,19 +1064,19 @@ class TestQuestionGroups(TestCase):
 
         # no overlap between acceptable answers
         self.new_answer(answer_code="a", answer="ax")
-        expr_context["ax"]=math_object(sympify("a*x"))
+        expr_context["ax"]=math_object(a*x)
         self.new_answer(answer_code="a", answer="ay")
-        expr_context["ay"]=math_object(sympify("a*y"))
+        expr_context["ay"]=math_object(a*y)
 
         self.new_answer(answer_code="b", answer="bx")
-        expr_context["bx"]=math_object(sympify("b*x"))
+        expr_context["bx"]=math_object(b*x)
         self.new_answer(answer_code="b", answer="by")
-        expr_context["by"]=math_object(sympify("b*y"))
+        expr_context["by"]=math_object(b*y)
         
         self.new_answer(answer_code="c", answer="cx")
-        expr_context["cx"]=math_object(sympify("c*x"))
+        expr_context["cx"]=math_object(c*x)
         self.new_answer(answer_code="c", answer="cy")
-        expr_context["cy"]=math_object(sympify("c*y"))
+        expr_context["cy"]=math_object(c*y)
         
         answer_user_responses=[]
         answer_user_responses.append({'answer': "bx"})
@@ -1136,6 +1144,11 @@ class TestQuestionGroups(TestCase):
     def test_multiple_answers_overlap1(self):
         local_dict={}
         expr_context=Context({})
+        x=Symbol('x')
+        y=Symbol('y')
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
 
 
         # set up three answers in group with multiple acceptable answers each
@@ -1153,9 +1166,9 @@ class TestQuestionGroups(TestCase):
 
         # each answer acceptable in two slots
         # not sure why would have this, but it's possible with system
-        expr_context["ax"]=math_object(sympify("a*x"))
-        expr_context["bx"]=math_object(sympify("b*x"))
-        expr_context["cx"]=math_object(sympify("c*x"))
+        expr_context["ax"]=math_object(a*x)
+        expr_context["bx"]=math_object(b*x)
+        expr_context["cx"]=math_object(c*x)
 
         self.new_answer(answer_code="a", answer="ax")
         self.new_answer(answer_code="a", answer="bx")
@@ -1229,7 +1242,11 @@ class TestQuestionGroups(TestCase):
     def test_multiple_answers_overlap2(self):
         local_dict={}
         expr_context=Context({})
-
+        x=Symbol('x')
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        d=Symbol('d')
 
         # set up four answers in group with multiple acceptable answers each
         answer_info=[]
@@ -1249,10 +1266,10 @@ class TestQuestionGroups(TestCase):
 
         # each answer acceptable in multiple slots
         # not sure why would have this, but it's possible with system
-        expr_context["ax"]=math_object(sympify("a*x"))
-        expr_context["bx"]=math_object(sympify("b*x"))
-        expr_context["cx"]=math_object(sympify("c*x"))
-        expr_context["dx"]=math_object(sympify("d*x"))
+        expr_context["ax"]=math_object(a*x)
+        expr_context["bx"]=math_object(b*x)
+        expr_context["cx"]=math_object(c*x)
+        expr_context["dx"]=math_object(d*x)
 
         self.new_answer(answer_code="a", answer="ax")
         self.new_answer(answer_code="a", answer="bx")
@@ -1316,6 +1333,10 @@ class TestQuestionGroups(TestCase):
     def test_multiple_answers_partial_credit(self):
         local_dict={}
         expr_context=Context({})
+        x=Symbol('x')
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
 
 
         # set up three answers in group with multiple acceptable answers each
@@ -1333,9 +1354,9 @@ class TestQuestionGroups(TestCase):
 
         # each answer acceptable in two slots
         # not sure why would have this, but it's possible with system
-        expr_context["ax"]=math_object(sympify("a*x"))
-        expr_context["bx"]=math_object(sympify("b*x"))
-        expr_context["cx"]=math_object(sympify("c*x"))
+        expr_context["ax"]=math_object(a*x)
+        expr_context["bx"]=math_object(b*x)
+        expr_context["cx"]=math_object(c*x)
 
         ans11=self.new_answer(answer_code="a", answer="ax", percent_correct=100)
         ans12=self.new_answer(answer_code="a", answer="bx", percent_correct=50)
