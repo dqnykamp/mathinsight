@@ -6,7 +6,7 @@ from __future__ import division
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
 from midocs.models import Page, Level
-from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list
+from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list, process_expressions_from_answers
 from mitesting.sympy_customized import SymbolCallable, Symbol
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
@@ -1503,6 +1503,7 @@ class TestRenderQuestion(TestCase):
         from dynamictext.models import DynamicText
         self.q.question_text="{% dynamictext %}Hello{%enddynamictext %}"
         self.q.save()
+        process_expressions_from_answers(self.q)
 
         self.assertEqual(DynamicText.return_number_for_object(self.q), 1)
         dt = DynamicText.return_dynamictext(self.q,0)
@@ -1519,7 +1520,9 @@ class TestRenderQuestion(TestCase):
                         in question_data['dynamictext_javascript'])
         
         self.q.question_text="Is this {% dynamictext %}dynamic{%enddynamictext %} text? {% dynamictext %}Yes.{%enddynamictext%}"
-        self.q.save()
+        self.q.save() 
+        process_expressions_from_answers(self.q)
+       
         
         self.assertEqual(DynamicText.return_number_for_object(self.q), 2)
         dt0 = DynamicText.return_dynamictext(self.q,0)
@@ -1557,6 +1560,8 @@ class TestRenderQuestion(TestCase):
                                                answer="n")
         self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
         self.q.save()
+        
+        process_expressions_from_answers(self.q)
 
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,
@@ -1579,6 +1584,7 @@ class TestRenderQuestion(TestCase):
         
         self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' assign_to_expression_default='???' %}, apple={{apple}}, m={{m}},"
         self.q.save()
+        process_expressions_from_answers(self.q)
 
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,
@@ -1612,7 +1618,8 @@ class TestRenderQuestion(TestCase):
 
         self.q.question_text = "{% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}"
         self.q.save()
-        
+        process_expressions_from_answers(self.q)
+
         question_data=render_question(self.q, rng=self.rng, 
                                       question_identifier=identifier,
                                       prefilled_answers=prefilled_answers)

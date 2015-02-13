@@ -356,6 +356,55 @@ def return_valid_answer_codes(question, expression_context):
     return (valid_answer_codes, invalid_answers, invalid_answer_messages)
 
 
+
+def process_expressions_from_answers(question):
+
+    # update expression from answers from question text and subparts
+    # update dynamic text from question and solution text and subparts
+
+    # just assume every answer code is valid 
+    valid_answer_codes = {}
+    for ao in question.questionansweroption_set.all():
+        answer_dict = {'answer_type': ao.answer_type,
+                       'split_symbols_on_compare':
+                       ao.split_symbols_on_compare
+        }
+        valid_answer_codes[ao.answer_code]=answer_dict
+
+
+    import random
+    rng=random.Random()
+
+    answer_data = { 'valid_answer_codes': valid_answer_codes,
+                    'answer_info': [],
+                    'question': question,
+                    'question_identifier': "",
+                    'prefilled_answers': [],
+                    'error': False,
+                    'answer_errors': [],
+                    'readonly': False,
+                    'rng': rng,
+                }
+
+    update_context = Context({'question': question, 
+                              '_process_dynamictext': True,
+                              '_dynamictext_object': question,
+                              '_process_expressions_from_answers': True,
+                              '_answer_data_': answer_data,
+                              '_sympy_local_dict_': {},
+                          })
+
+
+    from dynamictext.models import DynamicText
+    DynamicText.initialize(question)
+    question.expressionfromanswer_set.all().delete()
+    render_results=render_question_text(
+        {'question': question, 'show_help': True,
+         'expression_context': update_context,
+     })
+
+
+
 def render_question_text(render_data, solution=False):
     """
     Render the question text and subparts as Django templates.

@@ -2441,6 +2441,9 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="double_me", answer="double_me")
 
         self.q.save()
+        
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(self.q)
 
         response = self.client.get("/assess/question/%s" % self.q.id)
 
@@ -2507,6 +2510,9 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="try3a", answer="try3a")
 
         self.q.save()
+
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(self.q)
 
         response = self.client.get("/assess/question/%s" % self.q.id)
 

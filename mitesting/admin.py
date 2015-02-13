@@ -195,6 +195,13 @@ class QuestionAdmin(reversion.VersionAdmin):
               "mitesting/preselect_sympy_options.js",]
 
 
+    def save_related(self, request, form, formsets, change):
+        super(QuestionAdmin, self).save_related(request, form, formsets, change)
+
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(form.instance)
+
+
 class QuestionTypeAdmin(reversion.VersionAdmin):
     class Media:
         js = ["js/save_me_genie.js",]
