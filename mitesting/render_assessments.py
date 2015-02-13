@@ -498,7 +498,7 @@ def add_help_data(render_data, render_results, subparts=None):
     """
     question = render_data['question']
 
-    template_string_base = "{% load testing_tags mi_tags humanize %}"
+    template_string_base = "{% load testing_tags mi_tags dynamictext humanize %}"
     expr_context = render_data['expression_context']
     hint_template_error=False
    

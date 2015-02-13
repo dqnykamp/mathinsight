@@ -140,8 +140,10 @@ class Question(models.Model):
         DynamicText.initialize(self)
         self.expressionfromanswer_set.all().delete()
         from mitesting.render_assessments import render_question_text
-        render_results=render_question_text({'question': self, 
-                              'expression_context': update_context})
+        render_results=render_question_text(
+            {'question': self, 'show_help': True,
+             'expression_context': update_context,
+         })
 
     def user_can_view(self, user, solution=True):
         permission_level=return_user_assessment_permission_level(user)
