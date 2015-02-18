@@ -1,4 +1,4 @@
-{% load staticfiles testing_tags %}
+{% load staticfiles testing_tags mi_tags %}
 
 {% if question_data.error_message %}
 <section class="error">
@@ -15,9 +15,7 @@
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
-<div class="question_help_container">
-  <p><a id="{{question_data.identifier}}_help_show" class="show_help" onclick="showHide('{{question_data.identifier}}_help');">Need help?</a></p>
-  <section id="{{question_data.identifier}}_help" class="question_help info">
+{% hidden "" show_text="Need help?" displayed_text_css="" hide_text="Hide help" container_css="question_help_container" %}
     {% if question_data.hint_text %}
     <h5>Hint</h5>
     {{ question_data.hint_text}}
@@ -30,11 +28,7 @@
       {% endfor%}
     </ul>
     {% endif %}
-    <p><a id="{{question_data.identifier}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_help');">Hide help</a></p>
-  </section>
-
-</div>
-
+{% endhidden %}
 {% endif %}
 
 {% if question_data.subparts %}
@@ -42,10 +36,9 @@
 {% for subpart in question_data.subparts %}
 <li class='question{% if subpart.subpart.spacing_css%} {{ subpart.subpart.spacing_css}}{%endif%}{%if subpart.subpart.css_class%} {{ subpart.subpart.css_class }}{%endif%}' id="question_{{question_data.identifier}}_{{subpart.letter}}">
   {{ subpart.rendered_text}}
+
   {% if subpart.help_available %}
-<div class="question_help_container">
-  <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_show" class="show_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Need help?</a></p>
-  <section id="{{question_data.identifier}}_{{subpart.letter}}_help" class="question_help info">
+{% hidden "" show_text="Need help?" displayed_text_css="" hide_text="Hide help" container_css="question_help_container" %}
     {% if subpart.hint_text %}
     <h5>Hint</h5>
     {{ subpart.hint_text}}
@@ -58,11 +51,7 @@
       {% endfor%}
     </ul>
     {% endif %}
-   <p><a id="{{question_data.identifier}}_{{subpart.letter}}_help_hide" class="hide_help" onclick="showHide('{{question_data.identifier}}_{{subpart.letter}}_help');">Hide help</a></p>
-  </section>
-
-</div>
-
+{% endhidden %}
 {% endif %}
 
 </li>

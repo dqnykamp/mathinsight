@@ -74,20 +74,6 @@ ul.instruction_list {
 }
 
 
-/* have mouse change to pointer over links */
-a.show_help, a.hide_help {
-    cursor: pointer;
-}
-
-.question_help {
-    display: none;
-    padding: 8px;
-}
-.question_help h5{
-    margin-bottom: -0.2em;
-}
-
-
 form.writein {
    display: inline;
 }

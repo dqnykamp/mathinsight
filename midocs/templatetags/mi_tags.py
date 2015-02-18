@@ -2456,6 +2456,81 @@ def counter(parser, token):
     return CounterNode(args)
 
 
+class HiddenNode(template.Node):
+    def __init__(self, displayed_text, kwargs, nodelist):
+        self.displayed_text=displayed_text
+        self.kwargs=kwargs
+        self.nodelist=nodelist
+
+    def render(self, context):
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        
+        displayed_text = self.displayed_text.resolve(context)
+
+        show_text = kwargs.get("show_text", "(Show)")
+        hide_text = kwargs.get("hide_text", "Hide")
+        css = kwargs.get("css", "info")
+        displayed_text_css = kwargs.get("displayed_text_css", "info")
+        container_css = kwargs.get("container_css", "")
+
+        try:
+            hidden_info = context["_hidden_section_info"]
+        except KeyError:
+            hidden_info={}
+            context.dicts[0]['_hidden_section_info']=hidden_info
+
+        counter = hidden_info.get('counter',0)+1
+        hidden_info['counter']=counter
+        hidden_section_identifier= "hidden_section_%s" % counter
+
+        html_string = self.nodelist.render(context)
+        html_string += '<p><a id="%s_hide" class="hide_section" onclick="showHide(\'%s\');">%s</a></p>' \
+            % (hidden_section_identifier, hidden_section_identifier,
+               hide_text)
+        html_string = '<div id="%s" class="hidden_section %s">%s</div>' \
+            % (hidden_section_identifier, css, html_string)
+        html_string = '<div id="%s_show" class="show_section %s" style="width: 100%%">%s <a onclick="showHide(\'%s\');">%s</a></div>%s' \
+            % (hidden_section_identifier, 
+               displayed_text_css, displayed_text, 
+               hidden_section_identifier, 
+               show_text, html_string)
+        html_string = '<div class="hidden_section_container %s">%s</div>'\
+                      % (container_css, html_string)
+        
+        return html_string
+        
+
+@register.tag
+def hidden(parser, token):
+    bits = token.split_contents()
+
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+    
+    displayed_text = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+  
+
+    nodelist = parser.parse(('endhidden',))
+    parser.delete_first_token()
+
+    return HiddenNode(displayed_text, kwargs, nodelist)
+
+
+
 
 def find_applet_and_identifier(
         applet_id_dict, applet=None, applet_identifier=None,

@@ -583,13 +583,13 @@ def add_help_data(render_data, render_results, subparts=None):
 
     help_available=False
 
-    # If subparts are present, then only pages with no subpart listed
-    # are added to main reference_pages list.
+    # If subparts are present, then only pages with no single character subpart
+    # listed are added to main reference_pages list.
     # (References pages marked with non-existent subpart are not visible)
     if subparts_present:
         render_results['reference_pages'] = \
             [rpage.page for rpage in question.questionreferencepage_set\
-                 .filter(question_subpart=None)]
+                 .exclude(question_subpart__range=("a","z"))]
 
     # If question does not contain subparts, then show all reference_pages
     # in the main list, regardless of any marking for a particular subpart

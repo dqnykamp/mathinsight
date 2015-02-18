@@ -14,20 +14,6 @@
 <script src="{{ STATIC_URL }}js/ajaxcsrf.js"></script>
 {% dajaxice_js_import %} 
 
-<script type="text/javascript">
- function showHide(shID) {
-	if (document.getElementById(shID)) {
-		if (document.getElementById(shID+'_show').style.display != 'none') {
-			document.getElementById(shID+'_show').style.display = 'none';
-			document.getElementById(shID).style.display = 'block';
-		}
-		else {
-			document.getElementById(shID+'_show').style.display = 'inline';
-			document.getElementById(shID).style.display = 'none';
-		}
-	}
-}
-</script>
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({
   "HTML-CSS": { linebreaks: { automatic: false } },

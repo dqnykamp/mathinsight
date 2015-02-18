@@ -372,7 +372,6 @@ class DiffSubs(Expr):
 class IsNumberUneval(BooleanFunction):
     def doit(self, **hints):
         if hints.get('deep', True):
-            print("isnumberarg=%s" % self.args[0].doit(**hints))
             return self.args[0].doit(**hints).is_number
         else:
             return  self.args[0].is_number

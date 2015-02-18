@@ -2298,6 +2298,20 @@ a.assessment
     display: none;
 }
 
+/* have mouse change to pointer over links */
+.show_section a, a.hide_section {
+    cursor: pointer;
+}
+
+.hidden_section {
+    display: none;
+    padding: 8px;
+}
+
+.hidden_section_container {
+    margin-top: 1em;
+}
+
 @media print {
 
     .visible_print_only {
