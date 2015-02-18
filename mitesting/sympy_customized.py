@@ -913,18 +913,39 @@ class AddUnsort(Add):
 
     def _latex(self, prtr):
         # identical to _print_Add from latex.py with self=prtr and expr=self
-        # except get terqms from original_args
-        # and use customized _coeff_isneg
+        # except 
+        # - get terms from original_args
+        # - use customized _coeff_isneg
+        # - put brackets around additional adds,
+        #   (for expressions such as x - (y + z) )
+
+        def _needs_add_brackets(expr):
+            """
+            Returns True if the expression needs to be wrapped in brackets when
+            printed as part of an Add, False otherwise.  This is False for most
+            things.
+            """
+            if expr.is_Relational:
+                return True
+            if expr.is_Add:
+                return True
+            return False
 
         terms = list(self.original_args)
 
-        tex = prtr._print(terms[0])
-
-        for term in terms[1:]:
-            if not _coeff_isneg(term):
-                tex += " + " + prtr._print(term)
+        tex = ""
+        for i, term in enumerate(terms):
+            if i == 0:
+                pass
+            elif _coeff_isneg(term):
+                tex += " - "
+                term = -term
             else:
-                tex += " - " + prtr._print(-term)
+                tex += " + "
+            term_tex = prtr._print(term)
+            if _needs_add_brackets(term):
+                term_tex = r"\left(%s\right)" % term_tex
+            tex += term_tex
 
         return tex
 
@@ -1082,14 +1103,14 @@ class MulUnsort(Mul):
             return False
 
 
-
-        def convert(self):
-            if not self.is_Mul:
-                return str(prtr._print(self))
+        def convert(expr):
+            if not isinstance(expr, MulUnsort):
+                return str(prtr._print(expr))
             else:
                 _tex = last_term_tex = ""
+                
+                args=expr.original_args
 
-                args=self.original_args
                 for i, term in enumerate(args):
                     term_tex = prtr._print(term)
 

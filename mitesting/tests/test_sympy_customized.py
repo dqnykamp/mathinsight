@@ -262,6 +262,11 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(expr), 
             '\\frac{1 x x}{x x} - \\frac{1 x x}{x x} - \\frac{1 x x}{- x x}')
 
+        expr=parse_expr("-t/x", evaluate=False)
+        self.assertEqual(latex(expr), '\\frac{- t}{x}')
+
+        expr=parse_expr("x-(y-z)", evaluate=False)
+        self.assertEqual(latex(expr), 'x - \\left(y - z\\right)')
 
     def test_factorial(self):
         from sympy import factorial
