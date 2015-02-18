@@ -1279,6 +1279,18 @@ class AppletChildObjectLink(models.Model):
         return "link %s to %s" % (self.object_name, self.child_object_name)
 
 
+class AppletDynamicText(models.Model):
+    applet = models.ForeignKey(Applet)
+    code = models.SlugField(max_length=100)
+    text = models.TextField()
+
+    class Meta:
+        unique_together = ("applet", "code")
+
+    def __unicode__(self):
+        return self.code
+
+
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)
     author = models.ForeignKey(Author)

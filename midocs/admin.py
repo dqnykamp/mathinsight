@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink
+from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletDynamicText
 from django.conf import settings
 import reversion
 
@@ -59,8 +59,11 @@ class AppletAuthorInline(admin.TabularInline):
 class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
+class AppletDynamicTextInline(admin.StackedInline):
+    model = AppletDynamicText
+
 class AppletAdmin(reversion.VersionAdmin):
-    inlines = [AppletParameterInline, AppletObjectInline, AppletChildObjectLinkInline, AppletAuthorInline,AppletNotationSystemInline]
+    inlines = [AppletParameterInline, AppletObjectInline, AppletChildObjectLinkInline, AppletDynamicTextInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
     list_filter = ("applet_type",)
@@ -75,6 +78,7 @@ class AppletAdmin(reversion.VersionAdmin):
 
     class Media:
         js = [
+            "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
             "%sjs/save_me_genie.js" % settings.STATIC_URL,
         ]
 

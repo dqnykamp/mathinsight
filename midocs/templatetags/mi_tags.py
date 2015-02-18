@@ -141,7 +141,7 @@ def intlink(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -169,7 +169,7 @@ def extendedlink(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -195,7 +195,7 @@ def confusedlink(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -804,7 +804,7 @@ def image(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -1142,8 +1142,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
     except:
         raise #return ""
 
-def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
-                                       target, related_objects=[]):
+def Geogebra_capture_object_javascript(appletobject, applet_identifier,
+                                       varname, related_objects=[]):
     
     object_type = appletobject.object_type.object_type
     javascript= ""
@@ -1152,26 +1152,21 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
             (applet_identifier, appletobject.name)
         ycoord = 'document.%s.getYcoord("%s")' % \
             (applet_identifier, appletobject.name)
-
-        javascript='jQuery("#%s").val("Point("+%s+","+%s+")");\n' % \
-            (target, xcoord,ycoord)
+        return '%s="Point("+%s+","+%s+")"' % (varname, xcoord,ycoord)
     elif object_type=='Number' or object_type=='Boolean':
-        value = 'document.%s.getValue("%s")' % \
-            (applet_identifier, appletobject.name)
-        javascript='jQuery("#%s").val(%s);\n' % (target, value)
+        return '%s=document.%s.getValue("%s")' % \
+            (varname, applet_identifier, appletobject.name)
     elif object_type=='Text':
-        value = 'document.%s.getValueString("%s")' % \
-            (applet_identifier, appletobject.name)
-        javascript='jQuery("#%s").val(%s);\n' % (target, value)
+        return '%s=document.%s.getValueString("%s")' % \
+            (varname, applet_identifier, appletobject.name)
     elif object_type=='List':
-        value = 'document.%s.getValueString("%s")' % \
+        value = '%document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
         # Extract the list within the braces returned by getValueString
         # Replace all curly braces by parentheses so lists will be tuples
         # Add comma at end so single element will still be a tuple (especially
         # important for lists of lists)
-        value = "/{(.*)}/.exec(%s)[1].replace(/(\{)/g, '(').replace(/(\})/g, ')')+','" % value
-        javascript='try {\njQuery("#%s").val(%s);\n}\ncatch(e) {\njQuery("#%s").val("");\n}\n' % (target, value, target)
+        return "try {\n %s=/{(.*)}/.exec(%s)[1].replace(/(\{)/g, '(').replace(/(\})/g, ')')+','\n}\ncatch(e) {\n %s="";\n}\n" % (varname, value, varname)
     elif object_type=='Line':
         if len(related_objects)==2:
             point1=related_objects[0]
@@ -1186,11 +1181,10 @@ def Geogebra_capture_object_javascript(context, appletobject, applet_identifier,
                     (applet_identifier, point2.name)
                 ycoord2 = 'document.%s.getYcoord("%s")' % \
                     (applet_identifier, point2.name)
-                javascript='jQuery("#%s").val("Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))");\n' % \
-                    (target, xcoord1,ycoord1, xcoord2,ycoord2)
-                
-                
-    return javascript
+                return '%s="Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))";\n' % \
+                        (varname, xcoord1,ycoord1, xcoord2,ycoord2)
+
+    return "%s=''" % varname
     
 
 def GeogebraTube_link(context, applet, applet_identifier, width, height):
@@ -1614,8 +1608,26 @@ class AppletNode(template.Node):
             underscore_to_camel(applet_suffix),
             underscore_to_camel(identifier))
 
-        if applet.applet_type.code == "GeogebraWeb":
-            applet_data['activate_geogebraweb']=True
+
+        # keep track of identifiers and applet_id_users specified in tag,
+        # so that javascript from other applet_object tags can
+        # access the applet
+        try:
+            applet_id_dict = applet_data['applet_ids']
+        except KeyError:
+            applet_id_dict={}
+            applet_data['applet_ids']=applet_id_dict
+        # applet_id_dict is keyed on optional applet_id_user (kwarg: applet_id)
+        # so key will be None if applet_id_user is not specified.
+        # If multiple instances of same applet_id_user are found (including None)
+        # then don't overwrite so that first instance of applet is used
+        this_applet_info=applet_id_dict.get(applet.code, {})
+        # None is treated as valid applet_id_user, in case of no applet_id 
+        applet_id_user = kwargs.get('applet_id') 
+        if applet_id_user not in this_applet_info:
+            this_applet_info[applet_id_user] = applet_identifier
+            applet_id_dict[applet.code]=this_applet_info
+        
 
         if applet.applet_type.code == "LiveGraphics3D":
             (applet_link, script_string) = LiveGraphics3D_link(context, applet, applet_identifier, width, height)
@@ -1765,9 +1777,12 @@ class AppletNode(template.Node):
 
             if applet.applet_type.code == "Geogebra" \
                     or applet.applet_type.code == "GeogebraWeb":
-                capture_javascript += Geogebra_capture_object_javascript \
-                    (context, appletobject, applet_identifier, 
-                     inputbox_id, related_objects)
+                javascript = Geogebra_capture_object_javascript \
+                       (appletobject, applet_identifier, 
+                        "temp", related_objects)
+                capture_javascript \
+                    += 'var temp;\n%s\njQuery("#%s").val(temp);\n' \
+                    % (javascript, inputbox_id,)
 
         # if there was a kwarg of form answer_xxxx that was not a
         # changeable object, register the error
@@ -1819,31 +1834,16 @@ class AppletNode(template.Node):
                 geogebra_javascript = applet_data['javascript']['Geogebra']
             except KeyError:
                 applet_data['javascript']['Geogebra'] = {
-                    'on_init_commands': ""}
+                    'on_init_commands': {}}
                 geogebra_javascript = applet_data['javascript']['Geogebra']
 
         if capture_javascript:
             if applet.applet_type.code == "Geogebra" \
                or applet.applet_type.code == "GeogebraWeb":
-                listener_function_name = "listener%s" % applet_identifier
-                
-                capture_javascript = 'function %s(obj) {\n%s}\n' % \
-                        (listener_function_name, capture_javascript)
-
                 all_capture_javascript = geogebra_javascript.get(
-                    'capture_javascript','')
-              
-                all_capture_javascript += capture_javascript
-
+                    'capture_javascript',{})
+                all_capture_javascript[applet_identifier] = capture_javascript
                 geogebra_javascript['capture_javascript'] = all_capture_javascript
-
-                init_javascript += 'document.%s.registerUpdateListener("%s");\n' \
-                    % (applet_identifier, listener_function_name)
-                
-                # run the listener function upon initialization
-                # so answer_blanks have values
-                init_javascript += "%s();\n" % listener_function_name
-
 
         applet_data['javascript']['_initialization'] += script_string
 
@@ -1852,15 +1852,12 @@ class AppletNode(template.Node):
             if applet.applet_type.code == "Geogebra" \
                     or applet.applet_type.code == "GeogebraWeb":
 
-
                 all_init_javascript = geogebra_javascript.get(
-                    'on_init_commands','')
-
-                all_init_javascript += 'if(arg=="%s") {\n%s}\n' % \
-                    (applet_identifier, init_javascript)
-                
+                    'on_init_commands',{})
+                all_init_javascript[applet_identifier] = init_javascript
                 geogebra_javascript['on_init_commands'] \
                     = all_init_javascript
+
 
 
         # if not boxed, just return code for applet
@@ -1901,7 +1898,7 @@ def applet_sub(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -1921,6 +1918,194 @@ def boxedapplet(parser, token):
 # boxedapplet tag
     (applet, kwargs, kwargs_string)=applet_sub(parser, token)
     return AppletNode(applet, 1, kwargs, kwargs_string)
+
+
+class AppletObjectNode(template.Node):
+    def __init__(self, object_name, kwargs, kwargs_string):
+        self.object_name = object_name
+        self.kwargs=kwargs
+        self.kwargs_string=kwargs_string
+    def render(self, context):
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        kwargs_string = dict([(smart_text(k, 'ascii'), v)
+                              for k, v in self.kwargs_string.items()])
+
+        object_name = self.object_name.resolve(context)
+        applet = kwargs.get('applet')
+        applet_id_user = kwargs.get('applet_id')
+
+        # if neither applet nor applet_id_user is specified,
+        # then check if applet is added to context
+        applet_identifier=None
+        if not applet and not applet_id_user:
+            try:
+                applet = context['_the_applet']
+                applet_identifier = context.get('_the_applet_identifier')
+            except KeyError:
+                return "[Broken applet object: no applet specified]"
+        
+
+        identifier = context.get('identifier','')
+        
+        try:
+            applet_data=context['_applet_data_']
+        except KeyError:
+            return "[Broken applet object: no applet data]"
+        
+        applet_object_counter = applet_data.get('applet_object_counter',0)+1
+        applet_data['applet_object_counter']=applet_object_counter
+        
+        object_identifier = "appletobject_%s_%s" % (applet_object_counter, identifier)
+
+        try:
+            object_list=applet_data['applet_objects']
+        except KeyError:
+            object_list = []
+            applet_data['applet_objects'] = object_list
+
+        render_with_mathjax=False
+        math_delims = ""
+        mathmode = kwargs.get('math')
+        if mathmode == "inline":
+            math_delims = "`{}`"
+            render_with_mathjax=True
+        elif mathmode == "display":
+            math_delims = r"\[{}\]"
+            render_with_mathjax=True
+        elif mathmode == "align":
+            math_delims = r"\begin{align*}{}\end{align*}"
+            render_with_mathjax=True
+
+        # Since applet tag may not have been encountered yet
+        # cannot yet form javascript to update object.
+        # Record information about applet object for later processing.
+        # If applet_identifier is specified, then it overrides applet_id_user
+        object_list.append({
+            'object_name': object_name,
+            'object_identifier': object_identifier,
+            'applet': applet,
+            'applet_id_user': applet_id_user,
+            'applet_identifier': applet_identifier,
+            'render_with_mathjax': render_with_mathjax,
+        })
+        
+        # return container for applet object
+        return "<span id='%s'>%s</span>" % (object_identifier, math_delims)
+
+@register.tag
+def applet_object(parser,token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+
+    object_name = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    kwargs_string = {}
+    
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+                kwargs_string[name] = value
+
+    return AppletObjectNode(object_name, kwargs, kwargs_string)
+    
+
+class AppletDynamicTextNode(template.Node):
+    def __init__(self, dynamictext_code, kwargs, kwargs_string):
+        self.dynamictext_code = dynamictext_code
+        self.kwargs=kwargs
+        self.kwargs_string=kwargs_string
+    def render(self, context):
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        kwargs_string = dict([(smart_text(k, 'ascii'), v)
+                              for k, v in self.kwargs_string.items()])
+
+        dynamictext_code = self.dynamictext_code.resolve(context)
+        applet = kwargs.get('applet')
+        applet_id_user = kwargs.get('applet_id')
+
+        # if neither applet nor applet_id_user is specified,
+        # then check if applet is added to context
+        applet_identifier=None
+        if not applet and not applet_id_user:
+            try:
+                applet = context['_the_applet']
+                applet_identifier = context.get('_the_applet_identifier')
+            except KeyError:
+                return "[Broken applet dynamictext: no applet specified]"
+        
+
+        identifier = context.get('identifier','')
+
+        try:
+            applet_data=context['_applet_data_']
+        except KeyError:
+            return "[Broken applet dynamictext: no applet data]"
+        
+        applet_dynamictext_counter = applet_data.get('applet_dynamictext_counter',0)+1
+        applet_data['applet_dynamictext_counter']=applet_dynamictext_counter
+        
+        dynamictext_identifier = "appletdynamictext_%s_%s" % (applet_dynamictext_counter, identifier)
+
+        try:
+            dynamictext_list=applet_data['applet_dynamictext']
+        except KeyError:
+            dynamictext_list = []
+            applet_data['applet_dynamictext'] = dynamictext_list
+
+        # Since applet tag may not have been encountered yet
+        # cannot yet form javascript to update text.
+        # Record information about applet dynamictext for later processing.
+        # If applet_identifier is specified, then it overrides applet_id_user
+        dynamictext_list.append({
+            'dynamictext_code': dynamictext_code,
+            'dynamictext_identifier': dynamictext_identifier,
+            'applet': applet,
+            'applet_id_user': applet_id_user,
+            'applet_identifier': applet_identifier,
+        })
+        
+        # return container for applet dynamictext
+        return "<span id='%s'></span>" % dynamictext_identifier
+
+
+
+@register.tag
+def applet_dynamic_text(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+
+    dynamictext_code = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    kwargs_string = {}
+    
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+                kwargs_string[name] = value
+
+    return AppletDynamicTextNode(dynamictext_code, kwargs, kwargs_string)
 
 
 def youtube_link(context, video, width, height):
@@ -2081,7 +2266,7 @@ def video_sub(parser, token):
         for bit in bits:
             match = kwarg_re.match(bit)
             if not match:
-                raise TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
             name, value = match.groups()
             if name:
                 kwargs[name] = parser.compile_filter(value)
@@ -2271,14 +2456,242 @@ def counter(parser, token):
     return CounterNode(args)
 
 
+
+def find_applet_and_identifier(
+        applet_id_dict, applet=None, applet_identifier=None,
+        applet_id_user=None):
+
+    """
+    Try to find applet.  Could be specified in the following ways.
+    1. have applet and corresponding applet_identifier.
+    2. have applet, no applet_identifier, and corresponding applet_id_user
+    3. have applet, no applet_id_user or applet_identifier, but applet
+       is found in applet_id_dict.
+       (If multiple matches, which applet identifier chosen is arbitrary)
+    4. no applet, but have applet_id_user.
+       (If multiple matches, which applet chosen is arbitrary)
+
+    raises ObjectDoesNotExist if unable to find.
+    
+    Returns (applet, applet_identifier) upon successful finding of applet
+
+    """
+
+    if applet:
+        # if applet is not an applet instance
+        # try to load applet with that code
+        if not isinstance(applet, Applet):
+            # test if applet with applet_code exists
+            # else raise ObjectDoesNotExist
+            applet=Applet.objects.get(code=applet)
+
+        try:
+            # information about instances of applet in page
+            this_applet_info=applet_id_dict[applet.code]
+        except KeyError:
+            # if applet code not in applet_id_dict,
+            # then applet does not appear in page
+            raise ObjectDoesNotExist
+
+        if applet_identifier:
+            # Check if applet_identifier is in applet_id_dict.
+            # If so, we're done
+            if applet_identifier in this_applet_info.values():
+                return (applet, applet_identifier)
+
+        if applet_id_user:
+            try:
+                # If applet_id_user was found in page
+                # use the associated applet_identifier
+                applet_identifier = this_applet_info[applet_id_user]
+                return (applet, applet_identifier)
+            except KeyError:
+                # if applet_id_user was not found, will ignore
+                pass
+
+        # try to pick an arbitrary applet_identifier associated with applet
+        try:
+            applet_identifier = this_applet_info.values()[0]
+            return (applet, applet_identifier)
+        except IndexError:
+            raise ObjectDoesNotExist
+
+
+    # if no applet specified, attempt to find via applet_id_user
+    for applet_code in applet_id_dict:
+        try:
+            applet_identifier = applet_id_dict[applet_code][applet_id_user]
+        except KeyError:
+            pass
+        else:
+            # if found identifier, return applet with that code
+            applet=Applet.objects.get(code=applet_code)
+            return (applet, applet_identifier)
+
+    # if never found applet, raise ObjectDoesNotExist
+    raise ObjectDoesNotExist
+
+
+
+def return_applet_object_javascript(applet_data, capture_javascript):
+
+
+    # Additional javascript to capture objects from applet_object tags.
+    # Now can look up applet information to associate to correct applet
+    try:
+        applet_objects = applet_data['applet_objects']
+        applet_id_dict = applet_data['applet_ids']
+    except KeyError:
+        return ""
+
+    setup_variables_javascript=""
+    error_javascript = ""
+    for ao in applet_objects:
+        object_name = ao['object_name']
+        object_identifier = ao['object_identifier']
+        applet = ao['applet']
+        applet_id_user = ao['applet_id_user']
+        applet_identifier = ao['applet_identifier']
+        render_with_mathjax = ao['render_with_mathjax']
+        
+        try:
+            (applet, applet_identifier) = find_applet_and_identifier(
+                applet_id_dict=applet_id_dict, applet=applet, 
+                applet_identifier=applet_identifier,
+                applet_id_user=applet_id_user)
+        except ObjectDoesNotExist:
+            error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no applet found]</p>");\n' % object_identifier
+            continue
+
+        try:
+            applet_object=applet.appletobject_set.get \
+                           (capture_changes=True, name=object_name)
+        except ObjectDoesNotExist:
+            error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no object found]</p>");\n' % object_identifier
+            continue
+     
+        related_objects=[]
+        if applet_object.related_objects:
+            related_object_names  \
+                = [item.strip() for item in applet_object.related_objects.split(",")]
+            for name in related_object_names:
+                try:
+                    ro = applet.appletobject_set.get(name=name)
+                    related_objects.append(ro)
+                except:
+                    pass
+
+        if applet.applet_type.code == "Geogebra" \
+           or applet.applet_type.code == "GeogebraWeb":
+            if render_with_mathjax:
+                javascript = Geogebra_capture_object_javascript(
+                    applet_object, applet_identifier, 
+                    "applet_object_content.%s.new" % object_identifier,
+                    related_objects)
+
+                applet_object_capture_javascript = "%s;\n" % javascript
+
+
+                setup_variables_javascript+='applet_object_content.%s={"new": "", "old": ""};\nmath_elements.%s=null;\nMathJax.Hub.Queue(function() { math_elements.%s= MathJax.Hub.getAllJax("%s")[0]; })\n' % (object_identifier, object_identifier, object_identifier, object_identifier)
+
+            else:
+                javascript = Geogebra_capture_object_javascript(
+                    applet_object, applet_identifier, 
+                    "temp", related_objects)
+                applet_object_capture_javascript \
+                    = '%s\njQuery("#%s").html(temp);\n' \
+                    % (javascript, object_identifier,)
+
+            # add to the capture javascript for the applet
+            this_applet_capture = capture_javascript.get(applet_identifier,"")
+            this_applet_capture += applet_object_capture_javascript
+            capture_javascript[applet_identifier] = this_applet_capture
+
+    if not setup_variables_javascript:
+        return '<div id="applet_object_capture">\n<script>\n%s</script>\n</div>\n' % error_javascript
+
+    setup_variables_javascript = "var applet_object_content={};\nvar math_elements={};\n" + setup_variables_javascript
+
+    interval_javascript = 'for(var object_identifier in math_elements) {\n var content = applet_object_content[object_identifier];\n if(content.new !=content.old) {\n  MathJax.Hub.Queue(["Text", math_elements[object_identifier], content.new]);\n  content.old=content.new; \n}\n}\nMathJax.Hub.Config({ showProcessingMessages: false});'
+
+    interval_javascript = 'window.setInterval(function() {\n%s}, 500);' % interval_javascript
+
+    return '<div id="applet_object_capture">\n<script>\n%s%s%s</script>\n</div>\n' % (error_javascript, setup_variables_javascript, interval_javascript)
+
+
+
+def render_dynamictext(context, applet_data):
+
+    # Additional javascript to capture dynamictexts from applet_dynamictext tags.
+    # Now can look up applet information to associate to correct applet
+    try:
+        applet_dynamictext = applet_data['applet_dynamictext']
+        applet_id_dict = applet_data['applet_ids']
+    except KeyError:
+        return ""
+
+    dynamictext_javascript=""
+    error_javascript = ""
+    for ao in applet_dynamictext:
+        dynamictext_code = ao['dynamictext_code']
+        dynamictext_identifier = ao['dynamictext_identifier']
+        applet = ao['applet']
+        applet_id_user = ao['applet_id_user']
+        applet_identifier = ao['applet_identifier']
+        
+        try:
+            (applet, applet_identifier) = find_applet_and_identifier(
+                applet_id_dict=applet_id_dict, applet=applet, 
+                applet_identifier=applet_identifier,
+                applet_id_user=applet_id_user)
+        except ObjectDoesNotExist:
+            error_javascript += 'jQuery("#%s").html("<p>[Broken applet dynamictext: no applet found]</p>");\n' % object_identifier
+            continue
+
+        try:
+            applet_dynamictext=applet.appletdynamictext_set.get \
+                           (code=dynamictext_code)
+        except ObjectDoesNotExist:
+            error_javascript += 'jQuery("#%s").html("<p>[Broken applet dynamictext: no dynamictext found]</p>");\n' % dynamictext_identifier
+            continue
+     
+        # add applet and applet_identifer to context 
+        # so that applet_object tags in dynamic text
+        # do not need to specify applet
+        context.push()
+        context['_the_applet']=applet
+        context['_the_applet_identifier']=applet_identifier
+        context['_applet_data_'] = applet_data
+
+        # rendered dynamic text will have insert placeholders
+        # for any embedded applet_objects
+        rendered_dynamictext = template.Template(
+            "{% load mi_tags testing_tags %}"+applet_dynamictext.text)\
+                                       .render(context)
+        context.pop()
+        
+        # replace \ with \\
+        rendered_dynamictext = re.sub(r"\\", r"\\\\", rendered_dynamictext)
+
+        dynamictext_javascript += 'jQuery("#%s").html("%s");\n' \
+                    % (dynamictext_identifier, rendered_dynamictext)
+
+    return '<div id="applet_dynamictext">\n<script>\n%s%s</script>\n</div>\n' % (error_javascript, dynamictext_javascript)
+
+
+
 class AccumulatedJavascriptNode(template.Node):
     def render(self, context):
 
         script_string = ""
         static_url = context.get("STATIC_URL","")
-        applet_data = context.get('applet_data')
-
+        try:
+            applet_data = context['applet_data']
+        except KeyError:
+            return ""
         
+
+        # initialization scripts that actually start applets
         try:
             initialization_script = applet_data['javascript']['_initialization']
         except:
@@ -2287,27 +2700,57 @@ class AccumulatedJavascriptNode(template.Node):
             if initialization_script:
                 script_string += '<div id="applet_initialization">\n<script>\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>\n</div>\n' % initialization_script
 
-        # capture javascript
-        try:
-            capture_javascript = applet_data['javascript']['Geogebra']\
-                                        ['capture_javascript']
-        except:
-            pass
-        else:
-            if capture_javascript:
-                script_string += '<div id="geogebra_capture">\n<script>\n%s\n</script>\n</div>\n' % capture_javascript
-        
+        geogebra_javascript = applet_data['javascript'].get('Geogebra',{})
+
+        # find dictionary of javascript to capture applet objects
+        capture_javascript = geogebra_javascript.get('capture_javascript',{})
 
         # return any geogebra_init_javascript
-        try:
-            geogebra_on_init_commands = applet_data['javascript']['Geogebra']\
-                                        ['on_init_commands']
-        except:
-            pass
-        else:
-            if geogebra_on_init_commands:
-                #script_string += '<div id="geogebra_onit"><script type="text/javascript">\n\nMathJax.Hub.Register.StartupHook("End",function () {console.log("hi");\nfunction ggbOnInit(arg) {\n%s}\n});</script></div>' % geogebra_on_init_commands
-                script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\n }\n</script></div>' % geogebra_on_init_commands
+        geogebra_on_init_commands = geogebra_javascript.get('on_init_commands',{})
+
+        # must render dynamictext before applet objects
+        # so that any additional applet objects get added to applet_data
+        script_string += render_dynamictext(context, applet_data)
+
+        script_string += return_applet_object_javascript(
+            applet_data=applet_data, capture_javascript=capture_javascript)
+
+        # collect all capture object javascript for each applet
+        the_capture_script =""
+        for applet_identifier in capture_javascript:
+
+            listener_function_name = "listener%s" % applet_identifier
+                
+            the_capture_script += 'function %s(obj) {\n%s}\n' % \
+                                  (listener_function_name, 
+                                   capture_javascript[applet_identifier])
+            
+            on_init_commands=geogebra_on_init_commands.get(applet_identifier,"")
+            
+            on_init_commands \
+                += 'document.%s.registerUpdateListener("%s");\n' \
+                % (applet_identifier, listener_function_name)
+
+            # run the listener function upon initialization
+            # so values are set at outset
+            on_init_commands += "%s();\n" % listener_function_name
+
+            geogebra_on_init_commands[applet_identifier]=on_init_commands
+
+
+        if the_capture_script:
+            script_string += '<div id="geogebra_capture">\n<script>\n%s\n</script>\n</div>\n' % the_capture_script
+        
+
+        all_init_commands=""
+        for applet_identifier in geogebra_on_init_commands:
+            on_init_commands = geogebra_on_init_commands[applet_identifier]
+            all_init_commands += 'if(arg=="%s") {\n%s}\n' % \
+                                 (applet_identifier, on_init_commands)
+                
+
+        if all_init_commands:
+            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\n }\n</script></div>' % all_init_commands
 
         three_javascript = context.dicts[0].get('three_javascript', '')
         run_three_javascript = context.dicts[0].get('run_three_javascript', '')
