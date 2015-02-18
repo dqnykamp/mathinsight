@@ -855,6 +855,52 @@ class TestCompareResponse(TestCase):
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
 
+    def test_function_is_number(self):
+        from mitesting.utils import return_parsed_function
+        from mitesting.customized_commands import IsNumberUneval
+        from mitesting.models import Expression
+
+        local_dict={'IsNumber': IsNumberUneval}
+        expr_context=Context({'_sympy_local_dict_': local_dict })
+
+        answer_info={'code': 'a', 'type': FUNCTION}
+        f=return_parsed_function("IsNumber(x-3s)", function_inputs="x", name="f",
+                                 evaluate_level=Expression.EVALUATE_NONE,
+                                 local_dict=local_dict)
+        expr_context["f"]=math_object(1)
+        local_dict["f"]=f
+
+        the_ans=self.new_answer(answer_code="a", answer="f",
+                                answer_type=FUNCTION)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="3s", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="3s-5", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="4s", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+
 class TestQuestionGroups(TestCase):
     def setUp(self):
         random.seed()

@@ -365,13 +365,13 @@ class TestParsedFunction(SimpleTestCase):
     def test_is_number(self):
         from mitesting.customized_commands import IsNumberUneval
         from mitesting.models import Expression
-        from mitesting.sympy_customized import parse_expr
         t=Symbol("t")
         fun = return_parsed_function("IsNumber(x-2*t)", "x", name="f",
                                      evaluate_level=Expression.EVALUATE_NONE,
                                      local_dict = {'IsNumber': IsNumberUneval})
-        self.assertTrue(parse_expr("fun(2*t+5)", local_dict={'fun': fun}))
-        self.assertFalse(parse_expr("fun(3*t)", local_dict={'fun': fun}))
+        self.assertTrue(fun(2*t+5).doit())
+        self.assertFalse(fun(3*t).doit())
+
 
     def test_evaluate_derivative_at_point(self):
         from sympy import diff

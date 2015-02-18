@@ -886,7 +886,8 @@ class AddUnsort(Add):
         super(AddUnsort,self).__init__()
 
     def doit(self, **hints):
-        return Add(*self.args)
+        hints['deep']=True  # for deep to be True
+        return Add(*[arg.doit(**hints) for arg in self.args])
 
     def __eq__(self, other):
         # For AddUnsort, original args must be the same
@@ -1014,7 +1015,9 @@ class MulUnsort(Mul):
         super(MulUnsort,self).__init__()
 
     def doit(self, **hints):
-        return Mul(*self.args)
+        hints['deep']=True  # for deep to be True
+        return Mul(*[arg.doit(**hints) for arg in self.args])
+
 
     def __eq__(self, other):
         # For MulUnsort, original args must be the same

@@ -21,6 +21,12 @@ def check_function_answer(f,user_response_parsed):
     except Exception as e:
         return 0
     else:
+        # try performing doit() on function in case has unevaluated functions
+        try:
+            f=f.doit()
+        except (AttributeError, TypeError):
+            pass
+
         # before attempting to convert to float,
         # check if f returns a boolean, 
         # in which case mark as completely correct or incorrect
