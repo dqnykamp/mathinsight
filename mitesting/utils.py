@@ -50,6 +50,7 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
          'count': count,
          'Point': Point,
          'DiffSubs': DiffSubs,
+         'IsNumber': IsNumberUneval,
          'acosh': acosh, 'acos': acos, 'acosh': acosh, 
          'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
          'atan': atan, 'atan2': atan2, 'atanh': atanh, 
@@ -341,21 +342,17 @@ def return_parsed_function(expression, function_inputs, name,
             expression, local_dict=local_dict, evaluate_level=evaluate_level,
             assume_real_variables=assume_real_variables)
 
-    expression_string=expression
-    
-    # parsed_function is a class that stores the expression string
-    # and the input list, substitutes the function arguments
-    # for the input_list symbols, and then parses with the resulting local_dict
+
+    # parsed_function is a class that stores the expression
+    # and the input list, substituting the function arguments
+    # for the input_list symbols on evaluation
     class _parsed_function(ParsedFunction):
         # Store information for evaluation
         # On evaluation, it must take the number of arguments in input_list
         the_input_list = input_list
         nargs = len(input_list)
 
-        unparsed_expression = expression_string
-        local_dict = local_dict_sub
-        the_evaluate_level = evaluate_level
-        real_variables = assume_real_variables
+        expression=expr2
 
         default=default_value
 
@@ -363,17 +360,21 @@ def return_parsed_function(expression, function_inputs, name,
         # with the values from the arguments
         @classmethod
         def eval(cls, *args):
-            eval_local_dict=cls.local_dict.copy()
+            expr_sub=cls.expression
 
             # can't use nargs here as it is converted to a set
             # so instead use len(input_list)
+            replace_dict={}
             for i in range(len(cls.the_input_list)):
-                eval_local_dict[cls.the_input_list[i]] = args[i]
-
-            return parse_and_process(cls.unparsed_expression,
-                                     local_dict=eval_local_dict,
-                                     evaluate_level=cls.the_evaluate_level,
-                                     assume_real_variables=cls.real_variables)
+                if assume_real_variables:
+                    input_symbol=Symbol(cls.the_input_list[i],real=True)
+                else:
+                    input_symbol=Symbol(cls.the_input_list[i])
+                replace_dict[input_symbol] =  args[i]
+            expr_sub=bottom_up(expr_sub,
+                lambda w: w if w not in replace_dict else replace_dict[w],
+                               atoms=True)
+            return expr_sub
 
     # must assign to __name__ outside class definition 
     # so it overwrites default name

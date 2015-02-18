@@ -578,7 +578,7 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
         
         self.q.expression_set.create(
-            name="g",expression="x == y", function_inputs="x",
+            name="g",expression="x in {y,}", function_inputs="x",
             expression_type = Expression.FUNCTION)
 
         self.new_answer(answer_code="ans", answer="n")
@@ -616,6 +616,18 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+
+        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+                                  {"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "z"})
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)
+        self.assertFalse(results["correct"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
 

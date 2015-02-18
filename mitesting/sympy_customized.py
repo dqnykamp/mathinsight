@@ -257,15 +257,19 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # if evaluate, then 
     # - replace AddUnsorts with Adds
     # - replace MulUnsorts with Muls
-    def replaceUnsorts(w):
+    # - replace IsNumberUneval is .is_Number
+    from mitesting.customized_commands import IsNumberUneval
+    def replaceUnsortsIsNumber(w):
         if isinstance(w, AddUnsort):
             return Add(*w.args)
         if isinstance(w, MulUnsort):
             return Mul(*w.args)
+        if isinstance(w, IsNumberUneval):
+            return w.args[0].is_number
         return w
 
     if evaluate:
-        expr=bottom_up(expr, replaceUnsorts)
+        expr=bottom_up(expr, replaceUnsortsIsNumber)
 
     return expr
 

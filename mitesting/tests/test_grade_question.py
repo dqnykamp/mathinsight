@@ -804,9 +804,8 @@ class TestCompareResponse(TestCase):
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
 
-        f=return_parsed_function("x==y", 
-                                 function_inputs="x", name="f",
-                                 local_dict=local_dict)
+        f=return_parsed_function("x in {y,}", 
+                                 function_inputs="x", name="f")
 
         local_dict["f"]=f
 

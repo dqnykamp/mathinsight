@@ -7,6 +7,8 @@ from __future__ import division
 
 from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix, Expr, Subs
 from mitesting.sympy_customized import bottom_up, customized_sort_key
+from sympy.logic.boolalg import BooleanFunction
+
 
 class Abs(C.Abs):
     """
@@ -365,6 +367,16 @@ class DiffSubs(Expr):
             e[0] + '=' + e[1] for e in zip(latex_old, latex_new2))
         return r'\left. %s \vphantom{\Large I} \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs1, latex_subs2)
 
+
+
+class IsNumberUneval(BooleanFunction):
+    @classmethod
+    def eval(cls,x):
+        cls.x = x
+
+    @classmethod
+    def doit(cls, **hints):
+        return  cls.x.is_number
 
 
 """

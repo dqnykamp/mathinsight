@@ -362,11 +362,56 @@ class TestParsedFunction(SimpleTestCase):
         self.assertEqual(latex(fun(z)), '3 z \\left(-1\\right) 1 z - 1 + 0 - 3 + z')
         
 
-    def test_evaluate_after_substitutions(self):
+    def test_is_number(self):
+        from mitesting.customized_commands import IsNumberUneval
+        from mitesting.models import Expression
+        from mitesting.sympy_customized import parse_expr
         t=Symbol("t")
-        fun = return_parsed_function("(x-2*t).is_Number", "x", name="f")
-        self.assertTrue(fun(2*t+5))
-        self.assertFalse(fun(3*t))
+        fun = return_parsed_function("IsNumber(x-2*t)", "x", name="f",
+                                     evaluate_level=Expression.EVALUATE_NONE,
+                                     local_dict = {'IsNumber': IsNumberUneval})
+        self.assertTrue(parse_expr("fun(2*t+5)", local_dict={'fun': fun}))
+        self.assertFalse(parse_expr("fun(3*t)", local_dict={'fun': fun}))
+
+    def test_evaluate_derivative_at_point(self):
+        from sympy import diff
+        fun1 = return_parsed_function("x^3","x", name="f1")
+        fun2 = return_parsed_function("diff(f1(x),x)", "x", name="f2",
+                                      local_dict={'f1': fun1, 'diff': diff})
+        y=Symbol('y')
+        z=Symbol('z')
+        self.assertEqual(fun2(y), 3*y**2)
+        self.assertEqual(fun2(2), 3*2**2)
+        self.assertEqual(fun2(y*z+3), 3*(y*z+3)**2)
+
+    def test_evaluate_indefinite_integral_at_point(self):
+        from mitesting.models import Expression
+        from sympy import Integral
+        x=Symbol('x')
+        y=Symbol('y')
+        fun = return_parsed_function("Integral(x^2,(x,t))","t", name="f1",
+                                     local_dict={'Integral': Integral},
+                                     evaluate_level=Expression.EVALUATE_PARTIAL)
+        self.assertEqual(fun(3), Integral(x**2,(x,3)))
+        self.assertEqual(fun(y), Integral(x**2,(x,y)))
+
+        fun = return_parsed_function("Integral(x^2,(x,t))","t", name="f1",
+                                     local_dict={'Integral': Integral})
+        self.assertEqual(fun(3), 9)
+        self.assertEqual(fun(y), y**3/3)
+
+    def test_assume_real_variables(self):
+        fun=return_parsed_function("x^2", "x", name="f",
+                                   assume_real_variables=True)
+        self.assertEqual(fun(3),9)
+        
+        y  = Symbol('y', real=True)
+        z  = Symbol('z')
+        fun=return_parsed_function("x^2*y", "x", name="f",
+                                   assume_real_variables=True)
+        self.assertEqual(fun(3),9*y)
+        self.assertEqual(fun(z),z**2*y)
+
 
 class TestReplaceBooleanEqualsIn(SimpleTestCase):
     def test_replace_boolean_equals(self):
