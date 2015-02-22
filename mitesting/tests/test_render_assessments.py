@@ -1275,7 +1275,7 @@ class TestRenderQuestion(TestCase):
         answer_identifier ="1_%s" % (identifier)
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
-        self.q.question_text = "{% answer ans %}"
+        self.q.question_text = "{% answer 'ans' %}"
         self.q.save()
         
         question_data=render_question(self.q, rng=self.rng, 
@@ -1300,7 +1300,7 @@ class TestRenderQuestion(TestCase):
             'answer': previous_answer })
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
-        self.q.question_text = "{% answer " + answer_code + " %}"
+        self.q.question_text = "{% answer '" + answer_code + "' %}"
         self.q.save()
         
         question_data=render_question(self.q, rng=self.rng, 
@@ -1355,7 +1355,7 @@ class TestRenderQuestion(TestCase):
         self.assertTrue(question_data.get("help_available",False))
 
         self.q.questionansweroption_set.create(answer_code="x", answer="x")
-        self.q.question_text="{% answer x %}"
+        self.q.question_text="{% answer 'x' %}"
         self.q.save()
 
         question_data=render_question(self.q, rng=self.rng)
@@ -1391,7 +1391,7 @@ class TestRenderQuestion(TestCase):
                                                answer="expr1")
         self.q.questionansweroption_set.create(answer_code="another",
                                                answer="expr2")
-        self.q.question_text = "{% answer ans %}"
+        self.q.question_text = "{% answer 'ans' %}"
         self.q.solution_text = "{{expr1}}"
         self.q.computer_graded=True
         self.q.save()
@@ -1446,7 +1446,7 @@ class TestRenderQuestion(TestCase):
         question_set=5
 
         self.q.questionansweroption_set.create(answer_code="x", answer="x")
-        self.q.question_text="{% answer x %}"
+        self.q.question_text="{% answer 'x' %}"
         self.q.save()
 
         at = AssessmentType.objects.create(
@@ -1558,7 +1558,7 @@ class TestRenderQuestion(TestCase):
 
         self.q.questionansweroption_set.create(answer_code=answer_code, 
                                                answer="n")
-        self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
+        self.q.question_text = "n={{n}}, {% answer '" + answer_code + "' assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
         self.q.save()
         
         process_expressions_from_answers(self.q)
@@ -1582,7 +1582,7 @@ class TestRenderQuestion(TestCase):
         self.assertTrue('apple=\uff3f,' in question_data["rendered_text"])
         self.assertTrue('m=\uff3f + 1,' in question_data["rendered_text"])
         
-        self.q.question_text = "n={{n}}, {% answer " + answer_code + " assign_to_expression='apple' assign_to_expression_default='???' %}, apple={{apple}}, m={{m}},"
+        self.q.question_text = "n={{n}}, {% answer '" + answer_code + "' assign_to_expression='apple' assign_to_expression_default='???' %}, apple={{apple}}, m={{m}},"
         self.q.save()
         process_expressions_from_answers(self.q)
 
@@ -1616,7 +1616,7 @@ class TestRenderQuestion(TestCase):
             'code': answer_code,
             'answer': str(option3.id) })
 
-        self.q.question_text = "{% answer " + answer_code + " assign_to_expression='apple' %}, apple={{apple}}"
+        self.q.question_text = "{% answer '" + answer_code + "' assign_to_expression='apple' %}, apple={{apple}}"
         self.q.save()
         process_expressions_from_answers(self.q)
 

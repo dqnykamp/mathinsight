@@ -356,10 +356,13 @@ def display_video_questions(parser, token):
 
 
 class AnswerNode(template.Node):
-    def __init__(self, answer_code, kwargs):
+    def __init__(self, answer_code, answer_code_string, kwargs):
         self.answer_code = answer_code
+        self.answer_code_string = answer_code_string
         self.kwargs = kwargs
     def render(self, context):
+
+        answer_code = self.answer_code.resolve(context)
 
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
@@ -396,11 +399,12 @@ class AnswerNode(template.Node):
         # answer code should be a code defined in the question answer options
         try:
             answer_code_dict = answer_data['valid_answer_codes']\
-                               [self.answer_code]
+                               [answer_code]
             answer_type=answer_code_dict['answer_type']
             expression_type=answer_code_dict.get('expression_type')
         except KeyError:
-            return return_error("Invalid answer blank: %s" % self.answer_code)
+            return return_error("Invalid answer blank: %s, resolved as %s"\
+                                % (self.answer_code_string, answer_code))
 
         answer_number = len(answer_data['answer_info'])+1
         question_identifier = answer_data['question_identifier']
@@ -424,7 +428,7 @@ class AnswerNode(template.Node):
 
                 expressionfromanswer, created= \
                     question.expressionfromanswer_set.get_or_create(
-                        name=assign_to_expression, answer_code=self.answer_code,
+                        name=assign_to_expression, answer_code=answer_code,
                         answer_number=answer_number,
                         split_symbols_on_compare=\
                         answer_code_dict['split_symbols_on_compare'],
@@ -437,17 +441,17 @@ class AnswerNode(template.Node):
             prefilled_answers = answer_data['prefilled_answers']
             the_answer_dict = prefilled_answers[answer_number-1]
 
-            if the_answer_dict["code"] == self.answer_code:
+            if the_answer_dict["code"] == answer_code:
                 given_answer = the_answer_dict["answer"]
             else:
                 logger.warning("Invalid previous answer for question %s: %s != %s" % 
                     (answer_data.get("question"), the_answer_dict["code"], 
-                     self.answer_code))
+                     answer_code))
         except (KeyError, IndexError, TypeError):
             pass
 
         answer_data['answer_info'].append(\
-            {'code': self.answer_code, 'points': points, 
+            {'code': answer_code, 'points': points, 
              'type': answer_type, 'identifier': answer_identifier,
              'group': group, 'assign_to_expression': assign_to_expression,
              'prefilled_answer': given_answer,
@@ -483,7 +487,7 @@ class AnswerNode(template.Node):
 
             answer_options = question.questionansweroption_set.filter(
                 answer_type=QuestionAnswerOption.MULTIPLE_CHOICE,
-                answer_code=self.answer_code)
+                answer_code=answer_code)
             
             rendered_answer_list=[]
             for answer in answer_options:
@@ -494,7 +498,7 @@ class AnswerNode(template.Node):
                     rendered_answer = mark_safe(t.render(context))
                 except TemplateSyntaxError as e:
                     return return_error("Invalid multiple choice answer: %s" \
-                                            % self.answer_code)
+                                            % answer_code)
                 rendered_answer_list.append({
                         'answer_id': answer.id,
                         'rendered_answer': rendered_answer})
@@ -557,7 +561,8 @@ def answer(parser, token):
         raise TemplateSyntaxError("%r tag requires at least one argument" \
                                       % bits[0])
 
-    answer_code = bits[1]
+    answer_code = parser.compile_filter(bits[1])
+    answer_code_string = bits[1]
 
     kwargs = {} 
     bits = bits[2:]
@@ -573,7 +578,7 @@ def answer(parser, token):
                 kwargs[name] = parser.compile_filter(value)
 
 
-    return AnswerNode(answer_code, kwargs)
+    return AnswerNode(answer_code, answer_code_string, kwargs)
 
 
 class AssessmentUserCanViewNode(Node):

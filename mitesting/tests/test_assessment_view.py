@@ -533,7 +533,7 @@ class TestAssessmentView(TestCase):
     def test_errors(self):
         self.q1.expression_set.create(name="xyz",expression="x*y*z")
         self.q1.questionansweroption_set.create(answer_code="xyz", answer="xyz")
-        self.q1.question_text="{% answer xyz %}"
+        self.q1.question_text="{% answer 'xyz' %}"
         self.q1.computer_graded=True
         self.q1.save()
 
@@ -548,7 +548,7 @@ class TestAssessmentView(TestCase):
 
         top_error_base= '<section class="error"><h4>Errors encountered</h4><p>%s</p></section>'
 
-        self.q1.question_text="{% answer xyz %}{% badtag %}"
+        self.q1.question_text="{% answer 'xyz' %}{% badtag %}"
         self.q1.save()
 
         response = self.client.get("/assess/the_test")
@@ -564,7 +564,7 @@ class TestAssessmentView(TestCase):
 
         
         abc=self.q1.expression_set.create(name="abc", expression="(")
-        self.q1.question_text="{% answer xyz %}abc={{abc}}"
+        self.q1.question_text="{% answer 'xyz' %}abc={{abc}}"
         self.q1.save()
         
         response = self.client.get("/assess/the_test")

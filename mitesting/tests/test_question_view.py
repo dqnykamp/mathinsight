@@ -189,7 +189,7 @@ class TestQuestionView(TestCase):
         self.assertNotContains(response, "An incorrect answer")
         self.assertNotContains(response, "A partially correct answer")
 
-        self.q.question_text="Which is right? {% answer choice %}"
+        self.q.question_text="Which is right? {% answer 'choice' %}"
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -269,7 +269,7 @@ class TestQuestionView(TestCase):
     def test_errors(self):
         self.q.expression_set.create(name="xyz",expression="x*y*z")
         self.q.questionansweroption_set.create(answer_code="xyz", answer="xyz")
-        self.q.question_text="{% answer xyz %}"
+        self.q.question_text="{% answer 'xyz' %}"
         self.q.computer_graded=True
         self.q.save()
 
@@ -279,7 +279,7 @@ class TestQuestionView(TestCase):
 
         self.assertContains(response, submit_button_html, html=True)
         
-        self.q.question_text="{% answer xyz %}{% badtag %}"
+        self.q.question_text="{% answer 'xyz' %}{% badtag %}"
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -290,7 +290,7 @@ class TestQuestionView(TestCase):
         self.assertContains(response, error_message, html=True)
 
         abc=self.q.expression_set.create(name="abc", expression="(")
-        self.q.question_text="{% answer xyz %}abc={{abc}}"
+        self.q.question_text="{% answer 'xyz' %}abc={{abc}}"
         self.q.save()
         
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -383,11 +383,11 @@ class TestGradeQuestionView(TestCase):
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertTrue("computer_grade_data" in response.context["question_data"])
         
-        self.q.question_text="Type the answer: {% answer fun_x %}"
+        self.q.question_text="Type the answer: {% answer 'fun_x' %}"
         self.q.save()
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
-        self.assertContains(response,"Invalid answer blank: fun_x")
+        self.assertContains(response,"Invalid answer blank: 'fun_x', resolved as fun_x")
         self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="fun_x", answer="fun_x")
@@ -427,7 +427,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_multiple_correct_answers(self):
-        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.question_text="Type the answer: {% answer 'ans' %}$"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="n")
@@ -574,7 +574,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_multiple_correct_answers_mix_types(self):
-        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.question_text="Type the answer: {% answer 'ans' %}$"
         self.q.save()
         
         self.q.expression_set.create(
@@ -632,7 +632,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_repeat_same_answer(self):
-        self.q.question_text="Type the same answer twice: {% answer ans %}  {% answer ans %}"
+        self.q.question_text="Type the same answer twice: {% answer 'ans' %}  {% answer 'ans' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="x")
@@ -683,7 +683,7 @@ class TestGradeQuestionView(TestCase):
 
             
     def test_two_different_answers(self):
-        self.q.question_text="Type two different answers: {% answer ans1 %}  {% answer ans2 %}"
+        self.q.question_text="Type two different answers: {% answer 'ans1' %}  {% answer 'ans2' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="x")
@@ -758,7 +758,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_two_unequal_answers(self):
-        self.q.question_text="Type two different answers: {% answer ans1 points=3 %}  {% answer ans2 %}"
+        self.q.question_text="Type two different answers: {% answer 'ans1' points=3 %}  {% answer 'ans2' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="x")
@@ -816,7 +816,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_answers_with_alternates(self):
-        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.question_text="Type the answer: {% answer 'ans' %}$"
         self.q.save()
         
         self.q.expression_set.create(
@@ -879,7 +879,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_answers_with_alternates_2(self):
-        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.question_text="Type the answer: {% answer 'ans' %}$"
         self.q.save()
         
         self.q.expression_set.create(
@@ -949,7 +949,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
     def test_answers_with_alternates_random(self):
-        self.q.question_text="Type the answer: {% answer ans %}$"
+        self.q.question_text="Type the answer: {% answer 'ans' %}$"
         self.q.save()
         
         self.q.expression_set.create(
@@ -1082,7 +1082,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_question_group(self):
-        self.q.question_text="Type in either order: {% answer ans1 group='a' %}  {% answer ans2 group='a' %}"
+        self.q.question_text="Type in either order: {% answer 'ans1' group='a' %}  {% answer 'ans2' group='a' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="x")
@@ -1182,7 +1182,7 @@ class TestGradeQuestionView(TestCase):
             name="two_a_x", expression="2*a*x", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
+        self.q.question_text="Type answers: {% answer 'ans1' %} {% answer 'ans2' %} {% answer 'ans3' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="two_a_x",
@@ -1254,7 +1254,7 @@ class TestGradeQuestionView(TestCase):
         self.q.expression_set.create(
             name="afx", expression="a*f(x)")
         
-        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %}"
+        self.q.question_text="Type answers: {% answer 'ans1' %} {% answer 'ans2' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="afx",
@@ -1349,7 +1349,7 @@ class TestGradeQuestionView(TestCase):
         expr=self.q.expression_set.create(
             name="x_plus_x", expression="x+x", 
             expression_type = Expression.GENERIC)
-        self.q.question_text="{% answer x_plus_x %}"
+        self.q.question_text="{% answer 'x_plus_x' %}"
         self.q.save()
         self.new_answer(answer_code="x_plus_x", answer="x_plus_x")
 
@@ -1432,7 +1432,7 @@ class TestGradeQuestionView(TestCase):
         expr=self.q.expression_set.create(
             name="ans", expression="6x+9", 
             expression_type = Expression.GENERIC)
-        self.q.question_text="{% answer ans %}"
+        self.q.question_text="{% answer 'ans' %}"
         self.q.save()
         self.new_answer(answer_code="ans", answer="ans")
 
@@ -1515,7 +1515,7 @@ class TestGradeQuestionView(TestCase):
         expr=self.q.expression_set.create(
             name="deriv", expression="4x^3", 
             expression_type = Expression.GENERIC)
-        self.q.question_text="{% answer deriv %}"
+        self.q.question_text="{% answer 'deriv' %}"
         self.q.save()
         self.new_answer(answer_code="deriv", answer="deriv")
         scs_derivative = SympyCommandSet.objects.create(
@@ -1607,7 +1607,7 @@ class TestGradeQuestionView(TestCase):
             name="product", expression="(x+a)(x-a)", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans1 %} {% answer ans2 %} {% answer ans3 %}"
+        self.q.question_text="Type answers: {% answer 'ans1' %} {% answer 'ans2' %} {% answer 'ans3' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="product",
@@ -1678,7 +1678,7 @@ class TestGradeQuestionView(TestCase):
             name="product", expression="(x+a)(x-a)x", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.question_text="Type answers: {% answer 'ans' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="product",
@@ -1750,7 +1750,7 @@ class TestGradeQuestionView(TestCase):
             name="product", expression="(x+a)(x-a)", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.question_text="Type answers: {% answer 'ans' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="product",
@@ -1793,7 +1793,7 @@ class TestGradeQuestionView(TestCase):
             name="tuple", expression="a,b,c,d", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.question_text="Type answers: {% answer 'ans' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="tuple",
@@ -1851,7 +1851,7 @@ class TestGradeQuestionView(TestCase):
             name="set", expression="a,b,c,d,a,c,a,a", 
             expression_type = Expression.SET)
 
-        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.question_text="Type answers: {% answer 'ans' %}"
         self.q.save()
         
         the_ans=self.new_answer(answer_code="ans", answer="set")
@@ -1925,7 +1925,7 @@ class TestGradeQuestionView(TestCase):
             expression_type = Expression.INTERVAL,
             real_variables=False)
 
-        self.q.question_text="Type intervals: {% answer ans1 %} {% answer ans1a %} {% answer ans2 %} {% answer ans2a %} {% answer ans3 %} {% answer ans3a %} {% answer ans3b %}"
+        self.q.question_text="Type intervals: {% answer 'ans1' %} {% answer 'ans1a' %} {% answer 'ans2' %} {% answer 'ans2a' %} {% answer 'ans3' %} {% answer 'ans3a' %} {% answer 'ans3b' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans1", answer="interval1")
@@ -2005,7 +2005,7 @@ class TestGradeQuestionView(TestCase):
         self.q.expression_set.create(name="x2", expression="y\nz",
                                      expression_type=Expression.MATRIX)
 
-        self.q.question_text="Type answers: {% answer ans1 rows=5 cols=5 %} {% answer ans2 %} {% answer ans3 rows=5 cols=2%}"
+        self.q.question_text="Type answers: {% answer 'ans1' rows=5 cols=5 %} {% answer 'ans2' %} {% answer 'ans3' rows=5 cols=2%}"
         
         self.q.save()
 
@@ -2051,7 +2051,7 @@ class TestGradeQuestionView(TestCase):
             name="f_x", expression="f(x)", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answers: {% answer ans %}"
+        self.q.question_text="Type answers: {% answer 'ans' %}"
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="f_x")
@@ -2089,7 +2089,7 @@ class TestGradeQuestionView(TestCase):
             name="exp_x", expression="exp(x)", 
             expression_type = Expression.GENERIC)
 
-        self.q.question_text="Type answer: {% answer exp_x %}"
+        self.q.question_text="Type answer: {% answer 'exp_x' %}"
         self.q.save()
         
         self.new_answer(answer_code="exp_x", answer="exp_x")
@@ -2131,7 +2131,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["correct"])
 
     def test_seed(self):
-        self.q.question_text="Type answer: {% answer function %}"
+        self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -2158,7 +2158,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_blank_answer(self):
-        self.q.question_text="Type answer: {% answer function %}"
+        self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -2190,7 +2190,7 @@ class TestGradeQuestionView(TestCase):
         
 
     def test_unparsable_answer(self):
-        self.q.question_text="Type answer: {% answer function %}"
+        self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.save()
         
         self.new_answer(answer_code="function", answer="fun_x")
@@ -2224,13 +2224,13 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("computer_grade_data" in 
                          response.context["question_data"])
 
-        self.q.question_text="Type answer: {% answer function %}"
+        self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
         self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
-        self.assertContains(response, "Invalid answer blank: function", count=2)
+        self.assertContains(response, "Invalid answer blank: 'function', resolved as function", count=2)
         self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="function", answer="fun_x")
@@ -2262,7 +2262,7 @@ class TestGradeQuestionView(TestCase):
         solution_button_html_fragment = \
             '<input type="button" class="mi_show_solution" value="Show solution"'
 
-        self.q.question_text="Type answer: {% answer function %}"
+        self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.show_solution_button_after_attempts=3
         self.q.save()
         
@@ -2327,7 +2327,7 @@ class TestGradeQuestionView(TestCase):
             answer_code="choice", answer_type=MULTIPLE_CHOICE,
             answer = "A partially correct answer: {{n}}",
             percent_correct = 50)
-        self.q.question_text="Which is right? {% answer choice %}"
+        self.q.question_text="Which is right? {% answer 'choice' %}"
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -2384,7 +2384,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans", answer="crit",
                         answer_type=QuestionAnswerOption.FUNCTION)
 
-        self.q.question_text="Meet the criterion: {% answer ans %}"
+        self.q.question_text="Meet the criterion: {% answer 'ans' %}"
         self.q.save()
 
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -2443,7 +2443,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_post_user_response(self):
-        self.q.question_text="One thing: {% answer fun_x assign_to_expression='good_try' %}, then double it: {% answer double_me %}"
+        self.q.question_text="One thing: {% answer 'fun_x' assign_to_expression='good_try' %}, then double it: {% answer 'double_me' %}"
         
         self.new_answer(answer_code="fun_x", answer="fun_x")
 
@@ -2503,7 +2503,7 @@ class TestGradeQuestionView(TestCase):
 
 
     def test_post_user_response_real(self):
-        self.q.question_text="try1: {% answer a1 assign_to_expression='try1' %}, try2: {% answer a2 assign_to_expression='try2' real=True %}, try3: {% answer a3 assign_to_expression='try3' real=False %}, try1a: {% answer try2a %}, try1a: {% answer try2a %}, try3a: {% answer try3a %}"
+        self.q.question_text="try1: {% answer 'a1' assign_to_expression='try1' %}, try2: {% answer 'a2' assign_to_expression='try2' real=True %}, try3: {% answer 'a3' assign_to_expression='try3' real=False %}, try1a: {% answer 'try2a' %}, try1a: {% answer 'try2a' %}, try3a: {% answer 'try3a' %}"
         
         self.new_answer(answer_code="a1", answer="fun_x")
         self.new_answer(answer_code="a2", answer="fun_x")
@@ -2575,7 +2575,7 @@ class TestInjectQuestionSolutionView(TestCase):
             question_privacy = 0,
             solution_privacy = 0,
             computer_graded=True,
-            question_text = "Type answer: {% answer ans %}",
+            question_text = "Type answer: {% answer 'ans' %}",
             )
         self.q.expression_set.create(
             name="f",expression="f,g,h,k", 
