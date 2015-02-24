@@ -14,6 +14,7 @@ import datetime, os
 from django.contrib.sites.models import Site
 from django.utils.encoding import smart_unicode
 from django.utils.safestring import mark_safe
+from django.db.models import Max
 import re
 import random
 from math import *
@@ -1263,6 +1264,7 @@ class AppletObject(models.Model):
     related_objects = models.CharField(max_length=200, blank=True, null=True)
     name_for_changes = models.CharField(max_length=100, blank=True, null=True)
     category_for_capture = models.CharField(max_length=100, blank=True, null=True)
+    function_input_variable= models.CharField(max_length=1, blank=True, null=True)
 
     def __unicode__(self):
         return "%s: %s" % (self.object_type, self.name)
@@ -1279,16 +1281,37 @@ class AppletChildObjectLink(models.Model):
         return "link %s to %s" % (self.object_name, self.child_object_name)
 
 
-class AppletDynamicText(models.Model):
+class AppletText(models.Model):
+    POSITION_CHOICES = (
+        ('top', 'top'),
+        ('bottom', 'bottom'),
+        )
+
     applet = models.ForeignKey(Applet)
     code = models.SlugField(max_length=100)
+    title = models.CharField(max_length=100)
     text = models.TextField()
+    default_position = models.CharField(max_length=6, choices=POSITION_CHOICES,
+                                        blank=True, null=True)
+    sort_order = models.FloatField(blank=True)
 
     class Meta:
         unique_together = ("applet", "code")
+        ordering = ['sort_order','id']
 
     def __unicode__(self):
         return self.code
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.applet.applettext_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(AppletText, self).save(*args, **kwargs)
 
 
 class AppletAuthor(models.Model):

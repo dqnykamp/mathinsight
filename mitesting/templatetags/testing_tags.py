@@ -354,6 +354,76 @@ def display_video_questions(parser, token):
     return VideoQuestionsNode(video_code, seed)
 
 
+def process_assign_to_applet_object(applet_object_name, answer_field_name,
+                                    kwargs, context):
+
+    # must have applet in kwargs, or specified in context
+    try:
+        applet = kwargs.get('applet', context['_the_applet'])
+    except KeyError:
+        return ""
+
+    # if applet is not an applet instance
+    # try to load applet with that code
+    if not isinstance(applet, Applet):
+        # test if applet with applet_code exists
+        try:
+            applet=Applet.objects.get(code=applet)
+            # if applet does not exist
+            # return tag to applet code anyway
+        except ObjectDoesNotExist:
+            return ""
+
+    # get applet_id_user optionally from kwargs or context
+    applet_id_user = kwargs.get('applet_id', 
+                                context.get('_the_applet_id_user'))
+
+    # get applet_identifier optionally from context
+    applet_identifier = context.get('_the_applet_identifier')
+
+    try:
+        applet_object=applet.appletobject_set.get \
+                       (capture_changes=True, name=applet_object_name)
+    except ObjectDoesNotExist:
+        return ""
+        
+    try:
+        applet_data=context['_applet_data_']
+    except KeyError:
+        return ""
+
+    modify_applet_object_counter \
+        = applet_data.get('modify_applet_object_counter',0)+1
+    applet_data['modify_applet_object_counter']\
+        =modify_applet_object_counter
+
+    try:
+        modify_object_list=applet_data['modify_applet_objects']
+    except KeyError:
+        modify_object_list = []
+        applet_data['modify_applet_objects'] = modify_object_list
+
+    modify_function_name = "modify_applet_object_%s" %\
+                           modify_applet_object_counter
+
+    # Since applet tag may not have been encountered yet
+    # cannot yet form javascript to update applet
+    # Record information about applet object for later processing.
+    # If applet_identifier is specified, then it overrides applet_id_user
+    modify_object_list.append({
+        'applet_object': applet_object,
+        'answer_field_name': answer_field_name,
+        'applet': applet,
+        'applet_id_user': applet_id_user,
+        'applet_identifier': applet_identifier,
+        'modify_function_name': modify_function_name,
+        'bidirectional': kwargs.get('applet_bidirectional',False),
+        'round_decimals': kwargs.get('round'),
+        'hidden_section_identifier': context.get('_the_hidden_section_identifier'),
+    })
+
+    return " onchange=%s(this.value)" % modify_function_name
+
 
 class AnswerNode(template.Node):
     def __init__(self, answer_code, answer_code_string, kwargs):
@@ -388,23 +458,33 @@ class AnswerNode(template.Node):
         try:
             answer_data = context['_answer_data_']
         except KeyError:
-            return "[No answer data]"
-
+            from mitesting.render_assessments import return_new_answer_data
+            answer_data = return_new_answer_data()
+            context.dicts[0]['_answer_data_'] = answer_data
 
         def return_error(message):
             answer_data['error']=True
             answer_data['answer_errors'].append(message)
             return "[%s]" % message
         
-        # answer code should be a code defined in the question answer options
-        try:
-            answer_code_dict = answer_data['valid_answer_codes']\
-                               [answer_code]
-            answer_type=answer_code_dict['answer_type']
-            expression_type=answer_code_dict.get('expression_type')
-        except KeyError:
-            return return_error("Invalid answer blank: %s, resolved as %s"\
-                                % (self.answer_code_string, answer_code))
+        # unless answer code is None, 
+        # it should be a code defined in the question answer options
+        if answer_code is None:
+            answer_type=None
+            expression_type=None
+            number_blank_answer_codes \
+                =answer_data.get('number_blank_answer_codes', 0) + 1
+            answer_data['number_blank_answer_codes']=number_blank_answer_codes
+            answer_code = "_blank_answer_code_%s_" % number_blank_answer_codes
+        else:
+            try:
+                answer_code_dict = answer_data['valid_answer_codes']\
+                                   [answer_code]
+                answer_type=answer_code_dict['answer_type']
+                expression_type=answer_code_dict.get('expression_type')
+            except KeyError:
+                return return_error("Invalid answer blank: %s, resolved as %s"\
+                                    % (self.answer_code_string, answer_code))
 
         answer_number = len(answer_data['answer_info'])+1
         question_identifier = answer_data['question_identifier']
@@ -426,16 +506,27 @@ class AnswerNode(template.Node):
                 default_value = kwargs.get('assign_to_expression_default',
                                            '_long_underscore_')
 
+                if answer_type is None:
+                    split_symbols = True
+                else:
+                    split_symbols = answer_code_dict['split_symbols_on_compare']
                 expressionfromanswer, created= \
                     question.expressionfromanswer_set.get_or_create(
                         name=assign_to_expression, answer_code=answer_code,
                         answer_number=answer_number,
-                        split_symbols_on_compare=\
-                        answer_code_dict['split_symbols_on_compare'],
+                        split_symbols_on_compare=split_symbols,
                         answer_type=answer_type,
                         real_variables = assume_real_variables,
                         default_value=default_value,
                     )
+            
+        applet_object_name = kwargs.get('assign_to_applet_object')
+        onchange_string=""
+        if applet_object_name:
+                onchange_string = process_assign_to_applet_object(
+                    applet_object_name, answer_field_name=answer_field_name,
+                    kwargs=kwargs, context=context)
+
         given_answer=None
         try:
             prefilled_answers = answer_data['prefilled_answers']
@@ -457,8 +548,10 @@ class AnswerNode(template.Node):
              'prefilled_answer': given_answer,
              'expression_type': expression_type})
 
+
         if answer_type == QuestionAnswerOption.EXPRESSION or \
-           answer_type == QuestionAnswerOption.FUNCTION:
+           answer_type == QuestionAnswerOption.FUNCTION or \
+           answer_type is None:
             
             value_string = ''
 
@@ -471,9 +564,9 @@ class AnswerNode(template.Node):
             else:
                 if given_answer is not None:
                     value_string = ' value="%s"' %  given_answer
-                input_html = '<input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s />' % \
+                input_html = '<input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s%s />' % \
                     (answer_field_name, answer_field_name,
-                     size, readonly_string, value_string, )
+                     size, readonly_string, value_string, onchange_string, )
                 
             return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
                 (input_html,

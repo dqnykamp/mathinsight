@@ -355,6 +355,21 @@ def return_valid_answer_codes(question, expression_context):
 
     return (valid_answer_codes, invalid_answers, invalid_answer_messages)
 
+def return_new_answer_data(rng=None):
+    if not rng:
+        import random
+        rng=random.Random()
+        
+    return { 'valid_answer_codes': {},
+                    'answer_info': [],
+                    'question': None,
+                    'question_identifier': "",
+                    'prefilled_answers': [],
+                    'error': False,
+                    'answer_errors': [],
+                    'readonly': False,
+                    'rng': rng,
+         }
 
 
 def process_expressions_from_answers(question):
@@ -375,16 +390,9 @@ def process_expressions_from_answers(question):
     import random
     rng=random.Random()
 
-    answer_data = { 'valid_answer_codes': valid_answer_codes,
-                    'answer_info': [],
-                    'question': question,
-                    'question_identifier': "",
-                    'prefilled_answers': [],
-                    'error': False,
-                    'answer_errors': [],
-                    'readonly': False,
-                    'rng': rng,
-                }
+    answer_data = return_new_answer_data(rng)
+    answer_data['valid_answer_codes'] = valid_answer_codes
+    answer_data['question']=question
 
     update_context = Context({'question': question, 
                               '_process_dynamictext': True,
@@ -402,7 +410,6 @@ def process_expressions_from_answers(question):
         {'question': question, 'show_help': True,
          'expression_context': update_context,
      })
-
 
 
 def render_question_text(render_data, solution=False):

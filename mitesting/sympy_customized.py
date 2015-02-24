@@ -5,7 +5,7 @@ from __future__ import division
 
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S
+from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S, E, pi
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 from django.utils.safestring import mark_safe
@@ -196,6 +196,29 @@ def parse_expr(s, global_dict=None, local_dict=None,
     
     # replace unicode character for \cdot used in mathjax display with *
     s = re.sub(r'\u22c5', r'*', s)
+
+    # replace numerical unicode superscripts with ^
+    unicode_superscripts = '\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079'
+    pattern = '\w(['+unicode_superscripts+']+)'
+    while True:
+        mo = re.search(pattern, s)
+        if not mo:
+            break
+        ind1=mo.start(1)
+        ind2=mo.end(1)
+        superscripts=s[ind1:ind2]
+        for (i,sps) in enumerate(unicode_superscripts):
+            superscripts = re.sub(sps,str(i),superscripts)
+        s=s[:ind1] + "^" + superscripts + " " + s[ind2:]
+
+    # replace unicode e with __E__, which is mapped to sympy E
+    s=re.sub('\u212f', '__E__', s)
+    new_local_dict['__E__'] = E
+
+    # replace unicode pi with __pi__, which is mapped to sympy pi
+    s=re.sub('\u03c0', '__pi__', s)
+    new_local_dict['__pi__'] = pi
+
 
     from mitesting.utils import replace_simplified_derivatives
     s= replace_simplified_derivatives(

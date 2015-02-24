@@ -764,7 +764,7 @@ def grade_question(question, question_identifier, answer_info,
         answer_type = answer_info[answer_num]['type']
 
         # if answer_type is None ignore
-        # (used for state variables from applets)
+        # (used for state variables from applets and if answer_code is None)
         if answer_type is None:
             continue
 

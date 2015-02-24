@@ -8,25 +8,36 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'AppletDynamicText'
-        db.create_table(u'midocs_appletdynamictext', (
+        # Adding model 'AppletText'
+        db.create_table(u'midocs_applettext', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('applet', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['midocs.Applet'])),
             ('code', self.gf('django.db.models.fields.SlugField')(max_length=100)),
+            ('title', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('text', self.gf('django.db.models.fields.TextField')()),
+            ('default_position', self.gf('django.db.models.fields.CharField')(max_length=6, null=True, blank=True)),
+            ('sort_order', self.gf('django.db.models.fields.FloatField')(default=0)),
         ))
-        db.send_create_signal(u'midocs', ['AppletDynamicText'])
+        db.send_create_signal(u'midocs', ['AppletText'])
 
-        # Adding unique constraint on 'AppletDynamicText', fields ['applet', 'code']
-        db.create_unique(u'midocs_appletdynamictext', ['applet_id', 'code'])
+        # Adding unique constraint on 'AppletText', fields ['applet', 'code']
+        db.create_unique(u'midocs_applettext', ['applet_id', 'code'])
+
+        # Adding field 'AppletObject.function_input_variable'
+        db.add_column(u'midocs_appletobject', 'function_input_variable',
+                      self.gf('django.db.models.fields.CharField')(max_length=1, null=True, blank=True),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'AppletDynamicText', fields ['applet', 'code']
-        db.delete_unique(u'midocs_appletdynamictext', ['applet_id', 'code'])
+        # Removing unique constraint on 'AppletText', fields ['applet', 'code']
+        db.delete_unique(u'midocs_applettext', ['applet_id', 'code'])
 
-        # Deleting model 'AppletDynamicText'
-        db.delete_table(u'midocs_appletdynamictext')
+        # Deleting model 'AppletText'
+        db.delete_table(u'midocs_applettext')
+
+        # Deleting field 'AppletObject.function_input_variable'
+        db.delete_column(u'midocs_appletobject', 'function_input_variable')
 
 
     models = {
@@ -88,13 +99,6 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'object_name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        u'midocs.appletdynamictext': {
-            'Meta': {'unique_together': "((u'applet', u'code'),)", 'object_name': 'AppletDynamicText'},
-            'applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']"}),
-            'code': ('django.db.models.fields.SlugField', [], {'max_length': '100'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'text': ('django.db.models.fields.TextField', [], {})
-        },
         u'midocs.appletfeature': {
             'Meta': {'object_name': 'AppletFeature'},
             'code': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '20', 'db_index': 'True'}),
@@ -115,6 +119,7 @@ class Migration(SchemaMigration):
             'capture_changes': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'category_for_capture': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'change_from_javascript': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'function_input_variable': ('django.db.models.fields.CharField', [], {'max_length': '1', 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name_for_changes': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
@@ -133,6 +138,16 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'parameter': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.AppletTypeParameter']"}),
             'value': ('django.db.models.fields.CharField', [], {'max_length': '1000', 'blank': 'True'})
+        },
+        u'midocs.applettext': {
+            'Meta': {'unique_together': "((u'applet', u'code'),)", 'object_name': 'AppletText'},
+            'applet': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['midocs.Applet']"}),
+            'code': ('django.db.models.fields.SlugField', [], {'max_length': '100'}),
+            'default_position': ('django.db.models.fields.CharField', [], {'max_length': '6', 'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'sort_order': ('django.db.models.fields.FloatField', [], {'default': '0'}),
+            'text': ('django.db.models.fields.TextField', [], {}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.applettype': {
             'Meta': {'object_name': 'AppletType'},

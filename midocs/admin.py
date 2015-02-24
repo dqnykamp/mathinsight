@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletDynamicText
+from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletText
 from django.conf import settings
 import reversion
 
@@ -49,6 +49,25 @@ class AppletParameterInline(admin.TabularInline):
 
 class AppletObjectInline(admin.TabularInline):
     model = AppletObject
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(AppletObjectInline, self).formfield_for_dbfield(db_field,
+                                                                      **kwargs)
+        if db_field.name == 'name':
+            field.widget.attrs['size'] = 15
+            del field.widget.attrs['class']
+        if db_field.name == 'related_objects':
+            field.widget.attrs['size'] = 10
+            del field.widget.attrs['class']
+        if db_field.name == 'name_for_changes':
+            field.widget.attrs['size'] = 10
+            del field.widget.attrs['class']
+        if db_field.name == 'category_for_capture':
+            field.widget.attrs['size'] = 20
+            del field.widget.attrs['class']
+        if db_field.name == 'function_input_variable':
+            field.widget.attrs['size'] = 2
+            del field.widget.attrs['class']
+        return field
 
 class AppletChildObjectLinkInline(admin.TabularInline):
     model = AppletChildObjectLink
@@ -59,11 +78,11 @@ class AppletAuthorInline(admin.TabularInline):
 class AppletNotationSystemInline(admin.TabularInline):
     model = AppletNotationSystem
 
-class AppletDynamicTextInline(admin.StackedInline):
-    model = AppletDynamicText
+class AppletTextInline(admin.StackedInline):
+    model = AppletText
 
 class AppletAdmin(reversion.VersionAdmin):
-    inlines = [AppletParameterInline, AppletObjectInline, AppletChildObjectLinkInline, AppletDynamicTextInline, AppletAuthorInline,AppletNotationSystemInline]
+    inlines = [AppletParameterInline, AppletObjectInline, AppletChildObjectLinkInline, AppletTextInline, AppletAuthorInline,AppletNotationSystemInline]
     # inlines = [AppletParameterInline, AppletInPagesInline]
     exclude = ('in_pages',)
     list_filter = ("applet_type",)

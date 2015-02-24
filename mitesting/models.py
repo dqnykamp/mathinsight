@@ -1081,7 +1081,8 @@ class ExpressionFromAnswer(models.Model):
     answer_code = models.SlugField(max_length=50)
     answer_number = models.IntegerField()
     split_symbols_on_compare = models.BooleanField(default=True)
-    answer_type = models.IntegerField(default=QuestionAnswerOption.EXPRESSION)
+    answer_type = models.IntegerField(default=QuestionAnswerOption.EXPRESSION,
+                                      null=True)
     answer_data = models.TextField(null=True)
     real_variables = models.BooleanField(default=True)
     default_value = models.CharField(max_length=20, default="_long_underscore_")

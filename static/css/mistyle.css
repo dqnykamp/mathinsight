@@ -2025,6 +2025,10 @@ ul.answerlist {
     box-shadow: 3px 3px 4px rgba(0,0,0,.3);
 }
 
+.applet_text {
+    background: #eeeeee;
+}
+
 .videobox {
     border: solid 1px #66000F;
     padding-left: 2%;
@@ -2137,6 +2141,7 @@ object.liveGraphics3D, object.ggbApplet, applet.ggbApplet {
 .correct {
     font-weight: bold;
 }
+
 
 /* for comment form */
 ul.errorlist
@@ -2299,17 +2304,23 @@ a.assessment
 }
 
 /* have mouse change to pointer over links */
-.show_section a, a.hide_section {
+.hidden_section_header a, a.hide_section {
     cursor: pointer;
+}
+
+.hidden_section_header {
+    background:#cccccc;
+    padding-left: 0.5em;
 }
 
 .hidden_section {
     display: none;
-    padding: 8px;
+    padding: 1px 8px;
 }
 
 .hidden_section_container {
     margin-top: 1em;
+    margin-bottom: 1em;
 }
 
 @media print {

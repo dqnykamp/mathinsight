@@ -15,7 +15,7 @@ import re
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from sympy.printing import StrPrinter
-
+import six
 
 register=template.Library()
 
@@ -1143,7 +1143,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
         raise #return ""
 
 def Geogebra_capture_object_javascript(appletobject, applet_identifier,
-                                       varname, related_objects=[]):
+                                       varname, related_objects=[],
+                                       round_decimals=None):
     
     object_type = appletobject.object_type.object_type
     javascript= ""
@@ -1153,12 +1154,26 @@ def Geogebra_capture_object_javascript(appletobject, applet_identifier,
         ycoord = 'document.%s.getYcoord("%s")' % \
             (applet_identifier, appletobject.name)
         return '%s="Point("+%s+","+%s+")"' % (varname, xcoord,ycoord)
-    elif object_type=='Number' or object_type=='Boolean':
+    elif object_type=='Number':
+        if round_decimals is None:
+            return '%s=document.%s.getValue("%s")' % \
+                (varname, applet_identifier, appletobject.name)
+        else:
+            return '%s=Math.round10(document.%s.getValue("%s"), %s)' % \
+                (varname, applet_identifier, appletobject.name, round_decimals)
+    elif object_type=='Boolean':
         return '%s=document.%s.getValue("%s")' % \
             (varname, applet_identifier, appletobject.name)
     elif object_type=='Text':
         return '%s=document.%s.getValueString("%s")' % \
             (varname, applet_identifier, appletobject.name)
+    elif object_type=='Function':
+        inputvarname = appletobject.function_input_variable
+        if not inputvarname:
+            inputvarname="x"
+        return '%s=/%s\(%s\) = (.*)/g.exec(document.%s.getValueString("%s"))[1]' % \
+            (varname, appletobject.name, inputvarname, 
+             applet_identifier, appletobject.name)
     elif object_type=='List':
         value = '%document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
@@ -1647,6 +1662,31 @@ class AppletNode(template.Node):
             return '<p>[Broken applet: unrecognized applet type]</p>'
 
 
+        # add default applet texts unless specified not
+        if kwargs.get("add_default_texts", True):
+            top_text=""
+            for applet_text in applet.applettext_set\
+                                     .filter(default_position="top"):
+
+                top_text = render_applet_text(
+                    context, applet_text, applet=applet, 
+                    applet_identifier=applet_identifier,
+                    hidden=kwargs.get("hidden", True))
+
+
+            bottom_text = ""
+            for applet_text in applet.applettext_set\
+                                     .filter(default_position="bottom"):
+
+                bottom_text += render_applet_text(
+                    context, applet_text, applet=applet, 
+                    applet_identifier=applet_identifier,
+                    hidden=kwargs.get("hidden", True))
+
+
+            applet_link = top_text + applet_link + bottom_text
+
+
         answer_data = context.get('_answer_data_')
         prefilled_answers=None
         if answer_data:
@@ -1671,7 +1711,7 @@ class AppletNode(template.Node):
                                "category_for_capture")
 
         inputboxlist=''
-        capture_javascript=''
+        capture_javascript={}
         init_javascript = ""
         
         # dictionary to check if have a kwarg of form answer_xxxxx
@@ -1780,9 +1820,11 @@ class AppletNode(template.Node):
                 javascript = Geogebra_capture_object_javascript \
                        (appletobject, applet_identifier, 
                         "temp", related_objects)
-                capture_javascript \
+                this_capture= capture_javascript.get(appletobject.name,"")
+                this_capture \
                     += 'var temp;\n%s\njQuery("#%s").val(temp);\n' \
                     % (javascript, inputbox_id,)
+                capture_javascript[appletobject.name]=this_capture
 
         # if there was a kwarg of form answer_xxxx that was not a
         # changeable object, register the error
@@ -1933,19 +1975,38 @@ class AppletObjectNode(template.Node):
                               for k, v in self.kwargs_string.items()])
 
         object_name = self.object_name.resolve(context)
-        applet = kwargs.get('applet')
-        applet_id_user = kwargs.get('applet_id')
 
-        # if neither applet nor applet_id_user is specified,
-        # then check if applet is added to context
-        applet_identifier=None
-        if not applet and not applet_id_user:
+        # must have applet in kwargs, or specified in context
+        applet = kwargs.get('applet')
+        if not applet:
             try:
-                applet = context['_the_applet']
-                applet_identifier = context.get('_the_applet_identifier')
+                applet= context['_the_applet']
             except KeyError:
                 return "[Broken applet object: no applet specified]"
+
+        # if applet is not an applet instance
+        # try to load applet with that code
+        if not isinstance(applet, Applet):
+            # test if applet with applet_code exists
+            try:
+                applet=Applet.objects.get(code=applet)
+                # if applet does not exist
+                # return tag to applet code anyway
+            except ObjectDoesNotExist:
+                return "[Broken applet object: no applet found]"
+
+        # get applet_id_user optionally from kwargs or context
+        applet_id_user = kwargs.get('applet_id', 
+                                    context.get('_the_applet_id_user'))
+
+        # get applet_identifier optionally from context
+        applet_identifier = context.get('_the_applet_identifier')
         
+        try:
+            applet_object=applet.appletobject_set.get \
+                           (capture_changes=True, name=object_name)
+        except ObjectDoesNotExist:
+            return "[Broken applet object: no object found]"
 
         identifier = context.get('identifier','')
         
@@ -1957,7 +2018,8 @@ class AppletObjectNode(template.Node):
         applet_object_counter = applet_data.get('applet_object_counter',0)+1
         applet_data['applet_object_counter']=applet_object_counter
         
-        object_identifier = "appletobject_%s_%s" % (applet_object_counter, identifier)
+        object_identifier = "appletobject_%s_%s" % \
+                             (applet_object_counter, identifier)
 
         try:
             object_list=applet_data['applet_objects']
@@ -1974,21 +2036,21 @@ class AppletObjectNode(template.Node):
         elif mathmode == "display":
             math_delims = r"\[{}\]"
             render_with_mathjax=True
-        elif mathmode == "align":
-            math_delims = r"\begin{align*}{}\end{align*}"
-            render_with_mathjax=True
 
         # Since applet tag may not have been encountered yet
         # cannot yet form javascript to update object.
         # Record information about applet object for later processing.
         # If applet_identifier is specified, then it overrides applet_id_user
         object_list.append({
-            'object_name': object_name,
+            'applet_object': applet_object,
             'object_identifier': object_identifier,
             'applet': applet,
             'applet_id_user': applet_id_user,
             'applet_identifier': applet_identifier,
             'render_with_mathjax': render_with_mathjax,
+            'round_decimals': kwargs.get('round'),
+            'hidden_section_identifier':\
+            context.get('_the_hidden_section_identifier'),
         })
         
         # return container for applet object
@@ -2020,9 +2082,9 @@ def applet_object(parser,token):
     return AppletObjectNode(object_name, kwargs, kwargs_string)
     
 
-class AppletDynamicTextNode(template.Node):
-    def __init__(self, dynamictext_code, kwargs, kwargs_string):
-        self.dynamictext_code = dynamictext_code
+class AppletTextNode(template.Node):
+    def __init__(self, text_code, kwargs, kwargs_string):
+        self.text_code = text_code
         self.kwargs=kwargs
         self.kwargs_string=kwargs_string
     def render(self, context):
@@ -2032,63 +2094,93 @@ class AppletDynamicTextNode(template.Node):
         kwargs_string = dict([(smart_text(k, 'ascii'), v)
                               for k, v in self.kwargs_string.items()])
 
-        dynamictext_code = self.dynamictext_code.resolve(context)
+        text_code = self.text_code.resolve(context)
+
+        # must have applet in kwargs, or specified in context
         applet = kwargs.get('applet')
-        applet_id_user = kwargs.get('applet_id')
-
-        # if neither applet nor applet_id_user is specified,
-        # then check if applet is added to context
-        applet_identifier=None
-        if not applet and not applet_id_user:
+        if not applet:
             try:
-                applet = context['_the_applet']
-                applet_identifier = context.get('_the_applet_identifier')
+                applet= context['_the_applet']
             except KeyError:
-                return "[Broken applet dynamictext: no applet specified]"
+                return "[Broken applet text: no applet specified]"
+
+        # if applet is not an applet instance
+        # try to load applet with that code
+        if not isinstance(applet, Applet):
+            # test if applet with applet_code exists
+            try:
+                applet=Applet.objects.get(code=applet)
+                # if applet does not exist
+                # return tag to applet code anyway
+            except ObjectDoesNotExist:
+                return "[Broken applet text: no applet found]"
+
+        # get applet_id_user optionally from kwargs or context
+        applet_id_user = kwargs.get('applet_id', 
+                                    context.get('_the_applet_id_user'))
+
+        # get applet_identifier optionally from context
+        applet_identifier = context.get('_the_applet_identifier')
         
-
-        identifier = context.get('identifier','')
-
         try:
-            applet_data=context['_applet_data_']
-        except KeyError:
-            return "[Broken applet dynamictext: no applet data]"
-        
-        applet_dynamictext_counter = applet_data.get('applet_dynamictext_counter',0)+1
-        applet_data['applet_dynamictext_counter']=applet_dynamictext_counter
-        
-        dynamictext_identifier = "appletdynamictext_%s_%s" % (applet_dynamictext_counter, identifier)
+            applet_text=applet.applettext_set.get(code=text_code)
+        except ObjectDoesNotExist:
+            return "[Broken applet text: no text found]"
 
+        return render_applet_text(context, applet_text, applet=applet, 
+                                  applet_id_user=applet_id_user,
+                                  applet_identifier=applet_identifier,
+                                  hidden=kwargs.get("hidden", True))
+
+
+
+def render_applet_text(context, applet_text, applet, applet_id_user=None,
+                       applet_identifier=None,
+                       hidden=True):
+
+    if hidden is None:
+        hidden_section_identifier=""
+    else:
         try:
-            dynamictext_list=applet_data['applet_dynamictext']
+            hidden_info = context["_hidden_section_info"]
         except KeyError:
-            dynamictext_list = []
-            applet_data['applet_dynamictext'] = dynamictext_list
+            hidden_info={}
+            context.dicts[0]['_hidden_section_info']=hidden_info
 
-        # Since applet tag may not have been encountered yet
-        # cannot yet form javascript to update text.
-        # Record information about applet dynamictext for later processing.
-        # If applet_identifier is specified, then it overrides applet_id_user
-        dynamictext_list.append({
-            'dynamictext_code': dynamictext_code,
-            'dynamictext_identifier': dynamictext_identifier,
-            'applet': applet,
-            'applet_id_user': applet_id_user,
-            'applet_identifier': applet_identifier,
-        })
-        
-        # return container for applet dynamictext
-        return "<span id='%s'></span>" % dynamictext_identifier
+        counter = hidden_info.get('counter',0)+1
+        hidden_info['counter']=counter
+        hidden_section_identifier= "hidden_section_%s" % counter
 
+
+    context.push()
+    context['_the_applet']=applet
+    context['_the_applet_id_user'] = applet_id_user
+    context['_the_applet_identifier'] = applet_identifier
+    context['_the_hidden_section_identifier']=hidden_section_identifier
+
+    rendered_text = template.Template(
+        "{% load mi_tags testing_tags %}"+applet_text.text)\
+                                   .render(context)
+    context.pop()
+
+    if hidden is None:
+        return '<div class="info"><h4>%s</h4>%s</div>' % \
+            (applet_text.title, rendered_text)
+    else:
+        return hidden_text_html(
+            content_html = rendered_text, 
+            title=applet_text.title, css="applet_text",
+            section_identifier = hidden_section_identifier,
+            start_revealed = not hidden)
 
 
 @register.tag
-def applet_dynamic_text(parser, token):
+def applet_text(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
 
-    dynamictext_code = parser.compile_filter(bits[1])
+    text_code = parser.compile_filter(bits[1])
 
     kwargs = {}
     kwargs_string = {}
@@ -2105,7 +2197,7 @@ def applet_dynamic_text(parser, token):
                 kwargs[name] = parser.compile_filter(value)
                 kwargs_string[name] = value
 
-    return AppletDynamicTextNode(dynamictext_code, kwargs, kwargs_string)
+    return AppletTextNode(text_code, kwargs, kwargs_string)
 
 
 def youtube_link(context, video, width, height):
@@ -2456,9 +2548,57 @@ def counter(parser, token):
     return CounterNode(args)
 
 
+def hidden_text_html(content_html, title, section_identifier,
+                     css=None, show_text=None, hide_text=None,
+                     start_revealed=False):
+    
+    if isinstance(css, dict):
+        body_css = css.get("body", "info")
+        title_css = css.get("title", "")
+        container_css = css.get("container", "")
+    elif isinstance(css, six.text_type):
+        body_css = css
+        title_css = ""
+        container_css = ""
+    else:
+        body_css = "info"
+        title_css = ""
+        container_css = ""
+
+    if show_text is None:
+        show_text = "(Show)"
+    if hide_text is None:
+        hide_text = "(Hide)"
+
+    if start_revealed:
+        show_link_style = 'display: none;'
+        hide_link_style = 'display: inline;'
+        body_style = 'display: block;'
+    else:
+        show_link_style = 'display: inline;'
+        hide_link_style = 'display: none;'
+        body_style = 'display: none;'
+
+    bottom_hide_link =  '<p><a id="%s_hide" class="hide_section" onclick="showHide(\'%s\');">%s</a></p>' \
+        % (section_identifier, section_identifier, hide_text)
+
+    body_html = '<div id="%s" class="hidden_section %s" style="%s">%s%s</div>' \
+        % (section_identifier, body_css, body_style,
+           content_html, bottom_hide_link)
+    
+    title_html = '<div id="%s_header" class="hidden_section_header %s" style="width: 100%%">%s <a onclick="showHide(\'%s\');"><span id="%s_show" class="hidden_section_show" style="%s">%s</span><span id="%s_hide" class="hidden_section_hide" style="%s">%s</span></a></div>' \
+        % (section_identifier, title_css, title, 
+           section_identifier, 
+           section_identifier, show_link_style, show_text, 
+           section_identifier, hide_link_style, hide_text)
+
+    return '<div class="hidden_section_container %s">%s%s</div>'\
+                  % (container_css, title_html, body_html)
+
+
 class HiddenNode(template.Node):
-    def __init__(self, displayed_text, kwargs, nodelist):
-        self.displayed_text=displayed_text
+    def __init__(self, title, kwargs, nodelist):
+        self.title=title
         self.kwargs=kwargs
         self.nodelist=nodelist
 
@@ -2467,13 +2607,16 @@ class HiddenNode(template.Node):
         kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
                        for k, v in self.kwargs.items()])
         
-        displayed_text = self.displayed_text.resolve(context)
+        title = self.title.resolve(context)
 
         show_text = kwargs.get("show_text", "(Show)")
-        hide_text = kwargs.get("hide_text", "Hide")
-        css = kwargs.get("css", "info")
-        displayed_text_css = kwargs.get("displayed_text_css", "info")
+        hide_text = kwargs.get("hide_text", "(Hide)")
+
+        body_css = kwargs.get("body_css", "info")
+        title_css = kwargs.get("title_css", "")
         container_css = kwargs.get("container_css", "")
+
+        css = {'body': body_css, 'title': title_css, 'container': container_css}
 
         try:
             hidden_info = context["_hidden_section_info"]
@@ -2485,21 +2628,10 @@ class HiddenNode(template.Node):
         hidden_info['counter']=counter
         hidden_section_identifier= "hidden_section_%s" % counter
 
-        html_string = self.nodelist.render(context)
-        html_string += '<p><a id="%s_hide" class="hide_section" onclick="showHide(\'%s\');">%s</a></p>' \
-            % (hidden_section_identifier, hidden_section_identifier,
-               hide_text)
-        html_string = '<div id="%s" class="hidden_section %s">%s</div>' \
-            % (hidden_section_identifier, css, html_string)
-        html_string = '<div id="%s_show" class="show_section %s" style="width: 100%%">%s <a onclick="showHide(\'%s\');">%s</a></div>%s' \
-            % (hidden_section_identifier, 
-               displayed_text_css, displayed_text, 
-               hidden_section_identifier, 
-               show_text, html_string)
-        html_string = '<div class="hidden_section_container %s">%s</div>'\
-                      % (container_css, html_string)
-        
-        return html_string
+        return hidden_text_html(
+            content_html=self.nodelist.render(context),
+            title = title, section_identifier = hidden_section_identifier,
+            css=css, show_text=show_text, hide_text=hide_text)
         
 
 @register.tag
@@ -2509,7 +2641,7 @@ def hidden(parser, token):
     if len(bits) < 2:
         raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
     
-    displayed_text = parser.compile_filter(bits[1])
+    title = parser.compile_filter(bits[1])
 
     kwargs = {}
     bits = bits[2:]
@@ -2527,84 +2659,44 @@ def hidden(parser, token):
     nodelist = parser.parse(('endhidden',))
     parser.delete_first_token()
 
-    return HiddenNode(displayed_text, kwargs, nodelist)
+    return HiddenNode(title, kwargs, nodelist)
 
 
 
 
-def find_applet_and_identifier(
-        applet_id_dict, applet=None, applet_identifier=None,
-        applet_id_user=None):
+def find_applet_identifier(applet_id_dict, applet, applet_id_user=None):
 
     """
-    Try to find applet.  Could be specified in the following ways.
-    1. have applet and corresponding applet_identifier.
-    2. have applet, no applet_identifier, and corresponding applet_id_user
-    3. have applet, no applet_id_user or applet_identifier, but applet
-       is found in applet_id_dict.
-       (If multiple matches, which applet identifier chosen is arbitrary)
-    4. no applet, but have applet_id_user.
-       (If multiple matches, which applet chosen is arbitrary)
+    Try to find applet_identifier.  
+    Try to match both applet and applet_id_user in applet_id_dict.
+    If no match, try to find arbitrary match of applet in applet_id_dict.
 
     raises ObjectDoesNotExist if unable to find.
     
-    Returns (applet, applet_identifier) upon successful finding of applet
-
     """
 
-    if applet:
-        # if applet is not an applet instance
-        # try to load applet with that code
-        if not isinstance(applet, Applet):
-            # test if applet with applet_code exists
-            # else raise ObjectDoesNotExist
-            applet=Applet.objects.get(code=applet)
+    try:
+        # information about instances of applet in page
+        this_applet_info=applet_id_dict[applet.code]
+    except KeyError:
+        # if applet code not in applet_id_dict,
+        # then applet does not appear in page
+        raise ObjectDoesNotExist
 
+    if applet_id_user:
         try:
-            # information about instances of applet in page
-            this_applet_info=applet_id_dict[applet.code]
+            # If applet_id_user was found in page
+            # use the associated applet_identifier
+            return this_applet_info[applet_id_user]
         except KeyError:
-            # if applet code not in applet_id_dict,
-            # then applet does not appear in page
-            raise ObjectDoesNotExist
-
-        if applet_identifier:
-            # Check if applet_identifier is in applet_id_dict.
-            # If so, we're done
-            if applet_identifier in this_applet_info.values():
-                return (applet, applet_identifier)
-
-        if applet_id_user:
-            try:
-                # If applet_id_user was found in page
-                # use the associated applet_identifier
-                applet_identifier = this_applet_info[applet_id_user]
-                return (applet, applet_identifier)
-            except KeyError:
-                # if applet_id_user was not found, will ignore
-                pass
-
-        # try to pick an arbitrary applet_identifier associated with applet
-        try:
-            applet_identifier = this_applet_info.values()[0]
-            return (applet, applet_identifier)
-        except IndexError:
-            raise ObjectDoesNotExist
-
-
-    # if no applet specified, attempt to find via applet_id_user
-    for applet_code in applet_id_dict:
-        try:
-            applet_identifier = applet_id_dict[applet_code][applet_id_user]
-        except KeyError:
+            # if applet_id_user was not found, will ignore
             pass
-        else:
-            # if found identifier, return applet with that code
-            applet=Applet.objects.get(code=applet_code)
-            return (applet, applet_identifier)
 
-    # if never found applet, raise ObjectDoesNotExist
-    raise ObjectDoesNotExist
+    # try to pick an arbitrary applet_identifier associated with applet
+    try:
+        return this_applet_info.values()[0]
+    except IndexError:
+        raise ObjectDoesNotExist
 
 
 
@@ -2621,30 +2713,28 @@ def return_applet_object_javascript(applet_data, capture_javascript):
 
     setup_variables_javascript=""
     error_javascript = ""
+
+    capture_by_hidden_identifier={}
+
     for ao in applet_objects:
-        object_name = ao['object_name']
+        applet_object = ao['applet_object']
         object_identifier = ao['object_identifier']
         applet = ao['applet']
         applet_id_user = ao['applet_id_user']
         applet_identifier = ao['applet_identifier']
         render_with_mathjax = ao['render_with_mathjax']
-        
-        try:
-            (applet, applet_identifier) = find_applet_and_identifier(
-                applet_id_dict=applet_id_dict, applet=applet, 
-                applet_identifier=applet_identifier,
-                applet_id_user=applet_id_user)
-        except ObjectDoesNotExist:
-            error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no applet found]</p>");\n' % object_identifier
-            continue
+        round_decimals = ao['round_decimals']
+        hidden_section_identifier = ao['hidden_section_identifier']
 
-        try:
-            applet_object=applet.appletobject_set.get \
-                           (capture_changes=True, name=object_name)
-        except ObjectDoesNotExist:
-            error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no object found]</p>");\n' % object_identifier
-            continue
-     
+        if not applet_identifier:
+            try:
+                applet_identifier = find_applet_identifier(
+                    applet_id_dict=applet_id_dict, applet=applet, 
+                    applet_id_user=applet_id_user)
+            except ObjectDoesNotExist:
+                error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no applet found]</p>");\n' % object_identifier
+                continue
+
         related_objects=[]
         if applet_object.related_objects:
             related_object_names  \
@@ -2662,7 +2752,7 @@ def return_applet_object_javascript(applet_data, capture_javascript):
                 javascript = Geogebra_capture_object_javascript(
                     applet_object, applet_identifier, 
                     "applet_object_content.%s.new" % object_identifier,
-                    related_objects)
+                    related_objects, round_decimals=round_decimals)
 
                 applet_object_capture_javascript = "%s;\n" % javascript
 
@@ -2672,15 +2762,23 @@ def return_applet_object_javascript(applet_data, capture_javascript):
             else:
                 javascript = Geogebra_capture_object_javascript(
                     applet_object, applet_identifier, 
-                    "temp", related_objects)
+                    "temp", related_objects, round_decimals=round_decimals
+                )
                 applet_object_capture_javascript \
                     = '%s\njQuery("#%s").html(temp);\n' \
                     % (javascript, object_identifier,)
 
             # add to the capture javascript for the applet
-            this_applet_capture = capture_javascript.get(applet_identifier,"")
-            this_applet_capture += applet_object_capture_javascript
-            capture_javascript[applet_identifier] = this_applet_capture
+            try:
+                applet_capture = capture_javascript[applet_identifier]
+            except KeyError:
+                applet_capture = {}
+                capture_javascript[applet_identifier] = applet_capture
+
+            object_capture = applet_capture.get(applet_object.name, "")
+            object_capture += applet_object_capture_javascript
+            applet_capture[applet_object.name] = object_capture
+
 
     if not setup_variables_javascript:
         return '<div id="applet_object_capture">\n<script>\n%s</script>\n</div>\n' % error_javascript
@@ -2694,64 +2792,113 @@ def return_applet_object_javascript(applet_data, capture_javascript):
     return '<div id="applet_object_capture">\n<script>\n%s%s%s</script>\n</div>\n' % (error_javascript, setup_variables_javascript, interval_javascript)
 
 
+def return_modify_applet_object_javascript(applet_data, capture_javascript,
+                                           on_init_commands):
 
-def render_dynamictext(context, applet_data):
 
-    # Additional javascript to capture dynamictexts from applet_dynamictext tags.
+    # Additional javascript to modify applet objects from answer blanks
     # Now can look up applet information to associate to correct applet
     try:
-        applet_dynamictext = applet_data['applet_dynamictext']
+        modify_applet_objects = applet_data['modify_applet_objects']
         applet_id_dict = applet_data['applet_ids']
     except KeyError:
         return ""
 
-    dynamictext_javascript=""
-    error_javascript = ""
-    for ao in applet_dynamictext:
-        dynamictext_code = ao['dynamictext_code']
-        dynamictext_identifier = ao['dynamictext_identifier']
+    modify_javascript = "var isMSIE = /*@cc_on!@*/false || !!document.documentMode;\n"
+    capture_by_hidden_identifier={}
+    
+
+    for ao in modify_applet_objects:
+        applet_object = ao['applet_object']
+        answer_field_name = ao['answer_field_name']
         applet = ao['applet']
         applet_id_user = ao['applet_id_user']
         applet_identifier = ao['applet_identifier']
-        
-        try:
-            (applet, applet_identifier) = find_applet_and_identifier(
-                applet_id_dict=applet_id_dict, applet=applet, 
-                applet_identifier=applet_identifier,
-                applet_id_user=applet_id_user)
-        except ObjectDoesNotExist:
-            error_javascript += 'jQuery("#%s").html("<p>[Broken applet dynamictext: no applet found]</p>");\n' % object_identifier
-            continue
+        modify_function_name = ao['modify_function_name']
+        bidirectional = ao['bidirectional']
+        round_decimals = ao['round_decimals']
+        hidden_section_identifier = ao['hidden_section_identifier']
 
-        try:
-            applet_dynamictext=applet.appletdynamictext_set.get \
-                           (code=dynamictext_code)
-        except ObjectDoesNotExist:
-            error_javascript += 'jQuery("#%s").html("<p>[Broken applet dynamictext: no dynamictext found]</p>");\n' % dynamictext_identifier
-            continue
-     
-        # add applet and applet_identifer to context 
-        # so that applet_object tags in dynamic text
-        # do not need to specify applet
-        context.push()
-        context['_the_applet']=applet
-        context['_the_applet_identifier']=applet_identifier
-        context['_applet_data_'] = applet_data
+        if not applet_identifier:
+            try:
+                applet_identifier = find_applet_identifier(
+                    applet_id_dict=applet_id_dict, applet=applet, 
+                    applet_id_user=applet_id_user)
+            except ObjectDoesNotExist:
+                continue
 
-        # rendered dynamic text will have insert placeholders
-        # for any embedded applet_objects
-        rendered_dynamictext = template.Template(
-            "{% load mi_tags testing_tags %}"+applet_dynamictext.text)\
-                                       .render(context)
-        context.pop()
-        
-        # replace \ with \\
-        rendered_dynamictext = re.sub(r"\\", r"\\\\", rendered_dynamictext)
+        if applet.applet_type.code == "Geogebra" \
+           or applet.applet_type.code == "GeogebraWeb":
 
-        dynamictext_javascript += 'jQuery("#%s").html("%s");\n' \
-                    % (dynamictext_identifier, rendered_dynamictext)
+            applet_object_capture_javascript=""
+            if bidirectional and applet_object.capture_changes:
+                related_objects=[]
+                if applet_object.related_objects:
+                    related_object_names  \
+                        = [item.strip() for item in applet_object.related_objects.split(",")]
+                    for name in related_object_names:
+                        try:
+                            ro = applet.appletobject_set.get(name=name)
+                            related_objects.append(ro)
+                        except:
+                            pass
 
-    return '<div id="applet_dynamictext">\n<script>\n%s%s</script>\n</div>\n' % (error_javascript, dynamictext_javascript)
+                javascript = Geogebra_capture_object_javascript(
+                    applet_object, applet_identifier, 
+                    "temp", related_objects, round_decimals=round_decimals)
+                applet_object_capture_javascript \
+                    = '%s\njQuery("#id_%s").val(temp);\n' \
+                    % (javascript, answer_field_name,)
+
+                # add to the capture javascript for the applet
+                try:
+                    applet_capture = capture_javascript[applet_identifier]
+                except KeyError:
+                    applet_capture = {}
+                    capture_javascript[applet_identifier] =applet_capture
+
+                object_capture = applet_capture.get(applet_object.name, "")
+                object_capture += applet_object_capture_javascript
+                applet_capture[applet_object.name] = object_capture
+
+
+            object_type = applet_object.object_type.object_type
+            if object_type == 'Number' or object_type=='Boolean':
+                change_command = 'document.%s.setValue("%s", the_value);' % \
+                                 (applet_identifier,  applet_object.name)
+            elif object_type == 'Function':
+                varname = applet_object.function_input_variable
+                if varname == "" or varname is None:
+                    varname="x"
+                change_command = 'document.%s.evalCommand(\'%s(%s) = \' + the_value );'%\
+                                 (applet_identifier, applet_object.name, varname)
+            else:
+                change_command = 'document.%s.evalCommand(\'%s: \' + the_value );'%\
+                                 (applet_identifier, applet_object.name)
+                
+
+            if applet_object_capture_javascript:
+                # if bidirectional and an error, capture value from applet
+                change_command = "var status=%s\n" % change_command
+                change_command += "if(status==false) {%s}" % applet_object_capture_javascript
+
+            modify_javascript += 'function %s(the_value) {\n%s}\n' % \
+                                 (modify_function_name, change_command)
+
+            modify_javascript +=  'if (isMSIE) {\n id_%s.onkeypress = function () {\n  if (window.event && window.event.keyCode === 13) {this.blur(); this.focus()}\n  }\n}\n' % answer_field_name
+
+            # also, run the change_command on initialization
+            initial_change_javascript = re.sub(
+                'the_value', 'id_%s.value' % answer_field_name, change_command)
+            # only run if value is not blank
+            initial_change_javascript = 'if(id_%s.value != "") { %s }\n' % \
+                            (answer_field_name, initial_change_javascript)
+            on_init=on_init_commands.get(applet_identifier,"")
+            on_init += initial_change_javascript
+            on_init_commands[applet_identifier] = on_init
+
+            
+    return '<div id="modify_applet_objects">\n<script>\n%s</script>\n</div>\n' % modify_javascript
 
 
 
@@ -2783,9 +2930,9 @@ class AccumulatedJavascriptNode(template.Node):
         # return any geogebra_init_javascript
         geogebra_on_init_commands = geogebra_javascript.get('on_init_commands',{})
 
-        # must render dynamictext before applet objects
-        # so that any additional applet objects get added to applet_data
-        script_string += render_dynamictext(context, applet_data)
+        script_string += return_modify_applet_object_javascript(
+            applet_data=applet_data, capture_javascript=capture_javascript,
+            on_init_commands = geogebra_on_init_commands)
 
         script_string += return_applet_object_javascript(
             applet_data=applet_data, capture_javascript=capture_javascript)
@@ -2793,22 +2940,29 @@ class AccumulatedJavascriptNode(template.Node):
         # collect all capture object javascript for each applet
         the_capture_script =""
         for applet_identifier in capture_javascript:
-
-            listener_function_name = "listener%s" % applet_identifier
-                
-            the_capture_script += 'function %s(obj) {\n%s}\n' % \
-                                  (listener_function_name, 
-                                   capture_javascript[applet_identifier])
+            
+            applet_capture = capture_javascript[applet_identifier]
+            listener_function_name_base = "listener%s" % applet_identifier
             
             on_init_commands=geogebra_on_init_commands.get(applet_identifier,"")
             
-            on_init_commands \
-                += 'document.%s.registerUpdateListener("%s");\n' \
-                % (applet_identifier, listener_function_name)
+            for applet_object_name in applet_capture:
+                listener_function_name = "%s_%s" % \
+                            (listener_function_name_base, applet_object_name)
 
-            # run the listener function upon initialization
-            # so values are set at outset
-            on_init_commands += "%s();\n" % listener_function_name
+                the_capture_script += 'function %s(obj) {\n%s}\n' % \
+                                      (listener_function_name, 
+                                       applet_capture[applet_object_name])
+            
+            
+                on_init_commands \
+                    += 'document.%s.registerObjectUpdateListener("%s","%s");\n'\
+                    % (applet_identifier, applet_object_name,
+                       listener_function_name)
+                
+                # run the listener function upon initialization
+                # so values are set at outset
+                on_init_commands += "%s();\n" % listener_function_name
 
             geogebra_on_init_commands[applet_identifier]=on_init_commands
 
@@ -2816,7 +2970,6 @@ class AccumulatedJavascriptNode(template.Node):
         if the_capture_script:
             script_string += '<div id="geogebra_capture">\n<script>\n%s\n</script>\n</div>\n' % the_capture_script
         
-
         all_init_commands=""
         for applet_identifier in geogebra_on_init_commands:
             on_init_commands = geogebra_on_init_commands[applet_identifier]

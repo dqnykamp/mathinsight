@@ -120,7 +120,8 @@ class TestQuestionView(TestCase):
 
         response = self.client.get("/assess/question/%s" % self.q.id)
         identifier = response.context['question_data']['identifier']
-        need_help_snippet = '<a onclick="showHide(\'hidden_section_1\');">Need help?</a>'
+        need_help_snippet = '<span id="hidden_section_1_show" class="hidden_section_show" style="display: inline;">Need help?</span>'
+
         self.assertNotContains(response, need_help_snippet, html=True)
 
         self.q.hint_text = "help"
