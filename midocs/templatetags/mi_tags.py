@@ -824,15 +824,21 @@ class ProcessMiTagsNode(template.Node):
         if not templatetext:
             return ""
 
+        context.push()
+
+        if '_applet_data_' not in context:
+            context['_applet_data_'] = Applet.return_initial_applet_data()
+        
         try:
             if blank_style:
-                extended_context = context
-                extended_context['blank_style']=1
-                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(extended_context)
+                context['blank_style']=1
+                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(context)
             else:
                 rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(context)
         except Exception as e:
             rendered_text = "Template error (TMPLERR): %s" % e
+
+        context.pop()
 
         return rendered_text
 
@@ -1577,37 +1583,7 @@ class AppletNode(template.Node):
             except:
                 height=default_size
 
-        caption = None
-        if self.boxed:
-            caption = kwargs.get('caption')
 
-            if caption is None:
-                try:
-                    caption = template.Template("{% load mi_tags %}"+applet.default_inline_caption).render(context)
-                except Exception as e:
-                    caption = "Caption template error (TMPLERR): %s" % e
-
-
-        # check to see if the variable process_applet_entries is set
-        # if so, add entry to database
-        if context.get("process_applet_entries"):
-            # get page object, 
-            thepage = context.get('thepage')
-            # if applet wasn in a page,  add page to in_pages of applet
-            if thepage:
-                applet.in_pages.add(thepage)
-
-        # check if blank_style is set
-        # if so, just return title, and caption if "boxed"
-        blank_style = context.get("blank_style")
-        if blank_style:
-            if self.boxed:
-                return " %s %s " % (applet.title, caption)
-            else:
-                return " %s " % applet.title
-
-        # html for applet inclusion
-        # add html for applet embedding based on applet_type
         identifier = context.get('identifier','')
         
         try:
@@ -1622,6 +1598,63 @@ class AppletNode(template.Node):
             applet.code_camel(), applet_counter, 
             underscore_to_camel(applet_suffix),
             underscore_to_camel(identifier))
+
+
+        caption = None
+        description = ""
+        if self.boxed:
+            caption = kwargs.get('caption')
+
+            if caption is None:
+
+                # add applet info to context for any applet_objects in caption
+                context.push()
+                context['_the_applet']=applet
+                context['_the_applet_identifier'] = applet_identifier
+
+                try:
+                    caption = template.Template("{% load mi_tags testing_tags %}"+applet.default_inline_caption).render(context)
+                except Exception as e:
+                    caption = "Caption template error (TMPLERR): %s" % e
+
+                context.pop()
+
+        else:
+            if kwargs.get("include_description", False):
+                # add applet info to context for any applet_objects in 
+                # description
+                context.push()
+                context['_the_applet']=applet
+                context['_the_applet_identifier'] = applet_identifier
+
+                try:
+                    description = template.Template("{% load mi_tags testing_tags %}"+applet.detailed_description).render(context)
+                except Exception as e:
+                    description = "Template error (TMPLERR): %s" % e
+
+                context.pop()
+
+
+        # check to see if the variable process_applet_entries is set
+        # if so, add entry to database
+        if context.get("process_applet_entries"):
+            # get page object, 
+            thepage = context.get('thepage')
+            # if applet was in a page,  add page to in_pages of applet
+            if thepage:
+                applet.in_pages.add(thepage)
+
+        # check if blank_style is set
+        # if so, just return title, and caption if "boxed"
+        blank_style = context.get("blank_style")
+        if blank_style:
+            if self.boxed:
+                return " %s %s " % (applet.title, caption)
+            else:
+                return " %s %s" % (applet.title, description)
+
+        # html for applet inclusion
+        # add html for applet embedding based on applet_type
 
 
         # keep track of identifiers and applet_id_users specified in tag,
@@ -1909,7 +1942,7 @@ class AppletNode(template.Node):
 
         # if not boxed, just return code for applet
         if not self.boxed:
-            return applet_link
+            return applet_link+description
 
         # if boxed, then put in box (from class="appletbox")
         # as well as caption

@@ -209,7 +209,7 @@ def _render_question(question, rng, seed, context):
     try:
         applet_data=context['_applet_data_']
     except KeyError:
-        appet_data = Applet.return_initial_applet_data()
+        applet_data = Applet.return_initial_applet_data()
         context['_applet_data_'] = applet_data
 
     question_data = question.render(question_identifier=identifier,

@@ -21,9 +21,7 @@
 
 <h3>{{ applet.annotated_title }}</h3>
 
-{% applet applet %}
-
-{% process_mi_tags applet.detailed_description %}
+{% applet applet include_description=True %}
 
 {% if applet.video_set.all %}<p>{{ applet.video_links|safe }}</p>{%endif%}
 

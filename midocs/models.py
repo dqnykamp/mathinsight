@@ -351,7 +351,9 @@ class Page(models.Model):
                           'process_citations': 1,
                           'update_database': 1,
                           'blank_style': 1,
-                          'STATIC_URL': ''}
+                          'STATIC_URL': '',
+                          '_applet_data_': Applet.return_initial_applet_data(),
+                      }
 
         # if page is hidden, don't update image/applet/video links
         if self.hidden:
