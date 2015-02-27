@@ -1149,8 +1149,7 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
         raise #return ""
 
 def Geogebra_capture_object_javascript(appletobject, applet_identifier,
-                                       varname, related_objects=[],
-                                       round_decimals=None):
+                                       varname, related_objects=[]):
     
     object_type = appletobject.object_type.object_type
     javascript= ""
@@ -1160,14 +1159,7 @@ def Geogebra_capture_object_javascript(appletobject, applet_identifier,
         ycoord = 'document.%s.getYcoord("%s")' % \
             (applet_identifier, appletobject.name)
         return '%s="Point("+%s+","+%s+")"' % (varname, xcoord,ycoord)
-    elif object_type=='Number':
-        if round_decimals is None:
-            return '%s=document.%s.getValue("%s")' % \
-                (varname, applet_identifier, appletobject.name)
-        else:
-            return '%s=Math.round10(document.%s.getValue("%s"), %s)' % \
-                (varname, applet_identifier, appletobject.name, round_decimals)
-    elif object_type=='Boolean':
+    elif object_type=='Number' or object_type=='Boolean':
         return '%s=document.%s.getValue("%s")' % \
             (varname, applet_identifier, appletobject.name)
     elif object_type=='Text':
@@ -2773,40 +2765,10 @@ def return_applet_object_javascript(applet_data, capture_javascript):
                 error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no applet found]</p>");\n' % object_identifier
                 continue
 
-        related_objects=[]
-        if applet_object.related_objects:
-            related_object_names  \
-                = [item.strip() for item in applet_object.related_objects.split(",")]
-            for name in related_object_names:
-                try:
-                    ro = applet.appletobject_set.get(name=name)
-                    related_objects.append(ro)
-                except:
-                    pass
-
         if applet.applet_type.code == "Geogebra" \
            or applet.applet_type.code == "GeogebraWeb":
-            if render_with_mathjax:
-                javascript = Geogebra_capture_object_javascript(
-                    applet_object, applet_identifier, 
-                    "applet_object_content.%s.new" % object_identifier,
-                    related_objects, round_decimals=round_decimals)
 
-                applet_object_capture_javascript = "%s;\n" % javascript
-
-
-                setup_variables_javascript+='applet_object_content.%s={"new": "", "old": ""};\nmath_elements.%s=null;\nMathJax.Hub.Queue(function() { math_elements.%s= MathJax.Hub.getAllJax("%s")[0]; })\n' % (object_identifier, object_identifier, object_identifier, object_identifier)
-
-            else:
-                javascript = Geogebra_capture_object_javascript(
-                    applet_object, applet_identifier, 
-                    "temp", related_objects, round_decimals=round_decimals
-                )
-                applet_object_capture_javascript \
-                    = '%s\njQuery("#%s").html(temp);\n' \
-                    % (javascript, object_identifier,)
-
-            # add to the capture javascript for the applet
+            # find any capture object javascript for the object
             try:
                 applet_capture = capture_javascript[applet_identifier]
             except KeyError:
@@ -2814,7 +2776,46 @@ def return_applet_object_javascript(applet_data, capture_javascript):
                 capture_javascript[applet_identifier] = applet_capture
 
             object_capture = applet_capture.get(applet_object.name, "")
-            object_capture += applet_object_capture_javascript
+
+            # if object_capture exists, it already has the value
+            # of the object assigned to temp, so we only need to
+            # add the capture object javascript if it is empty
+            if not object_capture:
+                related_objects=[]
+                if applet_object.related_objects:
+                    related_object_names  \
+                        = [item.strip() for item in applet_object.related_objects.split(",")]
+                    for name in related_object_names:
+                        try:
+                            ro = applet.appletobject_set.get(name=name)
+                            related_objects.append(ro)
+                        except:
+                            pass
+
+                object_capture += "var temp;\n"
+                object_capture += Geogebra_capture_object_javascript(
+                    applet_object, applet_identifier, 
+                    "temp", related_objects)
+                object_capture += "\n";
+
+            if render_with_mathjax:
+                if round_decimals is not None and \
+                   applet_object.object_type.object_type == 'Number':
+                    object_capture += "applet_object_content.%s.new = Math.round10(temp, %s);\n" % (object_identifier, round_decimals)
+                else:
+                    object_capture += "applet_object_content.%s.new = temp;\n" %\
+                                      object_identifier
+
+                setup_variables_javascript+='applet_object_content.%s={"new": "", "old": ""};\nmath_elements.%s=null;\nMathJax.Hub.Queue(function() { math_elements.%s= MathJax.Hub.getAllJax("%s")[0]; })\n' % (object_identifier, object_identifier, object_identifier, object_identifier)
+
+            else:
+                if round_decimals is not None and \
+                   applet_object.object_type.object_type == 'Number':
+                    object_capture += 'jQuery("#%s").html(Math.round10(temp,%s));\n' % (object_identifier, round_decimals)
+                else:
+                    object_capture += 'jQuery("#%s").html(temp);\n' %\
+                                       object_identifier
+
             applet_capture[applet_object.name] = object_capture
 
 
@@ -2868,8 +2869,11 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
         if applet.applet_type.code == "Geogebra" \
            or applet.applet_type.code == "GeogebraWeb":
 
-            applet_object_capture_javascript=""
+            capture_command=""
             if bidirectional and applet_object.capture_changes:
+
+                # capture_command1 is command to capture value of 
+                # applet_object and assign it to variable temp
                 related_objects=[]
                 if applet_object.related_objects:
                     related_object_names  \
@@ -2880,24 +2884,42 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
                             related_objects.append(ro)
                         except:
                             pass
-
-                javascript = Geogebra_capture_object_javascript(
+                    
+                capture_command1 = "var temp;\n"
+                capture_command1 += Geogebra_capture_object_javascript(
                     applet_object, applet_identifier, 
-                    "temp", related_objects, round_decimals=round_decimals)
-                applet_object_capture_javascript \
-                    = '%s\njQuery("#id_%s").val(temp);\n' \
-                    % (javascript, answer_field_name,)
+                    "temp", related_objects)
+                capture_command1 += "\n";
 
-                # add to the capture javascript for the applet
+                # capture_command2 is command to assign temp 
+                # to the value of the answer_field
+                if round_decimals is not None and \
+                   applet_object.object_type.object_type == 'Number':
+                    capture_command2 = 'jQuery("#id_%s").val(Math.round10(temp,%s));\n' % (answer_field_name, round_decimals)
+                else:
+                    capture_command2= 'jQuery("#id_%s").val(temp);\n' %\
+                                    answer_field_name
+
+
+                capture_command = capture_command1 + capture_command2
+
+                # find any previous capture object javascript for the object
                 try:
                     applet_capture = capture_javascript[applet_identifier]
                 except KeyError:
                     applet_capture = {}
-                    capture_javascript[applet_identifier] =applet_capture
+                    capture_javascript[applet_identifier] = applet_capture
 
                 object_capture = applet_capture.get(applet_object.name, "")
-                object_capture += applet_object_capture_javascript
+
+                # if object_capture exists, it already has capture_command1
+                # and only needs capture_command2
+                if not object_capture:
+                    object_capture += capture_command1
+                object_capture += capture_command2
+
                 applet_capture[applet_object.name] = object_capture
+
 
 
             object_type = applet_object.object_type.object_type
@@ -2915,10 +2937,11 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
                                  (applet_identifier, applet_object.name)
                 
 
-            if applet_object_capture_javascript:
+            if capture_command:
                 # if bidirectional and an error, capture value from applet
                 change_command = "var status=%s\n" % change_command
-                change_command += "if(status==false) {%s}" % applet_object_capture_javascript
+                change_command += "if(status==false) {%s}" % \
+                                  capture_command
 
             modify_javascript += 'function %s(the_value) {\n%s}\n' % \
                                  (modify_function_name, change_command)
