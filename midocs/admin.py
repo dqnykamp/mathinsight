@@ -67,6 +67,9 @@ class AppletObjectInline(admin.TabularInline):
         if db_field.name == 'function_input_variable':
             field.widget.attrs['size'] = 2
             del field.widget.attrs['class']
+        if db_field.name == 'default_value':
+            field.widget.attrs['size'] = 5
+            del field.widget.attrs['class']
         return field
 
 class AppletChildObjectLinkInline(admin.TabularInline):

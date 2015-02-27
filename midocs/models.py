@@ -1265,6 +1265,7 @@ class AppletObject(models.Model):
     name_for_changes = models.CharField(max_length=100, blank=True, null=True)
     category_for_capture = models.CharField(max_length=100, blank=True, null=True)
     function_input_variable= models.CharField(max_length=1, blank=True, null=True)
+    default_value = models.CharField(max_length=50, blank=True, null=True)
 
     def __unicode__(self):
         return "%s: %s" % (self.object_type, self.name)

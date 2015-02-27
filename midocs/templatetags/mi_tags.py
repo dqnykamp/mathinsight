@@ -1856,6 +1856,11 @@ class AppletNode(template.Node):
                     # target as it would have been in prefilled_answer
                     objectvalue = the_prefilled_answer
 
+            # if objectvalue is none, set to default value, if exists
+            if objectvalue is None:
+                if appletobject.default_value:
+                    objectvalue=appletobject.default_value
+
             if objectvalue is not None:
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
