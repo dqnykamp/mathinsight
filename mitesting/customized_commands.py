@@ -6,7 +6,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix, Expr, Subs
-from mitesting.sympy_customized import bottom_up, customized_sort_key
+from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen
 from sympy.logic.boolalg import BooleanFunction
 
 
@@ -24,7 +24,7 @@ class Abs(C.Abs):
 def roots_tuple(f, *gens, **flags):
     """
     Finds symbolic roots of a univariate polynomial.
-    Returns a Tuple of the sorted roots (using customized_sort_key)
+    Returns a TupleNoParen of the sorted roots (using customized_sort_key)
     ignoring multiplicity
     
     """
@@ -33,17 +33,17 @@ def roots_tuple(f, *gens, **flags):
     rootslist = roots(f, *gens, **flags).keys()
     rootslist.sort(key=customized_sort_key)
 
-    return Tuple(*rootslist)
+    return TupleNoParen(*rootslist)
 
 def real_roots_tuple(f, *gens):
     """
     Finds real roots of a univariate polynomial.
-    Returns a Tuple of the sorted roots, ignoring multiplicity.
+    Returns a TupleNoParen of the sorted roots, ignoring multiplicity.
     """
     from sympy import roots
     rootslist = roots(f, *gens, filter='R').keys()
     rootslist.sort(key=customized_sort_key)
-    return Tuple(*rootslist)
+    return TupleNoParen(*rootslist)
 
 
 def _initial_evalf(w,n):
