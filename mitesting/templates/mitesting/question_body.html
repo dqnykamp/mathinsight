@@ -194,7 +194,7 @@
       ggbOnInit = function(arg) {
 	  console.log(arg);
 	  if(geogebra_on_init_commands) {
-	      eval(geogebra_on_init_commands);
+	      eval(geogebra_on_init_commands[arg]);
 	  }
       }
       

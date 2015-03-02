@@ -429,7 +429,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         question_data= render_question(
             question=question,
             rng=rng, seed=seed, user=request.user,
-            question_identifier=question_identifier, 
+            question_identifier="%s_sol" % question_identifier, 
             applet_data = applet_data,
             solution=True,
             show_help = False)
