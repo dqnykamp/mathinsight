@@ -144,7 +144,8 @@ def pageview(request, page_code):
     
     # render page text with extra template tags
     context=RequestContext(request)
-    context['_applet_data_'] = Applet.return_initial_applet_data()
+    from midocs.functions import return_new_auxiliary_data
+    context['_auxiliary_data_'] = return_new_auxiliary_data()
     context['thepage'] = thepage
     context['notation_system']=notation_system,
 
@@ -164,7 +165,7 @@ def pageview(request, page_code):
           'notation_config': notation_config,
           'notation_system_form': notation_system_form,
           'noanalytics': noanalytics,
-          'applet_data': context['_applet_data_'],
+          'auxiliary_data': context['_auxiliary_data_'],
           'rendered_text': rendered_text,
           },
          context_instance=context  # use to get context from rendered text
@@ -350,7 +351,8 @@ def appletview(request, applet_code):
         applet_filename2 = re.sub(settings.APPLET_UPLOAD_TO,"", theapplet.applet_file2.name)  # get rid of upload path
 
 
-    applet_data = Applet.return_initial_applet_data()
+    from midocs.functions import return_new_auxiliary_data
+    auxiliary_data = return_new_auxiliary_data()
 
     return render_to_response("midocs/applet_detail.html", 
                               {'applet': theapplet, 'in_pages': in_pages,
@@ -359,8 +361,7 @@ def appletview(request, applet_code):
                                'notation_config': notation_config,
                                'notation_system_form': notation_system_form,
                                'noanalytics': noanalytics,
-                               '_applet_data_': applet_data,
-                               'applet_data': applet_data,
+                               '_auxiliary_data_': auxiliary_data,
                                },
                               context_instance=RequestContext(request))
 

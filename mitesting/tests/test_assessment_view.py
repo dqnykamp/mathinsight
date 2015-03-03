@@ -421,6 +421,21 @@ class TestAssessmentView(TestCase):
         response = self.client.get("/assess/the_test/solution")
         self.assertFalse(response.context['show_solution_link'])
 
+    def test_need_help(self):
+        self.q1.hint_text = "Do this."
+        self.q1.save()
+        self.q2.hint_text = "Do that."
+        self.q2.save()
+        self.q3.hint_text = "Do the other."
+        self.q3.save()
+        
+        response = self.client.get("/assess/the_test")
+
+        need_help_snippet = '<span id="hidden_section_%s_show" class="hidden_section_show" style="display: inline;">Need help?</span>'
+        self.assertContains(response, need_help_snippet % 1, html=True)
+        self.assertContains(response, need_help_snippet % 2, html=True)
+        self.assertContains(response, need_help_snippet % 3, html=True)
+        
 
     def test_assessment_date(self):
         import datetime

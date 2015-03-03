@@ -186,13 +186,16 @@ def invisible_one(text):
 invisible_one.is_safe = True
 
 
-@register.inclusion_tag('mitesting/question_body.html')
-def question_body(question_data):
-    return {'question_data': question_data}
+@register.inclusion_tag('mitesting/question_body.html', takes_context=True)
+def question_body(context, question_data):
+    return {'question_data': question_data, 
+            '_auxiliary_data_': context['_auxiliary_data_']}
 
-@register.inclusion_tag('mitesting/question_solution_body.html')
-def question_solution_body(question_data):
-    return {'question_data': question_data}
+@register.inclusion_tag('mitesting/question_solution_body.html', 
+                        takes_context=True)
+def question_solution_body(context, question_data):
+    return {'question_data': question_data, 
+            '_auxiliary_data_': context['_auxiliary_data_']}
 
     
 
@@ -207,13 +210,14 @@ def _render_question(question, rng, seed, context):
     identifier = "qtag_%s" % questions_rendered
     
     try:
-        applet_data=context['_applet_data_']
+        auxiliary_data=context['_auxiliary_data_']
     except KeyError:
-        applet_data = Applet.return_initial_applet_data()
-        context['_applet_data_'] = applet_data
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
+        context['_auxiliary_data_'] = auxiliary_data
 
     question_data = question.render(question_identifier=identifier,
-                                    seed=seed, applet_data=applet_data,
+                                    seed=seed, auxiliary_data=auxiliary_data,
                                     rng=rng)
     
     html_string = template.loader.render_to_string("mitesting/question_body.html",
@@ -388,7 +392,7 @@ def process_assign_to_applet_object(applet_object_name, answer_field_name,
         return ""
         
     try:
-        applet_data=context['_applet_data_']
+        applet_data=context['_auxiliary_data_']['applet']
     except KeyError:
         return ""
 

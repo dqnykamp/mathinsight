@@ -6,7 +6,7 @@ from __future__ import division
 from django.test import SimpleTestCase
 from mitesting.customized_commands import *
 from sympy import diff, Tuple, sympify
-from mitesting.sympy_customized import Symbol
+from mitesting.sympy_customized import Symbol, TupleNoParen
 import random
 
 
@@ -53,10 +53,10 @@ class RootsTests(SimpleTestCase):
             theroots.sort()
             
             rt = roots_tuple(poly)
-            self.assertEqual(rt,Tuple(*theroots))
+            self.assertEqual(rt,TupleNoParen(*theroots))
             
             rrt = real_roots_tuple(poly)
-            self.assertEqual(rrt,Tuple(*theroots))
+            self.assertEqual(rrt,TupleNoParen(*theroots))
 
     def test_roots_polys_with_complex_roots(self):
         from sympy import I
@@ -88,10 +88,10 @@ class RootsTests(SimpleTestCase):
             theroots = sorted(theroots, key=lambda x: sympify(x).sort_key())
 
             rt = roots_tuple(poly)
-            self.assertEqual(rt,Tuple(*theroots))
+            self.assertEqual(rt,TupleNoParen(*theroots))
             
             rrt = real_roots_tuple(poly)
-            self.assertEqual(rrt,Tuple(*therealroots))
+            self.assertEqual(rrt,TupleNoParen(*therealroots))
 
 
 

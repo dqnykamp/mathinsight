@@ -114,3 +114,6 @@ def return_extended_link(obj, **kwargs):
     return mark_safe(html_string)
 
 
+def return_new_auxiliary_data():
+    from midocs.models import Applet
+    return {'applet': Applet.return_initial_applet_data() }

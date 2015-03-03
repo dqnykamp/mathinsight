@@ -631,7 +631,7 @@ def render_question(question, rng, seed=None, solution=False,
                     readonly=False, auto_submit=False, 
                     record_answers=True,
                     allow_solution_buttons=False,
-                    applet_data=None,
+                    auxiliary_data=None,
                     show_post_user_errors=False,
                 ):
 
@@ -673,7 +673,9 @@ def render_question(question, rng, seed=None, solution=False,
     - record_answers: if true, record answer upon submit
     - allow_solution_buttons: if true, allow a solution button to be displayed
       on computer graded questions
-    - applet_data: dictionary of information about applets embedded in text
+    - auxiliary_data: dictionary for information that should be accessible 
+      between questions or outside questions.  Used, for example, 
+      for information about applets and hidden sections embedded in text
     - show_post_user_errors: if true, display errors when evaluating
       expressions flagged as being post user response.  Even if showing
       errors, such an error does not cause the rendering success to be False
@@ -764,9 +766,9 @@ def render_question(question, rng, seed=None, solution=False,
         'user': user, 'assessment': assessment
         }
 
-    # Add applet_data to context with key _applet_data_
+    # Add auxiliary_data to context with key _auxiliary_data_
     # to avoid overwriting expressions
-    render_data['expression_context']['_applet_data_'] = applet_data
+    render_data['expression_context']['_auxiliary_data_'] = auxiliary_data
 
     # set up dynamic text
     # context variables used for dynamic text tags
@@ -999,7 +1001,7 @@ def get_question_list(assessment, rng):
 
 
 def render_question_list(assessment, rng, seed=None, user=None, solution=False,
-                         current_attempt=None, applet_data=None,
+                         current_attempt=None, auxiliary_data=None,
                          show_post_user_errors=False):
     """
     Generate list of rendered questions or solutions for assessment.
@@ -1021,7 +1023,9 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
     - solution: True if rendering solution
     - current_attempt: information about score so far on computer scored
       assessments (need to fix and test)
-    - applet_data: dictionary of information about applets embedded in text
+    - auxiliary_data: dictionary for information that should be accessible 
+      between questions or outside questions.  Used, for example, 
+      for information about applets and hidden sections embedded in text
     - show_post_user_errors: if true, show errors in expressions that are
       flagged as post user response
 
@@ -1083,7 +1087,7 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
             assessment_seed=seed, 
             record_answers=True,
             allow_solution_buttons=assessment.allow_solution_buttons,
-            applet_data=applet_data,
+            auxiliary_data=auxiliary_data,
             prefilled_answers=prefilled_answers,
             show_post_user_errors=show_post_user_errors)
         

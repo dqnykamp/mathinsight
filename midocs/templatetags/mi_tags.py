@@ -826,8 +826,9 @@ class ProcessMiTagsNode(template.Node):
 
         context.push()
 
-        if '_applet_data_' not in context:
-            context['_applet_data_'] = Applet.return_initial_applet_data()
+        if '_auxiliary_data_' not in context:
+            from midocs.functions import return_new_auxiliary_data
+            context['_auxiliary_data_'] = return_new_auxiliary_data()
         
         try:
             if blank_style:
@@ -1579,7 +1580,7 @@ class AppletNode(template.Node):
         identifier = context.get('identifier','')
         
         try:
-            applet_data=context['_applet_data_']
+            applet_data=context['_auxiliary_data_']['applet']
         except KeyError:
             return "[Broken applet: no applet data]"
         
@@ -2041,7 +2042,7 @@ class AppletObjectNode(template.Node):
         identifier = context.get('identifier','')
         
         try:
-            applet_data=context['_applet_data_']
+            applet_data=context['_auxiliary_data_']['applet']
         except KeyError:
             return "[Broken applet object: no applet data]"
         
@@ -2649,10 +2650,17 @@ class HiddenNode(template.Node):
         css = {'body': body_css, 'title': title_css, 'container': container_css}
 
         try:
-            hidden_info = context["_hidden_section_info"]
+            auxiliary_data = context['_auxiliary_data_']
+        except KeyError:
+            from midocs.functions import return_new_auxiliary_data
+            auxiliary_data = return_new_auxiliary_data()
+            context.dicts[0]['_auxiliary_data_'] = auxiliary_data
+            
+        try:
+            hidden_info = auxiliary_data['hidden_section']
         except KeyError:
             hidden_info={}
-            context.dicts[0]['_hidden_section_info']=hidden_info
+            auxiliary_data['hidden_section'] = hidden_info
 
         counter = hidden_info.get('counter',0)+1
         hidden_info['counter']=counter
@@ -2969,7 +2977,7 @@ class AccumulatedJavascriptNode(template.Node):
         script_string = ""
         static_url = context.get("STATIC_URL","")
         try:
-            applet_data = context['applet_data']
+            applet_data = context['_auxiliary_data_']['applet']
         except KeyError:
             return ""
         

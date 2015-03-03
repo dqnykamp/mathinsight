@@ -84,7 +84,8 @@ class QuestionView(DetailView):
         # Identifier doesn't matter.  Use qv to indiciate from question view.
         identifier = "qv"
 
-        applet_data = Applet.return_initial_applet_data()
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
 
         import random
         rng = random.Random()
@@ -95,10 +96,10 @@ class QuestionView(DetailView):
             allow_solution_buttons=True,
             solution=self.solution,
             show_help = show_help,
-            applet_data=applet_data,
+            auxiliary_data=auxiliary_data,
             show_post_user_errors=True)
 
-        context['applet_data'] = applet_data
+        context['_auxiliary_data_'] = auxiliary_data
 
         context['show_lists']=True
 
@@ -419,8 +420,9 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # set up context from question expressions
         seed = computer_grade_data['seed']
 
-        applet_data = Applet.return_initial_applet_data()
-        applet_data['suffix'] = "%s_sol" % question_identifier
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
+        auxiliary_data['applet']['suffix'] = "%s_sol" % question_identifier
 
         import random
         rng=random.Random()
@@ -430,7 +432,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
             question=question,
             rng=rng, seed=seed, user=request.user,
             question_identifier="%s_sol" % question_identifier, 
-            applet_data = applet_data,
+            auxiliary_data = auxiliary_data,
             solution=True,
             show_help = False)
 
@@ -443,7 +445,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         rendered_solution = mark_safe("<h4>Solution</h4>" + rendered_solution)
         results = {'rendered_solution': rendered_solution,
                    'identifier': question_identifier,
-                   'applet_javascript': applet_data['javascript'],
+                   'applet_javascript': auxiliary_data['applet']['javascript'],
                    }
 
 
@@ -576,8 +578,9 @@ class AssessmentView(DetailView):
             context['assessment_date']  = \
                 datetime.date.today().strftime("%B %d, %Y")
 
-        applet_data = Applet.return_initial_applet_data()
-        context['applet_data'] = applet_data
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
+        context['_auxiliary_data_'] = auxiliary_data
 
         import random
         rng=random.Random()
@@ -594,7 +597,7 @@ class AssessmentView(DetailView):
             self.object, rng=rng, seed=self.seed, user=self.request.user, 
             solution=self.solution,
             current_attempt=self.current_attempt,
-            applet_data = applet_data,
+            auxiliary_data = auxiliary_data,
             show_post_user_errors=show_post_user_errors)
 
         # if question_only is set, then view only that question
