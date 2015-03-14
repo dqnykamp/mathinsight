@@ -410,3 +410,59 @@ class DiffSubsTests(SimpleTestCase):
 
         from mitesting.sympy_customized import AddUnsortInitial
         self.assertEqual(DiffSubs(2*x,x,1,2).as_difference(), AddUnsortInitial(4,-2))
+
+class ScalarMultipleTests(SimpleTestCase):
+    def test_scalar_multiples(self):
+        from sympy import oo
+        x=Symbol('x')
+        y=Symbol('y')
+        u = (1,2)
+        v = (3,6)
+        self.assertEqual(scalar_multiple_deviation(u,v),0)
+
+        u = Tuple(3*x,2*y)
+        v = Tuple(3*x**2, 2*x*y)
+        self.assertEqual(scalar_multiple_deviation(u,v),0)
+        
+        v = Tuple(3*x**2, 2*y)
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+
+        u = TupleNoParen(1.52305, 8353.20343)
+        v = TupleNoParen(u[0]*2353.3421, u[1]*2353.3421)
+        sm = scalar_multiple_deviation(u,v) 
+        self.assertTrue(sm >=0 and sm < 1E-15)
+
+        u = Tuple(1.52305*x+3.253321*y, 8353.20343*sin(x*y))
+        v = Tuple(u[0]*123.23413*x, u[1]*123.23413*x)
+        sm = scalar_multiple_deviation(u,v) 
+        self.assertTrue(sm >=0 and sm < 1E-15)
+
+        u = Tuple(1,2,3)
+        v = Tuple(4,5,6)
+        sm1 = scalar_multiple_deviation(u,v) 
+        sm2 = scalar_multiple_deviation(v,u) 
+        self.assertEqual(sm1,sm2)
+        self.assertTrue(sm1 > 1)
+        
+        u = Tuple(1,2,3)
+        v = TupleNoParen(1,2,3)
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+        v = Tuple(1,2)
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+        v = 1
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+        v = Tuple(0,0,0)
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+        v = Tuple(1,2,0)
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+
+        from sympy import Matrix
+        u = Matrix(((1,2,3), (4,5,6)))
+        v = 3*x*u
+        self.assertEqual(scalar_multiple_deviation(u,v),0)
+
+        v = u.transpose()
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)
+        
+        v = Matrix(((1,2,3,4),(5,6,7,8)))
+        self.assertEqual(scalar_multiple_deviation(u,v),oo)

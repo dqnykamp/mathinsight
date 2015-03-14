@@ -294,6 +294,131 @@ def count(thelist, item):
     """
     return thelist.count(item)
 
+def scalar_multiple_deviation(u,v):
+    """
+    Return deviation from u and v being scalar multiples of each other,
+    where u and v are either matrices or tuples representing vectors
+
+    For each component that is nonzero for both u and v,
+    calculate ratio between their components.
+    Divide each such ratio by the first ratio
+    and add the absolute difference from 1, symmetrized between u and v.
+    Return this sum as the deviation.
+
+    Returns 0 if they are perfectly scalar multiples.
+    A non-zero number represents an estimate of the fraction they are away
+    from being scalar multiples of each other.
+    A very small deviation (on order of machine precision) 
+    is an indication that u and v may be scalar multiples except for
+    differences due to round off error.
+
+    If u and v are both scalars, then consider multiples if both zero
+    or if both non-zero and one can take their ratio.
+
+    Returns infinity (oo) if for some component only one of u or v is zero.
+    Hence, the zero vector is excluded as being a scalar multiple unless
+    both u and v are the zero vector.
+
+    Returns infinity (oo) if u and v are not both tuples/matrices
+    of the same size and type.
+
+    Have not implemented for sympy's Vector class.
+    """
+    
+    from sympy import oo
+
+    u = sympify(u)
+    v = sympify(v)
+
+    if u == v:
+        return 0
+
+    # if u and v are not tuples or Matrices, then
+    # - to be consistent, u and v are not multiples if either are zero 
+    #   (the case of both zero is accounted for above)
+    # - otherwise, attempt to take ratio, 
+    #   and consider u and v to be multiples if this ratio can be taken
+    if not (isinstance(u,Tuple) or isinstance(u,tuple) or isinstance(u,Matrix))\
+       and not (isinstance(v,Tuple) or isinstance(v,tuple) \
+                or isinstance(v,Matrix)):
+        if u==0 or v==0:
+            return oo
+        try:
+            ratio = u/v
+        except AttributeError:
+            return oo
+        else:
+            return 0
+
+    # if not the same type of tuple, then return as non-multiples
+    if u.__class__ != v.__class__:
+        return oo
+    
+    if len(u) != len(v):
+        return oo
+
+    # if matrices, also demand the same shape
+    if isinstance(u,Matrix):
+        if u.shape != v.shape:
+            return oo
+
+    n = len(u)
+
+    # find indices where both u and v are non-zero
+    # if find index where only one of u and v zero, then conclude not multiples
+    nonzero_inds=[]
+    for i in range(n):
+        if u[i]==0:
+            if v[i]==0:
+                continue
+            else:
+                return oo
+        else:
+            if v[i]==0:
+                return oo
+            else:
+                nonzero_inds.append(i)
+
+    # shouldn't encounter no nonzero inds, as two zero vectors
+    # should have been caught in first line
+    if len(nonzero_inds)==0:
+        return 0
+
+    ind1=nonzero_inds[0]
+
+    try:
+        base_ratio = u[ind1]/v[ind1]
+    except AttributeError:
+        # if components are objects that can't be divided, 
+        # then u and v aren't scalar multiples
+        return oo
+
+    # if just one non-zero component, and we could divide to form base_ratio,
+    # then consider scalar multiples
+    if len(nonzero_inds)==1:
+        return 0
+    
+    deviation_sum = 0
+    for i in range(1, len(nonzero_inds)):
+        try:
+            ratio_of_ratios = u[nonzero_inds[i]]/v[nonzero_inds[i]]/base_ratio
+        except AttributeError:
+            # if components are objects that can't be divided, 
+            # then u and v aren't scalar multiples
+            return oo
+
+        try:
+            ratio_of_ratios = ratio_of_ratios.ratsimp()
+        except:
+            pass
+
+        # symmetrize deviation_sum with respect to u and v
+        deviation_sum += (Abs(ratio_of_ratios-1)+Abs(1/ratio_of_ratios-1))/2
+        
+    if deviation_sum.is_comparable:
+        return deviation_sum
+    else:
+        return oo
 
 
 class Point(C.Point):
