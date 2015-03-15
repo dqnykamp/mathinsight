@@ -268,6 +268,12 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("x-(y-z)", evaluate=False)
         self.assertEqual(latex(expr), 'x - \\left(y - z\\right)')
 
+        # should be equal to evaluate if looks the same
+        expr1=parse_expr("-5z^2-5", evaluate=False)
+        expr2=parse_expr("-5z^2-5")
+        self.assertEqual(expr1,expr2)
+
+
     def test_factorial(self):
         from sympy import factorial
         expr = parse_expr("x!")

@@ -1052,7 +1052,13 @@ class MulUnsort(Mul):
 
         # For Mul, equal if the sorted/combined args are equal to original_args
         if isinstance(other,Mul):
-            if list(self.original_args) == other.as_ordered_factors():
+
+            # customized version of as_ordered_factors that doesn't separate -1
+            cpart, ncpart = other.args_cnc(split_1=False)
+            cpart.sort(key=lambda expr: expr.sort_key(order=None))
+            other_as_ordered_factors = cpart + ncpart
+
+            if list(self.original_args) == other_as_ordered_factors:
                 return True
             else:
                 return False
