@@ -363,6 +363,24 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("10x99")
         self.assertEqual(expr, 10*Symbol("x99"))
         
+    def test_prevent_auto_j_as_imaginary(self):
+        j=Symbol('j')
+        J=Symbol('J')
+        expr = parse_expr("5j")
+        self.assertEqual(expr, 5*j)
+
+        expr = parse_expr("7J")
+        self.assertEqual(expr, 7*J)
+
+    def test_prevent_auto_l_as_long(self):
+        l=Symbol('l')
+        L=Symbol('L')
+        expr = parse_expr("5l")
+        self.assertEqual(expr, 5*l)
+
+        expr = parse_expr("7L")
+        self.assertEqual(expr, 7*L)
+
 
     def test_split_with_function(self):
         from sympy import Function

@@ -188,6 +188,12 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s = re.sub(r'(\d)l', r'\1*l', s)
     s = re.sub(r'(\d)L', r'\1*L', s)
 
+    # Don't interpret integer followed by j or J as complex unless
+    # j or J has been defined on I in dictionaries
+    # Instead, make it be a multiplication
+    s = re.sub(r'(\d)j', r'\1*j', s)
+    s = re.sub(r'(\d)J', r'\1*J', s)
+
     # replace unicode character for - used in mathjax display with -
     s= re.sub(r'\u2212', r'-', s)
 
