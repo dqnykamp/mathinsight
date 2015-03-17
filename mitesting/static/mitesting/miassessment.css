@@ -40,7 +40,7 @@ th, td, tbody th, thead th, tbody td, thead td {
 /* don't highlight row on mouse over */
 tbody tr:hover th,
 tbody tr:hover td {
-    background:#fff;
+    background: transparaent;
 }
 
 

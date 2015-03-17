@@ -1861,6 +1861,8 @@ table.rowclick tr td a {
     margin-right: 6px;
     display: inline-block;
     vertical-align: middle;
+    width:auto;
+    border-style: none;
 }
 
 .matrix:before {
@@ -1889,8 +1891,16 @@ table.rowclick tr td a {
 }
 
 .matrix td {
+   border-style: none;
    padding: 6px;
 }
+
+/* don't highlight row on mouse over */
+.matrix tbody tr:hover th,
+.matrix tbody tr:hover td {
+    background:transparent;
+}
+
 
 /* the index */
 .indexlink 
