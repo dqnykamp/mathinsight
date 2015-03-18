@@ -3,9 +3,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from mitesting.customized_commands import *
 from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen, Symbol
-from sympy import Tuple, Function
+from sympy import Tuple, Function, sympify
 from sympy.parsing.sympy_tokenize import TokenError
 import six
 import re
@@ -18,52 +17,25 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
     Returns a dictionary where keys are the command names and 
     values are the corresponding function or sympy expression.
     The local dictionary contains
-    1.  all greek symbols from create_greek_dict()
-    2.  the allowed sympy_commands that match localized commands
-    3.  the allowed sympy_commands that match standard sympy commands.
+    1.  the allowed sympy_commands that match localized commands
+    2.  the allowed sympy_commands that match standard sympy commands.
     Command names that don't match either customized or sympy commands
     are ignored.
     """
 
-    # create a dictionary containing all sympy commands
-    all_sympy_commands = {}
-    exec "from sympy import *" in all_sympy_commands
+    from mitesting.user_commands import return_localized_commands
+    localized_commands = return_localized_commands()
 
-    # create a dictionary containing the localized commands
-    localized_commands = \
-        {'roots_tuple': roots_tuple, 
-         'real_roots_tuple': real_roots_tuple, 
-         'round': round_expression,
-         'smallest_factor': smallest_factor,
-         'e': all_sympy_commands['E'], 
-         'max': max_including_tuples,
-         'Max': max_including_tuples,
-         'min': min_including_tuples,
-         'Min': min_including_tuples,
-         'abs': Abs,
-         'evalf': evalf_expression,
-         'index': index,
-         'sum': sum,
-         'if': iif,
-         'len': len,
-         'log': log, 'ln': ln, 'exp': exp, 
-         'count': count,
-         'Point': Point,
-         'DiffSubs': DiffSubs,
-         'IsNumber': IsNumberUneval,
-         'acosh': acosh, 'acos': acos, 'acosh': acosh, 
-         'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
-         'atan': atan, 'atan2': atan2, 'atanh': atanh, 
-         'cos': cos, 'cosh': cosh, 'cot': cot, 'coth': coth, 'csc': csc, 
-         'sec': sec, 'sin': sin, 'sinh': sinh, 'tan': tan, 'tanh': tanh, 
-        }
-    
     # create a set of allowed commands containing all comma-separated
     # strings from allowed_sympy_commands
     allowed_commands = set()
     for commandstring in allowed_sympy_commands:
         allowed_commands=allowed_commands.union(
             [item.strip() for item in commandstring.split(",")])
+
+    # create a dictionary containing all sympy commands
+    all_sympy_commands = {}
+    exec "from sympy import *" in all_sympy_commands
 
     # create the dictionary
     local_dict = {}
@@ -314,6 +286,9 @@ def return_parsed_function(expression, function_inputs, name,
     substitutions from local_dict.
     """
 
+    from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
+        EVALUATE_FULL
+
     input_list = [six.text_type(item.strip())
                   for item in function_inputs.split(",")]
     # if no inputs, make empty list so function with no arguments
@@ -329,10 +304,11 @@ def return_parsed_function(expression, function_inputs, name,
     else:
         local_dict_sub = {}
 
-    # test evaluate with the local_dict_sub to check for errors in format
+    # initially parse with no evaluation so functions are not evaluated
+    # until after inputs are substituted
     try:
         expr2= parse_and_process(expression, local_dict=local_dict_sub,
-                                 evaluate_level=evaluate_level,
+                                 evaluate_level=EVALUATE_NONE,
                                  assume_real_variables=assume_real_variables)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
@@ -353,7 +329,7 @@ def return_parsed_function(expression, function_inputs, name,
         nargs = len(input_list)
 
         expression=expr2
-
+        eval_level = evaluate_level
         default=default_value
 
         # on evaluation replace any occurences of inputs in expression
@@ -371,10 +347,26 @@ def return_parsed_function(expression, function_inputs, name,
                 else:
                     input_symbol=Symbol(cls.the_input_list[i])
                 replace_dict[input_symbol] =  args[i]
-            expr_sub=bottom_up(expr_sub,
-                lambda w: w if w not in replace_dict else replace_dict[w],
-                               atoms=True)
+
+            if cls.eval_level == EVALUATE_NONE:
+                expr_sub=bottom_up(expr_sub,
+                    lambda w: w if w not in replace_dict else replace_dict[w],
+                                   atoms=True)
+            else:
+                # if evaluated, then replace unevaluated commands at same time
+                # as substitute in the input values so that function is 
+                # calculated based on its evaluated input
+                expr_sub = replace_unevaluated_commands(
+                    expr_sub, replace_dict=replace_dict)
+
+            if cls.eval_level == EVALUATE_FULL or cls.eval_level is None:
+                try: 
+                    expr_sub=expr_sub.doit()
+                except (AttributeError, TypeError):
+                    pass
+
             return expr_sub
+
 
     # must assign to __name__ outside class definition 
     # so it overwrites default name
@@ -501,20 +493,27 @@ def replace_boolean_equals_in(s, evaluate=True):
     1. Replace 
        - and with &
        - or with |
-       - in with placeholder symbole
+       - in with placeholder symbol
 
     2. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
+    If evaluate=False, add evaluate=False
 
     3. replace in placeholder with (rhs).contains(lhs),
-       or, if evaluate=False, with (rhs).contains(lhs, evaluate=False)
-
+    If evaluate=False, add evaluate=False
    
     4. replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
 
+    5. if evaluate=False, then replace == with __python_Eq__(lhs,rhs)
+    and !== with __python__Ne__(lhs,rhs)
+    
+
     __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
     Eq, Ne, And, and Or when parsing
+
+    If evaluate=False, then __python_Eq__ and __python_Ne__ must be
+    mapped to python_equal_uneval and python_not_equal_uneval when parsing
     
     To find lhs and rhs, looks for unmatched parentheses 
     or the presence of certain characters no in parentheses
@@ -535,11 +534,14 @@ def replace_boolean_equals_in(s, evaluate=True):
     # replace in with __in_op_pl__
     s=re.sub(r'\bin\b', r'___in_op_pl___', s)
 
-    for i in range(5):
+    for i in range(7):
         if i==0:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
-            new_op='__Eq__(%s,%s)'
+            if evaluate:
+                new_op='__Eq__(%s,%s)'
+            else:
+                new_op='__Eq__(%s,%s, evaluate===False)'
             reverse_arguments=False
             replace_rhs_intervals=False
             # characters captured in pattern to left of operator
@@ -549,7 +551,10 @@ def replace_boolean_equals_in(s, evaluate=True):
         elif i==1:
             pattern = re.compile('[^<>!=](!=)[^=]')
             len_op=2
-            new_op='__Ne__(%s,%s)'
+            if evaluate:
+                new_op='__Ne__(%s,%s)'
+            else:
+                new_op='__Ne__(%s,%s, evaluate===False)'
             reverse_arguments=False
             replace_rhs_intervals=False
             # characters captured in pattern to left of operator
@@ -562,7 +567,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             if evaluate:
                 new_op='(%s).contains(%s)'
             else:
-                new_op='(%s).contains(%s, evaluate=False)'
+                new_op='(%s).contains(%s, evaluate===False)'
             reverse_arguments=True
             replace_rhs_intervals=True
             # characters captured in pattern to left of operator
@@ -589,6 +594,30 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|" 
+        if i==5:
+            if evaluate:
+                continue
+            pattern = re.compile('[^<>!=](==)[^=]')
+            len_op=2
+            new_op='__python_Eq__(%s,%s)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==6:
+            if evaluate:
+                continue
+            pattern = re.compile('[^<>!=](!==)[^=]')
+            len_op=3
+            new_op='__python_Ne__(%s,%s)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
             
         while True:
             mo= pattern.search(s)
@@ -1074,3 +1103,115 @@ def evaluate_expression(the_expr, rng,
                             or the_expr.expression_type==the_expr.SET),
         expression_type=the_expr.expression_type,
         assume_real_variables = the_expr.real_variables)
+
+
+
+def mark_commands_no_evaluate(s, global_dict={}, local_dict={}):
+    """
+    For every sympy Function f in global_dict or local_dict,
+    replace in string s any calls "f(...)" with "f(..., evaluate=False)"
+    as long as does not have an evaluate keyword already specified.
+    Exception: don't mark ParsedFunctions
+    """
+    
+    from sympy.core.function import Application
+
+    combined_dict=global_dict.copy()
+    combined_dict.update(local_dict)
+
+    evaluate_pattern = re.compile('evaluate *=')
+
+    for cmd in combined_dict:
+        try:
+            if not issubclass(combined_dict[cmd], Application) or \
+               issubclass(combined_dict[cmd],ParsedFunction):
+                continue
+        except TypeError:
+            continue
+            
+        pattern = re.compile(r'\b%s *\(' % cmd)
+        start_ind=0
+
+        while True:
+            mo= pattern.search(s[start_ind:])
+            if not mo:
+                break
+
+            start_ind = mo.end(0)+start_ind
+
+            # search for any instances of evaluate=,
+            # that aren't surrounded by parentheses
+            last_ind_outside_parens=start_ind
+            n_parens=0
+            for (j,c) in enumerate(s[start_ind:]):
+                if c=="(":
+                    if n_parens==0:
+                        mo= evaluate_pattern.search(\
+                                        s[last_ind_outside_parens:start_ind+j])
+
+                        # if found evaluate, continue to next instance 
+                        if mo:
+                            break
+
+                    n_parens += 1
+
+                if c==")":
+                    if n_parens==0:
+                        mo= evaluate_pattern.search(\
+                                        s[last_ind_outside_parens:start_ind+j])
+
+                        # if found evaluate, continue to next instance
+                        if mo:
+                            break
+                        
+                        # found closing paren to command with not evaluate
+                        # so add evaluate=False
+                        s=s[:start_ind+j] + ", evaluate=False" + \
+                           s[start_ind+j:]
+                        
+                        # continue to next instance
+                        break
+                    elif n_parens==1:
+                        # dropped out of last parentheses inside command
+                        last_ind_outside_parens=start_ind+j
+
+                    n_parens-=1
+    return s
+
+
+def replace_unevaluated_commands(expr, replace_dict={}):
+    """
+    replace AddUnsorts with Adds
+    replace MulUnsorts with Muls
+    replace python_equal_uneval with ==
+    replace python_not_equal_uneval with !=
+    all other unevaluated commands replaced with evaluated versions
+
+    In addition, make replacement from replace_dict, if given
+
+    """
+
+    def replaceUnsortsPythonEquals(w):
+        from mitesting.sympy_customized import AddUnsort, MulUnsort
+        from mitesting.customized_commands import python_equal_uneval, \
+            python_not_equal_uneval
+        from sympy import Add, Mul
+
+        if w in replace_dict:
+            return replace_dict[w]
+        if isinstance(w, AddUnsort):
+            return Add(*w.args)
+        if isinstance(w, MulUnsort):
+            return Mul(*w.args)
+        if isinstance(w, python_equal_uneval):
+            return w.args[0] == w.args[1]
+        if isinstance(w, python_not_equal_uneval):
+            return w.args[0] != w.args[1]
+  
+        return w
+
+    # other unevaluated commands get replaced with evaluated versions
+    # during bottom_up
+    # use atoms only if there is a replace_dict
+    return bottom_up(expr, replaceUnsortsPythonEquals, atoms=bool(replace_dict))
+

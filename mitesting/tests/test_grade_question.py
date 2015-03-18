@@ -685,7 +685,7 @@ class TestCompareResponse(TestCase):
 
     def test_function(self):
         from mitesting.utils import return_parsed_function
-        from mitesting.customized_commands import iif
+        from mitesting.user_commands import iif
 
         local_dict={'if': iif}
         expr_context=Context({'_sympy_local_dict_': local_dict })
@@ -855,17 +855,42 @@ class TestCompareResponse(TestCase):
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
 
+        f=return_parsed_function("x==y", 
+                                 function_inputs="x", name="f",
+                                 local_dict=local_dict)
+
+        local_dict["f"]=f
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="y", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="z", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+
     def test_function_is_number(self):
         from mitesting.utils import return_parsed_function
-        from mitesting.customized_commands import IsNumberUneval
+        from mitesting.user_commands import is_number
         from mitesting.models import Expression
 
-        local_dict={'IsNumber': IsNumberUneval}
+        local_dict={'is_number': is_number}
         expr_context=Context({'_sympy_local_dict_': local_dict })
 
         answer_info={'code': 'a', 'type': FUNCTION}
-        f=return_parsed_function("IsNumber(x-3s)", function_inputs="x", name="f",
-                                 evaluate_level=Expression.EVALUATE_NONE,
+        f=return_parsed_function("is_number(x-3s)", function_inputs="x", name="f",
                                  local_dict=local_dict)
         expr_context["f"]=math_object(1)
         local_dict["f"]=f

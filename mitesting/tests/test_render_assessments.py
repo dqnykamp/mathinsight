@@ -317,7 +317,7 @@ class TestSetupExpressionContext(TestCase):
                 self.q.allowed_sympy_commands.add(scs_other)
 
     def test_initial_sympy_local_dict(self):
-        from mitesting.customized_commands import sin, cos, log, exp
+        from mitesting.user_commands import sin, cos, log, exp
         self.assertEqual(self.q.return_sympy_local_dict(), {})
         self.assertEqual(self.q.return_sympy_local_dict(user_response=True), 
                          {})
@@ -341,7 +341,7 @@ class TestSetupExpressionContext(TestCase):
 
     def test_command_set_inclusion(self):
         x=Symbol('x')
-        from mitesting.customized_commands import sin, cos, log, exp, ln
+        from mitesting.user_commands import sin, cos, log, exp, ln
         self.new_expr(name="sincos", expression="sin(x)*cos(x)", real_variables=False)
         self.new_expr(name="explog1", expression="exp(x)*log(x)", real_variables=False)
         self.new_expr(name="explog2", expression="e^x*log(x)", real_variables=False)

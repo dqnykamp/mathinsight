@@ -250,6 +250,13 @@ def parse_expr(s, global_dict=None, local_dict=None,
     new_global_dict['__And__'] = And
     new_global_dict['__Or__'] = Or
     new_global_dict['__Interval__'] = Interval
+
+    if not evaluate:
+        from mitesting.customized_commands import python_equal_uneval,\
+            python_not_equal_uneval
+        new_global_dict['__python_Eq__'] = python_equal_uneval
+        new_global_dict['__python_Ne__'] = python_not_equal_uneval
+
     
     # change {} to __FiniteSet__()
     s = re.sub(r'{',r' __FiniteSet__(', s)
@@ -261,6 +268,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
     # change === to = (so can assign keywords in functions like Interval)
     s = re.sub('===','=', s)
+
+    if not evaluate:
+        from mitesting.utils import mark_commands_no_evaluate
+        s = mark_commands_no_evaluate(s, local_dict=new_local_dict,
+                                      global_dict=new_global_dict)
 
     # call sympify after parse_expr to convert tuples to Tuples
     expr = sympify(sympy_parse_expr(
@@ -283,22 +295,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
                     expr = TupleNoParen(*expr)
                     break
 
-    # if evaluate, then 
-    # - replace AddUnsorts with Adds
-    # - replace MulUnsorts with Muls
-    # - replace IsNumberUneval is .is_Number
-    from mitesting.customized_commands import IsNumberUneval
-    def replaceUnsortsIsNumber(w):
-        if isinstance(w, AddUnsort):
-            return Add(*w.args)
-        if isinstance(w, MulUnsort):
-            return Mul(*w.args)
-        if isinstance(w, IsNumberUneval):
-            return w.args[0].is_number
-        return w
 
     if evaluate:
-        expr=bottom_up(expr, replaceUnsortsIsNumber)
+        from mitesting.utils import replace_unevaluated_commands
+        expr = replace_unevaluated_commands(expr)
 
     return expr
 

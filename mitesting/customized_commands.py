@@ -5,46 +5,37 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, Function, C, S, Basic, Float, Matrix, Expr, Subs
+from sympy import Tuple, sympify, C, S, Float, Matrix, Abs
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen
 from sympy.logic.boolalg import BooleanFunction
 
+class python_equal_uneval(BooleanFunction):
+    nargs=2
 
-class Abs(C.Abs):
-    """
-    customized version of sympy Abs function that
-    evaluates the derivative assuming that the argument is real
-    """
-    def _eval_derivative(self, x):
-        from sympy.core.function import Derivative
-        from sympy.functions import sign
-        return Derivative(self.args[0], x, **{'evaluate': True}) \
-            * sign(self.args[0])
+    def doit(self, **hints):
+        if hints.get('deep', True):
+            return self.args[0].doit(**hints) == self.args[1].doit(**hints) 
+        else:
+            return self.args[0] == self.args[1]
     
-def roots_tuple(f, *gens, **flags):
-    """
-    Finds symbolic roots of a univariate polynomial.
-    Returns a TupleNoParen of the sorted roots (using customized_sort_key)
-    ignoring multiplicity
+    def _latex(self, prtr):
+        return "%s == %s" % (prtr._print(self.args[0]), 
+                             prtr._print(self.args[1]))
     
-    """
 
-    from sympy import roots
-    rootslist = roots(f, *gens, **flags).keys()
-    rootslist.sort(key=customized_sort_key)
+class python_not_equal_uneval(BooleanFunction):
+    nargs=2
 
-    return TupleNoParen(*rootslist)
-
-def real_roots_tuple(f, *gens):
-    """
-    Finds real roots of a univariate polynomial.
-    Returns a TupleNoParen of the sorted roots, ignoring multiplicity.
-    """
-    from sympy import roots
-    rootslist = roots(f, *gens, filter='R').keys()
-    rootslist.sort(key=customized_sort_key)
-    return TupleNoParen(*rootslist)
-
+    def doit(self, **hints):
+        if hints.get('deep', True):
+            return self.args[0].doit(**hints) != self.args[1].doit(**hints) 
+        else:
+            return self.args[0] != self.args[1]
+    
+    def _latex(self, prtr):
+        return "%s != %s" % (prtr._print(self.args[0]), 
+                             prtr._print(self.args[1]))
+    
 
 def _initial_evalf(w,n):
     """ 
@@ -221,216 +212,6 @@ def normalize_floats(expression):
     return expression
 
 
-def index(expr, value):
-    """
-    Returns first index of value for list or Tuple expr.
-    Return empty string if not list or Tuple or value is not present.
-    """
-    try:
-        return expr.index(value)
-    except:
-        return ""
-
-
-def smallest_factor(expr):
-    """
-    Find smallest factor of absolute value of expr up to 10000.
-    Return empty string on error or if not integer.
-    Assumes expr is a sympy integer, not a Python integer
-    """
-    try:
-        if expr.is_Integer:
-            from sympy import factorint
-            factors = factorint(Abs(expr), limit=10000)
-            factorlist=factors.keys()
-            factorlist.sort()
-            return factorlist[0]
-        else:
-            return ""
-    except:
-        return ""
-
-def max_including_tuples(*args):
-    """
-    If argument is a single Tuple, then find max over Tuple items.
-    Else, find max over arguments.
-    Return empty string on error.
-    """
-    try:
-        if len(args)==1 and isinstance(args[0],Tuple):
-            return C.Max(*args[0])
-        else:
-            return C.Max(*args)
-    except:
-        return ""
-
-
-def min_including_tuples(*args):
-    """
-    If argument is a single Tuple, then find min over Tuple items.
-    Else, find min over arguments.
-    Return empty string on error.
-    """
-    try:
-        if len(args)==1 and isinstance(args[0],Tuple):
-            return C.Min(*args[0])
-        else:
-            return C.Min(*args)
-    except:
-        return ""
-
-def iif(cond, result_if_true, result_if_false):
-    """
-    Inline if statement
-    """
-    from sympy import Piecewise
-    return Piecewise((result_if_true,cond),(result_if_false,True))
-
-
-def count(thelist, item):
-    """
-    Implementation of list count member function as a separate function
-    so that works with parse_expr and implicit multiplication transformation.
-    """
-    return thelist.count(item)
-
-def scalar_multiple_deviation(u,v):
-    """
-    Return deviation from u and v being scalar multiples of each other,
-    where u and v are either matrices or tuples representing vectors
-
-    For each component that is nonzero for both u and v,
-    calculate ratio between their components.
-    Divide each such ratio by the first ratio
-    and add the absolute difference from 1, symmetrized between u and v.
-    Return this sum as the deviation.
-
-    Returns 0 if they are perfectly scalar multiples.
-    A non-zero number represents an estimate of the fraction they are away
-    from being scalar multiples of each other.
-    A very small deviation (on order of machine precision) 
-    is an indication that u and v may be scalar multiples except for
-    differences due to round off error.
-
-    If u and v are both scalars, then consider multiples if both zero
-    or if both non-zero and one can take their ratio.
-
-    Returns infinity (oo) if for some component only one of u or v is zero.
-    Hence, the zero vector is excluded as being a scalar multiple unless
-    both u and v are the zero vector.
-
-    Returns infinity (oo) if u and v are not both tuples/matrices
-    of the same size and type.
-
-    Have not implemented for sympy's Vector class.
-    """
-    
-    from sympy import oo
-
-    u = sympify(u)
-    v = sympify(v)
-
-    if u == v:
-        return 0
-
-    # if u and v are not tuples or Matrices, then
-    # - to be consistent, u and v are not multiples if either are zero 
-    #   (the case of both zero is accounted for above)
-    # - otherwise, attempt to take ratio, 
-    #   and consider u and v to be multiples if this ratio can be taken
-    if not (isinstance(u,Tuple) or isinstance(u,tuple) or isinstance(u,Matrix))\
-       and not (isinstance(v,Tuple) or isinstance(v,tuple) \
-                or isinstance(v,Matrix)):
-        if u==0 or v==0:
-            return oo
-        try:
-            ratio = u/v
-        except AttributeError:
-            return oo
-        else:
-            return 0
-
-    # if not the same type of tuple, then return as non-multiples
-    if u.__class__ != v.__class__:
-        return oo
-    
-    if len(u) != len(v):
-        return oo
-
-    # if matrices, also demand the same shape
-    if isinstance(u,Matrix):
-        if u.shape != v.shape:
-            return oo
-
-    n = len(u)
-
-    # find indices where both u and v are non-zero
-    # if find index where only one of u and v zero, then conclude not multiples
-    nonzero_inds=[]
-    for i in range(n):
-        if u[i]==0:
-            if v[i]==0:
-                continue
-            else:
-                return oo
-        else:
-            if v[i]==0:
-                return oo
-            else:
-                nonzero_inds.append(i)
-
-    # shouldn't encounter no nonzero inds, as two zero vectors
-    # should have been caught in first line
-    if len(nonzero_inds)==0:
-        return 0
-
-    ind1=nonzero_inds[0]
-
-    try:
-        base_ratio = u[ind1]/v[ind1]
-    except AttributeError:
-        # if components are objects that can't be divided, 
-        # then u and v aren't scalar multiples
-        return oo
-
-    # if just one non-zero component, and we could divide to form base_ratio,
-    # then consider scalar multiples
-    if len(nonzero_inds)==1:
-        return 0
-    
-    deviation_sum = 0
-    for i in range(1, len(nonzero_inds)):
-        try:
-            ratio_of_ratios = u[nonzero_inds[i]]/v[nonzero_inds[i]]/base_ratio
-        except AttributeError:
-            # if components are objects that can't be divided, 
-            # then u and v aren't scalar multiples
-            return oo
-
-        try:
-            ratio_of_ratios = ratio_of_ratios.ratsimp()
-        except:
-            pass
-
-        # symmetrize deviation_sum with respect to u and v
-        deviation_sum += (Abs(ratio_of_ratios-1)+Abs(1/ratio_of_ratios-1))/2
-        
-    if deviation_sum.is_comparable:
-        return deviation_sum
-    else:
-        return oo
-
-
-class Point(C.Point):
-    def evalf(self, prec=None, **options):
-        coords = [x.evalf(prec, **options) for x in self.args]
-        return type(self)(*coords, evaluate=False)
-
-    def __new__(cls, *args, **kwargs):
-        kwargs["evaluate"]=False
-        return super(Point, cls).__new__(cls,*args, **kwargs) 
-
-
 class MatrixAsVector(Matrix):
     """
     Matrix that prints like a vector with latex.
@@ -453,172 +234,3 @@ class MatrixFromTuple(object):
     def __new__(cls, *args, **kwargs):
         return MatrixAsVector(list(args))
         
-
-class DiffSubs(Expr):
-    """
-    Difference of substituting two different values of variables
-    into an expression.
-    """
-
-    def __new__(cls, expr, variables, point1, point2, 
-                 **assumptions):
-        obj = Expr.__new__(cls, expr, variables, point1, point2)
-        obj.sub1 = Subs(expr, variables, point1, **assumptions)
-        obj.sub2 = Subs(expr, variables, point2, **assumptions)
-        return obj
-
-    def doit(self):
-        return self.sub2.doit() - self.sub1.doit()
-
-    def as_difference(self):
-        from mitesting.sympy_customized import AddUnsortInitial
-        return AddUnsortInitial(self.sub2.doit(), -self.sub1.doit())
-
-    def evalf(self, prec=None, **options):
-        return self.sub2.doit().evalf(prec, **options)\
-            -self.sub1.doit().evalf(prec, **options)
-
-    def _latex(self, prtr):
-        expr, old, new1 = self.sub1.args
-        latex_expr = prtr._print(expr)
-        latex_old = (prtr._print(e) for e in old)
-        latex_new1 = (prtr._print(e) for e in new1)
-        new2 = self.sub2.args[2]
-        latex_new2 = (prtr._print(e) for e in new2)
-        latex_subs1 = r'\\ '.join(
-            e[0] + '=' + e[1] for e in zip(latex_old, latex_new1))
-        latex_old = (prtr._print(e) for e in old)
-        latex_subs2 = r'\\ '.join(
-            e[0] + '=' + e[1] for e in zip(latex_old, latex_new2))
-        return r'\left. %s \vphantom{\Large I} \right|_{\substack{ %s }}^{\substack{ %s }}' % (latex_expr, latex_subs1, latex_subs2)
-
-
-
-class IsNumberUneval(BooleanFunction):
-    def doit(self, **hints):
-        if hints.get('deep', True):
-            return self.args[0].doit(**hints).is_number
-        else:
-            return  self.args[0].is_number
-
-
-"""
-Turn off automatic evaluation of floats in the following sympy functions.
-Functions will still evaluate to floats when .evalf() is called
-and will otherwise behave normally.
-"""
-
-class log(C.log):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class ln(C.log):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class exp(C.exp):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class acosh(C.acosh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class acos(C.acos):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class acosh(C.acosh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class acot(C.acot):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class acoth(C.acoth):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class asin(C.asin):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class asinh(C.asinh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class atan(C.atan):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class atan2(C.atan2):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class atanh(C.atanh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class cos(C.cos):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class cosh(C.cosh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class cot(C.cot):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class coth(C.coth):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class csc(C.csc):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class sec(C.sec):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class sin(C.sin):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class sinh(C.sinh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class tan(C.tan):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class tanh(C.tanh):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1

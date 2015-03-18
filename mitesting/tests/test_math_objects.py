@@ -712,7 +712,7 @@ class MathObjectTests(SimpleTestCase):
 
 
     def test_normalize_catch_polynomial_error(self):
-        from mitesting.customized_commands import iif
+        from mitesting.user_commands import iif
         x = Symbol('x')
         expr = iif(x>1,1,0)
         self.assertEqual(expr,try_normalize_expr(expr))

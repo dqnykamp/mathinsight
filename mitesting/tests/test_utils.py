@@ -16,7 +16,7 @@ class TestDicts(SimpleTestCase):
         local_dict = return_sympy_local_dict()
         self.assertEqual(local_dict, {})
 
-        from mitesting.customized_commands import Abs
+        from sympy import Abs
         local_dict = return_sympy_local_dict(["Abs"])
         local_dict2 = {}
         local_dict2['Abs']=Abs
@@ -31,7 +31,7 @@ class TestDicts(SimpleTestCase):
         local_dict = return_sympy_local_dict(["Abs", "floor, ceiling",
                                                 "min, max, Min, Max",
                                                 "nothingvalid", "if"])
-        from mitesting.customized_commands import min_including_tuples,\
+        from mitesting.user_commands import min_including_tuples,\
             max_including_tuples, iif
         local_dict2['min']=min_including_tuples
         local_dict2['Min']=min_including_tuples
@@ -363,14 +363,13 @@ class TestParsedFunction(SimpleTestCase):
         
 
     def test_is_number(self):
-        from mitesting.customized_commands import IsNumberUneval
+        from mitesting.user_commands import is_number
         from mitesting.models import Expression
         t=Symbol("t")
-        fun = return_parsed_function("IsNumber(x-2*t)", "x", name="f",
-                                     evaluate_level=Expression.EVALUATE_NONE,
-                                     local_dict = {'IsNumber': IsNumberUneval})
-        self.assertTrue(fun(2*t+5).doit())
-        self.assertFalse(fun(3*t).doit())
+        fun = return_parsed_function("is_number(x-2*t)", "x", name="f",
+                                     local_dict = {'is_number': is_number})
+        self.assertTrue(fun(2*t+5))
+        self.assertFalse(fun(3*t))
 
 
     def test_evaluate_derivative_at_point(self):
@@ -411,6 +410,28 @@ class TestParsedFunction(SimpleTestCase):
                                    assume_real_variables=True)
         self.assertEqual(fun(3),9*y)
         self.assertEqual(fun(z),z**2*y)
+
+
+    def test_equality(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        from sympy import Eq, Ne
+
+        fun = return_parsed_function("x==y", "x", name="f")
+        self.assertTrue(fun(y))
+        self.assertFalse(fun(x))
+        
+        fun = return_parsed_function("x=y", "x", name="f")
+        self.assertTrue(fun(y))
+        self.assertEqual(fun(x), Eq(x,y))
+
+        fun = return_parsed_function("x!==y", "x", name="f")
+        self.assertTrue(fun(x))
+        self.assertFalse(fun(y))
+        
+        fun = return_parsed_function("x!=y", "x", name="f")
+        self.assertFalse(fun(y))
+        self.assertEqual(fun(x), Ne(x,y))
 
 
 class TestReplaceBooleanEqualsIn(SimpleTestCase):

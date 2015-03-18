@@ -383,7 +383,7 @@ class math_object(object):
         # As long as evaluate is not False
         # convert customized ln command to customized log command
         if self._parameters.get("evaluate_level") != EVALUATE_NONE:
-            from .customized_commands import log, ln
+            from .user_commands import log, ln
             expression = bottom_up(expression, 
                 lambda w: w if not w.func==ln else log(*w.args))
             new_expr = bottom_up(new_expr, 

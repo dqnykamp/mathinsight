@@ -174,7 +174,7 @@ class ParseExprTests(SimpleTestCase):
                          4*x**2*y**2+x+y)
 
     def test_if_as_iif(self):
-        from mitesting.customized_commands import iif
+        from mitesting.user_commands import iif
         x = Symbol('x')
         sub_dict = {'if': iif}
         self.assertEqual(parse_expr('if(4>3,x,y)', local_dict=sub_dict),x)
@@ -272,6 +272,43 @@ class ParseExprTests(SimpleTestCase):
         expr1=parse_expr("-5z^2-5", evaluate=False)
         expr2=parse_expr("-5z^2-5")
         self.assertEqual(expr1,expr2)
+
+
+    def test_no_evaluate_functions(self):
+        from mitesting.user_commands import roots_tuple, index
+        from mitesting.sympy_customized import TupleNoParen
+        from sympy import Abs
+
+        x=Symbol('x')
+        
+        expr=parse_expr("roots_tuple((x-3)*(x-1),x)", 
+                        local_dict={'roots_tuple': roots_tuple}, evaluate=False)
+        self.assertEqual(expr, roots_tuple((x-3)*(x-1),x, evaluate=False))
+        self.assertEqual(expr.doit(), TupleNoParen(1,3))
+        
+        expr=parse_expr("index([3,-2,6],-2)", local_dict={'index': index }, 
+                        evaluate=False)
+        self.assertEqual(expr, index([3,-2,6],-2, evaluate=False))
+        self.assertEqual(expr.doit(), 1)
+
+        expr=parse_expr("Abs(-1)/Abs(x*Abs(-5))", local_dict={"Abs": Abs},
+                        evaluate=False)
+        self.assertEqual(expr, Abs(-1,evaluate=False)/Abs(x*Abs(-5, evaluate=False),evaluate=False))
+        self.assertEqual(expr.doit(), 1/Abs(5*x))
+
+    
+    def test_no_evaluate_strange_Eq_behavior(self):
+        # This fails if parse_expr doesn't add evaluate=False to Eq.
+        # For some reason, it compares the Matrix to zero
+
+        from mitesting.user_commands import scalar_multiple_deviation
+        from sympy import Matrix, Eq
+        A=Matrix([1,2])
+        x=Symbol('x')
+        expr = parse_expr('smd(A,x)=0', evaluate=False,
+                          local_dict={'smd': scalar_multiple_deviation,
+                                      'A': A})
+        self.assertEqual(expr, Eq(scalar_multiple_deviation(A,x,evaluate=False),0,evaluate=False))
 
 
     def test_factorial(self):
@@ -434,12 +471,22 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("x==y")
         self.assertEqual(expr, False)
 
+        expr = parse_expr("x==y", evaluate=False)
+        self.assertEqual(latex(expr), "x == y")
+        self.assertEqual(expr.doit(), False)
+        self.assertEqual(expr.subs(y,x).doit(), True)
+
         expr = parse_expr("x != y")
         self.assertEqual(expr, Ne(x,y))
  
         expr = parse_expr("x !== y")
         self.assertEqual(expr, True)
        
+        expr = parse_expr("x!==y", evaluate=False)
+        self.assertEqual(latex(expr), "x != y")
+        self.assertEqual(expr.doit(), True)
+        self.assertEqual(expr.subs(y,x).doit(), False)
+
         expr = parse_expr("x < y")
         self.assertEqual(expr, Lt(x,y))
 
@@ -666,7 +713,7 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("x in {a,b} or x in (1,2]")
         self.assertEqual(expr, Or(FiniteSet(a,b).contains(x),Interval(1,2, left_open=True).contains(x)))
 
-        from mitesting.customized_commands import iif
+        from mitesting.user_commands import iif
         expr=parse_expr("if(x in {a,b}, 1, 0)", local_dict={'x': a, 'if': iif})
         self.assertEqual(expr,1)
         
