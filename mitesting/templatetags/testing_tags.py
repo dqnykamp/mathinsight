@@ -362,10 +362,12 @@ def process_assign_to_applet_object(applet_object_name, answer_field_name,
                                     kwargs, context):
 
     # must have applet in kwargs, or specified in context
-    try:
-        applet = kwargs.get('applet', context['_the_applet'])
-    except KeyError:
-        return ""
+    applet = kwargs.get('applet')
+    if not applet:
+        try:
+            applet=context['_the_applet']
+        except KeyError:
+            return ""
 
     # if applet is not an applet instance
     # try to load applet with that code
@@ -381,13 +383,20 @@ def process_assign_to_applet_object(applet_object_name, answer_field_name,
     # get applet_id_user optionally from kwargs or context
     applet_id_user = kwargs.get('applet_id', 
                                 context.get('_the_applet_id_user'))
+    # if applet_id_user not assigned, try to set it to question identifier
+    # from answer_data
+    if not applet_id_user:
+        try:
+            applet_id_user = context['_answer_data_']['question_identifier']
+        except KeyError:
+            pass
 
     # get applet_identifier optionally from context
     applet_identifier = context.get('_the_applet_identifier')
 
     try:
         applet_object=applet.appletobject_set.get \
-                       (capture_changes=True, name=applet_object_name)
+                       (change_from_javascript=True, name=applet_object_name)
     except ObjectDoesNotExist:
         return ""
         
@@ -527,9 +536,9 @@ class AnswerNode(template.Node):
         applet_object_name = kwargs.get('assign_to_applet_object')
         onchange_string=""
         if applet_object_name:
-                onchange_string = process_assign_to_applet_object(
-                    applet_object_name, answer_field_name=answer_field_name,
-                    kwargs=kwargs, context=context)
+            onchange_string = process_assign_to_applet_object(
+                applet_object_name, answer_field_name=answer_field_name,
+                kwargs=kwargs, context=context)
 
         given_answer=None
         try:

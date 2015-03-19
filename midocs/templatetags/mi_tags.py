@@ -1576,8 +1576,7 @@ class AppletNode(template.Node):
             except:
                 height=default_size
 
-
-        identifier = context.get('identifier','')
+        answer_data = context.get('_answer_data_')
         
         try:
             applet_data=context['_auxiliary_data_']['applet']
@@ -1587,10 +1586,9 @@ class AppletNode(template.Node):
         applet_counter = applet_data['counter']+1
         applet_data['counter']=applet_counter
         applet_suffix = applet_data.get('suffix','')
-        applet_identifier = "Applet%s0%s%s0%s" % (
+        applet_identifier = "Applet%s0%s%s" % (
             applet.code_camel(), applet_counter, 
-            underscore_to_camel(applet_suffix),
-            underscore_to_camel(identifier))
+            underscore_to_camel(applet_suffix))
 
 
         caption = None
@@ -1658,13 +1656,22 @@ class AppletNode(template.Node):
         except KeyError:
             applet_id_dict={}
             applet_data['applet_ids']=applet_id_dict
-        # applet_id_dict is keyed on optional applet_id_user (kwarg: applet_id)
-        # so key will be None if applet_id_user is not specified.
-        # If multiple instances of same applet_id_user are found (including None)
-        # then don't overwrite so that first instance of applet is used
+
+        # applet_id_dict is keyed on optional applet_id_user
         this_applet_info=applet_id_dict.get(applet.code, {})
-        # None is treated as valid applet_id_user, in case of no applet_id 
+
+        # applet_id_user is from kwargs applet_id, 
+        # or answer_data['question_identifier'], if exists.
+        # If none found, None is treated as valid applet_id_user.
         applet_id_user = kwargs.get('applet_id') 
+        if applet_id_user is None and answer_data:
+            try:
+                applet_id_user = answer_data['question_identifier']
+            except KeyError:
+                pass
+
+        # If previous instance of same applet_id_user found (including None)
+        # then don't overwrite so that first instance of applet is used
         if applet_id_user not in this_applet_info:
             this_applet_info[applet_id_user] = applet_identifier
             applet_id_dict[applet.code]=this_applet_info
@@ -1713,7 +1720,6 @@ class AppletNode(template.Node):
             applet_link = top_text + applet_link + bottom_text
 
 
-        answer_data = context.get('_answer_data_')
         prefilled_answers=None
         if answer_data:
             prefilled_answers = answer_data.get('prefilled_answers')
@@ -2029,6 +2035,14 @@ class AppletObjectNode(template.Node):
         # get applet_id_user optionally from kwargs or context
         applet_id_user = kwargs.get('applet_id', 
                                     context.get('_the_applet_id_user'))
+        # if applet_id_user not assigned, try to set it to question identifier
+        # from answer_data
+        if not applet_id_user:
+            try:
+                applet_id_user = context['_answer_data_']['question_identifier']
+            except KeyError:
+                pass
+
 
         # get applet_identifier optionally from context
         applet_identifier = context.get('_the_applet_identifier')
@@ -2039,8 +2053,6 @@ class AppletObjectNode(template.Node):
         except ObjectDoesNotExist:
             return "[Broken applet object: no object found]"
 
-        identifier = context.get('identifier','')
-        
         try:
             applet_data=context['_auxiliary_data_']['applet']
         except KeyError:
@@ -2049,8 +2061,7 @@ class AppletObjectNode(template.Node):
         applet_object_counter = applet_data.get('applet_object_counter',0)+1
         applet_data['applet_object_counter']=applet_object_counter
         
-        object_identifier = "appletobject_%s_%s" % \
-                             (applet_object_counter, identifier)
+        object_identifier = "appletobject_%s" % applet_object_counter
 
         try:
             object_list=applet_data['applet_objects']
@@ -2149,6 +2160,13 @@ class AppletTextNode(template.Node):
         # get applet_id_user optionally from kwargs or context
         applet_id_user = kwargs.get('applet_id', 
                                     context.get('_the_applet_id_user'))
+        # if applet_id_user not assigned, try to set it to question identifier
+        # from answer_data
+        if not applet_id_user:
+            try:
+                applet_id_user = context['_answer_data_']['question_identifier']
+            except KeyError:
+                pass
 
         # get applet_identifier optionally from context
         applet_identifier = context.get('_the_applet_identifier')
@@ -2940,6 +2958,9 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
                     varname="x"
                 change_command = 'document.%s.evalCommand(\'%s(%s) = \' + the_value );'%\
                                  (applet_identifier, applet_object.name, varname)
+            elif object_type == "Text":
+                change_command = 'document.%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
+                                 (applet_identifier, applet_object.name)
             else:
                 change_command = 'document.%s.evalCommand(\'%s: \' + the_value );'%\
                                  (applet_identifier, applet_object.name)
