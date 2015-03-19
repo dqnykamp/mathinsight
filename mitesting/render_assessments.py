@@ -394,12 +394,16 @@ def process_expressions_from_answers(question):
     answer_data['valid_answer_codes'] = valid_answer_codes
     answer_data['question']=question
 
+    from midocs.functions import return_new_auxiliary_data
+    auxiliary_data =  return_new_auxiliary_data()
+
     update_context = Context({'question': question, 
                               '_process_dynamictext': True,
                               '_dynamictext_object': question,
                               '_process_expressions_from_answers': True,
                               '_answer_data_': answer_data,
                               '_sympy_local_dict_': {},
+                              '_auxiliary_data_': auxiliary_data,
                           })
 
 

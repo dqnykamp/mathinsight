@@ -1580,7 +1580,7 @@ class AppletNode(template.Node):
         
         try:
             applet_data=context['_auxiliary_data_']['applet']
-        except KeyError:
+        except (KeyError, TypeError):
             return "[Broken applet: no applet data]"
         
         applet_counter = applet_data['counter']+1
@@ -2055,7 +2055,7 @@ class AppletObjectNode(template.Node):
 
         try:
             applet_data=context['_auxiliary_data_']['applet']
-        except KeyError:
+        except (KeyError, TypeError):
             return "[Broken applet object: no applet data]"
         
         applet_object_counter = applet_data.get('applet_object_counter',0)+1

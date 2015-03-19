@@ -1596,6 +1596,62 @@ class TestRenderQuestion(TestCase):
         self.assertTrue('m=??? + 1,' in question_data["rendered_text"])
 
 
+    def test_assign_to_expression_with_captured_applet_object(self):
+        self.q.expression_set.create(name="one", expression="1")
+        self.q.expression_set.create(name="n", expression="y")
+        self.q.expression_set.create(name="m", expression="apple+1",
+                                     post_user_response=True)
+        
+        from midocs.models import Applet, AppletType, AppletObjectType
+        at = AppletType.objects.create(code="Geogebra", name="Geogebra",
+                                       description="a", help_text="b",
+                                       error_string="c")
+        aot = AppletObjectType.objects.create(object_type="Boolean")
+
+        applet_code="the_applet"
+        applet=Applet.objects.create(title="applet", code=applet_code,
+                                     applet_type=at, highlight=False,
+                                     hidden=False)
+        
+        applet.appletobject_set.create(object_type=aot, name="d",
+                                       capture_changes=True)
+        
+
+        identifier="abc"
+        answer_code='z'
+        response = "x+1"
+        prefilled_answers = []
+        prefilled_answers.append({ 
+            'code': 'one',
+            'answer': "" })
+        prefilled_answers.append({ 
+            'code': answer_code,
+            'answer': response })
+
+        self.q.questionansweroption_set.create(answer_code=answer_code, 
+                                               answer="n")
+        self.q.questionansweroption_set.create(answer_code="one", 
+                                               answer="one")
+
+        self.q.question_text = "{% applet '" + applet_code + "' answer_d=one %} n={{n}}, {% answer '" + answer_code + "' assign_to_expression='apple' %}, apple={{apple}}, m={{m}},"
+        self.q.save()
+
+        process_expressions_from_answers(self.q)
+
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data = return_new_auxiliary_data()
+
+        question_data=render_question(self.q, rng=self.rng, 
+                                      question_identifier=identifier,
+                                      prefilled_answers=prefilled_answers,
+                                      auxiliary_data=auxiliary_data)
+
+        self.assertTrue(question_data["success"])
+        self.assertTrue('n=y,' in question_data["rendered_text"])
+        self.assertTrue('apple=x + 1,' in question_data["rendered_text"])
+        self.assertTrue('m=x + 2,' in question_data["rendered_text"])
+        
+
 
     def test_assign_to_expression_multiple_choice(self):
 
