@@ -14,7 +14,7 @@ def return_localized_commands():
     # create a dictionary containing the localized commands
 
     from mitesting.customized_commands import round_expression, evalf_expression
-    from sympy import E
+    from sympy import E, I
     
     localized_commands = \
         {'roots_tuple': roots_tuple, 
@@ -22,6 +22,7 @@ def return_localized_commands():
          'round': round_expression,
          'smallest_factor': smallest_factor,
          'e': E,
+         'i': I,
          'max': max_including_tuples,
          'Max': max_including_tuples,
          'min': min_including_tuples,

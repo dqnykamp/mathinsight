@@ -315,6 +315,13 @@ class TestSetupExpressionContext(TestCase):
                 self.q.allowed_user_sympy_commands.add(scs_other)
             else:
                 self.q.allowed_sympy_commands.add(scs_other)
+        if 'i' in command_sets:
+            scs_i = SympyCommandSet.objects.create(
+                name = 'i', commands='i')
+            if user_response:
+                self.q.allowed_user_sympy_commands.add(scs_i)
+            else:
+                self.q.allowed_sympy_commands.add(scs_i)
 
     def test_initial_sympy_local_dict(self):
         from mitesting.user_commands import sin, cos, log, exp
@@ -342,11 +349,13 @@ class TestSetupExpressionContext(TestCase):
     def test_command_set_inclusion(self):
         x=Symbol('x')
         from mitesting.user_commands import sin, cos, log, exp, ln
+        from sympy import I
         self.new_expr(name="sincos", expression="sin(x)*cos(x)", real_variables=False)
         self.new_expr(name="explog1", expression="exp(x)*log(x)", real_variables=False)
         self.new_expr(name="explog2", expression="e^x*log(x)", real_variables=False)
         self.new_expr(name="expln1", expression="exp(x)*ln(x)", real_variables=False)
         self.new_expr(name="expln2", expression="e^x*ln(x)", real_variables=False)
+        self.new_expr(name="complex", expression="5*i+1-2i*i", real_variables=False)
 
         rng = random.Random()
         rng.seed()
@@ -373,6 +382,10 @@ class TestSetupExpressionContext(TestCase):
                          expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
                          expression_context['_sympy_local_dict_']["expln2"])
+        self.assertEqual(5*Symbol('i')+1-2*Symbol('i')**2,
+                         expression_context["complex"])
+        self.assertEqual(5*Symbol('i')+1-2*Symbol('i')**2,
+                         expression_context['_sympy_local_dict_']["complex"])
 
         self.add_allowed_sympy_commands_sets(['trig'])
         results=setup_expression_context(self.q, rng=rng)
@@ -397,8 +410,13 @@ class TestSetupExpressionContext(TestCase):
                          expression_context["expln2"])
         self.assertEqual(Symbol('e')**x*Symbol('ln')*x,
                          expression_context['_sympy_local_dict_']["expln2"])
+        self.assertEqual(5*Symbol('i')+1-2*Symbol('i')**2,
+                         expression_context["complex"])
+        self.assertEqual(5*Symbol('i')+1-2*Symbol('i')**2,
+                         expression_context['_sympy_local_dict_']["complex"])
        
         self.add_allowed_sympy_commands_sets(['explog'])
+        self.add_allowed_sympy_commands_sets(['i'])
         results=setup_expression_context(self.q, rng=rng)
         expression_context = results['expression_context']
         self.assertEqual(sin(x)*cos(x),
@@ -421,6 +439,10 @@ class TestSetupExpressionContext(TestCase):
                          expression_context["expln2"])
         self.assertEqual(exp(x)*ln(x),
                          expression_context['_sympy_local_dict_']["expln2"])
+        self.assertEqual(5*I+3,
+                         expression_context["complex"])
+        self.assertEqual(5*I+3,
+                         expression_context['_sympy_local_dict_']["complex"])
 
         
     
