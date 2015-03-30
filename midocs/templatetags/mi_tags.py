@@ -1174,13 +1174,13 @@ def Geogebra_capture_object_javascript(appletobject, applet_identifier,
             (varname, appletobject.name, inputvarname, 
              applet_identifier, appletobject.name)
     elif object_type=='List':
-        value = '%document.%s.getValueString("%s")' % \
+        value = 'document.%s.getValueString("%s")' % \
             (applet_identifier, appletobject.name)
         # Extract the list within the braces returned by getValueString
         # Replace all curly braces by parentheses so lists will be tuples
         # Add comma at end so single element will still be a tuple (especially
         # important for lists of lists)
-        return "try {\n %s=/{(.*)}/.exec(%s)[1].replace(/(\{)/g, '(').replace(/(\})/g, ')')+','\n}\ncatch(e) {\n %s="";\n}\n" % (varname, value, varname)
+        return "try {\n %s=/{(.*)}/.exec(%s)[1].replace(/(\{)/g, '(').replace(/(\})/g, ')')+','\n}\ncatch(e) {\n %s='';\n}\n" % (varname, value, varname)
     elif object_type=='Line':
         if len(related_objects)==2:
             point1=related_objects[0]
