@@ -335,8 +335,8 @@ class DiffSubs(Expr):
         return self.sub2.doit() - self.sub1.doit()
 
     def as_difference(self):
-        from mitesting.sympy_customized import AddUnsortInitial
-        return AddUnsortInitial(self.sub2.doit(), -self.sub1.doit())
+        from mitesting.sympy_customized import AddUnsort
+        return AddUnsort(self.sub2.doit(), -self.sub1.doit())
 
     def evalf(self, prec=None, **options):
         return self.sub2.doit().evalf(prec, **options)\

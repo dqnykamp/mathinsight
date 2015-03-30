@@ -9,6 +9,8 @@ from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Deriv
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 from django.utils.safestring import mark_safe
+from sympy.core.cache import cacheit
+from sympy.core.sympify import _sympify
 
 from sympy import Interval as sympy_Interval
 from sympy import FiniteSet as sympy_FiniteSet
@@ -42,16 +44,6 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
             rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
             if nonbasic:
                 rv=F(rv)
-        elif isinstance(rv, AddUnsort):
-            args = tuple([bottom_up(a, F, atoms, nonbasic)
-                for a in rv.original_args])
-            rv = AddUnsortInitial(*args)
-            rv = F(rv)
-        elif isinstance(rv, MulUnsort):
-            args = tuple([bottom_up(a, F, atoms, nonbasic)
-                for a in rv.original_args])
-            rv = MulUnsortInitial(*args)
-            rv = F(rv)
         elif rv.args:
             args = tuple([bottom_up(a, F, atoms, nonbasic)
                 for a in rv.args])
@@ -130,9 +122,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # so must add them to global_dict if not present
     if evaluate==False:
         if 'Add' not in new_global_dict:
-            new_global_dict['Add'] = AddUnsortInitial
+            new_global_dict['Add'] = AddUnsort
         if 'Mul' not in new_global_dict:
-            new_global_dict['Mul'] = MulUnsortInitial
+            new_global_dict['Mul'] = MulUnsort
         if 'Pow' not in new_global_dict:
             new_global_dict['Pow'] = Pow
 
@@ -828,44 +820,16 @@ class DerivativeSimplifiedNotation(Derivative):
 
         return super(DerivativeSimplifiedNotation,self).doit(**hints)
 
-class AddUnsortInitial(Expr):
-    """
-    returns an unevaluated AddUnsort with 0 terms included
-    """
-    def __new__(cls, *args, **options):
-        # always set evaluate to false
-        options['evaluate']=False
-        original_args = sympify(args)
-        new_args=[]
-        zero_placeholder=Symbol('_0_')
-        for w in args:
-            if w==0:
-                new_args.append(zero_placeholder)
-            else:
-                new_args.append(w)
-        args= tuple(sympify(new_args))
-
-        obj=AddUnsort(*args, **options)
-        
-        if obj.is_Add:
-            obj.original_args=original_args
-            obj._args=original_args
-        return obj
-
 
 def _get_coeff(a):
     # Get first argument from Mul.
-    # Handle nested Muls and use original_args for MulUnsort.
+    # Handle nested Muls
     while a.is_Mul:
-        if isinstance(a,MulUnsort):
-            a=a.original_args[0]
-        else:
-            a=a.args[0]
+        a=a.args[0]
     return a
 
 def _coeff_isneg(a):
     # modified from sympy to handle nested Muls
-    # and use original_args for MulUnsort
     a=_get_coeff(a)
     return a.is_Number and a.is_negative
 
@@ -901,7 +865,7 @@ def fraction_MulUnsort(expr, exact=False):
         else:
             numer.append(term)
 
-    return MulUnsortInitial(*numer), MulUnsortInitial(*denom)
+    return MulUnsort(*numer), MulUnsort(*denom)
 
 
 class AddUnsort(Add):
@@ -910,25 +874,43 @@ class AddUnsort(Add):
     Even if not created with evaluate=False, will show original args.
     """
 
-    def __init__(self, *args, **options):
-        self.original_args = sympify(args)
-        super(AddUnsort,self).__init__()
+    @cacheit
+    def __new__(cls, *args, **options):
+        # __new__ from AssocOp, with differences
+        # - we don't throw out the identity
+        # - we never evaluate
+
+        from sympy import Order
+        from sympy.core.evaluate import global_evaluate
+
+        args = list(map(_sympify, args))
+
+        if len(args) == 0:
+            return cls.identity
+        if len(args) == 1:
+            return args[0]
+
+        return cls._from_args(args)
 
     def doit(self, **hints):
         hints['deep']=True  # for deep to be True
         return Add(*[arg.doit(**hints) for arg in self.args])
 
+
+    def as_ordered_terms(self, order=None):
+        return list(self.args)
+
     def __eq__(self, other):
-        # For AddUnsort, original args must be the same
+        # For AddUnsort, args must be the same
         if isinstance(other, AddUnsort):
-            if self.original_args == other.original_args:
+            if self.args == other.args:
                 return True
             else:
                 return False
 
-        # For Add, equal if the sorted/combined args are equal to original_args
+        # For Add, equal if the sorted/combined args are equal to args of AddUnsort
         if isinstance(other,Add):
-            if list(self.original_args) == other.as_ordered_terms():
+            if list(self.args) == other.as_ordered_terms():
                 return True
             else:
                 return False
@@ -937,14 +919,13 @@ class AddUnsort(Add):
     def __neg__(self):
         # create a MulUnsort with an initial factor of -1 set to not
         # be displayed
-        obj= MulUnsortInitial(S.NegativeOne, self)
-        obj.display_initial_negative_one=False
+        obj= MulUnsort(S.NegativeOne, self, 
+                       display_initial_negative_one=False)
         return obj
 
     def _latex(self, prtr):
         # identical to _print_Add from latex.py with self=prtr and expr=self
         # except 
-        # - get terms from original_args
         # - use customized _coeff_isneg
         # - put brackets around additional adds,
         #   (for expressions such as x - (y + z) )
@@ -961,7 +942,7 @@ class AddUnsort(Add):
                 return True
             return False
 
-        terms = list(self.original_args)
+        terms = list(self.args)
 
         tex = ""
         for i, term in enumerate(terms):
@@ -979,58 +960,6 @@ class AddUnsort(Add):
 
         return tex
 
-    def _sympystr(self, prtr):
-        # identical to _print_Add from str.py with self=prtr and expr=self
-        # except set terms from original_args
-        from sympy.printing.precedence import precedence
-        terms = list(self.original_args)
-
-        PREC = precedence(self)
-        l = []
-        for term in terms:
-            t = prtr._print(term)
-            if t.startswith('-'):
-                sign = "-"
-                t = t[1:]
-            else:
-                sign = "+"
-            if precedence(term) < PREC:
-                l.extend([sign, "(%s)" % t])
-            else:
-                l.extend([sign, t])
-        sign = l.pop(0)
-        if sign == '+':
-            sign = ""
-        return sign + ' '.join(l)
-
-
-class MulUnsortInitial(Expr):
-    """
-    returns an unevaluated MulUnsort with 1 factors included
-    """
-    def __new__(cls, *args, **options):
-        # always set evaluate to false
-        options['evaluate']=False
-        original_args = sympify(args)
-        if len(original_args)==1:
-            return original_args[0]
-
-        new_args=[]
-        one_placeholder=Symbol('_1_')
-        for w in args:
-            if w==1:
-                new_args.append(one_placeholder)
-            else:
-                new_args.append(w)
-        args= tuple(sympify(new_args))
-
-        obj=MulUnsort(*args, **options)
-        
-        if obj.is_Mul:
-            obj.original_args=original_args
-            obj._args=original_args
-        return obj
-
 
 class MulUnsort(Mul):
     """
@@ -1038,9 +967,27 @@ class MulUnsort(Mul):
     Even if not created with evaluate=False, will show original args.
     """
 
+    @cacheit
+    def __new__(cls, *args, **options):
+        # __new__ from AssocOp, with differences
+        # - we don't throw out the identity
+        # - we never evaluate
+        from sympy import Order
+        from sympy.core.evaluate import global_evaluate
+
+        args = list(map(_sympify, args))
+
+        if len(args) == 0:
+            return cls.identity
+        if len(args) == 1:
+            return args[0]
+        
+        return cls._from_args(args)
+
+
     def __init__(self, *args, **options):
-        self.original_args = sympify(args)
-        self.display_initial_negative_one = True
+        self.display_initial_negative_one=options.pop(
+            'display_initial_negative_one', True)
         super(MulUnsort,self).__init__()
 
     def doit(self, **hints):
@@ -1049,22 +996,35 @@ class MulUnsort(Mul):
 
 
     def __eq__(self, other):
-        # For MulUnsort, original args must be the same
+        # For MulUnsort, args must be the same.
+        # And, if first factor is -1, display_initial_negative_one must match
         if isinstance(other, MulUnsort):
-            if self.original_args == other.original_args:
-                return True
+            if self.args == other.args:
+                if self.args[0]==-1:
+                    if self.display_initial_negative_one == \
+                       other.display_initial_negative_one:
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
             else:
                 return False
 
-        # For Mul, equal if the sorted/combined args are equal to original_args
+        # For Mul, equal if the sorted/combined args are equal to args from MulUnsort
         if isinstance(other,Mul):
 
             # customized version of as_ordered_factors that doesn't separate -1
             cpart, ncpart = other.args_cnc(split_1=False)
             cpart.sort(key=lambda expr: expr.sort_key(order=None))
             other_as_ordered_factors = cpart + ncpart
-
-            if list(self.original_args) == other_as_ordered_factors:
+            
+            self_as_ordered_factors = list(self.args)
+            if not self.display_initial_negative_one \
+               and self.args[0]==-1:
+                self_as_ordered_factors[1]*=-1
+                self_as_ordered_factors=self_as_ordered_factors[1:]
+            if self_as_ordered_factors == other_as_ordered_factors:
                 return True
             else:
                 return False
@@ -1074,14 +1034,13 @@ class MulUnsort(Mul):
         # keep track if an initial factor of -1 was originally added, 
         # and should be displayed
         # or was just added to switch the sign, and should not be displayed
-        if not self.display_initial_negative_one and self.original_args[0]==-1:
-            return MulUnsortInitial(*self.original_args[1:])
+        if not self.display_initial_negative_one and self.args[0]==-1:
+            return MulUnsort(*self.args[1:])
         arg0=_get_coeff(self)
         if arg0.is_Number and arg0.is_negative:
-            return MulUnsortInitial(-self.original_args[0], 
-                                    *self.original_args[1:])
-        obj= MulUnsortInitial(S.NegativeOne, *self.original_args)
-        obj.display_initial_negative_one=False
+            return MulUnsort(-self.args[0], *self.args[1:])
+        obj= MulUnsort(S.NegativeOne, *self.args,
+                       display_initial_negative_one=False)
         return obj
 
     def _latex(self,prtr):
@@ -1089,7 +1048,6 @@ class MulUnsort(Mul):
         based on _print_Mul from latex.py with self=prtr and expr=self
         
         Differences
-        - set args = original_args 
         - create MulUnsort when construction fractions
         - wrap negative number factors in parentheses
         - display initial factor of -1 if didn't come from negation
@@ -1100,9 +1058,9 @@ class MulUnsort(Mul):
 
         # don't display the initial factor of negative one 
         # if just came from negation
-        if not self.display_initial_negative_one and self.original_args[0]==-1:
+        if not self.display_initial_negative_one and self.args[0]==-1:
             tex = "-"
-            self = MulUnsortInitial(*self.original_args[1:])
+            self = MulUnsort(*self.args[1:])
 
             if not self.is_Mul:
                 return tex + prtr._print(self)
@@ -1110,7 +1068,6 @@ class MulUnsort(Mul):
         numer, denom = fraction_MulUnsort(self, exact=True)
         separator = prtr._settings['mul_symbol_latex']
         numbersep = prtr._settings['mul_symbol_latex_numbers']
-
 
         def _needs_mul_brackets(expr, first=False, last=False):
             """
@@ -1147,7 +1104,7 @@ class MulUnsort(Mul):
             else:
                 _tex = last_term_tex = ""
                 
-                args=expr.original_args
+                args=expr.args
 
                 for i, term in enumerate(args):
                     term_tex = prtr._print(term)
@@ -1191,7 +1148,6 @@ class MulUnsort(Mul):
     def _sympystr(self, prtr):
         """
         identical to _print_Mul from str.py with self=prtr and expr=self except
-        - set args = original_args 
         - create MulUnsort when have leading negative
         - display initial factor of -1 if didn't come from negation
         """
@@ -1203,7 +1159,7 @@ class MulUnsort(Mul):
 
         prec = precedence(self)
 
-        coeff = self.original_args[0]
+        coeff = self.args[0]
         
         if not coeff.is_negative:
             sign = ""
@@ -1214,8 +1170,8 @@ class MulUnsort(Mul):
                 new_args=[]
             else:
                 new_args=[-coeff]
-            new_args.extend(self.original_args[1:])
-            self = MulUnsortInitial(*new_args)
+            new_args.extend(self.args[1:])
+            self = MulUnsort(*new_args)
             sign = "-"
             if not self.is_Mul:
                 return "-" + prtr._print(self)
@@ -1223,7 +1179,7 @@ class MulUnsort(Mul):
         a = []  # items in the numerator
         b = []  # items that are in the denominator (if any)
 
-        args = self.original_args
+        args = self.args
 
         # Gather args for numerator/denominator
         for item in args:
@@ -1255,7 +1211,7 @@ class MulUnsort(Mul):
     @classmethod
     def make_args(cls, expr):
         if isinstance(expr, cls):
-            return expr.original_args
+            return expr.args
         else:
             return (expr,)
 

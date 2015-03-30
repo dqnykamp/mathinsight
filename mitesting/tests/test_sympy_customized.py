@@ -273,6 +273,15 @@ class ParseExprTests(SimpleTestCase):
         expr2=parse_expr("-5z^2-5")
         self.assertEqual(expr1,expr2)
 
+        expr_base=parse_expr("-14*x^3+2")
+        expr1=parse_expr("expr_base.as_ordered_terms()[1]+expr_base.as_ordered_terms()[0]", local_dict={'expr_base': expr_base}, evaluate=False)
+        expr2=parse_expr("2-14*x^3", evaluate=False)
+        self.assertEqual(expr1,expr2)
+
+        expr1=parse_expr("1-5x", evaluate=False)
+        expr2=parse_expr("1-1*5*x", evaluate=False)
+        self.assertNotEqual(expr1,expr2)
+
 
     def test_no_evaluate_functions(self):
         from mitesting.user_commands import roots_tuple, index
