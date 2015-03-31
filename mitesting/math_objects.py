@@ -495,7 +495,7 @@ def try_normalize_expr(expr):
             pass
         try:
             w=w.ratsimp().expand()
-        except (AttributeError,PolynomialError):
+        except (AttributeError,PolynomialError,UnicodeEncodeError):
             pass
         return w
 
