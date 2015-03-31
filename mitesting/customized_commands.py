@@ -217,6 +217,8 @@ class MatrixAsVector(Matrix):
     Matrix that prints like a vector with latex.
     Simply outputs all elements, separated by commands and in parentheses.
     Produces reasonable results only for column or row matrices.
+
+    Compares as equal to Tuples or tuples.
     
     """
     def _latex(self, prtr):
@@ -225,6 +227,16 @@ class MatrixAsVector(Matrix):
         return r"\left ( %s\right )" % \
             r", \quad ".join([ prtr._print(i) for i in elts ])
         
+    def __eq__(self, other):
+        # compare as equal to tuple or Tuple
+        if isinstance(other, Tuple) or isinstance(other,tuple):
+            n=len(other)
+            if not self.shape==(1,n) or self.shape==(n,1):
+                return False
+            return Tuple(*self)==other
+
+        return super(MatrixAsVector, self).__eq__(other)
+
 
 class MatrixFromTuple(object):
     """

@@ -508,6 +508,94 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object("3*x/5")
         self.assertRaises(TypeError, int, mobject)
 
+    def test_tuple_no_paren_equality(self):
+        from mitesting.sympy_customized import TupleNoParen
+        x=Symbol('x')
+        expr1=Tuple(x)
+        expr2=TupleNoParen(x)
+        expr3=x
+        mobject=math_object(expr1)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr3)\
+                         ['fraction_equal'],0)
+        mobject=math_object(expr2)
+        self.assertEqual(mobject.compare_with_expression(expr1)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr3)\
+                         ['fraction_equal'],1)
+        mobject=math_object(expr3)
+        self.assertEqual(mobject.compare_with_expression(expr1)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],1)
+
+    def test_tuple_list_mixed_type_equality(self):
+        from mitesting.sympy_customized import Interval, TupleNoParen
+        from mitesting.customized_commands import MatrixFromTuple
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        expr1 = Tuple(a,b)
+        expr2 = (a,b)
+        expr3 = TupleNoParen(a,b)
+        expr4 = [a,b]
+        expr5 = Interval(a,b)
+        expr6 = Interval(a,b, left_open=True, right_open=True)
+        expr7 = MatrixFromTuple((a,b))
+        mobject=math_object(expr1)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],1)
+
+        mobject=math_object(expr2)
+        self.assertEqual(mobject.compare_with_expression(expr3)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr4)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],1)
+        
+        mobject=math_object(expr3)
+        self.assertEqual(mobject.compare_with_expression(expr4)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],0)
+
+        mobject=math_object(expr4)
+        self.assertEqual(mobject.compare_with_expression(expr5)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr6)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],0)
+        
+        mobject=math_object(expr5)
+        self.assertEqual(mobject.compare_with_expression(expr6)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],0)
+        
+        mobject=math_object(expr6)
+        self.assertEqual(mobject.compare_with_expression(expr7)\
+                         ['fraction_equal'],0)
+        
 
     def test_list_equality(self):
         expr = sympify("[1, 2*x, 4*sin(3*z)]")

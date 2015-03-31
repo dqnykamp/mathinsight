@@ -552,6 +552,17 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
     0   if completely incorrect
     p   number p, 0 < p < 1 indicating fraction correct 
         in case is partially correct
+
+    In general, if two objects latex the same, they should compare 
+    as being equal.
+    - vectors compare equal to tuples and Tuples but not TupleNoParens
+    - open intervals compare equal to tuples and Tuples but not TupleNoParens
+    - closed intervals copare equal to lists
+    However, open intervals do not compare equal to vectors.
+
+    These equalities are already implemented at the class level, 
+    here we implement for partial matches and unordered tuples.
+
     """
         
     from sympy.geometry.line import LinearEntity
@@ -592,7 +603,9 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
                          partial_matches=False):
     """
     Check if two Tuples or lists are equal, 
-    converting non-Tuples/lists to length 1 TupleNoParen.
+    converting vectors and open intervals to Tuples,
+    closed intervals to lists,
+    and other non-Tuples/lists to length 1 TupleNoParens.
 
     If tuple_is_unordered is set, then check if elements match
     regardless of order.
@@ -610,15 +623,48 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     0   otherwise
     """
 
-    from .sympy_customized import TupleNoParen
+    from .sympy_customized import TupleNoParen, Interval
+    from .customized_commands import MatrixAsVector
 
-    # if either isn't a tuple, replace with a TupleNoParen of length 1
-    if not isinstance(the_tuple1, Tuple) and not isinstance(the_tuple1,tuple)\
-       and not isinstance(the_tuple1,list):
-        the_tuple1 = TupleNoParen(the_tuple1)
-    if not isinstance(the_tuple2, Tuple) and not isinstance(the_tuple2,tuple)\
-       and not isinstance(the_tuple2,list):
-        the_tuple2 = TupleNoParen(the_tuple2)
+    # convert vectors, open intervals, and tuples to Tuples
+    # closed intervals to lists,
+    # and other non-Tuples/lists to length 1 TupleNoParens.
+    if not isinstance(the_tuple1, Tuple) and not isinstance(the_tuple1,list):
+        if isinstance(the_tuple1, MatrixAsVector) or \
+           isinstance(the_tuple1, tuple):
+            the_tuple1 = Tuple(*the_tuple1)
+        elif isinstance(the_tuple1, Interval):
+            if the_tuple1.left_open:
+                if the_tuple1.right_open:
+                    the_tuple1 = Tuple(the_tuple1.left,the_tuple1.right)
+                else:
+                    return 0
+            else:
+                if the_tuple1.right_open:
+                    return 0
+                else:
+                    the_tuple1 = [the_tuple1.left,the_tuple1.right]
+        else:
+            the_tuple1 = TupleNoParen(the_tuple1)
+
+    if not isinstance(the_tuple2, Tuple) and not isinstance(the_tuple2,list):
+        if isinstance(the_tuple2, MatrixAsVector) or \
+           isinstance(the_tuple2, tuple):
+            the_tuple2 = Tuple(*the_tuple2)
+        elif isinstance(the_tuple2, Interval):
+            if the_tuple2.left_open:
+                if the_tuple2.right_open:
+                    the_tuple2 = Tuple(the_tuple2.left,the_tuple2.right)
+                else:
+                    return 0
+            else:
+                if the_tuple2.right_open:
+                    return 0
+                else:
+                    the_tuple2 = [the_tuple2.left,the_tuple2.right]
+        else:
+            the_tuple2 = TupleNoParen(the_tuple2)
+
 
     # if not same class, then not considered equal.
     # Tuples and TupleNoParens are considered different
@@ -732,11 +778,8 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
     n_matches=0
     for row in range(the_matrix1.rows):
         for col in range(the_matrix2.cols):
-            try:
-                if the_matrix1[row,col] == the_matrix2[row,col]:
-                    n_matches +=1
-            except IndexError:
-                pass
+            if the_matrix1[row,col] == the_matrix2[row,col]:
+                n_matches +=1
 
     return n_matches/(the_matrix1.rows*the_matrix1.cols)
     

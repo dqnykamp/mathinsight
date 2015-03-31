@@ -505,12 +505,20 @@ def replace_boolean_equals_in(s, evaluate=True):
     4. replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
 
-    5. if evaluate=False, then replace == with __python_Eq__(lhs,rhs)
+    5. if evaluate=False, replace == with __python_Eq__(lhs,rhs)
     and !== with __python__Ne__(lhs,rhs)
     
+    6. if evaluate=False,
+    replace <=, >=, <, and > with __Le__(lhs,rhs,evaluate=False),
+    __Ge__(lhs,rhs,evaluate=False), __Lt__(lhs,rhs, evaluate=False), and
+    __Gt__(lhs,rhs, evaluate=False), respectively
+
 
     __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
     Eq, Ne, And, and Or when parsing
+
+    If evaluate=False, then __Le__, __Ge__, __Lt__, and __Gt__ must be
+    mapped to sympy Le, Ge, Lt, and Gt when parsing
 
     If evaluate=False, then __python_Eq__ and __python_Ne__ must be
     mapped to python_equal_uneval and python_not_equal_uneval when parsing
@@ -534,7 +542,7 @@ def replace_boolean_equals_in(s, evaluate=True):
     # replace in with __in_op_pl__
     s=re.sub(r'\bin\b', r'___in_op_pl___', s)
 
-    for i in range(7):
+    for i in range(11):
         if i==0:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
@@ -612,6 +620,54 @@ def replace_boolean_equals_in(s, evaluate=True):
             pattern = re.compile('[^<>!=](!==)[^=]')
             len_op=3
             new_op='__python_Ne__(%s,%s)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==7:
+            if evaluate:
+                continue
+            pattern = re.compile('[^!](<=)[^=]')
+            len_op=2
+            new_op='__Le__(%s,%s,evaluate===False)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==8:
+            if evaluate:
+                continue
+            pattern = re.compile('[^!](>=)[^=]')
+            len_op=2
+            new_op='__Ge__(%s,%s,evaluate===False)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==9:
+            if evaluate:
+                continue
+            pattern = re.compile('[^!](<)[^=]')
+            len_op=1
+            new_op='__Lt__(%s,%s,evaluate===False)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==10:
+            if evaluate:
+                continue
+            pattern = re.compile('[^!](>)[^=]')
+            len_op=1
+            new_op='__Gt__(%s,%s,evaluate===False)'
             reverse_arguments=False
             replace_rhs_intervals=False
             # characters captured in pattern to left of operator

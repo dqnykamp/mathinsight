@@ -282,6 +282,13 @@ class ParseExprTests(SimpleTestCase):
         expr2=parse_expr("1-1*5*x", evaluate=False)
         self.assertNotEqual(expr1,expr2)
 
+        from sympy import Gt, Lt, Ge, Le, And, Or
+        expr1=parse_expr("2<3", evaluate=False)
+        self.assertEqual(expr1, Lt(2,3,evaluate=False))
+
+        expr1=parse_expr("2>3 and 5<=-1 or 3>=3", evaluate=False)
+        self.assertEqual(expr1, Or(And(Gt(2,3,evaluate=False), Le(5,-1,evaluate=False)), Ge(3,3,evaluate=False)))
+        
 
     def test_no_evaluate_functions(self):
         from mitesting.user_commands import roots_tuple, index

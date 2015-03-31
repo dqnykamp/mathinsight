@@ -249,7 +249,12 @@ def parse_expr(s, global_dict=None, local_dict=None,
         new_global_dict['__python_Eq__'] = python_equal_uneval
         new_global_dict['__python_Ne__'] = python_not_equal_uneval
 
-    
+        from sympy import Le, Ge, Lt, Gt
+        new_global_dict['__Le__'] = Le
+        new_global_dict['__Ge__'] = Ge
+        new_global_dict['__Lt__'] = Lt
+        new_global_dict['__Gt__'] = Gt
+        
     # change {} to __FiniteSet__()
     s = re.sub(r'{',r' __FiniteSet__(', s)
     s = re.sub(r'}', r')', s)
@@ -741,6 +746,13 @@ class TupleNoParen(Tuple):
             return self.__class__(*result)
         else:
             return result
+
+    def __eq__(self,other):
+        # not equal to a tuple
+        if isinstance(other, tuple):
+            return False
+        return super(TupleNoParen, self).__eq__(other)
+  
 
 class DerivativePrimeSimple(Derivative):
     def _latex(self, prtr):
@@ -1254,6 +1266,27 @@ class Interval(sympy_Interval):
         else:
             from sympy import Contains
             return Contains(other, self, evaluate=False)
+
+    def __eq__(self, other):
+        # open intervals compare as equal to tuple or Tuple
+        if (isinstance(other, Tuple) and not isinstance(other,TupleNoParen))\
+           or isinstance(other,tuple):
+            if not (self.left_open and self.right_open):
+                return False
+            if len(other) != 2:
+                return False
+            return self.left==other[0] and self.right==other[1]
+
+        # closed intervals compare as equal to lists
+        if isinstance(other, list):
+            if self.left_open or self.right_open:
+                return False
+            if len(other) != 2:
+                return False
+            return self.left==other[0] and self.right==other[1]
+                
+        return super(Interval, self).__eq__(other)
+
 
 class FiniteSet(sympy_FiniteSet):
     def contains(self, other, evaluate=True):
