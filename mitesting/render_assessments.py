@@ -186,19 +186,20 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
         # that are assigned to expressions
         from mitesting.sympy_customized import EVALUATE_NONE
         from mitesting.math_objects import math_object
-        from mitesting.sympy_customized import parse_and_process, Symbol
+        from mitesting.sympy_customized import parse_and_process, Symbol,\
+            Dummy
         from mitesting.models import QuestionAnswerOption
         import pickle
 
         # ExpressionFromAnswer contains information about any
         # answers that were assigned to expressions
         for expression in question.expressionfromanswer_set.all():
-            # will assign Symbol(default_value) if no response given for answer
+            # will assign Dummy(default_value) if no response given for answer
             # or if error in parsing respons
             default_value= re.sub('_long_underscore_', '\uff3f',
                                   expression.default_value)
 
-            math_expr= Symbol(default_value)
+            math_expr= Dummy(default_value)
 
             answer_number=expression.answer_number
             try:

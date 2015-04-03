@@ -7,7 +7,7 @@ from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
 from midocs.models import Page, Level
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list, process_expressions_from_answers
-from mitesting.sympy_customized import SymbolCallable, Symbol
+from mitesting.sympy_customized import SymbolCallable, Symbol, Dummy
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
 
@@ -607,8 +607,8 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
-        self.assertEqual(expression_context['c'], Symbol('_default_'))
+        self.assertTrue(expression_context['b'].return_expression().dummy_eq(Dummy('\uff3f')))
+        self.assertTrue(expression_context['c'].return_expression().dummy_eq(Dummy('_default_')))
 
 
     def test_invalid_response(self):
@@ -631,8 +631,8 @@ class TestSetupExpressionContextUserResponse(TestCase):
         results=setup_expression_context(self.q, rng=rng,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
-        self.assertEqual(expression_context['b'], Symbol('\uff3f'))
-        self.assertEqual(expression_context['c'], Symbol('_default_'))
+        self.assertTrue(expression_context['b'].return_expression().dummy_eq(Dummy('\uff3f')))
+        self.assertTrue(expression_context['c'].return_expression().dummy_eq(Dummy('_default_')))
 
   
     def test_multiple_choice(self):

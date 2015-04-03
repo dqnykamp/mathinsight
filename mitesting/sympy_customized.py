@@ -15,6 +15,7 @@ from sympy.core.sympify import _sympify
 from sympy import Interval as sympy_Interval
 from sympy import FiniteSet as sympy_FiniteSet
 from sympy import Symbol as sympy_Symbol
+from sympy import Dummy as sympy_Dummy
 
 import re
 import keyword
@@ -438,13 +439,12 @@ class Symbol(sympy_Symbol):
     def _sympystr(self, prtr):
         return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
 
-    def _latex(self, prtr):
-        if self in prtr._settings['symbol_names']:
-            return prtr._settings['symbol_names'][self]
+class Dummy(sympy_Dummy):
+    def __str__(self):
+        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
+    def _sympystr(self, prtr):
+        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
 
-        return prtr._deal_with_super_sub(self.name)
-
-        
 class SymbolCallable(Symbol):
     def __eq__(self, other):
         if self is other:
