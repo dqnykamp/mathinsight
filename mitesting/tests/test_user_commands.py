@@ -77,8 +77,7 @@ class IndexTests(SimpleTestCase):
         self.assertEqual(index(thetuple,-3),1)
         self.assertEqual(index(thetuple,13),3)
         self.assertEqual(index(thetuple,-5),4)
-        self.assertRaisesRegexp(ValueError, "12 is not in tuple",
-                                index, thetuple,12)
+        self.assertEqual(index(thetuple,12),-1)
 
     def test_index_of_list(self):
         thelist = [23, 0, -123, 5825.253, -123, 2]

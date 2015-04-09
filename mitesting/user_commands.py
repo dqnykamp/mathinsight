@@ -85,6 +85,8 @@ class real_roots_tuple(Function):
 class index(Function):
     """
     Returns first index of value for list or Tuple expr.
+
+    Return -1 if value not in list.
     """
 
     @classmethod
@@ -92,11 +94,7 @@ class index(Function):
         try:
             return expr.index(value)
         except ValueError:
-            if isinstance(expr,Tuple) or isinstance(expr,tuple):
-                group_type = "tuple"
-            else:
-                group_type = expr.__class__.__name__
-            raise ValueError("%s is not in %s" % (value, group_type))
+            return(-1)
         except AttributeError:
             raise ValueError("First argument of index must be a list or tuple")
 
