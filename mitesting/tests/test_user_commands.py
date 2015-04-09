@@ -242,3 +242,13 @@ class ScalarMultipleTests(SimpleTestCase):
         self.assertEqual(scalar_multiple_deviation(the_tuple,the_matrix),65/16)
 
                          
+class CumsumTests(SimpleTestCase):
+    def test_cumsum(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+        self.assertEqual(cumsum([1,2,3]), [1,3,6])
+        
+        self.assertEqual(cumsum(Tuple(x,y,z,2)), [x,x+y,x+y+z,x+y+z+2])
+        
+        

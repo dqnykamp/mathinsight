@@ -45,6 +45,7 @@ def return_localized_commands():
          'cos': cos, 'cosh': cosh, 'cot': cot, 'coth': coth, 'csc': csc, 
          'sec': sec, 'sin': sin, 'sinh': sinh, 'tan': tan, 'tanh': tanh, 
          'scalar_multiple_deviation': scalar_multiple_deviation,
+         'cumsum': cumsum,
         }
     
     return localized_commands
@@ -485,3 +486,15 @@ class tanh(C.tanh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
+
+def accumu(lis):
+    total = 0
+    for x in lis:
+        total += x
+        yield total
+
+class cumsum(Function):
+    @classmethod
+    def eval(cls, lis):
+        return list(accumu(lis))
+
