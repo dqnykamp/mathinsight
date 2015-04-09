@@ -478,7 +478,6 @@ class TestSetupExpressionContext(TestCase):
                       function_inputs="x")
         
         self.new_expr(name="f_y_1",expression="f(y)+1")
-        self.new_expr(name="f_1",expression="f+1")
 
         rng = random.Random()
         rng.seed(1)
@@ -488,8 +487,6 @@ class TestSetupExpressionContext(TestCase):
         y=Symbol('y', real=True)
         self.assertEqual(expression_context['f'], x**2)
         self.assertEqual(expression_context['f_y_1'], y**2+1)
-        self.assertEqual(expression_context['f_1'], x**2+1)
-    
 
 
     def test_expression_with_alternates(self):

@@ -338,19 +338,6 @@ class TestParsedFunction(SimpleTestCase):
         # give it three inputs
         self.assertRaises(TypeError, fun, 1,1,1)
 
-    def test_default_value(self):
-        x=Symbol('x')
-        s=Symbol('s')
-        t=Symbol('t')
-        fun = return_parsed_function("s^2+1", "s", name="h", default_value=s)
-        
-        self.assertEqual(fun(x), x**2+1)
-        self.assertEqual(fun.default, s)
-
-        fun = return_parsed_function("s^2-t+5", "s,t", name="g")
-        self.assertEqual(fun(x,s), x**2-s+5)
-        self.assertEqual(fun.default, s**2-t+5)
-        
 
     def test_no_evaluate(self):
         from mitesting.models import Expression

@@ -31,6 +31,7 @@ def return_localized_commands():
          'evalf': evalf_expression,
          'index': index,
          'sum': sum,
+         'map': map,
          'if': iif,
          'len': len,
          'log': log, 'ln': ln, 'exp': exp, 

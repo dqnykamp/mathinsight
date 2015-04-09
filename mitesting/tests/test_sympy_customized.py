@@ -20,6 +20,21 @@ class BottomUpTests(SimpleTestCase):
         expr = bottom_up(sympify("sin(x/3)"), lambda w: w if not w.is_Number else w.evalf(4), atoms=True)
         self.assertEqual(str(expr), "sin(0.3333*x)")
 
+    def test_substitute_list_tuple(self):
+        from sympy import Symbol
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+        expr = bottom_up((x,y,z), lambda w: w if not w==x else Tuple(x,y), atoms=True)
+        self.assertEqual(expr, ((x,y),y,z))
+
+        expr = bottom_up((x,y,z), lambda w: w if not w==x else [x,y], atoms=True)
+        self.assertEqual(expr, ([x,y],y,z))
+
+        self.assertRaises(AttributeError, 
+                          bottom_up, x**2, 
+                          lambda w: w if not w==x else Tuple(x,y),
+                          atoms=True)
 
 class ParseExprTests(SimpleTestCase):
 

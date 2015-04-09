@@ -118,6 +118,12 @@ class TestExpressions(TestCase):
         self.assertEqual(local_dict["fun3"](c,4), c**3-3*c-4*c**2)
         self.assertEqual(str(local_dict["fun3"]), "fun3")
 
+        expr4=self.new_expr(name="fun_mapped", expression="map(fun, [x,y,5])")
+        local_dict['map']=map
+        expr4_eval=expr4.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
+        the_fun = local_dict['fun']
+        self.assertEqual(expr4_eval, [the_fun(x), the_fun(y), the_fun(5)])
+        
 
     def test_function_name(self):
         x = Symbol('x', real=True)

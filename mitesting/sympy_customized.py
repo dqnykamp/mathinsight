@@ -33,33 +33,38 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
     1. always call rv=rv.func(*args) even if  args and rv.args
        evaluate to be equal.
     2. call bottom_up on elements of tuples and lists
-    3. catch TypeError so that can be called on tuples or lists
-       that contain other lists
+    3. catch AttributeError only when call rv.args and rv.func
+       so that AttributeErrors on F(rv) will be propagated
+    4. don't recurse on arguments if rv.args attribute is a property,
+       as in the case when rv is a function
     """
-    try:
-        if isinstance(rv, list) or isinstance(rv,tuple):
-            rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
-        elif isinstance(rv, Tuple):
-            rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
-        elif isinstance(rv,Matrix):
-            rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
-            if nonbasic:
-                rv=F(rv)
-        elif rv.args:
-            args = tuple([bottom_up(a, F, atoms, nonbasic)
-                for a in rv.args])
-            rv = rv.func(*args)
-            rv = F(rv)
-        elif atoms:
-            rv = F(rv)
-    except AttributeError:
+
+    if isinstance(rv, list) or isinstance(rv,tuple):
+        rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
+    elif isinstance(rv, Tuple):
+        rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
+    elif isinstance(rv,Matrix):
+        rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
         if nonbasic:
-            try:
+            rv=F(rv)
+    else:
+        try:
+            rvargs=rv.args
+            rvfunc = rv.func
+        except AttributeError:
+            if nonbasic:
+                try:
+                    rv = F(rv)
+                except TypeError:
+                    pass
+        else:
+            if rvargs and not isinstance(rvargs, property):
+                args = tuple([bottom_up(a, F, atoms, nonbasic)
+                              for a in rvargs])
+                rv = rvfunc(*args)
                 rv = F(rv)
-            except TypeError:
-                pass
-    except TypeError:
-        pass
+            elif atoms:
+                rv = F(rv)
 
     return rv
 
@@ -489,64 +494,13 @@ def implicit_multiplication(result, local_dict, global_dict):
     """
     # These are interdependent steps, so we don't expose them separately
     from sympy.parsing.sympy_parser import _group_parentheses, \
-        _flatten
+        _flatten, _apply_functions
     for step in (_group_parentheses(implicit_multiplication),
                  _apply_functions,
                  _implicit_multiplication):
         result = step(result, local_dict, global_dict)
 
     result = _flatten(result)
-    return result
-
-
-def _apply_functions(tokens, local_dict, global_dict):
-    """Convert a NAME token + ParenthesisGroup into an AppliedFunction.
-
-    Note that ParenthesisGroups, if not applied to any function, are
-    converted back into lists of tokens.
-
-    Customized version that adds .default to end of ParsedFunctions
-    if they are not followed by a ParenthesisGroup.
-    In this way, a Function will behave like an Expression if
-    it is not followed by an argument.
-    """
-
-    from sympy.parsing.sympy_parser import ParenthesisGroup, AppliedFunction
-    from .utils import ParsedFunction
-
-    result = []
-    symbol = None
-    parsed_function = False
-    for tok in tokens:
-        if tok[0] == NAME:
-            symbol = tok
-            result.append(tok)
-
-            # check if tok represent a ParsedFunction
-            func = local_dict.get(tok[1])
-            if func is None:
-                func = global_dict.get(tok[1])
-            if func is not None:
-                try:
-                    if issubclass(func, ParsedFunction):
-                        parsed_function=True
-                except TypeError:
-                    pass
-        elif isinstance(tok, ParenthesisGroup):
-            if symbol and _token_callable(symbol, local_dict, global_dict):
-                result[-1] = AppliedFunction(symbol, tok)
-                symbol = None
-            else:
-                result.extend(tok)
-            parsed_function=False
-        else:
-            if parsed_function:
-                # if found parsed function not followed by ParenthesisGroup,
-                # then append .default
-                result[-1] = (NAME, "%s.default" % symbol[1])
-                parsed_function=False
-            symbol = None
-            result.append(tok)
     return result
 
 

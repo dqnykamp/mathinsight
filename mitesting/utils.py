@@ -268,7 +268,7 @@ class ParsedFunction(Function):
 
 def return_parsed_function(expression, function_inputs, name,
                            local_dict=None, 
-                           default_value=None, evaluate_level=None,
+                           evaluate_level=None,
                            assume_real_variables=False):
     """
     Parse expression into function of function_inputs,
@@ -281,9 +281,6 @@ def return_parsed_function(expression, function_inputs, name,
     Substitutions from local_dict will be made in expression
     except values from function_inputs will be ignored.
 
-    The .default argument returns default_value, if exists.
-    Else .default will be set to expression parsed with all
-    substitutions from local_dict.
     """
 
     from mitesting.sympy_customized import EVALUATE_NONE, EVALUATE_PARTIAL,\
@@ -313,11 +310,6 @@ def return_parsed_function(expression, function_inputs, name,
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
 
-    if default_value is None:
-        default_value = parse_and_process(
-            expression, local_dict=local_dict, evaluate_level=evaluate_level,
-            assume_real_variables=assume_real_variables)
-
 
     # parsed_function is a class that stores the expression
     # and the input list, substituting the function arguments
@@ -330,7 +322,6 @@ def return_parsed_function(expression, function_inputs, name,
 
         expression=expr2
         eval_level = evaluate_level
-        default=default_value
 
         # on evaluation replace any occurences of inputs in expression
         # with the values from the arguments
@@ -1108,7 +1099,6 @@ def evaluate_expression(the_expr, rng,
             parsed_function = return_parsed_function(
                 the_expr.expression, function_inputs=the_expr.function_inputs,
                 name = the_expr.name, local_dict=local_dict,
-                default_value=math_expr, 
                 evaluate_level = the_expr.evaluate_level,
                 assume_real_variables = the_expr.real_variables)
 
