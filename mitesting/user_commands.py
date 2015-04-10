@@ -46,6 +46,7 @@ def return_localized_commands():
          'sec': sec, 'sin': sin, 'sinh': sinh, 'tan': tan, 'tanh': tanh, 
          'scalar_multiple_deviation': scalar_multiple_deviation,
          'cumsum': cumsum,
+         'median': median,
         }
     
     return localized_commands
@@ -496,3 +497,25 @@ class cumsum(Function):
     def eval(cls, lis):
         return list(accumu(lis))
 
+class median(Function):
+    @classmethod
+    def eval(cls, lis):
+        try:
+            lis_sorted = sorted(lis)
+        except TypeError:
+            if isinstance(lis,list):
+                return cls(Tuple(*lis))
+            else:
+                return None
+
+        n=len(lis)
+        index = (n-1) // 2
+        if n < 1:
+            if isinstance(lis,list):
+                return cls(Tuple(*lis))
+            else:
+                return None
+        if n % 2 == 1:
+            return lis_sorted[index]
+        if len(lis) %2 == 0:
+            return (lis_sorted[index]+lis_sorted[index+1])/2

@@ -86,8 +86,7 @@ class IndexTests(SimpleTestCase):
         self.assertEqual(index(thelist,-123),2)
         self.assertEqual(index(thelist,5825.253),3)
         self.assertEqual(index(thelist,2),5)
-        self.assertRaisesRegexp(ValueError, "2232 is not in list",
-                                index,thelist,2232)
+        self.assertEqual(index(thelist,2232),-1)
 
     def test_index_of_symbolic_expressions(self):
         thetuple = sympify(sympify("(-3*x-2, sin(3*z/3), 3*exp(y**2)/2)"))
@@ -105,8 +104,7 @@ class IndexTests(SimpleTestCase):
     def test_index_no_evaluate(self):
         x = Symbol('x')
         expr = index([-3,0,1],x, evaluate=False)
-        self.assertRaisesRegexp(ValueError, "x is not in list",
-                                expr.doit)
+        self.assertEqual(expr.doit(), -1)
         self.assertEqual(expr.subs(x,0),1)
 
 
@@ -249,5 +247,11 @@ class CumsumTests(SimpleTestCase):
         self.assertEqual(cumsum([1,2,3]), [1,3,6])
         
         self.assertEqual(cumsum(Tuple(x,y,z,2)), [x,x+y,x+y+z,x+y+z+2])
+        
+        
+class MedianTests(SimpleTestCase):
+    def test_median(self):
+        self.assertEqual(median([30, 1,2]), 2)
+        self.assertEqual(median([1,10,2,7]), 9/2)
         
         
