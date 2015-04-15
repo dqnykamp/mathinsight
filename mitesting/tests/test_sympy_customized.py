@@ -305,6 +305,10 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr1, Or(And(Gt(2,3,evaluate=False), Le(5,-1,evaluate=False)), Ge(3,3,evaluate=False)))
         
 
+        expr1=parse_expr("5/1", evaluate=False)
+        self.assertEqual(latex(expr1), '\\frac{5}{1}')
+
+
     def test_no_evaluate_functions(self):
         from mitesting.user_commands import roots_tuple, index
         from mitesting.sympy_customized import TupleNoParen

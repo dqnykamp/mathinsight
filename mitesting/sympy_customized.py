@@ -1091,7 +1091,7 @@ class MulUnsort(Mul):
                 return _tex
         
 
-        if denom is S.One:
+        if denom is S.One and Pow(1,-1,evaluate=False) not in self.args:
             # use the original expression here, since fraction() may have
             # altered it when producing numer and denom
             tex += convert(self)
