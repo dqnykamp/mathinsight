@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem
+from midocs.models import NotationSystem, Author, Objective, Subject, Keyword, RelationshipType, Page, PageType, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem, return_default_page_type
 from django import http, forms
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.decorators.http import last_modified
@@ -47,11 +47,63 @@ def get_all_related_pages(thepage, max_keyword_matches=0, max_total_related=0):
 
     return related_pages
 
+
+def page_overview(request, page_code, page_type_code):
+
+    page_type = get_object_or_404(PageType, code=page_type_code)
+    thepage = get_object_or_404(Page, code=page_code, page_type=page_type)
+
+    # get related pages
+    max_keyword_matches=5
+    max_total_related=10
+    related_pages = get_all_related_pages(thepage,max_keyword_matches,max_total_related)
+    if related_pages.get('generic') or related_pages.get('lighter') \
+            or related_pages.get('depth'):
+        manual_links=True
+    else:
+        manual_links=False
+    
+    
+    # turn off google analytics for localhost or hidden page
+    noanalytics=False
+    if settings.SITE_ID==2 or settings.SITE_ID==3 or thepage.hidden:
+        noanalytics=True
+
+    # render page text with extra template tags
+    context=RequestContext(request)
+    from midocs.functions import return_new_auxiliary_data
+    context['_auxiliary_data_'] = return_new_auxiliary_data()
+    context['thepage'] = thepage
+    context['notation_system']=notation_system,
+
+    return render_to_response \
+        (["midocs/%s_overview.html" % page_type.code, "midocs/page_overview.html"], 
+         {'thepage': thepage, 'related_pages': related_pages,
+          'manual_links': manual_links,
+          'notation_system': notation_system,
+          'notation_config': notation_config,
+          'notation_system_form': notation_system_form,
+          'noanalytics': noanalytics,
+          'auxiliary_data': context['_auxiliary_data_'],
+          },
+         context_instance=context  # use to get context from rendered text
+         )
+    
+
+
 # calculate date of page as the last date_modified 
 # of the page itself or its included applets, videos, and images
-def date_page(request, page_code):
-    try: 
-        thepage=Page.objects.get(code=page_code)
+def date_page(request, page_code, page_type_code=None):
+    if page_type_code is None:
+        page_type = return_default_page_type()
+    else:
+        try:
+            page_type = PageType.objects.get(code=page_type_code)
+        except:
+            return None
+    
+    try:
+        thepage = Page.object.get(code=page_code, page_type=page_type)
     except:
         return None
     latest_date=thepage.date_modified
@@ -74,8 +126,19 @@ def date_page(request, page_code):
 
 
 @last_modified(date_page)
-def pageview(request, page_code):
-    thepage = get_object_or_404(Page, code=page_code)
+def pageview(request, page_code, page_type_code=None, overview=False):
+    if page_type_code is None:
+        page_type = return_default_page_type()
+    else:
+        page_type = get_object_or_404(PageType, code=page_type_code)
+
+        if page_type.default:
+            # for default type, don't allow longer URL with page_type_code
+            # so that don't have two URLs pointing to same page
+            from django.http import Http404
+            raise Http404('No Page matches the given query.')
+
+    thepage = get_object_or_404(Page, code=page_code, page_type=page_type)
     
     # get related pages
     max_keyword_matches=5
@@ -158,7 +221,7 @@ def pageview(request, page_code):
         rendered_text = ""
 
     return render_to_response \
-        ("midocs/page_detail.html", 
+        (["midocs/%s_detail.html" % page_type.code, "midocs/page_detail.html"], 
          {'thepage': thepage, 'related_pages': related_pages,
           'manual_links': manual_links,
           'notation_system': notation_system,
@@ -502,7 +565,7 @@ def whatsnewview(request, items):
 
     if includepages:
         try:
-            newpages=Page.objects.exclude(level__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
+            newpages=Page.objects.exclude(page_type__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_items]
         except ObjectDoesNotExist:
             newpages=EmptyQuerySet
     else:
@@ -595,7 +658,7 @@ def home(request):
     highlighted_applets=random.sample(highlighted_applets,max_highlighted_applets)
 
     news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[:max_news]
-    newpages=Page.objects.exclude(level__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_new_pages]
+    newpages=Page.objects.exclude(page_type__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_new_pages]
 
     # turn off google analytics for localhost
     noanalytics=False

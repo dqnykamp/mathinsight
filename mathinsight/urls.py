@@ -37,7 +37,6 @@ urlpatterns = patterns('',
     url(r'^$', 'midocs.views.home', name='mathinsight-home'),
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     (r'^admin/', include(admin.site.urls)),
-    (r'^', include('midocs.urls')),
     #(r'^search/', include('haystack.urls')),
     url(r'^search/$', MidocsSearchView(form_class=ModelSearchForm), name='haystack_search'),
     url(r'^contributor/list$', ListView.as_view(template_name="midocs/author_list.html", queryset=Author.objects.filter(mi_contributor__gte =2)), name="mi-authorlist"),
@@ -54,6 +53,7 @@ urlpatterns = patterns('',
     (r'^assess/', include('mitesting.urls')),
     (r'^thread/', include('mithreads.urls')),
     (r'^course/', include('micourses.urls')),
+    (r'^', include('midocs.urls')), # include last as will absorb xx/xx urls
  ) \
 + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

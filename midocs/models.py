@@ -74,7 +74,7 @@ class Author(models.Model):
         return "%s %s%s" % ( self.last_name, self.first_name[:1], self.middle_name[:1])
     
     def published_pages(self):
-        return self.page_set.exclude(level__code="definition").filter(publish_date__lte=datetime.date.today(),hidden=False)
+        return self.page_set.exclude(page_type__code="definition").filter(publish_date__lte=datetime.date.today(),hidden=False)
     def published_applets(self):
         return self.applet_set.filter(publish_date__lte=datetime.date.today(),hidden=False)
     def published_videos(self):
@@ -89,10 +89,12 @@ class Author(models.Model):
     class Meta:
         ordering = ['last_name','first_name','middle_name']
 
-class Level(models.Model):
+class PageType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
-    description = models.CharField(max_length=400)
+    name = models.CharField(max_length=100)
     default = models.BooleanField(default=False)
+    show_overview = models.BooleanField(default=False)
+
     def __unicode__(self):
         return self.code
 
@@ -101,15 +103,15 @@ class Level(models.Model):
         # check if newly default
         if self.default:
             if self.pk is None:
-                # mark all levels as not default
-                Level.objects.update(default=False)
+                # mark all page_types as not default
+                PageType.objects.update(default=False)
             else:
-                orig = Level.objects.get(pk=self.pk)
+                orig = PageType.objects.get(pk=self.pk)
                 if not orig.default:
-                    # since newly default, set all other levels as not default
-                    Levels.objects.exclude(pk=self.pk).update(default=False)
+                    # since newly default, set all other page_types as not default
+                    PageTypes.objects.exclude(pk=self.pk).update(default=False)
 
-        super(Level, self).save(*args, **kwargs) 
+        super(PageType, self).save(*args, **kwargs) 
 
     @classmethod
     def return_default(theclass):
@@ -119,15 +121,15 @@ class Level(models.Model):
             pass
 
         # if zero or multiple items marked as default
-        # return first level in database (or None if no Levels)
+        # return first page_type in database (or None if no PageTypes)
         try:
             return theclass.objects.all()[0]
         except IndexError:
             return None
 
-def return_default_level():
+def return_default_page_type():
     try:
-        return Level.return_default();
+        return PageType.return_default();
     except:
         return None
 
@@ -211,12 +213,13 @@ class ActivePageManager(models.Manager):
             .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
 
 class Page(models.Model):
-    code = models.SlugField(max_length=200, unique=True)
+    code = models.SlugField(max_length=200, db_index=True)
+    page_type = models.ForeignKey(PageType, default=return_default_page_type,
+                                  db_index=True)
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     authors = models.ManyToManyField(Author, through='PageAuthor')
-    level = models.ForeignKey(Level, default=return_default_level)
     objectives = models.ManyToManyField(Objective, blank=True, null=True)
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
@@ -227,6 +230,8 @@ class Page(models.Model):
     similar_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageSimilar', 
                                            related_name='pages_similar_from')
+    related_videos = models.ManyToManyField("Video", blank=True, null=True,
+                                            related_name='related_pages')
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True,db_index=True)
@@ -237,13 +242,15 @@ class Page(models.Model):
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
-    
+    detailed_description = models.TextField(blank=True, null=True)
+
     objects = models.Manager()
     activepages = ActivePageManager()
 
 
     class Meta:
-        ordering = ['code']
+        ordering = ['code', 'page_type' ]
+        unique_together = ('code', 'page_type')
 
     def __unicode__(self):
         return "%s (%s)" % (self.code, self.title)
@@ -258,7 +265,7 @@ class Page(models.Model):
         link_text=kwargs.get("link_text", self.title)
         link_title="%s: %s" % (self.title,self.description)
 
-        link_class=kwargs.get("link_class", self.level.code)
+        link_class=kwargs.get("link_class", self.page_type.code)
         if kwargs.get("confused"):
             link_class += " confused"
 
@@ -303,7 +310,10 @@ class Page(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return('mi-page', (), {'page_code': self.code})
+        if self.page_type.default:
+            return('mi-page', (), {'page_code': self.code})
+        else:
+            return('mi-page_with_type', (), {'page_code': self.code, 'page_type_code': self.page_type.code})
 
     def get_active_thread_content_set(self):
         return self.thread_content_set.filter(section__thread__active=True)
@@ -363,9 +373,9 @@ class Page(models.Model):
                 
 
         # delete old data regarding links from templates
-        self.image_set.clear()
-        self.applet_set.clear()
-        self.video_set.clear()
+        self.embedded_images.clear()
+        self.embedded_applets.clear()
+        self.embedded_videos.clear()
         self.pagenavigation_set.all().delete()
         self.pagecitation_set.all().delete()
         self.equationtag_set.all().delete()
@@ -589,6 +599,7 @@ class PageSimilar(models.Model):
     def __unicode__(self):
         return "%s: %s" % (self.origin.code, self.similar.code)
   
+
 class PageNavigation(models.Model):
     page = models.ForeignKey(Page)
     navigation_phrase = models.CharField(max_length=100)
@@ -677,7 +688,7 @@ class Image(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     notation_specific = models.BooleanField(default=False)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True)
+    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_images")
     authors = models.ManyToManyField(Author, through='ImageAuthor')
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
@@ -969,7 +980,7 @@ class Applet(models.Model):
     applet_objects = models.ManyToManyField(AppletObjectType,
                                         through='AppletObject',
                                         null=True, blank=True)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True)
+    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_applets")
     authors = models.ManyToManyField(Author, through='AppletAuthor')
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)
@@ -1394,7 +1405,7 @@ class Video(models.Model):
     parameters = models.ManyToManyField(VideoTypeParameter, 
                                         through='VideoParameter', 
                                         null=True, blank=True)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True)
+    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_videos")
     authors = models.ManyToManyField(Author, through='VideoAuthor')
     subjects = models.ManyToManyField(Subject, blank=True, null=True)
     keywords = models.ManyToManyField(Keyword, blank=True, null=True)

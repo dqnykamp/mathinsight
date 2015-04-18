@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django import template
-from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference
+from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type
 from mitesting.models import Assessment
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -90,7 +90,27 @@ class InternalLinkNode(template.Node):
                 target_class=Page
                 
             try:
-                target=target_class.objects.get(code=target)
+
+                if target_class != Page:
+                    target=target_class.objects.get(code=target)
+                    
+                else:
+                    # for Page, determine page type
+                    page_type = kwargs.get("page_type")
+
+                    if page_type is not None and \
+                       not isinstance(page_type, PageType):
+                        try:
+                            page_type = PageType.objects.get(code=page_type)
+                        except ObjectDoesNotExist:
+                            page_type = None
+
+                    if page_type is None:
+                        page_type = return_default_page_type()
+
+                    target=target_class.objects.get(code=target, 
+                                                    page_type=page_type)
+
 
             # if object does not exist, set link to point to target
             # mark as broken

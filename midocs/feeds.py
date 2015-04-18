@@ -47,7 +47,7 @@ class LatestItemsFeed(Feed):
         today = datetime.date.today()
         object_list = obj.objects
         if obj.__name__ == 'Page':
-            object_list = object_list.exclude(level__code="definition")
+            object_list = object_list.exclude(page_type__code="definition")
         return object_list.filter(publish_date__lte=today).order_by('-publish_date')[:10]
     
     def item_title(self, item):

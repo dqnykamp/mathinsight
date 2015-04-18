@@ -29,7 +29,7 @@ class PageIndex(ContentIndex, indexes.Indexable):
 
     def prepare(self, obj):
         data = super(PageIndex, self).prepare(obj)
-        if(obj.level.code=='definition'):
+        if(obj.page_type.code=='definition'):
             data['boost']=0.6
         else:
             data['boost']=1.5

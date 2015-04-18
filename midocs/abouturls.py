@@ -34,7 +34,7 @@ urlpatterns = patterns('midocs.views',
      name='mi-newsummary'),
  url(r'^new_pages$', ListView.as_view
      (template_name="midocs/whatsnew_pages.html", 
-      queryset=Page.objects.exclude(level__code="definition")
+      queryset=Page.objects.exclude(page_type__code="definition")
       .filter(publish_date__lte=datetime.date.today(),hidden=False)
       .filter(publish_date__gte=datetime.date.today()
               -datetime.timedelta(days=new_days_past))

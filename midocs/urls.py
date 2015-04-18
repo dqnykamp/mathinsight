@@ -21,7 +21,8 @@ urlpatterns = patterns('midocs.views',
     url(r'^index/(?P<index_code>\w+)$', 'indexview', name="mi-index"),
     url(r'^page/list$', ListView.as_view(template_name="midocs/all_page_list.html", queryset=Page.objects.filter(publish_date__lte=datetime.date.today(),hidden=False), paginate_by=paginate_by), name='mi-allpages'),
     url(r'^similar/(?P<slug>\w+)$', DetailView.as_view(template_name="midocs/similar_page_list.html", model=Page, slug_field='code', context_object_name="thepage"), name="mi-similar"),
-
+    url(r'^(?P<page_type_code>\w+)/(?P<page_code>\w+)$', 'pageview', name='mi-page_with_type'),
+    url(r'^(?P<page_type_code>\w+)/(?P<page_code>\w+)/overview$', 'page_overview', name='mi-page_overview'),
 
 )
 

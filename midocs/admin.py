@@ -6,7 +6,7 @@ from __future__ import division
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, Level, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletText
+from midocs.models import NotationSystem, Author, PageType, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletText
 from django.conf import settings
 import reversion
 
@@ -263,20 +263,20 @@ class IndexEntryInline(admin.TabularInline):
     model = IndexEntry
 
 class PageAdmin(reversion.VersionAdmin):
-    list_display = ('code','title', 'level')
+    list_display = ('code','title', 'page_type')
     inlines = [IndexEntryInline,PageAuthorInline,PageRelationshipInline]
     search_fields = ['code', 'title']
-    filter_horizontal = ['keywords','subjects']
+    filter_horizontal = ['keywords','subjects','related_videos']
     #exclude = ('objectives','subjects','content_types')
     fieldsets = (
         (None, {
                 'fields': ('code', 
-                           'title', 'description', 'text', 'keywords',
+                           'title', 'description', 'page_type','text', 'keywords',
                            'subjects',)
                 }),
         ('Optional', {
                 'classes': ('collapse',),
-                'fields': ('publish_date','notes', 'author_copyright','worksheet', 'hidden', 'additional_credits','level','objectives','notation_systems','highlight'),
+                'fields': ('publish_date','notes', 'author_copyright','worksheet', 'hidden', 'additional_credits','objectives','notation_systems','highlight', 'detailed_description', 'related_videos'),
                 }),
         )
     formfield_overrides = {
@@ -361,7 +361,7 @@ class NotationSystemAdmin(reversion.VersionAdmin):
     pass
 class AuthorAdmin(reversion.VersionAdmin):
     pass
-class LevelAdmin(reversion.VersionAdmin):
+class PageTypeAdmin(reversion.VersionAdmin):
     pass
 class ObjectiveAdmin(reversion.VersionAdmin):
     pass
@@ -391,7 +391,7 @@ class AuxiliaryFileAdmin(reversion.VersionAdmin):
 
 admin.site.register(NotationSystem,NotationSystemAdmin)
 admin.site.register(Author,AuthorAdmin)
-admin.site.register(Level,LevelAdmin)
+admin.site.register(PageType,PageTypeAdmin)
 admin.site.register(Objective,ObjectiveAdmin)
 admin.site.register(Subject,SubjectAdmin)
 admin.site.register(Keyword,KeywordAdmin)
