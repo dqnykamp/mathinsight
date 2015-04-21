@@ -5,7 +5,6 @@ from __future__ import division
 
 from micourses.models import Course, CourseUser, CourseThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
 from mitesting.models import Assessment
-from midocs.models import Applet
 from micourses.forms import StudentContentAttemptForm
 from django.shortcuts import render_to_response, get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect, HttpResponse
@@ -543,7 +542,8 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         # assessment attempt question attempt view
         identifier = "aaqav"
 
-        applet_data = Applet.return_initial_applet_data()
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
 
         import json
         prefilled_answers = json.loads(self.answer.answer)
@@ -558,12 +558,12 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
                                         readonly=True, auto_submit=True, 
                                         record_answers=False,
                                         allow_solution_buttons=False,
-                                        applet_data=applet_data)
+                                        auxiliary_data=auxiliary_data)
 
 
         context= {'question': question, 
                   'question_data': question_data,
-                  'applet_data': applet_data,
+                  '_auxiliary_data_': auxiliary_data,
                   'attempt': self.attempt,
                   'attempt_number': self.attempt_number,
                   'question_number': self.question_number,
