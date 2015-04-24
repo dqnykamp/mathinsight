@@ -192,6 +192,12 @@
 	}
 }
 </script>
+{% if rendered_javascript %}
+<script>
+{{rendered_javascript}}
+</script>
+{% endif %}
+
 {% accumulated_javascript %}
 
 </body>

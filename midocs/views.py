@@ -48,49 +48,6 @@ def get_all_related_pages(thepage, max_keyword_matches=0, max_total_related=0):
     return related_pages
 
 
-def page_overview(request, page_code, page_type_code):
-
-    page_type = get_object_or_404(PageType, code=page_type_code)
-    thepage = get_object_or_404(Page, code=page_code, page_type=page_type)
-
-    # get related pages
-    max_keyword_matches=5
-    max_total_related=10
-    related_pages = get_all_related_pages(thepage,max_keyword_matches,max_total_related)
-    if related_pages.get('generic') or related_pages.get('lighter') \
-            or related_pages.get('depth'):
-        manual_links=True
-    else:
-        manual_links=False
-    
-    
-    # turn off google analytics for localhost or hidden page
-    noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3 or thepage.hidden:
-        noanalytics=True
-
-    # render page text with extra template tags
-    context=RequestContext(request)
-    from midocs.functions import return_new_auxiliary_data
-    context['_auxiliary_data_'] = return_new_auxiliary_data()
-    context['thepage'] = thepage
-    context['notation_system']=notation_system,
-
-    return render_to_response \
-        (["midocs/%s_overview.html" % page_type.code, "midocs/page_overview.html"], 
-         {'thepage': thepage, 'related_pages': related_pages,
-          'manual_links': manual_links,
-          'notation_system': notation_system,
-          'notation_config': notation_config,
-          'notation_system_form': notation_system_form,
-          'noanalytics': noanalytics,
-          'auxiliary_data': context['_auxiliary_data_'],
-          },
-         context_instance=context  # use to get context from rendered text
-         )
-    
-
-
 # calculate date of page as the last date_modified 
 # of the page itself or its included applets, videos, and images
 def date_page(request, page_code, page_type_code=None):
@@ -209,6 +166,7 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     context=RequestContext(request)
     from midocs.functions import return_new_auxiliary_data
     context['_auxiliary_data_'] = return_new_auxiliary_data()
+    context['_auxiliary_data_']['page_type'] = page_type.code
     context['thepage'] = thepage
     context['notation_system']=notation_system,
 
@@ -220,8 +178,33 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     else:
         rendered_text = ""
 
+    if thepage.header:
+        try:
+            rendered_header = Template("{% load mi_tags testing_tags %}"+thepage.header).render(context)
+        except Exception as e:
+            rendered_header = ""
+            rendered_text = "<p>Template error in text (TMPLERR): %s</p> %s" \
+                            % (e, rendered_text)
+    else:
+        rendered_header = ""
+
+    if thepage.javascript:
+        try:
+            rendered_javascript = Template("{% load mi_tags testing_tags %}"+thepage.javascript).render(context)
+        except Exception as e:
+            rendered_javascript = ""
+            rendered_text = "<p>Template error in text (TMPLERR): %s</p> %s" \
+                            % (e, rendered_text)
+    else:
+        rendered_javascript = ""
+
+    templates = ["midocs/%s_detail.html" % page_type.code, "midocs/page_detail.html"]
+
+    if request.GET.get("bare"):
+        templates = ["midocs/%s_bare.html" % page_type.code, "midocs/page_bare.html"] + templates
+
     return render_to_response \
-        (["midocs/%s_detail.html" % page_type.code, "midocs/page_detail.html"], 
+        (templates, 
          {'thepage': thepage, 'related_pages': related_pages,
           'manual_links': manual_links,
           'notation_system': notation_system,
@@ -230,6 +213,8 @@ def pageview(request, page_code, page_type_code=None, overview=False):
           'noanalytics': noanalytics,
           'auxiliary_data': context['_auxiliary_data_'],
           'rendered_text': rendered_text,
+          'rendered_header': rendered_header,
+          'rendered_javascript': rendered_javascript,
           },
          context_instance=context  # use to get context from rendered text
          )
@@ -346,6 +331,25 @@ def date_applet(request, applet_code):
         return Applet.objects.get(code=applet_code).date_modified
     except:
         return None
+
+
+@last_modified(date_applet)
+def appletview_bare(request, applet_code):
+    theapplet = get_object_or_404(Applet, code=applet_code)
+    
+    width=request.GET.get("width")
+    height=request.GET.get("height")
+
+    from midocs.functions import return_new_auxiliary_data
+    auxiliary_data = return_new_auxiliary_data()
+
+    return render_to_response("midocs/applet_bare.html", 
+                              {'applet': theapplet, 
+                               '_auxiliary_data_': auxiliary_data,
+                               'width': width, 'height': height,
+                           },
+                              context_instance=RequestContext(request))
+    
 
 @last_modified(date_applet)
 def appletview(request, applet_code):

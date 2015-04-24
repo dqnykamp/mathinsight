@@ -1,5 +1,66 @@
-@import url(https://fonts.googleapis.com/css?family=News+Cycle:400,700);
-@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic);
+/*@import url(https://fonts.googleapis.com/css?family=News+Cycle:400,700);
+@import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic);*/
+
+/* news-cycle-regular - latin */
+@font-face {
+  font-family: 'News Cycle';
+  font-style: normal;
+  font-weight: 400;
+  src: local('News Cycle'), local('NewsCycle'),
+       url('../../fonts/news-cycle-v13-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/news-cycle-v13-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* news-cycle-700 - latin */
+@font-face {
+  font-family: 'News Cycle';
+  font-style: normal;
+  font-weight: 700;
+  src: local('News Cycle Bold'), local('NewsCycle-Bold'),
+       url('../../fonts/news-cycle-v13-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/news-cycle-v13-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+/* lato-regular - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lato Regular'), local('Lato-Regular'),
+       url('../../fonts/lato-v11-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/lato-v11-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* lato-italic - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Lato Italic'), local('Lato-Italic'),
+       url('../../fonts/lato-v11-latin-italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/lato-v11-latin-italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* lato-700 - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Lato Bold'), local('Lato-Bold'),
+       url('../../fonts/lato-v11-latin-700.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/lato-v11-latin-700.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* lato-700italic - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: italic;
+  font-weight: 700;
+  src: local('Lato Bold Italic'), local('Lato-BoldItalic'),
+       url('../../fonts/lato-v11-latin-700italic.woff2') format('woff2'), /* Chrome 26+, Opera 23+ */
+       url('../../fonts/lato-v11-latin-700italic.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+
 /**
  * A simple theme for reveal.js presentations, similar
  * to the default theme. The accent color is darkblue.

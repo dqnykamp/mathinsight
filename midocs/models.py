@@ -93,7 +93,6 @@ class PageType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     name = models.CharField(max_length=100)
     default = models.BooleanField(default=False)
-    show_overview = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.code
@@ -237,13 +236,13 @@ class Page(models.Model):
     publish_date = models.DateField(blank=True,db_index=True)
     notes = models.TextField(blank=True, null=True)
     highlight = models.BooleanField(db_index=True, default=False)
-    worksheet = models.BooleanField(default=False)
     author_copyright = models.BooleanField(default=True)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
-
+    header = models.TextField(blank=True, null=True)
+    javascript = models.TextField(blank=True, null=True)
     objects = models.Manager()
     activepages = ActivePageManager()
 
@@ -262,7 +261,14 @@ class Page(models.Model):
         return "Page: %s" % self.title
 
     def return_link(self, **kwargs):
-        link_text=kwargs.get("link_text", self.title)
+        try:
+            link_text=kwargs["link_text"]
+        except KeyError:
+            if self.page_type.default:
+                link_text = self.title
+            else:
+                link_text = "%s: %s" % (self.page_type.name, self.title)
+
         link_title="%s: %s" % (self.title,self.description)
 
         link_class=kwargs.get("link_class", self.page_type.code)

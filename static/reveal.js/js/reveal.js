@@ -214,7 +214,7 @@
 			'End':					'Last slide',
 			'B  ,  .':				'Pause',
 			'F':					'Fullscreen',
-			'ESC, O':				'Slide overview'
+			'O':				'Slide overview'
 		};
 
 	/**

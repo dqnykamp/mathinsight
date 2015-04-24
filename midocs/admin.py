@@ -270,15 +270,35 @@ class PageAdmin(reversion.VersionAdmin):
     #exclude = ('objectives','subjects','content_types')
     fieldsets = (
         (None, {
-                'fields': ('code', 
-                           'title', 'description', 'page_type','text', 'keywords',
-                           'subjects',)
-                }),
-        ('Optional', {
-                'classes': ('collapse',),
-                'fields': ('publish_date','notes', 'author_copyright','worksheet', 'hidden', 'additional_credits','objectives','notation_systems','highlight', 'detailed_description', 'related_videos'),
-                }),
-        )
+            'fields': ('code', 
+                       'title', 'description', 'page_type','text', 'keywords',
+                       'subjects',)
+        }),
+        ('Detailed description', {
+            'classes': ('collapse',),
+            'fields': ('detailed_description',),
+        }),
+        ('Javascript', {
+            'classes': ('collapse',),
+            'fields': ('javascript',),
+        }),
+        ('Header', {
+            'classes': ('collapse',),
+            'fields': ('header',),
+        }),
+        ('Notes', {
+            'classes': ('collapse',),
+            'fields': ('notes',),
+        }),
+        ('Copyright and credits', {
+            'classes': ('collapse',),
+            'fields': ('author_copyright','additional_credits',),
+        }),
+        ('Misc', {
+            'classes': ('collapse',),
+            'fields': ('publish_date', 'highlight', 'hidden', 'notation_systems', 'related_videos'),
+        }),
+    )
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         models.TextField: {'widget': forms.Textarea(attrs={'rows': 25, 'cols': 120})},

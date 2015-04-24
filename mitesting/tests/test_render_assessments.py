@@ -5,7 +5,7 @@ from __future__ import division
 
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
-from midocs.models import Page, Level
+from midocs.models import Page, PageType
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list, process_expressions_from_answers
 from mitesting.sympy_customized import SymbolCallable, Symbol, Dummy
 from django.contrib.auth.models import AnonymousUser, User, Permission
@@ -952,7 +952,7 @@ class TestRenderQuestionText(TestCase):
         self.q.solution_text="Solution"
         self.q.hint_text="Hint"
         self.q.save()
-        Level.objects.create(code="hmm", description="")
+        PageType.objects.create(code="hmm", name="hmm")
         page = Page.objects.create(code="test", title="test")
         self.q.questionreferencepage_set.create(page=page)
 
@@ -1001,7 +1001,7 @@ class TestRenderQuestionText(TestCase):
                                           solution_text="solution",
                                           hint_text="hint")
 
-        Level.objects.create(code="hmm", description="")
+        PageType.objects.create(code="hmm", name="hmm")
         page = Page.objects.create(code="test", title="test")
         self.q.questionreferencepage_set.create(page=page, question_subpart="a")
 

@@ -11,8 +11,21 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Page', fields ['code']
         db.delete_unique(u'midocs_page', ['code'])
 
+        # Deleting field 'Page.worksheet'
+        db.delete_column(u'midocs_page', 'worksheet')
+
         # Adding field 'Page.detailed_description'
         db.add_column(u'midocs_page', 'detailed_description',
+                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Page.header'
+        db.add_column(u'midocs_page', 'header',
+                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'Page.javascript'
+        db.add_column(u'midocs_page', 'javascript',
                       self.gf('django.db.models.fields.TextField')(null=True, blank=True),
                       keep_default=False)
 
@@ -28,27 +41,30 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'Page', fields ['code', 'page_type']
         db.create_unique(u'midocs_page', ['code', 'page_type_id'])
 
-        # Adding field 'PageType.show_overview'
-        db.add_column(u'midocs_pagetype', 'show_overview',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
-
 
     def backwards(self, orm):
         # Removing unique constraint on 'Page', fields ['code', 'page_type']
         db.delete_unique(u'midocs_page', ['code', 'page_type_id'])
 
+        # Adding field 'Page.worksheet'
+        db.add_column(u'midocs_page', 'worksheet',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
         # Deleting field 'Page.detailed_description'
         db.delete_column(u'midocs_page', 'detailed_description')
+
+        # Deleting field 'Page.header'
+        db.delete_column(u'midocs_page', 'header')
+
+        # Deleting field 'Page.javascript'
+        db.delete_column(u'midocs_page', 'javascript')
 
         # Removing M2M table for field related_videos on 'Page'
         db.delete_table(db.shorten_name(u'midocs_page_related_videos'))
 
         # Adding unique constraint on 'Page', fields ['code']
         db.create_unique(u'midocs_page', ['code'])
-
-        # Deleting field 'PageType.show_overview'
-        db.delete_column(u'midocs_pagetype', 'show_overview')
 
 
     models = {
@@ -338,9 +354,11 @@ class Migration(SchemaMigration):
             'date_modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '400', 'null': 'True', 'blank': 'True'}),
             'detailed_description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'header': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'hidden': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             'highlight': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'javascript': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'keywords': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Keyword']", 'null': 'True', 'blank': 'True'}),
             'notation_systems': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.NotationSystem']", 'null': 'True', 'blank': 'True'}),
             'notes': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
@@ -352,8 +370,7 @@ class Migration(SchemaMigration):
             'similar_pages': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'pages_similar_from'", 'symmetrical': 'False', 'through': u"orm['midocs.PageSimilar']", 'to': u"orm['midocs.Page']"}),
             'subjects': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': u"orm['midocs.Subject']", 'null': 'True', 'blank': 'True'}),
             'text': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'worksheet': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
         u'midocs.pageauthor': {
             'Meta': {'ordering': "[u'sort_order', u'id']", 'unique_together': "((u'page', u'author'),)", 'object_name': 'PageAuthor'},
@@ -406,8 +423,7 @@ class Migration(SchemaMigration):
             'code': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '50', 'db_index': 'True'}),
             'default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'show_overview': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
         u'midocs.reference': {
             'Meta': {'object_name': 'Reference'},

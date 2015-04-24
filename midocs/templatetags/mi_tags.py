@@ -1596,6 +1596,20 @@ class AppletNode(template.Node):
             except:
                 height=default_size
 
+        # check to see if the variable process_applet_entries is set
+        # if so, add entry to database
+        if context.get("process_applet_entries"):
+            # get page object, 
+            thepage = context.get('thepage')
+            # if applet was in a page,  add page to in_pages of applet
+            if thepage:
+                applet.in_pages.add(thepage)
+
+        if kwargs.get("iframe"):
+            return '<iframe width=%s height=%s src="%s?width=%s&height=%s"></iframe>' % \
+            (width+10, height+10, reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
+             width, height)
+
         answer_data = context.get('_answer_data_')
         
         try:
@@ -1645,15 +1659,6 @@ class AppletNode(template.Node):
 
                 context.pop()
 
-
-        # check to see if the variable process_applet_entries is set
-        # if so, add entry to database
-        if context.get("process_applet_entries"):
-            # get page object, 
-            thepage = context.get('thepage')
-            # if applet was in a page,  add page to in_pages of applet
-            if thepage:
-                applet.in_pages.add(thepage)
 
         # check if blank_style is set
         # if so, just return title, and caption if "boxed"
@@ -3018,7 +3023,8 @@ class AccumulatedJavascriptNode(template.Node):
         script_string = ""
         static_url = context.get("STATIC_URL","")
         try:
-            applet_data = context['_auxiliary_data_']['applet']
+            auxiliary_data = context['_auxiliary_data_']
+            applet_data = auxiliary_data['applet']
         except KeyError:
             return ""
         
@@ -3030,7 +3036,12 @@ class AccumulatedJavascriptNode(template.Node):
             pass
         else:
             if initialization_script:
-                script_string += '<div id="applet_initialization">\n<script>\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>\n</div>\n' % initialization_script
+                if auxiliary_data.get('page_type') == "slides":
+                    # for slides, MathJax isn't loaded right away
+                    # so we can't put initialization as MathJax startup hook
+                    script_string += '<div id="applet_initialization">\n<script>\n%s\n</script>\n</div>\n' % initialization_script
+                else:
+                    script_string += '<div id="applet_initialization">\n<script>\nMathJax.Hub.Register.StartupHook("End",function () {%s});\n</script>\n</div>\n' % initialization_script
 
         geogebra_javascript = applet_data['javascript'].get('Geogebra',{})
 

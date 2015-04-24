@@ -2,9 +2,10 @@
 {% load dajaxice_templatetags %}
 
 {% if not blank_style %}
-{% block title %}{{ thepage.title }} - Math Insight{% endblock %}
+{% block title %}Slides: {{ thepage.title }} - Math Insight{% endblock %}
 
 {% block extrastyle %}
+{% if thepage.worksheet %}<link href="{{ STATIC_URL }}css/miworksheet.css" rel="stylesheet" type="text/css"/>{% endif %} 
 <meta name="description" content="{{ thepage.description}}"/>
 <script src="{{ STATIC_URL }}js/jquery.dajax.core.js" type="text/javascript"></script>
 <script src="{{ STATIC_URL }}js/jquery.ba-serializeobject.min.js" type="text/javascript"></script>
@@ -16,7 +17,7 @@
         {% get_hit_count_javascript for thepage %}
     });
 --></script>
-{{ rendered_header }}
+{% block extrastyle2 %}{% endblock %}
 {% endblock %}
 
 
@@ -34,7 +35,7 @@
   {% for thread_content in thepage.get_active_thread_content_set %}
   <li><a href="#thread_{{ thread_content.section.thread.code }}">{{ thread_content.section.thread }}</a></li>
   {% endfor %}</ul></li>{% endif %}
-  {%if notation_system_form %}<li><a href="#notation_systems">Notation</a></li>{%endif%}
+
   {% if thepage.keywords.all or manual_links  %}
   <li><a href="#{% if manual_links %}linksection{%else%}similar_pages{%endif%}">Links</a>
     <ul>
@@ -52,7 +53,9 @@
   <div class="ym-column linearize-level-1">
     <div class="ym-col1">
       <div class="ym-cbox">
-	<h3>{% endif %}{{ thepage.title}}{% if not blank_style %}</h3>
+	<h3>{% endif %}Slides: {{ thepage.title}}{% if not blank_style %}</h3>
+	{% if thepage.worksheet %}<section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>{%endif %}
+
       </div>
     </div>
     
@@ -75,7 +78,22 @@
 {% endblock %}
 
 {% block content %}
-{{rendered_text}}
+<div class='slideWrapper'>
+<iframe id="slides" width=560 height=349 src="{% url 'mi-page_with_type' page_type_code='slides' page_code=thepage.code %}?bare=true"  webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> 
+</div>
+
+<p style="text-align: right"><a id="fullscreeniframe" style="cursor: pointer">View full screen</a></p>
+
+
+{% if thepage.related_videos.all %}
+<h3 class="pre_list">Related videos</h3>
+<ul class="linklist">
+{% for video in thepage.related_videos.all %}
+<li>{% intlink video %}{% endintlink %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
 {% endblock %}
 
 
@@ -102,18 +120,6 @@
 {% endfor %}
 </section>
 {% endif %}
-{%if notation_system_form %}
-<a id="notation_systems" class="anchor"></a>
-<section class="notation_systems">
-<h4><a href="{%url 'mi-notationsystem' %}" class="normaltext">Notation systems</a></h4>
-<form action="{{thepage.get_absolute_url}}" method="post">{% csrf_token %}
-<p><label for="id_notation_system">Select a notation system:</label> <br/>
-{{ notation_system_form.notation_system }}
-<input type="submit" value="Submit" /></p>
-</form>
-<p><a href="{%url 'mi-notationsystem' %}">More information on notation systems</a></p>
-</section>
-{%endif%}
 {% if thepage.keywords.all %}
 <a id="similar_pages" class="anchor"></a>
 <section class="similar_pages">
@@ -212,5 +218,47 @@
 {% endif %}
 
 {%comment%}{{ thepage.template_modified|date:"M d, Y" }}{%endcomment%}
+<script>
+  var theslides=jQuery('#slides');
+(function(window, document){
+        var $ = function(selector,context){return(context||document).querySelector(selector)};
+
+        var iframe = $("iframe"),
+            domPrefixes = 'Webkit Moz O ms Khtml'.split(' ');
+
+        var fullscreen = function(elem) {
+            var prefix;
+            // Mozilla and webkit intialise fullscreen slightly differently
+            for ( var i = -1, len = domPrefixes.length; ++i < len; ) {
+              prefix = domPrefixes[i].toLowerCase();
+
+              if ( elem[prefix + 'EnterFullScreen'] ) {
+                // Webkit uses EnterFullScreen for video
+                return prefix + 'EnterFullScreen';
+                break;
+              } else if( elem[prefix + 'RequestFullScreen'] ) {
+                // Mozilla uses RequestFullScreen for all elements and webkit uses it for non video elements
+                return prefix + 'RequestFullScreen';
+                break;
+              }
+            }
+
+            return false;
+        };              
+        // Webkit uses "requestFullScreen" for non video elements
+        var fullscreenother = fullscreen(document.createElement("iframe"));
+
+        if(!fullscreen) {
+            alert("Fullscreen won't work, please make sure you're using a browser that supports it and you have enabled the feature");
+            return;
+        }
+
+        $("#fullscreeniframe").addEventListener("click", function(){
+            // iframe fullscreen and non video elements in webkit use request over enter
+            iframe[fullscreenother]();
+	    iframe.focus()
+        }, false);
+    })(this, this.document);
+</script>
 {% endblock %}
 {% endif %}

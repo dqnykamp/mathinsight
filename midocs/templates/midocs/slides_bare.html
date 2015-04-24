@@ -1,0 +1,91 @@
+{% load mi_tags %}<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %}Slides: {{ thepage.title }} - Math Insight{% endblock %}</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link href="{{ STATIC_URL }}css/grids.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="{{ STATIC_URL }}reveal.js/css/reveal.css"/>
+    {% block themecss %}<link rel="stylesheet" href="{{ STATIC_URL }}reveal.js/css/theme/simple.css" id="theme">{% endblock %}
+    <script type="text/javascript" src="{{ STATIC_URL }}geogebra/scripts/deployggb.js"></script>
+    <script>
+      if( window.location.search.match( /print-pdf/gi ) ) {
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = '{{ STATIC_URL }}reveal.js/css/print/pdf.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+      }
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/d3.min.js"></script>
+
+
+{% block noanalytics %}{% if not noanalytics %}<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-28169224-1']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>{% endif %}{% endblock%}
+
+    {{ rendered_header }}
+
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+	
+	{% block content %}
+	{{ rendered_text }}
+	{% endblock %}
+      </div>
+    </div>
+
+    <script src="{{ STATIC_URL }}reveal.js/lib/js/head.min.js"></script>
+    <script src="{{ STATIC_URL }}reveal.js/js/reveal.js"></script>
+    <script>
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+      width: 1280,
+      height:720,
+      controls: {% if request.GET.show_controls %}true{% else %}false{% endif %},
+      progress: false,
+      history: {% if request.GET.show_history %}true{% else %}false{% endif %},
+      center: true,
+      transition: 'none',
+
+      math: {
+	  mathjax: '{{STATIC_URL}}MathJax/MathJax.js',
+	  config: 'TeX-AMS_HTML-full,{{STATIC_URL}}mathjaxconfig/midefault,{{STATIC_URL}}mathjaxconfig/reducescale'
+      },
+
+      keyboard: {
+	  27: null // don't do anything when ESC is pressed
+      },
+
+      // Optional libraries used to extend on reveal.js
+      dependencies: [
+      { src: '{{ STATIC_URL }}reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+      { src: '{{ STATIC_URL }}reveal.js/plugin/jump/jump.js', async: true },
+      // MathJax
+      { src: '{{ STATIC_URL }}reveal.js/plugin/math/math.js', async: true },
+      ]});
+    </script>
+
+  {% if rendered_javascript %}
+  <script>
+  {{rendered_javascript}}
+  </script>
+  {% endif %}
+
+    {% accumulated_javascript %}
+  </body>
+
+
+</html>

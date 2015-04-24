@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from django.test import TestCase
-from midocs.models import Page, Applet, AppletType, Level, Image, Video, VideoType
+from midocs.models import Page, Applet, AppletType, PageType, Image, Video, VideoType
 import datetime
 from django.core.urlresolvers import reverse
 #from PIL import Image as PILImage
@@ -14,11 +14,11 @@ from django.core.urlresolvers import reverse
 
 
 def create_page(code, title="test page", highlight=False, publish_date=None, 
-                hidden=False, level=None):
-    if level:
+                hidden=False, page_type=None):
+    if page_type:
         return Page.objects.create(code=code, title=title,
                                    highlight=highlight, hidden=hidden,
-                                   publish_date=publish_date, level=level)
+                                   publish_date=publish_date, page_type=page_type)
     else:
         return Page.objects.create(code=code, title=title,
                                    highlight=highlight, hidden=hidden,
@@ -58,38 +58,38 @@ def create_a_video_type(code="sometype", name="video type",
                                      description=description)
 
 
-class LevelTests(TestCase):
-    def test_behavior_of_default_levels(self):
-        # with no levels returns none
-        self.assertEqual(Level.return_default(), None)
-        # with level not marked as default, returns that one
-        firstlevel = Level.objects.create(code="firstone", description="First Level")
-        self.assertEqual(Level.return_default(), firstlevel)
-        # when add second level not marked as default, returns first
+class PageTypeTests(TestCase):
+    def test_behavior_of_default_page_types(self):
+        # with no page_types returns none
+        self.assertEqual(PageType.return_default(), None)
+        # with page_type not marked as default, returns that one
+        firstpage_type = PageType.objects.create(code="firstone", name="First PageType")
+        self.assertEqual(PageType.return_default(), firstpage_type)
+        # when add second page_type not marked as default, returns first
         # (could remove this test if don't care about tihs ordering)
-        secondlevel = Level.objects.create(code="secondone", description="Second Level")
-        self.assertEqual(Level.return_default(), firstlevel)
-        # when add level marked as default, it should be returned
-        firstdefaultlevel = Level.objects.create(code="thedefault", description="The first default", default=True)
-        self.assertEqual(Level.return_default(), firstdefaultlevel)
-        # when add fourth level, still return default
-        fourthlevel = Level.objects.create(code="fourthone", description="Fourth Level")
-        self.assertEqual(Level.return_default(), firstdefaultlevel)
+        secondpage_type = PageType.objects.create(code="secondone", name="Second PageType")
+        self.assertEqual(PageType.return_default(), firstpage_type)
+        # when add page_type marked as default, it should be returned
+        firstdefaultpage_type = PageType.objects.create(code="thedefault", name="The first default", default=True)
+        self.assertEqual(PageType.return_default(), firstdefaultpage_type)
+        # when add fourth page_type, still return default
+        fourthpage_type = PageType.objects.create(code="fourthone", name="Fourth PageType")
+        self.assertEqual(PageType.return_default(), firstdefaultpage_type)
         # when then add a new default, it overrides old default
-        newdefaultlevel = Level.objects.create(code="thenewdefault", description="The new default", default=True)
-        self.assertEqual(Level.return_default(), newdefaultlevel)
+        newdefaultpage_type = PageType.objects.create(code="thenewdefault", name="The new default", default=True)
+        self.assertEqual(PageType.return_default(), newdefaultpage_type)
         # old default is now marked as not default
-        olddefault = Level.objects.get(pk = firstdefaultlevel.pk)
+        olddefault = PageType.objects.get(pk = firstdefaultpage_type.pk)
         self.assertFalse(olddefault.default)
         # if remove default setting from newdefault, 
-        # should return first level again
-        newdefaultlevel.default = False
-        newdefaultlevel.save()
-        self.assertEqual(Level.return_default(), firstlevel)
+        # should return first page_type again
+        newdefaultpage_type.default = False
+        newdefaultpage_type.save()
+        self.assertEqual(PageType.return_default(), firstpage_type)
 
 
-def create_a_level():
-    defaultlevel = Level.objects.create(code="thedefault", description="The default", default=True)
+def create_a_page_type():
+    defaultpage_type = PageType.objects.create(code="thedefault", name="The default", default=True)
 
 
 
@@ -104,7 +104,7 @@ class HomePageTests(TestCase):
         self.assertQuerysetEqual(response.context['new_pages'],[])
 
     def test_home_page_with_one_past_page(self):
-        create_a_level()
+        create_a_page_type()
         thepage=create_page("the_page")
         response = self.client.get(reverse('mathinsight-home'))
         self.assertEqual(response.status_code, 200)
@@ -114,7 +114,7 @@ class HomePageTests(TestCase):
         self.assertQuerysetEqual(response.context['new_pages'],[repr(thepage)])
 
     def test_home_page_with_one_highlighted_page(self):
-        create_a_level()
+        create_a_page_type()
         thepage=create_page("the_page", highlight=True)
         response = self.client.get(reverse('mathinsight-home'))
         self.assertEqual(response.status_code, 200)
@@ -124,7 +124,7 @@ class HomePageTests(TestCase):
         self.assertQuerysetEqual(response.context['new_pages'],[repr(thepage)])
 
     def test_home_page_with_one_hidden_highlighted_page(self):
-        create_a_level()
+        create_a_page_type()
         thepage=create_page("the_page", highlight=True, hidden=True)
         response = self.client.get(reverse('mathinsight-home'))
         self.assertEqual(response.status_code, 200)
@@ -134,7 +134,7 @@ class HomePageTests(TestCase):
         self.assertQuerysetEqual(response.context['new_pages'],[])
 
     def test_home_page_with_one_future_highlighted_page(self):
-        create_a_level()
+        create_a_page_type()
         thepage=create_page("the_page", publish_date = datetime.date.today()+datetime.timedelta(days=1), highlight=True)
         response = self.client.get(reverse('mathinsight-home'))
         self.assertEqual(response.status_code, 200)
@@ -188,7 +188,7 @@ class HomePageTests(TestCase):
 class ActiveManagerTests(TestCase):
     
     def test_active_page_manager(self):
-        create_a_level()
+        create_a_page_type()
         # with no pages
         active_pages = Page.activepages.all()
         self.assertQuerysetEqual(active_pages,[])
