@@ -1051,7 +1051,7 @@ def sstrE(expr, **settings):
     return s
 
 
-def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
+def Geogebra_change_object_javascript(context, appletobject,applet_variable,
                                       objectvalue, objectvalue_string):
     
     object_type = appletobject.object_type.object_type
@@ -1085,21 +1085,21 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                 value_x = value[0]
                 value_y = value[1]
             try:
-                javascript = 'document.%s.setCoords("%s", %E, %E);\n' % \
-                    (applet_identifier, object_name,
+                javascript = '%s.setCoords("%s", %E, %E);\n' % \
+                    (applet_variable, object_name,
                      float(value_x), float(value_y))
             except:
                 return ""
         elif object_type=='Number':
             try:
-                javascript = 'document.%s.setValue("%s", %E);\n' % \
-                    (applet_identifier, object_name,
+                javascript = '%s.setValue("%s", %E);\n' % \
+                    (applet_variable, object_name,
                      float(value))
             except:
                 return ""
         elif object_type=='Boolean':
-            javascript = 'document.%s.setValue("%s", %s);\n' % \
-                (applet_identifier, object_name,
+            javascript = '%s.setValue("%s", %s);\n' % \
+                (applet_variable, object_name,
                  value)
         elif object_type=='Text':
             # don't use value, use objectvalue, so math_objects
@@ -1107,8 +1107,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             value_string = "%s" % objectvalue
             # escape \ for javascript
             value_string = value_string.replace('\\','\\\\')
-            javascript = 'document.%s.evalCommand(\'%s="%s"\');\n' % \
-                (applet_identifier, object_name,
+            javascript = '%s.evalCommand(\'%s="%s"\');\n' % \
+                (applet_variable, object_name,
                  value_string)  
         elif object_type=='Function':
             from sympy import Symbol
@@ -1118,8 +1118,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             except KeyError:
                 return ""
             try:
-                javascript = 'document.%s.evalCommand(\'%s(x)=%s\');\n' % \
-                    (applet_identifier, object_name,
+                javascript = '%s.evalCommand(\'%s(x)=%s\');\n' % \
+                    (applet_variable, object_name,
                     sstrE(the_fun(Symbol('x'))))
             except:
                 return ""
@@ -1131,8 +1131,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
             except KeyError:
                 return ""
             try:
-                javascript = 'document.%s.evalCommand(\'%s(x,y)=%s\');\n' % \
-                    (applet_identifier, object_name, \
+                javascript = '%s.evalCommand(\'%s(x,y)=%s\');\n' % \
+                    (applet_variable, object_name, \
                     sstrE(the_fun(Symbol('x'),Symbol('y'))))
             except:
                 return ""
@@ -1161,41 +1161,41 @@ def Geogebra_change_object_javascript(context, appletobject,applet_identifier,
                     the_list = "%s" % value
 
 
-            javascript = 'document.%s.evalCommand(\'%s={%s}\');\n' % \
-                (applet_identifier, object_name,
+            javascript = '%s.evalCommand(\'%s={%s}\');\n' % \
+                (applet_variable, object_name,
                  the_list)
 
         return javascript
     except:
         raise #return ""
 
-def Geogebra_capture_object_javascript(appletobject, applet_identifier,
+def Geogebra_capture_object_javascript(appletobject, applet_variable,
                                        varname, related_objects=[]):
     
     object_type = appletobject.object_type.object_type
     javascript= ""
     if object_type=='Point':
-        xcoord = 'document.%s.getXcoord("%s")' % \
-            (applet_identifier, appletobject.name)
-        ycoord = 'document.%s.getYcoord("%s")' % \
-            (applet_identifier, appletobject.name)
+        xcoord = '%s.getXcoord("%s")' % \
+            (applet_variable, appletobject.name)
+        ycoord = '%s.getYcoord("%s")' % \
+            (applet_variable, appletobject.name)
         return '%s="Point("+%s+","+%s+")"' % (varname, xcoord,ycoord)
     elif object_type=='Number' or object_type=='Boolean':
-        return '%s=document.%s.getValue("%s")' % \
-            (varname, applet_identifier, appletobject.name)
+        return '%s=%s.getValue("%s")' % \
+            (varname, applet_variable, appletobject.name)
     elif object_type=='Text':
-        return '%s=document.%s.getValueString("%s")' % \
-            (varname, applet_identifier, appletobject.name)
+        return '%s=%s.getValueString("%s")' % \
+            (varname, applet_variable, appletobject.name)
     elif object_type=='Function':
         inputvarname = appletobject.function_input_variable
         if not inputvarname:
             inputvarname="x"
-        return '%s=/%s\(%s\) = (.*)/g.exec(document.%s.getValueString("%s"))[1]' % \
+        return '%s=/%s\(%s\) = (.*)/g.exec(%s.getValueString("%s"))[1]' % \
             (varname, appletobject.name, inputvarname, 
-             applet_identifier, appletobject.name)
+             applet_variable, appletobject.name)
     elif object_type=='List':
-        value = 'document.%s.getValueString("%s")' % \
-            (applet_identifier, appletobject.name)
+        value = '%s.getValueString("%s")' % \
+            (applet_variable, appletobject.name)
         # Extract the list within the braces returned by getValueString
         # Replace all curly braces by parentheses so lists will be tuples
         # Add comma at end so single element will still be a tuple (especially
@@ -1207,14 +1207,14 @@ def Geogebra_capture_object_javascript(appletobject, applet_identifier,
             point2=related_objects[1]
             if point1.object_type.object_type=='Point' and \
                     point2.object_type.object_type=='Point':
-                xcoord1 = 'document.%s.getXcoord("%s")' % \
-                    (applet_identifier, point1.name)
-                ycoord1 = 'document.%s.getYcoord("%s")' % \
-                    (applet_identifier, point1.name)
-                xcoord2 = 'document.%s.getXcoord("%s")' % \
-                    (applet_identifier, point2.name)
-                ycoord2 = 'document.%s.getYcoord("%s")' % \
-                    (applet_identifier, point2.name)
+                xcoord1 = '%s.getXcoord("%s")' % \
+                    (applet_variable, point1.name)
+                ycoord1 = '%s.getYcoord("%s")' % \
+                    (applet_variable, point1.name)
+                xcoord2 = '%s.getXcoord("%s")' % \
+                    (applet_variable, point2.name)
+                ycoord2 = '%s.getYcoord("%s")' % \
+                    (applet_variable, point2.name)
                 return '%s="Line(Point("+%s+","+%s+"),Point("+%s+","+%s+"))";\n' % \
                         (varname, xcoord1,ycoord1, xcoord2,ycoord2)
 
@@ -1605,11 +1605,6 @@ class AppletNode(template.Node):
             if thepage:
                 applet.in_pages.add(thepage)
 
-        if kwargs.get("iframe"):
-            return '<iframe width=%s height=%s src="%s?width=%s&height=%s"></iframe>' % \
-            (width+10, height+10, reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
-             width, height)
-
         answer_data = context.get('_answer_data_')
         
         try:
@@ -1620,9 +1615,11 @@ class AppletNode(template.Node):
         applet_counter = applet_data['counter']+1
         applet_data['counter']=applet_counter
         applet_suffix = applet_data.get('suffix','')
-        applet_identifier = "Applet%s0%s%s" % (
-            applet.code_camel(), applet_counter, 
-            underscore_to_camel(applet_suffix))
+        applet_identifier = kwargs.get("applet_identifier")
+        if not applet_identifier:
+            applet_identifier = "Applet%s0%s%s" % (
+                applet.code_camel(), applet_counter, 
+                underscore_to_camel(applet_suffix))
 
 
         caption = None
@@ -1669,6 +1666,9 @@ class AppletNode(template.Node):
             else:
                 return " %s %s" % (applet.title, description)
 
+
+        iframe = kwargs.get("iframe")
+
         # html for applet inclusion
         # add html for applet embedding based on applet_type
 
@@ -1700,9 +1700,27 @@ class AppletNode(template.Node):
         if applet_id_user not in this_applet_info:
             this_applet_info[applet_id_user] = applet_identifier
             applet_id_dict[applet.code]=this_applet_info
-        
 
-        if applet.applet_type.code == "LiveGraphics3D":
+        # record if applet was in iframe
+        applet_iframes = applet_data.get("iframes", {})
+        applet_iframes[applet_identifier] = iframe
+        applet_data['iframes'] = applet_iframes
+
+        applet_variable = ""
+        if applet.applet_type.code == "Geogebra" or \
+           applet.applet_type.code == "GeogebraWeb":
+            if iframe:
+                applet_variable = 'document.getElementById("%s").contentWindow.document.%s' % (applet_identifier, applet_identifier)
+            else:
+                applet_variable = 'document.%s' % applet_identifier
+
+        if iframe:
+            applet_link = '<iframe width=%s height=%s src="%s?width=%s&height=%s&applet_identifier=%s" id="%s" style="display: block; width: 600px; height: 400px;"></iframe>' % \
+            (width, height, reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
+             width, height, applet_identifier, applet_identifier)
+            script_string=""
+
+        elif applet.applet_type.code == "LiveGraphics3D":
             (applet_link, script_string) = LiveGraphics3D_link(context, applet, applet_identifier, width, height)
         elif applet.applet_type.code == "DoubleLiveGraphics3D":
            (applet_link, script_string) = DoubleLiveGraphics3D_link(context, applet, applet_identifier, width, height)
@@ -1889,8 +1907,21 @@ class AppletNode(template.Node):
             answer_data['error']=True
             answer_data['answer_errors'].append(\
                 "No captureable applet object to match answer: %s" % the_kw)
-            
 
+        # if call_parent_capture, attempt to call parent version of capture
+        if kwargs.get("call_parent_capture"):
+            appletobjects=applet.appletobject_set.filter \
+                           (capture_changes=True).order_by(
+                               "category_for_capture")
+
+            for appletobject in appletobjects:
+                this_capture= capture_javascript.get(appletobject.name,"")
+                # this exact text is tested against in
+                # AccumulatedJavascriptNode to determine if the capture script
+                # is only this call.
+                this_capture \
+                    += 'if(inIframe()) {try {parent.listener%s_%s(obj);} catch(e) {} }\n' % (applet_identifier, appletobject.name)
+                capture_javascript[appletobject.name]=this_capture
 
         # check if any applet objects are specified 
         # to be changed with javascript
@@ -1922,7 +1953,7 @@ class AppletNode(template.Node):
                 if applet.applet_type.code == "Geogebra" \
                         or applet.applet_type.code == "GeogebraWeb":
                     init_javascript += Geogebra_change_object_javascript \
-                        (context, appletobject, applet_identifier, \
+                        (context, appletobject, applet_variable, \
                              objectvalue, objectvalue_string)
                     
 
@@ -2148,6 +2179,127 @@ def applet_object(parser,token):
 
     return AppletObjectNode(object_name, kwargs, kwargs_string)
     
+
+class RenderJavascriptSetAppletObjectNode(template.Node):
+    def __init__(self, object_name, kwargs, kwargs_string, nodelist):
+        self.object_name = object_name
+        self.kwargs=kwargs
+        self.kwargs_string=kwargs_string
+        self.nodelist=nodelist
+    def render(self, context):
+
+        kwargs = dict([(smart_text(k, 'ascii'), v.resolve(context))
+                       for k, v in self.kwargs.items()])
+        kwargs_string = dict([(smart_text(k, 'ascii'), v)
+                              for k, v in self.kwargs_string.items()])
+
+        object_name = self.object_name.resolve(context)
+
+        object_value = self.nodelist.render(context)
+
+
+        # must have applet in kwargs, or specified in context
+        applet = kwargs.get('applet')
+        if not applet:
+            try:
+                applet= context['_the_applet']
+            except KeyError:
+                return "console.log('Broken render_javascript_set_applet_object: no applet specified');"
+
+        # if applet is not an applet instance
+        # try to load applet with that code
+        if not isinstance(applet, Applet):
+            # test if applet with applet_code exists
+            try:
+                applet=Applet.objects.get(code=applet)
+                # if applet does not exist
+                # return tag to applet code anyway
+            except ObjectDoesNotExist:
+                return "console.log('Broken render_javascript_set_applet_object: no applet found');"
+
+        # get applet_id_user optionally from kwargs or context
+        applet_id_user = kwargs.get('applet_id', 
+                                    context.get('_the_applet_id_user'))
+        # if applet_id_user not assigned, try to set it to question identifier
+        # from answer_data
+        if not applet_id_user:
+            try:
+                applet_id_user = context['_answer_data_']['question_identifier']
+            except KeyError:
+                pass
+
+
+        # get applet_identifier optionally from context
+        applet_identifier = context.get('_the_applet_identifier')
+        
+        try:
+            applet_object=applet.appletobject_set.get \
+                           (capture_changes=True, name=object_name)
+        except ObjectDoesNotExist:
+            return "console.log('Broken render_javascript_set_applet_object: no object found');"
+
+        try:
+            applet_data=context['_auxiliary_data_']['applet']
+        except (KeyError, TypeError):
+            return "console.log('Broken render_javascript_set_applet_object: no applet data');"
+        
+        set_applet_object_counter = applet_data.get('set_applet_object_counter',0)+1
+        applet_data['set_applet_object_counter']=set_applet_object_counter
+        
+        set_object_function_name = "setappletobject_%s" % set_applet_object_counter
+
+        try:
+            object_list=applet_data['set_applet_objects']
+        except KeyError:
+            object_list = []
+            applet_data['set_applet_objects'] = object_list
+
+
+        # Since applet tag may not have been encountered yet
+        # cannot yet form javascript to update object.
+        # Record information about applet object for later processing.
+        # If applet_identifier is specified, then it overrides applet_id_user
+        object_list.append({
+            'applet_object': applet_object,
+            'set_object_function_name': set_object_function_name,
+            'applet': applet,
+            'applet_id_user': applet_id_user,
+            'applet_identifier': applet_identifier,
+            'hidden_section_identifier':\
+            context.get('_the_hidden_section_identifier'),
+        })
+        
+        # call function to set object value
+        return "%s(%s);" % (set_object_function_name, object_value)
+
+@register.tag
+def render_javascript_set_applet_object(parser,token):
+    bits = token.split_contents()
+    if len(bits) < 2:
+        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+
+    object_name = parser.compile_filter(bits[1])
+
+    kwargs = {}
+    kwargs_string = {}
+    
+    bits = bits[2:]
+
+    if len(bits):
+        for bit in bits:
+            match = kwarg_re.match(bit)
+            if not match:
+                raise template.TemplateSyntaxError("Malformed arguments to %s tag" % bits[0])
+            name, value = match.groups()
+            if name:
+                kwargs[name] = parser.compile_filter(value)
+                kwargs_string[name] = value
+
+    nodelist = parser.parse(('end_render_javascript_set_applet_object',))
+    parser.delete_first_token()
+
+    return RenderJavascriptSetAppletObjectNode(object_name, kwargs, 
+                                               kwargs_string, nodelist)
 
 class AppletTextNode(template.Node):
     def __init__(self, text_code, kwargs, kwargs_string):
@@ -2789,6 +2941,7 @@ def return_applet_object_javascript(applet_data, capture_javascript):
     try:
         applet_objects = applet_data['applet_objects']
         applet_id_dict = applet_data['applet_ids']
+        applet_iframes = applet_data['iframes']
     except KeyError:
         return ""
 
@@ -2815,6 +2968,14 @@ def return_applet_object_javascript(applet_data, capture_javascript):
             except ObjectDoesNotExist:
                 error_javascript += 'jQuery("#%s").html("<p>[Broken applet object: no applet found]</p>");\n' % object_identifier
                 continue
+
+        applet_variable = ""
+        if applet.applet_type.code == "Geogebra" or \
+           applet.applet_type.code == "GeogebraWeb":
+            if applet_iframes[applet_identifier]:
+                applet_variable = 'document.getElementById("%s").contentWindow.document.%s' % (applet_identifier, applet_identifier)
+            else:
+                applet_variable = 'document.%s' % applet_identifier
 
         if applet.applet_type.code == "Geogebra" \
            or applet.applet_type.code == "GeogebraWeb":
@@ -2845,7 +3006,7 @@ def return_applet_object_javascript(applet_data, capture_javascript):
 
                 object_capture += "var temp;\n"
                 object_capture += Geogebra_capture_object_javascript(
-                    applet_object, applet_identifier, 
+                    applet_object, applet_variable, 
                     "temp", related_objects)
                 object_capture += "\n";
 
@@ -2891,6 +3052,7 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
     try:
         modify_applet_objects = applet_data['modify_applet_objects']
         applet_id_dict = applet_data['applet_ids']
+        applet_iframes = applet_data['iframes']
     except KeyError:
         return ""
 
@@ -2917,6 +3079,14 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
             except ObjectDoesNotExist:
                 continue
 
+        applet_variable = ""
+        if applet.applet_type.code == "Geogebra" or \
+           applet.applet_type.code == "GeogebraWeb":
+            if applet_iframes[applet_identifier]:
+                applet_variable = 'document.getElementById("%s").contentWindow.document.%s' % (applet_identifier, applet_identifier)
+            else:
+                applet_variable = 'document.%s' % applet_identifier
+
         if applet.applet_type.code == "Geogebra" \
            or applet.applet_type.code == "GeogebraWeb":
 
@@ -2938,7 +3108,7 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
                     
                 capture_command1 = "var temp;\n"
                 capture_command1 += Geogebra_capture_object_javascript(
-                    applet_object, applet_identifier, 
+                    applet_object, applet_variable, 
                     "temp", related_objects)
                 capture_command1 += "\n";
 
@@ -2975,20 +3145,20 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
 
             object_type = applet_object.object_type.object_type
             if object_type == 'Number' or object_type=='Boolean':
-                change_command = 'document.%s.setValue("%s", the_value);' % \
-                                 (applet_identifier,  applet_object.name)
+                change_command = '%s.setValue("%s", the_value);' % \
+                                 (applet_variable,  applet_object.name)
             elif object_type == 'Function':
                 varname = applet_object.function_input_variable
                 if varname == "" or varname is None:
                     varname="x"
-                change_command = 'document.%s.evalCommand(\'%s(%s) = \' + the_value );'%\
-                                 (applet_identifier, applet_object.name, varname)
+                change_command = '%s.evalCommand(\'%s(%s) = \' + the_value );'%\
+                                 (applet_variable, applet_object.name, varname)
             elif object_type == "Text":
-                change_command = 'document.%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
-                                 (applet_identifier, applet_object.name)
+                change_command = '%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
+                                 (applet_variable, applet_object.name)
             else:
-                change_command = 'document.%s.evalCommand(\'%s: \' + the_value );'%\
-                                 (applet_identifier, applet_object.name)
+                change_command = '%s.evalCommand(\'%s: \' + the_value );'%\
+                                 (applet_variable, applet_object.name)
                 
 
             if capture_command:
@@ -3016,6 +3186,75 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
     return '<div id="modify_applet_objects">\n<script>\n%s</script>\n</div>\n' % modify_javascript
 
 
+def return_set_object_javascript_functions(applet_data):
+
+    # javascript functions that will be called to set object values 
+    # from within other javascript functions
+    # Now can look up applet information to associate to correct applet
+
+    # Could probably combine with the modify_applet_object_javascript, 
+    # which changes applet objects from answer blanks.
+    # At the very least, should change names to make the difference clear.
+
+    try:
+        set_applet_objects=applet_data['set_applet_objects']
+        applet_id_dict = applet_data['applet_ids']
+        applet_iframes = applet_data['iframes']
+    except KeyError:
+        return ""
+
+    set_object_javascript = ""
+
+    for ao in set_applet_objects:
+        applet_object = ao['applet_object']
+        set_object_function_name = ao['set_object_function_name']
+        applet = ao['applet']
+        applet_id_user = ao['applet_id_user']
+        applet_identifier = ao['applet_identifier']
+
+        if not applet_identifier:
+            try:
+                applet_identifier = find_applet_identifier(
+                    applet_id_dict=applet_id_dict, applet=applet, 
+                    applet_id_user=applet_id_user)
+            except ObjectDoesNotExist:
+                continue
+
+        applet_variable = ""
+        if applet.applet_type.code == "Geogebra" or \
+           applet.applet_type.code == "GeogebraWeb":
+            if applet_iframes[applet_identifier]:
+                applet_variable = 'document.getElementById("%s").contentWindow.document.%s' % (applet_identifier, applet_identifier)
+            else:
+                applet_variable = 'document.%s' % applet_identifier
+
+        if applet.applet_type.code == "Geogebra" \
+           or applet.applet_type.code == "GeogebraWeb":
+
+            object_type = applet_object.object_type.object_type
+            if object_type == 'Number' or object_type=='Boolean':
+                change_command = '%s.setValue("%s", the_value);' % \
+                                 (applet_variable,  applet_object.name)
+            elif object_type == 'Function':
+                varname = applet_object.function_input_variable
+                if varname == "" or varname is None:
+                    varname="x"
+                change_command = '%s.evalCommand(\'%s(%s) = \' + the_value );'%\
+                                 (applet_variable, applet_object.name, varname)
+            elif object_type == "Text":
+                change_command = '%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
+                                 (applet_variable, applet_object.name)
+            else:
+                change_command = '%s.evalCommand(\'%s: \' + the_value );'%\
+                                 (applet_variable, applet_object.name)
+                
+
+            set_object_javascript += 'function %s(the_value) {\n%s\n}\n' % \
+                                 (set_object_function_name, change_command)
+            
+    return '<div id="set_applet_objects">\n<script>\n%s</script>\n</div>\n' % set_object_javascript
+
+
 
 class AccumulatedJavascriptNode(template.Node):
     def render(self, context):
@@ -3025,6 +3264,7 @@ class AccumulatedJavascriptNode(template.Node):
         try:
             auxiliary_data = context['_auxiliary_data_']
             applet_data = auxiliary_data['applet']
+            applet_iframes = applet_data['iframes']
         except KeyError:
             return ""
         
@@ -3055,6 +3295,8 @@ class AccumulatedJavascriptNode(template.Node):
             applet_data=applet_data, capture_javascript=capture_javascript,
             on_init_commands = geogebra_on_init_commands)
 
+        script_string += return_set_object_javascript_functions(applet_data)
+
         script_string += return_applet_object_javascript(
             applet_data=applet_data, capture_javascript=capture_javascript)
 
@@ -3062,6 +3304,12 @@ class AccumulatedJavascriptNode(template.Node):
         the_capture_script =""
         for applet_identifier in capture_javascript:
             
+            applet_variable = ""
+            if applet_iframes[applet_identifier]:
+                applet_variable = 'document.getElementById("%s").contentWindow.document.%s' % (applet_identifier, applet_identifier)
+            else:
+                applet_variable = 'document.%s' % applet_identifier
+
             applet_capture = capture_javascript[applet_identifier]
             listener_function_name_base = "listener%s" % applet_identifier
             
@@ -3075,15 +3323,22 @@ class AccumulatedJavascriptNode(template.Node):
                                       (listener_function_name, 
                                        applet_capture[applet_object_name])
             
-            
-                on_init_commands \
-                    += 'document.%s.registerObjectUpdateListener("%s","%s");\n'\
-                    % (applet_identifier, applet_object_name,
-                       listener_function_name)
+
+                # if capture javascript is only a call to a parent listener
+                # then don't register listener.
+                # Listener will be registered if needed by parent
+                empty_capture = applet_capture[applet_object_name] == \
+                    'if(inIframe()) {try {parent.listener%s_%s(obj);} catch(e) {} }\n' % (applet_identifier, applet_object_name)
+
+                if not empty_capture:
+                    on_init_commands \
+                        += '%s.registerObjectUpdateListener("%s","%s");\n'\
+                        % (applet_variable, applet_object_name,
+                           listener_function_name)
                 
-                # run the listener function upon initialization
-                # so values are set at outset
-                on_init_commands += "%s();\n" % listener_function_name
+                    # run the listener function upon initialization
+                    # so values are set at outset
+                    on_init_commands += "%s();\n" % listener_function_name
 
             geogebra_on_init_commands[applet_identifier]=on_init_commands
 
@@ -3099,7 +3354,7 @@ class AccumulatedJavascriptNode(template.Node):
                 
 
         if all_init_commands:
-            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\n }\n</script></div>' % all_init_commands
+            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\nif(inIframe()) { parent.ggbOnInit(arg);} \n}\n</script></div>' % all_init_commands
 
         three_javascript = context.dicts[0].get('three_javascript', '')
         run_three_javascript = context.dicts[0].get('run_three_javascript', '')

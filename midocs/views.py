@@ -339,6 +339,7 @@ def appletview_bare(request, applet_code):
     
     width=request.GET.get("width")
     height=request.GET.get("height")
+    applet_identifier=request.GET.get("applet_identifier")
 
     from midocs.functions import return_new_auxiliary_data
     auxiliary_data = return_new_auxiliary_data()
@@ -347,6 +348,7 @@ def appletview_bare(request, applet_code):
                               {'applet': theapplet, 
                                '_auxiliary_data_': auxiliary_data,
                                'width': width, 'height': height,
+                               'applet_identifier': applet_identifier,
                            },
                               context_instance=RequestContext(request))
     

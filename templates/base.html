@@ -190,7 +190,16 @@
 			document.getElementById(shID).style.display = 'none';
 		}
 	}
-}
+  }
+  function inIframe () {
+    try { 
+	return window.self !== window.parent; 
+    } 
+    catch (e) { 
+	return true; 
+    }
+  }
+
 </script>
 {% if rendered_javascript %}
 <script>

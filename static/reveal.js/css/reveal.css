@@ -140,6 +140,44 @@ body {
 .reveal .slides section .fragment.highlight-current-bold.current-fragment {
   font-weight: bold; }
 
+.reveal .slides section .fragment.no-space {
+    display: none;
+ }
+
+.reveal .slides section p.fragment.no-space.visible, .reveal .slides section div.fragment.no-space.visible, .reveal .slides section h1.fragment.no-space.visible, .reveal .slides section h2.fragment.no-space.visible, .reveal .slides section h3.fragment.no-space.visible, .reveal .slides section h4.fragment.no-space.visible, .reveal .slides section h5.fragment.no-space.visible  {
+    display: block;
+}
+
+.reveal .slides section a.fragment.no-space.visible, .reveal .slides section span.fragment.no-space.visible  {
+    display: inline;
+}
+
+.reveal .slides section ol.fragment.no-space.visible, .reveal .slides section dl.fragment.no-space.visible, .reveal .slides section ul.fragment.no-space.visible {
+    display: inline-block;
+}
+
+.reveal .slides section li.fragment.no-space.visible  {
+    display: list-item;
+}
+
+.reveal .slides section tr.fragment.no-space.visible  {
+    display: table-row;
+}
+
+.reveal .slides section td.fragment.no-space.visible  {
+    display: table-cell;
+}
+
+.reveal .slides section .fragment.no-space-out {
+    opacity: 1;
+    visibility: visible;
+}
+
+.reveal .slides section .fragment.no-space-out.visible {
+    display: none;
+}
+
+
 /*********************************************
  * DEFAULT ELEMENT STYLES
  *********************************************/
