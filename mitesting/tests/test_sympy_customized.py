@@ -297,7 +297,8 @@ class ParseExprTests(SimpleTestCase):
         expr2=parse_expr("1-1*5*x", evaluate=False)
         self.assertNotEqual(expr1,expr2)
 
-        from sympy import Gt, Lt, Ge, Le, And, Or
+        from sympy import Gt, Lt, Ge, Le
+        from mitesting.sympy_customized import And, Or
         expr1=parse_expr("2<3", evaluate=False)
         self.assertEqual(expr1, Lt(2,3,evaluate=False))
 
@@ -495,7 +496,8 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, True)
 
     def test_relational(self):
-        from sympy import Eq, Ne, Lt, Ge, Or, And
+        from sympy import Eq, Ne, Lt, Ge
+        from mitesting.sympy_customized import Or, And
         
         x=Symbol('x')
         y=Symbol('y')
@@ -541,6 +543,34 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("x-1=y+c and (y/a=x(z) or a^2 != (b+2)(c-1)/2)")
         self.assertEqual(expr, And(Eq(x-1,y+c), Or(Eq(y/a,x*z), Ne(a**2,(b+2)*(c-1)/2))))
 
+    def test_multiple_relational(self):
+        from sympy import Eq, Ne, Lt, Le, Gt, Ge
+        from mitesting.sympy_customized import Or, And
+        from mitesting.customized_commands import Gts, Lts
+
+        a=Symbol('a')
+        b=Symbol('b')
+        c=Symbol('c')
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+ 
+        expr=parse_expr("a < b <=c <x")
+        self.assertEqual(expr, And(Lt(a,b), Le(b,c), Lt(c,x)))
+
+        expr=parse_expr("a>b >= c >=x")
+        self.assertEqual(expr, And(Gt(a,b), Ge(b,c), Ge(c,x)))
+
+        expr=parse_expr("a < b <=c <x", evaluate=False)
+        self.assertEqual(expr, Lts((a,b,c,x), (True, False, True), evaluate=False))
+        self.assertEqual(latex(expr), "a < b \leq c < x")
+        
+
+        expr=parse_expr("a>b >= c >=x", evaluate=False)
+        self.assertEqual(expr, Gts((a,b,c,x), (True, False, False), evaluate=False))
+        self.assertEqual(latex(expr), "a > b \geq c \geq x")
+        
+        
     def test_tuple_no_parens(self):
         from mitesting.sympy_customized import TupleNoParen
 
@@ -715,8 +745,7 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("(1/2).evalf()"), 0.5)
 
     def test_contains(self):
-        from sympy import Or
-        from mitesting.sympy_customized import Interval, FiniteSet
+        from mitesting.sympy_customized import Interval, FiniteSet, Or
         x=Symbol('x')
         expr=parse_expr("x in (1,2)")
         self.assertEqual(expr, Interval(1,2, left_open=True, right_open=True).contains(x))

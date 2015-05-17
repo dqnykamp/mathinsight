@@ -499,17 +499,21 @@ def replace_boolean_equals_in(s, evaluate=True):
     5. if evaluate=False, replace == with __python_Eq__(lhs,rhs)
     and !== with __python__Ne__(lhs,rhs)
     
-    6. if evaluate=False,
-    replace <=, >=, <, and > with __Le__(lhs,rhs,evaluate=False),
-    __Ge__(lhs,rhs,evaluate=False), __Lt__(lhs,rhs, evaluate=False), and
-    __Gt__(lhs,rhs, evaluate=False), respectively
+    6. replace expressions such as a <= b < c < d
+    with __Lts__((a,b,c,d), (False, True, True))
+    If evaluate=False, add evaluate=False.
+    Second argument is a tuple specifying which inequalities are strict.
 
+    6. replace expressions such as a >= b > c > d
+    with __Gts__((a,b,c,d), (False, True, True))
+    If evaluate=False, add evaluate=False.
+    Second argument is a tuple specifying which inequalities are strict.
 
     __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
-    Eq, Ne, And, and Or when parsing
+    Eq, Ne, And, and Or when parsing.  (Actually use customized And, Or.)
 
-    If evaluate=False, then __Le__, __Ge__, __Lt__, and __Gt__ must be
-    mapped to sympy Le, Ge, Lt, and Gt when parsing
+    __Lts__ and __Gts__ must be mapped to custom functions Lts and Gts
+    when parsing.
 
     If evaluate=False, then __python_Eq__ and __python_Ne__ must be
     mapped to python_equal_uneval and python_not_equal_uneval when parsing
@@ -520,6 +524,7 @@ def replace_boolean_equals_in(s, evaluate=True):
     Repeats the procedure until can't find more =, !=, &, |, or in
     or until lhs or rhs is blank
 
+    Step 6 is a separate loop, as it involves multiple arguments.
 
 
     """
@@ -533,7 +538,11 @@ def replace_boolean_equals_in(s, evaluate=True):
     # replace in with __in_op_pl__
     s=re.sub(r'\bin\b', r'___in_op_pl___', s)
 
-    for i in range(11):
+
+    #####################################
+    # replace commands with two arguments
+    #####################################
+    for i in range(7):
         if i==0:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
@@ -617,54 +626,6 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
-        elif i==7:
-            if evaluate:
-                continue
-            pattern = re.compile('[^!](<=)[^=]')
-            len_op=2
-            new_op='__Le__(%s,%s,evaluate===False)'
-            reverse_arguments=False
-            replace_rhs_intervals=False
-            # characters captured in pattern to left of operator
-            loffset=1
-            # characters that signal end of expression if not in ()
-            break_chars=",&|!=<>" 
-        elif i==8:
-            if evaluate:
-                continue
-            pattern = re.compile('[^!](>=)[^=]')
-            len_op=2
-            new_op='__Ge__(%s,%s,evaluate===False)'
-            reverse_arguments=False
-            replace_rhs_intervals=False
-            # characters captured in pattern to left of operator
-            loffset=1
-            # characters that signal end of expression if not in ()
-            break_chars=",&|!=<>" 
-        elif i==9:
-            if evaluate:
-                continue
-            pattern = re.compile('[^!](<)[^=]')
-            len_op=1
-            new_op='__Lt__(%s,%s,evaluate===False)'
-            reverse_arguments=False
-            replace_rhs_intervals=False
-            # characters captured in pattern to left of operator
-            loffset=1
-            # characters that signal end of expression if not in ()
-            break_chars=",&|!=<>" 
-        elif i==10:
-            if evaluate:
-                continue
-            pattern = re.compile('[^!](>)[^=]')
-            len_op=1
-            new_op='__Gt__(%s,%s,evaluate===False)'
-            reverse_arguments=False
-            replace_rhs_intervals=False
-            # characters captured in pattern to left of operator
-            loffset=1
-            # characters that signal end of expression if not in ()
-            break_chars=",&|!=<>" 
             
         while True:
             mo= pattern.search(s)
@@ -721,6 +682,107 @@ def replace_boolean_equals_in(s, evaluate=True):
                     new_command_string = new_op % (lhs,rhs)
                 s = s[:begin_pos] + new_command_string + s[end_pos:]
 
+
+
+    #####################
+    # replace Gts and Lts
+    #####################
+    for i in range(2):
+        if i==0:
+            pattern = re.compile('[^!](<)')
+            op_char="<"
+            new_op='__Lts__'
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+        elif i==1:
+            pattern = re.compile('[^!](>)')
+            op_char=">"
+            new_op='__Gts__'
+
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars=",&|!=<>" 
+            
+        while True:
+            mo= pattern.search(s)
+            if not mo:
+                break
+            ind = mo.start(0)+loffset
+
+            strict=[s[ind+1]!="=",]
+            if strict[0]:
+                len_op=1
+            else:
+                len_op=2
+
+            
+            # find location of first ( before and not matched by )
+            # or at a comma not enclosed in ()
+            # count braces and brackets as parens, don't track them separately
+            n_closepar=0
+            begin_pos=0
+            for (j,c) in enumerate(s[ind-1::-1]):
+                if c==")" or c=="}" or c=="]":
+                    n_closepar+=1
+                elif c=="(" or c=="{" or c=="[":
+                    n_closepar-=1
+                    if n_closepar ==-1:
+                        begin_pos=ind-j
+                        break
+                elif c in break_chars and n_closepar==0:
+                    begin_pos=ind-j
+                    break
+
+            args = [s[begin_pos:ind].strip(),]
+
+            while True:
+                n_openpar=0
+                end_pos=len(s)
+                for (j,c) in enumerate(s[ind+len_op:]):
+                    if c=="(" or c=="{" or c=="[":
+                        n_openpar+= 1
+                    elif c==")" or c=="}" or c=="]":
+                        n_openpar-=1
+                        if n_openpar==-1:
+                            end_pos=ind+j+len_op
+                            break
+                    elif c in break_chars and n_openpar==0:
+                        end_pos=ind+j+len_op
+                        break
+
+                args += [s[ind+len_op:end_pos].strip(),]
+
+                if end_pos==len(s) or s[end_pos] != op_char:
+                    break
+                
+                next_strict = s[end_pos+1] != "="
+                strict += [next_strict,]
+                if next_strict:
+                    len_op=1
+                else:
+                    len_op=2
+            
+
+                ind = end_pos
+                
+
+
+            # stop if an argument is just spaces
+            if "" in args:
+                break
+            else:
+                if evaluate:
+                    new_command_string = "%s((%s),%s)"\
+                                         % (new_op, ",".join(args), tuple(strict))
+                else:
+                    new_command_string = "%s((%s),%s, evaluate===False)"\
+                                         % (new_op, ",".join(args), tuple(strict))
+
+                s = s[:begin_pos] + new_command_string + s[end_pos:]
+            
     return s
 
 
@@ -1240,7 +1302,7 @@ def replace_unevaluated_commands(expr, replace_dict={}):
     def replaceUnsortsPythonEquals(w):
         from mitesting.sympy_customized import AddUnsort, MulUnsort
         from mitesting.customized_commands import python_equal_uneval, \
-            python_not_equal_uneval
+            python_not_equal_uneval, Gts, Lts
         from sympy import Add, Mul
 
         if w in replace_dict:
@@ -1253,6 +1315,9 @@ def replace_unevaluated_commands(expr, replace_dict={}):
             return w.args[0] == w.args[1]
         if isinstance(w, python_not_equal_uneval):
             return w.args[0] != w.args[1]
+        if isinstance(w, Gts) or isinstance(w,Lts):
+            return w.doit(deep=False)
+
   
         return w
 

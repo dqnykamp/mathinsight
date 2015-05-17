@@ -517,7 +517,7 @@ class TestCompareResponse(TestCase):
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
         self.assertTrue("75%" in answer_results["answer_feedback"])
 
-    
+
     def test_different_tuple_types(self):
 
         local_dict={}
@@ -559,6 +559,155 @@ class TestCompareResponse(TestCase):
         self.assertEqual(answer_results['percent_correct'],100)
         self.assertTrue("is correct" in answer_results["answer_feedback"])
 
+
+    def test_tuples_of_relational(self):
+        local_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a>b,b<=c,c>d"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b, c>=b, d < c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b,c>d,c>=b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
+        expr_context["a"]=math_object(parse_expr("a>b,b<=c,c>d"),
+                                      tuple_is_unordered=True)
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b,c>d,c>=b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+    def test_boolean_of_relational(self):
+        local_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a>b and b<=c and c>d"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b and c>=b and d < c", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+    
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b and c>d and c>=b", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b and c>=b and d<c and a>d", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a>b and c>=b and d<c and a>d", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],75)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("75%" in answer_results["answer_feedback"])
+
+
+    def test_inequality_string(self):
+        local_dict={}
+        expr_context=Context({})
+
+        answer_info={'code': 'a', 'type': EXPRESSION}
+        expr_context["a"]=math_object(parse_expr("a>b >=c >d >=x"))
+        
+        the_ans=self.new_answer(answer_code="a", answer="a")
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a >b >=c > d >=x", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a >b and b >=c and c > d and d >=x", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="x <=d <c <=b < a", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertTrue(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue("is correct" in answer_results["answer_feedback"])
+
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="b >=c > d >=x", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+
+        the_ans.match_partial_on_compare=True
+        the_ans.save()
+
+        answer_results=compare_response_with_answer_code\
+                        (user_response="b >=c > d >=x", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],75)
+        self.assertTrue("not completely correct" in answer_results["answer_feedback"])
+        self.assertTrue("75%" in answer_results["answer_feedback"])
 
     def test_matrix(self):
         from mitesting.utils import return_matrix_expression

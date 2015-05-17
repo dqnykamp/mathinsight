@@ -348,7 +348,8 @@ class TestExpressions(TestCase):
 
 
     def test_required_condition_complex_inequality(self):
-        from sympy import Or, And, Lt, Gt, Le, Ge
+        from sympy import Lt, Gt, Le, Ge
+        from mitesting.sympy_customized import Or, And
         for i in range(10):
             local_dict={'Or': Or, 'And': And, 'Lt': Lt, 'Gt': Gt, 
                          'Le': Le, 'Ge': Ge}
@@ -716,8 +717,7 @@ class TestExpressions(TestCase):
 
 
     def test_contains(self):
-        from sympy import Or, And
-        from mitesting.sympy_customized import latex
+        from mitesting.sympy_customized import latex, Or, And
 
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)

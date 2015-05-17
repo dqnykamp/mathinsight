@@ -380,9 +380,11 @@ class math_object(object):
 
         expression=self._expression
 
+        evaluate_level = self.return_evaluate_level()
+
         # As long as evaluate is not False
         # convert customized ln command to customized log command
-        if self._parameters.get("evaluate_level") != EVALUATE_NONE:
+        if evaluate_level != EVALUATE_NONE:
             from .user_commands import log, ln
             expression = bottom_up(expression, 
                 lambda w: w if not w.func==ln else log(*w.args))
@@ -403,7 +405,7 @@ class math_object(object):
         # As long as evaluate is not False
         # evaluate both expressions to precision as specified by
         # round_on_compare and round_absolute (with additional rounding)
-        if self._parameters.get("evaluate_level") != EVALUATE_NONE:
+        if evaluate_level != EVALUATE_NONE:
             new_expr = self.eval_to_comparison_precision(new_expr,
                                 additional_rounding=additional_rounding)
             expression = self.eval_to_comparison_precision(expression, 
@@ -594,6 +596,13 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
         except AttributeError:
             return 0
 
+    from sympy.core.function import Application
+    
+    if isinstance(expression1, Application) and \
+       isinstance(expression2, Application):
+        return check_function_equality(expression1, expression2, 
+                                       partial_matches=partial_matches)
+
     if expression1 == expression2:
         return 1
     else:
@@ -671,28 +680,37 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     if the_tuple1.__class__ != the_tuple2.__class__:
         return 0
 
+    nelts1=len(the_tuple1)
+    nelts2=len(the_tuple2)
+
     # if tuple_is_unordered isn't set, demand exact equality
     if not tuple_is_unordered:
-        if the_tuple1 == the_tuple2:
+
+        # check how many elements match in order from the beginning
+        n_matches=0
+        for i in range(min(nelts1, nelts2)):
+            n_matches+=check_equality(the_tuple1[i], the_tuple2[i])
+
+        # if tuple lengths are equal and all match, then exact equality
+        if nelts1==nelts2 and nelts1==n_matches:
             return 1
+
         if not partial_matches:
             return 0
 
         # find length of largest common subsequence
-        m = len(the_tuple1)
-        n = len(the_tuple2)
 
         from sympy import zeros
-        C = zeros(m+1,n+1)
-        for i in range(m):
-            for j in range(n):
-                if the_tuple1[i] == the_tuple2[j]:
+        C = zeros(nelts1+1,nelts2+1)
+        for i in range(nelts1):
+            for j in range(nelts2):
+                if check_equality(the_tuple1[i], the_tuple2[j])==1:
                     C[i+1,j+1] = C[i,j] +1
                 else:
                     C[i+1,j+1] = max(C[i+1,j],C[i,j+1])
         
-        max_matched = float(C[m,n])  # float so don't get sympy rational
-        return max_matched/max(m,n)
+        max_matched = float(C[nelts1,nelts2])  # float so don't get sympy rational
+        return max_matched/max(nelts1,nelts2)
 
 
     # if not ordered, check if match with any order
@@ -704,18 +722,18 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     n_matches=0
     for expr1 in the_tuple1:
         for (i, expr2) in enumerate(the_tuple2):
-            if expr1 == expr2 and i not in tuple2_indices_used:
+            if check_equality(expr1,expr2)==1 and i not in tuple2_indices_used:
                 tuple2_indices_used.append(i)
                 n_matches +=1
                 break
 
-    if len(the_tuple1) == len(the_tuple2) and n_matches==len(the_tuple1):
+    if nelts1==nelts2 and nelts1==n_matches:
         return 1
 
     if not partial_matches:
         return 0
     else:
-        return n_matches/max(len(the_tuple1),len(the_tuple2))
+        return n_matches/max(nelts1,nelts2)
 
 
 def check_set_equality(the_set1, the_set2, partial_matches=False):
@@ -758,7 +776,7 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
 
     Return 
     1   if exact match
-    p   number p, 0 < p < 1, if partial_matches is set and fracction
+    p   number p, 0 < p < 1, if partial_matches is set and fraction
         p of elements match.  Denominator of fraction is max rows*cols
         of both matrices
     0   otherwise
@@ -843,3 +861,53 @@ def check_relational_equality(the_relational1, the_relational2):
 
     # if have different types of relations, they must be unequal
     return False
+
+
+def check_function_equality(the_function1, the_function2,
+                            partial_matches=False):
+    """ 
+    Check if two functions are equal.
+
+    To be equal required that
+    1. func attribute is identical
+    2. the arguments compare equal as tuples
+
+    Return 
+    1   if exact match
+    p   number p, 0 < p < 1, if partial_matches is set, the func attributes
+        match and and fraction p of arguments match.  
+        Denominator of fraction is max length of both argument tuples
+    0   otherwise
+
+    We cannot rely on canonical sorting of arguments
+    since we may consider some expressions
+    that are not exactly the same to be equivalent.
+    Hence, for a function in which order does not matter, 
+    one should compare arguments as unordered tuple.
+
+    For now, just maintain a list of functions for which we consider
+    the arguments to be unordered.
+    
+    """
+
+    # if functions are exactly the same, we're done
+    if the_function1==the_function2:
+        return 1
+
+    # if different func attribute, then they are different
+    if the_function1.func != the_function2.func:
+        return 0
+
+    from mitesting.sympy_customized import And, Or
+
+    functions_unordered_arguments = [And, Or]
+    
+    if the_function1.func in functions_unordered_arguments:
+        unordered_arguments=True
+    else:
+        unordered_arguments=False
+
+    return check_tuple_equality(the_function1.args, the_function2.args, \
+                                tuple_is_unordered=unordered_arguments, \
+                                partial_matches=partial_matches)
+

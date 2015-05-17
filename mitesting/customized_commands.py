@@ -5,8 +5,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, C, S, Float, Matrix, Abs
-from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen
+from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le
+from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
 class python_equal_uneval(BooleanFunction):
@@ -246,3 +246,309 @@ class MatrixFromTuple(object):
     def __new__(cls, *args, **kwargs):
         return MatrixAsVector(list(args))
         
+
+class Gts(BooleanFunction):
+    """
+    Multiple GreaterThan function for expressions such as a > b >= c.
+
+    First argument is iterable of expressions.
+    If two or fewer expressions, return standard Gt or Ge.
+    Otherwise, the inequality is unevaluated.
+
+    Second argument, strict, determines if strict inequality.  (Defaults to True.)
+
+    If strict is iterable, then components determine the strictness of
+    each inequality.  
+    Extra components of strict are ignored.
+    If strict has too few components, the last component of applies to 
+    remaining inequalities.
+
+    If strict is not iterable, then the truth value of strict applies to
+    all inequalities.
+    
+
+    """
+
+    def __new__(cls, *args, **kwargs):
+        
+        if len(args) !=1 and len(args) !=2:
+            raise TypeError("Gts must have 1 or 2 arguments (%s given)" % \
+                            len(args))
+            
+        exprs=args[0]
+        if len(args) == 2:
+           strict=args[1]
+        else:
+           strict=True
+        try:
+            nexprs = len(exprs)
+        except TypeError:
+            raise TypeError("First argument of Gts must have at least 2 elements (1 given)")
+
+
+        if len(exprs) < 2:
+            raise TypeError("First argument of Gts must have at least 2 elements (%s given)"
+                            % len(exprs))
+
+        elif len(exprs)==2:
+            try:
+                strict0=strict[0]
+            except TypeError:
+                strict0=strict
+            if strict0:
+                return Gt(exprs[0],exprs[1], **kwargs)
+            else:
+                return Ge(exprs[0],exprs[1], **kwargs)
+        else:
+            obj = super(Gts, cls).__new__(cls,*args,**kwargs)
+            
+            if kwargs.get("evaluate", True):
+                obj.normalize_args()
+                return obj.doit(deep=False)
+            else:
+                return obj
+
+    def __init__(self, *args, **kwargs):
+        self.normalize_args()
+
+    def normalize_args(self):
+        self.exprs = self.args[0]
+
+        if(len(self.args)==2):
+           self.strict = self.args[1]
+        else:
+           self.strict = True
+
+        self.nargs = len(self.exprs)
+
+        try:
+            nstrict = len(self.strict)
+            self.strict=list(self.strict)
+        except TypeError:
+            try:
+                self.strict=[bool(self.strict)]*(self.nargs-1)
+            except TypeError:
+                self.strict=[True]*(self.nargs-1)
+        else:
+            for i in range(min(nstrict,self.nargs-1)):
+                try: 
+                    self.strict[i] = bool(self.strict[i])
+                except TypeError:
+                    self.strict[i] = True
+            if nstrict < self.nargs-1:
+                self.strict += [self.strict[:]]*(self.nargs-1-nstrict)
+            elif nstrict > self.nargs-1:
+                self.strict = self.strict[:self.nargs-1]
+            
+        self.strict = tuple(self.strict)
+
+    def _hashable_content(self):
+        """
+        Use normalized args for hashable content so
+        equality doesn't depend original format for strict
+        """
+
+        return (self.exprs, self.strict)
+
+
+    def doit(self, **hints):
+        result=True
+        if hints.get('deep', True):
+            if self.strict[0]:
+                result = Gt(self.exprs[0].doit(**hints), 
+                            self.exprs[1].doit(**hints))
+            else:
+                result = Ge(self.exprs[0].doit(**hints), 
+                            self.exprs[1].doit(**hints))
+            for i in range(1, self.nargs-1):
+                if self.strict[i]:
+                    result = And(result, Gt(self.exprs[i].doit(**hints), 
+                                            self.exprs[i+1].doit(**hints)))
+                else:
+                    result = And(result, Ge(self.exprs[i].doit(**hints), 
+                                            self.exprs[i+1].doit(**hints)))
+            return result
+        else:
+            if self.strict[0]:
+                result = Gt(self.exprs[0], self.exprs[1])
+            else:
+                result = Ge(self.exprs[0], self.exprs[1])
+            for i in range(1, self.nargs-1):
+                if self.strict[i]:
+                    result = And(result, Gt(self.exprs[i], self.exprs[i+1]))
+                else:
+                    result = And(result, Ge(self.exprs[i], self.exprs[i+1]))
+            return result
+
+
+    def __nonzero__(self):
+        return bool(self.doit(deep=False))
+
+    __bool__ = __nonzero__
+
+
+    def _latex(self, prtr):
+        tex = "%s" % prtr._print(self.exprs[0])
+        for i in range(self.nargs-1):
+            if self.strict[i]:
+                tex += " >"
+            else:
+                tex += " \geq"
+            tex += " %s" % prtr._print(self.exprs[i+1])
+
+        return tex
+
+
+
+
+class Lts(BooleanFunction):
+    """
+    Multiple LessThan function for expressions such as a < b <= c.
+
+    First argument is iterable of expressions.
+    If two or fewer expressions, return standard Lt or Le.
+    Otherwise, the inequality is unevaluated.
+
+    Second argument, strict, determines if strict inequality.  (Defaults to True.)
+
+    If strict is iterable, then components determine the strictness of
+    each inequality.  
+    Extra components of strict are ignored.
+    If strict has too few components, the last component of applies to 
+    remaining inequalities.
+
+    If strict is not iterable, then the truth value of strict applies to
+    all inequalities.
+    
+
+    """
+
+    def __new__(cls, *args, **kwargs):
+        
+        if len(args) !=1 and len(args) !=2:
+            raise TypeError("Lts must have 1 or 2 arguments (%s given)" % \
+                            len(args))
+            
+        exprs=args[0]
+        if len(args) == 2:
+           strict=args[1]
+        else:
+           strict=True
+        try:
+            nexprs = len(exprs)
+        except TypeError:
+            raise TypeError("First argument of Lts must have at least 2 elements (1 given)")
+
+
+        if len(exprs) < 2:
+            raise TypeError("First argument of Lts must have at least 2 elements (%s given)"
+                            % len(exprs))
+
+        elif len(exprs)==2:
+            try:
+                strict0=strict[0]
+            except TypeError:
+                strict0=strict
+            if strict0:
+                return Lt(exprs[0],exprs[1], **kwargs)
+            else:
+                return Le(exprs[0],exprs[1], **kwargs)
+        else:
+            obj = super(Lts, cls).__new__(cls,*args,**kwargs)
+            
+            if kwargs.get("evaluate", True):
+                obj.normalize_args()
+                return obj.doit(deep=False)
+            else:
+                return obj
+
+    def __init__(self, *args, **kwargs):
+        self.normalize_args()
+
+    def normalize_args(self):
+        self.exprs = self.args[0]
+
+        if(len(self.args)==2):
+           self.strict = self.args[1]
+        else:
+           self.strict = True
+
+        self.nargs = len(self.exprs)
+
+        try:
+            nstrict = len(self.strict)
+            self.strict=list(self.strict)
+        except TypeError:
+            try:
+                self.strict=[bool(self.strict)]*(self.nargs-1)
+            except TypeError:
+                self.strict=[True]*(self.nargs-1)
+        else:
+            for i in range(min(nstrict,self.nargs-1)):
+                try: 
+                    self.strict[i] = bool(self.strict[i])
+                except TypeError:
+                    self.strict[i] = True
+            if nstrict < self.nargs-1:
+                self.strict += [self.strict[:]]*(self.nargs-1-nstrict)
+            elif nstrict > self.nargs-1:
+                self.strict = self.strict[:self.nargs-1]
+            
+        self.strict = tuple(self.strict)
+
+    def _hashable_content(self):
+        """
+        Use normalized args for hashable content so
+        equality doesn't depend original format for strict
+        """
+
+        return (self.exprs, self.strict)
+
+
+    def doit(self, **hints):
+        result=True
+        if hints.get('deep', True):
+            if self.strict[0]:
+                result = Lt(self.exprs[0].doit(**hints), 
+                            self.exprs[1].doit(**hints))
+            else:
+                result = Le(self.exprs[0].doit(**hints), 
+                            self.exprs[1].doit(**hints))
+            for i in range(1, self.nargs-1):
+                if self.strict[i]:
+                    result = And(result, Lt(self.exprs[i].doit(**hints), 
+                                            self.exprs[i+1].doit(**hints)))
+                else:
+                    result = And(result, Le(self.exprs[i].doit(**hints), 
+                                            self.exprs[i+1].doit(**hints)))
+            return result
+        else:
+            if self.strict[0]:
+                result = Lt(self.exprs[0], self.exprs[1])
+            else:
+                result = Le(self.exprs[0], self.exprs[1])
+            for i in range(1, self.nargs-1):
+                if self.strict[i]:
+                    result = And(result, Lt(self.exprs[i], self.exprs[i+1]))
+                else:
+                    result = And(result, Le(self.exprs[i], self.exprs[i+1]))
+            return result
+
+
+    def __nonzero__(self):
+        return bool(self.doit(deep=False))
+
+    __bool__ = __nonzero__
+
+
+    def _latex(self, prtr):
+        tex = "%s" % prtr._print(self.exprs[0])
+        for i in range(self.nargs-1):
+            if self.strict[i]:
+                tex += " <"
+            else:
+                tex += " \leq"
+            tex += " %s" % prtr._print(self.exprs[i+1])
+
+        return tex
+

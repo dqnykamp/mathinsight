@@ -54,8 +54,6 @@
     <div class="ym-col1">
       <div class="ym-cbox">
 	<h3>{% endif %}Slides: {{ thepage.title}}{% if not blank_style %}</h3>
-	{% if thepage.worksheet %}<section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>{%endif %}
-
       </div>
     </div>
     
@@ -79,11 +77,18 @@
 
 {% block content %}
 <div class='slideWrapper'>
-<iframe id="slides" width=560 height=349 src="{% url 'mi-page_with_type' page_type_code='slides' page_code=thepage.code %}?bare=true"  webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> 
+<iframe id="slides" width=560 height=349 src="{% url 'mi-page_with_type' page_type_code='slides' page_code=thepage.code %}?bare=true{% if request.GET.show_controls %}&show_controls=true{%endif%}{% if request.GET.show_history %}&show_history=true{%endif%}"  webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> 
+</div>
+<div class="ym-grid">
+<div class="ym-g66 ym-gl"><div class="ym-gbox-left">
+<p>Use the arrow keys to change slides.</p>
+</div></div>
+<div class="ym-g33 ym-gr"><div class="ym-gbox-right">
+<p style="text-align: right;"><a id="fullscreeniframe" style="cursor: pointer">View full screen</a></p>
+</div></div>
 </div>
 
-<p style="text-align: right"><a id="fullscreeniframe" style="cursor: pointer">View full screen</a></p>
-
+{% process_mi_tags thepage.detailed_description %}
 
 {% if thepage.related_videos.all %}
 <h3 class="pre_list">Related videos</h3>

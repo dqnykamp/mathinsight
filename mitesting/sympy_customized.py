@@ -16,6 +16,8 @@ from sympy import Interval as sympy_Interval
 from sympy import FiniteSet as sympy_FiniteSet
 from sympy import Symbol as sympy_Symbol
 from sympy import Dummy as sympy_Dummy
+from sympy import And as sympy_And
+from sympy import Or as sympy_Or
 
 import re
 import keyword
@@ -242,12 +244,17 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=replace_intervals(s, replace_symmetric=replace_symmetric_intervals)
 
     # map those replace booleans and equals to sympy functions
-    from sympy import Eq, Ne, And, Or
+    from sympy import Eq, Ne
     new_global_dict['__Eq__'] = Eq
     new_global_dict['__Ne__'] = Ne
     new_global_dict['__And__'] = And
     new_global_dict['__Or__'] = Or
     new_global_dict['__Interval__'] = Interval
+
+    from mitesting.customized_commands import Gts, Lts
+    new_global_dict['__Lts__'] = Lts
+    new_global_dict['__Gts__'] = Gts
+
 
     if not evaluate:
         from mitesting.customized_commands import python_equal_uneval,\
@@ -255,12 +262,6 @@ def parse_expr(s, global_dict=None, local_dict=None,
         new_global_dict['__python_Eq__'] = python_equal_uneval
         new_global_dict['__python_Ne__'] = python_not_equal_uneval
 
-        from sympy import Le, Ge, Lt, Gt
-        new_global_dict['__Le__'] = Le
-        new_global_dict['__Ge__'] = Ge
-        new_global_dict['__Lt__'] = Lt
-        new_global_dict['__Gt__'] = Gt
-        
     # change {} to __FiniteSet__()
     s = re.sub(r'{',r' __FiniteSet__(', s)
     s = re.sub(r'}', r')', s)
@@ -357,7 +358,6 @@ def auto_symbol(tokens, local_dict, global_dict):
         nextTokNum, nextTokVal = nextTok
         if tokNum == NAME:
             name = tokVal
-
             if (name in ['True', 'False', 'and', 'or', 'not', 'in']
                 or name in local_dict
                 # Don't convert attribute access
@@ -1221,6 +1221,30 @@ class Interval(sympy_Interval):
             from sympy import Contains
             return Contains(other, self, evaluate=False)
 
+    def _contains(self, other):
+        """
+        Identical to _contains from sympy Interval
+        except that the And will be the customized version.
+        """
+        if other.is_real is False:
+            return false
+
+        if self.start is S.NegativeInfinity and self.end is S.Infinity:
+            if not other.is_real is None:
+                return other.is_real
+
+        if self.left_open:
+            expr = other > self.start
+        else:
+            expr = other >= self.start
+
+        if self.right_open:
+            expr = And(expr, other < self.end)
+        else:
+            expr = And(expr, other <= self.end)
+
+        return _sympify(expr)
+
     def __eq__(self, other):
         # open intervals compare as equal to tuple or Tuple
         if (isinstance(other, Tuple) and not isinstance(other,TupleNoParen))\
@@ -1281,3 +1305,45 @@ class FiniteSet(sympy_FiniteSet):
             elif t != false:
                 r = None
         return r
+
+
+class And(sympy_And):
+    """
+    Modification of And that throws a TypeError
+    when attempting to determine truth value.
+
+    Otherwise, will always return as true, 
+    e.g. bool(And(a>3, a<1)) would return True for Symbol a.
+
+    If truth value could already be determined, 
+    then the And would have evaluated.
+
+    """
+
+
+    ### bug: TypeError is raised in Ipython with ?obj when obj is And(x,y)
+    def __nonzero__(self):
+        raise TypeError("cannot determine truth value of And")
+
+    __bool__ = __nonzero__
+
+
+
+class Or(sympy_Or):
+    """
+    Modification of Or that throws a TypeError
+    when attempting to determine truth value.
+
+    Otherwise, will always return as true, 
+    e.g.  bool(Or(a>3, a<1)) would return True for Symbol a.
+
+    If truth value could already be determined, 
+    then the Or would have evaluated.
+
+    """
+    
+    ### bug: TypeError is raised in Ipython with ?obj when obj is Or(x,y)
+    def __nonzero__(self):
+        raise TypeError("cannot determine truth value of Or")
+
+    __bool__ = __nonzero__
