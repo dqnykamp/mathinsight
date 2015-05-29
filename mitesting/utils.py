@@ -216,7 +216,8 @@ def return_random_word_and_plural(expression_list, rng, index=None):
 
 def return_random_expression(expression_list, rng, index=None, 
                              local_dict=None, evaluate_level=None,
-                             assume_real_variables=False):
+                             assume_real_variables=False,
+                             parse_subscripts=False):
     """
     Return an expression from a string containing comma-separated list.
     Expression_list is first parsed with sympy using local_dict, if given.
@@ -232,7 +233,8 @@ def return_random_expression(expression_list, rng, index=None,
         parsed_list = parse_and_process(
             expression_list, local_dict=local_dict,
             evaluate_level=evaluate_level,
-            assume_real_variables=assume_real_variables)
+            assume_real_variables=assume_real_variables,
+            parse_subscripts=parse_subscripts)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random expression: "
                          + expression_list
@@ -269,7 +271,8 @@ class ParsedFunction(Function):
 def return_parsed_function(expression, function_inputs, name,
                            local_dict=None, 
                            evaluate_level=None,
-                           assume_real_variables=False):
+                           assume_real_variables=False,
+                           parse_subscripts=False):
     """
     Parse expression into function of function_inputs,
     a subclass of ParsedFunction.
@@ -306,7 +309,8 @@ def return_parsed_function(expression, function_inputs, name,
     try:
         expr2= parse_and_process(expression, local_dict=local_dict_sub,
                                  evaluate_level=EVALUATE_NONE,
-                                 assume_real_variables=assume_real_variables)
+                                 assume_real_variables=assume_real_variables,
+                                 parse_subscripts=parse_subscripts)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
 
@@ -448,7 +452,8 @@ def replace_intervals(expression, replace_symmetric=True):
 
 
 def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
-                             split_symbols=None, assume_real_variables=False):
+                             split_symbols=None, assume_real_variables=False,
+                             parse_subscripts=False):
 
     import re
     
@@ -464,7 +469,8 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     expr= parse_and_process(expr_matrix, local_dict=new_local_dict,
                             evaluate_level = evaluate_level,
                             split_symbols=split_symbols,
-                            assume_real_variables=assume_real_variables)
+                            assume_real_variables=assume_real_variables,
+                            parse_subscripts=parse_subscripts)
 
     # If expression was a Matrix already, then have a 1x1 matrix
     # whose only element is a matrix.
@@ -968,7 +974,8 @@ def evaluate_expression(the_expr, rng,
                 the_expr.expression, index=group_index,
                 local_dict=local_dict,
                 evaluate_level = the_expr.evaluate_level, rng=rng,
-                assume_real_variables=the_expr.real_variables)
+                assume_real_variables=the_expr.real_variables,
+                parse_subscripts=the_expr.parse_subscripts)
         except IndexError:
             raise IndexError("Insufficient entries for random list group: " \
                                      + the_expr.random_list_group)
@@ -1022,7 +1029,8 @@ def evaluate_expression(the_expr, rng,
                     expression, local_dict=local_dict,
                     evaluate_level = the_expr.evaluate_level,
                     replace_symmetric_intervals=True,
-                    assume_real_variables=the_expr.real_variables)
+                    assume_real_variables=the_expr.real_variables,
+                    parse_subscripts=the_expr.parse_subscripts)
 
             except (TypeError, NotImplementedError, SyntaxError, TokenError):
                 math_expr=None
@@ -1037,7 +1045,8 @@ def evaluate_expression(the_expr, rng,
                 math_expr = return_matrix_expression(
                     expression, local_dict=local_dict, 
                     evaluate_level = the_expr.evaluate_level,
-                    assume_real_variables = the_expr.real_variables)
+                    assume_real_variables = the_expr.real_variables,
+                    parse_subscripts=the_expr.parse_subscripts)
             except ValueError as e:
                 raise ValueError("Invalid format for matrix\n%s" % e.args[0])
             except (TypeError, NotImplementedError, SyntaxError, TokenError):
@@ -1047,7 +1056,8 @@ def evaluate_expression(the_expr, rng,
                 math_expr = parse_and_process(
                     expression, local_dict=local_dict,
                     evaluate_level = the_expr.evaluate_level,
-                    assume_real_variables = the_expr.real_variables)
+                    assume_real_variables = the_expr.real_variables,
+                    parse_subscripts=the_expr.parse_subscripts)
         except (TokenError, SyntaxError, TypeError, AttributeError):
             if the_expr.expression_type in [
                 the_expr.RANDOM_ORDER_TUPLE,
@@ -1162,7 +1172,8 @@ def evaluate_expression(the_expr, rng,
                 the_expr.expression, function_inputs=the_expr.function_inputs,
                 name = the_expr.name, local_dict=local_dict,
                 evaluate_level = the_expr.evaluate_level,
-                assume_real_variables = the_expr.real_variables)
+                assume_real_variables = the_expr.real_variables,
+                parse_subscripts=the_expr.parse_subscripts)
 
             # for FUNCTION, add parsed_function rather than
             # math_expr to local dict
@@ -1326,3 +1337,81 @@ def replace_unevaluated_commands(expr, replace_dict={}):
     # use atoms only if there is a replace_dict
     return bottom_up(expr, replaceUnsortsPythonEquals, atoms=bool(replace_dict))
 
+
+
+def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
+    """
+    Replace any instances of x_y with __subscript_symbol__(x,y) in string s.
+
+    If split_symbols, then x can be only one letter. 
+    Otherwise, x can be any combination of numbers or letters
+    but must begin with a letter.
+
+    If split_symbols, then y can be only one character unless it is 
+    a number or in parentheses.
+    Otherwise, y can be any combination of numbers or letters.
+    If the first character of y is "(", then y continues until matching ")".
+
+    If assume_real_variables, add third argument of True to command
+
+    """
+
+    if split_symbols:
+        pattern = re.compile(r"([a-zA-Z])_[^_]")
+    else:
+        pattern = re.compile(r"([a-zA-Z][a-zA-Z0-9]*)_[^_]")
+
+    while True:
+        mo= pattern.search(s)
+        if not mo:
+            break
+        base_begin = mo.start(0)
+        base_end = mo.end(0)-1
+
+        exp_begin=base_end
+        exp_end=len(s)
+        exp_skipafter=0
+
+        # if next character after "_" is "(", then find matching )
+        if s[base_end]=="(":
+            exp_begin+=1
+            n_openpar=0
+            for (j,c) in enumerate(s[base_end:]):
+                if c=="(":
+                    n_openpar+=1
+                elif c==")":
+                    n_openpar-=1
+                    if n_openpar == 0:
+                        exp_end=base_end+j
+                        exp_skipafter=1
+                        break
+
+        elif split_symbols:
+            if s[base_end].isdigit():
+                for (j,c) in enumerate(s[base_end:]):
+                    if not c.isdigit():
+                        exp_end=base_end+j
+                        break
+            else:
+                exp_end=base_end+1
+
+        else:
+            for (j,c) in enumerate(s[base_end:]): 
+                if not c.isalnum():
+                    exp_end=base_end+j
+                    break
+
+
+        base = s[base_begin:base_end-1]
+        subscript = s[exp_begin:exp_end]
+        
+        if assume_real_variables:
+            subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
+                                       (base,subscript)
+        else:
+            subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
+                                       (base,subscript)
+        s = s[:base_begin] + subscript_command_string \
+            + s[exp_end+exp_skipafter:]
+
+    return s

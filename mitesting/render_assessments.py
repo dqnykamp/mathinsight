@@ -225,6 +225,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                                 expression.split_symbols_on_compare,
                                 evaluate_level=EVALUATE_NONE,
                                 assume_real_variables=expression.real_variables,
+                                parse_subscripts = expression.parse_subscripts
                             )
                         except:
                             pass

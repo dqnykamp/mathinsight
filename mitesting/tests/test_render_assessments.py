@@ -521,6 +521,43 @@ class TestSetupExpressionContext(TestCase):
         self.assertEqual(alternate_exprs['f_y'], [y**2+b, y**2+c])
 
 
+    def test_parse_subscripts(self):
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        c=Symbol('c', real=True)
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        self.new_expr(name="xx",expression="u,v,w,x,y,z",
+                      expression_type=Expression.RANDOM_EXPRESSION)
+        self.new_expr(name="nn",expression="n,m,s,t",
+                      expression_type=Expression.RANDOM_EXPRESSION)
+        self.new_expr(name="xx_nn_a",expression="xx_nn", parse_subscripts=True)
+        self.new_expr(name="xx_nn_b",expression="xx_nn", parse_subscripts=False)
+        self.new_expr(name="xx_nnp1_a",expression="xx_(nn+1)", parse_subscripts=True)
+        self.new_expr(name="xx_nnp1_b",expression="xx_(nn+1)", parse_subscripts=False)
+        self.new_expr(name="xx_plus_5_xx_nn",expression="xx+5xx_nn", parse_subscripts=True)
+
+        rng = random.Random()
+        rng.seed(1)
+        results=setup_expression_context(self.q, rng=rng)
+        expression_context = results['expression_context']
+
+        xx=expression_context['xx']
+        nn=expression_context['nn']
+        self.assertEqual(expression_context['xx_nn_a'], 
+                         Symbol('%s_%s' % (xx,nn), real=True))
+        self.assertEqual(expression_context['xx_nn_b'], 
+                         Symbol('xx_nn', real=True))
+        self.assertEqual(expression_context['xx_nnp1_a'], 
+                         Symbol('%s_%s + 1' % (xx,nn), real=True))
+        self.assertEqual(expression_context['xx_nnp1_b'], 
+                         Symbol('xx_', real=True)*(nn+1))
+        self.assertEqual(expression_context["xx_plus_5_xx_nn"],
+                         xx+5*expression_context['xx_nn_a'])
+
+
+
+
 class TestSetupExpressionContextUserResponse(TestCase):
     def setUp(self):
         random.seed()

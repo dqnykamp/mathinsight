@@ -81,7 +81,7 @@ class ExpressionInline(admin.TabularInline):
     fields = ('name', 'expression_type', 'expression', 
               'evaluate_level', 
               'function_inputs', 'random_list_group',
-              'post_user_response', 'sort_order')
+              'post_user_response', 'parse_subscripts', 'sort_order')
     # for now, don't have real_variables showing,
     # as don't have reason for non-real variables
 

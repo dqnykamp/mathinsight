@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le
+from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
@@ -552,3 +552,33 @@ class Lts(BooleanFunction):
 
         return tex
 
+
+
+class subscript_symbol(Function):
+    """
+    Returns a symbol of the form "a_b" where a and b are latexed arguments.
+
+    If third argument is True, then create real symbol
+    
+    """
+
+    @classmethod
+    def eval(cls, a,b, real=False):
+
+        from mitesting.sympy_customized import Symbol, latex
+        symbol_name=''
+        if b is None:
+            if a is None:
+                symbol_name='_'
+            else:
+                symbol_name='%s_' % latex(a)
+        else:
+            if a is None:
+                symbol_name='_%s' % latex(b)
+            else:
+                symbol_name='%s_%s' % (latex(a),latex(b))
+
+        if real:
+            return Symbol(symbol_name, real=True)
+        else:
+            return Symbol(symbol_name)

@@ -74,7 +74,8 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
 def parse_expr(s, global_dict=None, local_dict=None, 
                split_symbols=False, evaluate=True,
                replace_symmetric_intervals=False,
-               assume_real_variables=False):
+               assume_real_variables=False,
+               parse_subscripts=False):
     """
     Customized version of sympy parse_expr with the following modifications.
     1.  Add Integer, Float, Rational, Symbol, and factorial
@@ -225,6 +226,17 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=re.sub('\u03c0', '__pi__', s)
     new_local_dict['__pi__'] = pi
 
+    if parse_subscripts:
+        # replace a_b  with __subscriptsymbol__(a,b)
+
+        from mitesting.utils import replace_subscripts
+        s=replace_subscripts(s, split_symbols=split_symbols,
+                             assume_real_variables=assume_real_variables)
+
+        # map subscript sympy
+        from mitesting.customized_commands import subscript_symbol
+        new_global_dict['__subscriptsymbol__'] = subscript_symbol
+        
 
     from mitesting.utils import replace_simplified_derivatives
     s= replace_simplified_derivatives(
@@ -311,7 +323,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
 def parse_and_process(s, global_dict=None, local_dict=None,
                       split_symbols=False, evaluate_level=None,
                       replace_symmetric_intervals=False,
-                      assume_real_variables=False):
+                      assume_real_variables=False,
+                      parse_subscripts=False):
     """
     Parse expression and optionally call doit, evaluate_level is full. 
     If evaluate_level = EVALUATE_NONE, then parse
@@ -329,7 +342,8 @@ def parse_and_process(s, global_dict=None, local_dict=None,
         s, global_dict=global_dict, local_dict=local_dict,
         split_symbols=split_symbols, evaluate=evaluate,
         replace_symmetric_intervals=replace_symmetric_intervals,
-        assume_real_variables=assume_real_variables)
+        assume_real_variables=assume_real_variables,
+        parse_subscripts=parse_subscripts)
 
     if evaluate_level == EVALUATE_FULL or evaluate_level is None:
         try: 

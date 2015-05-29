@@ -756,6 +756,7 @@ class Expression(models.Model):
                                        null=True)
     random_list_group = models.CharField(max_length=50, blank=True, null=True)
     real_variables = models.BooleanField(default=True)
+    parse_subscripts = models.BooleanField(default=False)
     post_user_response = models.BooleanField(default=False)
     sort_order = models.FloatField(blank=True)
     class Meta:
@@ -1085,6 +1086,7 @@ class ExpressionFromAnswer(models.Model):
                                       null=True)
     answer_data = models.TextField(null=True)
     real_variables = models.BooleanField(default=True)
+    parse_subscripts = models.BooleanField(default=True)
     default_value = models.CharField(max_length=20, default="_long_underscore_")
 
     class Meta:

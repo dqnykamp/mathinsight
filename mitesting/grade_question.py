@@ -220,7 +220,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                             split_symbols=answer_option
                             .split_symbols_on_compare,
                             evaluate_level=evaluate_level,
-                            assume_real_variables=assume_real_variables)
+                            assume_real_variables=assume_real_variables,
+                            parse_subscripts=True)
                     except ValueError as e:
                         feedback = "Invalid matrix: %s" % e.args[0]
                         break
@@ -232,7 +233,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                             .split_symbols_on_compare,
                             evaluate_level=evaluate_level,
                             replace_symmetric_intervals=True,
-                            assume_real_variables=assume_real_variables)
+                            assume_real_variables=assume_real_variables,
+                            parse_subscripts=True)
                     except (TypeError, NotImplementedError, SyntaxError, TokenError):
                         pass
                     except ValueError as e:
@@ -246,7 +248,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         split_symbols=answer_option
                         .split_symbols_on_compare,
                         evaluate_level=evaluate_level,
-                        assume_real_variables=assume_real_variables)
+                        assume_real_variables=assume_real_variables,
+                        parse_subscripts=True)
             except ValueError as e:
                 if "real intervals" in e.args[0]:
                     feedback="Cannot evaluate answer; variables used in intervals must be real."
@@ -292,7 +295,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         split_symbols=answer_option
                         .split_symbols_on_compare,
                         evaluate_level=EVALUATE_NONE,
-                        assume_real_variables=assume_real_variables)
+                        assume_real_variables=assume_real_variables,
+                        parse_subscripts=True)
                 elif expression_type == Expression.INTERVAL:
                     try:
                         user_response_unevaluated = parse_and_process(
@@ -301,7 +305,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                             .split_symbols_on_compare,
                             evaluate_level=EVALUATE_NONE,
                             replace_symmetric_intervals=True,
-                            assume_real_variables=assume_real_variables)
+                            assume_real_variables=assume_real_variables,
+                            parse_subscripts=True)
                     except (TypeError, NotImplementedError, SyntaxError, TokenError):
                         pass
                     except ValueError as e:
@@ -315,7 +320,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         split_symbols=answer_option
                         .split_symbols_on_compare,
                         evaluate_level=EVALUATE_NONE,
-                        assume_real_variables=assume_real_variables)
+                        assume_real_variables=assume_real_variables,
+                        parse_subscripts=True)
 
                 user_response_unevaluated=math_object(
                     user_response_unevaluated,

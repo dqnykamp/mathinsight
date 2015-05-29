@@ -824,3 +824,49 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("[a,b)", replace_symmetric_intervals=True,
                         assume_real_variables=True)
         self.assertEqual(expr, Interval(a,b, right_open=True))
+
+
+    def test_parse_subscripts(self):
+        x=Symbol('x')
+        y=Symbol('y')
+        n=Symbol('n')
+        m=Symbol('m')
+        
+        expr1=parse_expr("x_n")
+        expr2=parse_expr("x_n", parse_subscripts=True)
+        expr3=parse_expr("x_n", parse_subscripts=True, 
+                         assume_real_variables=True)
+        
+        self.assertEqual(expr1,Symbol("x_n"))
+        self.assertEqual(expr2,Symbol("x_n"))
+        self.assertEqual(expr1,expr2)
+        self.assertEqual(expr3,Symbol("x_n", real=True))
+
+        expr1=parse_expr("x_(n+1)")
+        expr2=parse_expr("x_(n+1)", parse_subscripts=True)
+        self.assertEqual(expr1,Symbol("x_")*(n+1))
+        self.assertEqual(expr2,Symbol("x_n + 1"))
+        self.assertEqual(latex(expr2), "x_{n + 1}")
+
+        expr=parse_expr("xx_nn", parse_subscripts=True, 
+                        local_dict={'xx': y, 'nn': m})
+        self.assertEqual(expr, Symbol('y_m'))
+
+        expr=parse_expr("y+xx_nn/2", parse_subscripts=True)
+        self.assertEqual(expr, y+Symbol('xx_nn')/2)
+
+        expr=parse_expr("y+xx_nn/2", parse_subscripts=True, split_symbols=True)
+        self.assertEqual(expr, y+x*n*Symbol('x_n')/2)
+
+        expr=parse_expr("y+6xx_nn/2", parse_subscripts=True)
+        self.assertEqual(expr, y+3*Symbol('xx_nn'))
+
+        expr=parse_expr("y+xx_28/2", parse_subscripts=True, split_symbols=True)
+        self.assertEqual(expr, y+x*Symbol('x_28')/2)
+
+        expr=parse_expr("y+xx_28n/2", parse_subscripts=True, split_symbols=True)
+        self.assertEqual(expr, y+x*n*Symbol('x_28')/2)
+ 
+        expr=parse_expr("y+xx_28n/2", parse_subscripts=True)
+        self.assertEqual(expr, y+Symbol('xx_28 n')/2)
+
