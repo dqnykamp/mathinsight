@@ -571,7 +571,7 @@ class AnswerNode(template.Node):
             if expression_type == Expression.MATRIX:
                 if given_answer is not None:
                     value_string = given_answer                
-                input_html = '<span class="matrix"><textarea class=mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea></span>' %\
+                input_html = '<span class="matrix"><textarea class="mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea></span>' %\
                     (answer_field_name, answer_field_name,
                      rows, cols, value_string)
             else:

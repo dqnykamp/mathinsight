@@ -1857,8 +1857,7 @@ table.rowclick tr td a {
 
 .matrix {
     position: relative;
-    margin-left: 6px;
-    margin-right: 6px;
+    margin: 6px;
     display: inline-block;
     vertical-align: middle;
     width:auto;

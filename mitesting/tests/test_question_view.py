@@ -2023,8 +2023,8 @@ class TestGradeQuestionView(TestCase):
         answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
 
         self.assertContains(response,"Type answers: ")
-        matrix1_input_html='<span class="matrix"><textarea class=mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier1, answer_identifier1, 5, 5)
-        matrix2_input_html='<span class="matrix"><textarea class=mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier3, answer_identifier3, 5, 2)
+        matrix1_input_html='<span class="matrix"><textarea class="mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier1, answer_identifier1, 5, 5)
+        matrix2_input_html='<span class="matrix"><textarea class="mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea></span>' % (answer_identifier3, answer_identifier3, 5, 2)
         standard_input_html ='<input class="mi_answer" type="text" id="id_answer_%s" maxlength="200" name="answer_%s" size="20" />' % (answer_identifier2, answer_identifier2)
         self.assertContains(response, matrix1_input_html, html=True)
         self.assertContains(response, matrix2_input_html, html=True)
