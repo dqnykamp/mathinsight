@@ -13,6 +13,8 @@
  *  headLength - Number
  *  headWidth - Number
  *  LineWidth - Number
+ *  transparent - Boolean
+ *  opacity - Number
  */
 
 /* modified to include LineWidth */
@@ -78,13 +80,18 @@ var Arrow = function ( parameters) {
     var lambertMaterial = parameters.hasOwnProperty("lambertMaterial") ?  
 	parameters["lambertMaterial"] :  false;
 
+    var transparent = parameters.hasOwnProperty("transparent") ?  
+	parameters["transparent"] :  false;
+    var opacity = parameters.hasOwnProperty("opacity") ?  
+	parameters["opacity"] :  1;
+
 
     if(this.cylinderForLine) {
 	var cylinderGeometry = new THREE.CylinderGeometry(1, 1, 1, cylinderDetail);
 	cylinderGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0.5, 0 ) );
 	var lineMaterial;
 	if(lambertMaterial) {
-	    lineMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	    lineMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color, transparent: transparent, opacity: opacity});
 	}
 	else {
 	    lineMaterial = new THREE.MeshBasicMaterial({color: color});
@@ -110,7 +117,7 @@ var Arrow = function ( parameters) {
 
 	var coneMaterial;
 	if(lambertMaterial) {
-	    coneMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	    coneMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color, transparent: transparent, opacity: opacity});
 	}
 	else {
 	    coneMaterial = new THREE.MeshBasicMaterial({color: color});
@@ -125,7 +132,7 @@ var Arrow = function ( parameters) {
 	tailGeometry.applyMatrix( new THREE.Matrix4().makeTranslation( 0, 0.499, 0 ) );
 	var tailMaterial;
 	if(lambertMaterial) {
-	    tailMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color});
+	    tailMaterial = new THREE.MeshLambertMaterial({ color: color, ambient: color, transparent: transparent, opacity: opacity});
 	}
 	else {
 	    tailMaterial = new THREE.MeshBasicMaterial({color: color});

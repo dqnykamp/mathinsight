@@ -22,15 +22,6 @@ var VectorField = function ( F, params) {
     if (params.dz  === undefined) {params.dz = 1;}
     if (params.lambertMaterial === undefined) {params.lambertMaterial=false;}
     if (params.color === undefined) {params.color=0x999999;}
-
-    var axesSize;
-    if (params.axesParams === undefined) {
-	axesSize = 1;
-    }
-    else {
-	axesSize = params.axesParams.size instanceof THREE.Vector3 ? Math.max(params.axesParams.size.x, params.axesParams.size.y, params.axesParams.size.z) : params.axesParams.size;
-	console.log(axesSize);
-    }
     
     THREE.Object3D.call( this );
     
@@ -42,44 +33,64 @@ var VectorField = function ( F, params) {
 	var miniSphereMaterial = new THREE.MeshBasicMaterial( { color: params.color } );
     }
     var miniSphere = new THREE.Mesh( miniSphereGeometry, miniSphereMaterial);
-    
+	
+    if (params.maxFMag == null) {//Allows manual setting of vector magnitude
+	params.maxFMag = Math.min(params.dx, params.dy, params.dz);
+    }
+
+    var rawMaxFMag = 0;
+    for (var x = params.minx; x <= params.maxx; x += params.dx) {
+        for (var y = params.miny; y <= params.maxy; y += params.dy) {
+            for (var z = params.minz; z <= params.maxz; z += params.dz) {
+                var Fvec = F(x, y, z);
+		if(Fvec) {
+                    var Fmag = Math.sqrt(Fvec.x * Fvec.x + Fvec.y * Fvec.y + Fvec.z * Fvec.z);
+                    rawMaxFMag = Math.max(Fmag, rawMaxFMag);
+		}
+            }
+        }
+    }
+    var headLength = params.headLength;
     for(var x=params.minx; x<=params.maxx; x+=params.dx) {
 	for(var y=params.miny; y<=params.maxy; y+=params.dy) {
 	    for(var z=params.minz; z<=params.maxz; z+=params.dz) {
 		var Fvec = F(x,y,z);
-		var Fmag = Math.sqrt(Fvec.x*Fvec.x+Fvec.y*Fvec.y+Fvec.z*Fvec.z);
-		var Fdir = Fvec.clone();
-		if(Fmag > 0) Fdir.normalize();
+		if(Fvec) {
+		    var Fmag = Math.sqrt(Fvec.x*Fvec.x+Fvec.y*Fvec.y+Fvec.z*Fvec.z);
+		    var Fdir = Fvec.clone();
+		    if(Fmag > 0) Fdir.normalize();
+		}
+		else {
+		    var Fmag=null;
+		    var Fdir=null;
+		}
 		var Forigin = new THREE.Vector3(x,y,z);
-		var Fcolor = 0x999999;
+		var Fcolor = params.color;
 		if(Fmag > 0) {
-		    // todo: calculate normalization for vector field
-		    // Fmag/5 works just for sample vector field
+		    if (params.headLength === undefined) {
+			headLength = 0.99*Fmag/rawMaxFMag;
+		    }
+		    if (params.headWidth === undefined) {params.headWidth = 0.2}
 
 		    var arrowProps = {
 			dir: Fdir,
 			origin: Forigin,
-			length: Fmag/axesSize,
+			length: Fmag/rawMaxFMag*params.maxFMag,
 			color: Fcolor,
-			headLength: Math.min(0.4, 0.99*Fmag/axesSize),
-			headWidth: 0.2,
+			headLength: Math.min(0.4, headLength),
+			headWidth: params.headWidth,
 			lineWidth: 3,			
 			lambertMaterial:params.lambertMaterial,
 		    }
-		    //TODO: previously 'arrowProps' was:
-		    //Fdir, Forigin, Fmag/5, Fcolor, Math.min(0.4,0.99*Fmag/5), 0.2, 3,10
 		    this.add(new Arrow(arrowProps));
 		}
-		else {
+		else if (Fmag==0) {
 		    var object = miniSphere.clone();
 		    object.position.copy(Forigin);
 		    this.add(object);
-		}
-		//dz = Math.max(2, 1/axesSize, Math.sqrt(Fvec.z*Fvec.z)/axesSize);
+		}	
 	    }
-	    //dy = Math.max(2, 1/axesSize, Math.sqrt(Fvec.y*Fvec.y)/axesSize);
 	}
-	//dx = Math.max(2, 1/axesSize, Math.sqrt(Fvec.x*Fvec.x)/axesSize);
     }
 };
 
