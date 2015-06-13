@@ -1668,6 +1668,12 @@ class AppletNode(template.Node):
 
 
         iframe = kwargs.get("iframe")
+        bare = kwargs.get("bare")
+        
+        # if not bare and iframe in database entry,
+        # make iframe regardless of kwargs
+        if not bare and applet.iframe:
+            iframe = True
 
         # html for applet inclusion
         # add html for applet embedding based on applet_type
@@ -1715,9 +1721,9 @@ class AppletNode(template.Node):
                 applet_variable = 'document.%s' % applet_identifier
 
         if iframe:
-            applet_link = '<iframe width=%s height=%s src="%s?width=%s&height=%s&applet_identifier=%s" id="%s" style="display: block; width: 600px; height: 400px;"></iframe>' % \
+            applet_link = '<iframe width=%s height=%s src="%s?width=%s&height=%s&applet_identifier=%s" id="%s" style="display: block; width: %spx; height: %spx; border: none;"></iframe>' % \
             (width, height, reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
-             width, height, applet_identifier, applet_identifier)
+             width, height, applet_identifier, applet_identifier, width, height)
             script_string=""
 
         elif applet.applet_type.code == "LiveGraphics3D":
