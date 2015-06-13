@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<jnlp spec="1.0+" codebase="http://jars.geogebra.org/webstart/5.0/" href="" version="5.0.57.0">
+<jnlp spec="1.0+" codebase="http://jars.geogebra.org/webstart/5.0/" href="" version="5.0.82.0">
     <information>
         <title>GeoGebraTube 3D 5.0</title>
         <vendor>International GeoGebra Institute</vendor>
@@ -65,7 +65,7 @@
         <nativelib href="javagiac-linux32.jar"/>
    </resources>
    <resources os="Linux" arch="amd64">
-        <nativelib href="gluegen-rt-natives-linux-i586.jar"/>
+        <nativelib href="gluegen-rt-natives-linux-amd64.jar"/>
         <nativelib href="jogl.all-natives-linux-amd64.jar"/>
         <nativelib href="javagiac-linux64.jar"/>
    </resources>

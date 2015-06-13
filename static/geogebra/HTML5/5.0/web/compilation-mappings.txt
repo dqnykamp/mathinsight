@@ -1,4 +1,4 @@
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
+CA70CD31118655A78FCC78CC7C230A10.cache.js
 ClientBundle.enableInlining true
 audioElementSupport maybe
 canvasElementSupport maybe
@@ -8,21 +8,25 @@ compiler.stackMode strip
 compiler.useSourceMaps false
 compiler.useSymbolMaps false
 dragEventSupport maybe
-geolocationSupport maybe
 gwt.enableDebugId false
 gwt.forceBidi false
-gwt.logging.enabled FALSE
+gwt.logging.consoleHandler ENABLED
+gwt.logging.developmentModeHandler ENABLED
+gwt.logging.enabled SEVERE
+gwt.logging.hasWidgetsHandler DISABLED
+gwt.logging.logLevel INFO
+gwt.logging.simpleRemoteHandler DISABLED
+gwt.logging.systemHandler DISABLED
 gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale ar
-storageSupport maybe
+locale default
+rpc.XserializeFinalFields false
 superdevmode off
 touchEventSupport maybe
 user.agent gecko1_8
 videoElementSupport maybe
 webApiUsage modern
 
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
+CA70CD31118655A78FCC78CC7C230A10.cache.js
 ClientBundle.enableInlining true
 audioElementSupport maybe
 canvasElementSupport maybe
@@ -32,21 +36,25 @@ compiler.stackMode strip
 compiler.useSourceMaps false
 compiler.useSymbolMaps false
 dragEventSupport maybe
-geolocationSupport maybe
 gwt.enableDebugId false
 gwt.forceBidi false
-gwt.logging.enabled FALSE
+gwt.logging.consoleHandler ENABLED
+gwt.logging.developmentModeHandler ENABLED
+gwt.logging.enabled SEVERE
+gwt.logging.hasWidgetsHandler DISABLED
+gwt.logging.logLevel INFO
+gwt.logging.simpleRemoteHandler DISABLED
+gwt.logging.systemHandler DISABLED
 gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale ar
-storageSupport maybe
+locale default
+rpc.XserializeFinalFields false
 superdevmode off
-touchEventSupport maybe
+touchEventSupport no
 user.agent ie10
 videoElementSupport maybe
 webApiUsage modern
 
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
+CA70CD31118655A78FCC78CC7C230A10.cache.js
 ClientBundle.enableInlining true
 audioElementSupport maybe
 canvasElementSupport maybe
@@ -56,21 +64,25 @@ compiler.stackMode strip
 compiler.useSourceMaps false
 compiler.useSymbolMaps false
 dragEventSupport maybe
-geolocationSupport maybe
 gwt.enableDebugId false
 gwt.forceBidi false
-gwt.logging.enabled FALSE
+gwt.logging.consoleHandler ENABLED
+gwt.logging.developmentModeHandler ENABLED
+gwt.logging.enabled SEVERE
+gwt.logging.hasWidgetsHandler DISABLED
+gwt.logging.logLevel INFO
+gwt.logging.simpleRemoteHandler DISABLED
+gwt.logging.systemHandler DISABLED
 gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale ar
-storageSupport maybe
+locale default
+rpc.XserializeFinalFields false
 superdevmode off
-touchEventSupport maybe
+touchEventSupport no
 user.agent ie9
 videoElementSupport maybe
 webApiUsage modern
 
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
+CA70CD31118655A78FCC78CC7C230A10.cache.js
 ClientBundle.enableInlining true
 audioElementSupport maybe
 canvasElementSupport maybe
@@ -80,110 +92,18 @@ compiler.stackMode strip
 compiler.useSourceMaps false
 compiler.useSymbolMaps false
 dragEventSupport maybe
-geolocationSupport maybe
 gwt.enableDebugId false
 gwt.forceBidi false
-gwt.logging.enabled FALSE
+gwt.logging.consoleHandler ENABLED
+gwt.logging.developmentModeHandler ENABLED
+gwt.logging.enabled SEVERE
+gwt.logging.hasWidgetsHandler DISABLED
+gwt.logging.logLevel INFO
+gwt.logging.simpleRemoteHandler DISABLED
+gwt.logging.systemHandler DISABLED
 gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale ar
-storageSupport maybe
-superdevmode off
-touchEventSupport maybe
-user.agent safari
-videoElementSupport maybe
-webApiUsage modern
-
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
-ClientBundle.enableInlining true
-audioElementSupport maybe
-canvasElementSupport maybe
-compiler.emulatedStack false
-compiler.predeclare.cross.fragment.references false
-compiler.stackMode strip
-compiler.useSourceMaps false
-compiler.useSymbolMaps false
-dragEventSupport maybe
-geolocationSupport maybe
-gwt.enableDebugId false
-gwt.forceBidi false
-gwt.logging.enabled FALSE
-gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
 locale default
-storageSupport maybe
-superdevmode off
-touchEventSupport maybe
-user.agent gecko1_8
-videoElementSupport maybe
-webApiUsage modern
-
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
-ClientBundle.enableInlining true
-audioElementSupport maybe
-canvasElementSupport maybe
-compiler.emulatedStack false
-compiler.predeclare.cross.fragment.references false
-compiler.stackMode strip
-compiler.useSourceMaps false
-compiler.useSymbolMaps false
-dragEventSupport maybe
-geolocationSupport maybe
-gwt.enableDebugId false
-gwt.forceBidi false
-gwt.logging.enabled FALSE
-gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale default
-storageSupport maybe
-superdevmode off
-touchEventSupport maybe
-user.agent ie10
-videoElementSupport maybe
-webApiUsage modern
-
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
-ClientBundle.enableInlining true
-audioElementSupport maybe
-canvasElementSupport maybe
-compiler.emulatedStack false
-compiler.predeclare.cross.fragment.references false
-compiler.stackMode strip
-compiler.useSourceMaps false
-compiler.useSymbolMaps false
-dragEventSupport maybe
-geolocationSupport maybe
-gwt.enableDebugId false
-gwt.forceBidi false
-gwt.logging.enabled FALSE
-gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale default
-storageSupport maybe
-superdevmode off
-touchEventSupport maybe
-user.agent ie9
-videoElementSupport maybe
-webApiUsage modern
-
-9F61182EE8EE5387FE55A1F0E81CA8BD.cache.js
-ClientBundle.enableInlining true
-audioElementSupport maybe
-canvasElementSupport maybe
-compiler.emulatedStack false
-compiler.predeclare.cross.fragment.references false
-compiler.stackMode strip
-compiler.useSourceMaps false
-compiler.useSymbolMaps false
-dragEventSupport maybe
-geolocationSupport maybe
-gwt.enableDebugId false
-gwt.forceBidi false
-gwt.logging.enabled FALSE
-gwt.suppressNonStaticFinalFieldWarnings false
-gwt.unloadEnabled false
-locale default
-storageSupport maybe
+rpc.XserializeFinalFields false
 superdevmode off
 touchEventSupport maybe
 user.agent safari

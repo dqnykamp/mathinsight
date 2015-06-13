@@ -65,7 +65,7 @@ html{height:100% !important;}
   border:0;
 }
 .wysibb .wysibb-toolbar .wysibb-toolbar-container .wysibb-toolbar-btn,.wysibb .wysibb-toolbar .wysibb-toolbar-container .wysibb-toolbar-btn.wbb-select{
-  width:60px;
+  width:70px;
   max-width:96%;
 }
 .wysibb .wysibb-toolbar .wysibb-toolbar-container select.wbb-selectbox{
@@ -437,7 +437,7 @@ html{height:100% !important;}
   background: rgba(0,0,0,0.5);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#7Fffffff,endColorstr=#7Fffffff);
   zoom: 1;
-  z-index: 1100;
+  z-index: 4000;
 }
 
 #wbbmodal  .wbbm{
@@ -685,7 +685,7 @@ html{height:100% !important;}
 
 
 /* DESKTOP AND TAVBLETS STYLES */
-@media (min-width: 992px) {
+@media (min-width: 750px) {
 	/* TOOLBAR */
 	.wysibb .wysibb-text{
 	  padding:5px;
@@ -768,18 +768,34 @@ html{height:100% !important;}
 	
 	.ve-tlb-colorpick{width:24px;height:24px;line-height:24px;text-align:right;}
 	.wysibb .bottom-resize-line{display:block;height:5px;cursor:ns-resize;}
+
 }
 
 /* GG Added styles */
+.wysibb{
+    font-size: 16px; /*15px*/
+}
+
 .wysibb-toolbar-container-group {
     display: none;
     position: absolute;
     background-color: white;
     box-shadow: 0 0 2px 1px rgba(204,204,204,0.5) ;
-    margin-top: -40px;
+    margin-top: -135px;
     min-width: 800px;
-    z-index: 10000000;
+    z-index: 3000;
     border-radius: 5px;
+}
+
+@media (min-width: 750px) {
+    .wysibb-toolbar-container-group {
+        margin-top: -40px;
+    }
+}
+
+.wysibb .wysibb-text{
+    padding:5px;
+    line-height: normal; /*100%*/
 }
 
 .wysibb-toolbar-btn .texttools {
@@ -788,5 +804,56 @@ html{height:100% !important;}
     font-style: italic;
     font-size: 15px;
     text-align: center;
-    padding: 5px;
+    padding: 0 5px;
 }
+
+
+.wysibb-input-math-editor {
+    width:  100%;
+    display:block;
+    box-sizing: border-box;
+    min-height: 250px;
+}
+
+.wysibb-input-icon-editor {
+
+}
+
+.wysibb-input-icon-editor img {
+    width: 32px;
+    height: 32px;
+    padding: 2px;
+    border-radius: 2px;
+    border: 1px solid #DCDCDC;
+    margin: 2px;
+}
+
+.wysibb-input-icon-editor img.selected {
+    border: 1px solid #6666FF;
+}
+
+.wysibb-input-icon-editor img:hover {
+    box-shadow: 0 0 2px 1px rgba(204,204,204,0.5);
+}
+
+/*font sizes*/
+.font-size-1 {
+    font-size: 10px;
+}
+
+.font-size-2 {
+    font-size: 13px;
+}
+
+.font-size-3 {
+    font-size: 16px;
+}
+
+.font-size-4 {
+    font-size: 18px;
+}
+
+.font-size-5 {
+    font-size: 32px;
+}
+
