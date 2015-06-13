@@ -998,6 +998,13 @@ class Applet(models.Model):
     child_applet = models.ForeignKey('self', blank=True, null=True)
     child_applet_percent_width = models.IntegerField(default=50)
     child_applet_parameters = models.CharField(max_length=100, blank=True, null=True)
+
+    OVERWRITE_THUMBNAIL_CHOICES = (
+        (0, "don't overwrite"),
+        (1, "from image 1"),
+        (2, "from image 2"),
+    )
+    overwrite_thumbnail = models.SmallIntegerField(choices=OVERWRITE_THUMBNAIL_CHOICES, default =1)
     thumbnail = models.ImageField(max_length=150, upload_to=applet_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
@@ -1150,11 +1157,13 @@ class Applet(models.Model):
 
         # check if changed code, applet file, or image file
         # if changed code, may need to change file names after save
-        # if changed file, and Geogebra web, then generated encoded content
+        # if changed file, and Geogebra web, then generate encoded content
         # if changed image, then generate thumbnail
         changed_code=False
         changed_applet=False
         changed_image=False
+        changed_image2=False
+        changed_thumbnail=False
         if self.pk is not None:
             orig = Applet.objects.get(pk=self.pk)
             if orig.code != self.code:
@@ -1163,6 +1172,10 @@ class Applet(models.Model):
                 changed_applet = True
             if orig.image != self.image:
                 changed_image = True
+            if orig.image2 != self.image2:
+                changed_image2 = True
+            if orig.thumbnail != self.thumbnail:
+                changed_thumbnail = True
 
         # create encoded content if applet_file exists
         # only do this for new file or if have changed the applet_file
@@ -1180,13 +1193,30 @@ class Applet(models.Model):
                     self.applet_file.close()
                 except:
                     raise
+
+        # if thumbnail is added explicitly (or changed)
+        # then mark thumbnail not to be overwritten from image
+        if changed_thumbnail or (self.pk is None and self.thumbnail):
+            self.overwrite_thumbnail = 0
                 
-        # create thumbnail from image file, if it exists
+        # if thumbnail marked to be overwritten
+        # and corresponding image has been added or changed, then
+        # create thumbnail from image file
         # adapted from http://djangosnippets.org/snippets/2094/
         # only do this for new file or if have changed the image
-        if (self.pk is None or changed_image) and self.image:
+        if (self.overwrite_thumbnail==1 and \
+            (self.pk is None or changed_image) \
+            and self.image) \
+            or (self.overwrite_thumbnail==2 and \
+                (self.pk is None or changed_image2) \
+                and self.image2):
 
-            image = PILImage.open(self.image)
+            if self.overwrite_thumbnail==2:
+                image = self.image2
+            else:
+                image = self.image
+
+            image = PILImage.open(image)
         
             thumb_size = (200,200)
 
