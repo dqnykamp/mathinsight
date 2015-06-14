@@ -23,10 +23,12 @@
  * axisWidth: width of lines for axes
  * showAxisTicks: a boolean determining whether ticks will be displayed on each axis, default is false
  * axisTick: a number specifying the tick increment, default is proportional to axis size
- * axisTickSize: a number specifying the tick size in percent of axis size, default is 0.03
+ * axisTickSize: a number specifying the tick size in fraction of axis size, default is 0.03
  * axisTickIncrement: a number or vector specifying the spacing between ticks, default is 1
  * showAxisTickLabels: a boolean determining whether tick labels will be displayed on each axis, default is false
  * axisTickLabelFontSize: Font size for lables, defaults to labelFontSize
+ * tickLabelSpace: spacing of tick labels from axes in fraction of axis size, default is 0.06
+ * tickLabelDigits: number of digits to round tick labels, defaults to 1
  */
 
 
@@ -82,12 +84,16 @@ var Axes = function (params) {
 
     if (params.showAxisTickLabels === undefined) { params.showAxisTickLabels = false; }
     if (params.axisTickLabelFontSize === undefined) { params.axisTickLabelFontSize = params.labelFontSize; }
+    if (params.tickLabelSpace === undefined) { params.tickLabelSpace= 0.06; }
+    if (params.tickLabelDigits === undefined) { params.tickLabelDigits= 1; }
+
+    var tickLabelRoundFactor = Math.pow(10,params.tickLabelDigits); 
+    
     if (params.boxAxisTicksXSide === undefined) { params.boxAxisTicksXSide = 1; };
     if (params.boxAxisTicksYSide === undefined) { params.boxAxisTicksYSide = 1; };
     if (params.boxAxisTicksZSide === undefined) { params.boxAxisTicksZSide = 1; };
 
 
-    var tickLabelSpace=0.05;
     var axisLabelSpace=0.15;
     if (! params.showAxisTickLabels) {
 	axisLabelSpace=0.08;
@@ -224,19 +230,20 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var x=i*params.axisTickIncrement.x;
-		geometry.vertices.push(new THREE.Vector3(x, -params.axisTickSize, 0), new THREE.Vector3(x, params.axisTickSize, 0));
+		geometry.vertices.push(new THREE.Vector3(x, -(params.size.y-params.negSize.y)*params.axisTickSize, 0), new THREE.Vector3(x, (params.size.y-params.negSize.y)*params.axisTickSize, 0))
+
             }
 	    tickMinInd = Math.ceil(params.negSize.y/params.axisTickIncrement.y);
 	    tickMaxInd = Math.floor(params.size.y/params.axisTickIncrement.y);
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var y=i*params.axisTickIncrement.y;
-		geometry.vertices.push(new THREE.Vector3(-params.axisTickSize, y, 0), new THREE.Vector3(params.axisTickSize, y, 0));
+		geometry.vertices.push(new THREE.Vector3(-(params.size.x-params.negSize.x)*params.axisTickSize, y, 0), new THREE.Vector3((params.size.x-params.negSize.x)*params.axisTickSize, y, 0))
             }
 	    tickMinInd = Math.ceil(params.negSize.z/params.axisTickIncrement.z);
 	    tickMaxInd = Math.floor(params.size.z/params.axisTickIncrement.z);
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var z=i*params.axisTickIncrement.z;
-		geometry.vertices.push(new THREE.Vector3(0, -params.axisTickSize, z), new THREE.Vector3(0, params.axisTickSize, z));
+		geometry.vertices.push(new THREE.Vector3(0, -(params.size.y-params.negSize.y)*params.axisTickSize, z), new THREE.Vector3(0, (params.size.y-params.negSize.y)*params.axisTickSize, z))
             }
 	}
 	
@@ -255,21 +262,21 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var x=i*params.axisTickIncrement.x;
-		
-		var sprite = new TextLabel(x.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		var xRound = Math.round(x*tickLabelRoundFactor)/tickLabelRoundFactor
+		var sprite = new TextLabel(xRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
 
 		if(params.boxAxisTicksXSide==1) {
-		    sprite.position.set(x, params.size.y + (params.size.y-params.negSize.y) *tickLabelSpace, params.size.z + (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(x, params.size.y + (params.size.y-params.negSize.y) *params.tickLabelSpace, params.size.z + (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksXSide==2) {
-		    sprite.position.set(x, params.negSize.y - (params.size.y-params.negSize.y) *tickLabelSpace, params.size.z + (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(x, params.negSize.y - (params.size.y-params.negSize.y) *params.tickLabelSpace, params.size.z + (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksXSide==3) {
-		    sprite.position.set(x, params.negSize.y - (params.size.y-params.negSize.y) *tickLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(x, params.negSize.y - (params.size.y-params.negSize.y) *params.tickLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksXSide==4) {
-		    sprite.position.set(x, params.size.y + (params.size.y-params.negSize.y) *tickLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(x, params.size.y + (params.size.y-params.negSize.y) *params.tickLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 
             }
@@ -279,21 +286,22 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var y=i*params.axisTickIncrement.y;
+		var yRound = Math.round(y*tickLabelRoundFactor)/tickLabelRoundFactor
 
-		var sprite = new TextLabel(y.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		var sprite = new TextLabel(yRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
 
 		if(params.boxAxisTicksYSide==1) {
-		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *tickLabelSpace, y, params.size.z + (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *params.tickLabelSpace, y, params.size.z + (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksYSide==2) {
-		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *tickLabelSpace, y, params.size.z + (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.tickLabelSpace, y, params.size.z + (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksYSide==3) {
-		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *tickLabelSpace, y, params.negSize.z - (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.tickLabelSpace, y, params.negSize.z - (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 		else if(params.boxAxisTicksYSide==4) {
-		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *tickLabelSpace, y, params.negSize.z - (params.size.z-params.negSize.z)*tickLabelSpace);
+		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *params.tickLabelSpace, y, params.negSize.z - (params.size.z-params.negSize.z)*params.tickLabelSpace);
 		}
 
             }
@@ -304,21 +312,22 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var z=i*params.axisTickIncrement.z;
+		var zRound = Math.round(z*tickLabelRoundFactor)/tickLabelRoundFactor
 
-		var sprite = new TextLabel(z.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		var sprite = new TextLabel(zRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
 		
 		if(params.boxAxisTicksZSide==1) {
-		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *tickLabelSpace, params.size.y + (params.size.y-params.negSize.y)*tickLabelSpace, z);
+		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *params.tickLabelSpace, params.size.y + (params.size.y-params.negSize.y)*params.tickLabelSpace, z);
 		}
 		else if(params.boxAxisTicksZSide==2) {
-		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *tickLabelSpace, params.size.y + (params.size.y-params.negSize.y)*tickLabelSpace, z);
+		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.tickLabelSpace, params.size.y + (params.size.y-params.negSize.y)*params.tickLabelSpace, z);
 		}
 		else if(params.boxAxisTicksZSide==3) {
-		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *tickLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*tickLabelSpace, z);
+		    sprite.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.tickLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*params.tickLabelSpace, z);
 		}
 		else if(params.boxAxisTicksZSide==4) {
-		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *tickLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*tickLabelSpace, z);
+		    sprite.position.set(params.size.x + (params.size.x-params.negSize.x) *params.tickLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*params.tickLabelSpace, z);
 		}
             }
 	}
@@ -390,9 +399,11 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var x=i*params.axisTickIncrement.x;
+		var xRound = Math.round(x*tickLabelRoundFactor)/tickLabelRoundFactor
+		
 		if (i != 0) {
-		    var sprite = new TextLabel(x.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
-		    sprite.position.set(x, params.axisTickSize * 2, 0);
+		    var sprite = new TextLabel(xRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		    sprite.position.set(x, (params.size.y-params.negSize.y)*params.tickLabelSpace, 0);
 		    this.add(sprite);
 		}
 	    }
@@ -402,9 +413,10 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var y=i*params.axisTickIncrement.y;
+		var yRound = Math.round(y*tickLabelRoundFactor)/tickLabelRoundFactor
 		if (i != 0) {
-		    var sprite = new TextLabel(y.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
-		    sprite.position.set(params.axisTickSize * 2, y, 0);
+		    var sprite = new TextLabel(yRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		    sprite.position.set((params.size.x-params.negSize.x)*params.tickLabelSpace, y, 0);
 		    this.add(sprite);
 		}
 	    }
@@ -414,9 +426,10 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var z=i*params.axisTickIncrement.z;
+		var zRound = Math.round(z*tickLabelRoundFactor)/tickLabelRoundFactor
 		if (i != 0) {
-		    var sprite = new TextLabel(z.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
-		    sprite.position.set(0, params.axisTickSize * 2, z);
+		    var sprite = new TextLabel(zRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		    sprite.position.set(0, (params.size.y-params.negSize.y)*params.tickLabelSpace, z);
 		    this.add(sprite);
 		}
 	    }
@@ -487,6 +500,20 @@ var Axes2D = function (params) {
     if (params.labelColor === undefined) {params.labelColor = '#000000';}
     if (params.axisWidth === undefined) { params.axisWidth = 5; }
 
+    if (params.showAxisTicks === undefined) { params.showAxisTicks = false; };
+    if (params.axisTickSize === undefined) { params.axisTickSize = 0.03; };
+    if (params.axisTickIncrement === undefined) {
+        params.axisTickIncrement = new THREE.Vector2(1, 1);
+    }
+    else if (!(params.axisTickIncrement instanceof THREE.Vector2)) {
+        params.axisTickIncrement = new THREE.Vector2(params.axisTickIncrement, params.axisTickIncrement);
+    }
+    if (params.showAxisTickLabels === undefined) { params.showAxisTickLabels = false; }
+    if (params.axisTickLabelFontSize === undefined) { params.axisTickLabelFontSize = params.labelFontSize; }
+    if (params.showZeroTickLabels === undefined) { params.showZeroTickLabels = false; }
+    if (params.tickLabelDigits === undefined) { params.tickLabelDigits= 1; }
+    var tickLabelRoundFactor = Math.pow(10,params.tickLabelDigits); 
+
     var geometry = new THREE.Geometry();
     
     geometry.vertices.push(
@@ -496,6 +523,22 @@ var Axes2D = function (params) {
 	new THREE.Vector3(), new THREE.Vector3( 0, params.negSize.y, 0 )
     );
     
+    if (params.showAxisTicks) {
+	var tickMinInd = Math.ceil(params.negSize.x/params.axisTickIncrement.x);
+	var tickMaxInd = Math.floor(params.size.x/params.axisTickIncrement.x);
+	
+	for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
+	    var x=i*params.axisTickIncrement.x;
+	    geometry.vertices.push(new THREE.Vector3(x, -(params.size.y-params.negSize.y)*params.axisTickSize, 0), new THREE.Vector3(x, (params.size.y-params.negSize.y)*params.axisTickSize, 0))
+        }
+	tickMinInd = Math.ceil(params.negSize.y/params.axisTickIncrement.y);
+	tickMaxInd = Math.floor(params.size.y/params.axisTickIncrement.y);
+	for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
+	    var y=i*params.axisTickIncrement.y;
+	    geometry.vertices.push(new THREE.Vector3(-(params.size.x-params.negSize.x)*params.axisTickSize, y, 0), new THREE.Vector3((params.size.x-params.negSize.x)*params.axisTickSize, y, 0))
+
+        }
+    }
     var material = new THREE.LineBasicMaterial( { color: params.color, linewidth: params.axisWidth } );
 
     THREE.Line.call( this, geometry, material, THREE.LinePieces );
@@ -511,6 +554,34 @@ var Axes2D = function (params) {
 	spritey.position.set(0, params.size.y + (params.size.y-params.negSize.y)*0.05, 0);
 	this.add( spritey );
 	
+    }
+    if (params.showAxisTickLabels) {
+	var tickMinInd = Math.ceil(params.negSize.x/params.axisTickIncrement.x);
+	var tickMaxInd = Math.floor(params.size.x/params.axisTickIncrement.x);
+	
+	for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
+	    var x=i*params.axisTickIncrement.x
+	    var xRound = Math.round(x*tickLabelRoundFactor)/tickLabelRoundFactor
+
+	    if (i != 0 || params.showZeroTickLabels) {
+		var sprite = new TextLabel(xRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		sprite.position.set(x, -(params.size.y-params.negSize.y)*params.axisTickSize * 3, 0);
+		this.add(sprite);
+	    }
+	}
+
+	tickMinInd = Math.ceil(params.negSize.y/params.axisTickIncrement.y);
+	tickMaxInd = Math.floor(params.size.y/params.axisTickIncrement.y);
+	
+	for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
+	    var y=i*params.axisTickIncrement.y;
+	    var yRound = Math.round(y*tickLabelRoundFactor)/tickLabelRoundFactor
+	    if (i != 0 || params.showZeroTickLabels) {
+		var sprite = new TextLabel(yRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
+		sprite.position.set(-(params.size.x-params.negSize.x)*params.axisTickSize * 3, y, 0);
+		this.add(sprite);
+	    }
+	}
     }
 };
 

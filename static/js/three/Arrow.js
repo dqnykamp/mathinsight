@@ -55,6 +55,11 @@ var Arrow = function ( parameters) {
 	parameters["headLength"] :  0.2*length;
     this.headWidth = parameters.hasOwnProperty("headWidth") ?  
 	parameters["headWidth"] :  0.2*this.headLength;
+    this.headLengthMaxFraction = parameters.hasOwnProperty("headLengthMaxFraction") ?  
+	parameters["headLengthMaxFraction"] :  0.6;
+    this.headWidthMaxRatio = parameters.hasOwnProperty("headWidthMaxRatio") ?  
+	parameters["headWidthMaxRatio"] :  2;
+    this.headLengthActual=this.headLength;
 
     // use cylinder rather than line for arrow
     this.cylinderForLine = parameters.hasOwnProperty("cylinderForLine") ?
@@ -76,6 +81,10 @@ var Arrow = function ( parameters) {
 	parameters["tailLength"] :  0.2*this.headLength;
     this.tailWidth = parameters.hasOwnProperty("tailWidth") ?  
 	parameters["tailWidth"] :  0.8*this.headWidth;
+    this.tailLengthMaxFraction = parameters.hasOwnProperty("tailLengthMaxFraction") ?  
+	parameters["tailLengthMaxFraction"] :  0.2;
+    this.tailWidthMaxRatio = parameters.hasOwnProperty("tailWidthMaxRatio") ?  
+	parameters["tailWidthMaxRatio"] :  6;
 
     var lambertMaterial = parameters.hasOwnProperty("lambertMaterial") ?  
 	parameters["lambertMaterial"] :  false;
@@ -202,22 +211,34 @@ Arrow.prototype.setDirection = function () {
 
 Arrow.prototype.setLength = function ( length, headLength, headWidth, tailLength, tailWidth ) {
     
+    var manualHeadLength=false;
     if ( headLength === undefined ) {
 	headLength = this.headLength;
     }
     else {
 	this.headLength = headLength;
+	manualHeadLength=true;
     }
     
+    if(!manualHeadLength) {
+	headLength = Math.min(length*this.headLengthMaxFraction,headLength);
+    }
+    this.headLengthActual = headLength
+
     this.line.scale.y = length-headLength;
     this.line.updateMatrix();
 
     if(this.addHead) {
+	var manualHeadWidth = false;
 	if ( headWidth === undefined ) {
 	    headWidth = this.headWidth;
 	}
 	else {
 	    this.headWidth = headWidth;
+	    manualHeadWidth = true;
+	}
+	if(!manualHeadWidth) {
+	    headWidth = Math.min(headLength*this.headWidthMaxRatio, headWidth);
 	}
 	this.cone.scale.set( headWidth, headLength, headWidth );
 	this.cone.position.set(0,length-headLength/2,0);
@@ -225,17 +246,27 @@ Arrow.prototype.setLength = function ( length, headLength, headWidth, tailLength
     }
     
     if(this.addTail) {
+	var manualTailLength = false;
 	if ( tailLength === undefined ) {
 	    tailLength = this.tailLength;
 	}
 	else {
 	    this.tailLength = tailLength;
+	    manualTailLength = true;
 	}
+	if(!manualTailLength) {
+	    tailLength = Math.min(length*this.tailLengthMaxFraction,tailLength);
+	}
+	var manualTailWidth = false;
 	if ( tailWidth === undefined ) {
 	    tailWidth = this.tailWidth;
 	}
 	else {
 	    this.tailWidth = tailWidth;
+	    manualTailWidth = true;
+	}
+	if(!manualTailWidth) {
+	    tailWidth = Math.min(tailLength*this.tailWidthMaxRatio, tailWidth);
 	}
 	this.tail.scale.set( tailWidth, tailLength, tailWidth );
 	this.tail.position.set(0,0,0);
@@ -258,11 +289,11 @@ Arrow.prototype.setColor = function ( color ) {
 
 
 Arrow.prototype.returnLength = function() {
-    return this.line.scale.y + this.headLength;
+    return this.line.scale.y + this.headLengthActual;
 }
 
 Arrow.prototype.returnTipPosition = function() {
-    var tipPosition = new THREE.Vector3(0, this.line.scale.y+ this.headLength,0);
+    var tipPosition = new THREE.Vector3(0, this.line.scale.y+ this.headLengthActual,0);
     this.updateMatrixWorld();
     this.localToWorld(tipPosition);
     return tipPosition;
@@ -373,7 +404,7 @@ Arrow.prototype.returnDragTipSphere= function() {
     	dir.sub(thearrow.position);
     	var length = dir.length();
     	dir.divideScalar(length);
-    	length += thearrow.headLength/2.0;
+    	length += thearrow.headLengthActual/2.0;
 	
     	thearrow.setDirection( dir );
     	thearrow.setLength( length );
@@ -389,7 +420,7 @@ Arrow.prototype.returnDragTipSphere= function() {
 	thearrow.updateMatrixWorld();
 	
     	// find position of the cone in coordinates of sphere parent
-	pos.set(0, thearrow.line.scale.y+ thearrow.headLength/2.0,0);
+	pos.set(0, thearrow.line.scale.y+ thearrow.headLengthActual/2.0,0);
     	thearrow.localToWorld(pos);
 	if(dragTipSphere.parent) {
 	    dragTipSphere.parent.worldToLocal(pos);
@@ -490,7 +521,7 @@ Arrow.prototype.returnDragTailSphere= function() {
 	
     	var length = dir.length();
     	dir.divideScalar(length);
-    	length += thearrow.headLength/2.0;
+    	length += thearrow.headLengthActual/2.0;
 		
     	thearrow.position.copy(pos);
 
