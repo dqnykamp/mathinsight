@@ -1317,10 +1317,10 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
     # (actually while mathjax is loading)
     applet_loading_image = ""
     if applet.image:
-        applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+        applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" style="display: block; width: 100%%; height: auto;" />' \
             % (applet.image.url, applet.annotated_title(), width, height)
         
-    applet_loading_image = '<div class="appletimagecontainer" style="width:%spx; height:%spx;" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (width, height, applet_loading_image, height/2)
+    applet_loading_image = '<div class="appletimagecontainer" style="width:%spx; max-width:100%%" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (width, applet_loading_image, height/2)
 
     html_string = '<div class="threeapplet" id="container_%s" >%s</div><div class="appleterror three_load_error"></div>' % (applet_id, applet_loading_image)
 
@@ -1340,11 +1340,11 @@ def Three_link(context, applet, applet_identifier, width, height, url_get_parame
         
         applet_loading_image=""
         if image_url:
-            applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" />' \
+            applet_loading_image = '<img src="%s" alt="%s" width ="%s" height="%s" style="display: block; width: 100%%; height: auto; max-width:100%%" />' \
                 % (image_url, applet.child_applet.annotated_title(), \
                        child_width, height)
             
-        applet_loading_image = '<div class="appletimagecontainer" style="width:%spx; height:%spx;" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (child_width, height, applet_loading_image, height/2)
+        applet_loading_image = '<div class="appletimagecontainer" style="width:%spx; max-width:100%%" >%s<h4 style="position: absolute; top: %spx; width: 100%%;" class="three_applet_loading_message">Applet loading</h4></div>' % (child_width, applet_loading_image, height/2)
 
 
         html_string +='<div class="ym-gr" style="width: %s%%"><div class="ym-gbox-right appletchild-right"><div class="threeapplet" id="container2_%s">%s</div><div class="appleterror three_load_error"></div></div></div>' % (applet.child_applet_percent_width, applet_id, applet_loading_image)
