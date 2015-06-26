@@ -84,6 +84,12 @@ var Axes = function (params) {
 
     if (params.showAxisTickLabels === undefined) { params.showAxisTickLabels = false; }
     if (params.axisTickLabelFontSize === undefined) { params.axisTickLabelFontSize = params.labelFontSize; }
+    if (params.tickLabelRescale === undefined) {
+	params.tickLabelRescale = new THREE.Vector3(1,1,1);
+    }
+    else if(!(params.tickLabelRescale instanceof THREE.Vector3)) {
+	params.tickLabelRescale = new THREE.Vector3(params.tickLabelRescale, params.tickLabelRescale, params.tickLabelRescale);
+    }
     if (params.tickLabelSpace === undefined) { params.tickLabelSpace= 0.06; }
     if (params.tickLabelDigits === undefined) { params.tickLabelDigits= 1; }
 
@@ -92,11 +98,13 @@ var Axes = function (params) {
     if (params.boxAxisTicksXSide === undefined) { params.boxAxisTicksXSide = 1; };
     if (params.boxAxisTicksYSide === undefined) { params.boxAxisTicksYSide = 1; };
     if (params.boxAxisTicksZSide === undefined) { params.boxAxisTicksZSide = 1; };
-
-
-    var axisLabelSpace=0.15;
-    if (! params.showAxisTickLabels) {
-	axisLabelSpace=0.08;
+    if (params.axisLabelSpace === undefined) {
+	if (params.showAxisTickLabels) {
+	    params.axisLabelSpace=0.15;
+	}
+	else {
+	    params.axisLabelSpace=0.08;
+	}
     }
 
     //Overall geometry, containing all vectors for standard and/or box axes
@@ -107,45 +115,45 @@ var Axes = function (params) {
         geometry.vertices.push(
 
             //Axes Box--lines grouped by dimension spanned--"top"
-            new THREE.Vector3(0, params.size.y, params.size.z), new THREE.Vector3(params.size.x, params.size.y, params.size.z),
-            new THREE.Vector3(0, params.size.y, params.size.z), new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
 
-            new THREE.Vector3(0, params.size.y, params.negSize.z), new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
-            new THREE.Vector3(0, params.size.y, params.negSize.z), new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
 
-            new THREE.Vector3(params.size.x, params.size.y, 0), new THREE.Vector3(params.size.x, params.size.y, params.size.z),
-            new THREE.Vector3(params.size.x, params.size.y, 0), new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
 
-            new THREE.Vector3(params.negSize.x, params.size.y, 0), new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
-            new THREE.Vector3(params.negSize.x, params.size.y, 0), new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
 
 
             //Axes Box--lines grouped by dimension spanned--"bottom"
-            new THREE.Vector3(0, params.negSize.y, params.size.z), new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
-            new THREE.Vector3(0, params.negSize.y, params.size.z), new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
 
-            new THREE.Vector3(0, params.negSize.y, params.negSize.z), new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
-            new THREE.Vector3(0, params.negSize.y, params.negSize.z), new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z),
 
-            new THREE.Vector3(params.size.x, params.negSize.y, 0), new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
-            new THREE.Vector3(params.size.x, params.negSize.y, 0), new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
 
-            new THREE.Vector3(params.negSize.x, params.negSize.y, 0), new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
-            new THREE.Vector3(params.negSize.x, params.negSize.y, 0), new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z),
 
             //Axes Box--lines grouped by dimension spanned--"right"
-            new THREE.Vector3(params.size.x, 0, params.size.z), new THREE.Vector3(params.size.x, params.size.y, params.size.z),
-            new THREE.Vector3(params.size.x, 0, params.size.z), new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.size.z),
 
-            new THREE.Vector3(params.size.x, 0, params.negSize.z), new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
-            new THREE.Vector3(params.size.x, 0, params.negSize.z), new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.size.x, params.negSize.y, params.negSize.z),
 
             //Axes Box--lines grouped by dimension spanned--"left"
-            new THREE.Vector3(params.negSize.x, 0, params.size.z), new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
-            new THREE.Vector3(params.negSize.x, 0, params.size.z), new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.size.y, params.size.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.size.z),
 
-            new THREE.Vector3(params.negSize.x, 0, params.negSize.z), new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
-            new THREE.Vector3(params.negSize.x, 0, params.negSize.z), new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z)
+            new THREE.Vector3(params.negSize.x, params.size.y, params.negSize.z),
+            new THREE.Vector3(params.negSize.x, params.negSize.y, params.negSize.z)
         );
 	
 	// box axis ticks
@@ -262,7 +270,7 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var x=i*params.axisTickIncrement.x;
-		var xRound = Math.round(x*tickLabelRoundFactor)/tickLabelRoundFactor
+		var xRound = Math.round(x*params.tickLabelRescale.x*tickLabelRoundFactor)/tickLabelRoundFactor
 		var sprite = new TextLabel(xRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
 
@@ -286,7 +294,7 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var y=i*params.axisTickIncrement.y;
-		var yRound = Math.round(y*tickLabelRoundFactor)/tickLabelRoundFactor
+		var yRound = Math.round(y*params.tickLabelRescale.y*tickLabelRoundFactor)/tickLabelRoundFactor
 
 		var sprite = new TextLabel(yRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
@@ -312,7 +320,7 @@ var Axes = function (params) {
 	    
 	    for (var i = tickMinInd; i <= tickMaxInd; i += 1) {
 		var z=i*params.axisTickIncrement.z;
-		var zRound = Math.round(z*tickLabelRoundFactor)/tickLabelRoundFactor
+		var zRound = Math.round(z*params.tickLabelRescale.z*tickLabelRoundFactor)/tickLabelRoundFactor
 
 		var sprite = new TextLabel(zRound.toString(), { fontSize: params.axisTickLabelFontSize, scale: params.labelScale, textColor: params.labelColor, fontWeight: "" });
 		this.add(sprite);
@@ -339,48 +347,48 @@ var Axes = function (params) {
             var spritex = new TextLabel(params.labelx, { fontSize: params.labelFontSize, scale: params.labelScale, textColor: params.labelColor });
 	    this.add(spritex);
 	    if(params.boxAxisTicksXSide==1) {
-		spritex.position.set((params.size.x + params.negSize.x)/2, params.size.y + (params.size.y-params.negSize.y) *axisLabelSpace, params.size.z + (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritex.position.set((params.size.x + params.negSize.x)/2, params.size.y + (params.size.y-params.negSize.y) *params.axisLabelSpace, params.size.z + (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    else if(params.boxAxisTicksXSide==2) {
-		spritex.position.set((params.size.x + params.negSize.x)/2, params.negSize.y - (params.size.y-params.negSize.y) *axisLabelSpace, params.size.z + (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritex.position.set((params.size.x + params.negSize.x)/2, params.negSize.y - (params.size.y-params.negSize.y) *params.axisLabelSpace, params.size.z + (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    else if(params.boxAxisTicksXSide==3) {
-		spritex.position.set((params.size.x + params.negSize.x)/2, params.negSize.y - (params.size.y-params.negSize.y) *axisLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritex.position.set((params.size.x + params.negSize.x)/2, params.negSize.y - (params.size.y-params.negSize.y) *params.axisLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }    
 	    else if(params.boxAxisTicksXSide==4) {
-		spritex.position.set((params.size.x + params.negSize.x)/2, params.size.y + (params.size.y-params.negSize.y) *axisLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritex.position.set((params.size.x + params.negSize.x)/2, params.size.y + (params.size.y-params.negSize.y) *params.axisLabelSpace, params.negSize.z - (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    
 	    var spritey = new TextLabel(params.labely, { fontSize: params.labelFontSize, scale: params.labelScale, textColor: params.labelColor });
 	    this.add(spritey);
 	    
 	    if(params.boxAxisTicksYSide==1) {
-		spritey.position.set(params.size.x + (params.size.x-params.negSize.y) *axisLabelSpace, (params.size.y + params.negSize.y)/2, params.size.z + (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritey.position.set(params.size.x + (params.size.x-params.negSize.x) *params.axisLabelSpace, (params.size.y + params.negSize.y)/2, params.size.z + (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    else if(params.boxAxisTicksYSide==2) {
-		spritey.position.set(params.negSize.x - (params.size.x-params.negSize.y) *axisLabelSpace, (params.size.y + params.negSize.y)/2, params.size.z + (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritey.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.axisLabelSpace, (params.size.y + params.negSize.y)/2, params.size.z + (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    else if(params.boxAxisTicksYSide==3) {
-		spritey.position.set(params.negSize.x - (params.size.x-params.negSize.y) *axisLabelSpace, (params.size.y + params.negSize.y)/2, params.negSize.z - (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritey.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.axisLabelSpace, (params.size.y + params.negSize.y)/2, params.negSize.z - (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 	    else if(params.boxAxisTicksYSide==4) {
-		spritey.position.set(params.size.x + (params.size.x-params.negSize.y) *axisLabelSpace, (params.size.y + params.negSize.y)/2, params.negSize.z - (params.size.z-params.negSize.z)*axisLabelSpace);
+		spritey.position.set(params.size.x + (params.size.x-params.negSize.x) *params.axisLabelSpace, (params.size.y + params.negSize.y)/2, params.negSize.z - (params.size.z-params.negSize.z)*params.axisLabelSpace);
 	    }
 
 	    var spritez = new TextLabel(params.labelz, { fontSize: params.labelFontSize, scale: params.labelScale, textColor: params.labelColor });
 	    this.add(spritez);
 	    
 	    if(params.boxAxisTicksZSide==1) {
-		spritez.position.set(params.size.x + (params.size.x-params.negSize.y) *axisLabelSpace, params.size.y + (params.size.y-params.negSize.y)*axisLabelSpace, (params.size.z + params.negSize.z)/2);
+		spritez.position.set(params.size.x + (params.size.x-params.negSize.x) *params.axisLabelSpace, params.size.y + (params.size.y-params.negSize.y)*params.axisLabelSpace, (params.size.z + params.negSize.z)/2);
 	    }
 	    else if(params.boxAxisTicksZSide==2) {
-		spritez.position.set(params.negSize.x - (params.size.x-params.negSize.y) *axisLabelSpace, params.size.y + (params.size.y-params.negSize.y)*axisLabelSpace, (params.size.z + params.negSize.z)/2);
+		spritez.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.axisLabelSpace, params.size.y + (params.size.y-params.negSize.y)*params.axisLabelSpace, (params.size.z + params.negSize.z)/2);
 	    }
 	    else if(params.boxAxisTicksZSide==3) {
-		spritez.position.set(params.negSize.x - (params.size.x-params.negSize.y) *axisLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*axisLabelSpace, (params.size.z + params.negSize.z)/2);
+		spritez.position.set(params.negSize.x - (params.size.x-params.negSize.x) *params.axisLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*params.axisLabelSpace, (params.size.z + params.negSize.z)/2);
 	    }
 	    else if(params.boxAxisTicksZSide==4) {
-		spritez.position.set(params.size.x + (params.size.x-params.negSize.y) *axisLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*axisLabelSpace, (params.size.z + params.negSize.z)/2);
+		spritez.position.set(params.size.x + (params.size.x-params.negSize.x) *params.axisLabelSpace, params.negSize.y - (params.size.y-params.negSize.y)*params.axisLabelSpace, (params.size.z + params.negSize.z)/2);
 	    }
 
 

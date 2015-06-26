@@ -22,10 +22,12 @@ var VectorField = function ( F, params) {
     if (params.dz  === undefined) {params.dz = 1;}
     if (params.lambertMaterial === undefined) {params.lambertMaterial=false;}
     if (params.color === undefined) {params.color=0x999999;}
+    if (params.headWidth === undefined) {params.headWidth = 0.2}
+    if (params.sphereRadius === undefined) {params.sphereRadius = params.headWidth/2}
     
     THREE.Object3D.call( this );
     
-    var miniSphereGeometry = new THREE.SphereGeometry( 0.1 );
+    var miniSphereGeometry = new THREE.SphereGeometry( params.sphereRadius );
     if(params.lambertMaterial) {
 	var miniSphereMaterial = new THREE.MeshLambertMaterial( { color: params.color, ambient: params.color } );
     }
@@ -70,7 +72,6 @@ var VectorField = function ( F, params) {
 		    if (params.headLength === undefined) {
 			headLength = 0.99*Fmag/rawMaxFMag;
 		    }
-		    if (params.headWidth === undefined) {params.headWidth = 0.2}
 
 		    var arrowProps = {
 			dir: Fdir,
@@ -88,6 +89,7 @@ var VectorField = function ( F, params) {
 		    var object = miniSphere.clone();
 		    object.position.copy(Forigin);
 		    this.add(object);
+
 		}	
 	    }
 	}
