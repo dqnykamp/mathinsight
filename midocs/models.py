@@ -997,7 +997,7 @@ class Applet(models.Model):
     javascript = models.TextField(blank=True, null=True)
     child_applet = models.ForeignKey('self', blank=True, null=True)
     child_applet_percent_width = models.IntegerField(default=50)
-    child_applet_parameters = models.CharField(max_length=100, blank=True, null=True)
+    child_applet_parameters = models.CharField(max_length=400, blank=True, null=True)
 
     OVERWRITE_THUMBNAIL_CHOICES = (
         (0, "don't overwrite"),
