@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.db import models
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
@@ -41,7 +36,7 @@ class CourseUser(models.Model):
     class Meta:
         ordering = ['user__last_name', 'user__first_name']
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s, %s" % (self.user.last_name, self.user.first_name)
     
     def get_full_name(self):
@@ -127,13 +122,13 @@ class CourseUser(models.Model):
 class GradeLevel(models.Model):
     grade = models.CharField(max_length=1, unique=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.grade
 
 class AssessmentCategory(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     
     class Meta:
@@ -147,7 +142,7 @@ class CourseAssessmentCategory(models.Model):
     rescale_factor = models.FloatField(default=1.0)
     sort_order = models.FloatField(blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.assessment_category, self.course)
 
     class Meta:
@@ -200,8 +195,8 @@ class Course(models.Model):
     short_name = models.CharField(max_length=50)
     semester = models.CharField(max_length=50)
     description = models.CharField(max_length=400,blank=True)
-    assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory')
-    enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment')
+    assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory', blank=True)
+    enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment', blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
@@ -218,7 +213,7 @@ class Course(models.Model):
     instructor_url = models.URLField(blank=True, null=True)
     tutoring_url = models.URLField(blank=True, null=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -771,7 +766,7 @@ class CourseEnrollment(models.Model):
                             default = STUDENT_ROLE)
 
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s enrolled in %s" % (self.student, self.course)
 
     class Meta:
@@ -806,9 +801,9 @@ class CourseThreadContent(models.Model):
     
     class Meta:
         ordering = ['sort_order', 'id']
-        unique_together = ['course', 'thread_content']
+        unique_together = ['thread_content','course']
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.thread_content, self.course)
 
     def clean(self):
@@ -816,9 +811,9 @@ class CourseThreadContent(models.Model):
         # check if thread_content is for the thread associated with course
         # If not, raise exception
         if self.course.thread != self.thread_content.section.thread:
-            raise ValidationError, \
+            raise ValidationError( \
                 "Thread content is not from course thread: %s"\
-                % self.course.thread
+                % self.course.thread)
 
     def save(self, *args, **kwargs):
         # if sort_order is null, make it one more than the max
@@ -1143,7 +1138,7 @@ class ManualDueDateAdjustment(models.Model):
     initial_due_date=models.DateField()
     final_due_date=models.DateField()
     
-    def __unicode__(self):
+    def __str__(self):
         return "Adjustment for %s on %s" % (self.student, self.content)
 
     class Meta:
@@ -1158,7 +1153,7 @@ class StudentContentAttempt(models.Model):
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s attempt on %s" % (self.student, self.content)
 
     class Meta:
@@ -1277,7 +1272,7 @@ class StudentContentCompletion(models.Model):
     skip = models.BooleanField(default=False)
     datetime = models.DateTimeField(auto_now=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s attempt on %s" % (self.student, self.content)
 
     class Meta:
@@ -1308,7 +1303,7 @@ class QuestionStudentAnswer(models.Model):
                                    blank=True, null=True)
     assessment_seed = models.CharField(max_length=150, blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return  "%s" % self.answer
 
     class Meta:

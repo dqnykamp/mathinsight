@@ -1,13 +1,9 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from django.db.models.signals import post_save
 from django.contrib.auth.models import User
-from micourses.models import CourseUser
 
 def create_course_user(sender, **kwargs):
+    from micourses.models import CourseUser
     user = kwargs['instance']
     if kwargs['created']:
         try:

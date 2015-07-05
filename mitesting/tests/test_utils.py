@@ -1,13 +1,8 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.utils import *
 from sympy import sympify
 from mitesting.sympy_customized import Symbol
-import six
 import random
 
 class TestDicts(SimpleTestCase):
@@ -84,21 +79,21 @@ class TestRandomNumber(SimpleTestCase):
         self.assertTrue(the_num in range(-2,3))
     
     def test_raises_useful_exceptions(self):
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random number',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random number',
                                 return_random_number_sample, "(", rng=self.rng)
         
-        self.assertRaisesRegexp(ValueError, 'require minval <= maxval', 
+        self.assertRaisesRegex(ValueError, 'require minval <= maxval', 
                                 return_random_number_sample, "(5,3)",
                                 rng=self.rng)
 
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random number', 
+        self.assertRaisesRegex(ValueError, 'Invalid format for random number', 
                                 return_random_number_sample, "4", rng=self.rng)
 
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random number', 
+        self.assertRaisesRegex(ValueError, 'Invalid format for random number', 
                                 return_random_number_sample, "(1,2,3,4)",
                                 rng=self.rng)
 
-        self.assertRaisesRegexp(TypeError, 'random number must contain numbers',
+        self.assertRaisesRegex(TypeError, 'random number must contain numbers',
                                 return_random_number_sample, "(a,b,c)",
                                 rng=self.rng)
 
@@ -166,24 +161,24 @@ class TestRandomWordPlural(SimpleTestCase):
 
 
     def test_raises_useful_exception(self):
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random word',
                                 return_random_word_and_plural, "(",
                                 rng=self.rng)
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random word',
                                 return_random_word_and_plural, "(a a)",
                                 rng=self.rng)
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random word',
                                 return_random_word_and_plural, "((a,a), a)",
                                 rng=self.rng)
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random word',
                                 return_random_word_and_plural, "a,(a,a,a)",
                                 rng=self.rng)
-        self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        self.assertRaisesRegex(ValueError, 'Invalid format for random word',
                                 return_random_word_and_plural, "(a,(a,a))",
                                 rng=self.rng)
 
         # this should raise a value error, but it doesn't yet
-        # self.assertRaisesRegexp(ValueError, 'Invalid format for random word',
+        # self.assertRaisesRegex(ValueError, 'Invalid format for random word',
         #                         return_random_word_and_plural, "a a, a")
        
 
@@ -240,7 +235,7 @@ class TestRandomExpression(SimpleTestCase):
         self.assertEqual(expr[1], 1)
 
     def test_raises_useful_exception(self):
-        self.assertRaisesRegexp(ValueError,
+        self.assertRaisesRegex(ValueError,
                                 'Invalid format for random expression',
                                 return_random_expression, "(", rng=self.rng)
 
@@ -249,7 +244,7 @@ class TestParsedFunction(SimpleTestCase):
         z=Symbol('z')
         fun = return_parsed_function("x^2","x", name="f")
         self.assertEqual(fun(z), z*z)
-        self.assertEqual(six.text_type(fun), "f")
+        self.assertEqual(str(fun), "f")
     def test_function_other_variables(self):
         w=Symbol('w')
         x=Symbol('x')
@@ -258,7 +253,7 @@ class TestParsedFunction(SimpleTestCase):
         a=Symbol('a')
         fun = return_parsed_function("x*y*z - a/y", "y", name="f")
         self.assertEqual(fun(w), x*w*z-a/w)
-        self.assertEqual(six.text_type(fun), "f")
+        self.assertEqual(str(fun), "f")
     def test_function_local_dict(self):
         u=Symbol('u')
         a=Symbol('a')
@@ -268,7 +263,7 @@ class TestParsedFunction(SimpleTestCase):
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
                                      local_dict={"a": b})
         self.assertEqual(fun(u), x*u*z-b/u)
-        self.assertEqual(six.text_type(fun), "f1g")
+        self.assertEqual(str(fun), "f1g")
         fun = return_parsed_function("x*y*z - a/y", "y", name="f1g",
                                      local_dict={"y": b})
         self.assertEqual(fun(u), x*u*z-a/u)
@@ -280,7 +275,7 @@ class TestParsedFunction(SimpleTestCase):
         a=Symbol('a')
         fun = return_parsed_function("s/t - a*u", "s,t,u", name="something")
         self.assertEqual(fun(x,y,z), x/y - a*z)
-        self.assertEqual(six.text_type(fun), "something")
+        self.assertEqual(str(fun), "something")
     def test_function_no_inputs(self):
         x=Symbol('x')
         y=Symbol('y')
@@ -293,11 +288,11 @@ class TestParsedFunction(SimpleTestCase):
         result = 3*x*(x-1)
         self.assertEqual(fun(0), result)
         self.assertEqual(fun(x*y-y**4),result)
-        self.assertEqual(six.text_type(fun), "crazy")
+        self.assertEqual(str(fun), "crazy")
         fun = return_parsed_function("3*x*(x-1)", "& 2 ^ ! &$%", "crazy2")
         self.assertEqual(fun(0), result)
         self.assertEqual(fun(x*y-y**4),result)
-        self.assertEqual(six.text_type(fun), "crazy2")
+        self.assertEqual(str(fun), "crazy2")
     def test_compose_functions(self):
         x=Symbol('x')
         y=Symbol('y')
@@ -313,7 +308,7 @@ class TestParsedFunction(SimpleTestCase):
     
         
     def test_raises_useful_exceptions(self):
-        self.assertRaisesRegexp(ValueError,
+        self.assertRaisesRegex(ValueError,
                                 'Invalid format for function',
                                 return_parsed_function, "(", "x", "f")
 

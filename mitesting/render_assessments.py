@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.template import TemplateSyntaxError, Context, Template
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
@@ -10,7 +5,6 @@ from django.core.urlresolvers import reverse
 import json 
 import re
 import sys
-import six
 import logging
 
 logger = logging.getLogger(__name__)
@@ -135,7 +129,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                 # allow to continue processing expressions
                 except Exception as exc:
                     error_in_expressions = True
-                    expression_error[expression.name] = six.text_type(exc)
+                    expression_error[expression.name] = str(exc)
                     expression_context[expression.name] = '??'
                 else:
                     # if random word, add singular and plural to context
@@ -155,6 +149,9 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                             = evaluate_results['alternate_exprs']
                         alternate_funcs[expression.name] \
                             = evaluate_results['alternate_funcs']
+
+                        the_expr = expression_context[expression.name]
+
 
             # if make it through all expressions without encountering
             # a failed condition, then record fact and
@@ -186,10 +183,11 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
         # that are assigned to expressions
         from mitesting.sympy_customized import EVALUATE_NONE
         from mitesting.math_objects import math_object
-        from mitesting.sympy_customized import parse_and_process, Symbol,\
-            Dummy
+        from mitesting.sympy_customized import parse_and_process
+        from sympy import Symbol, Dummy
+
         from mitesting.models import QuestionAnswerOption
-        import pickle
+        import pickle, base64
 
         # ExpressionFromAnswer contains information about any
         # answers that were assigned to expressions
@@ -210,7 +208,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                 if response['code']==expression.answer_code:
                     if expression.answer_type==\
                        QuestionAnswerOption.MULTIPLE_CHOICE:
-                        mc_dict=pickle.loads(expression.answer_data)
+                        mc_dict=pickle.loads(base64.b64decode(expression.answer_data))
                         try:
                             response_text=mc_dict[int(response['answer'])]
                         except (ValueError, KeyError):
@@ -252,7 +250,7 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
             # record exception and allow to continue processing expressions
             except Exception as exc:
                 error_in_expressions_post_user = True
-                expression_error_post_user[expression.name] = six.text_type(exc)
+                expression_error_post_user[expression.name] = str(exc)
                 expression_context[expression.name] = '??'
             else:
                 expression_context[expression.name] \
@@ -1163,7 +1161,7 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
             q['group']=unique_no_group_name
 
     # create list of randomly shuffled groups
-    groups = question_set_groups.keys()
+    groups = list(question_set_groups.keys())
     rng.shuffle(groups)
 
     # for each group, shuffle questions,

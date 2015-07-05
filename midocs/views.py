@@ -1,13 +1,8 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from midocs.models import NotationSystem, Author, Objective, Subject, Keyword, RelationshipType, Page, PageType, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem, return_default_page_type
 from django import http, forms
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.decorators.http import last_modified
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext, loader, TemplateDoesNotExist, Template, Context
 from django.db.models import Count, Q
 from django.db.models.query import EmptyQuerySet
@@ -163,12 +158,14 @@ def pageview(request, page_code, page_type_code=None, overview=False):
             notation_config=None
     
     # render page text with extra template tags
-    context=RequestContext(request)
+    context = Context({})
     from midocs.functions import return_new_auxiliary_data
     context['_auxiliary_data_'] = return_new_auxiliary_data()
     context['_auxiliary_data_']['page_type'] = page_type.code
     context['thepage'] = thepage
-    context['notation_system']=notation_system,
+    context['notation_system']=notation_system
+    context['STATIC_URL'] = settings.STATIC_URL
+    context['MEDIA_URL'] = settings.MEDIA_URL
 
     if thepage.text:
         try:
@@ -203,21 +200,19 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     if request.GET.get("bare"):
         templates = ["midocs/%s_bare.html" % page_type.code, "midocs/page_bare.html"] + templates
 
-    return render_to_response \
-        (templates, 
-         {'thepage': thepage, 'related_pages': related_pages,
-          'manual_links': manual_links,
-          'notation_system': notation_system,
-          'notation_config': notation_config,
-          'notation_system_form': notation_system_form,
-          'noanalytics': noanalytics,
-          'auxiliary_data': context['_auxiliary_data_'],
-          'rendered_text': rendered_text,
-          'rendered_header': rendered_header,
-          'rendered_javascript': rendered_javascript,
-          },
-         context_instance=context  # use to get context from rendered text
-         )
+    context.update({'related_pages': related_pages,
+                    'manual_links': manual_links,
+                    'notation_config': notation_config,
+                    'notation_system_form': notation_system_form,
+                    'noanalytics': noanalytics,
+                    'rendered_text': rendered_text,
+                    'rendered_header': rendered_header,
+                    'rendered_javascript': rendered_javascript,
+                });
+
+    print("render: %s" % templates);
+
+    return render(request, templates, context=context.flatten() )
 
 
 
@@ -313,17 +308,17 @@ def imageview(request, image_code):
         original_image_filename = re.sub(settings.IMAGE_UPLOAD_TO+"source/","", theimage.original_file.name)  # get rid of upload path
 
 
-    return render_to_response("midocs/image_detail.html", 
-                              {'image': theimage, 'in_pages': in_pages, 
-                               'imagefile': imagefile,
-                               'image_filename': image_filename,
-                               'original_image_filename': original_image_filename,
-                               'width': width, 'height': height,
-                               'notation_config': notation_config,
-                               'notation_system_form': notation_system_form, 
-                               'noanalytics': noanalytics,
-                              },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/image_detail.html", 
+                  {'image': theimage, 'in_pages': in_pages, 
+                   'imagefile': imagefile,
+                'image_filename': image_filename,
+                   'original_image_filename': original_image_filename,
+                   'width': width, 'height': height,
+                   'notation_config': notation_config,
+                'notation_system_form': notation_system_form, 
+                   'noanalytics': noanalytics,
+               })
+
 
 # calculate date of applet as the date_modified 
 def date_applet(request, applet_code):
@@ -344,13 +339,12 @@ def appletview_bare(request, applet_code):
     from midocs.functions import return_new_auxiliary_data
     auxiliary_data = return_new_auxiliary_data()
 
-    return render_to_response("midocs/applet_bare.html", 
-                              {'applet': theapplet, 
-                               '_auxiliary_data_': auxiliary_data,
-                               'width': width, 'height': height,
-                               'applet_identifier': applet_identifier,
-                           },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/applet_bare.html", 
+                  {'applet': theapplet, 
+                   '_auxiliary_data_': auxiliary_data,
+                'width': width, 'height': height,
+                   'applet_identifier': applet_identifier,
+               })
     
 
 @last_modified(date_applet)
@@ -423,16 +417,15 @@ def appletview(request, applet_code):
     from midocs.functions import return_new_auxiliary_data
     auxiliary_data = return_new_auxiliary_data()
 
-    return render_to_response("midocs/applet_detail.html", 
-                              {'applet': theapplet, 'in_pages': in_pages,
-                               'applet_filename': applet_filename,
-                               'applet_filename2': applet_filename2,
-                               'notation_config': notation_config,
-                               'notation_system_form': notation_system_form,
-                               'noanalytics': noanalytics,
-                               '_auxiliary_data_': auxiliary_data,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/applet_detail.html", 
+                  {'applet': theapplet, 'in_pages': in_pages,
+                   'applet_filename': applet_filename,
+                   'applet_filename2': applet_filename2,
+                   'notation_config': notation_config,
+                   'notation_system_form': notation_system_form,
+                   'noanalytics': noanalytics,
+                   '_auxiliary_data_': auxiliary_data,
+               })
 
 
 # calculate date of video as the date_modified 
@@ -459,11 +452,10 @@ def videoview(request, video_code):
             auth.logout(request)
 
 
-    return render_to_response("midocs/video_detail.html", 
-                              {'video': thevideo, 'in_pages': in_pages,
-                               'noanalytics': noanalytics,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/video_detail.html", 
+                  {'video': thevideo, 'in_pages': in_pages,
+                   'noanalytics': noanalytics,
+               })
 
 
 def indexview(request, index_code):
@@ -480,12 +472,11 @@ def indexview(request, index_code):
     if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
-    return render_to_response("midocs/index_detail.html", 
-                              {'index_type': index_type,
-                               'index_entries': index_entries,
-                               'noanalytics': noanalytics,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/index_detail.html", 
+                  {'index_type': index_type,
+                   'index_entries': index_entries,
+                   'noanalytics': noanalytics,
+               })
 
 def newsview(request, news_code):
 
@@ -497,13 +488,12 @@ def newsview(request, news_code):
     if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
-    return render_to_response("midocs/news_detail.html", 
-                              {'newsitem': newsitem,
-                               'news_list': 
-                               NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[0:10],
-                               'noanalytics': noanalytics,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, "midocs/news_detail.html", 
+                  {'newsitem': newsitem,
+                   'news_list': 
+                   NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[0:10],
+                   'noanalytics': noanalytics,
+               })
 
 
 # calculate date of applet as the date_modified 
@@ -612,15 +602,14 @@ def whatsnewview(request, items):
     if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
-    return render_to_response(the_template, 
-                              {'newpages': newpages,
-                               'newapplets': newapplets,
-                               'newvideos': newvideos,
-                               'newimages': newimages,
-                               'recent_news': recent_news,
-                               'noanalytics': noanalytics,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, the_template, 
+                  {'newpages': newpages,
+                   'newapplets': newapplets,
+                   'newvideos': newvideos,
+                   'newimages': newimages,
+                   'recent_news': recent_news,
+                   'noanalytics': noanalytics,
+               })
 
 
 
@@ -656,12 +645,12 @@ def home(request):
     highlighted_pages = Page.activepages.filter(highlight=True)
     num_highlights=highlighted_pages.count()
     max_highlights=min(max_highlights,num_highlights)
-    highlighted_pages = random.sample(highlighted_pages,max_highlights)
+    highlighted_pages = random.sample(list(highlighted_pages),max_highlights)
 
     highlighted_applets=Applet.activeapplets.filter(highlight=True)
     num_highlighted_applets=highlighted_applets.count()
     max_highlighted_applets=min(max_highlighted_applets,num_highlighted_applets)
-    highlighted_applets=random.sample(highlighted_applets,max_highlighted_applets)
+    highlighted_applets=random.sample(list(highlighted_applets),max_highlighted_applets)
 
     news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[:max_news]
     newpages=Page.objects.exclude(page_type__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_new_pages]
@@ -671,14 +660,13 @@ def home(request):
     if settings.SITE_ID==2 or settings.SITE_ID==3:
         noanalytics=True
 
-    return render_to_response("home.html", 
-                              {'highlight_list': highlighted_pages,
-                               'highlighted_applets': highlighted_applets,
-                               'news_list': news,
-                               'new_pages': newpages,
-                               'noanalytics': noanalytics,
-                               },
-                              context_instance=RequestContext(request))
+    return render(request, "home.html", 
+                  {'highlight_list': highlighted_pages,
+                   'highlighted_applets': highlighted_applets,
+                   'news_list': news,
+                   'new_pages': newpages,
+                   'noanalytics': noanalytics,
+               })
 
 
 

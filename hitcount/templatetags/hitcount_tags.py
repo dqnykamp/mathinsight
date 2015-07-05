@@ -66,10 +66,10 @@ class GetHitCount(template.Node):
                         period      = return_period_from_string(args[4]))
 
         else: # TODO - should there be more troubleshooting prior to bailing?
-            raise TemplateSyntaxError, \
+            raise TemplateSyntaxError(\
                     "'get_hit_count' requires " + \
                     "'for [object] in [timeframe] as [variable]' " + \
-                    "(got %r)" % args
+                    "(got %r)" % args)
         
     handle_token = classmethod(handle_token)
 
@@ -149,10 +149,10 @@ class GetHitCountJavascript(template.Node):
             return cls(object_expr = parser.compile_filter(args[2]))
 
         else:
-            raise TemplateSyntaxError, \
+            raise TemplateSyntaxError( \
                     "'get_hit_count' requires " + \
                     "'for [object] in [timeframe] as [variable]' " + \
-                    "(got %r)" % args
+                    "(got %r)" % args)
 
     handle_token = classmethod(handle_token)
 

@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from django.template.defaultfilters import floatformat
@@ -16,7 +11,7 @@ register=Library()
 def complete_skip_button(parser, token):
     bits = token.split_contents()
     if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires two arguments" % str(bits[0]))
     course_thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     
@@ -64,7 +59,7 @@ class AssessmentStudentScoreNode(Node):
 def assessment_student_score(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
     course_thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     float_format = "1"
@@ -100,7 +95,7 @@ class InitialDueDateNode(Node):
 def get_initial_due_date(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
     course_thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     
@@ -136,7 +131,7 @@ class FinalDueDateNode(Node):
 def get_final_due_date(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
     course_thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     

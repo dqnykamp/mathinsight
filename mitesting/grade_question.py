@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.conf import settings
 from mitesting.models import QuestionAnswerOption, Expression
 from django.core.exceptions import ObjectDoesNotExist
@@ -172,7 +167,6 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 valid_answer=expr_context[answer_option.answer]
             except KeyError:
                 continue
-
             try:
                 valid_alternates = expr_context['_alternate_exprs_'] \
                                    [answer_option.answer]
@@ -381,8 +375,11 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             this_near_match_percent_correct = \
                         answer_option.percent_correct\
                         *answer_results['fraction_equal_on_normalize']
+
             if (answer_results['fraction_equal'] > 0 or \
-                (answer_results['round_level_used'] < \
+                (answer_results['round_level_used'] is not None
+                 and answer_results['round_level_required'] is not None
+                 and answer_results['round_level_used'] < \
                  answer_results['round_level_required'])) \
                 and this_percent_correct  > percent_correct:
                 if this_percent_correct == 100:
@@ -531,7 +528,7 @@ def match_max_ones(A):
                 rows_to_remove.append(row_ind)
         
         rows_to_remove_converted = []
-        rows_to_keep=range(A.rows)
+        rows_to_keep=list(range(A.rows))
 
         for row_ind in rows_to_remove:
             rows_to_remove_converted.append(index_convert(row_ind,removed_rows))
@@ -562,7 +559,7 @@ def match_max_ones(A):
                 cols_to_remove.append(col_ind)
         
         cols_to_remove_converted = []
-        cols_to_keep=range(A.cols)
+        cols_to_keep=list(range(A.cols))
 
         for col_ind in cols_to_remove:
             cols_to_remove_converted.append(index_convert(col_ind,removed_cols))

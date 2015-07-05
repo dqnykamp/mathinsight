@@ -1,11 +1,6 @@
 # customized sympy commands
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
-from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function
+from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
@@ -237,6 +232,8 @@ class MatrixAsVector(Matrix):
 
         return super(MatrixAsVector, self).__eq__(other)
 
+    __hash__ = Matrix.__hash__
+
 
 class MatrixFromTuple(object):
     """
@@ -352,33 +349,24 @@ class Gts(BooleanFunction):
 
 
     def doit(self, **hints):
-        result=True
         if hints.get('deep', True):
-            if self.strict[0]:
-                result = Gt(self.exprs[0].doit(**hints), 
-                            self.exprs[1].doit(**hints))
-            else:
-                result = Ge(self.exprs[0].doit(**hints), 
-                            self.exprs[1].doit(**hints))
-            for i in range(1, self.nargs-1):
+            result = []
+            for i in range(self.nargs-1):
                 if self.strict[i]:
-                    result = And(result, Gt(self.exprs[i].doit(**hints), 
-                                            self.exprs[i+1].doit(**hints)))
+                    result.append(Gt(self.exprs[i].doit(**hints), 
+                                     self.exprs[i+1].doit(**hints)))
                 else:
-                    result = And(result, Ge(self.exprs[i].doit(**hints), 
-                                            self.exprs[i+1].doit(**hints)))
-            return result
+                    result.append(Ge(self.exprs[i].doit(**hints), 
+                                     self.exprs[i+1].doit(**hints)))
+            return And(*result)
         else:
-            if self.strict[0]:
-                result = Gt(self.exprs[0], self.exprs[1])
-            else:
-                result = Ge(self.exprs[0], self.exprs[1])
-            for i in range(1, self.nargs-1):
+            result = []
+            for i in range(self.nargs-1):
                 if self.strict[i]:
-                    result = And(result, Gt(self.exprs[i], self.exprs[i+1]))
+                    result.append(Gt(self.exprs[i], self.exprs[i+1]))
                 else:
-                    result = And(result, Ge(self.exprs[i], self.exprs[i+1]))
-            return result
+                    result.append(Ge(self.exprs[i], self.exprs[i+1]))
+            return And(*result)
 
 
     def __nonzero__(self):
@@ -506,33 +494,24 @@ class Lts(BooleanFunction):
 
 
     def doit(self, **hints):
-        result=True
         if hints.get('deep', True):
-            if self.strict[0]:
-                result = Lt(self.exprs[0].doit(**hints), 
-                            self.exprs[1].doit(**hints))
-            else:
-                result = Le(self.exprs[0].doit(**hints), 
-                            self.exprs[1].doit(**hints))
+            result = []
             for i in range(1, self.nargs-1):
                 if self.strict[i]:
-                    result = And(result, Lt(self.exprs[i].doit(**hints), 
-                                            self.exprs[i+1].doit(**hints)))
+                    result.append(Lt(self.exprs[i].doit(**hints), 
+                                     self.exprs[i+1].doit(**hints)))
                 else:
-                    result = And(result, Le(self.exprs[i].doit(**hints), 
-                                            self.exprs[i+1].doit(**hints)))
-            return result
+                    result.append(Le(self.exprs[i].doit(**hints), 
+                                     self.exprs[i+1].doit(**hints)))
+            return And(*result)
         else:
-            if self.strict[0]:
-                result = Lt(self.exprs[0], self.exprs[1])
-            else:
-                result = Le(self.exprs[0], self.exprs[1])
-            for i in range(1, self.nargs-1):
+            result = []
+            for i in range(self.nargs-1):
                 if self.strict[i]:
-                    result = And(result, Lt(self.exprs[i], self.exprs[i+1]))
+                    result.append(Lt(self.exprs[i], self.exprs[i+1]))
                 else:
-                    result = And(result, Le(self.exprs[i], self.exprs[i+1]))
-            return result
+                    result.append(Le(self.exprs[i], self.exprs[i+1]))
+            return And(*result)
 
 
     def __nonzero__(self):
@@ -565,7 +544,8 @@ class subscript_symbol(Function):
     @classmethod
     def eval(cls, a,b, real=False):
 
-        from mitesting.sympy_customized import Symbol, latex
+        from mitesting.sympy_customized import latex
+
         symbol_name=''
         if b is None:
             if a is None:

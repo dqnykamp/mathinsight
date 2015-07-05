@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.test import SimpleTestCase
 from mitesting.user_commands import *
 from sympy import diff, Tuple, sympify
@@ -94,10 +89,10 @@ class IndexTests(SimpleTestCase):
             self.assertEqual(index(thetuple,thetuple[i]),i)
 
     def test_index_of_invalid_items(self):
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValueError, "First argument of index must be a list or tuple",
             index,3,2)
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValueError, "First argument of index must be a list or tuple",
             index,sympify("3*x"),3)
 
@@ -111,7 +106,7 @@ class IndexTests(SimpleTestCase):
 class SmallestFactorTests(SimpleTestCase):
     def test_smallest_factor(self):
         self.assertEqual(smallest_factor(323),17)
-        self.assertRaisesRegexp(ValueError,
+        self.assertRaisesRegex(ValueError,
                                 "Argument to smallest_factor must be an integer",
                                 smallest_factor, 323.2)
 

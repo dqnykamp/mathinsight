@@ -1,6 +1,5 @@
 {% extends "base.html" %}
-{% load mi_tags comments hitcount_tags %}
-{% load url from future %}
+{% load mi_tags comments %}
 
 {% block title %}{{ applet.annotated_title }} - Math Insight{% endblock %}
 {% block nolinksection %}{% endblock %}
@@ -10,11 +9,6 @@
 <meta name="description" content="{{ applet.description}} "/>
 <script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
 <script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
-<script type="text/javascript"><!--
-    $(document).ready(function() {
-        {% get_hit_count_javascript for applet %}
-    });
---></script>
 {% endblock %}
 
 {% block main_columns %}

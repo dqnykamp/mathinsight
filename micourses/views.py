@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from micourses.models import Course, CourseUser, CourseThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
 from mitesting.models import Assessment

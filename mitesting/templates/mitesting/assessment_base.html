@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% load mi_tags testing_tags %}{% load dajaxice_templatetags %}
+{% extends "base.html" %}{% load mi_tags testing_tags %}
 
 
 {% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'mic-assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
@@ -8,11 +8,8 @@
 {% block extrastyle %}
 <link href="{{ STATIC_URL }}mitesting/miassessment.css" rel="stylesheet" type="text/css"/>
 <meta name="description" content="{{ assessment.description}}"/>
-<script src="{{ STATIC_URL }}js/jquery.dajax.core.js"></script>
-<script src="{{ STATIC_URL }}js/jquery.ba-serializeobject.min.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
 <script src="{{ STATIC_URL }}js/ajaxcsrf.js"></script>
-{% dajaxice_js_import %} 
 
 <script type="text/x-mathjax-config">
 MathJax.Hub.Config({

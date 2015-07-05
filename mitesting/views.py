@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from mitesting.models import Question, Assessment, QuestionAnswerOption
 from midocs.models import Applet
 from micourses.models import QuestionStudentAnswer
@@ -162,23 +157,34 @@ class GradeQuestionView(SingleObjectMixin, View):
     pk_url_kwarg = 'question_id'
 
     def post(self, request, *args, **kwargs):
+
         # Look up the question to grade
         question = self.get_object()
         
-        response_data = request.POST
+        pairs = [s2 for s1 in request.body.split(b'&') for s2 in s1.split(b';')]
+        cgd = None
+        for name_value in pairs:
+            if not name_value:
+                continue
+            nv = name_value.split(b'=', 1)
+            if len(nv) != 2:
+                continue
+            
+            if nv[0]==b'cgd':
+                cgd = nv[1]
+                break
 
         import pickle, base64
-        try:
-            computer_grade_data = pickle.loads(
-                base64.b64decode(response_data.get('cgd')))
-        except TypeError, IndexError:
-            return HttpResponse("", content_type = 'application/json')
+        computer_grade_data = pickle.loads(
+            base64.b64decode(cgd))
 
         question_identifier = computer_grade_data['identifier']
 
         # set up context from question expressions
         seed = computer_grade_data['seed']
         
+        response_data = request.POST
+
         answer_info = computer_grade_data['answer_info']
         
         answer_user_responses = []
@@ -385,13 +391,25 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # Look up the question to grade
         question = self.get_object()
         
-        response_data = request.POST
 
-        import pickle, base64
+        pairs = [s2 for s1 in request.body.split(b'&') for s2 in s1.split(b';')]
+        cgd = None
+        for name_value in pairs:
+            if not name_value:
+                continue
+            nv = name_value.split(b'=', 1)
+            if len(nv) != 2:
+                continue
+            
+            if nv[0]==b'cgd':
+                cgd = nv[1]
+                break
+
+        import pickle, base64, binascii
         try:
             computer_grade_data = pickle.loads(
-                base64.b64decode(response_data.get('cgd')))
-        except (TypeError, IndexError, EOFError) as exc:
+                base64.b64decode(cgd))
+        except (TypeError, IndexError, EOFError, binascii.Error) as exc:
             logger.error("cgd malformed: %s" % exc)
             return HttpResponse("", content_type = 'application/json')
 
@@ -439,8 +457,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         from django.template.loader import get_template
         question_solution_template = get_template(
             "mitesting/question_solution_body.html")
-        rendered_solution = question_solution_template.render(Context(
-                {'question_data': question_data}))
+        rendered_solution = question_solution_template.render(
+                {'question_data': question_data})
 
         rendered_solution = mark_safe("<h4>Solution</h4>" + rendered_solution)
         results = {'rendered_solution': rendered_solution,

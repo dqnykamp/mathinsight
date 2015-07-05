@@ -6,7 +6,7 @@ from django.db.models import F
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 from django.dispatch import Signal
 
@@ -63,7 +63,7 @@ class HitManager(models.Manager):
         '''
         grace = getattr(settings, 'HITCOUNT_KEEP_HIT_ACTIVE', {'days':7})
         period = datetime.datetime.utcnow() - datetime.timedelta(**grace)
-        queryset = self.get_query_set()
+        queryset = self.get_queryset()
         queryset = queryset.filter(created__gte=period)
         return queryset.filter(*args, **kwargs)
 
@@ -81,7 +81,7 @@ class HitCount(models.Model):
                         verbose_name="content type",
                         related_name="content_type_set_for_%(class)s",)
     object_pk       = models.TextField('object ID')
-    content_object  = generic.GenericForeignKey('content_type', 'object_pk')
+    content_object  = GenericForeignKey('content_type', 'object_pk')
 
     class Meta:
         ordering = ( '-hits', )
@@ -111,8 +111,8 @@ class HitCount(models.Model):
             if HitCount.objects.filter(
                     object_pk=self.object_pk).filter(
                             content_type=self.content_type):
-                raise DuplicateContentObject, "A HitCount object already " + \
-                        "exists for this content_object."
+                raise DuplicateContentObject("A HitCount object already " + \
+                        "exists for this content_object.")
 
         super(HitCount, self).save(*args, **kwargs)
 

@@ -1,21 +1,16 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP
-from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S, E, pi
+from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 from django.utils.safestring import mark_safe
 from sympy.core.cache import cacheit
 from sympy.core.sympify import _sympify
+from sympy.core.numbers import Number
+from sympy.core.operations import LatticeOp
 
 from sympy import Interval as sympy_Interval
 from sympy import FiniteSet as sympy_FiniteSet
-from sympy import Symbol as sympy_Symbol
-from sympy import Dummy as sympy_Dummy
 from sympy import And as sympy_And
 from sympy import Or as sympy_Or
 
@@ -311,7 +306,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
                     expr = TupleNoParen(*expr)
                     break
 
-
+                    
     if evaluate:
         from mitesting.utils import replace_unevaluated_commands
         expr = replace_unevaluated_commands(expr)
@@ -452,18 +447,6 @@ def auto_symbol_real(tokens, local_dict, global_dict):
 
 
 
-class Symbol(sympy_Symbol):
-    def __str__(self):
-        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
-    def _sympystr(self, prtr):
-        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
-
-class Dummy(sympy_Dummy):
-    def __str__(self):
-        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
-    def _sympystr(self, prtr):
-        return mark_safe(self.name.encode('ascii', 'xmlcharrefreplace'))
-
 class SymbolCallable(Symbol):
     def __eq__(self, other):
         if self is other:
@@ -472,6 +455,13 @@ class SymbolCallable(Symbol):
             return str(self)==str(other)
         return False
 
+    def __hash__(self):
+        # make it hash like a symbol
+        h = self._mhash
+        if h is None:
+            h = hash(('Symbol',) + self._hashable_content())
+            self._mhash = h
+        return h
 
 def _token_callable(token, local_dict, global_dict, nextToken=None, 
                     include_symbol_callable=True):
@@ -721,6 +711,9 @@ class TupleNoParen(Tuple):
             return False
         return super(TupleNoParen, self).__eq__(other)
   
+    def __hash__(self):
+        return hash(self.args)
+
 
 class DerivativePrimeSimple(Derivative):
     def _latex(self, prtr):
@@ -896,6 +889,16 @@ class AddUnsort(Add):
                 return False
         return super(AddUnsort, self).__eq__(other)
 
+
+    def __hash__(self):
+        # make it hash like a Add
+        h = self._mhash
+        if h is None:
+            h = hash(('Add',) + self._hashable_content())
+            self._mhash = h
+        return h
+
+
     def __neg__(self):
         # create a MulUnsort with an initial factor of -1 set to not
         # be displayed
@@ -1009,6 +1012,16 @@ class MulUnsort(Mul):
             else:
                 return False
         return super(MulUnsort, self).__eq__(other)
+
+
+    def __hash__(self):
+        # make it hash like a Mul
+        h = self._mhash
+        if h is None:
+            h = hash(('Mul',) + self._hashable_content())
+            self._mhash = h
+        return h
+
 
     def __neg__(self):
         # keep track if an initial factor of -1 was originally added, 
@@ -1197,10 +1210,10 @@ class MulUnsort(Mul):
 
 
 class LatexPrinter(sympy_LatexPrinter):
-    emptyPrinter = unicode
+    emptyPrinter = str
     def __init__(self, settings=None):
         super(LatexPrinter,self).__init__(settings)
-        self._str = unicode
+        self._str = str
 
     def _print_And(self, e):
         args = sorted(e.args, key=default_sort_key)
@@ -1280,6 +1293,10 @@ class Interval(sympy_Interval):
         return super(Interval, self).__eq__(other)
 
 
+    __hash__ = sympy_Interval.__hash__
+
+
+
 class FiniteSet(sympy_FiniteSet):
     def contains(self, other, evaluate=True):
         if evaluate:
@@ -1341,6 +1358,18 @@ class And(sympy_And):
 
     __bool__ = __nonzero__
 
+    
+    ## have to rewrite _new_args_filter since sympy has And hard coded
+    @classmethod
+    def _new_args_filter(cls, args):
+        newargs = []
+        for x in args:
+            if isinstance(x, Number) or x in (0, 1):
+                newargs.append(True if x else False)
+            else:
+                newargs.append(x)
+        return LatticeOp._new_args_filter(newargs, cls)
+
 
 
 class Or(sympy_Or):
@@ -1361,3 +1390,15 @@ class Or(sympy_Or):
         raise TypeError("cannot determine truth value of Or")
 
     __bool__ = __nonzero__
+
+
+    ## have to rewrite _new_args_filter since sympy has And hard coded
+    @classmethod
+    def _new_args_filter(cls, args):
+        newargs = []
+        for x in args:
+            if isinstance(x, Number) or x in (0, 1):
+                newargs.append(True if x else False)
+            else:
+                newargs.append(x)
+        return LatticeOp._new_args_filter(newargs, cls)

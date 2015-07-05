@@ -1,9 +1,5 @@
 # commands that users can use in questions
 
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from sympy import Tuple, Function, C,  Subs, Expr, Abs
 from mitesting.sympy_customized import customized_sort_key, TupleNoParen
@@ -63,7 +59,7 @@ class roots_tuple(Function):
     @classmethod
     def eval(cls, f, *gens):
         from sympy import roots
-        rootslist = roots(f, *gens).keys()
+        rootslist = list(roots(f, *gens).keys())
         rootslist.sort(key=customized_sort_key)
 
         return TupleNoParen(*rootslist)
@@ -78,7 +74,7 @@ class real_roots_tuple(Function):
     @classmethod
     def eval(cls, f, *gens):
         from sympy import roots
-        rootslist = roots(f, *gens, filter='R').keys()
+        rootslist = list(roots(f, *gens, filter='R').keys())
         rootslist.sort(key=customized_sort_key)
         return TupleNoParen(*rootslist)
 
@@ -117,7 +113,7 @@ class smallest_factor(Function):
         if expr.is_Integer:
             from sympy import factorint
             factors = factorint(Abs(expr), limit=10000)
-            factorlist=factors.keys()
+            factorlist=list(factors.keys())
             factorlist.sort()
             return factorlist[0]
         else:

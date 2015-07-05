@@ -1,10 +1,6 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
-from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen, Symbol
-from sympy import Tuple, Function, sympify
+from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen
+from sympy import Tuple, Function, sympify, Symbol
 from sympy.parsing.sympy_tokenize import TokenError
 import six
 import re
@@ -35,7 +31,7 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
 
     # create a dictionary containing all sympy commands
     all_sympy_commands = {}
-    exec "from sympy import *" in all_sympy_commands
+    exec("from sympy import *", all_sympy_commands)
 
     # create the dictionary
     local_dict = {}

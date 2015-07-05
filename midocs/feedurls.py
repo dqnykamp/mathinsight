@@ -1,13 +1,8 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.conf.urls import patterns, url
 from midocs.feeds import LatestItemsFeed
 
 
-urlpatterns = patterns('',
+urlpatterns =[
  url(r'^new_pages$', LatestItemsFeed(),{'item_type':'page'}, 
      name='mi-newpagefeed'),
  url(r'^new_applets$', LatestItemsFeed(),{'item_type':'applet'}, 
@@ -18,4 +13,4 @@ urlpatterns = patterns('',
      name='mi-newimagefeed'),
  url(r'^news$', LatestItemsFeed(),{'item_type':'news'}, 
      name='mi-newsfeed'),
-)
+]

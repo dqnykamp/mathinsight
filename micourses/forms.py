@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django import forms
 from micourses.models import StudentContentAttempt
 from django.forms.widgets import HiddenInput,SplitDateTimeWidget
@@ -13,6 +8,7 @@ class StudentContentAttemptForm(forms.ModelForm):
                                    widget=forms.TextInput(attrs={'size': 10}))
     class Meta:
         model = StudentContentAttempt
+        fields = ['student', 'content', 'datetime', 'score', 'seed']
         widgets = {
             'student': HiddenInput,
             'content': HiddenInput,
@@ -27,6 +23,7 @@ class StudentContentAttemptRequiredScoreForm(forms.ModelForm):
                                    widget=forms.TextInput(attrs={'size': 10}))
     class Meta:
         model = StudentContentAttempt
+        fields = ['student', 'content', 'datetime', 'score', 'seed']
         widgets = {
             'student': HiddenInput,
             'content': HiddenInput,

@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
 from django.contrib.auth.models import AnonymousUser, User, Permission, Group
@@ -587,8 +582,10 @@ class TestAssessmentView(TestCase):
         self.assertContains(response, top_error_base % top_error_message,
                             html=True)
         
-        error_message = '<li>Error in expression: abc<br/>Invalid format for expression: (</li>'
-        self.assertContains(response, error_message, html=True)
+        error_message = 'Error in expression: abc'
+        self.assertContains(response, error_message)
+        error_message = 'Invalid format for expression: ('
+        self.assertContains(response, error_message)
 
         self.assertNotContains(response, submit_button_html, html=True)
 
@@ -619,7 +616,7 @@ class TestAssessmentView(TestCase):
 
         self.assertNotContains(response, top_error_base % top_error_message,
                             html=True)
-        self.assertContains(response, error_message, html=True)
+        self.assertContains(response, error_message)
         self.assertContains(response, submit_button_html, html=True)
         self.assertContains(response, 'abc=??')
 

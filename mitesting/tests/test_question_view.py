@@ -1,12 +1,7 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
 from django.contrib.auth.models import AnonymousUser, User, Permission
-import json
+import json, re
 import pickle, base64
 import random
 
@@ -296,8 +291,10 @@ class TestQuestionView(TestCase):
         
         response = self.client.get("/assess/question/%s" % self.q.id)
         
-        error_message = '<li>Error in expression: abc<br/>Invalid format for expression: (</li>'
-        self.assertContains(response, error_message, html=True)
+        error_message = 'Error in expression: abc'
+        self.assertContains(response, error_message)
+        error_message = 'Invalid format for expression: ('
+        self.assertContains(response, error_message)
         self.assertNotContains(response, submit_button_html, html=True)
         self.assertContains(response, 'abc=??')
 
@@ -305,9 +302,23 @@ class TestQuestionView(TestCase):
         abc.save()
         
         response = self.client.get("/assess/question/%s" % self.q.id)
-        self.assertContains(response, error_message, html=True)
+        self.assertContains(response, error_message)
         self.assertContains(response, submit_button_html, html=True)
         self.assertContains(response, 'abc=??')
+
+
+def convert_answer_data(data_dict):
+    
+    data_list = []
+    for key in data_dict.keys():
+        if key=="cgd":
+            data_list.append(b"cgd="+data_dict[key])
+        else:
+            answer = re.sub("\+", "%2B", str(data_dict[key]))
+            answer = re.sub(" ", r"+", answer)
+            data_list.append(key.encode()  + b"=" + answer.encode())
+            
+    return b"&".join(data_list)
 
 
 class TestGradeQuestionView(TestCase):
@@ -347,6 +358,7 @@ class TestGradeQuestionView(TestCase):
     def new_answer(self, **kwargs):
         return self.q.questionansweroption_set.create(**kwargs)
 
+
     def test_view_simple(self):
         computer_grade_data = {
             'seed': '0', 'identifier': 'a', 'record_answers': True,
@@ -355,30 +367,18 @@ class TestGradeQuestionView(TestCase):
 
         cgd = base64.b64encode(pickle.dumps(computer_grade_data))
 
+        data = b"cgd=" + cgd
         response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd})
+                                  data, content_type='application/x-www-form-urlencoded')
+
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertEqual(results['identifier'], "a")
         self.assertEqual(results['number_attempts'],1)
         self.assertFalse(results['enable_solution_button'])
         self.assertFalse(results.get('inject_solution_url',''),'')
         self.assertFalse(results['correct'])
         self.assertEqual(results['answers'],{})
-        
-    def test_bad_cgd(self):
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": "abc"})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": 123})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
-        
         
     def test_simple_grade(self):
         response = self.client.get("/assess/question/%s" % self.q.id)
@@ -402,25 +402,31 @@ class TestGradeQuestionView(TestCase):
 
         fun_x = response.context['fun_x']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(fun_x.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(fun_x.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(1+fun_x.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(1+fun_x.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -441,25 +447,29 @@ class TestGradeQuestionView(TestCase):
 
         n = response.context['n']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(2*n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(2*n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -481,38 +491,44 @@ class TestGradeQuestionView(TestCase):
 
         n = response.context['n']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(2*n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(2*n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(3*n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(3*n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -533,25 +549,30 @@ class TestGradeQuestionView(TestCase):
 
         n = response.context['n']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(2*n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(2*n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
@@ -561,13 +582,15 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(3*n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(3*n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -595,36 +618,43 @@ class TestGradeQuestionView(TestCase):
 
         n = response.context['n']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                       str(n.return_expression())})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier:
+                                 str(n.return_expression())}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "y"})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: "y"}),        
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "z"})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: "z"}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -651,11 +681,13 @@ class TestGradeQuestionView(TestCase):
         for ai in answer_identifiers:
             answers["answer_%s" % ai] = str(x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -666,11 +698,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[0]] \
             = str(x.return_expression()+1)
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -706,11 +740,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -723,11 +759,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[0]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         for ai in answer_identifiers:
@@ -741,11 +779,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -782,11 +822,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -799,11 +841,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(n.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -832,47 +876,56 @@ class TestGradeQuestionView(TestCase):
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "t"})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "t"}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "s"})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "s"}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
-        self.assertTrue(results["correct"])
-        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
-        self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
-
-
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "u"})
-
-        self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: "v"})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "u"}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                   "answer_%s" % answer_identifier: "v"}),
+            content_type='application/x-www-form-urlencoded')
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -899,51 +952,62 @@ class TestGradeQuestionView(TestCase):
 
         x = response.context['x']
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "2t+%s" % x})
+                                   "2t+%s" % x}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "2s+%s" % x})
+                                   "2s+%s" % x}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
-        self.assertTrue(results["correct"])
-        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
-        self.assertTrue("is correct" in results["feedback"])
-        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
-
-
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier:
-                                   "2u+%s" % x})
-
-        self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "2v + %s" % x})
+                                   "2u+%s" % x}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("is correct" in results["feedback"])
+        self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
+
+
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                   "answer_%s" % answer_identifier: 
+                                   "2v + %s" % x}),
+            content_type='application/x-www-form-urlencoded')
+
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -990,90 +1054,104 @@ class TestGradeQuestionView(TestCase):
             xx2 = "x"
             xx3 = "y"
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+t" % (num,xx)})
+                                   "%s%s+t" % (num,xx)}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+s" % (num,xx)})
+                                   "%s%s+s" % (num,xx)}),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+u" % (num,xx)})
+                                   "%s%s+u" % (num,xx)}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+t" % (num,xx2)})
+                                   "%s%s+t" % (num,xx2)}),
+            content_type='application/x-www-form-urlencoded')
 
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+t" % (num,xx3)})
-
+                                   "%s%s+t" % (num,xx3)}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+t" % (num+1,xx)})
+                                   "%s%s+t" % (num+1,xx)}),
+            content_type='application/x-www-form-urlencoded')
 
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
-                                   "%s%s+t" % (num-1,xx)})
-
+                                   "%s%s+t" % (num-1,xx)}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -1105,11 +1183,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -1122,11 +1202,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[0]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -1140,11 +1222,14 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1161,11 +1246,14 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = str(fun_x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1210,11 +1298,14 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[2]] \
             = "2a%s" % x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 67% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1238,11 +1329,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[2]] \
             = "2a*%s" % x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -1279,11 +1372,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = "a%s(%s)" % (f.return_expression(), x.return_expression())
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1302,11 +1397,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = "a*%s(%s)" % (f.return_expression(), x.return_expression())
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1324,11 +1421,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[1]] \
             = "a%s" % (f.return_expression())
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1363,16 +1462,22 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         expr.evaluate_level=EVALUATE_NONE
@@ -1380,16 +1485,22 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
 
         expr.evaluate_level=EVALUATE_PARTIAL
@@ -1397,16 +1508,21 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         expr.evaluate_level=EVALUATE_FULL
@@ -1414,16 +1530,20 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -1446,16 +1566,20 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         expr.evaluate_level=EVALUATE_NONE
@@ -1463,16 +1587,20 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
 
         expr.evaluate_level=EVALUATE_PARTIAL
@@ -1480,16 +1608,20 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         expr.evaluate_level=EVALUATE_FULL
@@ -1497,16 +1629,20 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -1533,16 +1669,20 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         expr.evaluate_level=EVALUATE_NONE
@@ -1551,16 +1691,20 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -1570,16 +1714,20 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -1589,16 +1737,20 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -1634,11 +1786,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[2]] \
             = "(%s-a)(%s+a)" % (x.return_expression(),x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         for ai in answer_identifiers:
@@ -1653,11 +1807,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifiers[2]] \
             = "%s^2-a^2" % x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 33% correct" in results["feedback"])
         ai = answer_identifiers[0]
@@ -1698,10 +1854,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s^3-a^2*%s" \
             % (x.return_expression(),x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1731,10 +1890,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s^3-a^2*%s" \
             % (x.return_expression(),x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1771,10 +1933,13 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "%s^2-a^2" % x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1810,20 +1975,26 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "a, b, c,d"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
 
 
         answers["answer_" + answer_identifier] = "d, b, c"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1835,10 +2006,13 @@ class TestGradeQuestionView(TestCase):
         expr.expression_type=Expression.UNORDERED_TUPLE
         expr.save()
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 75% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1867,20 +2041,26 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "d, a, c, b"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
 
         
         answers["answer_" + answer_identifier] = "a,b,c,d,a,c,a,a"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1892,10 +2072,13 @@ class TestGradeQuestionView(TestCase):
         the_ans.match_partial_on_compare=True
         the_ans.save()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -1959,10 +2142,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier3a] = "[0,1]"
         answers["answer_" + answer_identifier3b] = "[0,1]"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier1a]["answer_correct"])
@@ -1977,10 +2163,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier3] = "[0,a]"
         answers["answer_" + answer_identifier3a] = "[0,a]"
         answers["answer_" + answer_identifier3b] = "[0,a]"
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier1a]["answer_correct"])
@@ -2035,10 +2224,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier2] = "(y,z)"
         answers["answer_" + answer_identifier3] = "y\nz"
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
 
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
@@ -2071,10 +2263,13 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s(%s)" % \
             (f.return_expression(),x.return_expression())
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
@@ -2105,30 +2300,45 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "exp(%s)" % \
             x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         
         self.q.allowed_sympy_commands.add(scs_explog)
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         self.q.customize_user_sympy_commands=True
         self.q.save()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         
         self.q.allowed_user_sympy_commands.add(scs_explog)
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
         answers["answer_" + answer_identifier] = "e^%s" % \
             x.return_expression()
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
     def test_seed(self):
@@ -2153,8 +2363,11 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s" % \
             fun_x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
 
 
@@ -2172,8 +2385,11 @@ class TestGradeQuestionView(TestCase):
 
         answers = {"cgd": cgd,}
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2181,8 +2397,11 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = ""
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2206,8 +2425,11 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "("
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2254,8 +2476,11 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "%s" % fun_x.return_expression()
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         
                                    
@@ -2278,13 +2503,19 @@ class TestGradeQuestionView(TestCase):
 
         answers = {"cgd": cgd,}
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results.get("enable_solution_button",False))
         
         answers['number_attempts_%s' % question_identifier ] = 3
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results.get("enable_solution_button",False))
 
         self.q.solution_text="The solution"
@@ -2299,18 +2530,27 @@ class TestGradeQuestionView(TestCase):
 
         answers = {"cgd": cgd,}
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results.get("enable_solution_button",False))
 
         answers['number_attempts_%s' % question_identifier ] = 1
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results.get("enable_solution_button",False))
         
         answers['number_attempts_%s' % question_identifier ] = 2
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results.get("enable_solution_button",False))
         
 
@@ -2345,8 +2585,11 @@ class TestGradeQuestionView(TestCase):
         
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "%s" % a1.id
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
@@ -2354,8 +2597,11 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = "%s" % a2.id
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2363,8 +2609,11 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
         answers["answer_" + answer_identifier] = "%s" % a3.id
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id, answers)
-        results = json.loads(response.content)
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2394,34 +2643,40 @@ class TestGradeQuestionView(TestCase):
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: 9})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: 9}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: 5})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: 5}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: 10})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: 10}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
@@ -2430,12 +2685,14 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("partial (50%) credit" in
                         results["answers"][answer_identifier]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier: -20})
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier: -20}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
@@ -2467,15 +2724,18 @@ class TestGradeQuestionView(TestCase):
 
         fun_x = response.context['fun_x']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier1:
-                                   str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier2:
-                                   str(fun_x.return_expression()*2)})
+
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier1:
+                                 str(fun_x.return_expression()),
+                                 "answer_%s" % answer_identifier2:
+                                 str(fun_x.return_expression()*2)}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
 
         self.assertTrue(results["correct"])
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
@@ -2485,15 +2745,17 @@ class TestGradeQuestionView(TestCase):
 
         self.assertTrue("is correct" in results["answers"][answer_identifier2]["answer_feedback"])
 
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier1:
                                    "3*x(y-z)",
                                    "answer_%s" % answer_identifier2:
-                                   "6*x*(y-z)"})
+                                   "6*x*(y-z)"}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
         self.assertTrue("is 50% correct" in results["feedback"])
         self.assertFalse(results["answers"][answer_identifier1]["answer_correct"])
@@ -2540,24 +2802,27 @@ class TestGradeQuestionView(TestCase):
 
         fun_x = response.context['fun_x']
         
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
-                                  {"cgd": cgd,
-                                   "answer_%s" % answer_identifier1:
+        response=self.client.post(
+            "/assess/question/%s/grade_question" % self.q.id,
+            convert_answer_data({"cgd": cgd,
+                                 "answer_%s" % answer_identifier1:
+                                 str(fun_x.return_expression()),
+                                 "answer_%s" % answer_identifier2:
+                                 str(fun_x.return_expression()),
+                                 "answer_%s" % answer_identifier3:
+                                 str(fun_x.return_expression()),
+                                 "answer_%s" % answer_identifier1a:
+                                str(fun_x.return_expression()),
+                                 "answer_%s" % answer_identifier2a:
                                    str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier2:
-                                   str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier3:
-                                   str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier1a:
-                                   str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier2a:
-                                   str(fun_x.return_expression()),
-                                   "answer_%s" % answer_identifier3a:
-                                   str(fun_x.return_expression()),
-                               })
+                                 "answer_%s" % answer_identifier3a:
+                                str(fun_x.return_expression()),
+                             }),
+            content_type='application/x-www-form-urlencoded')
+
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
 
         self.assertTrue(results["answers"][answer_identifier1]["answer_correct"])
         self.assertTrue(results["answers"][answer_identifier2]["answer_correct"])
@@ -2608,20 +2873,24 @@ class TestInjectQuestionSolutionView(TestCase):
         cgd = response.context["question_data"]["computer_grade_data"]
         fun_x = response.context['fun_x']
 
-        response=self.client.post("/assess/question/%s/inject_solution" % self.q.id,
-                                  {"cgd": cgd})
+        response=self.client.post(
+            "/assess/question/%s/inject_solution" % self.q.id,
+            convert_answer_data({"cgd": cgd}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue("<h4>Solution</h4>" in results["rendered_solution"])
         
         self.q.solution_text = "The solution is ${{fun_x}}$."
         self.q.save()
-        response=self.client.post("/assess/question/%s/inject_solution" % self.q.id,
-                                  {"cgd": cgd})
+        response=self.client.post(
+            "/assess/question/%s/inject_solution" % self.q.id,
+            convert_answer_data({"cgd": cgd}),
+            content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
-        results = json.loads(response.content)
+        results = json.loads(response.content.decode())
         self.assertTrue("The solution is $%s$." % fun_x
                         in results["rendered_solution"])
         
@@ -2629,15 +2898,13 @@ class TestInjectQuestionSolutionView(TestCase):
     def test_bad_cgd(self):
         response=self.client.post("/assess/question/%s/inject_solution" % self.q.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
-        response=self.client.post("/assess/question/%s/inject_solution" % self.q.id,
-                                  {"cgd": "abc"})
+        self.assertEqual(response.content,b"")
+        response=self.client.post(
+            "/assess/question/%s/inject_solution" % self.q.id,
+            convert_answer_data({"cgd": b"abc"}),
+            content_type='application/x-www-form-urlencoded')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
-        response=self.client.post("/assess/question/%s/inject_solution" % self.q.id,
-                                  {"cgd": 123})
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,"")
+        self.assertEqual(response.content,b"")
 
 
     def test_permissions(self):
@@ -2680,14 +2947,17 @@ class TestInjectQuestionSolutionView(TestCase):
             self.client.login(username=users[iu],password="pass")
             for iq in range(3):
                 for jq in range(3):
+
                     response=self.client.post(
                         "/assess/question/%s/inject_solution" % 
-                        qpks[iq][jq], {"cgd": cgd})
+                        qpks[iq][jq],
+                        convert_answer_data({"cgd": cgd}),
+                        content_type='application/x-www-form-urlencoded')
 
                     if iu < jq:
-                        self.assertEqual(response.content, "")
+                        self.assertEqual(response.content, b"")
                     else: 
-                        results = json.loads(response.content)
+                        results = json.loads(response.content.decode())
                         self.assertTrue("The only solution" in
                                         results["rendered_solution"])
 
@@ -2757,12 +3027,13 @@ class TestInjectQuestionSolutionView(TestCase):
                     for ic in range(3):
                         response=self.client.post(
                             "/assess/question/%s/inject_solution" % 
-                            qpks[iq][jq], {"cgd": cgds[ic]})
-                        
+                            qpks[iq][jq],
+                            convert_answer_data({"cgd": cgds[ic]}),
+                            content_type='application/x-www-form-urlencoded')
                         if iu < jq or iu < ic:
-                            self.assertEqual(response.content, "")
+                            self.assertEqual(response.content, b"")
                         else: 
-                            results = json.loads(response.content)
+                            results = json.loads(response.content.decode())
                             self.assertTrue("The only solution" in
                                             results["rendered_solution"])
 

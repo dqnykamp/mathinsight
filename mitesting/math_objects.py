@@ -1,16 +1,10 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-from django.utils.encoding import python_2_unicode_compatible
 
-from sympy import Tuple, sympify, Abs, Matrix, Derivative
+from sympy import Tuple, sympify, Abs, Matrix, Derivative, Symbol
 from sympy.core.relational import Relational, Equality, Unequality
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
-from mitesting.sympy_customized import bottom_up, latex, Symbol
+from mitesting.sympy_customized import bottom_up, latex
 from django.utils.safestring import mark_safe
 
-@python_2_unicode_compatible
 class math_object(object):
     def __init__(self, expression, **parameters):
         """
@@ -382,6 +376,7 @@ class math_object(object):
 
         evaluate_level = self.return_evaluate_level()
 
+
         # As long as evaluate is not False
         # convert customized ln command to customized log command
         if evaluate_level != EVALUATE_NONE:
@@ -682,6 +677,7 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
 
     nelts1=len(the_tuple1)
     nelts2=len(the_tuple2)
+
 
     # if tuple_is_unordered isn't set, demand exact equality
     if not tuple_is_unordered:

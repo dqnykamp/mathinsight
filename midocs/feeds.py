@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.contrib.syndication.views import Feed
 from midocs.models import Page, Image, Applet, Video, NewsItem
 import re

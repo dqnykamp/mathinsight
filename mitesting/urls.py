@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.conf.urls import patterns, url
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
@@ -12,6 +7,7 @@ from mitesting.views import QuestionView, \
     GradeQuestionView, InjectQuestionSolutionView, \
     AssessmentView, GenerateNewAssessmentAttemptView
 from mitesting.permissions import user_can_administer_assessment_decorator
+from mitesting import views
 
 class GenerateAssessmentView(DetailView):
     context_object_name = "assessment"
@@ -29,10 +25,9 @@ class GenerateAssessmentView(DetailView):
 
 
 
-urlpatterns = patterns(
-    'mitesting.views',
-    url(r'^assessment/list$','assessment_list_view', name='mit-assessmentlist'),
-    url(r'^question/list$','question_list_view', name='mit-questionlist'),
+urlpatterns = [
+    url(r'^assessment/list$',views.assessment_list_view, name='mit-assessmentlist'),
+    url(r'^question/list$', views.question_list_view, name='mit-questionlist'),
     url(r'^question/(?P<question_id>\d+)$', QuestionView.as_view(), 
         name='mit-question'),
     url(r'^question/(?P<question_id>\d+)/solution$',
@@ -41,10 +36,10 @@ urlpatterns = patterns(
         GradeQuestionView.as_view(), name='mit-gradequestion'),
     url(r'^question/(?P<question_id>\d+)/inject_solution$', 
         InjectQuestionSolutionView.as_view(), name='mit-injectquestionsolution'),
-    url(r'^question/default_sympy_commands$', 'default_sympy_commands'),
+    url(r'^question/default_sympy_commands$', views.default_sympy_commands),
     url(r'^(?P<assessment_code>\w+)$', AssessmentView.as_view(), \
             name='mit-assessment'),
-    url(r'^(?P<assessment_code>\w+)/overview$','assessment_overview_view', name='mit-assessmentoverview'),
+    url(r'^(?P<assessment_code>\w+)/overview$',views.assessment_overview_view, name='mit-assessmentoverview'),
     url(r'^(?P<assessment_code>\w+)/(?P<question_only>\d+)$',
         AssessmentView.as_view()),
     url(r'^(?P<assessment_code>\w+)/solution$',
@@ -52,7 +47,6 @@ urlpatterns = patterns(
     url(r'^(?P<assessment_code>\w+)/generatenewattempt$', \
         GenerateNewAssessmentAttemptView.as_view(), \
         name='mit-generatenewassessmentattempt'),
-    url(r'^(?P<assessment_code>\w+)/avoid$','assessment_avoid_question_view', name='mit-assessmentavoidquestion'),
+    url(r'^(?P<assessment_code>\w+)/avoid$',views.assessment_avoid_question_view, name='mit-assessmentavoidquestion'),
     url(r'^(?P<slug>\w+)/generate$', GenerateAssessmentView.as_view(), name='mit-assessmentgenerate'),
-    
-    )
+]

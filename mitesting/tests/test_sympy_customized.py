@@ -1,14 +1,9 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from django.test import SimpleTestCase
 from mitesting.sympy_customized import bottom_up, parse_expr, \
-    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL, latex, \
-    Symbol
+    parse_and_process, EVALUATE_NONE, EVALUATE_PARTIAL, EVALUATE_FULL, latex    
 from mitesting.customized_commands import normalize_floats
-from sympy import diff, Tuple, sympify, Integer
+from sympy import diff, Tuple, sympify, Integer, Symbol
 
 class BottomUpTests(SimpleTestCase):
     
@@ -21,7 +16,6 @@ class BottomUpTests(SimpleTestCase):
         self.assertEqual(str(expr), "sin(0.3333*x)")
 
     def test_substitute_list_tuple(self):
-        from sympy import Symbol
         x=Symbol('x')
         y=Symbol('y')
         z=Symbol('z')
@@ -791,15 +785,15 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("[a,b]"), [a,b])
         
 
-        self.assertRaisesRegexp(ValueError, "Only real intervals",
+        self.assertRaisesRegex(ValueError, "Only real intervals",
                                 parse_expr, "(a,b)", 
                                 replace_symmetric_intervals=True)
-        self.assertRaisesRegexp(ValueError, "Only real intervals",
+        self.assertRaisesRegex(ValueError, "Only real intervals",
                                 parse_expr, "[a,b]", 
                                 replace_symmetric_intervals=True)
-        self.assertRaisesRegexp(ValueError, "Only real intervals",
+        self.assertRaisesRegex(ValueError, "Only real intervals",
                                 parse_expr, "(a,b]")
-        self.assertRaisesRegexp(ValueError, "Only real intervals",
+        self.assertRaisesRegex(ValueError, "Only real intervals",
                                 parse_expr, "[a,b)")
 
         a=Symbol('a', real=True)

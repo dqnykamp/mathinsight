@@ -1,18 +1,13 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.db import models, transaction
 from django.conf import settings
 from django.db.models import Count
 from django.template.loader import render_to_string
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericRelation
 import datetime, os
 from django.contrib.sites.models import Site
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.db.models import Max
 import re
@@ -21,7 +16,7 @@ from math import *
 from midocs.storage import OverwriteStorage
 import os
 from PIL import Image as PILImage
-from cStringIO import StringIO
+from io import StringIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
 from mitesting.models import Question
@@ -37,7 +32,7 @@ class NotationSystem(models.Model):
     detailed_description = models.TextField(blank=True, null=True)
     
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class EquationTag(models.Model):
@@ -60,9 +55,9 @@ class Author(models.Model):
     mi_contributor = models.SmallIntegerField(db_index=True, default=0)
     contribution_summary = models.TextField(blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         name= "%s, %s %s" % (self.last_name, self.first_name, self.middle_name)
-        return smart_unicode(name)
+        return smart_text(name)
 
     def full_name(self):
         return "%s %s %s" % (self.first_name, self.middle_name,self.last_name)
@@ -94,7 +89,7 @@ class PageType(models.Model):
     name = models.CharField(max_length=100)
     default = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
     def save(self, *args, **kwargs):
@@ -135,17 +130,17 @@ def return_default_page_type():
 class Objective(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 class Subject(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 class Keyword(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
     class Meta:
         ordering = ['code']
@@ -153,14 +148,14 @@ class Keyword(models.Model):
 class RelationshipType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 class AuxiliaryFileType(models.Model):
     code = models.CharField(max_length=50, db_index=True, unique=True)
     description = models.CharField(max_length=400)
     heading = models.CharField(max_length=100)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 def auxiliary_path(instance, filename):
@@ -175,7 +170,7 @@ class AuxiliaryFile(models.Model):
                                       upload_to=auxiliary_path, 
                                       blank=True, verbose_name="file",
                                       storage=OverwriteStorage())
-    def __unicode__(self):
+    def __str__(self):
         return self.code
     def get_filename(self):
         return re.sub(settings.AUXILIARY_UPLOAD_TO,"", self.auxiliary_file.name)  # get rid of upload path
@@ -218,18 +213,20 @@ class Page(models.Model):
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
-    authors = models.ManyToManyField(Author, through='PageAuthor')
-    objectives = models.ManyToManyField(Objective, blank=True, null=True)
-    subjects = models.ManyToManyField(Subject, blank=True, null=True)
-    keywords = models.ManyToManyField(Keyword, blank=True, null=True)
-    thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
+    authors = models.ManyToManyField(Author, through='PageAuthor', blank=True)
+    objectives = models.ManyToManyField(Objective, blank=True)
+    subjects = models.ManyToManyField(Subject, blank=True)
+    keywords = models.ManyToManyField(Keyword, blank=True)
+    thread_content_set = GenericRelation('mithreads.ThreadContent')
     related_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageRelationship', 
-                                           related_name='pages_related_from')
+                                           related_name='pages_related_from',
+                                           blank=True)
     similar_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageSimilar', 
-                                           related_name='pages_similar_from')
-    related_videos = models.ManyToManyField("Video", blank=True, null=True,
+                                           related_name='pages_similar_from',
+                                           blank=True)
+    related_videos = models.ManyToManyField("Video", blank=True, 
                                             related_name='related_pages')
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
@@ -239,7 +236,7 @@ class Page(models.Model):
     author_copyright = models.BooleanField(default=True)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
-    notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
+    notation_systems = models.ManyToManyField(NotationSystem, blank=True)
     detailed_description = models.TextField(blank=True, null=True)
     header = models.TextField(blank=True, null=True)
     javascript = models.TextField(blank=True, null=True)
@@ -251,7 +248,7 @@ class Page(models.Model):
         ordering = ['code', 'page_type' ]
         unique_together = ('code', 'page_type')
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s)" % (self.code, self.title)
 
     def get_title(self):
@@ -575,7 +572,7 @@ class PageAuthor(models.Model):
     class Meta:
         unique_together = ("page","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
      
 class PageRelationship(models.Model):
@@ -587,7 +584,7 @@ class PageRelationship(models.Model):
     class Meta:
         unique_together = ("origin","related", "relationship_type")
         ordering = ['relationship_type','sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s -> %s" % (self.origin.code, self.related.code)
 
 
@@ -602,7 +599,7 @@ class PageSimilar(models.Model):
         unique_together = ("origin","similar")
         ordering = ['-score','id']
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.origin.code, self.similar.code)
   
 
@@ -614,7 +611,7 @@ class PageNavigation(models.Model):
         unique_together = ("page","navigation_phrase")
         ordering = ['id']
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.page.code, self.navigation_phrase)
 
 
@@ -626,7 +623,7 @@ class PageNavigationSub(models.Model):
         unique_together = ("navigation","navigation_subphrase")
         ordering = ['id']
         
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s, %s" % (self.navigation.page.code, self.navigation.navigation_phrase, self.navigation_subphrase)
 
 
@@ -635,7 +632,7 @@ class IndexType(models.Model):
     code = models.SlugField(max_length=20, unique=True)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -653,7 +650,7 @@ class IndexEntry(models.Model):
         verbose_name_plural = "Index entries"
         ordering = ['indexed_phrase','indexed_subphrase']
 
-    def __unicode__(self):
+    def __str__(self):
         if(self.indexed_subphrase):
             return '%s:%s in %s' % (self.indexed_phrase, self.indexed_subphrase, self.page.code)
         else:
@@ -663,7 +660,7 @@ class ImageType(models.Model):
     code = models.CharField(max_length=20, db_index=True, unique=True)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 
@@ -694,10 +691,10 @@ class Image(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     notation_specific = models.BooleanField(default=False)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_images")
-    authors = models.ManyToManyField(Author, through='ImageAuthor')
-    subjects = models.ManyToManyField(Subject, blank=True, null=True)
-    keywords = models.ManyToManyField(Keyword, blank=True, null=True)
+    in_pages = models.ManyToManyField(Page, blank=True, related_name="embedded_images")
+    authors = models.ManyToManyField(Author, through='ImageAuthor', blank=True)
+    subjects = models.ManyToManyField(Subject, blank=True)
+    keywords = models.ManyToManyField(Keyword, blank=True)
     thumbnail = models.ImageField(max_length=150, upload_to=image_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
@@ -707,12 +704,11 @@ class Image(models.Model):
     author_copyright = models.BooleanField(default=True)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
-    auxiliary_files = models.ManyToManyField(AuxiliaryFile, blank=True, null=True)
-    notation_systems = models.ManyToManyField(NotationSystem, through='ImageNotationSystem')
+    auxiliary_files = models.ManyToManyField(AuxiliaryFile, blank=True)
+    notation_systems = models.ManyToManyField(NotationSystem, through='ImageNotationSystem', blank=True)
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True,db_index=True)
-#    notation_systems = models.ManyToManyField(NotationSystem, blank=True, null=True)
 
     objects = models.Manager()
     activeimages = ActiveImageManager()
@@ -720,7 +716,7 @@ class Image(models.Model):
     class Meta:
         ordering = ["code"]
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (Image: %s)" % (self.code, self.title)
 
     def annotated_title(self):
@@ -886,7 +882,7 @@ class ImageAuthor(models.Model):
     class Meta:
         unique_together = ("image","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
 
 def image_notation_path(instance, filename):
@@ -903,7 +899,7 @@ class ImageNotationSystem(models.Model):
     class Meta:
         unique_together = ("image","notation_system")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s image notation system for %s" % (self.image.code, self.notation_system)
     
 
@@ -914,7 +910,7 @@ class AppletType(models.Model):
     description = models.CharField(max_length=400)
     help_text = models.TextField()
     error_string = models.TextField()
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 class AppletTypeParameter(models.Model):
@@ -924,13 +920,13 @@ class AppletTypeParameter(models.Model):
 
     class Meta:
         unique_together = ("applet_type", "parameter_name")
-    def __unicode__(self):
+    def __str__(self):
         return self.parameter_name
    
 class AppletFeature(models.Model):
     code = models.CharField(max_length=20, db_index=True, unique=True)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 def applet_path(instance, filename):
@@ -953,7 +949,7 @@ def applet_2_image_path(instance, filename):
 class AppletObjectType(models.Model):
     object_type = models.CharField(max_length=50, unique=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.object_type
 
 class ActiveAppletManager(models.Manager):
@@ -968,7 +964,7 @@ class Applet(models.Model):
     default_inline_caption = models.TextField(blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
-    thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('mithreads.ThreadContent')
     applet_file = models.FileField(max_length=150, 
                                    upload_to=applet_path,
                                    blank=True, verbose_name="file", 
@@ -981,18 +977,16 @@ class Applet(models.Model):
 
     encoded_content=models.TextField(blank=True, null=True)
     parameters = models.ManyToManyField(AppletTypeParameter, 
-                                        through='AppletParameter', 
-                                        null=True, blank=True)
+                                        through='AppletParameter', blank=True)
     applet_objects = models.ManyToManyField(AppletObjectType,
-                                        through='AppletObject',
-                                        null=True, blank=True)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_applets")
-    authors = models.ManyToManyField(Author, through='AppletAuthor')
-    subjects = models.ManyToManyField(Subject, blank=True, null=True)
-    keywords = models.ManyToManyField(Keyword, blank=True, null=True)
-    features = models.ManyToManyField(AppletFeature, blank=True, null=True)
+                                            through='AppletObject', blank=True)
+    in_pages = models.ManyToManyField(Page, blank=True, related_name="embedded_applets")
+    authors = models.ManyToManyField(Author, through='AppletAuthor', blank=True)
+    subjects = models.ManyToManyField(Subject, blank=True)
+    keywords = models.ManyToManyField(Keyword, blank=True)
+    features = models.ManyToManyField(AppletFeature, blank=True)
     notation_specific = models.BooleanField(default=False)
-    notation_systems = models.ManyToManyField(NotationSystem, through='AppletNotationSystem')
+    notation_systems = models.ManyToManyField(NotationSystem, through='AppletNotationSystem', blank=True)
     highlight = models.BooleanField(db_index=True, default=False)
     javascript = models.TextField(blank=True, null=True)
     child_applet = models.ForeignKey('self', blank=True, null=True)
@@ -1028,7 +1022,7 @@ class Applet(models.Model):
     class Meta:
         ordering = ["code"]
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (Applet: %s)" % (self.code, self.title)
 
     @classmethod
@@ -1293,15 +1287,15 @@ class AppletParameter(models.Model):
     class Meta:
         unique_together = ("applet", "parameter")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.parameter, self.applet)
 
     def clean(self):
 
         # check if parameter is for applet_type of applet.  If not, raise exception
         if self.applet.applet_type != self.parameter.applet_type:
-            raise ValidationError, "Incorrect parameter for applet of type %s"\
-                % self.applet.applet_type
+            raise ValidationError("Incorrect parameter for applet of type %s"\
+                % self.applet.applet_type)
 
 
 class AppletObject(models.Model):
@@ -1317,7 +1311,7 @@ class AppletObject(models.Model):
     function_input_variable= models.CharField(max_length=1, blank=True, null=True)
     default_value = models.CharField(max_length=50, blank=True, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.object_type, self.name)
 
 
@@ -1328,7 +1322,7 @@ class AppletChildObjectLink(models.Model):
     applet_to_child_link = models.BooleanField(default=True)
     child_to_applet_link = models.BooleanField(default=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return "link %s to %s" % (self.object_name, self.child_object_name)
 
 
@@ -1350,7 +1344,7 @@ class AppletText(models.Model):
         unique_together = ("applet", "code")
         ordering = ['sort_order','id']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
     def save(self, *args, **kwargs):
@@ -1373,7 +1367,7 @@ class AppletAuthor(models.Model):
     class Meta:
         unique_together = ("applet","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
 
 
@@ -1400,7 +1394,7 @@ class AppletNotationSystem(models.Model):
     class Meta:
         unique_together = ("applet","notation_system")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s applet notation system for %s" % (self.applet.code, self.notation_system)
     
 
@@ -1408,7 +1402,7 @@ class VideoType(models.Model):
     code = models.CharField(max_length=20, db_index=True, unique=True)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=400)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 class VideoTypeParameter(models.Model):
@@ -1418,7 +1412,7 @@ class VideoTypeParameter(models.Model):
 
     class Meta:
         unique_together = ("video_type", "parameter_name")
-    def __unicode__(self):
+    def __str__(self):
         return self.parameter_name
 
 def video_thumbnail_path(instance, filename):
@@ -1438,14 +1432,13 @@ class Video(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     transcript = models.TextField(blank=True, null=True)
-    thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('mithreads.ThreadContent')
     parameters = models.ManyToManyField(VideoTypeParameter, 
-                                        through='VideoParameter', 
-                                        null=True, blank=True)
-    in_pages = models.ManyToManyField(Page, blank=True, null=True, related_name="embedded_videos")
-    authors = models.ManyToManyField(Author, through='VideoAuthor')
-    subjects = models.ManyToManyField(Subject, blank=True, null=True)
-    keywords = models.ManyToManyField(Keyword, blank=True, null=True)
+                                        through='VideoParameter', blank=True)
+    in_pages = models.ManyToManyField(Page, blank=True, related_name="embedded_videos")
+    authors = models.ManyToManyField(Author, through='VideoAuthor', blank=True)
+    subjects = models.ManyToManyField(Subject, blank=True)
+    keywords = models.ManyToManyField(Keyword, blank=True)
     associated_applet = models.ForeignKey(Applet, blank=True, null=True)
     highlight = models.BooleanField(db_index=True, default=False)
     thumbnail = models.ImageField(max_length=150, upload_to=video_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
@@ -1458,8 +1451,7 @@ class Video(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True, db_index=True)
     questions = models.ManyToManyField(Question,
-                                       through = 'VideoQuestion',
-                                       blank=True, null=True)
+                                       through = 'VideoQuestion', blank=True)
 
     objects = models.Manager()
     activevideos = ActiveVideoManager()
@@ -1467,7 +1459,7 @@ class Video(models.Model):
     class Meta:
         ordering = ["code"]
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (Video: %s)" % (self.code, self.title)
 
     def annotated_title(self):
@@ -1580,15 +1572,15 @@ class VideoParameter(models.Model):
         unique_together = ("video", "parameter")
 
     # need to figure out why this breaks for moebius strip with unicode error
-    def __unicode__(self):
+    def __str__(self):
         return "%s for %s" % (self.parameter, self.video)
 
     def clean(self):
 
         # check if parameter is for video_type of video.  If not, raise exception
         if self.video.video_type != self.parameter.video_type:
-            raise ValidationError, "Incorrect parameter for video of type %s"\
-                % self.video.video_type
+            raise ValidationError("Incorrect parameter for video of type %s"\
+                % self.video.video_type)
         
 class VideoQuestion(models.Model):
     video = models.ForeignKey(Video)
@@ -1598,7 +1590,7 @@ class VideoQuestion(models.Model):
     class Meta:
         unique_together = ("video", "question")
         ordering = ['sort_order', 'id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.question
 
 
@@ -1610,7 +1602,7 @@ class VideoAuthor(models.Model):
     class Meta:
         unique_together = ("video","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
 
 
@@ -1621,7 +1613,7 @@ class NewsItem(models.Model):
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=400)
     content=models.TextField()
-    authors = models.ManyToManyField(Author, through='NewsAuthor')
+    authors = models.ManyToManyField(Author, through='NewsAuthor', blank=True)
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True)
@@ -1629,7 +1621,7 @@ class NewsItem(models.Model):
     class Meta:
         ordering = ["-date_created"]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
     @models.permalink
@@ -1667,7 +1659,7 @@ class NewsAuthor(models.Model):
     class Meta:
         unique_together = ("newsitem","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.author
 
 
@@ -1676,7 +1668,7 @@ class ExternalLink(models.Model):
     in_page = models.ForeignKey(Page, blank=True, null=True)
     link_text = models.CharField(max_length=200)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.external_url
 
     def validate(self):
@@ -1697,7 +1689,7 @@ class ExternalLink(models.Model):
         for the_link in theclass.objects.all():
             try:
                 the_link.validate()
-            except ValidationError, e:
+            except ValidationError as e:
                 if e.code == 'invalid':
                     invalid_links += 1
                     print("%s is invalid." % the_link.external_url)
@@ -1723,14 +1715,14 @@ class ExternalLink(models.Model):
 class ReferenceType(models.Model):
     code = models.CharField(max_length=20, db_index=True, unique=True)
     name = models.CharField(max_length=100)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
 
 class Reference(models.Model):
     code = models.SlugField(max_length=50, db_index=True)
     reference_type = models.ForeignKey(ReferenceType, verbose_name="type")
-    authors = models.ManyToManyField(Author, through='ReferenceAuthor', related_name="references_authored",blank=True,null=True)
+    authors = models.ManyToManyField(Author, through='ReferenceAuthor', related_name="references_authored", blank=True)
     title = models.CharField(max_length=400,blank=True,null=True)
     booktitle = models.CharField(max_length=400,blank=True,null=True)
     journal = models.CharField(max_length=200,blank=True,null=True)
@@ -1738,13 +1730,13 @@ class Reference(models.Model):
     volume = models.IntegerField(blank=True,null=True)
     number = models.IntegerField(blank=True,null=True)
     pages = models.CharField(max_length=20,blank=True,null=True)
-    editors = models.ManyToManyField(Author, through='ReferenceEditor', related_name="references_edited",blank=True,null=True)
+    editors = models.ManyToManyField(Author, through='ReferenceEditor', related_name="references_edited", blank=True)
     publisher = models.CharField(max_length=100,blank=True,null=True)
     address = models.CharField(max_length=100,blank=True,null=True)
     published_web_address = models.URLField(blank=True, null=True)
     preprint_web_address = models.URLField(blank=True, null=True)
     notes = models.CharField(max_length=100,blank=True,null=True)
-    def __unicode__(self):
+    def __str__(self):
         return self.code
 
     def author_list_abbreviated_link(self):
@@ -1807,8 +1799,8 @@ class ReferenceAuthor(models.Model):
     class Meta:
         unique_together = ("reference","author")
         ordering = ['sort_order','id']
-    def __unicode__(self):
-        return smart_unicode(self.author)
+    def __str__(self):
+        return smart_text(self.author)
 
 
 class ReferenceEditor(models.Model):
@@ -1819,7 +1811,7 @@ class ReferenceEditor(models.Model):
     class Meta:
         unique_together = ("reference","editor")
         ordering = ['sort_order','id']
-    def __unicode__(self):
+    def __str__(self):
         return "%s" % self.editor
 
 
@@ -1834,7 +1826,7 @@ class PageCitation(models.Model):
         unique_together = ("page","code")
         ordering = ['id']
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s: %s" % (self.page.code, self.code)
 
     def reference_text(self):

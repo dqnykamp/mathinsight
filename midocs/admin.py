@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.contrib import admin
 from django import forms
 from django.db import models
@@ -28,6 +23,7 @@ def applet_parameter_form_factory(applet_type):
                 queryset=AppletTypeParameter.objects.filter(applet_type=applet_type))
  
         class Meta:
+            fields='__all__'
             model = AppletParameter
  
     return RuntimeAppletParameterForm
@@ -144,6 +140,7 @@ def video_parameter_form_factory(video_type):
  
         class Meta:
             model = VideoParameter
+            fields='__all__'
  
     return RuntimeVideoParameterForm
  
@@ -247,7 +244,8 @@ def page_author_form_factory():
  
         class Meta:
             model = PageAuthor
- 
+            fields='__all__'
+        
     return RuntimePageAuthorForm
  
 class PageAuthorInline(admin.TabularInline):

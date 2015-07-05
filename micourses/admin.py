@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.contrib import admin
 from django import forms
 from django.db import models
@@ -59,7 +54,8 @@ def course_thread_content_form_factory(thread):
  
         class Meta:
             model = CourseThreadContent
- 
+            fields = '__all__'
+            
     return RuntimeCourseThreadContentForm
  
 class CourseThreadContentInline(admin.StackedInline):
@@ -93,13 +89,14 @@ def course_assessment_thread_content_form_factory(thread):
  
         class Meta:
             model = CourseThreadContent
+            fields = '__all__'
  
     return RuntimeAssessmentCourseThreadContentForm
 
 class CourseAssessmentThreadContentInline(admin.StackedInline):
     model = CourseThreadContent
     def get_queryset(self, request):
-        qs = super(CourseAssessmentThreadContentInline, self).queryset(request)
+        qs = super(CourseAssessmentThreadContentInline, self).get_queryset(request)
         return qs.filter(thread_content__content_type__model='assessment')
 
 # Tweak from

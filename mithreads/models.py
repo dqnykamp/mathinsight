@@ -1,11 +1,6 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from mithreads.utils import HTMLOutliner
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils.safestring import mark_safe
@@ -27,7 +22,7 @@ class Thread(models.Model):
     objects = models.Manager()
     activethreads = ActiveThreadManager()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     class Meta:
         ordering = ['sort_order','id']
@@ -112,9 +107,9 @@ class ThreadSection(models.Model):
     sort_order = models.FloatField(default=0)
     level = models.IntegerField(default=1)
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s (%s/%s)" % (self.code,self.thread, self.name)
-    __unicode__.admin_order_field = 'code'
+    __str__.admin_order_field = 'code'
 
 
     class Meta:
@@ -288,12 +283,12 @@ class ThreadContent(models.Model):
     section = models.ForeignKey(ThreadSection)
     content_type = models.ForeignKey(ContentType, default=19)
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey('content_type', 'object_id')
     sort_order = models.FloatField(default=0)
     substitute_title = models.CharField(max_length=200, blank=True, null=True)
 
-    def __unicode__(self):
-        return unicode(self.content_object)
+    def __str__(self):
+        return str(self.content_object)
 
     class Meta:
         ordering = ['sort_order']
@@ -311,7 +306,7 @@ class ThreadContent(models.Model):
             try:
                 return self.content_object.get_title()
             except:
-                return unicode(self.content_object)
+                return str(self.content_object)
 
 
     def return_link(self):
@@ -340,8 +335,8 @@ class ThreadContent(models.Model):
                     .filter(content_type=self.content_type, \
                                 object_id = self.object_id,\
                                 section__thread=self.section.thread).exists():
-                raise ValidationError, "Duplicate entries of %s in thread %s" \
-                    % (self.content_object, self.section.thread)
+                raise ValidationError("Duplicate entries of %s in thread %s" \
+                    % (self.content_object, self.section.thread))
 
 
 

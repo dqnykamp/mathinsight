@@ -1,19 +1,14 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django import template
 from django.conf import settings
 from django.shortcuts import get_object_or_404, render_to_response
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.comments.views.utils import next_redirect, confirmation_view
-from django.contrib import comments
-from django.contrib.comments import signals
+import django_comments
+from django_comments.views.utils import next_redirect, confirmation_view
+from django_comments import signals
 from django.views.decorators.csrf import csrf_protect
 
 @csrf_protect
-@permission_required("comments.can_moderate")
+@permission_required("django_comments.can_moderate")
 def credit(request, comment_id, next=None):
     """
     Credit a comment (that is, mark it as public and non-removed). Confirmation
@@ -24,7 +19,7 @@ def credit(request, comment_id, next=None):
         comment
             the `comments.comment` object for approval
     """
-    comment = get_object_or_404(comments.get_model(), pk=comment_id, site__pk=settings.SITE_ID)
+    comment = get_object_or_404(django_comments.get_model(), pk=comment_id, site__pk=settings.SITE_ID)
 
     # Delete on POST
     if request.method == 'POST':
@@ -44,10 +39,10 @@ def credit(request, comment_id, next=None):
 # may be called from admin actions.
 
 def perform_credit(request, comment):
-    flag, created = comments.models.CommentFlag.objects.get_or_create(
+    flag, created = django_comments.models.CommentFlag.objects.get_or_create(
         comment = comment,
         user    = request.user,
-        flag    = comments.models.CommentFlag.MODERATOR_APPROVAL,
+        flag    = django_comments.models.CommentFlag.MODERATOR_APPROVAL,
     )
 
     comment.credit = True

@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-import six
 
 from django.test import SimpleTestCase
 from mitesting.math_objects import *
@@ -18,7 +13,7 @@ class MathObjectTests(SimpleTestCase):
         expression = sympify("5*x")
         mobject = math_object(expression)
         self.assertEqual(mobject,expression)
-        self.assertEqual(six.text_type(mobject), '5 x')
+        self.assertEqual(str(mobject), '5 x')
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.return_expression(), expression)
 
@@ -280,7 +275,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
@@ -288,14 +283,14 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression, normalize_on_compare=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
 
         mobject = math_object(expression, normalize_on_compare=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
@@ -305,7 +300,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
@@ -313,14 +308,14 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression, normalize_on_compare=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
 
         mobject = math_object(expression, normalize_on_compare=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
@@ -339,7 +334,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertFalse(mobject.return_if_unordered())
@@ -347,7 +342,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression, tuple_is_unordered=True)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
         self.assertTrue(mobject.return_if_unordered())
@@ -355,7 +350,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expression, tuple_is_unordered=False)
         self.assertEqual(mobject,expression)
         self.assertNotEqual(mobject,expression2)
-        self.assertEqual(six.text_type(mobject), latex(expression))
+        self.assertEqual(str(mobject), latex(expression))
         self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertFalse(mobject.return_if_unordered())
@@ -453,13 +448,13 @@ class MathObjectTests(SimpleTestCase):
         
     def test_text_basics(self):
         mobject = math_object("7/9*x**2-3/5*x+33")
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '\\frac{7 x^{2}}{9} - \\frac{3 x}{5} + 33')
         mobject = math_object("Integral(f,x)")
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '\\int f\\, dx')
         mobject = math_object("sin(2*pi*x)*exp(5.2*x)")
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          'e^{5.2 x} \\sin{\\left (2 \\pi x \\right )}')
         
 
@@ -468,30 +463,30 @@ class MathObjectTests(SimpleTestCase):
         from sympy import Point
         expr = Line(Point(2,3), Point(3,5))
         mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '- 2 x + y + 1 = 0')
         mobject = math_object(expr, xvar = 's', yvar = 't')
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '- 2 s + t + 1 = 0')
 
     def test_text_symbols(self):
         from mitesting.sympy_customized import parse_expr
         expr = parse_expr("blacktriangle*bigstar")
         mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '\\bigstar \\blacktriangle')
         expr = parse_expr("2*x*Box - 3*y*lozenge")
         mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '2 \\Box x - 3 \\lozenge y')
 
         expr = parse_expr("blacktriangle*bigstar", assume_real_variables=True)
         mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '\\bigstar \\blacktriangle')
         expr = parse_expr("2*x*Box - 3*y*lozenge", assume_real_variables=True)
         mobject = math_object(expr)
-        self.assertEqual(six.text_type(mobject), 
+        self.assertEqual(str(mobject), 
                          '2 \\Box x - 3 \\lozenge y')
 
     def test_float_conversion(self):
@@ -719,25 +714,25 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expr_unevaluated)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
-        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+        self.assertEqual(str(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
 
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_NONE)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
-        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+        self.assertEqual(str(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_NONE)
         
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_PARTIAL)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
-        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+        self.assertEqual(str(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_PARTIAL)
 
         mobject = math_object(expr_unevaluated, evaluate_level=EVALUATE_FULL)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expr_evaluated)['fraction_equal_on_normalize'],1)
-        self.assertEqual(six.text_type(mobject), latex(expr_unevaluated))
+        self.assertEqual(str(mobject), latex(expr_unevaluated))
         self.assertEqual(mobject.return_evaluate_level(), EVALUATE_FULL)
         
 

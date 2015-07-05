@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django import template
 from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type
 from mitesting.models import Assessment
@@ -15,7 +10,6 @@ import re
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from sympy.printing import StrPrinter
-import six
 
 register=template.Library()
 
@@ -150,7 +144,7 @@ class InternalLinkNode(template.Node):
 def intlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     
     target = parser.compile_filter(bits[1])
 
@@ -178,7 +172,7 @@ def intlink(parser, token):
 def extendedlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     
     target = parser.compile_filter(bits[1])
 
@@ -204,7 +198,7 @@ def extendedlink(parser, token):
 def confusedlink(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     target = parser.compile_filter(bits[1])
 
 
@@ -264,7 +258,7 @@ class EquationTagNode(template.Node):
 def equation_tag(parser, token):
     bits = token.split_contents()
     if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires two arguments" % bits[0])
     code=parser.compile_filter(bits[1])
     tag=parser.compile_filter(bits[2])
     return EquationTagNode(code,tag)
@@ -307,7 +301,7 @@ class ExternalLinkNode(template.Node):
 def extlink(parser, token):
     bits = token.split_contents()
     if len(bits) != 2:
-        raise template.TemplateSyntaxError, "%r tag requires one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires one argument" % bits[0])
     external_url = parser.compile_filter(bits[1])
 
     nodelist = parser.parse(('endextlink',))
@@ -395,7 +389,7 @@ class NavigationTagNode(template.Node):
 def navigation_tag(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two arguments" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least two arguments" % bits[0])
     page_anchor=parser.compile_filter(bits[1])
     navigation_phrase=parser.compile_filter(bits[2])
     if len(bits) > 3:
@@ -460,7 +454,7 @@ class FootnoteNode(template.Node):
 def footnote(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
-        raise template.TemplateSyntaxError, "%r tag requires at least two argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least two argument" % bits[0])
 
     cite_code=parser.compile_filter(bits[1])
     footnote_text=parser.compile_filter(bits[2])
@@ -547,7 +541,7 @@ class CitationNode(template.Node):
 def citation(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
 
     cite_codes=[]
     for i in range(1,len(bits)):
@@ -609,7 +603,7 @@ class IndexEntryNode(template.Node):
 def index_entry(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     indexed_phrase=parser.compile_filter(bits[1])
     if len(bits) >2:
         indexed_subphrase=parser.compile_filter(bits[2])
@@ -675,7 +669,7 @@ class TitleNode(template.Node):
 def title(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     title_text=parser.compile_filter(bits[1])
     if len(bits) > 2:
         navigation_phrase=parser.compile_filter(bits[2])
@@ -707,7 +701,7 @@ def description(parser, token):
     try:
         tag_name, description_text = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     
     description_text = parser.compile_filter(description_text)
 
@@ -813,7 +807,7 @@ class ImageNode(template.Node):
 def image(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     image = parser.compile_filter(bits[1])
 
     kwargs = {}
@@ -868,7 +862,7 @@ class ProcessMiTagsNode(template.Node):
 def process_mi_tags(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     the_text_var = parser.compile_filter(bits[1])
 
     if len(bits) > 2:
@@ -2027,7 +2021,7 @@ class AppletNode(template.Node):
 def applet_sub(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     applet = parser.compile_filter(bits[1])
 
     kwargs = {}
@@ -2164,7 +2158,7 @@ class AppletObjectNode(template.Node):
 def applet_object(parser,token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
 
     object_name = parser.compile_filter(bits[1])
 
@@ -2282,7 +2276,7 @@ class RenderJavascriptSetAppletObjectNode(template.Node):
 def render_javascript_set_applet_object(parser,token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
 
     object_name = parser.compile_filter(bits[1])
 
@@ -2410,7 +2404,7 @@ def render_applet_text(context, applet_text, applet, applet_id_user=None,
 def applet_text(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
 
     text_code = parser.compile_filter(bits[1])
 
@@ -2579,7 +2573,7 @@ class VideoNode(template.Node):
 def video_sub(parser, token):
     bits = token.split_contents()
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     video = parser.compile_filter(bits[1])
 
     kwargs = {}
@@ -2642,7 +2636,7 @@ def template_text_blank_style(parser, token):
     try:
         tag_name, page_code = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires a single argument" % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires a single argument" % token.contents.split()[0])
     return TemplateTextNode(page_code)
 
 
@@ -2741,7 +2735,7 @@ def twocolumns(parser, token):
     if len(bits) > 3:
         gstyle = bits[3]
         if not (gstyle[0] == gstyle[-1] and gstyle[0] in ('"', "'")):
-            raise template.TemplateSyntaxError, "%r tag's third argument should be in quotes" % bits[0]
+            raise template.TemplateSyntaxError("%r tag's third argument should be in quotes" % bits[0])
         gstyle = gstyle[1:-1] 
     else:
         gstyle=0
@@ -2788,7 +2782,7 @@ def hidden_text_html(content_html, title, section_identifier,
         body_css = css.get("body", "info")
         title_css = css.get("title", "")
         container_css = css.get("container", "")
-    elif isinstance(css, six.text_type):
+    elif isinstance(css, str):
         body_css = css
         title_css = ""
         container_css = ""
@@ -2878,7 +2872,7 @@ def hidden(parser, token):
     bits = token.split_contents()
 
     if len(bits) < 2:
-        raise template.TemplateSyntaxError, "%r tag requires at least one argument" % bits[0]
+        raise template.TemplateSyntaxError("%r tag requires at least one argument" % bits[0])
     
     title = parser.compile_filter(bits[1])
 
@@ -3362,9 +3356,9 @@ class AccumulatedJavascriptNode(template.Node):
         if all_init_commands:
             script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\nif(inIframe()) { parent.ggbOnInit(arg);} \n}\n</script></div>' % all_init_commands
 
-        three_javascript = context.dicts[0].get('three_javascript', '')
-        run_three_javascript = context.dicts[0].get('run_three_javascript', '')
-
+        three_javascript = context.get('three_javascript', '')
+        run_three_javascript = context.get('run_three_javascript', '')
+        
         if three_javascript:
             # load in three libraries
             script_string += '<script src="%sjs/three/three.js"></script><script src="%sjs/three/controls/TrackballControls.js"></script><script src="%sjs/three/Detector.js"></script><script src="%sjs/three/MIAppletThree.js"></script><script src="%sjs/three/MIThreeObjects.js"></script><script src="%sjs/three/Axes.js"></script><script src="%sjs/three/Arrow.js"></script><script src="%sjs/three/VectorField.js"></script><script src="%sjs/three/Slider.js"></script><script src="%sjs/three/DragObjects.js"></script><script src="%sjs/three/TextLabel.js"></script><script src="%sjs/three/Geometries.js"></script>\n' % \

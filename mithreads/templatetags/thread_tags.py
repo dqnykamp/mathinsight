@@ -1,7 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
 
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
@@ -29,7 +25,7 @@ class RenderThreadHtmlStringNode(Node):
 def render_thread_html_string(parser, token):
     bits = token.split_contents()
     if len(bits) < 4:
-        raise template.TemplateSyntaxError, "%r tag requires at least three arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires at least three arguments" % str(bits[0]))
     thread = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     course = parser.compile_filter(bits[3])
@@ -55,7 +51,7 @@ class SaveChangeToCourseButtonNode(Node):
 def save_changes_to_course_button(parser, token):
     bits = token.split_contents()
     if len(bits) != 3:
-        raise template.TemplateSyntaxError, "%r tag requires two arguments" % str(bits[0])
+        raise template.TemplateSyntaxError("%r tag requires two arguments" % str(bits[0]))
     thread = parser.compile_filter(bits[1])
     course = parser.compile_filter(bits[2])
 

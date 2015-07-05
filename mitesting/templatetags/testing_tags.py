@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
 from midocs.models import Page, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, Video, EquationTag, ExternalLink, PageCitation, Reference
@@ -16,7 +11,7 @@ from django.template.base import kwarg_re
 import re
 from django.contrib.sites.models import Site
 from django.db.models import  Max
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_text
 from django.utils.encoding import smart_text
 import json
 from math import floor, ceil
@@ -79,7 +74,7 @@ class ExprNode(Node):
         kwargs = dict([(k, v.resolve(context))
                        for k, v in self.kwargs.items()])
 
-        expression = force_unicode(self.expression.resolve(context))
+        expression = force_text(self.expression.resolve(context))
 
         local_dict = context["_sympy_local_dict_"]
 
@@ -140,7 +135,7 @@ def new_exam_page(context):
 
 @register.filter
 def addplus(text):
-    input_val = force_unicode(text)
+    input_val = force_text(text)
     
     negative_number = False
     try:
@@ -164,7 +159,7 @@ addplus.is_safe = True
     
 @register.filter
 def invisible_one(text):
-    input_val = force_unicode(text)
+    input_val = force_text(text)
     
     try:
         plus_added = False
@@ -613,8 +608,8 @@ class AnswerNode(template.Node):
                 mc_answer_dict = {}
                 for a in rendered_answer_list:
                     mc_answer_dict[a['answer_id']]=a['rendered_answer']
-                import pickle
-                expressionfromanswer.answer_data=pickle.dumps(mc_answer_dict)
+                import pickle, base64
+                expressionfromanswer.answer_data=base64.b64encode(pickle.dumps(mc_answer_dict)).decode();
                 expressionfromanswer.save()
 
             answer_data['rng'].shuffle(rendered_answer_list)

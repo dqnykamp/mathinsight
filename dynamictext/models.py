@@ -1,21 +1,15 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-from django.utils.encoding import python_2_unicode_compatible
 
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ObjectDoesNotExist
-import pickle
+import pickle, base64
 
-@python_2_unicode_compatible
 class DynamicText(models.Model):
     contained_in_content_type = models.ForeignKey(ContentType)
     contained_in_object_id = models.PositiveIntegerField()
-    contained_in_object = generic.GenericForeignKey(
+    contained_in_object = GenericForeignKey(
         'contained_in_content_type', 'contained_in_object_id')
     number = models.IntegerField()
     nodelisttext = models.TextField()
@@ -29,7 +23,7 @@ class DynamicText(models.Model):
 
     def render(self, context, include_container=False,
                instance_identifier=""):
-        nodelist=pickle.loads(self.nodelisttext)
+        nodelist=pickle.loads(base64.b64decode(self.nodelisttext))
         content= nodelist.render(context)
 
         if include_container:
@@ -75,7 +69,7 @@ class DynamicText(models.Model):
 
     @classmethod
     def add_new(cls, object, nodelist):
-        nodelisttext=pickle.dumps(nodelist)
+        nodelisttext=base64.b64encode(pickle.dumps(nodelist)).decode();
         return cls.objects.create(contained_in_object=object, 
                                   number=cls.return_number_for_object(object),
                                   nodelisttext=nodelisttext)

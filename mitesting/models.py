@@ -1,23 +1,16 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-from django.utils.encoding import python_2_unicode_compatible
-
 from django.db import models
 from django.contrib.auth.models import Group
 from django.template import TemplateSyntaxError, TemplateDoesNotExist, Context, loader, Template
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from math import *
 from mitesting.permissions import return_user_assessment_permission_level
 import re
-from sympy import Function, Tuple
+from sympy import Function, Tuple, Symbol
 from django.db.models import Max
 from mitesting.math_objects import math_object
-from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen, Symbol
-import six
+from mitesting.sympy_customized import parse_expr, parse_and_process, customized_sort_key, SymbolCallable, TupleNoParen
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,13 +20,11 @@ from sympy.core.sympify import converter as sympify_converter
 from sympy import MatrixBase
 sympify_converter[MatrixBase] = lambda x: x
 
-@python_2_unicode_compatible
 class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     def __str__(self):
         return  self.name
    
-@python_2_unicode_compatible
 class Question(models.Model):
 
     # spacing choices must correspond to css classes
@@ -67,18 +58,19 @@ class Question(models.Model):
     hint_text = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     reference_pages = models.ManyToManyField('midocs.Page', 
-                                             through='QuestionReferencePage')
+                                             through='QuestionReferencePage',
+                                             blank=True)
     allowed_sympy_commands = models.ManyToManyField('SympyCommandSet', 
-                                                    blank=True, null=True)
+                                                    blank=True)
     customize_user_sympy_commands = models.BooleanField(default=False)
     allowed_user_sympy_commands = models.ManyToManyField(
-        'SympyCommandSet', blank=True, null=True,
-        related_name='question_set_user')
+        'SympyCommandSet', related_name='question_set_user', blank=True)
     computer_graded=models.BooleanField(default=False)
     show_solution_button_after_attempts=models.IntegerField(default=0)
-    keywords = models.ManyToManyField('midocs.Keyword', blank=True, null=True)
-    subjects = models.ManyToManyField('midocs.Subject', blank=True, null=True)
-    authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor')
+    keywords = models.ManyToManyField('midocs.Keyword', blank=True)
+    subjects = models.ManyToManyField('midocs.Subject', blank=True)
+    authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor',
+                                     blank=True)
 
 
     def __str__(self):
@@ -180,7 +172,6 @@ class Question(models.Model):
         else:
             return ""
 
-@python_2_unicode_compatible
 class QuestionAuthor(models.Model):
     question = models.ForeignKey(Question)
     author = models.ForeignKey('midocs.Author')
@@ -204,7 +195,6 @@ class QuestionAuthor(models.Model):
         super(QuestionAuthor, self).save(*args, **kwargs)
 
 
-@python_2_unicode_compatible
 class QuestionSubpart(models.Model):
     question= models.ForeignKey(Question)
     question_spacing = models.CharField(max_length=20, blank=True, null=True,
@@ -252,7 +242,6 @@ class QuestionSubpart(models.Model):
 
 
 
-@python_2_unicode_compatible
 class QuestionReferencePage(models.Model):
     question = models.ForeignKey(Question)
     page = models.ForeignKey('midocs.Page')
@@ -277,7 +266,6 @@ class QuestionReferencePage(models.Model):
         super(QuestionReferencePage, self).save(*args, **kwargs)
 
 
-@python_2_unicode_compatible
 class QuestionAnswerOption(models.Model):
     EXPRESSION = 0
     MULTIPLE_CHOICE = 1
@@ -324,6 +312,8 @@ class QuestionAnswerOption(models.Model):
 
 
     def render_feedback(self, expr_context):
+        if not self.feedback:
+            return ""
         template_string = "{% load testing_tags mi_tags humanize %}"
         template_string += self.feedback
         try:
@@ -336,7 +326,6 @@ class QuestionAnswerOption(models.Model):
             return ""
 
 
-@python_2_unicode_compatible
 class AssessmentType(models.Model):
     PRIVACY_CHOICES = (
         (0, 'Public'),
@@ -356,7 +345,6 @@ class AssessmentType(models.Model):
     def __str__(self):
         return  self.name
 
-@python_2_unicode_compatible
 class Assessment(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     name = models.CharField(max_length=200, unique=True)
@@ -364,15 +352,16 @@ class Assessment(models.Model):
     assessment_type = models.ForeignKey(AssessmentType)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
-    questions = models.ManyToManyField(Question, through='QuestionAssigned')
+    questions = models.ManyToManyField(Question, through='QuestionAssigned',
+                                       blank=True)
     instructions = models.TextField(blank=True, null=True)
     instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     time_limit = models.CharField(max_length=20, blank=True, null=True)
-    thread_content_set = generic.GenericRelation('mithreads.ThreadContent')
-    groups_can_view = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view")
-    groups_can_view_solution = models.ManyToManyField(Group, blank=True, null=True, related_name = "assessments_can_view_solution")
-    background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage')
+    thread_content_set = GenericRelation('mithreads.ThreadContent')
+    groups_can_view = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view")
+    groups_can_view_solution = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view_solution")
+    background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage', blank=True)
     allow_solution_buttons = models.BooleanField(default=True)
     fixed_order = models.BooleanField(default=False)
     nothing_random = models.BooleanField(default=False)
@@ -521,6 +510,8 @@ class Assessment(models.Model):
     privacy_level_solution_description.short_description = "Solution privacy"
 
     def render_instructions(self):
+        if not self.instructions:
+            return ""
         template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions
         try:
@@ -530,6 +521,8 @@ class Assessment(models.Model):
             return "Error in instructions template: %s" % e
 
     def render_instructions2(self):
+        if not self.instructions2:
+            return ""
         template_string_base = "{% load testing_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions2
         try:
@@ -624,7 +617,6 @@ class Assessment(models.Model):
         return seed_min_disallowed
                     
 
-@python_2_unicode_compatible
 class AssessmentBackgroundPage(models.Model):
     assessment = models.ForeignKey(Assessment)
     page = models.ForeignKey('midocs.Page')
@@ -646,7 +638,6 @@ class AssessmentBackgroundPage(models.Model):
                 self.sort_order = 1
         super(AssessmentBackgroundPage, self).save(*args, **kwargs)
 
-@python_2_unicode_compatible
 class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
     question_set = models.SmallIntegerField(default=0,db_index=True)
@@ -659,7 +650,6 @@ class QuestionSetDetail(models.Model):
         return "%s for %s" % (self.question_set, self.assessment)
 
 
-@python_2_unicode_compatible
 class QuestionAssigned(models.Model):
     assessment = models.ForeignKey(Assessment)
     question = models.ForeignKey(Question)
@@ -686,7 +676,6 @@ class QuestionAssigned(models.Model):
         super(QuestionAssigned, self).save(*args, **kwargs)
 
         
-@python_2_unicode_compatible
 class Expression(models.Model):
     RANDOM_NUMBER = "RN"
     RANDOM_WORD = "RW"
@@ -1006,8 +995,8 @@ class Expression(models.Model):
                 local_dict[self.name] = Symbol('??')
 
             import sys
-            raise exc.__class__, "Error in expression: %s\n%s" \
-                % (self.name, exc), sys.exc_info()[2]
+            raise exc.__class__("Error in expression: %s\n%s" \
+                % (self.name, exc), sys.exc_info()[2])
 
         # if have alternate dictionaries, 
         alternate_exprs=[]
@@ -1075,7 +1064,6 @@ class Expression(models.Model):
         return results
 
 
-@python_2_unicode_compatible
 class ExpressionFromAnswer(models.Model):
     name = models.SlugField(max_length=100)
     question = models.ForeignKey(Question)
@@ -1096,7 +1084,6 @@ class ExpressionFromAnswer(models.Model):
         return  self.name
 
 
-@python_2_unicode_compatible
 class SympyCommandSet(models.Model):
     name = models.CharField(max_length=50, unique=True)
     commands = models.TextField()

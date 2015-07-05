@@ -1,9 +1,19 @@
-Django==1.6.8
-django-dajax==0.9.2
-django-haystack==2.1.0
-django-reversion==1.8.5
-pyelasticsearch==0.6.1
-Pillow==2.4.0
-South==1.0
+Python packages:
+
+Django==1.8.2
+django-haystack==2.4.0
+django-reversion==1.8.7
+elasticsearch==0.4.5
+Pillow==2.9.0
 sympy==0.7.6
-pyparsing==2.0.1
+mpmath==0.19
+pyparsing==2.0.3
+pytz==2015.4
+
+Ubuntu packages:
+
+elasticsearch (0.90)
+python3-scipy (0.13.3)
+
+
+mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -u root mysql

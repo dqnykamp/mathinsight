@@ -1,8 +1,3 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
 from midocs.models import Page, PageType
@@ -465,7 +460,7 @@ class TestSetupExpressionContext(TestCase):
 
             expr_context = results['expression_context']
             n = expr_context['n'].return_expression()
-            self.assertTrue(n in range(-10,-3) + range(4,11))
+            self.assertTrue(n in list(range(-10,-3)) + list(range(4,11)))
             if abs(n) > 5:
                 self.assertEqual(min(0,n), expr_context['fun_n'])
             else:
@@ -670,10 +665,10 @@ class TestSetupExpressionContextUserResponse(TestCase):
 
   
     def test_multiple_choice(self):
-        import pickle
+        import pickle, base64
         answer_dict = {123: 'hello', 456: 'bye', 921: 'later'}
         self.new_expr_from_answer(name="b", answer_code="borig",
-                        answer_number=1, answer_data=pickle.dumps(answer_dict),
+                        answer_number=1, answer_data=base64.b64encode(pickle.dumps(answer_dict)).decode(),
                         answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
 
         user_responses=[]

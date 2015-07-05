@@ -1,13 +1,9 @@
-from __future__ import print_function
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from __future__ import division
-
 from django.conf.urls import patterns, url
 from django.views.generic import TemplateView, ListView, DetailView
 from midocs.models import Applet, Video, Image, Author, Page, NotationSystem
 import datetime
 from mathinsight.urls import paginate_by
+from midocs import views
 
 new_days_past=365
 
@@ -21,16 +17,16 @@ class ContactView(TemplateView):
         context['comment_object']=comment_object
         return context
 
-urlpatterns = patterns('midocs.views',
+urlpatterns = [
  url(r'^mathinsight$', TemplateView.as_view(template_name="about_mathinsight.html"), 
      name='mi-about'),
  url(r'^contact$', ContactView.as_view(template_name="contact.html"),
      name='mi-contact'),
- url(r'^news/(?P<news_code>[\w-]+)$', 'newsview', 
+ url(r'^news/(?P<news_code>[\w-]+)$', views.newsview, 
      name='mi-news'),
- url(r'^recent_news$', 'whatsnewview', {'items': 'news'}, 
+ url(r'^recent_news$', views.whatsnewview, {'items': 'news'}, 
      name='mi-recentnews'),
- url(r'^new_summary$', 'whatsnewview', {'items': 'summary'},
+ url(r'^new_summary$', views.whatsnewview, {'items': 'summary'},
      name='mi-newsummary'),
  url(r'^new_pages$', ListView.as_view
      (template_name="midocs/whatsnew_pages.html", 
@@ -75,4 +71,4 @@ urlpatterns = patterns('midocs.views',
                         slug_field='code',
                         context_object_name="notationsystem"),
      name="mi-notationsystemdetail"),
-)
+]
