@@ -830,11 +830,13 @@ class ParseExprTests(SimpleTestCase):
         expr2=parse_expr("x_n", parse_subscripts=True)
         expr3=parse_expr("x_n", parse_subscripts=True, 
                          assume_real_variables=True)
+        expr4=parse_expr("x_n", parse_subscripts=True, evaluate=False)
         
         self.assertEqual(expr1,Symbol("x_n"))
         self.assertEqual(expr2,Symbol("x_n"))
         self.assertEqual(expr1,expr2)
         self.assertEqual(expr3,Symbol("x_n", real=True))
+        self.assertEqual(expr4,Symbol("x_n"))
 
         expr1=parse_expr("x_(n+1)")
         expr2=parse_expr("x_(n+1)", parse_subscripts=True)

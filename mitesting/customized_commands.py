@@ -1,6 +1,6 @@
 # customized sympy commands
 
-from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol
+from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol, Expr
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
@@ -533,7 +533,7 @@ class Lts(BooleanFunction):
 
 
 
-class subscript_symbol(Function):
+class subscript_symbol(Expr):
     """
     Returns a symbol of the form "a_b" where a and b are latexed arguments.
 
@@ -541,8 +541,7 @@ class subscript_symbol(Function):
     
     """
 
-    @classmethod
-    def eval(cls, a,b, real=False):
+    def __new__(cls, a,b, real=False):
 
         from mitesting.sympy_customized import latex
 

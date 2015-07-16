@@ -249,7 +249,10 @@ class Page(models.Model):
         unique_together = ('code', 'page_type')
 
     def __str__(self):
-        return "%s (%s)" % (self.code, self.title)
+        if self.page_type.default:
+            return "%s (Page: %s)" % (self.code, self.title)
+        else:
+            return "%s (Page, %s: %s)" % (self.code, self.page_type, self.title)
 
     def get_title(self):
         return self.title

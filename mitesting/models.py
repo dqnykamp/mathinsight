@@ -368,7 +368,7 @@ class Assessment(models.Model):
     total_points = models.FloatField(blank=True, null=True)
 
     def __str__(self):
-        return  self.name
+        return "%s (Assessment: %s)" % (self.code, self.name)
 
     def return_short_name(self):
         if self.short_name:
@@ -428,6 +428,7 @@ class Assessment(models.Model):
         permissions = (
             ("administer_assessment","Can administer assessments"),
         )
+        ordering = ["code",]
 
     def get_new_seed(self):
         from .render_assessments import get_new_seed
