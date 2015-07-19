@@ -52,8 +52,8 @@ urlpatterns = [
     url(r'^about/', include('midocs.abouturls')),
     url(r'^feed/', include('midocs.feedurls')),
     url(r'^assess/', include('mitesting.urls')),
-    url(r'^thread/', include('mithreads.urls')),
-    url(r'^course/', include('micourses.urls')),
+    url(r'^thread/', include('micourses.threadurls', namespace="mithreads")),
+    url(r'^course/', include('micourses.urls', namespace="micourses")),
     url(r'^', include('midocs.urls')), # include last as will absorb xx/xx urls
 ] \
 + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -2182,12 +2182,28 @@ ol.threadsections {
 
 ol.threadsections ol  {
     margin-left: 1em;
+    list-style-type: upper-latin
 }
 
 ol.threadsections ol ol {
     list-style-type: lower-roman;
 }
 
+ol.threadsections ol ol ol {
+    list-style-type: lower-latin;
+}
+
+ol.threadsections ol ol ol ol {
+    list-style-type: lower-roman;
+}
+
+ol.threadsections ol ol ol ol ol {
+    list-style-type: lower-latin;
+}
+
+ol.threadsections ol ol ol ol ol ol {
+    list-style-type: lower-roman;
+}
 
 ul.threadsections { 
     margin-bottom: 0em;
@@ -2217,6 +2233,9 @@ a.edit_link {
     margin-top: 0;
 }
 
+.thread_content_edit p {
+    margin-top: 0;
+}
 /* for list of links to pages */
 ul.linklist { 
     list-style: none; 

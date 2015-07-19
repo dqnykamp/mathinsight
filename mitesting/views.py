@@ -271,7 +271,7 @@ class GradeQuestionView(SingleObjectMixin, View):
                 (model='assessment')
 
             try:
-                content=course.coursethreadcontent_set.get\
+                content=course.thread_contents.get\
                     (thread_content__object_id=assessment.id,\
                          thread_content__content_type=assessment_content_type)
 
@@ -343,7 +343,7 @@ class GradeQuestionView(SingleObjectMixin, View):
             feedback_message = ""
 
         if current_attempt:
-            feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('mic-assessmentattempted', kwargs={'pk': content.id} ), course)
+            feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:assessmentattempted', kwargs={'pk': content.id} ), course)
 
             current_credit =current_attempt\
                 .get_percent_credit_question_set(question_set)
@@ -493,7 +493,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                 (model='assessment')
 
             try:
-                content=course.coursethreadcontent_set.get\
+                content=course.thread_contents.get\
                     (thread_content__object_id=assessment.id,\
                          thread_content__content_type=\
                          assessment_content_type)
@@ -671,7 +671,7 @@ class AssessmentView(DetailView):
         # add attempt url to rendered_list question_data
         if self.course_thread_content:
             for (ind,q) in enumerate(rendered_list):
-                q["question_data"]["attempt_url"] = reverse('mic-assessmentattemptquestion', kwargs={'pk': self.course_thread_content.id, 'attempt_number': self.attempt_number, 'question_number': ind+1} )
+                q["question_data"]["attempt_url"] = reverse('micourses:assessmentattemptquestion', kwargs={'pk': self.course_thread_content.id, 'attempt_number': self.attempt_number, 'question_number': ind+1} )
 
         # get list of the question numbers in assessment
         # if question_numbers specified in GET parameters
@@ -739,7 +739,7 @@ class AssessmentView(DetailView):
                 (model='assessment')
 
             try:
-                self.course_thread_content=self.course.coursethreadcontent_set.get\
+                self.course_thread_content=self.course.thread_contents.get\
                     (thread_content__object_id=self.object.id,\
                          thread_content__content_type=assessment_content_type)
                 # Finds the course version of the specific assessment
@@ -821,7 +821,7 @@ class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
 
         try:
             # Find the course version of the specific assessment
-            course_thread_content=course.coursethreadcontent_set.get\
+            course_thread_content=course.thread_contents.get\
                             (thread_content__object_id=self.object.id,\
                         thread_content__content_type=assessment_content_type)
         except ObjectDoesNotExist:
@@ -902,7 +902,7 @@ def assessment_overview_view(request, assessment_code):
             (model='assessment')
                         
         try:
-            course_thread_content=course.coursethreadcontent_set.get\
+            course_thread_content=course.thread_contents.get\
                 (thread_content__object_id=assessment.id,\
                      thread_content__content_type=assessment_content_type)
         except ObjectDoesNotExist:

@@ -9,7 +9,7 @@
 <p>Select a course to continue.</p>
 {% for course in request.user.courseuser.active_courses %}
 <p>{{ course }}<br/>
-<form action="{% url 'mic-coursemain' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:coursemain' %}" method="post">{% csrf_token %}
 <input type="hidden" id="id_course" name="course" value="{{course.code}}">
 <input type="submit" value="Select course" />
 </form>

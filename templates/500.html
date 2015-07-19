@@ -28,7 +28,7 @@
       <div class="mnav">
 	<ul class="ym-grid ym-equalize linearize-level-2">
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mathinsight-home' %}">Home</a></li>
-	  <li class="ym-g10 ym-gl"><a href="{% url 'mithreads-list' %}">Threads</a></li>
+	  <li class="ym-g10 ym-gl"><a href="{% url 'mithreads:list' %}">Threads</a></li>
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mi-index' 'general' %}">Index</a></li>
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mi-about' %}">About</a></li>
 	  <li class="ym-g50 ym-gl"><div id="search_box"><form class="ym-searchform" action="{% url 'haystack_search' %}#search" method="get">
@@ -66,7 +66,7 @@
 <p>We hope the error is isolated to just that page.  
 To find another page, you can scan through the
 <a href="{% url 'mi-index' 'general'%}">index</a>, browse the
-<a href="{% url 'mithreads-list' %}">threads</a>,
+<a href="{% url 'mithreads:list' %}">threads</a>,
 or
 search Math Insight.</p>
 

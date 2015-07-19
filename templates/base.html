@@ -43,7 +43,7 @@
       <div class="mnav">
 	<ul class="ym-grid ym-equalize linearize-level-2">
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mathinsight-home' %}">Home</a></li>
-	  <li class="ym-g10 ym-gl"><a href="{% url 'mithreads-list' %}">Threads</a></li>
+	  <li class="ym-g10 ym-gl"><a href="{% url 'mithreads:list' %}">Threads</a></li>
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mi-index' 'general' %}">Index</a></li>
 	  <li class="ym-g10 ym-gl"><a href="{% url 'mi-about' %}">About</a></li>
 	  <li class="ym-g50 ym-gl"><div id="search_box"><form class="ym-searchform" action="{% url 'haystack_search' %}#search" method="get">
@@ -86,7 +86,7 @@
       <div class="ym-grid linearize-level-1">
 	<div class="ym-g66 ym-gl">
 	  <div class="ym-gbox-left">
-	    {% if user.courseuser.return_selected_course_if_exists %}<a href="{% url 'mic-coursemain' %}">{{user.courseuser.return_selected_course_if_exists}}</a> {% block coursebreadcrumb %}{%endblock%}{%else%}{%if user.courseuser %}<a href="{% url 'mic-coursemain' %}">Select course</a>{%endif%}{%endif%}
+	    {% if user.courseuser.return_selected_course_if_exists %}<a href="{% url 'micourses:coursemain' %}">{{user.courseuser.return_selected_course_if_exists}}</a> {% block coursebreadcrumb %}{%endblock%}{%else%}{%if user.courseuser %}<a href="{% url 'micourses:coursemain' %}">Select course</a>{%endif%}{%endif%}
 	  </div>
 	</div>
 	<div class="ym-g33 ym-gr"> 
@@ -229,6 +229,7 @@ function isElementInViewport (el) {
 
 {% accumulated_javascript %}
 
+{% block tail %}{% endblock %}
 
 </body>
 </html>

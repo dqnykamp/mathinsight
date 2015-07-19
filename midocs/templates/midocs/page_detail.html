@@ -74,10 +74,10 @@
 {% if thepage.get_active_thread_content_set %}
 <a id="threads" class="anchor"></a>
 <section class="box threadbox">
-<h4><a href="{% url 'mithreads-list' %}" class="normaltext">Thread navigation</a></h4>
+<h4><a href="{% url 'mithreads:list' %}" class="normaltext">Thread navigation</a></h4>
 {% for thread_content in thepage.get_active_thread_content_set %}
-<a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
-<h5 class="pre_list"><a href="{% url 'mithreads-thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
+<a id="thread_{{ thread_content.course.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads:thread' thread_content.course.code %}#s{{ thread_content.section.id }}" class="normaltext">{{  thread_content.course }}</a></h5>
 <ul class="linklist">
   {% with thread_content.find_previous as previous_in_thread %}
   {% if previous_in_thread %}

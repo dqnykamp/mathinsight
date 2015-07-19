@@ -3,7 +3,7 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Attempts of {{ student.get_full_name }} on {{content.thread_content.content_object}}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'mic-instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'mic-assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
 
 {% block content %}
 <h3>Student: {{student.get_full_name}}</h3>
@@ -12,7 +12,7 @@
 
 <p>Points: {{content.total_points}}<br/>
 Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} score achieved)<br/>
-Adjusted due date: <a href='{% url 'mic-instructoradjustedduedatecalculation' student.id content.id %}'>{{adjusted_due_date}}</a></p>
+Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculation' student.id content.id %}'>{{adjusted_due_date}}</a></p>
 
 <table id="attempt_table" class="basic rowclick">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th><th>Link</th></tr></thead>

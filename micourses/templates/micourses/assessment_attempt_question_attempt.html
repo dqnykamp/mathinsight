@@ -19,7 +19,7 @@ MathJax.Hub.Config({
 </script>
 {% endblock %}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempted' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'mic-assessmentattempt' content.id attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestion' content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'mic-assessmentattemptquestionattempt' content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:assessmentattempted' content.id %}">{{content.thread_content.content_object}}</a> ►  <a href="{% url 'micourses:assessmentattempt' content.id attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'micourses:assessmentattemptquestion' content.id attempt_number question_number %}">Question {{question_number}}</a> ►  <a href="{% url 'micourses:assessmentattemptquestionattempt' content.id attempt_number question_number answer_dict.attempt_number %}">{{ answer_dict.datetime}}</a>{% endblock %}
 
 
 {% block content %}

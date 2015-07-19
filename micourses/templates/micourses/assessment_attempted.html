@@ -3,7 +3,7 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Attempts of {{ user.get_full_name }} on {{content.thread_content.content_object}}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'mic-assessmentattempted' content.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:assessmentattempted' content.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
 
 {% block content %}
 
@@ -11,7 +11,7 @@
 
 <p>Points: {{content.total_points}}<br/>
 Score: {{score|floatformat_or_dash:"1"}} (based on {{content.attempt_aggregation_string}} score achieved)<br/>
-Adjusted due date: <a href='{% url 'mic-adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
+Adjusted due date: <a href='{% url 'micourses:adjustedduedatecalculation' content.id %}'>{{adjusted_due_date}}</a></p>
 
 {% if attempts %}
 <table class="basic rowclick">

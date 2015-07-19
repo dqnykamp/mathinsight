@@ -11,7 +11,7 @@
 <p>{{error_message}}</p>
 </section>
 {% endif %}
-<h3>{{ assessment }}</h3>
+<h3>{{ assessment_name }}</h3>
 
 <section class="namesection"><div class="nameblank">{% if course %}{{ course }}<br/>{%endif%}
 Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due date: {% if course_thread_content.adjusted_due_date %} {{course_thread_content.adjusted_due_date}}{% endif %}<br/>{%endif%}Table/group #:<br/>Group members:</div></section>

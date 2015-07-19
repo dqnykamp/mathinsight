@@ -10,22 +10,18 @@ class ThreadSectionForm(forms.Form):
     section_name = forms.CharField(max_length=100)
     section_code = forms.SlugField(max_length=50)
 
-# def return_object_queryset(content_type):
-#     if content_type:
-#         return ContentType.objects.get(id=content_type.id).model_class().objects.all()
-#     else:
-#         return ContentType.objects.none()
 
+def thread_content_form_factory(the_content_type=None):
 
-class ChoiceFieldNoValidate(forms.ChoiceField):
-    def validate(self, value):
-        pass
+    if the_content_type is None:
+        the_content_type = ContentType.objects.get(model="page")
+    
+    class ThreadContentForm(forms.ModelForm):
+        content_type = forms.ModelChoiceField(queryset=ContentType.objects.filter(Q(model='applet') | Q(model='page') | Q(model='assessment') | Q(model='video')), empty_label=None, initial=ContentType.objects.get(model=the_content_type.model))
+        object_id =forms.ModelChoiceField(queryset=the_content_type.model_class().objects.all(), label="Object")
 
-class ThreadContentForm(forms.ModelForm):
-    content_type = forms.ModelChoiceField(queryset=ContentType.objects.filter(Q(model='applet') | Q(model='page') | Q(model='assessment') | Q(model='video')))
-    #object_id =  ChoiceFieldNoValidate(choices=(('1','hi'),('2','goodbye')), label="Object")
-    object_id = ChoiceFieldNoValidate(choices=(), label="Object")
-    class Meta:
-        model=ThreadContent
-        fields = ('content_type', 'object_id', 'substitute_title')
+        class Meta:
+            model=ThreadContent
+            fields = ('content_type', 'object_id', 'substitute_title')
 
+    return ThreadContentForm

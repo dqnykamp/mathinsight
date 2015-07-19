@@ -13,6 +13,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='assessment',
-            options={'ordering': ['code'], 'permissions': (('administer_assessment', 'Can administer assessments'),)},
+            options={'permissions': (('administer_assessment', 'Can administer assessments'),), 'ordering': ['code']},
+        ),
+        migrations.AlterField(
+            model_name='assessment',
+            name='short_name',
+            field=models.CharField(null=True, blank=True, max_length=30),
         ),
     ]

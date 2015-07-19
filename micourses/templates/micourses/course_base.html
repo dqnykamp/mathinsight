@@ -10,21 +10,21 @@
 
 
 {% block rightcolumn %}
- <a href="{% url 'mithreads-thread' course.thread.code %}">{{course.thread}} thread</a><br/>
+ <a href="{% url 'mithreads:thread' course.code %}">{{course}} thread</a><br/>
 {% if course.syllabus_url %}<a href="{{course.syllabus_url}}">Course syllabus</a><br/>{% endif %}
 {% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
 {% if courseuser.get_current_role == 'I' %}
-<a href="{% url 'mic-instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
-<a href="{% url 'mic-exportgradebook' %}">Export gradebook</a><br/>
-<a href="{% url 'mic-instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
+<a href="{% url 'micourses:instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
+<a href="{% url 'micourses:exportgradebook' %}">Export gradebook</a><br/>
+<a href="{% url 'micourses:instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
 {% if course.track_attendance %}
-<a href="{% url 'mic-updateattendance' %}">Update attendance</a><br/>
-<a href = "{% url 'mic-updateindividualattendance' %}">Update individual attendance</a>
+<a href="{% url 'micourses:updateattendance' %}">Update attendance</a><br/>
+<a href = "{% url 'micourses:updateindividualattendance' %}">Update individual attendance</a>
 {%endif%}
 {%else%}
-<a href="{% url 'mic-contentlist' %}?{{week_date_parameters}}">Due dates by week</a><br/>
-<a href="{% url 'mic-studentgradebook' %}">Grades</a><br/>
-{% if course.track_attendance %}<a href="{% url 'mic-attendancedisplay' %}">Attendance record</a><br/>{% endif %}
+<a href="{% url 'micourses:contentlist' %}?{{week_date_parameters}}">Due dates by week</a><br/>
+<a href="{% url 'micourses:studentgradebook' %}">Grades</a><br/>
+{% if course.track_attendance %}<a href="{% url 'micourses:attendancedisplay' %}">Attendance record</a><br/>{% endif %}
 {%endif%}
 {% if course.tutoring_url %}<a href="{{course.tutoring_url}}">Tutoring options</a><br/>{% endif %}
 {% if courseuser.selected_course_enrollment.group %}

@@ -9,7 +9,7 @@
 {%endif %}
 <p>Update attendance for {{course}}.</p>
 
-<form action="{% url 'mic-updateattendance' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:updateattendance' %}" method="post">{% csrf_token %}
 <div>
 <label for="id_attendance_date">Attendance date:</label> <input id="id_attendance_date" name="attendance_date" size="10" type="text" value="{{ next_attendance_date|date:'M j, Y'}}" />
 </div>

@@ -348,7 +348,7 @@ class AssessmentType(models.Model):
 class Assessment(models.Model):
     code = models.SlugField(max_length=200, unique=True)
     name = models.CharField(max_length=200, unique=True)
-    short_name = models.CharField(max_length=30, blank=True)
+    short_name = models.CharField(max_length=30, blank=True, null=True)
     assessment_type = models.ForeignKey(AssessmentType)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
@@ -358,7 +358,7 @@ class Assessment(models.Model):
     instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     time_limit = models.CharField(max_length=20, blank=True, null=True)
-    thread_content_set = GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
     groups_can_view = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view_solution")
     background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage', blank=True)

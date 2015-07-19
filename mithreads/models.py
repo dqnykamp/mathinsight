@@ -1,10 +1,11 @@
 from django.db import models
+from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
-from mithreads.utils import HTMLOutliner
+from mithreads.utils import HTMLOutliner, return_section_insert_html, return_section_delete_html, return_section_edit_html, return_content_insert_html
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.utils.safestring import mark_safe
-
+from django.contrib.contenttypes.models import ContentType
 
 class ActiveThreadManager(models.Manager):
     def get_queryset(self):
@@ -37,18 +38,13 @@ class Thread(models.Model):
         else:
             return "ul"
 
-    def top_section_insert_html(self):
-        click_command = "Dajaxice.midocs.insert_section_form_top" + "(Dajax.process,{'thread_code': '%s'})" % (self.code)
-        html_string = '<a onclick="%s;" class="edit_link"> [insert section]</a>' \
-                % (click_command)
-        return html_string
 
     def render_html_string(self, student=None, course=None, edit=False):
 
         html_string=""
         if edit:
-            html_string = '%s <p style="margin-top: 2em;"><span id="top_section_insert">%s</span></p>' \
-                % (html_string, self.top_section_insert_html())
+            html_string = '%s <div style="margin-top: 2em;" id="top_section_insert">%s</div>' \
+                % (html_string, return_section_insert_html("top", self.id))
             
         outliner=HTMLOutliner(numbered=self.numbered, default_css_class="threadsections")
         
@@ -58,6 +54,8 @@ class Thread(models.Model):
                 (outliner, student, course, edit)
 
         html_string = html_string + outliner.return_html_close_string()
+
+
         return mark_safe(html_string)
 
     def render_html_edit_string(self):
@@ -88,14 +86,14 @@ class Thread(models.Model):
     
     def render_save_changes_course_button_html_string(self, course):
         click_command = "Dajaxice.midocs.save_thread_changes_to_course"\
-            + "(Dajax.process,{'thread_code': '%s', 'course_code': '%s' })" \
-            % (self.code, course.code)
+            + "(Dajax.process,{'thread_code': '%s',  })" \
+            % (self.code, )
         
         html_string =  \
             '<input type="button" value="Save changes to course: %s" onclick="%s;">' \
             % (course, click_command)
-        html_string += '<div class="info" id="message_save_changes_%s_%s"></div>' \
-            % (self.code, course.code)
+        html_string += '<div class="info" id="message_save_changes_%s"></div>' \
+            % (self.code)
         
         return html_string
 
@@ -129,23 +127,23 @@ class ThreadSection(models.Model):
         
 
         # copy thread content
-        for threadcontent in original_thread_section.threadcontent_set.all():
+        for threadcontent in original_thread_section.thread_contents.all():
             threadcontent.save_to_new_thread_section(new_thread_section)
         
     def save_to_course(self, course, sort_order):
 
-        for thread_content in self.threadcontent_set.all():
+        for thread_content in self.thread_contents.all():
             sort_order += 1
             try:
                 # see if content exists
-                ctc = course.coursethreadcontent_set.get\
+                ctc = course.coursethread_contents.get\
                     (thread_content=thread_content)
                 ctc.sort_order=sort_order
                 ctc.save()
 
             except ObjectDoesNotExist:
                 # if not already in course, add
-                course.coursethreadcontent_set.create\
+                course.coursethread_content.create\
                     (thread_content=thread_content, sort_order=sort_order)
 
         return sort_order
@@ -153,7 +151,7 @@ class ThreadSection(models.Model):
 
     def first_content_title(self):
         try:
-            the_content = self.threadcontent_set.all()[0]
+            the_content = self.thread_contents.all()[0]
             if the_content:
                 return the_content.get_title()
 
@@ -182,7 +180,7 @@ class ThreadSection(models.Model):
         thread_section_list = list(self.thread.thread_sections.all())
         this_section_index = thread_section_list.index(self)
         for section in thread_section_list[this_section_index+1:]:
-            if section.threadcontent_set.all():
+            if section.thread_contents.all():
                 return section
         return None
 
@@ -191,19 +189,29 @@ class ThreadSection(models.Model):
         this_section_index = thread_section_list.index(self)
         if this_section_index > 0:
             for section in thread_section_list[this_section_index-1::-1]:
-                if section.threadcontent_set.all():
+                if section.thread_contents.all():
                     return section
         return None
+
+
+    def find_children(self):
+        # find all child sections
+        next_section=self
+        children = []
+        while True:
+            next_section = next_section.find_next_section()
+            if not next_section:
+                break
+            if next_section.level <= self.level:
+                break
+            children.append(next_section)
+        return children
+
 
     def get_click_command_base(self):
         return "Dajaxice.midocs.%s" + "(Dajax.process,{'section_code': '%s', 'thread_code': '%s'})" % (self.code, self.thread.code)
 
 
-    def section_insert_below_html(self):
-        click_command_base = self.get_click_command_base()
-        click_command = click_command_base % 'insert_section_form_below'
-        return '<a onclick="%s;" class="edit_link">[insert section]</a>' \
-                % (click_command)
 
     def content_insert_below_section_html(self):
         click_command_base = self.get_click_command_base()
@@ -219,26 +227,19 @@ class ThreadSection(models.Model):
         html_string += '<div id="thread_section_%s">%s</div>' \
             % (self.code, self.return_html_innerstring(edit))
 
-        if edit:
-            html_string = '%s <div id="%s_section_info_box"></div>' \
-                % (html_string, self.code)
-                
         # now add content links
         html_string += '\n<ul class="threadcontent" id = "threadcontent_%s">\n' % self.code
         html_string += self.return_content_html_string(student, course, edit)
         html_string += "</ul>\n"
 
         if edit:
-            html_string = '%s <div id="%s_content_insert_below_section">%s</div>' \
-                % (html_string, self.code, self.content_insert_below_section_html())
-
-            html_string = '%s <div id="%s_section_insert_below">%s</div>' \
-                % (html_string, self.code, self.section_insert_below_html())
+            html_string += return_content_insert_html(self.id)
+            html_string += return_section_insert_html(self.id)
         return html_string
 
     def return_content_html_string(self, student=None, course=None, edit=False):
         html_string=''
-        for content in self.threadcontent_set.all():
+        for content in self.thread_contents.all():
             html_string += content.return_html_string(student, course, edit)
         return html_string
 
@@ -253,27 +254,26 @@ class ThreadSection(models.Model):
             click_command_base = self.get_click_command_base()
 
             if self.level > 1:
-                click_command = click_command_base % 'dec_section_level'
+                click_command = "post_edit_section(%s, 'dec_level')" % self.id
                 html_string = '%s <a onclick="%s;" class="edit_link">[left]</a>' \
                     % (html_string, click_command)
-            click_command = click_command_base % 'inc_section_level'
+            click_command = "post_edit_section(%s, 'inc_level')" % self.id
             html_string = '%s <a onclick="%s;" class="edit_link">[right]</a>' \
                 % (html_string, click_command)
             if self.find_previous_section():
-                click_command = click_command_base % 'move_section_up'
+                click_command = "post_edit_section(%s, 'move_up')" % self.id
                 html_string = '%s <a onclick="%s;" class="edit_link">[up]</a>' \
                     % (html_string, click_command)
             if self.find_next_section():
-                click_command = click_command_base % 'move_section_down'
+                click_command = "post_edit_section(%s, 'move_down')" % self.id
                 html_string = '%s <a onclick="%s;" class="edit_link">[down]</a>' \
                     % (html_string, click_command)
-            click_command = click_command_base % 'delete_section'
-            html_string = '%s <a onclick="%s;" class="edit_link">[delete]</a>' \
-                % (html_string, click_command)
-            click_command = click_command_base % 'edit_section'
-            html_string = '%s <a onclick="%s;" class="edit_link">[edit]</a>' \
-                % (html_string, click_command)
-                
+
+            (delete_link, delete_form) = return_section_delete_html(self)
+            html_string += delete_link
+            html_string += return_section_edit_html(self)
+            html_string += delete_form
+
         return html_string
 
     def return_html_transition_edit_string(self, outliner):
@@ -281,7 +281,7 @@ class ThreadSection(models.Model):
         
 class ThreadContent(models.Model):
     section = models.ForeignKey(ThreadSection)
-    content_type = models.ForeignKey(ContentType, default=19)
+    content_type = models.ForeignKey(ContentType, default=19, related_name="threadcontent_original")
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     sort_order = models.FloatField(default=0)
@@ -344,7 +344,7 @@ class ThreadContent(models.Model):
         return self.section.thread
 
     def find_next_in_section(self):
-        content_list = list(self.section.threadcontent_set.all())
+        content_list = list(self.section.thread_contents.all())
         this_index = content_list.index(self)
         try:
             return content_list[this_index+1]
@@ -352,7 +352,7 @@ class ThreadContent(models.Model):
             return None
   
     def find_previous_in_section(self):
-        content_list = list(self.section.threadcontent_set.all())
+        content_list = list(self.section.thread_contents.all())
         this_index = content_list.index(self)
         if this_index >0:
             return content_list[this_index-1]
@@ -368,7 +368,7 @@ class ThreadContent(models.Model):
         # otherwise, find next section with content
         next_section = self.section.find_next_with_content()
         if next_section:
-            return next_section.threadcontent_set.all()[0]
+            return next_section.thread_contents.all()[0]
         # if can't find anything, return null
         return None
 
@@ -380,7 +380,7 @@ class ThreadContent(models.Model):
         # otherwise, find previous section with content
         previous_section = self.section.find_previous_with_content()
         if previous_section:
-            return previous_section.threadcontent_set.reverse()[0]
+            return previous_section.thread_contents.reverse()[0]
         # if can't find anything, return null
         return None
 
@@ -409,7 +409,7 @@ class ThreadContent(models.Model):
 
         if not edit and course:
             try:
-                ctc = self.coursethreadcontent_set.get(course=course)
+                ctc = self.coursethread_content.get(course=course)
                 html_string += " " + ctc.complete_skip_button_html\
                     (student=student, full_html=True)
             except:

@@ -9,14 +9,14 @@
 {%endif %}
 <h4>Update attendance of individual for {{course}}</h4>
 
-<form action="{% url 'mic-updateindividualattendance' %}" method="get">
+<form action="{% url 'micourses:updateindividualattendance' %}" method="get">
 {{select_student_form.student.label_tag}}: {{select_student_form.student}}
 <input type="submit" value="Select student" />
 </form>
 
 {% if student %}
 <h5>Update existing attendance data for {{student.get_full_name}}</h5>
-<form action="{% url 'mic-updateindividualattendance' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:updateindividualattendance' %}" method="post">{% csrf_token %}
 <table class="narrow" style="width:10%">
 <tr><td>1</td><td>&frac12;</td><td>0</td><td>E</td></tr>
 {% for field in attendance_dates_form %}
@@ -37,7 +37,7 @@
 
 <h5>Add upcoming excused absense for {{student.get_full_name}}</h5>
 
-<form action="{% url 'mic-addexcusedabsence' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:addexcusedabsence' %}" method="post">{% csrf_token %}
 <input id="id_student_excused" name="student" type="hidden" value="{{student.id}}" />
 <div>
 <label for="id_attendance_date">Attendance date:</label> <input id="id_attendance_date" name="attendance_date" size="10" type="text" value="{{ next_attendance_date|date:'M j, Y'}}" />

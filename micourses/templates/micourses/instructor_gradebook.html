@@ -3,19 +3,19 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Gradebook for {{course}}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'mic-instructorgradebook'%}">Gradebook</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a>{% endblock %}
 
 {% block main_columns %}
 <h4>Gradebook</h4>
 <div style="overflow: auto;">
 <table class="bordertable rowclick">
 <thead><tr><th style="min-width: 80px;"></th><th></th>{% for ac in assessment_categories %}<th colspan = {{ac.number_assessments_plus_one}}>{{ac.category}}</th>{%endfor%}<th style="min-width: 80px;"></th></tr>
-<tr><th>Name</th><th>Section</th>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<th style="min-width: 80px;">{{assessment.assessment.return_short_name}} <br/><a href="{% url 'mic-editassessmentattempt' assessment.content.id%}" style="font-size: x-small; font-weight: normal;">Edit scores</a></th>{%endfor %}<th style="min-width: 80px;">Total {{ac.category}} {{ ac.score_comment }}</th>{%endfor%}<th>Course Total</th></tr>
+<tr><th>Name</th><th>Section</th>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<th style="min-width: 80px;">{{assessment.assessment.return_short_name}} <br/><a href="{% url 'micourses:editassessmentattempt' assessment.content.id%}" style="font-size: x-small; font-weight: normal;">Edit scores</a></th>{%endfor %}<th style="min-width: 80px;">Total {{ac.category}} {{ ac.score_comment }}</th>{%endfor%}<th>Course Total</th></tr>
   <tr><td><i>Possible points</i></td><td></td>{% for ac in assessment_categories %}{% for assessment in ac.assessments%}<td><i>{{assessment.points|floatformat:"1"}}</i> </td>{%endfor %}<td><i>{{ac.points|floatformat:"1"}}</i></td>{%endfor%}<td><i>{{total_points|floatformat:"1"}}</i></td></tr>
 </thead>
 <tbody>
   {% for student in student_scores %}
-  <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.student.get_full_name}}</td><td>{{student.section}}</td>{% for ac in student.categories%}{% for score in ac.scores %}<td id="{{student.student.id}}_{{score.content.id}}"><a href="{% url 'mic-assessmentattemptedinstructor' student_id=student.student.id pk=score.content.id%}" title="{{student.student.get_full_name}}&#10;{{score.assessment}}">{{score.score|floatformat_or_dash:"1"}}</a></td>{%endfor%}<td>{{ac.category_score|floatformat:"1"}}</td>{%endfor%}<td>{{student.total_score|floatformat:"1"}}</td></tr>
+  <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.student.get_full_name}}</td><td>{{student.section}}</td>{% for ac in student.categories%}{% for score in ac.scores %}<td id="{{student.student.id}}_{{score.content.id}}"><a href="{% url 'micourses:assessmentattemptedinstructor' student_id=student.student.id pk=score.content.id%}" title="{{student.student.get_full_name}}&#10;{{score.assessment}}">{{score.score|floatformat_or_dash:"1"}}</a></td>{%endfor%}<td>{{ac.category_score|floatformat:"1"}}</td>{%endfor%}<td>{{student.total_score|floatformat:"1"}}</td></tr>
   {% endfor %}
 </tbody>
 </table>

@@ -3,6 +3,7 @@ from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.safestring import mark_safe
 import datetime
 from django.conf import settings
@@ -119,12 +120,6 @@ class CourseUser(models.Model):
     
 
 
-class GradeLevel(models.Model):
-    grade = models.CharField(max_length=1, unique=True)
-    
-    def __str__(self):
-        return self.grade
-
 class AssessmentCategory(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
@@ -182,26 +177,29 @@ class StudentAttendance(models.Model):
     course = models.ForeignKey('Course')
     student = models.ForeignKey(CourseUser)
     date = models.DateField()
-    # 0: absent, 1: present, 0.5: half-present, -1: excused absense
+    # 0: absent, 1: present, -1: excused absense
     present = models.FloatField(default=1.0)
 
     class Meta:
         unique_together = ['course', 'student', 'date']
 
-# should this be a group instead?
+
+class ActiveCourseManager(models.Manager):
+    def get_queryset(self):
+        return super(ActiveCourseManager, self).get_queryset() \
+            .filter(active=True)
+
 class Course(models.Model):
     code = models.SlugField(max_length=50, unique=True)
-    name = models.CharField(max_length=50, unique=True)
-    short_name = models.CharField(max_length=50)
-    semester = models.CharField(max_length=50)
-    description = models.CharField(max_length=400,blank=True)
+    name = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=50, blank=True, null=True)
+    description = models.CharField(max_length=400, blank=True, null=True)
+    semester = models.CharField(max_length=50, blank=True, null=True)
     assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory', blank=True)
     enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment', blank=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
-    active = models.BooleanField(default=False)
-    thread = models.ForeignKey('mithreads.Thread')
     track_attendance = models.BooleanField(default=False)
     adjust_due_date_attendance = models.BooleanField(default=False)
     last_attendance_date = models.DateField(blank=True, null=True)
@@ -209,15 +207,49 @@ class Course(models.Model):
                                               default='F')
     
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
-    syllabus_url = models.URLField(blank=True, null=True)
-    instructor_url = models.URLField(blank=True, null=True)
-    tutoring_url = models.URLField(blank=True, null=True)
+
+    numbered = models.BooleanField(default=True)
+    active = models.BooleanField(default=True)
+    sort_order = models.FloatField(blank=True)
+    thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
+
+    objects = models.Manager()
+    activecourses = ActiveCourseManager()
+
     
     def __str__(self):
         return self.name
 
     class Meta:
-        ordering = ['start_date','id']
+        ordering = ['sort_order','id']
+        unique_together = ['name', 'semester']
+
+    def all_thread_section_generator(self):
+        ts = self.thread_sections.first()
+        # since could have infinite loop if data is corrupted
+        # (and have circular dependence in sections) 
+        # limit to 10000
+        for i in range(10000):
+            yield ts
+            ts = ts.find_next()
+            if not ts:
+                break
+
+    def reset_thread_section_sort_order(self):
+        for (i,ts) in enumerate(list(self.all_thread_section_generator())):
+            ts.sort_order=i
+            ts.save()
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = Course.objects\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(Course, self).save(*args, **kwargs)
 
     # save course as a new course
     # copy course thread content
@@ -244,7 +276,7 @@ class Course(models.Model):
 
 
         for course_thread_content in \
-            original_course.coursethreadcontent_set.all():
+            original_course.thread_contents.all():
             
             course_thread_content.save_to_new_course(new_course, new_thread)
             
@@ -260,13 +292,15 @@ class Course(models.Model):
         self.end_date += timeshift
         self.save()
 
-        for ctc in self.coursethreadcontent_set.all():
-            if ctc.initial_due_date:
-                ctc.initial_due_date += timeshift
-            if ctc.final_due_date:
-                ctc.final_due_date += timeshift
-            if ctc.initial_due_date or ctc.final_due_date:
-                ctc.save()
+        for tc in self.thread_contents.all():
+            if tc.assigned_date:
+                tc.assigned_date += timeshift
+            if tc.initial_due_date:
+                tc.initial_due_date += timeshift
+            if tc.final_due_date:
+                tc.final_due_date += timeshift
+            if tc.assigned_data or tc.initial_due_date or tc.final_due_date:
+                tc.save()
 
     def enrolled_students_ordered(self, active_only=True, section=None):
         student_enrollments = self.courseenrollment_set.filter(role=STUDENT_ROLE)
@@ -286,7 +320,7 @@ class Course(models.Model):
         
 
         point_list = []
-        for ctc in self.coursethreadcontent_set\
+        for ctc in self.thread_content\
                 .filter(assessment_category=assessment_category):
             total_points = ctc.total_points()
             if total_points:
@@ -307,7 +341,7 @@ class Course(models.Model):
 
             cac_assessments = []
             number_assessments = 0
-            for ctc in self.coursethreadcontent_set\
+            for ctc in self.thread_content\
                     .filter(assessment_category=cac.assessment_category):
                 ctc_points = ctc.total_points()
                 if ctc_points:
@@ -352,7 +386,7 @@ class Course(models.Model):
     def all_assessments_with_points(self):
         assessments = []
         # number_assessments = 0
-        for ctc in self.coursethreadcontent_set.all():
+        for ctc in self.thread_contents.all():
             ctc_points = ctc.total_points()
             if ctc_points:
                 # number_assessments += 1
@@ -375,7 +409,7 @@ class Course(models.Model):
             return 0
         
         score_list = []
-        for ctc in self.coursethreadcontent_set\
+        for ctc in self.thread_content\
                 .filter(assessment_category=assessment_category):
             total_score = ctc.student_score(student)
             if total_score:
@@ -392,7 +426,7 @@ class Course(models.Model):
     def student_scores_for_assessment_category(self, student, cac):
 
         cac_assessments = []
-        for ctc in self.coursethreadcontent_set\
+        for ctc in self.thread_content\
                 .filter(assessment_category=cac.assessment_category):
             ctc_points = ctc.total_points()
             if ctc_points:
@@ -471,7 +505,7 @@ class Course(models.Model):
             student_categories = []
             for cac in self.courseassessmentcategory_set.all():
                 category_scores = []
-                for ctc in self.coursethreadcontent_set\
+                for ctc in self.thread_content\
                     .filter(assessment_category=cac.assessment_category):
                     ctc_points = ctc.total_points()
                     if ctc_points:
@@ -510,21 +544,9 @@ class Course(models.Model):
                 (cac.assessment_category, student)
         return total_score
         
-    # def points_for_grade_level(self, grade_level):
-    #     return self.coursethreadcontent_set\
-    #         .filter(required_for_grade=grade_level)\
-    #         .aggregate(total_points=Sum('points'))['total_points']
-      
-    # def points_for_assessment_category_grade_level(self, assessment_category, 
-    #                                                grade_level):
-    #     return self.coursethreadcontent_set\
-    #         .filter(assessment_category=assessment_category, \
-    #                     required_for_grade=grade_level) \
-    #                     .aggregate(total_points=Sum('points'))['total_points']
- 
 
     def content_for_assessment_category(self, assessment_category):
-        return self.coursethreadcontent_set\
+        return self.thread_content\
             .filter(assessment_category=assessment_category)
 
 
@@ -686,7 +708,7 @@ class Course(models.Model):
         # if exclude_completed, then exclude those a student marked complete
         # if assessments_only, then show only those with contenttype=assessment
 
-        content_list= self.coursethreadcontent_set.all()
+        content_list= self.thread_contents.all()
 
         if assessments_only:
             assessment_content_type = ContentType.objects.get\
@@ -701,7 +723,7 @@ class Course(models.Model):
 
         if exclude_completed:
             content_list = content_list.exclude \
-                (id__in=self.coursethreadcontent_set.filter \
+                (id__in=self.thread_contents.filter \
                      (studentcontentcompletion__student=student,
                       studentcontentcompletion__complete=True))
 
@@ -741,14 +763,21 @@ class Course(models.Model):
         # https://code.djangoproject.com/ticket/14645
         # as suggested in
         # http://stackoverflow.com/questions/16704560/django-queryset-exclude-with-multiple-related-field-clauses
-        return self.coursethreadcontent_set\
+        return self.thread_content\
             .exclude(optional=True)\
-            .exclude(id__in=self.coursethreadcontent_set.filter \
+            .exclude(id__in=self.thread_contents.filter \
                          (studentcontentcompletion__student=student,
                           studentcontentcompletion__complete=True))\
-            .exclude(id__in=self.coursethreadcontent_set.filter \
+            .exclude(id__in=self.thread_contents.filter \
                          (studentcontentcompletion__student=student,\
                               studentcontentcompletion__skip=True))[:number]
+
+
+class CourseURLs(models.Model):
+    course = models.ForeignKey(Course)
+    name = models.CharField(max_length=100)
+    url = models.URLField()
+
 
 class CourseEnrollment(models.Model):
     ROLE_CHOICES = (
@@ -772,59 +801,239 @@ class CourseEnrollment(models.Model):
     class Meta:
         unique_together = ("course","student")
         ordering = ['student']
+
         
-class CourseThreadContent(models.Model):
+class ThreadSection(models.Model):
+    name =  models.CharField(max_length=200, db_index=True)
+    course = models.ForeignKey(Course, related_name = "thread_sections", 
+                               blank=True, null=True)
+    parent = models.ForeignKey('self', related_name = "child_sections",
+                               blank=True, null=True)
+    sort_order = models.FloatField(blank=True)
+
+    def __str__(self):
+        return "Section: %s. Course: %s" % (self.name,self.get_course())
+
+    class Meta:
+        ordering = ['sort_order','id']
+
+    def get_course(self):
+        ancestor = self
+        for i in range(10):
+            if ancestor.course:
+                return ancestor.course
+            ancestor=ancestor.parent
+        return None
+
+    def return_siblings(self):
+        if self.course:
+            return self.course.thread_sections.all()
+        else:
+            return self.parent.child_sections.all()
+
+    def find_next_sibling(self):
+        siblings = self.return_siblings()
+        for (i,ts) in enumerate(siblings):
+            if ts == self:
+                break
+        if i < siblings.count()-1:
+            return siblings[i+1]
+        else:
+            return None
+
+    def find_previous_sibling(self):
+        siblings = self.return_siblings()
+        for (i,ts) in enumerate(siblings):
+            if ts == self:
+                break
+        if i > 0:
+            return siblings[i-1]
+        else:
+            return None
+
+    def find_next(self):
+        first_child = self.child_sections.first()
+        if first_child:
+            return first_child
+        
+        ancestor = self
+        for i in range(10):
+            next_sibling = ancestor.find_next_sibling()
+            if next_sibling:
+                return next_sibling
+            else:
+                if ancestor.course is None:
+                    ancestor = ancestor.parent
+                else:
+                    return None
+        return None
+
+    def find_previous(self):
+        previous_sibling = self.find_previous_sibling()
+
+        if not previous_sibling:
+            if self.course:
+                return None
+            else:
+                return self.parent
+
+        # find last descendant of previous sibling
+        # (or sibling if no descendants)
+        descendant = previous_sibling
+        for i in range(10):
+            last_child = descendant.child_sections.last()
+            if last_child:
+                descendant = last_child
+            else:
+                return descendant
+
+        return None
+
+    def reset_thread_content_sort_order(self):
+        for (i,tc) in enumerate(list(self.thread_contents.all())):
+            tc.sort_order=i
+            tc.save()
+
+
+    def clean(self):
+        # Check if course exists
+        # If not, raise exception
+        if self.section.get_course() is None:
+            raise ValidationError( \
+                "Thread section does not have course: %s" % self)
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            if self.course:
+                max_sort_order = self.course.thread_sections\
+                    .aggregate(Max('sort_order'))['sort_order__max']
+            else:
+                max_sort_order = self.parent.child_sections\
+                    .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(ThreadSection, self).save(*args, **kwargs)
+
+
+class ThreadContent(models.Model):
     AGGREGATE_CHOICES = (
         ('Max', 'Maximum'),
         ('Avg', 'Average'),
         ('Las', 'Last'),
     )
 
-    course = models.ForeignKey(Course)
-    thread_content = models.ForeignKey('mithreads.ThreadContent')
+    section = models.ForeignKey(ThreadSection, related_name="thread_contents",
+                                null=True)
+
+    # Redundant in that should be able to determine course from section.
+    # However, the direct link allows queryset of all content of course
+    course = models.ForeignKey(Course, related_name="thread_contents")
+
+    thread_content = models.ForeignKey('mithreads.ThreadContent', blank=True, null=True)
+
+    content_type = models.ForeignKey(ContentType, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    substitute_title = models.CharField(max_length=200, blank=True, null=True)
+
     instructions = models.TextField(blank=True, null=True)
+
     assigned_date=models.DateField(blank=True, null=True)
     initial_due_date=models.DateField(blank=True, null=True)
     final_due_date=models.DateField(blank=True, null=True)
+
     assessment_category = models.ForeignKey(AssessmentCategory, 
                                             blank=True, null=True)
     individualize_by_student = models.BooleanField(default=True)
-    required_for_grade = models.ForeignKey(GradeLevel, blank=True, null=True)
-    required_to_pass = models.BooleanField(default=False)
-    max_number_attempts = models.IntegerField(default=1)
+
     attempt_aggregation = models.CharField(max_length=3,
                                            choices = AGGREGATE_CHOICES,
                                            default = 'Max')
+
     optional = models.BooleanField(default=False)
-    record_scores = models.BooleanField(default=False)
+    available_before_assigned = models.BooleanField(default=False)
     sort_order = models.FloatField(blank=True)
     
     class Meta:
-        ordering = ['sort_order', 'id']
-        unique_together = ['thread_content','course']
+        ordering = ['section', 'sort_order', 'id']
 
     def __str__(self):
-        return "%s for %s" % (self.thread_content, self.course)
+        return "%s for %s" % (self.content_object, self.course)
 
-    def clean(self):
 
-        # check if thread_content is for the thread associated with course
-        # If not, raise exception
-        if self.course.thread != self.thread_content.section.thread:
-            raise ValidationError( \
-                "Thread content is not from course thread: %s"\
-                % self.course.thread)
+    # def clean(self):
+    #     # Check if course is the same as course of section
+    #     # If not, raise exception
+
+    #     if self.course != self.section.get_course():
+    #         raise ValidationError( \
+    #             "Thread content course is not course of its section: %s, %s"\
+    #                             % (self.course, self.section.get_course()))
 
     def save(self, *args, **kwargs):
+        # set course to be course of section
+        self.course=self.section.get_course()
+
         # if sort_order is null, make it one more than the max
         if self.sort_order is None:
-            max_sort_order = self.course.coursethreadcontent_set\
+            max_sort_order = self.section.thread_contents\
                 .aggregate(Max('sort_order'))['sort_order__max']
             if max_sort_order:
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(CourseThreadContent, self).save(*args, **kwargs)
+        super(ThreadContent, self).save(*args, **kwargs)
+
+    def get_title(self):
+        if(self.substitute_title):
+            return self.substitute_title
+        else:
+            try:
+                return self.content_object.get_title()
+            except:
+                return str(self.content_object)
+
+
+    def return_link(self):
+        try:
+            if self.substitute_title:
+                return self.content_object.return_link(link_text=self.substitute_title)
+            else:
+                return self.content_object.return_link() 
+        except:
+            return self.get_title()
+
+
+    def find_previous(self, in_section=False):
+        if in_section:
+            tcs = self.section.thread_contents.all()
+        else:
+            tcs = self.course.thread_contents.all()
+        for (i,tc) in enumerate(tcs):
+            if tc == self:
+                break
+        if i > 0:
+            return tcs[i-1]
+        else:
+            return None
+
+    def find_next(self, in_section=False):
+        if in_section:
+            tcs = self.section.thread_contents.all()
+        else:
+            tcs = self.course.thread_contents.all()
+        for (i,tc) in enumerate(tcs):
+            if tc == self:
+                break
+        if i < tcs.count()-1:
+            return tcs[i+1]
+        else:
+            return None
+
 
     def save_to_new_course(self, course, thread):
         original_pk = self.pk
@@ -840,7 +1049,7 @@ class CourseThreadContent(models.Model):
         # use filter rather than get, as it is possible to have 
         # same content_object appear multiple times
         # in that case, just take first one
-        new_thread_content = new_thread_section.threadcontent_set.filter(
+        new_thread_content = new_thread_section.thread_contents.filter(
             content_type = old_thread_content.content_type,
             object_id = old_thread_content.object_id)[0]
         new_content.thread_content = new_thread_content
@@ -1133,7 +1342,7 @@ class CourseThreadContent(models.Model):
 
 
 class ManualDueDateAdjustment(models.Model):
-    content = models.ForeignKey(CourseThreadContent)
+    content = models.ForeignKey(ThreadContent)
     student = models.ForeignKey(CourseUser)
     initial_due_date=models.DateField()
     final_due_date=models.DateField()
@@ -1147,7 +1356,7 @@ class ManualDueDateAdjustment(models.Model):
 
 class StudentContentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
-    content = models.ForeignKey(CourseThreadContent)
+    content = models.ForeignKey(ThreadContent)
     datetime_added = models.DateTimeField(auto_now_add=True)
     datetime = models.DateTimeField(blank=True)
     score = models.FloatField(null=True, blank=True)
@@ -1267,7 +1476,7 @@ class StudentContentAttempt(models.Model):
 
 class StudentContentCompletion(models.Model):
     student = models.ForeignKey(CourseUser)
-    content = models.ForeignKey(CourseThreadContent)
+    content = models.ForeignKey(ThreadContent)
     complete = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
     datetime = models.DateTimeField(auto_now=True)

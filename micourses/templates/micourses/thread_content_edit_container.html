@@ -1,0 +1,4 @@
+{% load course_tags %}
+{% for content in thread_section.thread_contents.all %}
+<li id='thread_content_{{content.id}}'>{% thread_content_edit content %}</li>
+{% endfor %}

@@ -217,7 +217,7 @@ class Page(models.Model):
     objectives = models.ManyToManyField(Objective, blank=True)
     subjects = models.ManyToManyField(Subject, blank=True)
     keywords = models.ManyToManyField(Keyword, blank=True)
-    thread_content_set = GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
     related_pages = models.ManyToManyField("self", symmetrical=False, 
                                            through='PageRelationship', 
                                            related_name='pages_related_from',
@@ -322,7 +322,7 @@ class Page(models.Model):
             return('mi-page_with_type', (), {'page_code': self.code, 'page_type_code': self.page_type.code})
 
     def get_active_thread_content_set(self):
-        return self.thread_content_set.filter(section__thread__active=True)
+        return self.thread_content_set.filter(course__active=True)
 
     def title_with_period(self):
         # add period to end of title unless title already ends with 
@@ -967,7 +967,7 @@ class Applet(models.Model):
     default_inline_caption = models.TextField(blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
-    thread_content_set = GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
     applet_file = models.FileField(max_length=150, 
                                    upload_to=applet_path,
                                    blank=True, verbose_name="file", 
@@ -1435,7 +1435,7 @@ class Video(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     transcript = models.TextField(blank=True, null=True)
-    thread_content_set = GenericRelation('mithreads.ThreadContent')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
     parameters = models.ManyToManyField(VideoTypeParameter, 
                                         through='VideoParameter', blank=True)
     in_pages = models.ManyToManyField(Page, blank=True, related_name="embedded_videos")

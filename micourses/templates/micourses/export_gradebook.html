@@ -9,7 +9,7 @@
 {%endif %}
 <p>Export gradebook for {{course}}.</p>
 
-<form action="{% url 'mic-gradebookcsv' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:gradebookcsv' %}" method="post">{% csrf_token %}
 <p>Section: <input id="id_section" name="section" size="5" type="text"><br/>
 <input id="id_replace_numbers" type="checkbox" name="replace_numbers"> Replace names with numbers</p>
 
