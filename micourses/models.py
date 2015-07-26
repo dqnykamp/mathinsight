@@ -211,7 +211,6 @@ class Course(models.Model):
     numbered = models.BooleanField(default=True)
     active = models.BooleanField(default=True)
     sort_order = models.FloatField(blank=True)
-    thread = models.ForeignKey('mithreads.Thread', blank=True, null=True)
 
     objects = models.Manager()
     activecourses = ActiveCourseManager()
@@ -925,17 +924,14 @@ class ThreadContent(models.Model):
         ('Las', 'Last'),
     )
 
-    section = models.ForeignKey(ThreadSection, related_name="thread_contents",
-                                null=True)
+    section = models.ForeignKey(ThreadSection, related_name="thread_contents")
 
     # Redundant in that should be able to determine course from section.
     # However, the direct link allows queryset of all content of course
     course = models.ForeignKey(Course, related_name="thread_contents")
 
-    thread_content = models.ForeignKey('mithreads.ThreadContent', blank=True, null=True)
-
-    content_type = models.ForeignKey(ContentType, null=True)
-    object_id = models.PositiveIntegerField(null=True)
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
 
     substitute_title = models.CharField(max_length=200, blank=True, null=True)

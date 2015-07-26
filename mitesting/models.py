@@ -435,7 +435,7 @@ class Assessment(models.Model):
         return get_new_seed()
 
     def get_active_thread_content_set(self):
-        return self.thread_content_set.filter(section__thread__active=True)
+        return self.thread_content_set.filter(course__active=True)
 
     def user_can_view(self, user, solution=True, include_questions=True):
         permission_level=return_user_assessment_permission_level(user)

@@ -2222,6 +2222,15 @@ a.edit_link {
     cursor: pointer;
 }
 
+a.edit_link_disabled {
+    color: #888;
+    cursor: text;
+}
+
+a.edit_link_disabled:hover {
+    text-decoration:none;
+}
+
 .thread_info_box {
     margin: 10px;
     padding: 10px;

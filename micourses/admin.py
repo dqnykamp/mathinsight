@@ -2,7 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from micourses.models import *
-from mithreads.models import ThreadContent
+#from mithreads.models import ThreadContent
 from django.conf import settings
 import reversion
 from django.contrib.auth.models import User

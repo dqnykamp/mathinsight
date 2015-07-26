@@ -10,6 +10,8 @@
 {% endblock %}
 
 {% block content %}
+<script>var commands_enabled=true;</script>
+
 <h3>Thread: {{course}}</h3>
 
 <p><a href="{% url 'mithreads:thread' course.code %}">Finish editing</a></p>
@@ -27,20 +29,24 @@
   'use strict'
 
   function toggle_delete_section_warning(section_id) {
-      $('#thread_section_commands_'+section_id).toggle();
-      $('#delete_section_form_'+section_id).toggle();
-      $('#thread_section_'+section_id).toggleClass('warning');
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#thread_section_commands_'+section_id).toggle(commands_enabled);
+      $('#delete_section_form_'+section_id).toggle(!commands_enabled);
+      $('#thread_section_'+section_id).toggleClass('warning', !commands_enabled);
   }
   function toggle_edit_section_form(section_id) {
-      $('#thread_section_heading_'+section_id).toggle();
-      $('#edit_section_form_container_'+section_id).toggle();
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#thread_section_heading_'+section_id).toggle(commands_enabled);
+      $('#edit_section_form_container_'+section_id).toggle(!commands_enabled);
   }
   function toggle_insert_section_form(section_id) {
-      $('#insert_section_'+section_id).toggle();
-      $('#insert_section_form_'+section_id).toggle();
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#insert_section_'+section_id).toggle(commands_enabled);
+      $('#insert_section_form_'+section_id).toggle(!commands_enabled);
   }
 
   function post_edit_section(section_id, action, form, course_id) {
+      enable_commands(false);
 
       var data = "action=" + action + "&section_id=" + section_id;
       
@@ -54,6 +60,7 @@
       var thepost = jQuery.post('{% url "mithreads:edit-section" %}', data);
       
       thepost.done(process_edit_section);
+      thepost.always(function(event) {enable_commands(true);});
       
   }
   
@@ -79,43 +86,47 @@
       if(action=='edit') {
 	  var section_id = data['section_id'];
 	  $("#thread_section_name_"+section_id).html($('#edit_section_form_' + section_id + '_section_name').val());
-	  toggle_edit_section_form(section_id);
+	  toggle_edit_section_form(section_id, true);
       }
       else if(action=='delete') {
 	  var section_id = data['section_id'];
 	  $("#thread_section_"+section_id).remove()
+	  enable_commands(true)
       }
       else if(action=='insert') {
 	  var section_id = data['section_id'];
 	  if(section_id==null) {
 	      section_id="top";
 	  }
-	  toggle_insert_section_form(section_id);
+	  toggle_insert_section_form(section_id, true);
 	  $('#insert_section_form_'+section_id+'_section_name').val("");
 	  
       }
   }
 
   function toggle_delete_content_warning(content_id) {
+      commands_enabled=enable_commands(!commands_enabled);
       $('#thread_content_commands_'+content_id).toggle();
-      $('#delete_content_form_'+content_id).toggle();
-      $('#thread_content_title_'+content_id).toggleClass('warning');
+      $('#delete_content_form_'+content_id).toggle(!commands_enabled);
+      $('#thread_content_title_'+content_id).toggleClass('warning', !commands_enabled);
   }
 
   function toggle_content_form(form_type, id) {
 
       if(form_type=="edit") {
-	  $('#thread_content_commands_'+id).toggle();
+         $('#thread_content_commands_'+id).toggle();
       }
       else if(form_type=="insert") {
-	  $('#content_form_link_insert_'+id).toggle();
+         $('#content_form_link_insert_'+id).toggle();
       }
+
 
       $('#content_form_'+ form_type + '_' + id).toggle();
   }
 
 
   function post_edit_content(id, action, form) {
+      enable_commands(false);
 
       var data = "action=" + action + "&" + "id=" + id;
 
@@ -126,13 +137,18 @@
       var thepost = jQuery.post('{% url "mithreads:edit-content" %}', data);
       
       thepost.done(process_edit_content);
-      
+      thepost.always(function(event) {enable_commands(true);});
   }
   
   function process_edit_content(data) {
 
       var action = data['action'];
       var id = data['id'];
+
+      if(!action) {
+	  console.log("Error: invalid data");
+	  return false;
+      }
 
       var section_contents = data['section_contents'];
       
@@ -158,11 +174,11 @@
 
 
   function get_content_form(form_type, id) {
-      
+      enable_commands(false);
+
       var thepost = jQuery.post('{% url "mithreads:return-content-form" %}', {form_type: form_type, id: id});
       
       thepost.done(inject_content_form);
-      
   }
 
   function inject_content_form(data) {
@@ -186,6 +202,7 @@
       $(form_selector_inner).html("");
 
       toggle_content_form(form_type, id);
+      enable_commands(true);
       
   }
 
@@ -208,7 +225,18 @@
       $(container_selector).html(data['content_options']);
 
   }
-
+  function enable_commands(enable) {
+      if(enable) {
+	  $(".edit_link_disabled").addClass("edit_link").removeClass("edit_link_disabled");
+	  commands_enabled=true;
+      }
+      else {
+	  $(".edit_link").addClass("edit_link_disabled").removeClass("edit_link");
+	  commands_enabled=false;
+      }
+      return commands_enabled;
+  }
+  
 </script>
 
 {% endblock %}

@@ -1912,6 +1912,14 @@ class EditSectionView(View):
 
         # delete section
         elif action=="delete":
+            # rerender next and prevous siblings as commands may have changed
+            sibling=thread_section.find_next_sibling()
+            if sibling:
+                rerender_sections.append(sibling)
+            sibling=thread_section.find_previous_sibling()
+            if sibling:
+                rerender_sections.append(sibling)
+
             thread_section.delete()
             rerender_thread=False
             
