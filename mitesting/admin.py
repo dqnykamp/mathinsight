@@ -25,7 +25,7 @@ class AssessmentAdmin(reversion.VersionAdmin):
         (None, {
                 'fields': (('code', 'short_name'),
                            'name', 
-                          'assessment_type', 
+                           ('assessment_type', 'course'),
                            ('privacy_level_description',
                            'privacy_level_solution_description'),
                            ) 

@@ -1355,7 +1355,8 @@ class StudentContentAttempt(models.Model):
     content = models.ForeignKey(ThreadContent)
     datetime_added = models.DateTimeField(auto_now_add=True)
     datetime = models.DateTimeField(blank=True)
-    score = models.FloatField(null=True, blank=True)
+    score_override = models.FloatField(null=True, blank=True)
+    score = models.FloatField()
     seed = models.CharField(max_length=150, blank=True, null=True)
 
     def __str__(self):
@@ -1476,6 +1477,8 @@ class StudentContentCompletion(models.Model):
     complete = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
     datetime = models.DateTimeField(auto_now=True)
+    score = models.FloatField()
+    score_override = models.FloatField(blank=True, null=True)
 
     def __str__(self):
         return "%s attempt on %s" % (self.student, self.content)
@@ -1493,20 +1496,13 @@ class StudentContentAttemptSolutionView(models.Model):
 class QuestionStudentAnswer(models.Model):
     user = models.ForeignKey(User)
     question = models.ForeignKey('mitesting.Question')
-    seed = models.CharField(max_length=150, blank=True, null=True)
-    question_set = models.SmallIntegerField(blank=True, null=True)
-    answer = models.TextField(blank=True, null=True)
-    identifier_in_answer = models.CharField(max_length=50, blank=True,
-                                            null=True)
+    seed = models.CharField(max_length=150)
+    question_set = models.SmallIntegerField()
+    answer = models.TextField()
+    identifier_in_answer = models.CharField(max_length=50)
     credit = models.FloatField()
     datetime =  models.DateTimeField(auto_now_add=True)
-    course_content_attempt = models.ForeignKey(StudentContentAttempt,
-                                               blank=True, null=True)
-
-    # only if don't have a course_content_attempt:
-    assessment = models.ForeignKey('mitesting.Assessment', 
-                                   blank=True, null=True)
-    assessment_seed = models.CharField(max_length=150, blank=True, null=True)
+    course_content_attempt = models.ForeignKey(StudentContentAttempt)
 
     def __str__(self):
         return  "%s" % self.answer

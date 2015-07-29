@@ -24,7 +24,13 @@ class QuestionType(models.Model):
     name = models.CharField(max_length=50, unique=True)
     def __str__(self):
         return  self.name
-   
+
+class QuestionDatabaseManager(models.Manager):
+    def get_queryset(self):
+        return super(QuestionDatabaseManager, self).get_queryset() \
+                                                   .filter(course=None)
+
+
 class Question(models.Model):
 
     # spacing choices must correspond to css classes
@@ -49,6 +55,9 @@ class Question(models.Model):
                                            default=2)
     solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
                                            default=2)
+    course = models.ForeignKey('micourses.Course', blank=True, null=True)
+    base_question = models.ForeignKey('self', related_name="derived_questions",
+                                      blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
     question_spacing = models.CharField(max_length=20, blank=True, null=True,
                                          choices=SPACING_CHOICES)
@@ -71,6 +80,8 @@ class Question(models.Model):
     subjects = models.ManyToManyField('midocs.Subject', blank=True)
     authors = models.ManyToManyField('midocs.Author', through='QuestionAuthor',
                                      blank=True)
+    objects = models.Manager()
+    question_database = QuestionDatabaseManager()
 
 
     def __str__(self):
@@ -171,6 +182,141 @@ class Question(models.Model):
             return mark_safe(html_string)
         else:
             return ""
+
+    def save_as_new(self):
+        """
+        Create a new question and copy all fields to new question.
+        """
+
+        from copy import deepcopy
+
+        new_q = deepcopy(self)
+        new_q.id = None
+
+        if self.base_question:
+            new_q.base_question = self.base_question
+        else:
+            new_q.base_question = self
+
+        new_q.save()
+        
+        for qrp in self.questionreferencepage_set.all():
+            new_qrp = deepcopy(qrp)
+            new_qrp.id = None
+            new_qrp.question = new_q
+            new_qrp.save()
+            
+        for asc in self.allowed_sympy_commands.all():
+            new_q.allowed_sympy_commands.add(asc)
+
+        for ausc in self.allowed_user_sympy_commands.all():
+            new_q.allowed_user_sympy_commands.add(asc)
+        for kw in self.keywords.all():
+            new_q.keywords.add(kw)
+        for sb in self.subjects.all():
+            new_q.subjects.add(sb)
+
+        for qa in self.questionauthor_set.all():
+            new_qa = deepcopy(qa)
+            new_qa.id = None
+            new_qa.question = new_q
+            new_qa.save()
+
+        
+        for qsp in self.questionsubpart_set.all():
+            new_qsp = deepcopy(qsp)
+            new_qsp.id = None
+            new_qsp.question = new_q
+            new_qsp.save()
+
+        for qao in self.questionansweroption_set.all():
+            new_qao = deepcopy(qao)
+            new_qao.id = None
+            new_qao.question = new_q
+            new_qao.save()
+
+        for expr in self.expression_set.all():
+            new_expr = deepcopy(expr)
+            new_expr.id = None
+            new_expr.question = new_q
+            new_expr.save()
+
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(new_q)
+
+        return new_q
+
+
+    def overwrite_base_question(self):
+        """
+        Overwrite the base question with all fields of question.
+        """
+
+        from copy import deepcopy
+
+        base_question = self.base_question
+        if base_question is None:
+            return
+        
+        base_q = deepcopy(self)
+        base_q.id = base_question.id
+        base_q.base_question = base_question.base_question
+
+        base_q.save()
+        
+        base_q.questionreferencepage_set.all().delete()
+        for qrp in self.questionreferencepage_set.all():
+            new_qrp = deepcopy(qrp)
+            new_qrp.id = None
+            new_qrp.question = base_q
+            new_qrp.save()
+
+        base_q.allowed_sympy_commands.clear()
+        for asc in self.allowed_sympy_commands.all():
+            base_q.allowed_sympy_commands.add(asc)
+        base_q.allowed_user_sympy_commands.clear()
+        for ausc in self.allowed_user_sympy_commands.all():
+            base_q.allowed_user_sympy_commands.add(asc)
+        base_q.keywords.clear()
+        for kw in self.keywords.all():
+            base_q.keywords.add(kw)
+        base_q.authors.clear()
+        for sb in self.subjects.all():
+            base_q.subjects.add(sb)
+
+        base_q.questionauthor_set.all().delete()
+        for qa in self.questionauthor_set.all():
+            new_qa = deepcopy(qa)
+            new_qa.id = None
+            new_qa.question = base_q
+            new_qa.save()
+
+        base_q.questionsubpart_set.all().delete()
+        for qsp in self.questionsubpart_set.all():
+            new_qsp = deepcopy(qsp)
+            new_qsp.id = None
+            new_qsp.question = base_q
+            new_qsp.save()
+
+        base_q.questionansweroption_set.all().delete()
+        for qao in self.questionansweroption_set.all():
+            new_qao = deepcopy(qao)
+            new_qao.id = None
+            new_qao.question = base_q
+            new_qao.save()
+
+        base_q.expression_set.all().delete()
+        for expr in self.expression_set.all():
+            new_expr = deepcopy(expr)
+            new_expr.id = None
+            new_expr.question = base_q
+            new_expr.save()
+
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(base_q)
+
+        return base_q
+        
 
 class QuestionAuthor(models.Model):
     question = models.ForeignKey(Question)
@@ -346,10 +492,11 @@ class AssessmentType(models.Model):
         return  self.name
 
 class Assessment(models.Model):
-    code = models.SlugField(max_length=200, unique=True)
-    name = models.CharField(max_length=200, unique=True)
+    code = models.SlugField(max_length=200, db_index=True)
+    name = models.CharField(max_length=200)
     short_name = models.CharField(max_length=30, blank=True, null=True)
     assessment_type = models.ForeignKey(AssessmentType)
+    course = models.ForeignKey('micourses.Course', blank=True, null=True)
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     questions = models.ManyToManyField(Question, through='QuestionAssigned',
@@ -429,6 +576,7 @@ class Assessment(models.Model):
             ("administer_assessment","Can administer assessments"),
         )
         ordering = ["code",]
+        unique_together = (("course", "code"), ("course", "name"),)
 
     def get_new_seed(self):
         from .render_assessments import get_new_seed
@@ -617,6 +765,61 @@ class Assessment(models.Model):
 
         return seed_min_disallowed
                     
+
+    def save_as_new(self, new_name = None, new_code=None, course=None):
+        """
+        Create a new assessment and copy all fields to new assessment.
+
+        Must either have a new name and code or be assigned to a different course.
+        (Otherwise, will violate uniqueness constraint.)
+        
+        Assessment questions are also saved as new questions before 
+        assigned to new assessment.
+
+
+        """
+
+        from copy import deepcopy
+
+        new_a = deepcopy(self)
+        new_a.id = None
+        
+        if new_name:
+            new_a.name = new_name
+        if new_code:
+            new_a.code = new_code
+        if course:
+            new_a.course = course
+
+        new_a.save()
+        
+        for qa in self.questionassigned_set.all():
+            new_qa = deepcopy(qa)
+            new_qa.id = None
+            new_qa.assessment = new_a
+            new_qa.question = qa.question.save_as_new()
+            new_qa.save()
+            
+        for gcv in self.groups_can_view.all():
+            new_q.groups_can_view.add(gcv)
+        for gcv in self.groups_can_view_solution.all():
+            new_q.groups_can_view_solution.add(gcv)
+
+        for bp in self.assessmentbackgroundpage_set.all():
+            new_bp = deepcopy(bp)
+            new_bp.id = None
+            new_bp.assessment = new_a
+            new_bp.save()
+            
+        for qsd in self.questionsetdetail_set.all():
+            new_qsd = deepcopy(qsd)
+            new_qsd.id = None
+            new_qsd.assessment = new_a
+            new_qsd.save()
+
+        return new_a
+
+
 
 class AssessmentBackgroundPage(models.Model):
     assessment = models.ForeignKey(Assessment)
