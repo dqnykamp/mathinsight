@@ -518,6 +518,17 @@ class Assessment(models.Model):
     def __str__(self):
         return "%s (Assessment: %s)" % (self.code, self.name)
 
+
+    def save(self, *args, **kwargs):
+        # if any assigned questions are not from assessment's course
+        # then, save questions as new questions with that course.
+
+        super(Assessment, self).save(*args, **kwargs)
+        for qa in self.questionassigned_set.all():
+            if qa.question.course != self.course:
+                qa.question = qa.question.save_as_new(course=self.course)
+                qa.save()
+
     def return_short_name(self):
         if self.short_name:
             return self.short_name
@@ -824,7 +835,6 @@ class Assessment(models.Model):
         1. derived from this question or
         2. derived from this question's base question.
         In that case, instead of creating new question, switch to said question.
-
 
         """
 
