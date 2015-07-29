@@ -27,8 +27,8 @@ class QuestionStudentAnswerAdmin(reversion.VersionAdmin):
         return super(QuestionStudentAnswerAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class CourseAssessmentCategoryInline(admin.TabularInline):
-    model = CourseAssessmentCategory
+class CourseGradeCategoryInline(admin.TabularInline):
+    model = CourseGradeCategory
 
 
 class CourseEnrollmentInline(admin.TabularInline):
@@ -117,7 +117,7 @@ class CourseSkipDate(admin.TabularInline):
 
 
 class CourseAdmin(reversion.VersionAdmin):
-    inlines=[CourseAssessmentCategoryInline, CourseEnrollmentInline, CourseSkipDate]
+    inlines=[CourseGradeCategoryInline, CourseEnrollmentInline, CourseSkipDate]
     fieldsets = (
         (None, {
                 'fields': ('code', ('name',  'short_name'), 'semester',

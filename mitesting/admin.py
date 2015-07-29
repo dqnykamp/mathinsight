@@ -139,13 +139,15 @@ class QuestionAdmin(reversion.VersionAdmin):
     list_display = ("question_with_number","question_type", "computer_graded", "question_privacy", "solution_privacy")
     list_filter = ("question_type", "question_privacy", "solution_privacy",)
     search_fields = ['id', 'name']
+    readonly_fields = ['course', 'base_question']
     formfield_overrides = {
         models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
         }
 
     fieldsets = (
         (None, {
-                'fields': ('name', 
+                'fields': (('name', 'course'),
+                           ('base_question'),
                            ('question_type', 'question_privacy', 'solution_privacy'),
                            ('computer_graded',
                             'show_solution_button_after_attempts',),

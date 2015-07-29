@@ -130,9 +130,8 @@ class GradeCategory(models.Model):
         verbose_name_plural = 'Grade categories'
 
 
-# migration to change name to CourseGradeCategory doesn't seem to work.
-class CourseAssessmentCategory(models.Model):
-    course = models.ForeignKey('Course', related_name='coursegradecategory_set')
+class CourseGradeCategory(models.Model):
+    course = models.ForeignKey('Course')
     grade_category = models.ForeignKey(GradeCategory)
     number_count_for_grade = models.IntegerField(blank=True, null=True)
     rescale_factor = models.FloatField(default=1.0)
@@ -154,7 +153,7 @@ class CourseAssessmentCategory(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
-        super(CourseAssessmentCategory, self).save(*args, **kwargs)
+        super(CourseGradeCategory, self).save(*args, **kwargs)
 
     def save_to_new_course(self, course):
         new_coursegradecategory = self
@@ -196,7 +195,7 @@ class Course(models.Model):
     short_name = models.CharField(max_length=50, blank=True, null=True)
     description = models.CharField(max_length=400, blank=True, null=True)
     semester = models.CharField(max_length=50, blank=True, null=True)
-    grade_categories = models.ManyToManyField(GradeCategory, through='CourseAssessmentCategory', blank=True)
+    grade_categories = models.ManyToManyField(GradeCategory, through='CourseGradeCategory', blank=True)
     enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment', blank=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)

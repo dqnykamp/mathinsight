@@ -183,14 +183,16 @@ class Question(models.Model):
         else:
             return ""
 
-    def save_as_new(self):
+    def save_as_new(self, course=None):
         """
         Create a new question and copy all fields to new question.
+
+        Set course if specified.
         """
 
-        from copy import deepcopy
+        from copy import copy
 
-        new_q = deepcopy(self)
+        new_q = copy(self)
         new_q.id = None
 
         if self.base_question:
@@ -198,17 +200,18 @@ class Question(models.Model):
         else:
             new_q.base_question = self
 
+        if course:
+            new_q.course = course
+
         new_q.save()
         
         for qrp in self.questionreferencepage_set.all():
-            new_qrp = deepcopy(qrp)
-            new_qrp.id = None
-            new_qrp.question = new_q
-            new_qrp.save()
+            qrp.id = None
+            qrp.question = new_q
+            qrp.save()
             
         for asc in self.allowed_sympy_commands.all():
             new_q.allowed_sympy_commands.add(asc)
-
         for ausc in self.allowed_user_sympy_commands.all():
             new_q.allowed_user_sympy_commands.add(asc)
         for kw in self.keywords.all():
@@ -217,29 +220,25 @@ class Question(models.Model):
             new_q.subjects.add(sb)
 
         for qa in self.questionauthor_set.all():
-            new_qa = deepcopy(qa)
-            new_qa.id = None
-            new_qa.question = new_q
-            new_qa.save()
+            qa.id = None
+            qa.question = new_q
+            qa.save()
 
         
         for qsp in self.questionsubpart_set.all():
-            new_qsp = deepcopy(qsp)
-            new_qsp.id = None
-            new_qsp.question = new_q
-            new_qsp.save()
+            qsp.id = None
+            qsp.question = new_q
+            qsp.save()
 
         for qao in self.questionansweroption_set.all():
-            new_qao = deepcopy(qao)
-            new_qao.id = None
-            new_qao.question = new_q
-            new_qao.save()
+            qao.id = None
+            qao.question = new_q
+            qao.save()
 
         for expr in self.expression_set.all():
-            new_expr = deepcopy(expr)
-            new_expr.id = None
-            new_expr.question = new_q
-            new_expr.save()
+            expr.id = None
+            expr.question = new_q
+            expr.save()
 
         from mitesting.render_assessments import process_expressions_from_answers
         process_expressions_from_answers(new_q)
@@ -252,13 +251,13 @@ class Question(models.Model):
         Overwrite the base question with all fields of question.
         """
 
-        from copy import deepcopy
+        from copy import copy
 
         base_question = self.base_question
         if base_question is None:
             return
         
-        base_q = deepcopy(self)
+        base_q = copy(self)
         base_q.id = base_question.id
         base_q.base_question = base_question.base_question
 
@@ -266,10 +265,9 @@ class Question(models.Model):
         
         base_q.questionreferencepage_set.all().delete()
         for qrp in self.questionreferencepage_set.all():
-            new_qrp = deepcopy(qrp)
-            new_qrp.id = None
-            new_qrp.question = base_q
-            new_qrp.save()
+            qrp.id = None
+            qrp.question = base_q
+            qrp.save()
 
         base_q.allowed_sympy_commands.clear()
         for asc in self.allowed_sympy_commands.all():
@@ -286,31 +284,27 @@ class Question(models.Model):
 
         base_q.questionauthor_set.all().delete()
         for qa in self.questionauthor_set.all():
-            new_qa = deepcopy(qa)
-            new_qa.id = None
-            new_qa.question = base_q
-            new_qa.save()
+            qa.id = None
+            qa.question = base_q
+            qa.save()
 
         base_q.questionsubpart_set.all().delete()
         for qsp in self.questionsubpart_set.all():
-            new_qsp = deepcopy(qsp)
-            new_qsp.id = None
-            new_qsp.question = base_q
-            new_qsp.save()
+            qsp.id = None
+            qsp.question = base_q
+            qsp.save()
 
         base_q.questionansweroption_set.all().delete()
         for qao in self.questionansweroption_set.all():
-            new_qao = deepcopy(qao)
-            new_qao.id = None
-            new_qao.question = base_q
-            new_qao.save()
+            qao.id = None
+            qao.question = base_q
+            qao.save()
 
         base_q.expression_set.all().delete()
         for expr in self.expression_set.all():
-            new_expr = deepcopy(expr)
-            new_expr.id = None
-            new_expr.question = base_q
-            new_expr.save()
+            expr.id = None
+            expr.question = base_q
+            expr.save()
 
         from mitesting.render_assessments import process_expressions_from_answers
         process_expressions_from_answers(base_q)
@@ -514,6 +508,13 @@ class Assessment(models.Model):
     nothing_random = models.BooleanField(default=False)
     total_points = models.FloatField(blank=True, null=True)
 
+    class Meta:
+        permissions = (
+            ("administer_assessment","Can administer assessments"),
+        )
+        ordering = ["code",]
+        unique_together = (("course", "code"), ("course", "name"),)
+
     def __str__(self):
         return "%s (Assessment: %s)" % (self.code, self.name)
 
@@ -571,12 +572,57 @@ class Assessment(models.Model):
     def get_solution_url(self):
         return('mit-assessmentsolution', (), {'assessment_type': self.assessment_type.code, 'assessment_code': self.code})
 
-    class Meta:
-        permissions = (
-            ("administer_assessment","Can administer assessments"),
-        )
-        ordering = ["code",]
-        unique_together = (("course", "code"), ("course", "name"),)
+
+    def clean(self):
+        """
+        Check if course has changed.
+        If course has changed and already have student activity on
+        assessment, then raise validation error
+        """
+        
+        orig = Assessment.objects.get(pk=self.pk)
+        
+        if self.course != orig.course:
+
+            found_student_activity = False
+            from micourses.utils import check_for_student_activity
+            for content in self.thread_content_set.filter(course=orig.course):
+                if check_for_student_activity(content):
+                    found_student_activity=True
+                    break
+
+            if found_student_activity:
+                raise ValidationError('Cannot change course of %s from %s to %s since it already has student activity' % (self, orig.course, self.course))
+
+
+    def save(self, *args, **kwargs):
+        """
+        Make sure assigned questions as from assessment's course
+
+        If question's course if different, then save question as new question
+        unless course already has a question that is
+        1. derived from this question or
+        2. derived from this question's base question.
+        In that case, instead of creating new question, switch to said question.
+        """
+
+        super(Assessment, self).save(*args, **kwargs)
+
+        for qa in self.questionassigned_set.all():
+            if qa.question.course != self.course:
+                
+                # find related question
+                q=self.course.question_set.filter(base_question=qa.question)\
+                                          .first()
+                if not q and qa.question.base_question:
+                    q=self.course.question_set.filter(
+                        base_question = qa.question.base_question).first()
+                if q:
+                    qa.question = q
+                else:
+                    qa.question = qa.question.save_as_new(course=self.course)
+
+                qa.save()
 
     def get_new_seed(self):
         from .render_assessments import get_new_seed
@@ -773,49 +819,64 @@ class Assessment(models.Model):
         Must either have a new name and code or be assigned to a different course.
         (Otherwise, will violate uniqueness constraint.)
         
-        Assessment questions are also saved as new questions before 
-        assigned to new assessment.
+        If course changed, then save questions as new questions
+        unless course already has a question that is
+        1. derived from this question or
+        2. derived from this question's base question.
+        In that case, instead of creating new question, switch to said question.
 
 
         """
 
-        from copy import deepcopy
+        from copy import copy
 
-        new_a = deepcopy(self)
+        new_a = copy(self)
         new_a.id = None
         
         if new_name:
             new_a.name = new_name
         if new_code:
             new_a.code = new_code
+
+        course_changed=False
         if course:
+            if course != new_a.course:
+                course_changed=True
             new_a.course = course
 
         new_a.save()
         
         for qa in self.questionassigned_set.all():
-            new_qa = deepcopy(qa)
-            new_qa.id = None
-            new_qa.assessment = new_a
-            new_qa.question = qa.question.save_as_new()
-            new_qa.save()
-            
+            qa.id = None
+            qa.assessment = new_a
+
+             # find related question
+            if course_changed:
+                q=course.question_set.filter(base_question=qa.question).first()
+                if not q and qa.question.base_question:
+                    q=course.question_set.filter(
+                        base_question = qa.question.base_question).first()
+                if q:
+                    qa.question = q
+                else:
+                    qa.question = qa.question.save_as_new(course=new_a.course)
+
+            qa.save()
+
         for gcv in self.groups_can_view.all():
-            new_q.groups_can_view.add(gcv)
+            new_a.groups_can_view.add(gcv)
         for gcv in self.groups_can_view_solution.all():
-            new_q.groups_can_view_solution.add(gcv)
+            new_a.groups_can_view_solution.add(gcv)
 
         for bp in self.assessmentbackgroundpage_set.all():
-            new_bp = deepcopy(bp)
-            new_bp.id = None
-            new_bp.assessment = new_a
-            new_bp.save()
+            bp.id = None
+            bp.assessment = new_a
+            bp.save()
             
         for qsd in self.questionsetdetail_set.all():
-            new_qsd = deepcopy(qsd)
-            new_qsd.id = None
-            new_qsd.assessment = new_a
-            new_qsd.save()
+            qsd.id = None
+            qsd.assessment = new_a
+            qsd.save()
 
         return new_a
 
