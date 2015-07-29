@@ -66,7 +66,7 @@ class CourseSkipDate(admin.TabularInline):
 # # so that don't reload choice options for every record
 #     def formfield_for_dbfield(self, db_field, **kwargs):
 #         formfield = super(CourseThreadContentInline, self).formfield_for_dbfield(db_field, **kwargs)
-#         if db_field.name == 'thread_content' or db_field.name == 'assessment_category' or db_field.name == 'required_for_grade':
+#         if db_field.name == 'thread_content' or db_field.name == 'grade_category' or db_field.name == 'required_for_grade':
 #             # dirty trick so queryset is evaluated and cached in .choices
 #             formfield.choices = formfield.choices
 #         return formfield
@@ -104,7 +104,7 @@ class CourseSkipDate(admin.TabularInline):
 # # so that don't reload choice options for every record
 #     def formfield_for_dbfield(self, db_field, **kwargs):
 #         formfield = super(CourseAssessmentThreadContentInline, self).formfield_for_dbfield(db_field, **kwargs)
-#         if db_field.name == 'thread_content' or db_field.name == 'assessment_category' or db_field.name == 'required_for_grade':
+#         if db_field.name == 'thread_content' or db_field.name == 'grade_category' or db_field.name == 'required_for_grade':
 #             # dirty trick so queryset is evaluated and cached in .choices
 #             formfield.choices = formfield.choices
 #         return formfield
@@ -201,7 +201,7 @@ class CourseAdmin(reversion.VersionAdmin):
 #     save_on_top=True
 
 
-class AssessmentCategoryAdmin(reversion.VersionAdmin):
+class GradeCategoryAdmin(reversion.VersionAdmin):
     pass
 
 
@@ -227,7 +227,7 @@ admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
 admin.site.register(Course, CourseAdmin)
 #admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 #admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
-admin.site.register(AssessmentCategory,AssessmentCategoryAdmin)
+admin.site.register(GradeCategory,GradeCategoryAdmin)
 admin.site.register(ManualDueDateAdjustment, ManualDueDateAdjustmentAdmin)
 
 admin.site.register(StudentContentAttempt, StudentContentAttemptAdmin)

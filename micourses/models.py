@@ -120,34 +120,35 @@ class CourseUser(models.Model):
     
 
 
-class AssessmentCategory(models.Model):
+class GradeCategory(models.Model):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
     
     class Meta:
-        verbose_name_plural = 'Assessment categories'
+        verbose_name_plural = 'Grade categories'
 
 
+# migration to change name to CourseGradeCategory doesn't seem to work.
 class CourseAssessmentCategory(models.Model):
-    course = models.ForeignKey('Course')
-    assessment_category = models.ForeignKey(AssessmentCategory)
+    course = models.ForeignKey('Course', related_name='coursegradecategory_set')
+    grade_category = models.ForeignKey(GradeCategory)
     number_count_for_grade = models.IntegerField(blank=True, null=True)
     rescale_factor = models.FloatField(default=1.0)
     sort_order = models.FloatField(blank=True)
 
     def __str__(self):
-        return "%s for %s" % (self.assessment_category, self.course)
+        return "%s for %s" % (self.grade_category, self.course)
 
     class Meta:
-        verbose_name_plural = 'Course assessment categories'
+        verbose_name_plural = 'Course grade categories'
         ordering = ['sort_order',  'id']
 
     def save(self, *args, **kwargs):
         # if sort_order is null, make it one more than the max
         if self.sort_order is None:
-            max_sort_order = self.course.courseassessmentcategory_set\
+            max_sort_order = self.course.coursegradecategory_set\
                 .aggregate(Max('sort_order'))['sort_order__max']
             if max_sort_order:
                 self.sort_order = ceil(max_sort_order+1)
@@ -156,10 +157,10 @@ class CourseAssessmentCategory(models.Model):
         super(CourseAssessmentCategory, self).save(*args, **kwargs)
 
     def save_to_new_course(self, course):
-        new_courseassessmentcategory = self
-        new_courseassessmentcategory.pk = None
-        new_courseassessmentcategory.course = course
-        new_courseassessmentcategory.save()
+        new_coursegradecategory = self
+        new_coursegradecategory.pk = None
+        new_coursegradecategory.course = course
+        new_coursegradecategory.save()
     
 
 class AttendanceDate(models.Model):
@@ -195,7 +196,7 @@ class Course(models.Model):
     short_name = models.CharField(max_length=50, blank=True, null=True)
     description = models.CharField(max_length=400, blank=True, null=True)
     semester = models.CharField(max_length=50, blank=True, null=True)
-    assessment_categories = models.ManyToManyField(AssessmentCategory, through='CourseAssessmentCategory', blank=True)
+    grade_categories = models.ManyToManyField(GradeCategory, through='CourseAssessmentCategory', blank=True)
     enrolled_students = models.ManyToManyField(CourseUser, through='CourseEnrollment', blank=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
@@ -270,7 +271,7 @@ class Course(models.Model):
         
         original_course = Course.objects.get(code=original_code)
         
-        for ca_category in original_course.courseassessmentcategory_set.all():
+        for ca_category in original_course.coursegradecategory_set.all():
             ca_category.save_to_new_course(new_course)
 
 
@@ -310,38 +311,38 @@ class Course(models.Model):
         
         return self.enrolled_students.filter(courseenrollment__in=student_enrollments).order_by('user__last_name', 'user__first_name')
 
-    def points_for_assessment_category(self, assessment_category):
+    def points_for_grade_category(self, grade_category):
         try:
-            cac=self.courseassessmentcategory_set.get\
-                (assessment_category=assessment_category)
+            cgc=self.coursegradecategory_set.get\
+                (grade_category=grade_category)
         except ObjectDoesNotExist:
             return 0
         
 
         point_list = []
         for ctc in self.thread_content\
-                .filter(assessment_category=assessment_category):
+                .filter(grade_category=grade_category):
             total_points = ctc.total_points()
             if total_points:
                 point_list.append(total_points)
 
         point_list.sort()
         
-        n = cac.number_count_for_grade
+        n = cgc.number_count_for_grade
         if n is not None and n < len(point_list):
             point_list = point_list[-n:]
         
-        return sum(point_list)*cac.rescale_factor
+        return sum(point_list)*cgc.rescale_factor
 
 
     def all_assessments_by_category(self):
-        assessment_categories=[]
-        for cac in self.courseassessmentcategory_set.all():
+        grade_categories=[]
+        for cgc in self.coursegradecategory_set.all():
 
-            cac_assessments = []
+            cgc_assessments = []
             number_assessments = 0
             for ctc in self.thread_content\
-                    .filter(assessment_category=cac.assessment_category):
+                    .filter(grade_category=cgc.grade_category):
                 ctc_points = ctc.total_points()
                 if ctc_points:
                     number_assessments += 1
@@ -350,37 +351,37 @@ class Course(models.Model):
                      'assessment': ctc.thread_content.content_object,
                      'points': ctc_points,
                      }
-                    cac_assessments.append(assessment_results)
+                    cgc_assessments.append(assessment_results)
 
-            category_points = self.points_for_assessment_category \
-                               (cac.assessment_category)
+            category_points = self.points_for_grade_category \
+                               (cgc.grade_category)
 
             score_comment = ""
-            if cac.number_count_for_grade and \
-                    cac.number_count_for_grade < number_assessments:
+            if cgc.number_count_for_grade and \
+                    cgc.number_count_for_grade < number_assessments:
                 score_comment = "top %s of %s" % \
-                    (cac.number_count_for_grade, number_assessments)
-            if cac.rescale_factor != 1.0:
+                    (cgc.number_count_for_grade, number_assessments)
+            if cgc.rescale_factor != 1.0:
                 if score_comment:
                     score_comment += ", "
                 score_comment += "rescale %s%%" % \
-                    (round(cac.rescale_factor*1000)/10)
+                    (round(cgc.rescale_factor*1000)/10)
             if score_comment:
                 score_comment = mark_safe("<br/><small style='font-weight:normal'>(%s)</small>"\
                                               % score_comment)
 
-            cac_results = {'category': cac.assessment_category,
+            cgc_results = {'category': cgc.grade_category,
                            'points': category_points,
-                           'number_count': cac.number_count_for_grade,
-                           'rescale_factor': cac.rescale_factor,
+                           'number_count': cgc.number_count_for_grade,
+                           'rescale_factor': cgc.rescale_factor,
                            'score_comment': score_comment,
                            'number_assessments': number_assessments,
-                           'assessments': cac_assessments,
-                           'number_assessments_plus_one': len(cac_assessments)+1,
+                           'assessments': cgc_assessments,
+                           'number_assessments_plus_one': len(cgc_assessments)+1,
                            }
-            assessment_categories.append(cac_results)
+            grade_categories.append(cgc_results)
 
-        return assessment_categories
+        return grade_categories
     
     def all_assessments_with_points(self):
         assessments = []
@@ -399,34 +400,34 @@ class Course(models.Model):
 
         return assessments
  
-    def student_score_for_assessment_category(self, assessment_category,
+    def student_score_for_grade_category(self, grade_category,
                                               student):
         try:
-            cac=self.courseassessmentcategory_set.get\
-                (assessment_category=assessment_category)
+            cgc=self.coursegradecategory_set.get\
+                (grade_category=grade_category)
         except ObjectDoesNotExist:
             return 0
         
         score_list = []
         for ctc in self.thread_content\
-                .filter(assessment_category=assessment_category):
+                .filter(grade_category=grade_category):
             total_score = ctc.student_score(student)
             if total_score:
                 score_list.append(total_score)
 
         score_list.sort()
         
-        n = cac.number_count_for_grade
+        n = cgc.number_count_for_grade
         if n is not None and n < len(score_list):
             score_list = score_list[-n:]
-        return sum(score_list)*cac.rescale_factor
+        return sum(score_list)*cgc.rescale_factor
  
 
-    def student_scores_for_assessment_category(self, student, cac):
+    def student_scores_for_grade_category(self, student, cgc):
 
-        cac_assessments = []
+        cgc_assessments = []
         for ctc in self.thread_content\
-                .filter(assessment_category=cac.assessment_category):
+                .filter(grade_category=cgc.grade_category):
             ctc_points = ctc.total_points()
             if ctc_points:
                 student_score = ctc.student_score(student)
@@ -441,51 +442,51 @@ class Course(models.Model):
                  'student_score': student_score,
                  'percent': percent,
                  }
-                cac_assessments.append(assessment_results)
-        return cac_assessments
+                cgc_assessments.append(assessment_results)
+        return cgc_assessments
 
-    def student_scores_by_assessment_category(self, student):
+    def student_scores_by_grade_category(self, student):
         scores_by_category = []
-        for cac in self.courseassessmentcategory_set.all():
+        for cgc in self.coursegradecategory_set.all():
 
-            cac_assessments = self.student_scores_for_assessment_category(\
-                                                            student, cac)
-            number_assessments=len(cac_assessments)
+            cgc_assessments = self.student_scores_for_grade_category(\
+                                                            student, cgc)
+            number_assessments=len(cgc_assessments)
 
-            category_points = self.points_for_assessment_category \
-                               (cac.assessment_category)
+            category_points = self.points_for_grade_category \
+                               (cgc.grade_category)
             category_student_score = \
-                self.student_score_for_assessment_category \
-                (cac.assessment_category, student)
+                self.student_score_for_grade_category \
+                (cgc.grade_category, student)
             if category_student_score and category_points:
                 category_percent = category_student_score/category_points*100
             else:
                 category_percent = 0
 
             score_comment = ""
-            if cac.number_count_for_grade and \
-                    cac.number_count_for_grade < number_assessments:
+            if cgc.number_count_for_grade and \
+                    cgc.number_count_for_grade < number_assessments:
                 score_comment = "top %s scores out of %s" % \
-                    (cac.number_count_for_grade, number_assessments)
-            if cac.rescale_factor != 1.0:
+                    (cgc.number_count_for_grade, number_assessments)
+            if cgc.rescale_factor != 1.0:
                 if score_comment:
                     score_comment += " and "
                 score_comment += "rescaling by %s%%" % \
-                    (round(cac.rescale_factor*1000)/10)
+                    (round(cgc.rescale_factor*1000)/10)
             if score_comment:
                 score_comment = mark_safe("<br/><small>(based on %s)</small>"\
                                               % score_comment)
 
-            cac_results = {'category': cac.assessment_category,
+            cgc_results = {'category': cgc.grade_category,
                            'points': category_points,
                            'student_score': category_student_score,
                            'percent': category_percent,
-                           'number_count': cac.number_count_for_grade,
-                           'rescale_factor': cac.rescale_factor,
+                           'number_count': cgc.number_count_for_grade,
+                           'rescale_factor': cgc.rescale_factor,
                            'score_comment': score_comment,
-                           'assessments': cac_assessments,
+                           'assessments': cgc_assessments,
                            }
-            scores_by_category.append(cac_results)
+            scores_by_category.append(cgc_results)
         total_points = self.total_points()
         total_student_score = self.total_student_score(student)
         if total_points and total_student_score:
@@ -498,14 +499,14 @@ class Course(models.Model):
                 'total_percent': total_percent,
                 }
     
-    def all_student_scores_by_assessment_category(self):
+    def all_student_scores_by_grade_category(self):
         student_scores = []
         for student in self.enrolled_students_ordered():
             student_categories = []
-            for cac in self.courseassessmentcategory_set.all():
+            for cgc in self.coursegradecategory_set.all():
                 category_scores = []
                 for ctc in self.thread_content\
-                    .filter(assessment_category=cac.assessment_category):
+                    .filter(grade_category=cgc.grade_category):
                     ctc_points = ctc.total_points()
                     if ctc_points:
                         student_score = ctc.student_score(student)
@@ -515,9 +516,9 @@ class Course(models.Model):
                              'score': student_score,}
                         category_scores.append(assessment_results)
                 category_student_score = \
-                    self.student_score_for_assessment_category \
-                    (cac.assessment_category, student)
-                student_categories.append({'category': cac.assessment_category,
+                    self.student_score_for_grade_category \
+                    (cgc.grade_category, student)
+                student_categories.append({'category': cgc.grade_category,
                                            'category_score': \
                                                category_student_score,
                                            'scores': category_scores})
@@ -531,22 +532,22 @@ class Course(models.Model):
                     
     def total_points(self):
         total_points=0
-        for cac in self.courseassessmentcategory_set.all():
-            total_points += self.points_for_assessment_category\
-                (cac.assessment_category)
+        for cgc in self.coursegradecategory_set.all():
+            total_points += self.points_for_grade_category\
+                (cgc.grade_category)
         return total_points
 
     def total_student_score(self, student):
         total_score=0
-        for cac in self.courseassessmentcategory_set.all():
-            total_score += self.student_score_for_assessment_category\
-                (cac.assessment_category, student)
+        for cgc in self.coursegradecategory_set.all():
+            total_score += self.student_score_for_grade_category\
+                (cgc.grade_category, student)
         return total_score
         
 
-    def content_for_assessment_category(self, assessment_category):
+    def content_for_grade_category(self, grade_category):
         return self.thread_content\
-            .filter(assessment_category=assessment_category)
+            .filter(grade_category=grade_category)
 
 
     def generate_attendance_dates(self):
@@ -942,8 +943,7 @@ class ThreadContent(models.Model):
     initial_due_date=models.DateField(blank=True, null=True)
     final_due_date=models.DateField(blank=True, null=True)
 
-    assessment_category = models.ForeignKey(AssessmentCategory, 
-                                            blank=True, null=True)
+    grade_category = models.ForeignKey(GradeCategory, blank=True, null=True)
     individualize_by_student = models.BooleanField(default=True)
 
     attempt_aggregation = models.CharField(max_length=3,
