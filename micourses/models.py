@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist, Multiple
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils.safestring import mark_safe
-import datetime
+from django.utils import timezone
 from django.conf import settings
 from math import ceil
 
@@ -285,7 +285,7 @@ class Course(models.Model):
         Shifts class dates and due dates of assignments by n_days days
         """
         
-        timeshift = datetime.timedelta(days=n_days)
+        timeshift = timezone.timedelta(days=n_days)
 
         self.start_date += timeshift
         self.end_date += timeshift
@@ -319,7 +319,7 @@ class Course(models.Model):
         
 
         point_list = []
-        for ctc in self.thread_content\
+        for ctc in self.thread_contents\
                 .filter(grade_category=grade_category):
             total_points = ctc.total_points()
             if total_points:
@@ -340,14 +340,14 @@ class Course(models.Model):
 
             cgc_assessments = []
             number_assessments = 0
-            for ctc in self.thread_content\
+            for ctc in self.thread_contents\
                     .filter(grade_category=cgc.grade_category):
                 ctc_points = ctc.total_points()
                 if ctc_points:
                     number_assessments += 1
                     assessment_results =  \
                     {'content': ctc,
-                     'assessment': ctc.thread_content.content_object,
+                     'assessment': ctc.content_object,
                      'points': ctc_points,
                      }
                     cgc_assessments.append(assessment_results)
@@ -391,7 +391,7 @@ class Course(models.Model):
                 # number_assessments += 1
                 assessment_results =  \
                     {'content': ctc, \
-                         'assessment': ctc.thread_content.content_object, \
+                         'assessment': ctc.content_object, \
                          'points': ctc_points, \
                          }
                 assessments.append(assessment_results)
@@ -408,7 +408,7 @@ class Course(models.Model):
             return 0
         
         score_list = []
-        for ctc in self.thread_content\
+        for ctc in self.thread_contents\
                 .filter(grade_category=grade_category):
             total_score = ctc.student_score(student)
             if total_score:
@@ -425,7 +425,7 @@ class Course(models.Model):
     def student_scores_for_grade_category(self, student, cgc):
 
         cgc_assessments = []
-        for ctc in self.thread_content\
+        for ctc in self.thread_contents\
                 .filter(grade_category=cgc.grade_category):
             ctc_points = ctc.total_points()
             if ctc_points:
@@ -436,7 +436,7 @@ class Course(models.Model):
                     percent = 0
                 assessment_results =  \
                 {'content': ctc,
-                 'assessment': ctc.thread_content.content_object,
+                 'assessment': ctc.content_object,
                  'points': ctc_points,
                  'student_score': student_score,
                  'percent': percent,
@@ -504,14 +504,14 @@ class Course(models.Model):
             student_categories = []
             for cgc in self.coursegradecategory_set.all():
                 category_scores = []
-                for ctc in self.thread_content\
+                for ctc in self.thread_contents\
                     .filter(grade_category=cgc.grade_category):
                     ctc_points = ctc.total_points()
                     if ctc_points:
                         student_score = ctc.student_score(student)
                         assessment_results =  \
                             {'content': ctc,
-                             'assessment': ctc.thread_content.content_object,
+                             'assessment': ctc.content_object,
                              'score': student_score,}
                         category_scores.append(assessment_results)
                 category_student_score = \
@@ -545,7 +545,7 @@ class Course(models.Model):
         
 
     def content_for_grade_category(self, grade_category):
-        return self.thread_content\
+        return self.thread_contents\
             .filter(grade_category=grade_category)
 
 
@@ -563,7 +563,7 @@ class Course(models.Model):
         initial_weekday = self.start_date.weekday()
         offsets = []
         for wd in days_of_week_python:
-            offsets.append(datetime.timedelta((wd - initial_weekday) % 7))
+            offsets.append(timezone.timedelta((wd - initial_weekday) % 7))
         
         offsets.sort()
         
@@ -586,7 +586,7 @@ class Course(models.Model):
                     break
                 if new_date not in skip_dates:
                     self.attendancedate_set.create(date = new_date)
-            week_start += datetime.timedelta(7)
+            week_start += timezone.timedelta(7)
 
             if reached_end:
                 break
@@ -599,7 +599,7 @@ class Course(models.Model):
             if self.last_attendance_date:
                 last_attendance_date = self.last_attendance_date
             elif self.start_date:
-                last_attendance_date = self.start_date - datetime.timedelta(1)
+                last_attendance_date = self.start_date - timezone.timedelta(1)
             else:
                 return None
 
@@ -612,13 +612,13 @@ class Course(models.Model):
 
     def previous_week_end(self, date=None):
         if not date:
-            date = datetime.date.today()
+            date = timezone.now().date()
 
         # find end of previous week
         week_end_day = day_of_week_to_python(self.attendance_end_of_week)
         # offset is number of days since previous week_end
         offset = (date.weekday()-1-week_end_day) % 7 +1
-        previous_week_end = date - datetime.timedelta(offset)
+        previous_week_end = date - timezone.timedelta(offset)
         
         # find last attendance day at or before previous_week_end
         if self.days_of_week:
@@ -629,7 +629,7 @@ class Course(models.Model):
                                  min_offset)
                 
 
-            previous_week_end -= datetime.timedelta(min_offset)
+            previous_week_end -= timezone.timedelta(min_offset)
 
             # if previous_week_end is a course skip day, 
             # find previous day of class, up to one week in past
@@ -645,7 +645,7 @@ class Course(models.Model):
             while skipdate:
                 
                 # find previous day of class before previous_week_end
-                previous_week_end -= datetime.timedelta(1)
+                previous_week_end -= timezone.timedelta(1)
                 previous_week_end_day = previous_week_end.weekday()
                 
                 min_offset = 7
@@ -653,12 +653,12 @@ class Course(models.Model):
                     min_offset = min((previous_week_end_day
                                       -day_of_week_to_python(wd)) % 7,
                                      min_offset)
-                previous_week_end -= datetime.timedelta(min_offset)
+                previous_week_end -= timezone.timedelta(min_offset)
 
                 # if a week or more before original previous week end
                 # then return result regardless of it being a skip day
                 if original_previous_week_end - previous_week_end >= \
-                        datetime.timedelta(7):
+                        timezone.timedelta(7):
                     break
                 
                 # determine if is a skip date
@@ -675,7 +675,7 @@ class Course(models.Model):
             return None
 
         if not date:
-            date = datetime.date.today()
+            date = timezone.now().date()
 
         previous_week_end = self.previous_week_end(date)
         
@@ -762,7 +762,7 @@ class Course(models.Model):
         # https://code.djangoproject.com/ticket/14645
         # as suggested in
         # http://stackoverflow.com/questions/16704560/django-queryset-exclude-with-multiple-related-field-clauses
-        return self.thread_content\
+        return self.thread_contents\
             .exclude(optional=True)\
             .exclude(id__in=self.thread_contents.filter \
                          (studentcontentcompletion__student=student,
@@ -938,9 +938,9 @@ class ThreadContent(models.Model):
 
     instructions = models.TextField(blank=True, null=True)
 
-    assigned_date=models.DateField(blank=True, null=True)
-    initial_due_date=models.DateField(blank=True, null=True)
-    final_due_date=models.DateField(blank=True, null=True)
+    assigned=models.DateTimeField(blank=True, null=True)
+    initial_due=models.DateTimeField(blank=True, null=True)
+    final_due=models.DateTimeField(blank=True, null=True)
 
     grade_category = models.ForeignKey(GradeCategory, blank=True, null=True)
     individualize_by_student = models.BooleanField(default=True)
@@ -951,6 +951,8 @@ class ThreadContent(models.Model):
 
     optional = models.BooleanField(default=False)
     available_before_assigned = models.BooleanField(default=False)
+    record_scores = models.BooleanField(default=True)
+
     sort_order = models.FloatField(blank=True)
     
     class Meta:
@@ -959,15 +961,6 @@ class ThreadContent(models.Model):
     def __str__(self):
         return "%s for %s" % (self.content_object, self.course)
 
-
-    # def clean(self):
-    #     # Check if course is the same as course of section
-    #     # If not, raise exception
-
-    #     if self.course != self.section.get_course():
-    #         raise ValidationError( \
-    #             "Thread content course is not course of its section: %s, %s"\
-    #                             % (self.course, self.section.get_course()))
 
     def save(self, *args, **kwargs):
         # set course to be course of section
@@ -1052,29 +1045,15 @@ class ThreadContent(models.Model):
 
     def total_points(self):
         try:
-            return self.thread_content.content_object.get_total_points()
+            return self.content_object.get_total_points()
         except AttributeError:
             return None
 
-
     def student_score(self, student):
-        # return maximum or score of all student's assessment attempts, 
-        # depending on attempt_aggregation
-        # or zero if no attempt
-        if self.attempt_aggregation=='Avg':
-            from numpy import mean
-            score = mean([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
-            #score = self.studentcontentattempt_set.filter(student=student).aggregate(score = Avg('score'))['score']
-        elif self.attempt_aggregation=='Las':
-            score = self.studentcontentattempt_set.filter(student=student).latest('datetime').get_score()
-        else:
-            try:
-                score = max([sca.get_score() for sca in self.studentcontentattempt_set.filter(student=student)])
-            except ValueError:
-                score = None
-            #score = self.studentcontentattempt_set.filter(student=student).aggregate(score=Max('score'))['score']
-        return score
-
+        try:
+            return self.studentcontentcompletion_set.get(student=student).score
+        except ObjectDoesNotExist:
+            return None
 
     def get_student_latest_attempt(self, student):
         try:
@@ -1146,10 +1125,10 @@ class ThreadContent(models.Model):
         if not student:
             return due_date
             
-        today = datetime.date.today()
+        today = timezone.now().date()
         
         course = self.course        
-        while due_date < today + datetime.timedelta(7):
+        while due_date < today + timezone.timedelta(7):
             previous_week_end = \
                 course.previous_week_end(due_date)
 
@@ -1163,7 +1142,7 @@ class ThreadContent(models.Model):
                     < course.attendance_threshold_percent:
                 break
             
-            due_date += datetime.timedelta(7)
+            due_date += timezone.timedelta(7)
             if due_date >= final_due_date:
                 due_date = final_due_date
                 break
@@ -1183,12 +1162,12 @@ class ThreadContent(models.Model):
         if not due_date or not final_due_date:
             return []
 
-        today = datetime.date.today()
+        today = timezone.now().date()
 
         course = self.course        
         
         calculation_list = []
-        while due_date < today + datetime.timedelta(7):
+        while due_date < today + timezone.timedelta(7):
 
             previous_week_end = \
                 course.previous_week_end(due_date)
@@ -1220,7 +1199,7 @@ class ThreadContent(models.Model):
 
             calculation['reached_threshold'] = True
             
-            due_date += datetime.timedelta(7)
+            due_date += timezone.timedelta(7)
             if due_date >= final_due_date:
                 due_date = final_due_date
                 calculation['resulting_date'] = due_date
@@ -1348,15 +1327,22 @@ class ManualDueDateAdjustment(models.Model):
     class Meta:
         unique_together = ("content","student")
 
+class ValidAttemptManager(models.Manager):
+    def get_queryset(self):
+        return super(ValidAttemptManager, self).get_queryset() \
+            .filter(invalid=False)
 
 class StudentContentAttempt(models.Model):
     student = models.ForeignKey(CourseUser)
     content = models.ForeignKey(ThreadContent)
-    datetime_added = models.DateTimeField(auto_now_add=True)
-    datetime = models.DateTimeField(blank=True)
+    datetime = models.DateTimeField(auto_now_add=True)
     score_override = models.FloatField(null=True, blank=True)
-    score = models.FloatField()
+    score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
+    invalid = models.BooleanField(default=False)
+
+    objects = models.Manager()
+    valid_attempts = ValidAttemptManager()
 
     def __str__(self):
         return "%s attempt on %s" % (self.student, self.content)
@@ -1366,49 +1352,71 @@ class StudentContentAttempt(models.Model):
         get_latest_by = "datetime"
         
     def save(self, *args, **kwargs):
-        if self.datetime is None:
-            self.datetime = datetime.datetime.now()
+        # if changed score override, then recalculate score
+        score_override_changed=True
+        if self.pk is not None:
+            old_sca = StudentContentAttempt.objects.get(pk=self.pk)
+            if self.score_override == old_sca.score_override:
+                score_override_changed=False
 
         super(StudentContentAttempt, self).save(*args, **kwargs)
 
+        if score_override_changed:
+            self.recalculate_score()
+            
 
     def get_percent_credit(self):
-         score = self.get_score()
-         points = self.content.total_points()
-         if score is None or points is None:
-             return None
-         return int(round(score*100.0/points))
-
-    def get_score(self, ignore_manual_score = False):
-        # if a score is entered in, it overrides any question answers
-        # as long as not ignoring manual score
-        if self.score is not None and not ignore_manual_score:
-            return self.score
-        
-        assessment=self.content.thread_content.content_object
-        # must be an assessment 
-        from mitesting.models import Assessment
-        if not isinstance(assessment,Assessment):
+        points = self.content.total_points()
+        if self.score is None or points is None:
             return None
+        return int(round(self.score*100.0/points))
+
+
+    def recalculate_score(self, propagate=True):
+        """
+        Recalculate score of student content attempt.
         
-        question_set_details = assessment.questionsetdetail_set.all()
-        if question_set_details:
-            score = 0.0
-            for question_set_detail in question_set_details:
-                score += self.get_score_question_set(question_set_detail)
-        else: 
-            score = None
+        Set to score_override if it exists and to None if not assessment.
+        Else, score is sum of scores from each associated question set.
 
-        return score
+        If propagate and attempt isn't invalid,
+        then also calculate overall score for student content.
 
+        """
 
-    def score_overridden(self):
-        # determine if a score from questions is overridden by manual score
-        
-        if self.get_score() != self.get_score(ignore_manual_score=True):
-            return True
+        # if score is overridden, then just set set score to score_override
+        if self.score_override is not None:
+            self.score = self.score_override
+
         else:
-            return False
+
+            # must be an assessment 
+            assessment_ct=ContentType.objects.get(model='assessment')
+            if self.content.content_type != assessment_ct:
+                self.score = None
+            else:
+
+                assessment=self.content.content_object
+
+                question_set_details = assessment.questionsetdetail_set.all()
+                if question_set_details:
+                    self.score = 0.0
+                    for question_set_detail in question_set_details:
+                        self.score += self.get_score_question_set(
+                            question_set_detail)
+                else: 
+                    self.score = None
+        
+        self.save()
+
+        if propagate and not self.invalid:
+            content_completion, created = \
+                self.content.studentcontentcompletion_set.get_or_create(
+                    student = self.student)
+            content_completion.recalculate_score(
+                recalculate_attempt_scores=False)
+
+        return self.score
 
 
     def get_score_question_set(self, question_set_detail):
@@ -1418,11 +1426,13 @@ class StudentContentAttempt(models.Model):
         if question_answers:
 
             if self.content.attempt_aggregation=='Avg':
-                credit = question_answers.aggregate(credit=Avg('credit'))['credit']
+                credit = question_answers.aggregate(credit=Avg('credit'))\
+                         ['credit']
             elif self.content.attempt_aggregation=='Las':
                 credit = question_answers.latest('datetime').credit
             else:
-                credit = question_answers.aggregate(credit=Max('credit'))['credit']
+                credit = question_answers.aggregate(credit=Max('credit'))\
+                         ['credit']
                 
             return question_set_detail.points*credit
         else:
@@ -1435,11 +1445,13 @@ class StudentContentAttempt(models.Model):
         if question_answers:
 
             if self.content.attempt_aggregation=='Avg':
-                credit = question_answers.aggregate(credit=Avg('credit'))['credit']
+                credit = question_answers.aggregate(credit=Avg('credit'))\
+                         ['credit']
             elif self.content.attempt_aggregation=='Las':
                 credit = question_answers.latest('datetime').credit
             else:
-                credit = question_answers.aggregate(credit=Max('credit'))['credit']
+                credit = question_answers.aggregate(credit=Max('credit'))\
+                         ['credit']
                 
             return int(round(credit*100))
         else:
@@ -1447,7 +1459,7 @@ class StudentContentAttempt(models.Model):
 
 
     def get_latest_datetime(self):
-        assessment=self.content.thread_content.content_object
+        assessment=self.content.content_object
         # must be an assessment 
         from mitesting.models import Assessment
         if not isinstance(assessment,Assessment):
@@ -1462,10 +1474,10 @@ class StudentContentAttempt(models.Model):
 
     def have_datetime_interval(self):
         # true if difference between earliest and latest datetimes
-        # is at least a minue
+        # is at least a minute
         latest_datetime = self.get_latest_datetime()
         if latest_datetime and latest_datetime -self.datetime \
-                >= datetime.timedelta(0,60):
+                >= timezone.timedelta(0,60):
             return True
         else:
             return False
@@ -1476,7 +1488,7 @@ class StudentContentCompletion(models.Model):
     complete = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
     datetime = models.DateTimeField(auto_now=True)
-    score = models.FloatField()
+    score = models.FloatField(blank=True, null=True)
     score_override = models.FloatField(blank=True, null=True)
 
     def __str__(self):
@@ -1484,6 +1496,71 @@ class StudentContentCompletion(models.Model):
 
     class Meta:
         unique_together = ['student', 'content']
+
+    def save(self, *args, **kwargs):
+
+        # if changed score override, then recalculate score
+        score_override_changed=True
+        if self.pk is not None:
+            old_scc = StudentContentCompletion.objects.get(pk=self.pk)
+            if self.score_override == old_scc.score_override:
+                score_override_changed = False
+
+        super(StudentContentCompletion, self).save(*args, **kwargs)
+
+        if score_override_changed:
+            self.recalculate_score()
+
+
+    def recalculate_score(self, recalculate_attempt_scores=False):
+        """
+        Recalculate score of student for content.
+
+        Set to score_override if it exists and to None if not assessment.
+        Else score is aggregate of scores from each valid attempt 
+        for student on this thread_content.
+        Aggregate based on attempt_aggregration of thread_content.
+        
+        If recalculate_attempt_scores, then first recalculate
+        the scores of each attempt.  Otherwise, just use the
+        score field from each attempt.
+
+        """
+
+        # if score is overridden, then just set set score to score_override
+        if self.score_override is not None:
+            self.score = self.score_override
+            self.save()
+            return self.score
+
+        # must be an assessment 
+        assessment_ct=ContentType.objects.get(model='assessment')
+        if self.content.content_type != assessment_ct:
+            self.score = None
+            self.save()
+            return self.score
+
+        valid_attempts = self.content.studentcontentattempt_set\
+                         .filter(invalid=False, student=self.student)
+
+        if recalculate_attempt_scores:
+            for attempt in valid_attempts:
+                attempt.recalculate_score(propagate=False)
+                
+        if self.content.attempt_aggregation=='Avg':
+            # calculate average score of attempts
+           self.score = valid_attempts.aggregate(score = Avg('score'))['score']
+        elif self.content.attempt_aggregation=='Las':
+            # calculate score of last attempt
+            self.score = valid_attempts.latest('datetime').score
+        else:
+            # calculate maximum score over all attempts
+            self.score = valid_attempts.aggregate(score=Max('score'))['score']
+
+        self.save()
+
+        return self.score
+
 
 
 class StudentContentAttemptSolutionView(models.Model):
@@ -1508,3 +1585,9 @@ class QuestionStudentAnswer(models.Model):
 
     class Meta:
         get_latest_by = "datetime"
+
+
+    def save(self, *args, **kwargs):
+        super(QuestionStudentAnswer, self).save(*args, **kwargs)
+
+        self.course_content_attempt.recalculate_score()

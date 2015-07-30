@@ -33,8 +33,8 @@
 <section class="box threadbox">
 <h4><a href="{% url 'mithreads:list' %}" class="normaltext">Thread navigation</a></h4>
 {% for thread_content in assessment.get_active_thread_content_set %}
-<a id="thread_{{ thread_content.section.thread.code }}" class="anchor"></a>
-<h5 class="pre_list"><a href="{% url 'mithreads:thread' thread_content.section.thread.code %}#{{ thread_content.section.code }}" class="normaltext">{{  thread_content.section.thread }}</a></h5>
+<a id="thread_{{ thread_content.course.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads:thread' thread_content.course.code %}#s{{ thread_content.section.id }}" class="normaltext">{{  thread_content.course }}</a></h5>
 <ul class="linklist">
   {% with thread_content.find_previous as previous_in_thread %}
   {% if previous_in_thread %}
@@ -51,6 +51,6 @@
 </section>
 {% endif %}
 
-{% if generate_assessment_link %}<p><a href="{% url 'mit-assessmentgenerate' assessment.code %}">Generate assessment</a></p>{%endif%}
+{% if generate_assessment_link %}<p><a href="{% url 'mitesting:assessmentgenerate' course_code=assessment.course.code assessment_code=assessment.code %}">Generate assessment</a></p>{%endif%}
 
 {%endblock%}

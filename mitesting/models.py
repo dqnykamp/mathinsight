@@ -89,11 +89,11 @@ class Question(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return('mit-question', (), {'question_id': self.id})
+        return('mitesting:question', (), {'question_id': self.id})
 
     @models.permalink
     def get_solution_url(self):
-        return('mit-questionsolution', (), {'question_id': self.id})
+        return('mitesting:questionsolution', (), {'question_id': self.id})
 
     def question_with_number(self):
         return "%s: %s" % (self.id, self.name)
@@ -213,7 +213,7 @@ class Question(models.Model):
         for asc in self.allowed_sympy_commands.all():
             new_q.allowed_sympy_commands.add(asc)
         for ausc in self.allowed_user_sympy_commands.all():
-            new_q.allowed_user_sympy_commands.add(asc)
+            new_q.allowed_user_sympy_commands.add(ausc)
         for kw in self.keywords.all():
             new_q.keywords.add(kw)
         for sb in self.subjects.all():
@@ -248,7 +248,8 @@ class Question(models.Model):
 
     def overwrite_base_question(self):
         """
-        Overwrite the base question with all fields of question.
+        Overwrite the base question with all fields of question
+        except preserves fields: .course and .base_question
         """
 
         from copy import copy
@@ -260,6 +261,7 @@ class Question(models.Model):
         base_q = copy(self)
         base_q.id = base_question.id
         base_q.base_question = base_question.base_question
+        base_q.course = base_question.course
 
         base_q.save()
         
@@ -274,11 +276,11 @@ class Question(models.Model):
             base_q.allowed_sympy_commands.add(asc)
         base_q.allowed_user_sympy_commands.clear()
         for ausc in self.allowed_user_sympy_commands.all():
-            base_q.allowed_user_sympy_commands.add(asc)
+            base_q.allowed_user_sympy_commands.add(ausc)
         base_q.keywords.clear()
         for kw in self.keywords.all():
             base_q.keywords.add(kw)
-        base_q.authors.clear()
+        base_q.subjects.clear()
         for sb in self.subjects.all():
             base_q.subjects.add(sb)
 
@@ -310,7 +312,38 @@ class Question(models.Model):
         process_expressions_from_answers(base_q)
 
         return base_q
+
         
+    def find_replacement_question_for_course(self, course):
+        # If question is from assessment's course, return question.
+        # Else, attempt the following in order
+        # 1. assign a question from the course that has
+        #    the original question as its base_question
+        # 2. if the original question's base question is from the course
+        #    then assign the base question
+        # 3. assign a question from the course that has
+        #    the original question's base question as its base_question
+        # 4. save question as new question with that course
+        #    and assign new question
+
+        if self.course == course:
+            return self
+
+        replacement_question = self.derived_questions\
+                                       .filter(course=course).first()
+        if replacement_question:
+            return replacement_question
+
+        if self.base_question:
+            if self.base_question.course==course:
+                return self.base_question
+            replacement_question = self.base_question.derived_questions\
+                                                .filter(course=course).first()
+            if replacement_question:
+                return replacement_question
+
+        return self.save_as_new(course=course)
+
 
 class QuestionAuthor(models.Model):
     question = models.ForeignKey(Question)
@@ -480,7 +513,6 @@ class AssessmentType(models.Model):
     solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
                                                 default=2)
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
-    record_online_attempts = models.BooleanField(default=True)
     
     def __str__(self):
         return  self.name
@@ -490,7 +522,8 @@ class Assessment(models.Model):
     name = models.CharField(max_length=200)
     short_name = models.CharField(max_length=30, blank=True, null=True)
     assessment_type = models.ForeignKey(AssessmentType)
-    course = models.ForeignKey('micourses.Course', blank=True, null=True)
+    course = models.ForeignKey('micourses.Course')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     questions = models.ManyToManyField(Question, through='QuestionAssigned',
@@ -499,14 +532,18 @@ class Assessment(models.Model):
     instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     time_limit = models.CharField(max_length=20, blank=True, null=True)
-    thread_content_set = GenericRelation('micourses.ThreadContent')
-    groups_can_view = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view")
-    groups_can_view_solution = models.ManyToManyField(Group, blank=True, related_name = "assessments_can_view_solution")
-    background_pages = models.ManyToManyField('midocs.Page', through='AssessmentBackgroundPage', blank=True)
+    groups_can_view = models.ManyToManyField(Group, blank=True, 
+                            related_name = "assessments_can_view")
+    groups_can_view_solution = models.ManyToManyField(Group, blank=True, 
+                            related_name = "assessments_can_view_solution")
+    background_pages = models.ManyToManyField('midocs.Page', 
+                            through='AssessmentBackgroundPage', blank=True)
     allow_solution_buttons = models.BooleanField(default=True)
     fixed_order = models.BooleanField(default=False)
-    nothing_random = models.BooleanField(default=False)
+    single_version = models.BooleanField(default=False)
+    resample_question_sets = models.BooleanField(default=False)
     total_points = models.FloatField(blank=True, null=True)
+    
 
     class Meta:
         permissions = (
@@ -518,16 +555,6 @@ class Assessment(models.Model):
     def __str__(self):
         return "%s (Assessment: %s)" % (self.code, self.name)
 
-
-    def save(self, *args, **kwargs):
-        # if any assigned questions are not from assessment's course
-        # then, save questions as new questions with that course.
-
-        super(Assessment, self).save(*args, **kwargs)
-        for qa in self.questionassigned_set.all():
-            if qa.question.course != self.course:
-                qa.question = qa.question.save_as_new(course=self.course)
-                qa.save()
 
     def return_short_name(self):
         if self.short_name:
@@ -573,15 +600,18 @@ class Assessment(models.Model):
 
     @models.permalink
     def get_absolute_url(self):
-        return('mit-assessment', (), {'assessment_code': self.code})
+        return('mitesting:assessment', (), {'course_code': self.course.code,
+                                            'assessment_code': self.code})
 
     @models.permalink
     def get_overview_url(self):
-        return('mit-assessmentoverview', (), {'assessment_code': self.code})
+        return('mitesting:assessmentoverview', (), {'course_code': self.course.code,
+                                                    'assessment_code': self.code})
 
     @models.permalink
     def get_solution_url(self):
-        return('mit-assessmentsolution', (), {'assessment_type': self.assessment_type.code, 'assessment_code': self.code})
+        return('mitesting:assessmentsolution', (), {'course_code': self.course.code,
+                                                    'assessment_code': self.code})
 
 
     def clean(self):
@@ -823,7 +853,7 @@ class Assessment(models.Model):
         return seed_min_disallowed
                     
 
-    def save_as_new(self, new_name = None, new_code=None, course=None):
+    def save_as_new(self, name = None, code=None, course=None):
         """
         Create a new assessment and copy all fields to new assessment.
 
@@ -832,8 +862,9 @@ class Assessment(models.Model):
         
         If course changed, then save questions as new questions
         unless course already has a question that is
-        1. derived from this question or
-        2. derived from this question's base question.
+        1. derived from this question
+        2. this question's base question
+        3. derived from this question's base question.
         In that case, instead of creating new question, switch to said question.
 
         """
@@ -843,10 +874,10 @@ class Assessment(models.Model):
         new_a = copy(self)
         new_a.id = None
         
-        if new_name:
-            new_a.name = new_name
-        if new_code:
-            new_a.code = new_code
+        if name:
+            new_a.name = name
+        if code:
+            new_a.code = code
 
         course_changed=False
         if course:
@@ -860,16 +891,10 @@ class Assessment(models.Model):
             qa.id = None
             qa.assessment = new_a
 
-             # find related question
+            # find related question or create new one
             if course_changed:
-                q=course.question_set.filter(base_question=qa.question).first()
-                if not q and qa.question.base_question:
-                    q=course.question_set.filter(
-                        base_question = qa.question.base_question).first()
-                if q:
-                    qa.question = q
-                else:
-                    qa.question = qa.question.save_as_new(course=new_a.course)
+                qa.question=qa.question.find_replacement_question_for_course(
+                    course)
 
             qa.save()
 
@@ -937,7 +962,7 @@ class QuestionAssigned(models.Model):
         return "%s for %s" % (self.question, self.assessment)
 
     def save(self, *args, **kwargs):
-        # and the question set is null
+        # if the question set is null
         # make it be a unique question set,
         # i.e., one more than any other in the assessment
         if self.question_set is None:
@@ -947,8 +972,15 @@ class QuestionAssigned(models.Model):
                 self.question_set = max_question_set+1
             else:
                 self.question_set = 1
-                
+
+        # if question isn't from assessment's course
+        # then find related question from course or create new question
+        if self.question.course != self.assessment.course:
+            self.question = self.question.find_replacement_question_for_course(
+                self.assessment.course)
+
         super(QuestionAssigned, self).save(*args, **kwargs)
+
 
         
 class Expression(models.Model):

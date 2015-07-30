@@ -123,7 +123,8 @@ class GradeQuestionView(SingleObjectMixin, View):
       - allow_solution_buttons: if set to true, show a solution  button if
         other criteria are met
       - record_answers: if set to true, record logged in user answers
-      - assessment_code: code of any assessment in which the question was rendered
+      - course_code: code of course of assessment
+      - assessment_code: code of assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
       - assessment_seed: seed used to generate the assessment
       - answer_info: list of identifiers, codes, points, answer types,
@@ -203,13 +204,15 @@ class GradeQuestionView(SingleObjectMixin, View):
                 answer_user_responses=answer_user_responses, seed=seed)
             
         # determine if question is part of an assessment
+        course_code = computer_grade_data.get('course_code')
         assessment_code = computer_grade_data.get('assessment_code')
         assessment_seed = computer_grade_data.get('assessment_seed')
         question_set = computer_grade_data.get('question_set')
 
-        if assessment_code:
+        if assessment_code and course_code:
             try:
-                assessment = Assessment.objects.get(code=assessment_code)
+                assessment = Assessment.objects.get(course__code=course_code,
+                                                    code=assessment_code)
             except ObjectDoesNotExist:
                 assessment_code = None
 
@@ -272,13 +275,8 @@ class GradeQuestionView(SingleObjectMixin, View):
 
             try:
                 content=course.thread_contents.get\
-                    (thread_content__object_id=assessment.id,\
-                         thread_content__content_type=assessment_content_type)
-
-                # record answer only if assessment_type 
-                # specifies recoding online attempts
-                if not assessment.assessment_type.record_online_attempts:
-                    record_answers = False
+                    (object_id=assessment.id,\
+                     content_type=assessment_content_type)
 
                 if not content.record_scores:
                     record_answers = False
@@ -294,44 +292,51 @@ class GradeQuestionView(SingleObjectMixin, View):
                     past_due = True
                     record_answers = False
 
-            # if record scores, get or create attempt by student
+            # if content, get or create attempt by student
             # with same assessment_seed
-            if record_answers:
+            # if not record scores, mark attempt as invalid
+            if content:
                 try:
                     current_attempt = content.studentcontentattempt_set\
-                        .filter(student=student, seed=assessment_seed).latest()
+                        .filter(student=student, seed=assessment_seed,
+                                invalid=not record_answers).latest()
                 except ObjectDoesNotExist:
                     current_attempt = content.studentcontentattempt_set\
-                        .create(student=student, seed=assessment_seed)
+                        .create(student=student, seed=assessment_seed,
+                                invalid=not record_answers)
 
 
                 # check if student already viewed the solution
-                # if so, clear attempt so not recorded for course
+                # if so, mark as to not record scores 
+                # and get/create invalid attempt
                 if current_attempt.studentcontentattemptsolutionview_set\
                         .filter(question_set=question_set).exists():
                     solution_viewed = True
-                    current_attempt = None
                     record_answers = False
 
+                    try:
+                        current_attempt = content.studentcontentattempt_set\
+                            .filter(student=student, seed=assessment_seed,
+                                    invalid=not record_answers).latest()
+                    except ObjectDoesNotExist:
+                        current_attempt = content.studentcontentattempt_set\
+                            .create(student=student, seed=assessment_seed,
+                                    invalid=not record_answers)
 
-        # if have current_attempt, don't record assessment,
-        # as it would be redundant information
+
+
+        # If have current_attempt, then record answers even if 
+        # record_answers is False.
+        # Since attempt will be marked as invalid,
+        # it won't count toward score and won't be viewable by student
         if current_attempt:
-            assessment=None
-            assessment_seed = None
-
-        # record attempt, possibly linking to latest content attempt
-        # even if record_answers is False, create QuestionStudentAnswer
-        # record (just in case), but don't associate it with course
-        QuestionStudentAnswer.objects.create\
-            (user=request.user, question=question, \
+            QuestionStudentAnswer.objects.create\
+                (user=request.user, question=question, \
                  question_set=question_set,\
                  answer=json.dumps(answer_user_responses),\
                  identifier_in_answer = question_identifier, \
                  seed=seed, credit=answer_results['credit'],\
-                 course_content_attempt=current_attempt,\
-                 assessment=assessment, \
-                 assessment_seed=assessment_seed)
+                 course_content_attempt=current_attempt)
 
         if past_due:
             feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
@@ -342,7 +347,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         else:
             feedback_message = ""
 
-        if current_attempt:
+        if current_attempt and not current_attempt.invalid:
             feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:assessmentattempted', kwargs={'pk': content.id} ), course)
 
             current_credit =current_attempt\
@@ -371,7 +376,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
       computer_grade_data should contain the following
       - seed: the seed use to used to generate the question
       - identifier: the identifier for the question
-      - assessment_code: code of any assessment in which the question was rendered
+      - course_code: code of course of assessment
+      - assessment_code: code of assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
       - assessment_seed: seed used to generate the assessment
       - applet_counter: number of applets encountered so far 
@@ -413,12 +419,14 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
             logger.error("cgd malformed: %s" % exc)
             return HttpResponse("", content_type = 'application/json')
 
+        course_code = computer_grade_data.get('course_code')
         assessment_code = computer_grade_data.get('assessment_code')
         assessment = None
         
-        if assessment_code:
+        if assessment_code and course_code:
             try:
-                assessment = Assessment.objects.get(code=assessment_code)
+                assessment = Assessment.objects.get(course__code=course_code,
+                                                    code=assessment_code)
             except ObjectDoesNotExist:
                 assessment_code = None
 
@@ -494,9 +502,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
 
             try:
                 content=course.thread_contents.get\
-                    (thread_content__object_id=assessment.id,\
-                         thread_content__content_type=\
-                         assessment_content_type)
+                    (object_id=assessment.id,\
+                     content_type=assessment_content_type)
             except ObjectDoesNotExist:
                 content=None
 
@@ -691,9 +698,9 @@ class AssessmentView(DetailView):
 
         return context
 
-
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
+        self.object = self.get_object(queryset=self.model.objects.filter(
+            course__code=self.kwargs["course_code"]))
         seed = request.GET.get('seed')
         self.determine_seed_version(user=request.user,seed=seed)
         context = self.get_context_data(object=self.object)
@@ -740,8 +747,8 @@ class AssessmentView(DetailView):
 
             try:
                 self.course_thread_content=self.course.thread_contents.get\
-                    (thread_content__object_id=self.object.id,\
-                         thread_content__content_type=assessment_content_type)
+                    (object_id=self.object.id,\
+                         content_type=assessment_content_type)
                 # Finds the course version of the specific assessment
             except ObjectDoesNotExist:
                 self.course=None
@@ -806,7 +813,9 @@ class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
         Through post can generate new attempt.
         Need to test and fix this.
         """
-        self.object = self.get_object()
+
+        self.object = self.get_object(queryset=self.model.objects.filter(
+            course__code=self.kwargs["course_code"]))
 
         # First determine if user is enrolled in an course
         try:
@@ -814,20 +823,22 @@ class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
             course = courseuser.return_selected_course()
         except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
             # if not in course, just redirect to the assessment url
-            return HttpResponseRedirect(reverse('mit-assessment',
-                            kwargs={'assessment_code': self.object.code }))
+            return HttpResponseRedirect(reverse('mitesting:assessment',
+                            kwargs={'course_code': self.object.course.code,
+                                    'assessment_code': self.object.code }))
 
         assessment_content_type = ContentType.objects.get(model='assessment')
 
         try:
             # Find the course version of the specific assessment
             course_thread_content=course.thread_contents.get\
-                            (thread_content__object_id=self.object.id,\
-                        thread_content__content_type=assessment_content_type)
+                            (object_id=self.object.id,\
+                        content_type=assessment_content_type)
         except ObjectDoesNotExist:
             # if can't find, just redirect to the assessment url
-            return HttpResponseRedirect(reverse('mit-assessment',
-                            kwargs={'assessment_code': self.object.code }))
+            return HttpResponseRedirect(reverse('mitesting:assessment',
+                            kwargs={'course_code': self.object.course.code,
+                                    'assessment_code': self.object.code }))
 
 
         attempts = course_thread_content.studentcontentattempt_set\
@@ -845,13 +856,16 @@ class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
                                     .create(student=courseuser, seed=seed)
 
         # redirect to assessment url
-        return HttpResponseRedirect(reverse('mit-assessment', kwargs={'assessment_code': self.object.code }))
+        return HttpResponseRedirect(reverse('mitesting:assessment', 
+                    kwargs={'course_code': self.object.course.code,
+                            'assessment_code': self.object.code }))
 
 
 
-def assessment_avoid_question_view(request, assessment_code):
+def assessment_avoid_question_view(request, course_code, assessment_code):
     
-    assessment = get_object_or_404(Assessment, code=assessment_code)
+    assessment = get_object_or_404(Assessment, course__code=course_code,
+                                   code=assessment_code)
     
     # determine if user has permission to view, given privacy level
     if not assessment.user_can_view(request.user, solution=True):
@@ -875,14 +889,19 @@ def assessment_avoid_question_view(request, assessment_code):
     else:
         new_seed=seed
     
-    new_url = "%s?seed=%s&date=%s&course=%s&semester=%s&question_numbers" % (reverse('mit-assessment', kwargs={'assessment_code': assessment_code}), new_seed, assessment_date, course, semester)
+    new_url = "%s?seed=%s&date=%s&course=%s&semester=%s&question_numbers" % \
+              (reverse('mitesting:assessment', 
+                       kwargs={'course_code': course_code,
+                               'assessment_code': assessment_code}),
+               new_seed, assessment_date, course, semester)
     
 
     return HttpResponseRedirect(new_url)
 
 
-def assessment_overview_view(request, assessment_code):
-    assessment = get_object_or_404(Assessment, code=assessment_code)
+def assessment_overview_view(request, course_code, assessment_code):
+    assessment = get_object_or_404(Assessment, course__code=course_code,
+                                   code=assessment_code)
 
     # make link to assessment if 
     # user has permission to view the assessment, given privacy level
@@ -903,8 +922,8 @@ def assessment_overview_view(request, assessment_code):
                         
         try:
             course_thread_content=course.thread_contents.get\
-                (thread_content__object_id=assessment.id,\
-                     thread_content__content_type=assessment_content_type)
+                (object_id=assessment.id,\
+                     content_type=assessment_content_type)
         except ObjectDoesNotExist:
             course_thread_content=None
             course = None

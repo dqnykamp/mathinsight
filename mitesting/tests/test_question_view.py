@@ -1,5 +1,6 @@
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
+from micourses.models import Course
 from django.contrib.auth.models import AnonymousUser, User, Permission
 import json, re
 import pickle, base64
@@ -2965,6 +2966,8 @@ class TestInjectQuestionSolutionView(TestCase):
 
 
     def test_permissions_in_assessment(self):
+        course = Course.objects.create(name="Course", code="course")
+
         at0 = AssessmentType.objects.create(
             code="a0", name="a0", assessment_privacy=0, solution_privacy=0)
         at1 = AssessmentType.objects.create(
@@ -2973,16 +2976,20 @@ class TestInjectQuestionSolutionView(TestCase):
             code="a2", name="a2", assessment_privacy=0, solution_privacy=2)
 
         asmt0 = Assessment.objects.create(
-            code="the_test0", name="The test0", assessment_type=at0)
+            code="the_test0", name="The test0", assessment_type=at0,
+            course=course)
         asmt1 = Assessment.objects.create(
-            code="the_test1", name="The test1", assessment_type=at1)
+            code="the_test1", name="The test1", assessment_type=at1,
+            course=course)
         asmt2 = Assessment.objects.create(
-            code="the_test2", name="The test2", assessment_type=at2)
+            code="the_test2", name="The test2", assessment_type=at2,
+            course=course)
 
         computer_grade_data = {
             'seed': '0', 'identifier': 'a', 'record_answers': True,
             'allow_solution_buttons': True, 'answer_codes': {},
-            'answer_points': {}, 'applet_counter': 0}
+            'answer_points': {}, 'applet_counter': 0, 
+            'course_code': course.code}
 
         cgds=[]
         computer_grade_data['assessment_code'] = asmt0.code
@@ -3022,9 +3029,9 @@ class TestInjectQuestionSolutionView(TestCase):
 
         for iu in range(3):
             self.client.login(username=users[iu],password="pass")
-            for iq in range(3):
-                for jq in range(3):
-                    for ic in range(3):
+            for iq in range(3): # question_privacy
+                for jq in range(3): # solution_privacy
+                    for ic in range(3): # assessment solution privacy
                         response=self.client.post(
                             "/assess/question/%s/inject_solution" % 
                             qpks[iq][jq],

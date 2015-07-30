@@ -14,7 +14,7 @@ class AssessmentBackgroundPageInline(admin.TabularInline):
 class AssessmentAdmin(reversion.VersionAdmin):
     inlines = [QuestionAssignedInline,QuestionSetDetailInline,AssessmentBackgroundPageInline]
     list_display = ("code","name", "assessment_type")
-    list_filter = ("assessment_type",)
+    list_filter = ("course", "assessment_type",)
     search_fields = ['code', 'name', 'short_name']
     readonly_fields = ('privacy_level_description',
                        'privacy_level_solution_description',)
@@ -137,7 +137,7 @@ class QuestionAdmin(reversion.VersionAdmin):
     filter_horizontal = ['allowed_sympy_commands','allowed_user_sympy_commands',
                          'keywords','subjects']
     list_display = ("question_with_number","question_type", "computer_graded", "question_privacy", "solution_privacy")
-    list_filter = ("question_type", "question_privacy", "solution_privacy",)
+    list_filter = ("course", "question_type", "question_privacy", "solution_privacy",)
     search_fields = ['id', 'name']
     readonly_fields = ['course', 'base_question']
     formfield_overrides = {
@@ -199,6 +199,87 @@ class QuestionAdmin(reversion.VersionAdmin):
         process_expressions_from_answers(form.instance)
 
 
+class QuestionDatabase(Question):
+    class Meta:
+        proxy = True
+        verbose_name_plural = "Question database"
+
+class QuestionDatabaseAdmin(admin.ModelAdmin):
+    inlines = [QuestionSubpartInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
+    filter_horizontal = ['allowed_sympy_commands','allowed_user_sympy_commands',
+                         'keywords','subjects']
+    list_display = ("question_with_number","question_type", "computer_graded", "question_privacy", "solution_privacy")
+    list_filter = ("question_type", "question_privacy", "solution_privacy",)
+    search_fields = ['id', 'name']
+    readonly_fields = ['course', 'base_question']
+    formfield_overrides = {
+        models.CharField: {'widget': forms.TextInput(attrs={'size': 60})},
+        }
+
+    def get_queryset(self, request):
+        qs = self.model.question_database.get_queryset()
+
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+    fieldsets = (
+        (None, {
+                'fields': (('name'),
+                           ('base_question'),
+                           ('question_type', 'question_privacy', 'solution_privacy'),
+                           ('computer_graded',
+                            'show_solution_button_after_attempts',),
+                           'description', 
+                           ('question_spacing', 'css_class',),
+                           'question_text', 
+                           )
+                }),
+        ('Solution', {
+                'classes': ('collapse',),
+                'fields': ('solution_text', )
+                }),
+        ('Hint', {
+                'classes': ('collapse',),
+                'fields': ('hint_text', )
+                }),
+        ('Notes', {
+                'classes': ('collapse',),
+                'fields': ('notes', )
+                }),
+        ('Meta data', {
+                'classes': ('collapse',),
+                'fields': ('keywords', 'subjects',)
+                }),
+        ('Commands', {
+                'fields': ('allowed_sympy_commands',)
+                }),
+        ('User commands', {
+                'classes': ('collapse',),
+                'fields': ('customize_user_sympy_commands', 
+                           'allowed_user_sympy_commands',)
+                }),
+        )
+
+
+    save_on_top=True
+    save_as = True
+
+    class Media:
+        js = ["js/django_admin_collapsed_inlines.js",
+              "js/save_me_genie.js",
+              "mitesting/preselect_sympy_options.js",]
+
+
+    def save_related(self, request, form, formsets, change):
+        super(QuestionAdmin, self).save_related(request, form, formsets, change)
+
+        from mitesting.render_assessments import process_expressions_from_answers
+        process_expressions_from_answers(form.instance)
+
+
+
 class QuestionTypeAdmin(reversion.VersionAdmin):
     class Media:
         js = ["js/save_me_genie.js",]
@@ -214,6 +295,7 @@ class SympyCommandSetAdmin(reversion.VersionAdmin):
 
 
 admin.site.register(Question, QuestionAdmin)
+admin.site.register(QuestionDatabase, QuestionDatabaseAdmin)
 admin.site.register(Assessment, AssessmentAdmin)
 admin.site.register(QuestionType, QuestionTypeAdmin)
 admin.site.register(AssessmentType, AssessmentTypeAdmin)

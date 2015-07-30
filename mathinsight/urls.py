@@ -51,7 +51,7 @@ urlpatterns = [
 #    url(r'^ajax/hit/$', update_hit_count_ajax, name='hitcount_update_ajax'), 
     url(r'^about/', include('midocs.abouturls')),
     url(r'^feed/', include('midocs.feedurls')),
-    url(r'^assess/', include('mitesting.urls')),
+    url(r'^assess/', include('mitesting.urls', namespace="mitesting")),
     url(r'^thread/', include('micourses.threadurls', namespace="mithreads")),
     url(r'^course/', include('micourses.urls', namespace="micourses")),
     url(r'^', include('midocs.urls')), # include last as will absorb xx/xx urls

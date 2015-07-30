@@ -28,7 +28,7 @@
 {% if not assessment.nothing_random %}
 <section id="more_questions_link">
   {% if course_thread_content %}
-  <form action="{% url 'mit-generatenewassessmentattempt' assessment_code=assessment.code %}" method="post">{% csrf_token %}
+  <form action="{% url 'mitesting:generatenewassessmentattempt' course_code=assessment.course.code assessment_code=assessment.code %}" method="post">{% csrf_token %}
     <input type="submit" value="Generate new assessment attempt" />
   </form>
   {% else %}

@@ -89,7 +89,7 @@
       if(!question_{{question_data.identifier}}_processing) {
 	  set_processing_state_{{question_data.identifier}}()
 	  
-	  var thepost = jQuery.post('{% url "mit-gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
+	  var thepost = jQuery.post('{% url "mitesting:gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
 
 	  thepost.done(process_graded_question_{{question_data.identifier}})
 	  .fail(failed_grade_question_{{question_data.identifier}})

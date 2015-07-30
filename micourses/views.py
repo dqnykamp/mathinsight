@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 from django.db import IntegrityError
 from django.contrib.contenttypes.models import ContentType
 from django import forms
-import datetime
+from django.utils import timezone
 from micourses.templatetags.course_tags import floatformat_or_dash
 from mitesting.render_assessments import render_question_list, render_question
 
@@ -68,11 +68,11 @@ class CourseUserAuthenticationMixin(object):
 
 
         # find begining/end of week
-        today= datetime.date.today()
+        today= timezone.now().date()
         day_of_week = (today.weekday()+1) % 7
-        to_beginning_of_week = datetime.timedelta(days=day_of_week)
+        to_beginning_of_week = timezone.timedelta(days=day_of_week)
         beginning_of_week = today - to_beginning_of_week
-        end_of_week = beginning_of_week + datetime.timedelta(13)
+        end_of_week = beginning_of_week + timezone.timedelta(13)
         context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
             % (beginning_of_week, end_of_week)
         
@@ -126,16 +126,16 @@ def course_main_view(request):
     noanalytics=True
 
     # find begining/end of week
-    today= datetime.date.today()
+    today= timezone.now().date()
     day_of_week = (today.weekday()+1) % 7
-    to_beginning_of_week = datetime.timedelta(days=day_of_week)
+    to_beginning_of_week = timezone.timedelta(days=day_of_week)
     beginning_of_week = today - to_beginning_of_week
-    end_of_week = beginning_of_week + datetime.timedelta(6)
+    end_of_week = beginning_of_week + timezone.timedelta(6)
     week_date_parameters = "begin_date=%s&end_date=%s" \
         % (beginning_of_week, end_of_week)
 
     begin_date = beginning_of_week
-    end_date = begin_date + datetime.timedelta(13)
+    end_date = begin_date + timezone.timedelta(13)
 
 
     upcoming_content = course.course_content_by_adjusted_due_date \
@@ -145,12 +145,12 @@ def course_main_view(request):
     date_parameters = "begin_date=%s&end_date=%s" % (begin_date,
                                                      end_date)
 
-    next_begin_date = end_date + datetime.timedelta(1)
-    next_end_date = next_begin_date+datetime.timedelta(6)
+    next_begin_date = end_date + timezone.timedelta(1)
+    next_end_date = next_begin_date+timezone.timedelta(6)
     next_period_parameters = "begin_date=%s&end_date=%s" \
         % (next_begin_date, next_end_date)
-    previous_end_date = begin_date - datetime.timedelta(1)
-    previous_begin_date = previous_end_date-datetime.timedelta(6)
+    previous_end_date = begin_date - timezone.timedelta(1)
+    previous_begin_date = previous_end_date-timezone.timedelta(6)
     previous_period_parameters = "begin_date=%s&end_date=%s" \
         % (previous_begin_date, previous_end_date)
     previous_period_parameters += "&exclude_completed"
@@ -207,7 +207,7 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
     def get_object(self):
         content = super(AssessmentAttempted, self).get_object()
         self.student = self.get_student()
-        self.assessment=content.thread_content.content_object
+        self.assessment=content.content_object
         self.assessment_attempts = self.student.studentcontentattempt_set\
             .filter(content=content)
         return content
@@ -219,11 +219,11 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
             if attempt.have_datetime_interval():
                 datetime_text += " - " \
                     + format_datetime(attempt.get_latest_datetime())
-            score_text = floatformat_or_dash(attempt.get_score(), 1)
+            score_text = floatformat_or_dash(attempt.score, 1)
             attempt_dict = {}
             attempt_number = i+1
             attempt_dict['attempt'] = attempt
-            attempt_dict['score'] = attempt.get_score()
+            attempt_dict['score'] = attempt.score
             attempt_dict['attempt_number']  = attempt_number
             attempt_dict['formatted_attempt_number'] = \
                 mark_safe('&nbsp;%i&nbsp;' % attempt_number)
@@ -276,11 +276,11 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
             if attempt.have_datetime_interval():
                 datetime_text += " - " \
                     + format_datetime(attempt.get_latest_datetime())
-            score_text = floatformat_or_dash(attempt.get_score(), 1)
+            score_text = floatformat_or_dash(attempt.score, 1)
             attempt_dict = {}
             attempt_number = i+1
             attempt_dict['attempt'] = attempt
-            attempt_dict['score'] = attempt.get_score()
+            attempt_dict['score'] = attempt.score
             attempt_dict['attempt_number']  = attempt_number
             attempt_dict['formatted_attempt_number'] = \
                 mark_safe('&nbsp;%i&nbsp;' % attempt_number)
@@ -288,7 +288,7 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
                 mark_safe('&nbsp;%s&nbsp;' % datetime_text)
             attempt_dict['formatted_score'] = \
                 mark_safe('&nbsp;%s&nbsp;' % score_text)
-            attempt_dict['direct_link'] = attempt.content.thread_content.content_object.return_link(direct=True, link_text=" try it",seed=attempt.seed)
+            attempt_dict['direct_link'] = attempt.content.content_object.return_link(direct=True, link_text=" try it",seed=attempt.seed)
 
             if attempt.questionstudentanswer_set.exists():
                 attempt_url = reverse('micourses:assessmentattemptinstructor', 
@@ -306,7 +306,7 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
                          % (attempt_url, attempt_dict['formatted_score']))
 
             edit_attempt_form = StudentContentAttemptForm\
-                ({'score': attempt.get_score(), 'content': attempt.content.id,
+                ({'score': attempt.score, 'content': attempt.content.id,
                   'student': attempt.student.id, 'seed': attempt.seed, 
                   'datetime': attempt.datetime })
             edit_content_command = "Dajaxice.midocs.edit_student_content_attempt(Dajax.process,{'form':$('#edit_student_content_attempt_%i_form').serializeArray(), attempt_id: %i, attempt_number: %i })" % (attempt_number, attempt.id, attempt_number)
@@ -325,7 +325,7 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
         new_attempt_form = StudentContentAttemptForm({
                 'content': self.object.id,
                 'student': self.student.id,
-                'datetime': datetime.datetime.now()\
+                'datetime': timezone.now()\
                     .strftime('%Y-%m-%d %H:%M'),
                 })
 
@@ -364,7 +364,7 @@ class AssessmentAttempt(AssessmentAttempted):
         context={}
         context['attempt'] = self.attempt
         context['attempt_number'] = self.attempt_number
-        context['score_overridden'] = self.attempt.score_overridden()
+        context['score_overridden'] = self.attempt.score_override is not None
 
         import random
         rng=random.Random()
@@ -602,11 +602,11 @@ def content_list_view(request):
     noanalytics=True
 
     # find begining/end of week
-    today= datetime.date.today()
+    today= timezone.now().date()
     day_of_week = (today.weekday()+1) % 7
-    to_beginning_of_week = datetime.timedelta(days=day_of_week)
+    to_beginning_of_week = timezone.timedelta(days=day_of_week)
     beginning_of_week = today - to_beginning_of_week
-    end_of_week = beginning_of_week + datetime.timedelta(6)
+    end_of_week = beginning_of_week + timezone.timedelta(6)
     week_date_parameters = "begin_date=%s&end_date=%s" \
         % (beginning_of_week, end_of_week)
 
@@ -627,11 +627,11 @@ def content_list_view(request):
              begin_date=begin_date, end_date=end_date)
 
     if begin_date and end_date:
-        next_begin_date = end_date + datetime.timedelta(1)
+        next_begin_date = end_date + timezone.timedelta(1)
         next_end_date = next_begin_date+(end_date-begin_date)
         next_period_parameters = "begin_date=%s&end_date=%s" \
             % (next_begin_date, next_end_date)
-        previous_end_date = begin_date - datetime.timedelta(1)
+        previous_end_date = begin_date - timezone.timedelta(1)
         previous_begin_date = previous_end_date+(begin_date-end_date)
         previous_period_parameters = "begin_date=%s&end_date=%s" \
             % (previous_begin_date, previous_end_date)
@@ -1240,7 +1240,7 @@ def student_gradebook_view(request):
         return HttpResponseRedirect(reverse('micourses:notenrolled'))
 
         
-    category_scores=course.student_scores_by_assessment_category(courseuser)
+    category_scores=course.student_scores_by_grade_category(courseuser)
     
     # no Google analytics for course
     noanalytics=True
@@ -1273,7 +1273,7 @@ def instructor_gradebook_view(request):
         return HttpResponseRedirect(reverse('micourses:notenrolled'))
 
     assessment_categories = course.all_assessments_by_category()
-    student_scores = course.all_student_scores_by_assessment_category()
+    student_scores = course.all_student_scores_by_grade_category()
     total_points = course.total_points()
 
     # no Google analytics for course
@@ -1304,7 +1304,7 @@ class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
 
     def get_object(self):
         content = super(EditAssessmentAttempt, self).get_object()
-        self.assessment=content.thread_content.content_object
+        self.assessment=content.content_object
         self.latest_attempts = content.latest_student_attempts()
         return content
 
@@ -1373,7 +1373,7 @@ def add_assessment_attempts_view(request, pk):
 
     content = get_object_or_404(ThreadContent, id=pk)
 
-    assessment=content.thread_content.content_object
+    assessment=content.content_object
     latest_attempts = content.latest_student_attempts()
 
     class DateTimeForm(forms.Form):
@@ -1462,7 +1462,7 @@ def export_gradebook_view(request):
         return HttpResponseRedirect(reverse('micourses:notenrolled'))
 
 
-    assessment_categories = course.courseassessmentcategory_set.all()
+    assessment_categories = course.coursegradecategory_set.all()
 
     # no Google analytics for course
     noanalytics=True
@@ -1512,11 +1512,11 @@ def gradebook_csv_view(request):
     assessments_in_category = {}
     assessment_points_in_category = {}
 
-    for cac in course.courseassessmentcategory_set.all():
-        include_category = request.POST.get('category_%s' % cac.id, 'e')
+    for cgc in course.coursegradecategory_set.all():
+        include_category = request.POST.get('category_%s' % cgc.id, 'e')
         if include_category=="i":
             assessments = course.thread_content\
-                        .filter(assessment_category=cac.assessment_category)\
+                        .filter(grade_category=cgc.grade_category)\
                         .filter(thread_content__content_type__model='assessment')
             assessment_list=[]
             assessment_point_list=[]
@@ -1530,19 +1530,19 @@ def gradebook_csv_view(request):
                     assessment_list.append(i)
                 else:
                     try:
-                        name = assessment.thread_content.content_object.get_short_name()
+                        name = assessment.content_object.get_short_name()
                     except AttributeError:
-                        name = assessment.thread_content.content_object.get_title()
+                        name = assessment.content_object.get_title()
                     assessment_list.append(name)
                 assessment_point_list.append(assessment_points)
 
             if(assessment_list):
-                assessments_in_category[cac.id] = assessment_list
-                assessment_points_in_category[cac.id] = assessment_point_list
-                included_categories.append(cac)
+                assessments_in_category[cgc.id] = assessment_list
+                assessment_points_in_category[cgc.id] = assessment_point_list
+                included_categories.append(cgc)
 
         elif include_category=="t":
-            totaled_categories.append(cac)
+            totaled_categories.append(cgc)
         
     
     # Create the HttpResponse object with the appropriate CSV header.
@@ -1554,9 +1554,9 @@ def gradebook_csv_view(request):
     
     # write first header row with assessment categories
     row=["","",""]
-    for cac in included_categories:
-        row.append(cac.assessment_category.name)
-        row.extend([""]*(len(assessments_in_category[cac.id])-1))
+    for cgc in included_categories:
+        row.append(cgc.grade_category.name)
+        row.extend([""]*(len(assessments_in_category[cgc.id])-1))
         row.append("Total")
     row.extend(["Total"]*len(totaled_categories))
     if include_total:
@@ -1565,11 +1565,11 @@ def gradebook_csv_view(request):
     
         
     row=["Student", "ID", "Section"]
-    for cac in included_categories:
-        row.extend(assessments_in_category[cac.id])
-        row.append(cac.assessment_category.name)
-    for cac in totaled_categories:
-        row.append(cac.assessment_category.name)
+    for cgc in included_categories:
+        row.extend(assessments_in_category[cgc.id])
+        row.append(cgc.grade_category.name)
+    for cgc in totaled_categories:
+        row.append(cgc.grade_category.name)
     if include_total:
         row.append("Total")
     writer.writerow(row)
@@ -1577,18 +1577,18 @@ def gradebook_csv_view(request):
     for student in course.enrolled_students_ordered(section=section):
         student_section = course.courseenrollment_set.get(student=student).section
         row=[str(student), student.userid, student_section]
-        for cac in included_categories:
-            cac_assessments=course.student_scores_for_assessment_category(student, cac)
-            for cac_assessment in cac_assessments:
-                score = cac_assessment['student_score']
+        for cgc in included_categories:
+            cgc_assessments=course.student_scores_for_grade_category(student, cgc)
+            for cgc_assessment in cgc_assessments:
+                score = cgc_assessment['student_score']
                 if score is None:
                     score=0
                 row.append(round(score*10)/10.0)
-            row.append(round(course.student_score_for_assessment_category \
-                             (cac.assessment_category, student)*10)/10.0)
-        for cac in totaled_categories:
-            row.append(round(course.student_score_for_assessment_category \
-                             (cac.assessment_category, student)*10)/10.0)
+            row.append(round(course.student_score_for_grade_category \
+                             (cgc.grade_category, student)*10)/10.0)
+        for cgc in totaled_categories:
+            row.append(round(course.student_score_for_grade_category \
+                             (cgc.grade_category, student)*10)/10.0)
         if include_total:
             row.append(round(course.total_student_score(student)*10)/10.0)
 
@@ -1597,41 +1597,41 @@ def gradebook_csv_view(request):
     comments=[]
 
     row=["Possible points","",""]
-    for cac in included_categories:
-        row.extend(assessment_points_in_category[cac.id])
-        row.append(course.points_for_assessment_category \
-                   (cac.assessment_category))
-        number_assessments = len(assessment_points_in_category[cac.id])
+    for cgc in included_categories:
+        row.extend(assessment_points_in_category[cgc.id])
+        row.append(course.points_for_grade_category \
+                   (cgc.grade_category))
+        number_assessments = len(assessment_points_in_category[cgc.id])
         score_comment=""
-        if cac.number_count_for_grade and \
-           cac.number_count_for_grade < number_assessments:
+        if cgc.number_count_for_grade and \
+           cgc.number_count_for_grade < number_assessments:
             score_comment = "the top %s scores out of %s" % \
-                            (cac.number_count_for_grade,
+                            (cgc.number_count_for_grade,
                              number_assessments)
-        if cac.rescale_factor != 1.0:
+        if cgc.rescale_factor != 1.0:
             if score_comment:
                 score_comment += ", "
             score_comment += "rescaled by %s%%" % \
-                             (round(cac.rescale_factor*1000)/10)
+                             (round(cgc.rescale_factor*1000)/10)
         if score_comment:
-            score_comment = "Total %s is %s" % (cac.assessment_category.name,
+            score_comment = "Total %s is %s" % (cgc.grade_category.name,
                                                 score_comment)
             comments.append(score_comment)
-    for cac in totaled_categories:
-        row.append(course.points_for_assessment_category \
-                   (cac.assessment_category))
+    for cgc in totaled_categories:
+        row.append(course.points_for_grade_category \
+                   (cgc.grade_category))
     if include_total:
         row.append(course.total_points())
         score_comment = "Course total is "
         first=True
-        for cac in course.courseassessmentcategory_set.all():
-            if (course.points_for_assessment_category \
-                (cac.assessment_category)):
+        for cgc in course.coursegradecategory_set.all():
+            if (course.points_for_grade_category \
+                (cgc.grade_category)):
                 if not first:
                     score_comment += " + "
                 else:
                     first=False
-                score_comment += "Total %s" %cac.assessment_category.name
+                score_comment += "Total %s" %cgc.grade_category.name
         comments.append(score_comment)
     writer.writerow(row)
     

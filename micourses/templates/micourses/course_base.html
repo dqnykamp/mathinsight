@@ -14,7 +14,7 @@
 {% if course.syllabus_url %}<a href="{{course.syllabus_url}}">Course syllabus</a><br/>{% endif %}
 {% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
 {% if courseuser.get_current_role == 'I' %}
-<a href="{% url 'micourses:instructorgradebook' %}">Gradebook</a> (<b>very</b> slow)<br/>
+<a href="{% url 'micourses:instructorgradebook' %}">Gradebook</a><br/>
 <a href="{% url 'micourses:exportgradebook' %}">Export gradebook</a><br/>
 <a href="{% url 'micourses:instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
 {% if course.track_attendance %}

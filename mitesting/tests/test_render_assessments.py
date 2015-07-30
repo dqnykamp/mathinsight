@@ -1,5 +1,6 @@
 from django.test import TestCase
 from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
+from micourses.models import Course
 from midocs.models import Page, PageType
 from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list, process_expressions_from_answers
 from mitesting.sympy_customized import SymbolCallable, Symbol, Dummy
@@ -1135,12 +1136,14 @@ class TestRenderQuestion(TestCase):
     def setUp(self):
         self.rng = random.Random()
         self.rng.seed()
+        self.course = Course.objects.create(name="course", code="course")
         qt = QuestionType.objects.create(name="question type")
         self.q  = Question.objects.create(
             name="question",
             question_type = qt,
             question_privacy = 0,
             solution_privacy = 0,
+            course=self.course,
             )
         self.q.expression_set.create(
             name="n", expression="(-100,100)", 
@@ -1298,7 +1301,7 @@ class TestRenderQuestion(TestCase):
         at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=2, solution_privacy=2)
         asmt = Assessment.objects.create(
-            code="a", name="a", assessment_type=at)
+            code="a", name="a", assessment_type=at, course=self.course)
         
         question_data=render_question(self.q, rng=self.rng, 
                                       user=AnonymousUser(),
@@ -1459,6 +1462,7 @@ class TestRenderQuestion(TestCase):
         self.assertFalse(cgd['show_solution_button'])
         self.assertTrue(cgd['record_answers'])
         self.assertEqual(cgd.get('question_set'),None)
+        self.assertEqual(cgd.get('course_code'),None)
         self.assertEqual(cgd.get('assessment_code'),None)
         self.assertEqual(cgd.get('assessment_seed'),None)
         self.assertEqual(cgd['answer_info'],
@@ -1503,7 +1507,8 @@ class TestRenderQuestion(TestCase):
         at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=2, solution_privacy=2)
         asmt = Assessment.objects.create(
-            code=assessment_code, name="a", assessment_type=at)
+            code=assessment_code, name="a", assessment_type=at,
+            course=self.course)
 
 
         self.q.computer_graded=True
@@ -1519,6 +1524,7 @@ class TestRenderQuestion(TestCase):
         
         self.assertEqual(cgd['identifier'],identifier)
         self.assertEqual(cgd['seed'], seed)
+        self.assertEqual(cgd['course_code'], self.course.code)
         self.assertEqual(cgd['assessment_code'], assessment_code)
         self.assertEqual(cgd['assessment_seed'], assessment_seed)
         self.assertEqual(cgd['question_set'], question_set)
@@ -1738,6 +1744,7 @@ class TestRenderQuestion(TestCase):
 
 class TestShowSolutionButton(TestCase):
     def setUp(self):
+        self.course = Course.objects.create(name="course", code="course")
         self.rng = random.Random()
         self.rng.seed()
         qt = QuestionType.objects.create(name="question type")
@@ -1745,12 +1752,13 @@ class TestShowSolutionButton(TestCase):
         for i in range(3):
             for j in range(3):
                 self.qs[i].append(Question.objects.create(
-                        name="question",
-                        question_type = qt,
-                        question_privacy = i,
-                        solution_privacy = j,
-                        solution_text="solution",
-                        ))
+                    name="question",
+                    question_type = qt,
+                    question_privacy = i,
+                    solution_privacy = j,
+                    solution_text="solution",
+                    course=self.course,
+                ))
 
         self.users = [AnonymousUser()]
 
@@ -1805,6 +1813,7 @@ class TestShowSolutionButton(TestCase):
                 code="test_%s" % (i),
                 name = "Test %s" % (i),
                 assessment_type = at,
+                course=self.course,
                 )
             asmts.append(asmt) 
         for jq in range(3):
@@ -1830,30 +1839,38 @@ class TestGetQuestionList(TestCase):
     def setUp(self):
         self.rng = random.Random()
         self.rng.seed()
+
+        self.course = Course.objects.create(name="course", code="course")
         
         self.qt = QuestionType.objects.create(name="question type")
         self.q1  = Question.objects.create(
             name="a question",
             question_type = self.qt,
+            course=self.course,
             )
         self.q2  = Question.objects.create(
             name="a question",
             question_type = self.qt,
+            course=self.course,
             )
         self.q3  = Question.objects.create(
             name="a question",
             question_type = self.qt,
+            course=self.course,
             )
 
         self.q4  = Question.objects.create(
             name="a question",
             question_type = self.qt,
+            course=self.course,
             )
+
         self.at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=0, solution_privacy=0)
 
         self.asmt = Assessment.objects.create(
-            code="the_test", name="The test", assessment_type=self.at)
+            code="the_test", name="The test", assessment_type=self.at,
+            course=self.course)
         
         self.qsa1=self.asmt.questionassigned_set.create(question=self.q1)
         self.qsa2=self.asmt.questionassigned_set.create(question=self.q2)
@@ -1966,6 +1983,8 @@ class TestRenderQuestionList(TestCase):
         self.rng = random.Random()
         self.rng.seed()
    
+        self.course = Course.objects.create(name="Course", code="course")
+
         self.qt = QuestionType.objects.create(name="question type")
         self.q1  = Question.objects.create(
             name="a question",
@@ -1974,6 +1993,7 @@ class TestRenderQuestionList(TestCase):
             solution_privacy = 0,
             question_text = "Question number 1 text.",
             solution_text = "Question number 1 solution.",
+            course=self.course
             )
         self.q2  = Question.objects.create(
             name="a question",
@@ -1982,6 +2002,7 @@ class TestRenderQuestionList(TestCase):
             solution_privacy = 0,
             question_text = "Question number 2 text.",
             solution_text = "Question number 2 solution.",
+            course=self.course,
             )
         self.q3  = Question.objects.create(
             name="a question",
@@ -1990,6 +2011,7 @@ class TestRenderQuestionList(TestCase):
             solution_privacy = 0,
             question_text = "Question number 3 text.",
             solution_text = "Question number 3 solution.",
+            course=self.course,
             )
 
         self.q4  = Question.objects.create(
@@ -1999,12 +2021,16 @@ class TestRenderQuestionList(TestCase):
             solution_privacy = 0,
             question_text = "Question number 4 text.",
             solution_text = "Question number 4 solution.",
+            course=self.course,
             )
+
+
         self.at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=0, solution_privacy=0)
 
         self.asmt = Assessment.objects.create(
-            code="the_test", name="The test", assessment_type=self.at)
+            code="the_test", name="The test", assessment_type=self.at,
+            course=self.course)
         
         self.qsa1=self.asmt.questionassigned_set.create(question=self.q1)
         self.qsa2=self.asmt.questionassigned_set.create(question=self.q2)

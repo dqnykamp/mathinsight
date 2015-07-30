@@ -728,6 +728,7 @@ def render_question(question, rng, seed=None, solution=False,
       - record_answers
       - question_set
       - assessment_seed
+      - course_code (of assessment from input)
       - assessment_code (of assessment from input)
       - answer_info: list of codes, points, answer type, identifier, 
         group, assigned expression, prefilled answer, and expression type
@@ -916,7 +917,7 @@ def render_question(question, rng, seed=None, solution=False,
     question_data['show_solution_button']=show_solution_button
     if show_solution_button:
         question_data['inject_solution_url'] = reverse(
-            'mit-injectquestionsolution', kwargs={'question_id': question.id})
+            'mitesting:injectquestionsolution', kwargs={'question_id': question.id})
         question_data['enable_solution_button'] = not question.computer_graded \
                         or  (question.show_solution_button_after_attempts == 0)
 
@@ -943,6 +944,7 @@ def render_question(question, rng, seed=None, solution=False,
                            'record_answers': record_answers,
                            'show_solution_button': show_solution_button}
     if assessment:
+        computer_grade_data['course_code'] = assessment.course.code
         computer_grade_data['assessment_code'] = assessment.code
         computer_grade_data['assessment_seed'] = assessment_seed
         if question_set is not None:
