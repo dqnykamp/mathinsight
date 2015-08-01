@@ -2,7 +2,6 @@ from django.contrib import admin
 from django import forms
 from django.db import models
 from micourses.models import *
-#from mithreads.models import ThreadContent
 from django.conf import settings
 import reversion
 from django.contrib.auth.models import User
@@ -20,11 +19,11 @@ class CourseUserChoiceField(forms.ModelChoiceField):
         return "%s, %s" % (obj.user.last_name, obj.user.first_name)
 
 
-class QuestionStudentAnswerAdmin(reversion.VersionAdmin):
+class QuestionResponseAdmin(reversion.VersionAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'user':
             kwargs['form_class'] = UserChoiceField
-        return super(QuestionStudentAnswerAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(QuestionResponseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class CourseGradeCategoryInline(admin.TabularInline):
@@ -205,31 +204,24 @@ class GradeCategoryAdmin(reversion.VersionAdmin):
     pass
 
 
-class ManualDueDateAdjustmentAdmin(reversion.VersionAdmin):
+class ContentAttemptAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
             kwargs['form_class'] = CourseUserChoiceField
-        return super(ManualDueDateAdjustmentAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(ContentAttemptAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-class StudentContentAttemptAdmin(admin.ModelAdmin):
+class StudentContentRecordAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'student':
             kwargs['form_class'] = CourseUserChoiceField
-        return super(StudentContentAttemptAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(StudentContentRecordAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-class StudentContentCompletionAdmin(admin.ModelAdmin):
-    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
-        if db_field.name == 'student':
-            kwargs['form_class'] = CourseUserChoiceField
-        return super(StudentContentCompletionAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
-
-admin.site.register(QuestionStudentAnswer,QuestionStudentAnswerAdmin)
+admin.site.register(QuestionResponse,QuestionResponseAdmin)
 admin.site.register(Course, CourseAdmin)
 #admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 #admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
 admin.site.register(GradeCategory,GradeCategoryAdmin)
-admin.site.register(ManualDueDateAdjustment, ManualDueDateAdjustmentAdmin)
 
-admin.site.register(StudentContentAttempt, StudentContentAttemptAdmin)
-admin.site.register(StudentContentCompletion, StudentContentCompletionAdmin)
-admin.site.register(StudentContentAttemptSolutionView)
+admin.site.register(ContentAttempt, ContentAttemptAdmin)
+admin.site.register(StudentContentRecord, StudentContentRecordAdmin)
+

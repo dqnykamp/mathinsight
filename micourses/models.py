@@ -173,16 +173,6 @@ class CourseSkipDate(models.Model):
     course = models.ForeignKey('Course')
     date = models.DateField()
 
-class StudentAttendance(models.Model):
-    course = models.ForeignKey('Course')
-    student = models.ForeignKey(CourseUser)
-    date = models.DateField()
-    # 0: absent, 1: present, -1: excused absense
-    present = models.FloatField(default=1.0)
-
-    class Meta:
-        unique_together = ['course', 'student', 'date']
-
 
 class ActiveCourseManager(models.Manager):
     def get_queryset(self):
@@ -209,11 +199,11 @@ class Course(models.Model):
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
 
     numbered = models.BooleanField(default=True)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=True, db_index=True)
     sort_order = models.FloatField(blank=True)
 
     objects = models.Manager()
-    activecourses = ActiveCourseManager()
+    active_courses = ActiveCourseManager()
 
     
     def __str__(self):
@@ -802,6 +792,28 @@ class CourseEnrollment(models.Model):
         ordering = ['student']
 
         
+class StudentAttendance(models.Model):
+    enrollment = models.ForeignKey(CourseEnrollment)
+    date = models.DateField()
+    # 0: absent, 1: present, -1: excused absense
+    present = models.FloatField(default=1.0)
+
+    class Meta:
+        unique_together = ['enrollment', 'date']
+
+
+
+class NondeletedManager(models.Manager):
+    use_for_related_fields=True
+    def get_queryset(self):
+        return super(NondeletedManager, self).get_queryset() \
+            .filter(deleted=False)
+
+class DeletedManager(models.Manager):
+    def get_queryset(self):
+        return super(DeletedManager, self).get_queryset() \
+            .filter(deleted=True)
+
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=200, db_index=True)
     course = models.ForeignKey(Course, related_name = "thread_sections", 
@@ -809,6 +821,12 @@ class ThreadSection(models.Model):
     parent = models.ForeignKey('self', related_name = "child_sections",
                                blank=True, null=True)
     sort_order = models.FloatField(blank=True)
+
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return "Section: %s. Course: %s" % (self.name,self.get_course())
@@ -954,6 +972,14 @@ class ThreadContent(models.Model):
     record_scores = models.BooleanField(default=True)
 
     sort_order = models.FloatField(blank=True)
+
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
+
+    
     
     class Meta:
         ordering = ['section', 'sort_order', 'id']
@@ -989,7 +1015,8 @@ class ThreadContent(models.Model):
     def return_link(self):
         try:
             if self.substitute_title:
-                return self.content_object.return_link(link_text=self.substitute_title)
+                return self.content_object.return_link(
+                    link_text=self.substitute_title)
             else:
                 return self.content_object.return_link() 
         except:
@@ -1213,153 +1240,134 @@ class ThreadContent(models.Model):
         return calculation_list
 
 
-    def complete_skip_button_html(self, student, full_html=False):
-        if not self.course in student.course_set.all():
-            return ""
-        
-        html_string = ""
-
-        # check if student already completed content
-        try:
-            completed = self.studentcontentcompletion_set\
-                .get(student=student).complete
-        except:
-            completed = False
-
-            
-        # if completed, show checkmark, click to give option to remove complete
-        if completed:
-            html_string += \
-                '<img src="%sadmin/img/icon-yes.gif" alt="Complete"  onclick="$(\'#undo_complete_%s\').toggle();"/>' \
-                % (settings.STATIC_URL, self.id)
-            
-            # add hidden undo completion button
-            click_command = "Dajaxice.midocs.record_course_content_completion"\
-                + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': false })" \
-                % (self.id, student.id)
-
-            html_string += '<span id ="undo_complete_%s" hidden> <input type="button" class="coursecontentbutton" value="Undo completion" onclick="%s;"></span>' % (self.id, click_command)
-
-
-
-        # only show buttons if not optional
-        elif not self.optional:
-            # if not completed, check if skipped
-            try:
-                skipped = self.studentcontentcompletion_set\
-                    .get(student=student).skip
-            except:
-                skipped = False
-
-            # if skipped, show icon, click to give option to remove skip
-            if skipped:
-                html_string += \
-                    '<img src="%sadmin/img/icon-no.gif" alt="Complete"  onclick="$(\'#undo_skip_%s\').toggle();"/>' \
-                    % (settings.STATIC_URL, self.id)
-
-                # add hidden undo skip button
-                click_command = "Dajaxice.midocs.record_course_content_completion"\
-                    + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': false })" \
-                    % (self.id, student.id)
-
-                html_string += '<span id ="undo_skip_%s" hidden> <input type="button" class="coursecontentbutton" value="Remove skip" onclick="%s;"></span>' % (self.id, click_command)
-
-
-            # if not complete or skipped, 
-            # give option to mark assessment as complete or skip
-            # or to mark other content as done
-            else:
-            
-                # since haven't implement "Complete" doing anything special
-                # (like notifying instructors)
-                # don't use Complete/Skip buttons for now
-
-                # if self.initial_due_date:
-                #     use_complete_skip_buttons = True
-                # else:
-                #     use_complete_skip_buttons = False
-                use_complete_skip_buttons=False
-
-                if use_complete_skip_buttons:
-                    click_command = "Dajaxice.midocs.record_course_content_completion"\
-                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
-                        % (self.id, student.id)
-            
-                    html_string += \
-                        '<input type="button" class="coursecontentbutton" value="Complete" onclick="%s;">' \
-                        % (click_command)
-
-                    click_command = "Dajaxice.midocs.record_course_content_completion"\
-                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s', 'complete': false, 'skip': true })" \
-                        % (self.id, student.id)
-            
-                    html_string += \
-                        ' <input type="button" class="coursecontentbutton" value="Skip" onclick="%s;">' \
-                        % (click_command)
-
-                else:
-                    click_command = "Dajaxice.midocs.record_course_content_completion"\
-                        + "(Dajax.process,{'course_thread_content_id': '%s', 'student_id': '%s' })" \
-                        % (self.id, student.id)
-            
-                    html_string += \
-                        '<input type="button" class="coursecontentbutton" value="Done" onclick="%s;">' \
-                        % (click_command)
-
-            
-        # if full_html, mark section for later ajax changes
-        if full_html:
-            html_string = '<span id="id_course_completion_%s">%s</span>' \
-                % (self.id, html_string)
-        
-        return html_string
-
-
-class ManualDueDateAdjustment(models.Model):
+class StudentContentRecord(models.Model):
+    enrollment = models.ForeignKey(CourseEnrollment)
     content = models.ForeignKey(ThreadContent)
-    student = models.ForeignKey(CourseUser)
-    initial_due_date=models.DateField()
-    final_due_date=models.DateField()
-    
+
+    complete = models.BooleanField(default=False)
+    skip = models.BooleanField(default=False)
+    created = models.DateTimeField(blank=True, default=timezone.now)
+    last_modified = models.DateTimeField(blank=True)
+    score = models.FloatField(blank=True, null=True)
+    score_override = models.FloatField(blank=True, null=True)
+
+    initial_due_adjustment = models.DateTimeField(blank=True, null=True)
+    final_due_adjustment = models.DateTimeField(blank=True, null=True)
+
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
+
+
     def __str__(self):
-        return "Adjustment for %s on %s" % (self.student, self.content)
+        return "Record for %s on %s" % (self.enrollment.student, self.content)
 
     class Meta:
-        unique_together = ("content","student")
+        unique_together = ['enrollment', 'content']
 
-class ValidAttemptManager(models.Manager):
-    def get_queryset(self):
-        return super(ValidAttemptManager, self).get_queryset() \
-            .filter(invalid=False)
+    def save(self, *args, **kwargs):
+        if not kwargs.pop('skip_last_modified', False):
+            self.last_modified = timezone.now()
 
-class StudentContentAttempt(models.Model):
-    student = models.ForeignKey(CourseUser)
-    content = models.ForeignKey(ThreadContent)
-    datetime = models.DateTimeField(auto_now_add=True)
+        # if changed score override, then recalculate score
+        score_override_changed=True
+        if self.pk is not None:
+            old_scc = StudentContentRecord.objects.get(pk=self.pk)
+            if self.score_override == old_scc.score_override:
+                score_override_changed = False
+
+        super(StudentContentRecord, self).save(*args, **kwargs)
+
+        if score_override_changed:
+            self.recalculate_score()
+
+
+    def recalculate_score(self, recalculate_attempt_scores=False):
+        """
+        Recalculate score of student for content.
+
+        Set to score_override if it exists and to None if not assessment.
+        Else score is aggregate of scores from each valid attempt 
+        for student on this thread_content.
+        Aggregate based on attempt_aggregration of thread_content.
+        
+        If recalculate_attempt_scores, then first recalculate
+        the scores of each attempt.  Otherwise, just use the
+        score field from each attempt.
+
+        """
+
+        # if score is overridden, then just set set score to score_override
+        if self.score_override is not None:
+            self.score = self.score_override
+            self.save()
+            return self.score
+
+        # must be an assessment 
+        assessment_ct=ContentType.objects.get(model='assessment')
+        if self.content.content_type != assessment_ct:
+            self.score = None
+            self.save()
+            return self.score
+
+        valid_attempts = self.content.studentcontentattempt_set\
+                         .filter(invalid=False, student=self.student)
+
+        if recalculate_attempt_scores:
+            for attempt in valid_attempts:
+                attempt.recalculate_score(propagate=False)
+                
+        if self.content.attempt_aggregation=='Avg':
+            # calculate average score of attempts
+           self.score = valid_attempts.aggregate(score = Avg('score'))['score']
+        elif self.content.attempt_aggregation=='Las':
+            # calculate score of last attempt
+            self.score = valid_attempts.latest('datetime').score
+        else:
+            # calculate maximum score over all attempts
+            self.score = valid_attempts.aggregate(score=Max('score'))['score']
+
+        self.save()
+
+        return self.score
+
+
+
+class ContentAttempt(models.Model):
+    record = models.ForeignKey(StudentContentRecord, related_name="attempts")
+    attempt_began = models.DateTimeField(blank=True, default=timezone.now)
     score_override = models.FloatField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
-    invalid = models.BooleanField(default=False)
+    invalid = models.BooleanField(default=False, db_index=True)
 
-    objects = models.Manager()
-    valid_attempts = ValidAttemptManager()
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
+
+
 
     def __str__(self):
-        return "%s attempt on %s" % (self.student, self.content)
+        return "%s's attempt on %s" % (self.record.enrollment.student,
+                                     self.record.content)
 
     class Meta:
-        ordering = ['datetime']
-        get_latest_by = "datetime"
+        ordering = ['attempt_began']
+        get_latest_by = "attempt_began"
         
     def save(self, *args, **kwargs):
         # if changed score override, then recalculate score
         score_override_changed=True
         if self.pk is not None:
-            old_sca = StudentContentAttempt.objects.get(pk=self.pk)
+            old_sca = ContentAttempt.objects.get(pk=self.pk)
             if self.score_override == old_sca.score_override:
                 score_override_changed=False
 
-        super(StudentContentAttempt, self).save(*args, **kwargs)
+        super(ContentAttempt, self).save(*args, **kwargs)
 
         if score_override_changed:
             self.recalculate_score()
@@ -1482,112 +1490,58 @@ class StudentContentAttempt(models.Model):
         else:
             return False
 
-class StudentContentCompletion(models.Model):
-    student = models.ForeignKey(CourseUser)
-    content = models.ForeignKey(ThreadContent)
-    complete = models.BooleanField(default=False)
-    skip = models.BooleanField(default=False)
-    datetime = models.DateTimeField(auto_now=True)
-    score = models.FloatField(blank=True, null=True)
-    score_override = models.FloatField(blank=True, null=True)
 
-    def __str__(self):
-        return "%s attempt on %s" % (self.student, self.content)
+class QuestionAttempt(models.Model):
+    content_attempt = models.ForeignKey(ContentAttempt,
+                                        related_name="question_attempts")
+    question_set = models.SmallIntegerField()
+    question_number = models.SmallIntegerField(blank=True, null=True)
+    question = models.ForeignKey('mitesting.Question', blank=True, null=True)
+    seed = models.CharField(max_length=150)
+    attempt_began = models.DateTimeField(blank=True, default=timezone.now)
+
+    solution_viewed = models.DateTimeField(blank=True, null=True)
+
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
 
     class Meta:
-        unique_together = ['student', 'content']
+        ordering = ['question_number']
+        get_latest_by = "attempt_began"
 
-    def save(self, *args, **kwargs):
-
-        # if changed score override, then recalculate score
-        score_override_changed=True
-        if self.pk is not None:
-            old_scc = StudentContentCompletion.objects.get(pk=self.pk)
-            if self.score_override == old_scc.score_override:
-                score_override_changed = False
-
-        super(StudentContentCompletion, self).save(*args, **kwargs)
-
-        if score_override_changed:
-            self.recalculate_score()
-
-
-    def recalculate_score(self, recalculate_attempt_scores=False):
-        """
-        Recalculate score of student for content.
-
-        Set to score_override if it exists and to None if not assessment.
-        Else score is aggregate of scores from each valid attempt 
-        for student on this thread_content.
-        Aggregate based on attempt_aggregration of thread_content.
         
-        If recalculate_attempt_scores, then first recalculate
-        the scores of each attempt.  Otherwise, just use the
-        score field from each attempt.
+    def __str__(self):
+        return "%s's attempt on question %s of %s" % \
+            (self.content_attempt.record.enrollment.student, \
+             self.question_number, self.content_attempt.record.content)
 
-        """
-
-        # if score is overridden, then just set set score to score_override
-        if self.score_override is not None:
-            self.score = self.score_override
-            self.save()
-            return self.score
-
-        # must be an assessment 
-        assessment_ct=ContentType.objects.get(model='assessment')
-        if self.content.content_type != assessment_ct:
-            self.score = None
-            self.save()
-            return self.score
-
-        valid_attempts = self.content.studentcontentattempt_set\
-                         .filter(invalid=False, student=self.student)
-
-        if recalculate_attempt_scores:
-            for attempt in valid_attempts:
-                attempt.recalculate_score(propagate=False)
-                
-        if self.content.attempt_aggregation=='Avg':
-            # calculate average score of attempts
-           self.score = valid_attempts.aggregate(score = Avg('score'))['score']
-        elif self.content.attempt_aggregation=='Las':
-            # calculate score of last attempt
-            self.score = valid_attempts.latest('datetime').score
-        else:
-            # calculate maximum score over all attempts
-            self.score = valid_attempts.aggregate(score=Max('score'))['score']
-
-        self.save()
-
-        return self.score
-
-
-
-class StudentContentAttemptSolutionView(models.Model):
-    content_attempt = models.ForeignKey(StudentContentAttempt)
-    question_set = models.SmallIntegerField()
-    datetime = models.DateTimeField(auto_now_add=True)
-
-
-class QuestionStudentAnswer(models.Model):
-    user = models.ForeignKey(User)
-    question = models.ForeignKey('mitesting.Question')
-    seed = models.CharField(max_length=150)
-    question_set = models.SmallIntegerField()
-    answer = models.TextField()
-    identifier_in_answer = models.CharField(max_length=50)
+class QuestionResponse(models.Model):
+    question_attempt = models.ForeignKey(QuestionAttempt,
+                                         related_name="answers")
+    response = models.TextField()
+    identifier_in_response = models.CharField(max_length=50)
     credit = models.FloatField()
-    datetime =  models.DateTimeField(auto_now_add=True)
-    course_content_attempt = models.ForeignKey(StudentContentAttempt)
+    response_submitted =  models.DateTimeField(blank=True, default=timezone.now)
+
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
+
 
     def __str__(self):
         return  "%s" % self.answer
 
     class Meta:
-        get_latest_by = "datetime"
+        ordering = ['response_submitted']
+        get_latest_by = "response_submitted"
 
 
     def save(self, *args, **kwargs):
-        super(QuestionStudentAnswer, self).save(*args, **kwargs)
+        super(QuestionResponse, self).save(*args, **kwargs)
 
         self.course_content_attempt.recalculate_score()

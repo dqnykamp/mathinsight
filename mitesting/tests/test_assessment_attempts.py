@@ -19,8 +19,14 @@ Logged in user who is student of course:
 If assessment is not in course thread, same as anonymous user behavior
 Otherwise:
 Ignore seed from GET.
-Find latest attempt or create if none.
-If latest attempt found, get seeds of assessment and question sets from attempt.
+Find latest content attempt or create if none.
+
+If latest content attempt found, get seeds of assessment 
+and get questions and seeds from latest associated question attempts for each question set.
+If don't find a question attempt for a question set (shouldn't happen),
+then create question attempt 
+
+ and question sets from attempt.
 Otherwise, create assessment seed from course code and attempt number,
 as well as username if individualize by student (or seed=1 if single version)
 and generate question set seeds.
