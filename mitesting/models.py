@@ -531,7 +531,6 @@ class Assessment(models.Model):
     instructions = models.TextField(blank=True, null=True)
     instructions2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    time_limit = models.CharField(max_length=20, blank=True, null=True)
     groups_can_view = models.ManyToManyField(Group, blank=True, 
                             related_name = "assessments_can_view")
     groups_can_view_solution = models.ManyToManyField(Group, blank=True, 
@@ -542,8 +541,7 @@ class Assessment(models.Model):
     fixed_order = models.BooleanField(default=False)
     single_version = models.BooleanField(default=False)
     resample_question_sets = models.BooleanField(default=False)
-    total_points = models.FloatField(blank=True, null=True)
-    
+
 
     class Meta:
         permissions = (
@@ -589,7 +587,7 @@ class Assessment(models.Model):
 
     def return_direct_link(self, **kwargs):
         kwargs['direct']=True
-        if not self.nothing_random:
+        if not self.single_version:
             kwargs['seed']=1
         return self.return_link(**kwargs)
 
@@ -940,8 +938,8 @@ class AssessmentBackgroundPage(models.Model):
 
 class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
-    question_set = models.SmallIntegerField(default=0,db_index=True)
-    points = models.FloatField(default=0)
+    question_set = models.SmallIntegerField(db_index=True)
+    weight = models.FloatField(default=1)
     group = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:

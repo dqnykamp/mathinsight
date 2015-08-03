@@ -17,123 +17,120 @@ edit_content_url = reverse('mithreads:edit-content')
 return_content_form_url = reverse('mithreads:return-content-form')
 return_options_url = reverse('mithreads:return-options')
 
+
+def set_up_data(tcase):
+    tcase.course = Course.objects.create(
+        code="the_course",
+        name="The Course",
+    )
+    tcase.sectionA = tcase.course.thread_sections.create(name='Section A')
+    tcase.sectionB = tcase.course.thread_sections.create(name='Section B')
+    tcase.sectionC = tcase.course.thread_sections.create(name='Section C')
+
+    tcase.sectionAA = tcase.sectionA.child_sections.create(name='Section AA')
+
+    tcase.sectionBA = tcase.sectionB.child_sections.create(name='Section BA')
+
+    tcase.sectionCA = tcase.sectionC.child_sections.create(name='Section CA')
+
+    tcase.course.reset_thread_section_sort_order()
+
+    tcase.page_contenttype = ContentType.objects.get(model='page')
+    tcase.image_contenttype = ContentType.objects.get(model='image')
+    tcase.video_contenttype = ContentType.objects.get(model='video')
+    tcase.assessment_contenttype = ContentType.objects.get(model='assessment')
+
+    PageType.objects.create(code="pagetype", name="Page Type", default=True)
+    video_type = VideoType.objects.create(code="videotype", 
+                                         name="Video Type",
+                                         description="hi")
+    quiz = AssessmentType.objects.create(code="quiz", name="Quiz")
+
+    tcase.contentlist = []
+    page = Page.objects.create(code="pagea", title="Page a")
+    
+    thecontent = tcase.sectionAA.thread_contents.create(
+        content_type =  tcase.page_contenttype,
+        object_id = page.id,
+    )
+    tcase.contentlist.append(thecontent)
+
+    assessment = Assessment.objects.create(code="assessmenta",
+                        name="Assessment a", assessment_type=quiz,
+                        course=tcase.course,
+    )
+    thecontent = tcase.sectionBA.thread_contents.create(
+        content_type =  tcase.assessment_contenttype,
+        object_id = assessment.id,
+    )
+    tcase.contentlist.append(thecontent)
+
+    page = Page.objects.create(code="pageb", title="Page b")
+    thecontent = tcase.sectionBA.thread_contents.create(
+        content_type =  tcase.page_contenttype,
+        object_id = page.id,
+    )
+    tcase.contentlist.append(thecontent)
+
+    thecontent = tcase.sectionBA.thread_contents.create(
+        content_type =  tcase.assessment_contenttype,
+        object_id = assessment.id,
+        substitute_title = "new time for assessment",
+    )
+    tcase.contentlist.append(thecontent)
+
+
+    image = Image.objects.create(code="imagea", title="Image a")
+
+    thecontent = tcase.sectionC.thread_contents.create(
+        content_type =  tcase.image_contenttype,
+        object_id = image.id,
+    )
+    tcase.contentlist.append(thecontent)
+
+
+    video = Video.objects.create(code="videoa", title="Video a", 
+                                 video_type=video_type )
+    thecontent = tcase.sectionC.thread_contents.create(
+        content_type =  tcase.video_contenttype,
+        object_id = video.id,
+    )
+    tcase.contentlist.append(thecontent)
+
+    tcase.thread_url = reverse('mithreads:thread', 
+                              kwargs={'course_code': tcase.course.code})
+    tcase.thread_edit_url = reverse('mithreads:thread-edit', 
+                                   kwargs={'course_code': tcase.course.code})
+
+    u=User.objects.create_user("student", password="pass")
+    tcase.student = u.courseuser
+    u=User.objects.create_user("instructor", password="pass")
+    tcase.instructor = u.courseuser
+
+
+    tcase.course.courseenrollment_set.create(
+        student=tcase.student, date_enrolled=timezone.now().date())
+    tcase.course.courseenrollment_set.create(
+        student=tcase.instructor, date_enrolled=timezone.now().date(),
+        role=INSTRUCTOR_ROLE)
+
+    # run return_selected_course() so that course will be selected by default
+    tcase.student.return_selected_course()
+    tcase.instructor.return_selected_course()
+
+
+
+
 class TextThreadContruction(TestCase):
     def setUp(self):
-        self.course = Course.objects.create(
-            code="the_course",
-            name="The Course",
-        )
-        self.sectionA = self.course.thread_sections.create(name='Section A')
-        self.sectionB = self.course.thread_sections.create(name='Section B')
-        self.sectionC = self.course.thread_sections.create(name='Section C')
-        
-        self.sectionAA = self.sectionA.child_sections.create(name='Section AA')
-        self.sectionAB = self.sectionA.child_sections.create(name='Section AB')
-
-        self.sectionBA = self.sectionB.child_sections.create(name='Section BA')
-        
-        self.course.reset_thread_section_sort_order()
-
-        self.page_contenttype = ContentType.objects.get(model='page')
-        self.image_contenttype = ContentType.objects.get(model='image')
-        self.video_contenttype = ContentType.objects.get(model='video')
-        self.assessment_contenttype = ContentType.objects.get(model='assessment')
-        
-        PageType.objects.create(code="pagetype", name="Page Type", default=True)
-        video_type = VideoType.objects.create(code="videotype", 
-                                             name="Video Type",
-                                             description="hi")
-        quiz = AssessmentType.objects.create(code="quiz", name="Quiz")
-
-        self.contentlist = []
-        page = Page.objects.create(code="pagea", title="Page a")
-        self.contentlist.append({
-            'content_type': self.page_contenttype,
-            'object_id': page.id,
-            'content_object': page,
-        })
-        page = Page.objects.create(code="pageb", title="Page b")
-        self.contentlist.append({
-            'content_type': self.page_contenttype,
-            'object_id': page.id,
-            'content_object': page,
-        })
-        image = Image.objects.create(code="imagea", title="Image a")
-        self.contentlist.append({
-            'content_type': self.image_contenttype,
-            'object_id': image.id,
-            'content_object': image,
-        })
-        video = Video.objects.create(code="videoa", title="Video a", 
-                                     video_type=video_type )
-        self.contentlist.append({
-            'content_type': self.video_contenttype,
-            'object_id': video.id,
-            'content_object': video,
-        })
-        assessment = Assessment.objects.create(code="assessmenta",
-                            name="Assessment a", assessment_type=quiz)
-        self.contentlist.append({
-            'content_type': self.assessment_contenttype,
-            'object_id': assessment.id,
-            'content_object': assessment,
-        })
-
-
-        content = self.contentlist[0]
-        self.contentAa = self.sectionA.thread_contents.create(
-            content_type = content['content_type'],
-            object_id = content['object_id']
-        )
-        content = self.contentlist[1]
-        self.contentAb = self.sectionA.thread_contents.create(
-            content_type = content['content_type'],
-            object_id = content['object_id']
-        )
-        content = self.contentlist[2]
-        self.contentAAa = self.sectionAA.thread_contents.create(
-            content_type = content['content_type'],
-            object_id = content['object_id']
-        )
-        content = self.contentlist[3]
-        self.contentABa = self.sectionAB.thread_contents.create(
-            content_type = content['content_type'],
-            object_id = content['object_id']
-        )
-        content = self.contentlist[4]
-        self.contentABb = self.sectionAB.thread_contents.create(
-            content_type = content['content_type'],
-            object_id = content['object_id']
-        )
-
-        self.thread_url = reverse('mithreads:thread', 
-                                  kwargs={'course_code': self.course.code})
-        self.thread_edit_url = reverse('mithreads:thread-edit', 
-                                       kwargs={'course_code': self.course.code})
-
-        u=User.objects.create_user("student", password="pass")
-        self.student = u.courseuser
-        u=User.objects.create_user("instructor", password="pass")
-        self.instructor = u.courseuser
-        
-        
-        self.course.courseenrollment_set.create(
-            student=self.student, date_enrolled=timezone.now().date())
-        self.course.courseenrollment_set.create(
-            student=self.instructor, date_enrolled=timezone.now().date(),
-            role=INSTRUCTOR_ROLE)
-
-        # run return_selected_course() so that course will be selected by default
-        self.student.return_selected_course()
-        self.instructor.return_selected_course()
-
+        set_up_data(self)
 
     def test_render_thread(self):
         response = self.client.get(self.thread_url)
         self.assertEqual(response.context['course'],self.course)
         self.assertTemplateUsed(response,"micourses/thread_detail.html")
         for i in range(5):
-            self.assertContains(response, self.contentlist[i]['content_object'].return_link())
+            self.assertContains(response, self.contentlist[i].return_link())
 
 
     def test_thread_edit_access(self):
@@ -149,13 +146,12 @@ class TextThreadContruction(TestCase):
         self.assertEqual(response.context['course'],self.course)
         self.assertTemplateUsed(response,"micourses/thread_edit.html")
         for i in range(5):
-            self.assertContains(response, self.contentlist[i]['content_object'].return_link())
+            self.assertContains(response, self.contentlist[i].return_link())
 
 
 
 
 class SeleniumTests(StaticLiveServerTestCase):
-    fixtures = ['sample_course.json']
 
     @classmethod
     def setUpClass(cls):
@@ -168,28 +164,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         super(SeleniumTests, cls).tearDownClass()
 
     def setUp(self):
-        self.course = Course.objects.all()[0]
-
-        self.thread_url = reverse('mithreads:thread', 
-                                  kwargs={'course_code': self.course.code})
-        self.thread_edit_url = reverse('mithreads:thread-edit', 
-                                       kwargs={'course_code': self.course.code})
-
-        u=User.objects.create_user("student", password="pass")
-        self.student = u.courseuser
-        u=User.objects.create_user("instructor", password="pass")
-        self.instructor = u.courseuser
-        
-        
-        self.course.courseenrollment_set.create(
-            student=self.student, date_enrolled=timezone.now().date())
-        self.course.courseenrollment_set.create(
-            student=self.instructor, date_enrolled=timezone.now().date(),
-            role=INSTRUCTOR_ROLE)
-
-        # run return_selected_course() so that course will be selected by default
-        self.student.return_selected_course()
-        self.instructor.return_selected_course()
+        set_up_data(self)
 
     def test_thread(self):
         self.selenium.get('%s%s' % (self.live_server_url, self.thread_url))
@@ -414,6 +389,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 
                                                      ".edit_link")))
         
+        deleted_section = ThreadSection.deleted_objects.get(
+            id=new_first_section.id)
+        self.assertEqual(deleted_section.name,
+                         new_first_section.name)
         new_first_section = base_sections[0]
         self.assertEqual(new_first_section, first_section)
 
@@ -453,7 +432,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 
                                                      ".edit_link")))
 
-
+        deleted_section = ThreadSection.deleted_objects.get(
+            id=new_first_section_child.id)
+        self.assertEqual(deleted_section.name,
+                         new_first_section_child.name)
         new_first_section_child = first_section.child_sections.first()
         self.assertEqual(new_first_section_child, first_section_child)
 
@@ -1059,6 +1041,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 
                                                      ".edit_link")))
         
+        deleted_content = ThreadContent.deleted_objects.get(
+            id=new_content.id)
+        self.assertEqual(deleted_content.content_object,
+                         new_content.content_object)
         self.assertEqual(list(first_section_child.thread_contents.all()),
                          [other_content])
 

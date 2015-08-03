@@ -1,7 +1,7 @@
 
 from micourses.models import Course, CourseUser, ThreadSection, ThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
 from mitesting.models import Assessment
-from micourses.forms import StudentContentAttemptForm, thread_content_form_factory
+from micourses.forms import ContentAttemptForm, thread_content_form_factory
 from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
@@ -1674,7 +1674,7 @@ def thread_view(request, course_code):
         ('micourses/thread_detail.html', \
              {'course': course, 
               'include_edit_link': include_edit_link,
-              'course_list': Course.activecourses.all(),
+              'course_list': Course.active_courses.all(),
               'student': courseuser, 
               'ltag': ltag,
               'noanalytics': noanalytics,
@@ -1920,7 +1920,7 @@ class EditSectionView(View):
             if sibling:
                 rerender_sections.append(sibling)
 
-            thread_section.delete()
+            thread_section.mark_deleted()
             rerender_thread=False
             
         # edit section name
@@ -2123,7 +2123,7 @@ class EditContentView(View):
         
         # delete content
         elif action=="delete":
-            thread_content.delete()
+            thread_content.mark_deleted()
             rerender_sections = [thread_section,]
 
 

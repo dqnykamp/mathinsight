@@ -17,19 +17,38 @@ same as anonymous user behavior
 
 Logged in user who is student of course:
 If assessment is not in course thread, same as anonymous user behavior
-Otherwise:
-Ignore seed from GET.
-Find latest content attempt or create if none.
-
-If latest content attempt found, get seeds of assessment 
-and get questions and seeds from latest associated question attempts for each question set.
-If don't find a question attempt for a question set (shouldn't happen),
-then create question attempt 
-
- and question sets from attempt.
-Otherwise, create assessment seed from course code and attempt number,
-as well as username if individualize by student (or seed=1 if single version)
-and generate question set seeds.
+Otherwise
+- Ignore seed from GET
+- Determine if have a valid attempt.
+  Reasons for invalid: not yet released, past due, or solution viewed
+- Find latest content attempt that matches condition
+  (valid, not yet released, or past due/solution viewed)
+  Obtain
+  - assessment seed from content attempt 
+  - order of questions and their seeds from related question attempts
+    (take latest question attempt for each question set)
+  If missing data (e.g., question attempts, which shouldn't happen),
+  then treat as though don't have content attempt and create new one (below)
+- If no matching content attempt, 
+  then create new content attempt and question attempts.
+  Generate assessment seed as follows:
+  - If past due/solution viewed, check for a current valid attempt.
+    If found, use that assessment.
+    If none found, then generate seed as though a valid attempt.
+  - If valid attempt, create assessment seed from 
+    - course code and attempt number
+    - plus username if assessment is individualized by student
+    Exception: set seed=1 if assessment marked as single version
+  - If not yet released, set seed to be attempt number.
+  Use assessment seed to generate question order and seeds for each question.
+  Save 
+  - assessment seed to content attempt
+  - order of questions and their seeds to question attempt
+  If not yet released or past due/solution viewed, mark attempt as invalid.
+If not valid attempt, then removed any feedback of progress on question
+to make it clear that question isn't being tracked.
+Maintain feedback for individual answer responses.
+   
 
 Looged in user who is instructor of course:
 If assessment is not in course thread, same as anonymous user behavior

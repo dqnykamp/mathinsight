@@ -113,7 +113,7 @@ class TestAssessmentView(TestCase):
 
 
 
-    def test_nothing_random(self):
+    def test_single_version(self):
 
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
@@ -153,7 +153,7 @@ class TestAssessmentView(TestCase):
         self.assertTrue(found_different_question1)
 
         
-        self.asmt.nothing_random=True
+        self.asmt.single_version=True
         self.asmt.save()
 
         response = self.client.get("/assess/course/the_test")
@@ -175,7 +175,7 @@ class TestAssessmentView(TestCase):
             self.assertEqual(response.context['seed'],'1')
 
 
-        self.asmt.nothing_random=False
+        self.asmt.single_version=False
         self.asmt.save()
         response = self.client.get("/assess/course/the_test/solution")
 
@@ -202,7 +202,7 @@ class TestAssessmentView(TestCase):
         self.assertTrue(found_different_question1)
 
         
-        self.asmt.nothing_random=True
+        self.asmt.single_version=True
         self.asmt.save()
 
         response = self.client.get("/assess/course/the_test/solution")

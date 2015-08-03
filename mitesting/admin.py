@@ -47,8 +47,7 @@ class AssessmentAdmin(reversion.VersionAdmin):
                 'fields': ('notes', )
                 }),
         ('Other configurations', {
-                'fields': (('total_points', 'time_limit',),
-                           ('allow_solution_buttons', 'fixed_order', 'nothing_random'),
+                'fields': (('allow_solution_buttons', 'fixed_order', 'single_version'),
                            )
                 }),
         )

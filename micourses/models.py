@@ -935,6 +935,13 @@ class ThreadSection(models.Model):
         super(ThreadSection, self).save(*args, **kwargs)
 
 
+    def mark_deleted(self):
+        for thread_content in self.thread_contents.all():
+            thread_content.mark_deleted()
+        self.deleted=True
+        self.save()
+
+
 class ThreadContent(models.Model):
     AGGREGATE_CHOICES = (
         ('Max', 'Maximum'),
@@ -961,12 +968,13 @@ class ThreadContent(models.Model):
     final_due=models.DateTimeField(blank=True, null=True)
 
     grade_category = models.ForeignKey(GradeCategory, blank=True, null=True)
-    individualize_by_student = models.BooleanField(default=True)
-
+    points = models.FloatField(blank=True, null=True)
     attempt_aggregation = models.CharField(max_length=3,
                                            choices = AGGREGATE_CHOICES,
                                            default = 'Max')
 
+
+    individualize_by_student = models.BooleanField(default=True)
     optional = models.BooleanField(default=False)
     available_before_assigned = models.BooleanField(default=False)
     record_scores = models.BooleanField(default=True)
@@ -1049,6 +1057,10 @@ class ThreadContent(models.Model):
         else:
             return None
 
+    def mark_deleted(self):
+        self.deleted=True
+        self.save()
+
 
     def save_to_new_course(self, course, thread):
         original_pk = self.pk
@@ -1070,15 +1082,10 @@ class ThreadContent(models.Model):
         new_content.thread_content = new_thread_content
         new_content.save()
 
-    def total_points(self):
-        try:
-            return self.content_object.get_total_points()
-        except AttributeError:
-            return None
 
     def student_score(self, student):
         try:
-            return self.studentcontentcompletion_set.get(student=student).score
+            return self.studentcontentrecord_set.get(student=student).score
         except ObjectDoesNotExist:
             return None
 
@@ -1254,12 +1261,6 @@ class StudentContentRecord(models.Model):
     initial_due_adjustment = models.DateTimeField(blank=True, null=True)
     final_due_adjustment = models.DateTimeField(blank=True, null=True)
 
-    deleted = models.BooleanField(default=False, db_index=True)
-
-    objects = NondeletedManager()
-    deleted_objects = DeletedManager()
-    all_objects = models.Manager()
-
 
     def __str__(self):
         return "Record for %s on %s" % (self.enrollment.student, self.content)
@@ -1284,7 +1285,7 @@ class StudentContentRecord(models.Model):
             self.recalculate_score()
 
 
-    def recalculate_score(self, recalculate_attempt_scores=False):
+    def recalculate_score(self, total_recalculation=False):
         """
         Recalculate score of student for content.
 
@@ -1293,7 +1294,7 @@ class StudentContentRecord(models.Model):
         for student on this thread_content.
         Aggregate based on attempt_aggregration of thread_content.
         
-        If recalculate_attempt_scores, then first recalculate
+        If total_recalculation, then first recalculate
         the scores of each attempt.  Otherwise, just use the
         score field from each attempt.
 
@@ -1312,12 +1313,12 @@ class StudentContentRecord(models.Model):
             self.save()
             return self.score
 
-        valid_attempts = self.content.studentcontentattempt_set\
-                         .filter(valid=True, student=self.student)
+        valid_attempts = self.attempts.filter(valid=True)
 
-        if recalculate_attempt_scores:
+        if total_recalculation:
             for attempt in valid_attempts:
-                attempt.recalculate_score(propagate=False)
+                attempt.recalculate_score(propagate=False,
+                                          total_recalculation=True)
                 
         if self.content.attempt_aggregation=='Avg':
             # calculate average score of attempts
@@ -1342,14 +1343,6 @@ class ContentAttempt(models.Model):
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)
-
-    deleted = models.BooleanField(default=False, db_index=True)
-
-    objects = NondeletedManager()
-    deleted_objects = DeletedManager()
-    all_objects = models.Manager()
-
-
 
     def __str__(self):
         return "%s's attempt on %s" % (self.record.enrollment.student,
@@ -1380,15 +1373,18 @@ class ContentAttempt(models.Model):
         return int(round(self.score*100.0/points))
 
 
-    def recalculate_score(self, propagate=True):
+    def recalculate_score(self, propagate=True, total_recalculation=False):
         """
         Recalculate score of student content attempt.
         
         Set to score_override if it exists and to None if not assessment.
         Else, score is sum of scores from each associated question set.
 
-        If propagate and attempt isn't invalid,
+        If propagate and attempt is valid,
         then also calculate overall score for student content.
+
+        If total_recalculation, then also calculate the credit 
+        for each question attempt (assuming score not overridden)
 
         """
 
@@ -1397,54 +1393,45 @@ class ContentAttempt(models.Model):
             self.score = self.score_override
 
         else:
-
             # must be an assessment 
             assessment_ct=ContentType.objects.get(model='assessment')
-            if self.content.content_type != assessment_ct:
+            if self.record.content.content_type != assessment_ct:
                 self.score = None
             else:
-
-                assessment=self.content.content_object
-
-                question_set_details = assessment.questionsetdetail_set.all()
-                if question_set_details:
+                assessment = self.record.content.content_object
+                question_set_details = assessment.questionsetdetails_set
+                if total_recalculation:
+                    question_sets = self.question_sets\
+                                        .prefetch_related('question_attempts')
+                else:
+                    question_sets = self.question_sets.all()
+                if question_sets:
+                    total_weight = 0.0
                     self.score = 0.0
-                    for question_set_detail in question_set_details:
-                        self.score += self.get_score_question_set(
-                            question_set_detail)
+                    for question_set in questions_sets:
+                        if total_recalculation:
+                            for qa in question_set.question_attempts.all():
+                                qa.recalculate_credit(propagate=False)
+                                
+                        try:
+                            weight = question_set_details.get(
+                                question_set.question_set).weight
+                        except ObjectDoesNotExist:
+                            weight = 1
+                        self.score += question_set.get_credit()*weight
+                        total_weight += weight
+                    self.score /= total_weight
+
                 else: 
                     self.score = None
         
         self.save()
 
-        if propagate and not self.invalid:
-            content_completion, created = \
-                self.content.studentcontentcompletion_set.get_or_create(
-                    student = self.student)
-            content_completion.recalculate_score(
-                recalculate_attempt_scores=False)
+        if propagate and self.valid:
+            self.record.recalculate_score()
 
         return self.score
 
-
-    def get_score_question_set(self, question_set_detail):
-        question_answers = self.questionstudentanswer_set\
-            .filter(question_set=question_set_detail.question_set)
-
-        if question_answers:
-
-            if self.content.attempt_aggregation=='Avg':
-                credit = question_answers.aggregate(credit=Avg('credit'))\
-                         ['credit']
-            elif self.content.attempt_aggregation=='Las':
-                credit = question_answers.latest('datetime').credit
-            else:
-                credit = question_answers.aggregate(credit=Max('credit'))\
-                         ['credit']
-                
-            return question_set_detail.points*credit
-        else:
-            return 0
 
     def get_percent_credit_question_set(self, question_set):
         question_answers = self.questionstudentanswer_set\
@@ -1490,43 +1477,57 @@ class ContentAttempt(models.Model):
         else:
             return False
 
+
 class ContentAttemptQuestionSet(models.Model):
     content_attempt = models.ForeignKey(ContentAttempt,
                                         related_name="question_sets")
-    question_number = models.SmallIntegerField(blank=True, null=True)
+    question_number = models.SmallIntegerField()
     question_set = models.SmallIntegerField()
     
-    deleted = models.BooleanField(default=False, db_index=True)
-
-    objects = NondeletedManager()
-    deleted_objects = DeletedManager()
-    all_objects = models.Manager()
 
     class Meta:
         ordering = ['question_number']
+        unique_together = [('content_attempt', 'question_number'),
+                           ('content_attempt', 'question_set')]
+
+    def get_credit(self):
+        """
+        Get credit of question set for content attempt.
+
+        The credit earned is aggregate over all question attempts,
+        where aggregate function is determined from thread_content 
+
+        """
+        question_attempts = self.question_attempts.all()
+
+        if not question_attempts:
+            return 0
+
+        content = self.content_attempt.record.content
+
+        if content.attempt_aggregation=='Avg':
+            credit = question_attempts.aggregate(credit=Avg('credit'))\
+                     ['credit']
+        elif content.attempt_aggregation=='Las':
+            credit = question_attempts.latest('datetime').credit
+        else:
+            credit = question_attempts.aggregate(credit=Max('credit'))\
+                     ['credit']
+                
+        return credit
 
 
 class QuestionAttempt(models.Model):
-    # to delete
-    content_attempt = models.ForeignKey(ContentAttempt,
-                                        related_name="question_attempts")
-    question_set = models.SmallIntegerField()
-
-    # remove null
     content_attempt_question_set = models.ForeignKey(
-        ContentAttemptQuestionSet, related_name="question_attempts",
-        null=True)
-    question = models.ForeignKey('mitesting.Question', null=True)
+        ContentAttemptQuestionSet, related_name="question_attempts")
+    question = models.ForeignKey('mitesting.Question')
     seed = models.CharField(max_length=150)
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
 
     solution_viewed = models.DateTimeField(blank=True, null=True)
 
-    deleted = models.BooleanField(default=False, db_index=True)
+    credit = models.FloatField(default=0)
 
-    objects = NondeletedManager()
-    deleted_objects = DeletedManager()
-    all_objects = models.Manager()
 
     class Meta:
         ordering = ['attempt_began']
@@ -1534,41 +1535,65 @@ class QuestionAttempt(models.Model):
 
         
     def __str__(self):
+        qs = self.content_attempt_question_set
         return "%s's attempt on question %s of %s" % \
-            (self.content_attempt.record.enrollment.student, \
-             self.question_number, self.content_attempt.record.content)
+            (qs.content_attempt.record.enrollment.student, \
+             qs.question_number, qs.content_attempt.record.content)
+
+    def recalculate_credit(self, propagate=True):
+        """
+        Recalculate credit of question attempt according to attempt
+        aggregation of content
+        
+        If propagate, also recalculate score for content attempt
+
+        """
+
+        responses = self.responses.all()
+
+        content_attempt = self.content_attempt_question_set.content_attempt
+
+        if not responses:
+            credit=0
+        else:
+        
+            content = content_attempt.record.content
+
+            if content.attempt_aggregation=='Avg':
+                credit = responses.aggregate(credit=Avg('credit'))\
+                         ['credit']
+            elif content.attempt_aggregation=='Las':
+                credit = responses.latest('datetime').credit
+            else:
+                credit = responses.aggregate(credit=Max('credit'))\
+                         ['credit']
+
+        self.save()
+
+        if propagate:
+            content_attempt.recalculate_score()
+
+        return self.credit
+
+
 
 class QuestionResponse(models.Model):
-    #to delete
-    question = models.ForeignKey('mitesting.Question')
-    seed = models.CharField(max_length=150)
-    question_set = models.SmallIntegerField()
-    content_attempt = models.ForeignKey(ContentAttempt)
-
-    # remove null
     question_attempt = models.ForeignKey(QuestionAttempt,
-                                         related_name="answers", null=True)
+                                         related_name="responses")
     response = models.TextField()
     identifier_in_response = models.CharField(max_length=50)
     credit = models.FloatField()
     response_submitted =  models.DateTimeField(blank=True, default=timezone.now)
 
-    deleted = models.BooleanField(default=False, db_index=True)
-
-    objects = NondeletedManager()
-    deleted_objects = DeletedManager()
-    all_objects = models.Manager()
-
 
     def __str__(self):
-        return  "%s" % self.answer
+        return  "%s" % self.response
 
     class Meta:
         ordering = ['response_submitted']
         get_latest_by = "response_submitted"
 
-
     def save(self, *args, **kwargs):
         super(QuestionResponse, self).save(*args, **kwargs)
 
-        self.course_content_attempt.recalculate_score()
+        self.question_attempt.recalculate_credit()

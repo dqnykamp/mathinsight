@@ -1,38 +1,36 @@
 from django import forms
-from micourses.models import StudentContentAttempt, ThreadContent
+from micourses.models import ContentAttempt, ThreadContent
 from django.forms.widgets import HiddenInput,SplitDateTimeWidget, Select
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from midocs.models import Page
 
 
-class StudentContentAttemptForm(forms.ModelForm):
-    datetime = forms.DateTimeField(label="Date/time", 
+class ContentAttemptForm(forms.ModelForm):
+    attempt_began = forms.DateTimeField(label="Date/time", 
                                    widget=forms.TextInput(attrs={'size': 10}))
     class Meta:
-        model = StudentContentAttempt
-        fields = ['student', 'content', 'datetime', 'score', 'seed']
+        model = ContentAttempt
+        fields = ['record', 'attempt_began', 'score', 'seed']
         widgets = {
-            'student': HiddenInput,
-            'content': HiddenInput,
+            'record': HiddenInput,
             'seed': HiddenInput,
             'score': forms.TextInput(attrs={'size': 1}),
-            'datetime': forms.TextInput(attrs={'size': 10}),
+            'attempt_began': forms.TextInput(attrs={'size': 10}),
             }
 
-class StudentContentAttemptRequiredScoreForm(forms.ModelForm):
+class ContentAttemptRequiredScoreForm(forms.ModelForm):
     score = forms.FloatField(required=True)
-    datetime = forms.DateTimeField(label="Date/time", 
+    attempt_began = forms.DateTimeField(label="Date/time", 
                                    widget=forms.TextInput(attrs={'size': 10}))
     class Meta:
-        model = StudentContentAttempt
-        fields = ['student', 'content', 'datetime', 'score', 'seed']
+        model = ContentAttempt
+        fields = ['record', 'attempt_began', 'score', 'seed']
         widgets = {
-            'student': HiddenInput,
-            'content': HiddenInput,
+            'record': HiddenInput,
             'seed': HiddenInput,
             'score': forms.TextInput(attrs={'size': 1}),
-            'datetime': forms.TextInput(attrs={'size': 10}),
+            'attempt_began': forms.TextInput(attrs={'size': 10}),
             }
 
 
@@ -64,7 +62,7 @@ def thread_content_form_factory(the_content_type=None, update_options_command=""
 
         class Meta:
             model=ThreadContent
-            fields = ('content_type', 'object_id', 'substitute_title', 'assigned_date', 'initial_due_date', 'final_due_date', 'assessment_category', 'individualize_by_student', 'optional', 'available_before_assigned')
+            fields = ('content_type', 'object_id', 'substitute_title', 'assigned', 'initial_due', 'final_due', 'grade_category', 'points', 'individualize_by_student', 'attempt_aggregation', 'optional', 'available_before_assigned', 'record_scores')
 
 
     return ThreadContentForm

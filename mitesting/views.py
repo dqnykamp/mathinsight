@@ -1,6 +1,6 @@
 from mitesting.models import Question, Assessment, QuestionAnswerOption
 from midocs.models import Applet
-from micourses.models import QuestionStudentAnswer
+from micourses.models import QuestionResponse
 from django.db import IntegrityError
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
@@ -330,7 +330,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         # Since attempt will be marked as invalid,
         # it won't count toward score and won't be viewable by student
         if current_attempt:
-            QuestionStudentAnswer.objects.create\
+            QuestionResponse.objects.create\
                 (user=request.user, question=question, \
                  question_set=question_set,\
                  answer=json.dumps(answer_user_responses),\
@@ -719,7 +719,7 @@ class AssessmentView(DetailView):
         else:
             seed_from_get_post=True
 
-        if self.object.nothing_random:
+        if self.object.single_version:
             seed='1'
             self.version = ''
         else:

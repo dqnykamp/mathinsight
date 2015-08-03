@@ -25,7 +25,7 @@
 </ol>
 </section>
 
-{% if not assessment.nothing_random %}
+{% if not assessment.single_version %}
 <section id="more_questions_link">
   {% if course_thread_content %}
   <form action="{% url 'mitesting:generatenewassessmentattempt' course_code=assessment.course.code assessment_code=assessment.code %}" method="post">{% csrf_token %}

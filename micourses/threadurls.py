@@ -10,7 +10,7 @@ paginate_by=20
 urlpatterns = [
     url(r'^list$', ListView.as_view
         (template_name="micourses/thread_list.html", 
-         queryset=Course.activecourses.all(),
+         queryset=Course.active_courses.all(),
          paginate_by=paginate_by),
         name="list"),
     url(r'^(?P<course_code>\w+)$', views.thread_view, 
