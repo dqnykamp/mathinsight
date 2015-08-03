@@ -32,6 +32,19 @@ class Migration(migrations.Migration):
             model_name='questionresponse',
             name='user',
         ),
+        migrations.CreateModel(
+            name='ContentAttemptQuestionSet',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('question_number', models.SmallIntegerField(null=True, blank=True)),
+                ('question_set', models.SmallIntegerField()),
+                ('deleted', models.BooleanField(default=False, db_index=True)),
+                ('content_attempt', models.ForeignKey(to='micourses.ContentAttempt', related_name='question_sets')),
+            ],
+            options={
+                'ordering': ['question_number'],
+            },
+        ),
         migrations.AddField(
             model_name='contentattempt',
             name='record',
@@ -82,11 +95,6 @@ class Migration(migrations.Migration):
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='questionattempt',
-            name='solution_viewed',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
             model_name='questionresponse',
             name='deleted',
             field=models.BooleanField(db_index=True, default=False),
@@ -129,11 +137,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='threadsection',
             name='deleted',
-            field=models.BooleanField(db_index=True, default=False),
-        ),
-        migrations.AlterField(
-            model_name='contentattempt',
-            name='invalid',
             field=models.BooleanField(db_index=True, default=False),
         ),
         migrations.AlterField(

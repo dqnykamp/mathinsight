@@ -104,7 +104,8 @@ def move_due_date_adjustments_to_content_record(apps, schema_editor):
             scr = StudentContentRecord.objects.get(student=mdd.student,
                                                    content=mdd.content)
         except StudentContentRecord.DoesNotExist:
-            scr =StudentContentRecord(student=mdd.student, content=mdd.content)
+            scr =StudentContentRecord(student=mdd.student, content=mdd.content,
+                                      last_modified=timezone.now())
 
         scr.initial_due_adjustment = timezone.make_aware(
             timezone.datetime.combine(mdd.initial_due_date, time_endofday))
@@ -177,38 +178,6 @@ def base_attempt_on_record(apps, schema_editor):
             ca.save()
 
 
-def create_question_attempts(apps, schema_editor):
-    QuestionAttempt = apps.get_model("micourses", "QuestionAttempt")
-    QuestionResponse = apps.get_model("micourses", "QuestionResponse")
-    Assessment = apps.get_model("mitesting", "Assessment")
-    
-    for qr in QuestionResponse.objects.all():
-        try:
-            qa = QuestionAttempt.objects.get(content_attempt=qr.content_attempt,
-                                             question_set=qr.question_set)
-        except QuestionAttempt.DoesNotExist:
-            qa = QuestionAttempt(content_attempt=qr.content_attempt,
-                                 question_set=qr.question_set)
-        if qa.question:
-            if qa.question != qr.question:
-                print("Mismatched question for qa: %s, qr: %s" % (qa.pk, qr.pk))
-                print(qa.question, qr.question)
-
-        qa.question=qr.question
-        qa.seed=qr.seed
-        if qa.attempt_began:
-            qa.attempt_began = min(qa.attempt_began, qr.response_submitted)
-        else:
-            qa.attempt_began = qr.response_submitted
-        qa.save()
-
-        qr.question_attempt = qa
-        qr.save()
-
-
-
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -221,5 +190,4 @@ class Migration(migrations.Migration):
         migrations.RunPython(move_due_date_adjustments_to_content_record),
         migrations.RunPython(base_record_on_enrollment),
         migrations.RunPython(base_attempt_on_record),
-        migrations.RunPython(create_question_attempts),
     ]

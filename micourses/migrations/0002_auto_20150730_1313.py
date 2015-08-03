@@ -28,8 +28,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='studentcontentattempt',
-            name='invalid',
-            field=models.BooleanField(default=False),
+            name='valid',
+            field=models.BooleanField(db_index=True, default=True),
         ),
         migrations.RemoveField(
             model_name='studentcontentattempt',

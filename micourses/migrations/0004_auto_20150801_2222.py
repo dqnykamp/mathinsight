@@ -29,10 +29,6 @@ class Migration(migrations.Migration):
             old_name='datetime',
             new_name='attempt_began',
         ),
-        migrations.RemoveField(
-            model_name='questionattempt',
-            name='solution_viewed',
-        ),
         migrations.RenameField(
             model_name='questionattempt',
             old_name='datetime',
@@ -63,11 +59,6 @@ class Migration(migrations.Migration):
             name='attempt_began',
             field=models.DateTimeField(blank=True, default=django.utils.timezone.now),
         ),
-        migrations.AddField(
-            model_name='questionattempt',
-            name='question_number',
-            field=models.SmallIntegerField(blank=True, null=True),
-        ),
         migrations.AlterField(
             model_name='questionresponse',
             name='response_submitted',
@@ -82,5 +73,10 @@ class Migration(migrations.Migration):
             model_name='studentcontentrecord',
             name='last_modified',
             field=models.DateTimeField(blank=True),
+        ),
+        migrations.AddField(
+            model_name='questionattempt',
+            name='content_attempt_question_set',
+            field=models.ForeignKey(related_name='question_attempts', to='micourses.ContentAttemptQuestionSet', null=True),
         ),
     ]

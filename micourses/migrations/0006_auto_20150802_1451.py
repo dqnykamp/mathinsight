@@ -31,31 +31,10 @@ class Migration(migrations.Migration):
             model_name='contentattempt',
             name='student',
         ),
-        migrations.RemoveField(
-            model_name='questionresponse',
-            name='content_attempt',
-        ),
-        migrations.RemoveField(
-            model_name='questionresponse',
-            name='question',
-        ),
-        migrations.RemoveField(
-            model_name='questionresponse',
-            name='question_set',
-        ),
-        migrations.RemoveField(
-            model_name='questionresponse',
-            name='seed',
-        ),
         migrations.AlterField(
             model_name='contentattempt',
             name='record',
             field=models.ForeignKey(related_name='attempts', to='micourses.StudentContentRecord'),
-        ),
-        migrations.AlterField(
-            model_name='questionresponse',
-            name='question_attempt',
-            field=models.ForeignKey(related_name='answers', to='micourses.QuestionAttempt'),
         ),
         migrations.AlterField(
             model_name='studentattendance',

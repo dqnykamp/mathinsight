@@ -1313,7 +1313,7 @@ class StudentContentRecord(models.Model):
             return self.score
 
         valid_attempts = self.content.studentcontentattempt_set\
-                         .filter(invalid=False, student=self.student)
+                         .filter(valid=True, student=self.student)
 
         if recalculate_attempt_scores:
             for attempt in valid_attempts:
@@ -1341,7 +1341,7 @@ class ContentAttempt(models.Model):
     score_override = models.FloatField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
-    invalid = models.BooleanField(default=False, db_index=True)
+    valid = models.BooleanField(default=True, db_index=True)
 
     deleted = models.BooleanField(default=False, db_index=True)
 
@@ -1490,13 +1490,33 @@ class ContentAttempt(models.Model):
         else:
             return False
 
+class ContentAttemptQuestionSet(models.Model):
+    content_attempt = models.ForeignKey(ContentAttempt,
+                                        related_name="question_sets")
+    question_number = models.SmallIntegerField(blank=True, null=True)
+    question_set = models.SmallIntegerField()
+    
+    deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = NondeletedManager()
+    deleted_objects = DeletedManager()
+    all_objects = models.Manager()
+
+    class Meta:
+        ordering = ['question_number']
+
 
 class QuestionAttempt(models.Model):
+    # to delete
     content_attempt = models.ForeignKey(ContentAttempt,
                                         related_name="question_attempts")
     question_set = models.SmallIntegerField()
-    question_number = models.SmallIntegerField(blank=True, null=True)
-    question = models.ForeignKey('mitesting.Question', blank=True, null=True)
+
+    # remove null
+    content_attempt_question_set = models.ForeignKey(
+        ContentAttemptQuestionSet, related_name="question_attempts",
+        null=True)
+    question = models.ForeignKey('mitesting.Question', null=True)
     seed = models.CharField(max_length=150)
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
 
@@ -1509,7 +1529,7 @@ class QuestionAttempt(models.Model):
     all_objects = models.Manager()
 
     class Meta:
-        ordering = ['question_number']
+        ordering = ['attempt_began']
         get_latest_by = "attempt_began"
 
         
@@ -1519,8 +1539,15 @@ class QuestionAttempt(models.Model):
              self.question_number, self.content_attempt.record.content)
 
 class QuestionResponse(models.Model):
+    #to delete
+    question = models.ForeignKey('mitesting.Question')
+    seed = models.CharField(max_length=150)
+    question_set = models.SmallIntegerField()
+    content_attempt = models.ForeignKey(ContentAttempt)
+
+    # remove null
     question_attempt = models.ForeignKey(QuestionAttempt,
-                                         related_name="answers")
+                                         related_name="answers", null=True)
     response = models.TextField()
     identifier_in_response = models.CharField(max_length=50)
     credit = models.FloatField()
