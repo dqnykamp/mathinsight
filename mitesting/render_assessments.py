@@ -364,7 +364,7 @@ def return_new_answer_data(rng=None):
                     'answer_info': [],
                     'question': None,
                     'question_identifier': "",
-                    'prefilled_answers': [],
+                    'prefilled_responses': [],
                     'error': False,
                     'answer_errors': [],
                     'readonly': False,
@@ -631,7 +631,7 @@ def render_question(question, rng, seed=None, solution=False,
                     user=None, show_help=True,
                     assessment=None, question_set=None, 
                     assessment_seed=None, 
-                    prefilled_answers=None, 
+                    prefilled_responses=None, 
                     readonly=False, auto_submit=False, 
                     record_answers=True,
                     allow_solution_buttons=False,
@@ -668,7 +668,7 @@ def render_question(question, rng, seed=None, solution=False,
       Used for recording answers of computer graded questions
     - assessment_seed: which assessment seed was used to generate assessment.
       Used for recording answers of computer graded questions
-    - prefilled_answers: a list containing answers for answer blanks.
+    - prefilled_responses: a list containing respones for answer blanks.
       Useful for redisplaying student answers
     - readonly: if true, then all answer blanks are readonly.
       Useful with prefilled answers.
@@ -745,7 +745,7 @@ def render_question(question, rng, seed=None, solution=False,
     # first, setup context due to expressions from question.
     # include any prefilled responses to answers
     context_results = setup_expression_context(question, rng=rng, seed=seed,
-                                        user_responses=prefilled_answers)
+                                        user_responses=prefilled_responses)
 
     # if failed condition, then don't display the question
     # but instead give message that condition failed
@@ -806,7 +806,7 @@ def render_question(question, rng, seed=None, solution=False,
                     'answer_info': [],
                     'question': question,
                     'question_identifier': question_identifier,
-                    'prefilled_answers': prefilled_answers,
+                    'prefilled_responses': prefilled_responses,
                     'readonly': readonly,
                     'error': bool(invalid_answers),
                     'answer_errors': invalid_answer_messages,
@@ -828,9 +828,9 @@ def render_question(question, rng, seed=None, solution=False,
     # number of answer blanks (template tag already checked if
     # the answer_codes matched for those answers that were found)
     # If so, log warning but otherwise ignore.
-    if prefilled_answers:
-        if len(prefilled_answers) != len(answer_data["answer_info"]):
-            message = "Invalid number of previous answers.\nQuestion: %s"\
+    if prefilled_responses:
+        if len(prefilled_responses) != len(answer_data["answer_info"]):
+            message = "Invalid number of previous responses.\nQuestion: %s"\
                       % question
             if assessment:
                 message += "\nAssessment: %s" % assessment
@@ -964,25 +964,42 @@ def render_question(question, rng, seed=None, solution=False,
 
 
 
-def get_question_list(assessment, rng):
+def get_question_list(assessment, seed, rng=None, thread_content=None):
     """
-    Return list of questions for assessment, one for each question_set.
-    Questions are chosen randomly based on state of random instance rng
-    Its state can be set via rng.seed(seed).
+    Return list of questions for assessment, one for each question_set,
+    along with additional information about each question.
+
+    After initializing random number generator with seed
+    randomly pick a question and determine question group.  
+    If assessment is not set to fixed order,
+    randomly order the chosen assessments, keeping questions in the same
+    group together.
 
     Each question is randomly assigned a seed, which is to be used
     generate the question and/or solution, ensuring that question
     and solution will match.
 
+
     Return a list of dictionaries, one for each question. 
     Each dictionary contains the following:
     - question_set: the question_set from which the question was drawn
     - question: the question chosen
-    - points: the number of points the question set is worth
     - seed: the seed to use to render the question
+    - relative_weight: the relative weight of the question
+    - points: if have thread_content, then convert weight to points
+    - group: the group of the question, if specified
+    - previous_same_group: True if group is same as that of previous question
     """
 
+    if not rng:
+        import random
+        rng=random.Random()
+        
+    rng.seed(seed)
+
     question_list = []
+    
+    total_weight = 0
 
     for question_set in assessment.question_sets():
         questions_in_set = assessment.questionassigned_set.filter(
@@ -993,154 +1010,47 @@ def get_question_list(assessment, rng):
         # generate a seed for the question
         # so that can have link to this version of question and solution
         question_seed=get_new_seed(rng)
-        the_points = assessment.points_of_question_set(question_set)
-        if the_points is None:
-            the_points = ""    
+
+        # find question set detail, if it exists
+        try:
+            question_detail=assessment.questionsetdetail_set.get(
+                question_set=question_set)
+        except ObjectDoesNotExist:
+            question_detail = None
+        
+        if question_detail:
+            weight=question_detail.weight
+            group=question_detail.group
+        else:
+            weight=1
+            group=""
+
+        total_weight += weight
+
         question_list.append({'question_set': question_set,
                               'question': the_question,
-                              'points': the_points,
-                              'seed': question_seed}
-                             )
+                              'seed': question_seed,
+                              'relative_weight': weight,
+                              'group': group,
+                              'previous_same_group': False
+        })
 
-    return question_list
-            
-
-
-def render_question_list(assessment, rng, seed=None, user=None, solution=False,
-                         current_attempt=None, auxiliary_data=None,
-                         show_post_user_errors=False):
-    """
-    Generate list of rendered questions or solutions for assessment.
-
-    After initializing random number generator with seed
-    (or generating a new seed if seed was None),
-    from each question set, randomly pick a question and a question seed,
-    render the question, determine score on this attempt of assessment,
-    and determine question group.  If assessment is not set to fixed order,
-    randomly order the chosen assessments, keeping questions in the same
-    group together.
-    
-
-    Inputs:
-    - assessment: the assessment to be rendered
-    - rng: instance of random number generator to use
-    - seed: random number generator seed to generate assesment and questions
-    - user: the logged in user
-    - solution: True if rendering solution
-    - current_attempt: information about score so far on computer scored
-      assessments (need to fix and test)
-    - auxiliary_data: dictionary for information that should be accessible 
-      between questions or outside questions.  Used, for example, 
-      for information about applets and hidden sections embedded in text
-    - show_post_user_errors: if true, show errors in expressions that are
-      flagged as post user response
-
-    Outputs:
-    - seed that used to generate assessment (the input seed unless it was None)
-    - question_list.  List of dictionaries, one per question, giving
-      information about the question.  Each dictionary contains:
-      - question_set: the question_set from which the question was drawn
-      - question: the question chosen
-      - points: the number of points the question set is worth
-      - seed: the seed to use to render the question
-      - question_data: dictionary containing the information needed to
-        display the question with question_body.html template.
-        This dictionary is what is returned by render_question, supplemented by
-        - points: copy of above points
-        - current_credit: the percent credit achieved in current attempt
-        - current_score: the score (points) achieved in the current attempt
-        - attempt_url: url to current attempt for the question
-      - group: the group the question set belongs to
-      - previous_same_group: true if the previous question if from the
-        same question group as the current question
-        (Used as indicator for templates that questions belong together.)
-    """
-
-    
-    if seed is None:
-        seed=get_new_seed(rng)
-        
-    rng.seed(seed)
-    question_list = get_question_list(assessment, rng=rng)
-
-
-    for (i, question_dict) in enumerate(question_list):
-
-        # use qa for identifier since coming from assessment
-        identifier="qa%s" % i
-
-        question = question_dict['question']
-        question_set = question_dict['question_set']
-        prefilled_answers=None
-
-        # if have current attempt, load latest answers from that attempt
-        if current_attempt:
-            try:
-                latest_answers=current_attempt.questionstudentanswer_set.\
-                    filter(user=user, seed=question_dict["seed"]).latest()
-            except ObjectDoesNotExist:
-                latest_answers=None
-
-            if latest_answers:
-                import json
-                prefilled_answers = json.loads(latest_answers.answer)
-
-        question_data = render_question(
-            question, rng=rng, seed=question_dict["seed"],solution=solution,
-            question_identifier=identifier,
-            user=user, show_help=not solution,
-            assessment=assessment, question_set=question_set,
-            assessment_seed=seed, 
-            record_answers=True,
-            allow_solution_buttons=assessment.allow_solution_buttons,
-            auxiliary_data=auxiliary_data,
-            prefilled_answers=prefilled_answers,
-            show_post_user_errors=show_post_user_errors)
-        
-        question_dict['question_data']=question_data
-
-        # record actual seed used to generate question
-        question_dict['seed']=question_data['seed']
-
-        # if have a latest attempt, look for maximum score on question_set
-        current_score=None
-        if current_attempt:
-            try:
-                current_credit =current_attempt\
-                    .get_percent_credit_question_set(question_set)
-                if question_dict['points']:
-                    current_score = current_credit\
-                        *question_dict['points']/100
-                else:
-                    current_score=0
-            except ObjectDoesNotExist:
-                current_credit = None
-        else:
-            current_credit = None
-
-        # record information about score and points in question_data
-        # so is available in question_body.html template
-        question_data['points']=question_dict['points']
-        question_data['current_score']=current_score
-        question_data['current_credit']=current_credit
-
-        try:
-            question_group = assessment.questionsetdetail_set.get\
-                (question_set=question_set).group
-        except ObjectDoesNotExist:
-            question_group = ''
-        
-        question_dict["group"] = question_group
-        question_dict["previous_same_group"] = False
+    # make weight be relative weight
+    # if have thread_content, then multiply by assessment points to
+    # get question_points
+    for q_dict in question_list:
+        q_dict['relative_weight'] /= total_weight
+        if thread_content:
+            q_dict['points'] = q_dict["relative_weight"]*thread_content.points
 
     if assessment.fixed_order:
         for i in range(1, len(question_list)):
             the_group = question_list[i]["group"]
             # if group is not blank and the same as previous group
-            # make as belonging to same group as previous question
+            # mark as belonging to same group as previous question
             if the_group and question_list[i-1]["group"] == the_group:
                     question_list[i]["previous_same_group"] = True
-        return question_list, seed
+        return question_list
 
     # if not fixed order randomly shuffle questions
     # keep questions with same group together
@@ -1189,5 +1099,216 @@ def render_question_list(assessment, rng, seed=None, user=None, solution=False,
         previous_group = this_group
         question_list_shuffled.append(q)
 
-    return question_list_shuffled, seed
+    return question_list_shuffled
 
+    
+def return_question_list_from_specified_data(
+        assessment, question_sets, question_seeds, question_ids,
+        thread_content=None):
+
+    """
+    Attempt to populate question list from specified data.
+
+    Inputs: 
+    question_sets: as list of question sets
+    question_seeds: a list of seeds to use for each question
+    question_ids: a list of question ids
+
+    To be valid, each question set from assessment must appear once in list.
+    The question ids must be valid and the questions must belong to course,
+    but the questions are not verified to be part of the specified question set
+    If not valid, then raise ValueError.
+
+    If valid, then return a question list of same format as
+    get_question_list().
+    
+    """
+
+    # verify that question sets are valid
+    if sorted(question_sets) != sorted(assessment.question_sets):
+        raise ValueError("Invalid questions sets for assessment")
+
+    if len(question_seeds) != len(question_sets) or  \
+       len(question_ids) != len(question_sets):
+        raise ValueError("Invalid number of question seeds or ids")
+
+
+    question_list = []
+    total_weight=0
+
+    for (ind,question_set) in enumerate(question_sets):
+        try:
+            question=Question.objects.get(course=assessment.course,
+                                          id=question_ids[ind])
+        except Question.DoesNotExist:
+            raise ValueError("Question not found in assessment")
+
+        # find question set detail, if it exists
+        try:
+            question_detail=assessment.questionsetdetail_set.get(
+                question_set=question_set)
+        except ObjectDoesNotExist:
+            question_detail = None
+        
+        if question_detail:
+            weight=question_detail.weight
+            group=question_detail.group
+        else:
+            weight=1
+            group=""
+
+        total_weight += weight
+
+        question_list.append({'question_set': question_set,
+                              'question': question,
+                              'seed': question_seeds[ind],
+                              'relative_weight': weight,
+                              'group': group,
+                              'previous_same_group': False
+        })
+
+    # make weight be relative weight
+    # if have thread_content, then multiply by assessment points to
+    # get question_points
+    for q_dict in question_list:
+        q_dict['relative_weight'] /= total_weight
+        if thread_content:
+            q_dict['points'] = q_dict["relative_weight"]*thread_content.points
+
+    # treat just like fixed order
+    for i in range(1, len(question_list)):
+        the_group = question_list[i]["group"]
+        # if group is not blank and the same as previous group
+        # mark as belonging to same group as previous question
+        if the_group and question_list[i-1]["group"] == the_group:
+                question_list[i]["previous_same_group"] = True
+    return question_list
+
+
+
+def render_question_list(assessment, question_list, assessment_seed, rng=None,
+                         user=None, solution=False,
+                         auxiliary_data=None,
+                         show_post_user_errors=False):
+    """
+    Generate list of rendered questions or solutions for assessment.
+
+    After initializing random number generator with seed
+    (or generating a new seed if seed was None),
+    from each question set, randomly pick a question and a question seed,
+    render the question, determine score on this attempt of assessment,
+    and determine question group.  If assessment is not set to fixed order,
+    randomly order the chosen assessments, keeping questions in the same
+    group together.
+    
+
+    Inputs:
+    - assessment: the assessment to be rendered
+    - rng: instance of random number generator to use
+    - seed: random number generator seed to generate assesment and questions
+    - user: the logged in user
+    - solution: True if rendering solution
+    - current_attempt: information about score so far on computer scored
+      assessments (need to fix and test)
+    - auxiliary_data: dictionary for information that should be accessible 
+      between questions or outside questions.  Used, for example, 
+      for information about applets and hidden sections embedded in text
+    - show_post_user_errors: if true, show errors in expressions that are
+      flagged as post user response
+
+    Outputs:
+    - seed that used to generate assessment (the input seed unless it was None)
+    - question_list.  List of dictionaries, one per question, giving
+      information about the question.  Each dictionary contains:
+      - question_set: the question_set from which the question was drawn
+      - question: the question chosen
+      - points: the number of points the question set is worth
+      - seed: the seed to use to render the question
+      - question_data: dictionary containing the information needed to
+        display the question with question_body.html template.
+        This dictionary is what is returned by render_question, supplemented by
+        - points: copy of above points
+        - current_credit: the percent credit achieved in current attempt
+        - current_score: the score (points) achieved in the current attempt
+        - attempt_url: url to current attempt for the question
+      - group: the group the question set belongs to
+      - previous_same_group: true if the previous question if from the
+        same question group as the current question
+        (Used as indicator for templates that questions belong together.)
+    """
+
+    if not rng:
+        import random
+        rng=random.Random()
+
+    for (i, question_dict) in enumerate(question_list):
+
+        # use qa for identifier since coming from assessment
+        identifier="qa%s" % i
+
+        question = question_dict['question']
+        question_set = question_dict['question_set']
+        question_seed = question_dict["seed"]
+        question_attempt = question_dict.get("question_attempt")
+
+        prefilled_responses=None
+
+        # if have question attempt, load latest responses from that attempt
+        if question_attempt:
+            try:
+                latest_response=question_attempt.responses\
+                    .filter(valid=True).latest()
+            except ObjectDoesNotExist:
+                latest_response=None
+
+            if latest_response:
+                import json
+                prefilled_responses = json.loads(latest_response.response)
+
+        question_data = render_question(
+            question, rng=rng, seed=question_seed, solution=solution,
+            question_identifier=identifier,
+            user=user, show_help=not solution,
+            assessment=assessment, question_set=question_set,
+            assessment_seed=assessment_seed, 
+            record_answers=True,
+            allow_solution_buttons=assessment.allow_solution_buttons,
+            auxiliary_data=auxiliary_data,
+            prefilled_responses=prefilled_responses,
+            show_post_user_errors=show_post_user_errors)
+        
+        question_dict['question_data']=question_data
+
+        # if question seed changed 
+        # (from resampling question expressions until valid combination found)
+        if question_seed != question_data["seed"]:
+            # if initial question seed matched that from question_attempt,
+            # then record updated seed to reduce future resampling
+            if question_attempt and question_seed==question_attempt.seed:
+                question_attempt.seed = question_data["seed"]
+                question_attempt.save()
+
+            # record actual seed used in question_dict
+            # so resampling not needed when checking correctness of reponses
+            question_dict['seed']=question_data['seed']
+
+        # if have a latest attempt, look for maximum score on question_set
+        current_score=None
+        if question_attempt:
+            current_credit = question_attempt.credit
+            if question_dict.get('points'):
+                current_score = current_credit\
+                    *question_dict['points']
+            else:
+                current_score=0
+        else:
+            current_credit = None
+
+        # record information about score and points in question_data
+        # so is available in question_body.html template
+        question_data['points']=question_dict.get('points')
+        question_data['current_score']=current_score
+        question_data['current_credit']=current_credit
+
+
+    return question_list

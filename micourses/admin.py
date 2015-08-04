@@ -129,6 +129,7 @@ class CourseAdmin(reversion.VersionAdmin):
                            ('track_attendance', 'adjust_due_date_attendance'),
                            ('last_attendance_date', 'attendance_end_of_week',
                             'attendance_threshold_percent'),
+                           'attendance_time_zone',
                            )
                 }),
         )

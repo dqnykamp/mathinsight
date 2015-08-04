@@ -940,7 +940,7 @@ class QuestionSetDetail(models.Model):
     assessment = models.ForeignKey(Assessment)
     question_set = models.SmallIntegerField(db_index=True)
     weight = models.FloatField(default=1)
-    group = models.CharField(max_length=50, blank=True, null=True)
+    group = models.CharField(max_length=50, blank=True, default="")
 
     class Meta:
         unique_together = ("assessment", "question_set")

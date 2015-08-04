@@ -12,7 +12,7 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.contrib.contenttypes.models import ContentType
-import datetime
+from django.utils import timezone
 from mitesting.permissions import return_user_assessment_permission_level, user_has_given_assessment_permission_level_decorator, user_has_given_assessment_permission_level, user_can_administer_assessment
 from django.views.generic import DetailView, View
 from django.views.generic.detail import SingleObjectMixin
@@ -598,10 +598,7 @@ class AssessmentView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(AssessmentView, self).get_context_data(**kwargs)
 
-        context['assessment_date'] = self.request.GET.get('date')
-        if not context['assessment_date']:
-            context['assessment_date']  = \
-                datetime.date.today().strftime("%B %d, %Y")
+        context['assessment_date'] = kwargs['assessment_date']
 
         from midocs.functions import return_new_auxiliary_data
         auxiliary_data =  return_new_auxiliary_data()
@@ -618,10 +615,11 @@ class AssessmentView(DetailView):
             show_post_user_errors=False
 
         from .render_assessments import render_question_list, get_new_seed
-        (rendered_list,self.seed)=render_question_list(
-            self.object, rng=rng, seed=self.seed, user=self.request.user, 
+        rendered_list=render_question_list(
+            self.assessment, self.question_list, rng=rng, 
+            assessment_seed=self.assessment_seed, 
+            user=self.request.user, 
             solution=self.solution,
-            current_attempt=self.current_attempt,
             auxiliary_data = auxiliary_data,
             show_post_user_errors=show_post_user_errors)
 
@@ -632,7 +630,7 @@ class AssessmentView(DetailView):
             context['question_only'] = question_only
         context['rendered_list'] = rendered_list
 
-        context['seed'] = self.seed
+        context['seed'] = self.assessment_seed
 
         # determine if there were any errors
         success=True
@@ -659,30 +657,30 @@ class AssessmentView(DetailView):
                 context['show_solution_link'] = True
 
 
-        context['assessment_name'] = self.object.name
+        context['assessment_name'] = self.assessment.name
         if self.solution:
             context['assessment_name'] += " solution"
-        context['assessment_short_name'] = self.object.return_short_name()
+        context['assessment_short_name'] = self.assessment.return_short_name()
         if self.solution:
             context['assessment_short_name'] += " sol."
 
-        if self.version:
-            context['version_string'] = ', version %s' % self.version
+        if self.version_string:
+            context['version_string'] = ', version %s' % self.version_string
         else:
             context['version_string'] = ''
 
-        context['course'] = self.course
-        context['course_thread_content'] = self.course_thread_content
+        context['course'] = self.assessment.course
+        context['thread_content'] = self.thread_content
         context['attempt_number'] = self.attempt_number
 
         # add attempt url to rendered_list question_data
-        if self.course_thread_content:
+        if self.thread_content:
             for (ind,q) in enumerate(rendered_list):
-                q["question_data"]["attempt_url"] = reverse('micourses:assessmentattemptquestion', kwargs={'pk': self.course_thread_content.id, 'attempt_number': self.attempt_number, 'question_number': ind+1} )
+                q["question_data"]["attempt_url"] = reverse('micourses:assessmentattemptquestion', kwargs={'pk': self.thread_content.id, 'attempt_number': self.attempt_number, 'question_number': ind+1} )
 
         # get list of the question numbers in assessment
         # if question_numbers specified in GET parameters
-        if "question_numbers" in self.request.GET:
+        if kwargs["include_question_numbers"]:
             question_numbers=[]
             for q in rendered_list:
                 question_numbers.append(str(q['question'].id))
@@ -701,99 +699,394 @@ class AssessmentView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object(queryset=self.model.objects.filter(
             course__code=self.kwargs["course_code"]))
-        seed = request.GET.get('seed')
-        self.determine_seed_version(user=request.user,seed=seed)
-        context = self.get_context_data(object=self.object)
+        self.assessment = self.object
+
+        self.determine_version_attempt(
+            user=request.user,seed=request.GET.get('seed'),
+            question_seeds=request.GET.get('question_seeds'),
+            question_ids=request.GET.get('question_ids'),
+            question_sets=request.GET.get('question_sets'),
+            number_in_thread=request.GET.get('n',1),
+        )
+
+        # other data from GET
+        current_tz = timezone.get_current_timezone()
+        assessment_date = request.GET.get('date',
+                current_tz.normalize(timezone.now().astimezone(current_tz))\
+                                          .strftime("%B %d, %Y"))
+        question_numbers = "question_numbers" in request.GET
+        
+        context = self.get_context_data(object=self.object, 
+                                assessment_date=assessment_date,
+                                include_question_numbers=question_numbers)
         return self.render_to_response(context)
 
 
-    def determine_seed_version(self, user, seed=None):
-        """
-        
-        Need to fix and test this.
+    def determine_version_attempt(self, user, seed, 
+                                  question_seeds, question_ids, question_sets,
+                                  number_in_thread):
 
         """
-
-        if seed is None:
-            seed_from_get_post=False
-        else:
-            seed_from_get_post=True
-
-        if self.object.single_version:
-            seed='1'
-            self.version = ''
-        else:
-            if seed is None:
-                seed='1'
-            self.version = seed
+        Determine what version of assessment to generate.
         
-        # First determine if user is enrolled in an course
+        For enrolled students, find or create
+        content attempts and question attempts.
+
+        Set the following variables that give information about user
+        and the assessment's role in course:
+        self.current_enrollment
+        self.thread_content
+        self.attempt_number
+
+        Set the following variables that specify the version of assessment:
+        self.assessment_seed
+        self.version_string
+        self.question_list
+
+        question_list is a list of dictionaries with the following info 
+        about each question
+        - question: the question chosen for the question_set
+        - seed: the seed for the question
+        - question_set (optional): the question set from which the question
+          was chosen
+        - question_attempt (optional): the question attempt in which
+          to record responses.
+
+
+        ------------------
+        
+        Behavior based on status of user as follows.
+
+        Anonymous user behavior:
+        just set seed via GET.  If seed is not specified, use seed=1.
+        If single version, ignore seed from GET and use seed=1.
+        Generate new seed and make link at bottom.
+        Even if resample question sets, reloading page will reset with questions
+        from that given assessment seed.
+
+        Logged in user who isn't in course: 
+        same as anonymous user behavior
+
+        Logged in user who is an active student of course:
+        If assessment is not in course thread, same as anonymous user behavior
+        Otherwise
+        - Ignore seed from GET
+        - Determine availability of content 
+        - Find latest content attempt
+          If content attempt validity does not match, 
+          treat as no matching attempt (available=valid)
+          Obtain
+          * assessment seed from content attempt 
+          * list of questions sets in order (from content attempt question sets)
+          * the latest question attempt for each question set
+          * from each question attempt, determine
+            + question
+            + seed 
+            + whether or not solution viewed
+          If missing data (e.g., assessment seed or question attempts),
+          then treat as though don't have content attempt and create new one
+        - If no matching content attempt, 
+          then create new content attempt and question attempts.
+          Generate assessment seed as follows:
+          * If not yet released, set seed to be attempt number.
+          * Otherwise, create assessment seed from 
+            + thread content id and attempt number
+            + plus username if assessment is individualized by student
+            Exception: set seed=1 if assessment marked as single version
+          Use assessment seed to generate
+          * list of question sets in order
+          * question and seed
+          Save 
+          * assessment seed to content attempt
+          * list of question sets in order to content attempt question sets
+          * questions and their seeds to question attempt
+          If not yet released or past due, mark content attempt
+          and question attempts as invalid.
+
+
+        Logged in user who is a withdrawn student of course:
+        Treat like active student, only mark as withdrawn so can
+        display message when submitting responses.
+
+
+        Looged in user who is instructor of course:
+        If assessment is not in course thread, same as anonymous user behavior
+        Otherwise:
+        If seed is in GET
+        - use that to generate assessment (even if single version)
+        - If GET also contains list of question ids and question seeds,
+          then use those ids and question seeds 
+          rather than those from assessment.
+          (If number of ids and seeds doesn't match assesment
+          or ids are invalid,
+          then ignore and generate questions from assessment seed.)
+        - do not record any responses 
+          (not possible anyway as no matching attempts)
+        If seed is not in GET, treat as student of course
+
+
+        """
+
+        # sets the following variables
+        self.course_enrollment=None
+        self.thread_content=None
+        self.assessment_seed= None
+        self.version_string = ''
+        self.attempt_number=1
+        self.question_list = []
+
+        from mitesting.render_assessments import get_question_list
+        from micourses.models import INSTRUCTOR_ROLE, NOT_YET_AVAILABLE, \
+            NOT_YET_AVAILABLE
+
+
+        #################################
+        # first, determine status of user
+        #################################
+
+        # if course user doesn't exist, then is anonymous user
+        # as logged in users should have a courseuser
         try:
             courseuser = user.courseuser
-            self.course = courseuser.return_selected_course()
-        except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
+        except AttributeError:
             courseuser = None
-            self.course = None
 
-        self.current_attempt=None
-        self.attempt_number=0
-        self.course_thread_content=None
-
-
-        # if enrolled in the course
-        if self.course:
-            assessment_content_type = ContentType.objects.get\
-                (model='assessment')
-
+        # check if enrolled in course
+        if courseuser:
             try:
-                self.course_thread_content=self.course.thread_contents.get\
-                    (object_id=self.object.id,\
-                         content_type=assessment_content_type)
-                # Finds the course version of the specific assessment
+                self.course_enrollment = self.assessment.course\
+                        .courseenrollment_set.get(student=courseuser)
             except ObjectDoesNotExist:
-                self.course=None
-
-            if self.course_thread_content:
-                attempts = self.course_thread_content.studentcontentattempt_set\
-                    .filter(student=courseuser) 
-                self.attempt_number = attempts.count()
-                # attempts = attempts.filter(score=None) # We do not want to modify attempts where the score has been overitten
+                pass
 
 
+        ###############################################
+        # first, determine thread_content of assessment
+        ###############################################
 
-                # if instructor and seed is set from GET/POST
-                # then use that seed and don't link to attempt
-                # (i.e., skip this processing)
-                if not (courseuser.get_current_role() == 'I' and \
-                          seed_from_get_post):
+        # only exception where could have no thread content is
+        # if assessment is not in thread and number in thread is 1
+        try:
+            self.thread_content=self.assessment.thread_content_set.all()\
+                            [number_in_thread-1]
+        except (IndexError, ValueError, AssertionError):
+            if number_in_thread==1 and \
+               not self.assessment.thread_content_set.all():
+                pass
+            else:
+                raise Http404("No assessment found") 
 
-                    # else try to find latest attempt
-                    try:
-                        self.current_attempt = attempts.latest()
-                        seed = self.current_attempt.seed
-                        self.version = str(self.attempt_number)
-                        if self.course_thread_content.individualize_by_student:
-                            self.version= "%s_%s" % (courseuser.user.username,
-                                                     self.version)
 
-                    except ObjectDoesNotExist:
-                        # for seed use course_code, assessment_id, 
-                        # and possibly student
+        
+        ########################################################
+        # generic behavior if not in course or no thread content
+        ########################################################
 
-                        # if individualize_by_student, add username
-                        self.version = "1"
-                        if self.course_thread_content.individualize_by_student:
-                            self.version= "%s_%s" % (courseuser.user.username, 
-                                                     self.version)
-                        seed = "%s_%s_%s" % (self.course.code, self.object.id, 
-                                             self.version)
+        
+        if not (self.course_enrollment and self.thread_content):
+            if self.assessment.single_version:
+                self.assessment_seed='1'
+                self.version_string = ''
+            else:
+                if seed is None:
+                    self.assessment_seed='1'
+                else:
+                    self.assessment_seed=seed
+                self.version_string = str(self.assessment_seed)
 
-                        # create the attempt
-                        self.current_attempt = \
-                            self.course_thread_content.studentcontentattempt_set\
-                            .create(student=courseuser, seed=seed)
 
-        self.seed=seed
+            self.question_list = get_question_list(self.assessment, 
+                                                   seed=self.assessment_seed)
+
+            return
+
+
+        #########################################
+        # instructor behavior with seed specified
+        #########################################
+
+        if seed is not None and self.course_enrollment.role == INSTRUCTOR_ROLE:
+            
+            self.assessment_seed = seed
+
+            # If have list of question seeds, ids, and sets
+            # then use those for question list
+            if question_seed_list and question_id_list and question_set_list:
+                question_seed_list = question_seeds.split(",")
+                question_id_list = question_ids.split(",")
+                question_set_list = question_sets.split(",")
+                
+                try:
+                    from mitesting.render_assessments import \
+                        return_question_list_from_specified_data
+                    self.question_list = \
+                        return_question_list_from_specified_data(
+                            assessment=self.assessment, 
+                            question_sets=question_set_list,
+                            question_seeds=question_seed_list,
+                            question_ids=question_id_list,
+                            thread_content=self.thread_content)
+                except ValueError:
+                    pass
+                
+
+            # if don't have valid question list, then generate from seed
+            if not self.question_list:
+                self.question_list = get_question_list(
+                    self.assessment, seed=self.assessment_seed,
+                    thread_content=self.thread_content)
+            
+            return
+
+
+        #########################################
+        # enrolled student behavior
+        # (also instructor with no seed)
+        #########################################
+
+        try:
+            student_record = self.thread_content.studentcontentrecord_set\
+                                    .get(enrollment = self.course_enrollment)
+        except ObjectDoesNotExist:
+            student_record = self.thread_content.studentcontentrecord_set\
+                                    .create(enrollment = self.course_enrollment)
+
+
+        assessment_availability = self.thread_content.return_availability(
+            student=courseuser)
+
+        self.attempt_number = student_record.attempts.count()
+
+        try:
+            latest_attempt = student_record.attempts.latest()
+        except ObjectDoesNotExist:
+            latest_attempt = None
+        else:
+            # ignore latest attempt if doesn't match availability of 
+            # assessment
+            if assessment_availability==NOT_YET_AVAILABLE:
+                if latest_attempt.valid:
+                    latest_attempt=False
+            elif not latest_attempt.valid:
+                latest_attempt=False
+
+        current_attempt=None
+        if latest_attempt:
+            # Ferify latest attempt has the right number of
+            # of question sets with question attempts
+            # If so, set as current attempt and population
+            # question list from that attempt
+
+            question_sets=self.assessment.question_sets()
+
+            ca_qs_list=[]
+            total_weight=0
+            for ca_question_set in latest_attempt.question_sets.all()\
+                            .prefetch_related('question_attempts'):
+                try:
+                    qa = ca_question_set.question_attempts.latest()
+                except ObjectDoesNotExist:
+                    ca_qs_list=[]
+                    break
+
+                question_set = ca_question_set.question_set
+
+                # find question set detail, if it exists
+                try:
+                    question_detail=self.assessment.questionsetdetail_set.get(
+                        question_set=question_set)
+                except ObjectDoesNotExist:
+                    question_detail = None
+
+                if question_detail:
+                    weight=question_detail.weight
+                    group=question_detail.group
+                else:
+                    weight=1
+                    group=""
+
+                total_weight += weight
+
+                self.question_list.append(
+                    {'question_set': ca_question_set.question_set,
+                     'question': qa.question,
+                     'seed': qa.seed,
+                     'question_attempt': qa,
+                     'relative_weight': weight,
+                     'group': group,
+                     'previous_same_group': False
+                 })
+
+                ca_qs_list.append(ca_question_set.question_set)
+
+            # if question sets don't match, then
+            # ignore attempt and treat as not finding a current attempt
+            if sorted(ca_qs_list) != sorted(question_sets):
+                self.question_list=[]
+
+            # otherwise, use lastest attempt as current attempt
+            # and add remaining data to question list
+            else:
+                current_attempt = latest_attempt
+                
+                # set assessment seed and version string
+                self.assessment_seed = latest_attempt.seed
+                self.version_string = str(self.attempt_number)
+                if self.thread_content.individualize_by_student:
+                    self.version_string = "%s_%s" % \
+                        (courseuser.user.username, self.version_string)
+
+
+                # make weight be relative weight
+                # multiply by assessment points to
+                # get question_points
+                for q_dict in self.question_list:
+                    q_dict['relative_weight'] /= total_weight
+                    q_dict['points'] = q_dict["relative_weight"]\
+                                       *self.thread_content.points
+
+                # treat just like fixed order
+                for i in range(1, len(self.question_list)):
+                    the_group = self.question_list[i]["group"]
+                    # if group is not blank and the same as previous group
+                    # mark as belonging to same group as previous question
+                    if the_group and \
+                       self.question_list[i-1]["group"] == the_group:
+                        self.question_list[i]["previous_same_group"] = True
+
+
+                
+
+        # If didn't find a current attempt to use, generate new attempt
+        if not current_attempt:
+            
+            self.attempt_number +=1
+            self.version_string = str(self.attempt_number)
+            if self.thread_content.individualize_by_student:
+                self.version_string = "%s_%s" % \
+                            (courseuser.user.username, self.version_string)
+            self.assessment_seed = "sd%s_%s" % (self.thread_content.id, 
+                                                self.version_string)
+            valid_attempt=assessment_availability==AVAILABLE
+
+            # create the attempt
+            current_attempt = student_record.attempts\
+                            .create(seed=self.assessment_seed,
+                                    valid=valid_attempt)
+
+            self.question_list = get_question_list(
+                self.assessment, seed=self.assessment_seed,
+                thread_content=self.thread_content)
+
+            # create the content question sets and question attempts
+            for (i,q_dict) in enumerate(question_list):
+                ca_question_set = current_attempt.question_sets.create(
+                    question_number=i+1, question_set=q_dict['question_set'])
+                qa=ca_question_set.question_attempts.create(
+                    question=q_dict['question'],
+                    seed=q_dict['seed'], valid=valid_attempt)
+                q_dict['question_attempt'] = qa
+
 
 
 class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):

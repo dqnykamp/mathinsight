@@ -8,9 +8,14 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.conf import settings
 from math import ceil
+import pytz
 
 STUDENT_ROLE = 'S'
 INSTRUCTOR_ROLE = 'I'
+NOT_YET_AVAILABLE = 0
+AVAILABLE = 1
+PAST_DUE = -1
+
 
 def day_of_week_to_python(day_of_week):
     if day_of_week.upper() == 'S':
@@ -92,17 +97,24 @@ class CourseUser(models.Model):
                 course = self.return_selected_course()
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 return None
-        if not date:
+
+        if date:
+            try:
+                with timezone.override(self.attendance_time_zone):
+                    date = date.date()
+            except AttributeError:
+                pass
+        else:
             date = course.last_attendance_day_previous_week()
             if not date:
                 return None
         
-        date_enrolled = self.courseenrollment_set.get(course=course)\
-            .date_enrolled
+        course_enrollment = self.courseenrollment_set.get(course=course)
+        date_enrolled = course_enrollment.date_enrolled
         course_days = course.to_date_attendance_days(date, 
                                                      start_date=date_enrolled)
         
-        attendance_data = self.studentattendance_set.filter(course=course)\
+        attendance_data = course_enrollment.studentattendance_set\
             .filter(date__lte = date).filter(date__gte = date_enrolled)
         
         n_excused_absenses = attendance_data.filter(present = -1).count()
@@ -195,7 +207,7 @@ class Course(models.Model):
     last_attendance_date = models.DateField(blank=True, null=True)
     attendance_end_of_week = models.CharField(max_length = 2, 
                                               default='F')
-    
+    attendance_time_zone = models.CharField(max_length=50, choices = [(x,x) for x in pytz.common_timezones], default=settings.TIME_ZONE)
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
 
     numbered = models.BooleanField(default=True)
@@ -599,17 +611,25 @@ class Course(models.Model):
         except:
             return None
 
-
     def previous_week_end(self, date=None):
-        if not date:
-            date = timezone.now().date()
+
+        with timezone.override(self.attendance_time_zone):
+            if not date:
+                date = timezone.now().date()
+            else:
+                try:
+                    date = date.date()
+                except AttributeError:
+                    pass
 
         # find end of previous week
         week_end_day = day_of_week_to_python(self.attendance_end_of_week)
         # offset is number of days since previous week_end
         offset = (date.weekday()-1-week_end_day) % 7 +1
+
         previous_week_end = date - timezone.timedelta(offset)
-        
+
+
         # find last attendance day at or before previous_week_end
         if self.days_of_week:
             weekday_list =[item.strip() for item in self.days_of_week.split(",")]
@@ -657,15 +677,20 @@ class Course(models.Model):
                 except ObjectDoesNotExist:
                     skipdate=False
                 
-
         return previous_week_end
         
     def last_attendance_day_previous_week(self, date=None):
         if not self.last_attendance_date:
             return None
 
-        if not date:
-            date = timezone.now().date()
+        with timezone.override(self.attendance_time_zone):
+            if not date:
+                date = timezone.now().date()
+            else:
+                try:
+                    date = date.date()
+                except AttributeError:
+                    pass
 
         previous_week_end = self.previous_week_end(date)
         
@@ -1062,6 +1087,44 @@ class ThreadContent(models.Model):
         self.save()
 
 
+    def return_availability(self, student=None):
+        """
+        Returns availablity of ThreadContent based on
+        when assigned and initially due
+
+        If student, then these adjustments are included:
+        - adjustments from attendance
+        - adjustments in student content record
+
+        Availabilty does not take into account privacy settings.
+        
+        """
+
+        now = timezone.now()
+
+        if not self.available_before_assigned:
+
+            assigned = self.assigned
+            if student:
+                try:
+                    record = self.studentcontentrecordset_get(
+                        enrollment__student=student)
+                except ObjectDoesNotExist:
+                    pass
+                else:
+                     if record.assigned_adjustment:
+                         assigned = record.assigned_adjustment
+           
+            if now < assigned:
+                return NOT_YET_AVAILABLE
+
+        due = self.adjusted_due(student)
+        if now <= due:
+            return AVAILABLE
+
+        return PAST_DUE
+
+
     def save_to_new_course(self, course, thread):
         original_pk = self.pk
 
@@ -1118,53 +1181,66 @@ class ThreadContent(models.Model):
             return "Maximum"
 
 
-    def get_initial_due_date(self, student=None):
+    def get_initial_due(self, student=None):
         if not student:
-            return self.initial_due_date
-        try:
-            return self.manualduedateadjustment_set.get(student=student)\
-                .initial_due_date
-        except:
-            return self.initial_due_date
+            return self.initial_due
 
-    def get_final_due_date(self, student=None):
+        adjustment = None
+        try:
+            adjustment = self.studentcontentrecord_set.get(
+                enrollment__student=student).initial_due_adjustment
+        except ObjectDoesNotExist:
+            pass
+
+        if adjustment:
+            return adjustment
+        else:
+            return self.initial_due
+
+    def get_final_due(self, student=None):
         if not student:
-            return self.final_due_date
-        try:
-            return self.manualduedateadjustment_set.get(student=student)\
-                .final_due_date
-        except:
-            return self.final_due_date
+            return self.final_due
 
-    def adjusted_due_date(self, student=None):
-        # adjust due date in increments of weeks
+        adjustment = None
+        try:
+            adjustment = self.studentcontentrecord_set.get(
+                enrollment__student=student).final_due_adjustment
+        except:
+            pass
+        if adjustment:
+            return adjustment
+        else:
+            return self.final_due
+
+    def adjusted_due(self, student=None):
+        # adjust when due in increments of weeks
         # based on percent attendance at end of each previous week
 
-        # if only one of due date or final due date is specified,
+        # if only one of initial due or final due is specified,
         # use that one
         
-        # if no student specified, use initial due date
+        # if no student specified, use initial due
 
-        due_date = self.get_initial_due_date(student)
-        final_due_date = self.get_final_due_date(student)
+        due = self.get_initial_due(student)
+        final_due = self.get_final_due(student)
 
-        if not due_date:
-            if not final_due_date:
+        if not due:
+            if not final_due:
                 return None
             else:
-                return final_due_date
-        elif not final_due_date:
-            return due_date
+                return final_due
+        elif not final_due:
+            return due
         
         if not student:
-            return due_date
+            return due
             
-        today = timezone.now().date()
+        now = timezone.now()
         
         course = self.course        
-        while due_date < today + timezone.timedelta(7):
+        while due < now + timezone.timedelta(days=7):
             previous_week_end = \
-                course.previous_week_end(due_date)
+                course.previous_week_end(due)
 
             # only update if have attendance through previous_week_end
             if not course.last_attendance_date \
@@ -1176,12 +1252,12 @@ class ThreadContent(models.Model):
                     < course.attendance_threshold_percent:
                 break
             
-            due_date += timezone.timedelta(7)
-            if due_date >= final_due_date:
-                due_date = final_due_date
+            due += timezone.timedelta(days=7)
+            if due >= final_due:
+                due = final_due
                 break
 
-        return due_date
+        return due
 
 
 
@@ -1258,6 +1334,7 @@ class StudentContentRecord(models.Model):
     score = models.FloatField(blank=True, null=True)
     score_override = models.FloatField(blank=True, null=True)
 
+    assigned_adjustment = models.DateTimeField(blank=True, null=True)
     initial_due_adjustment = models.DateTimeField(blank=True, null=True)
     final_due_adjustment = models.DateTimeField(blank=True, null=True)
 
@@ -1420,8 +1497,8 @@ class ContentAttempt(models.Model):
                             weight = 1
                         self.score += question_set.get_credit()*weight
                         total_weight += weight
-                    self.score /= total_weight
-
+                    self.score *= record.content.points/total_weight
+                    
                 else: 
                     self.score = None
         
@@ -1523,6 +1600,7 @@ class QuestionAttempt(models.Model):
     question = models.ForeignKey('mitesting.Question')
     seed = models.CharField(max_length=150)
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
+    valid = models.BooleanField(default=True, db_index=True)
 
     solution_viewed = models.DateTimeField(blank=True, null=True)
 
@@ -1549,7 +1627,7 @@ class QuestionAttempt(models.Model):
 
         """
 
-        responses = self.responses.all()
+        responses = self.responses.filter(post_solution_view=False)
 
         content_attempt = self.content_attempt_question_set.content_attempt
 
@@ -1584,7 +1662,7 @@ class QuestionResponse(models.Model):
     identifier_in_response = models.CharField(max_length=50)
     credit = models.FloatField()
     response_submitted =  models.DateTimeField(blank=True, default=timezone.now)
-
+    valid = models.BooleanField(default=True, db_index=True)
 
     def __str__(self):
         return  "%s" % self.response
