@@ -41,9 +41,4 @@ class Migration(migrations.Migration):
             name='points',
             field=models.FloatField(null=True, blank=True),
         ),
-        migrations.AlterField(
-            model_name='questionresponse',
-            name='question_attempt',
-            field=models.ForeignKey(related_name='responses', to='micourses.QuestionAttempt'),
-        ),
     ]

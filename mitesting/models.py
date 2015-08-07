@@ -1076,7 +1076,8 @@ class Expression(models.Model):
 
     def evaluate(self, rng, local_dict=None, user_function_dict=None,
                  alternate_dicts=[], 
-                 random_group_indices=None):
+                 random_group_indices=None,
+                 random_outcomes={}):
         """
         Returns dictionary of evaluated expression and alternate forms.
         Keys:
@@ -1259,8 +1260,6 @@ class Expression(models.Model):
         
         from mitesting.utils import evaluate_expression
 
-        rng_initial_state = rng.getstate()
-
         new_alternate_dict_list=[]
         new_alternate_expr_list=[]
         new_alternate_func_list=[]
@@ -1279,7 +1278,8 @@ class Expression(models.Model):
                 user_function_dict=user_function_dict,
                 random_group_indices=random_group_indices,
                 new_alternate_dicts=new_alternate_dicts_sub,
-                new_alternate_exprs=new_alternate_exprs_sub)
+                new_alternate_exprs=new_alternate_exprs_sub,
+                random_outcomes=random_outcomes)
 
             new_alternate_dict_list.append(new_alternate_dicts_sub)
             new_alternate_expr_list.append(new_alternate_exprs_sub)
@@ -1300,18 +1300,17 @@ class Expression(models.Model):
                 local_dict[self.name] = Symbol('??')
 
             import sys
-            raise exc.__class__("Error in expression: %s\n%s" \
-                % (self.name, exc), sys.exc_info()[2])
+            raise exc.__class__("Error in expression: %s<br/>%s" \
+                % (self.name, exc)).with_traceback(sys.exc_info()[2])
 
         # if have alternate dictionaries, 
         alternate_exprs=[]
         alternate_funcs=[]
         for alt_dict in alternate_dicts:
             try:
-                # initial rng to its state before generating
-                # the original version of the expression
-                # to ensure get same random selections with alternate dicts.
-                rng.setstate(rng_initial_state)
+                # since random outcomes were set in original version
+                # will get same random selections with alternate dicts.
+                # (rng shouldn't be used)
                 
                 new_alternate_dicts_sub=[]
                 new_alternate_exprs_sub=[]
@@ -1324,7 +1323,8 @@ class Expression(models.Model):
                     user_function_dict=user_function_dict,
                     random_group_indices=random_group_indices,
                     new_alternate_dicts=new_alternate_dicts_sub,
-                    new_alternate_exprs=new_alternate_exprs_sub)
+                    new_alternate_exprs=new_alternate_exprs_sub,
+                    random_outcomes=random_outcomes)
 
                 if expression_evaluated_sub != expression_evaluated \
                    and expression_evaluated_sub not in alternate_exprs:

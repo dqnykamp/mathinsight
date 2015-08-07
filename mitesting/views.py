@@ -836,7 +836,7 @@ class AssessmentView(DetailView):
         self.question_list = []
 
         from mitesting.render_assessments import get_question_list
-        from micourses.models import INSTRUCTOR_ROLE, NOT_YET_AVAILABLE, \
+        from micourses.models import INSTRUCTOR_ROLE, AVAILABLE, \
             NOT_YET_AVAILABLE
 
 
@@ -972,9 +972,9 @@ class AssessmentView(DetailView):
 
         current_attempt=None
         if latest_attempt:
-            # Ferify latest attempt has the right number of
+            # Verify latest attempt has the right number of
             # of question sets with question attempts
-            # If so, set as current attempt and population
+            # If so, set as current attempt and populate
             # question list from that attempt
 
             question_sets=self.assessment.question_sets()
@@ -1079,7 +1079,7 @@ class AssessmentView(DetailView):
                 thread_content=self.thread_content)
 
             # create the content question sets and question attempts
-            for (i,q_dict) in enumerate(question_list):
+            for (i,q_dict) in enumerate(self.question_list):
                 ca_question_set = current_attempt.question_sets.create(
                     question_number=i+1, question_set=q_dict['question_set'])
                 qa=ca_question_set.question_attempts.create(

@@ -52,7 +52,7 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
 
 
 
-def return_random_number_sample(expression, rng, local_dict=None):
+def return_random_number_sample(expression, rng, local_dict=None, index=None):
     """
     Returns a randomly generated number based on string.
     Expression is first parsed via sympy using local_dict, if specified.
@@ -67,11 +67,11 @@ def return_random_number_sample(expression, rng, local_dict=None):
         number_params = parse_and_process(expression, 
                                           local_dict=local_dict)
     except (TokenError, SyntaxError, TypeError, AttributeError):
-        raise ValueError("Invalid format for random number: " + expression + "\nRequired format: (minval, maxval, [increment])")
+        raise ValueError("Invalid format for random number: " + expression + "<br/>Required format: (minval, maxval, [increment])")
 
     if not isinstance(number_params, Tuple) or len(number_params) < 2 \
             or len(number_params) > 3: 
-        raise ValueError("Invalid format for random number: " + expression + "\nRequired format: (minval, maxval, [increment])")
+        raise ValueError("Invalid format for random number: " + expression + "<br/>Required format: (minval, maxval, [increment])")
     
     min_value = number_params[0]
     max_value = number_params[1]
@@ -83,16 +83,25 @@ def return_random_number_sample(expression, rng, local_dict=None):
     from math import floor
     try:
         if min_value > max_value:
-            raise ValueError("In expression defining random number, require minval <= maxval.  However, %s > %s." % (min_value, max_value)  + "\nRequired format: (minval, maxval, [increment])")
+            raise ValueError("In expression defining random number, require minval <= maxval.  However, %s > %s." % (min_value, max_value)  + "<br/>Required format: (minval, maxval, [increment])")
         
         # multiply by 1+1E-10 before rounding down to integer
         # so small floating point errors don't bring it down to next integer
         num_possibilities = 1+int(floor((max_value-min_value)/increment) \
                                       *(1+1E-10))
     except TypeError:
-        raise TypeError("Expression defining random number must contain numbers: " + str(number_params) + "\nRequired format: (minval, maxval, [increment])")
+        raise TypeError("Expression defining random number must contain numbers: " + str(number_params) + "<br/>Required format: (minval, maxval, [increment])")
+
     choices=[min_value+n*increment for n in range(num_possibilities)]
-    the_num = rng.choice(choices)
+
+    if index is not None:
+        if index < 0 or index >= num_possibilities:
+            index=None
+    if index is None:
+        #index = int(rng.random() * num_possibilities)  # like python 2.7 choice
+        index = rng.randrange(num_possibilities)
+
+    the_num = choices[index]
 
     # if the_num is an integer, convert to integer so don't have decimal
     if int(the_num)==the_num:
@@ -108,10 +117,11 @@ def return_random_number_sample(expression, rng, local_dict=None):
                 the_num = round(the_num,i)
                 break
                 
-    return sympify(the_num)
+    return sympify(the_num), index
 
 
-def return_random_word_and_plural(expression_list, rng, index=None):
+def return_random_word_and_plural(expression_list, rng, index=None,
+                                  allow_index_resample=False):
     """
     Return word and its plural chosen from string.
     Expression_list is a command separated list of tuples.
@@ -125,12 +135,15 @@ def return_random_word_and_plural(expression_list, rng, index=None):
     If index is none, items is chosen randomly and uniformly from
     all entries.
 
+    If allow_index_resample, then resample randomly if index is invalid.
+    Otherwise, raise IndexError if index is invalid
+
     Returns a tuple containing the word, its plural, and the
     index of word from the list.
     """
     
-    required_format_text = "Required format: w1, w2, ...\n" \
-        + "where each w could be of the following forms:\n" \
+    required_format_text = "Required format: w1, w2, ...<br/>" \
+        + "where each w could be of the following forms:<br/>" \
         + "word, (word, plural), \"a phrase\", " \
         + "or (\"a phrase\", \"a plural phrase\")"
 
@@ -159,35 +172,45 @@ def return_random_word_and_plural(expression_list, rng, index=None):
         parsed_expression = parser.parseString(expression_list).asList()
     except:
         raise ValueError("Invalid format for random word: "+ expression_list
-                         + "\n" + required_format_text)
+                         + "<br/>" + required_format_text)
 
-        
+    
     # check if parsed the whole selection and if have only one level of 
     # recursion.
-    last_expr = expression_list.split(",")[-1].strip()
+    expr_split=expression_list.split(",")
+    last_expr = expr_split[-1].strip()
+    if last_expr=="":
+        try:
+            last_expr = expr_split[-2].strip()
+        except IndexError:
+            raise ValueError("Invalid format for random word: "+ expression_list
+                             + "<br/>" + required_format_text)
+        if last_expr == "":
+            raise ValueError("Invalid format for random word: "+ expression_list
+                             + "<br/>" + required_format_text)
     if last_expr[-1]==")":
         last_expr = last_expr[:-1].strip()
         if parsed_expression[-1][-1] != last_expr:
             raise ValueError("Invalid format for random word: "+ expression_list
-                             + "\n" + required_format_text)
+                             + "<br/>" + required_format_text)
 
     else:
         if parsed_expression[-1] != last_expr:
             raise ValueError("Invalid format for random word: "+ expression_list
-                             + "\n" + required_format_text)
+                             + "<br/>" + required_format_text)
         
     for expr in parsed_expression:
         if isinstance(expr, list):
             if len(expr) > 2:
                 raise ValueError("Invalid format for random word: "
                                  + expression_list
-                                 + "\n" + required_format_text)
+                                 + "<br/>" + required_format_text)
 
             for expr2 in expr:
                 if isinstance(expr2, list):
                     raise ValueError("Invalid format for random word: "
                                      + expression_list
-                                     + "\n" + required_format_text)
+                                     + "<br/>" + required_format_text)
                 
     option_list=[]
     plural_list=[]
@@ -204,8 +227,17 @@ def return_random_word_and_plural(expression_list, rng, index=None):
     if index is None:
         index = rng.randrange(len(option_list))
 
-    the_word=option_list[index]
-    the_plural=plural_list[index]
+    try:
+        the_word=option_list[index]
+        the_plural=plural_list[index]
+    except IndexError:
+        if allow_index_resample:
+            # resample and try again
+            index = rng.randrange(len(option_list))
+            the_word=option_list[index]
+            the_plural=plural_list[index]
+        else:
+            raise
 
     return (the_word, the_plural, index)
 
@@ -213,13 +245,17 @@ def return_random_word_and_plural(expression_list, rng, index=None):
 def return_random_expression(expression_list, rng, index=None, 
                              local_dict=None, evaluate_level=None,
                              assume_real_variables=False,
-                             parse_subscripts=False):
+                             parse_subscripts=False,
+                             allow_index_resample=False):
     """
     Return an expression from a string containing comma-separated list.
     Expression_list is first parsed with sympy using local_dict, if given.
     If index is given, that item from the list is returned.
     If index is none, items is chosen randomly and uniformly from
     all entries.
+
+    If allow_index_resample, then resample randomly if index is invalid.
+    Otherwise, raise IndexError if index is invalid
 
     Returns a tuple containing the expression 
     and the index of the expression from the list.
@@ -234,29 +270,44 @@ def return_random_expression(expression_list, rng, index=None,
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for random expression: "
                          + expression_list
-                         + "\nRequired format: expr1, expr2, ...")
+                         + "<br/>Required format: expr1, expr2, ...")
     
 
     
     the_expression=None
-    # if index isn't prescribed, generate randomly
-    if index is None:
-        try:
-            index = rng.randrange(len(parsed_list))
-        except TypeError:
-            # if didn't specify index and parsed_list isn't a list,
-            # then use whole expression for function name
+
+    # if expression isn't a list 
+    # but index is zero or unspecified or allow_index_resample is True
+    # then use whole expresion
+    try:
+        n = len(parsed_list)
+    except TypeError:
+        if index is None or index==0 or allow_index_resample:
             the_expression=parsed_list
             index=0
+        else:
+            raise IndexError("Nonzero index specified and expression is not a list")
 
-    # if didn't chose expression yet, get entry specified by index
+    # if expression is list
     if the_expression is None:
+        
+        # if index isn't prescribed, generate randomly
+        if index is None:
+            index = rng.randrange(n)
+
         try:
             the_expression = parsed_list[index]
         except TypeError:
             raise ValueError("Invalid format for random expression: "
                              + expression_list
-                             + "\nRequired format: expr1, expr2, ...")
+                             + "<br/>Required format: expr1, expr2, ...")
+        except IndexError:
+            if allow_index_resample:
+                # resample and try again
+                index = rng.randrange(n)
+                the_expression = parsed_list[index]
+            else:
+                raise
     
     return (the_expression, index)
 
@@ -915,7 +966,8 @@ def evaluate_expression(the_expr, rng,
                         local_dict=None, user_function_dict=None,
                         random_group_indices=None,
                         new_alternate_dicts=[],
-                        new_alternate_exprs=[]):
+                        new_alternate_exprs=[],
+                        random_outcomes={}):
 
     from sympy.core.function import UndefinedFunction
     from mitesting.math_objects import math_object
@@ -926,14 +978,21 @@ def evaluate_expression(the_expr, rng,
                                 the_expr.RANDOM_EXPRESSION,
                                 the_expr.RANDOM_FUNCTION_NAME]:
 
+        # try selecting index from group
         if the_expr.random_list_group:
             try:
-                group_index = random_group_indices.get(\
+                index = random_group_indices.get(\
                                         the_expr.random_list_group)
             except AttributeError:
-                group_index = None
+                index = None
         else:
-            group_index = None
+            index = None
+
+        # if didn't obtain index from group, try from random outcomes
+        allow_index_resample=False
+        if index is None:
+            index = random_outcomes.get(str(the_expr.id))
+            allow_index_resample=True
 
         # treat RANDOM_WORD as special case
         # as it involves two outputs and hasn't been
@@ -942,9 +1001,10 @@ def evaluate_expression(the_expr, rng,
         if the_expr.expression_type == the_expr.RANDOM_WORD:
             try:
                 result = return_random_word_and_plural( 
-                    the_expr.expression, index=group_index, rng=rng)
+                    the_expr.expression, index=index, rng=rng,
+                    allow_index_resample=allow_index_resample)
             except IndexError:
-                raise IndexError("Insufficient entries for random list group: " \
+                raise IndexError("Insufficient entries for random list group: "\
                                      + the_expr.random_list_group)
 
             # record index chosen for random list group, if group exist
@@ -954,6 +1014,9 @@ def evaluate_expression(the_expr, rng,
                         =result[2]
                 except TypeError:
                     pass
+
+            # record index chosen for random outcomes
+            random_outcomes[str(the_expr.id)] = result[2]
 
             # attempt to add word to local dictionary
             word_text=re.sub(' ', '_', result[0])
@@ -967,11 +1030,12 @@ def evaluate_expression(the_expr, rng,
 
         try:
             (math_expr, index) = return_random_expression(
-                the_expr.expression, index=group_index,
+                the_expr.expression, index=index,
                 local_dict=local_dict,
                 evaluate_level = the_expr.evaluate_level, rng=rng,
                 assume_real_variables=the_expr.real_variables,
-                parse_subscripts=the_expr.parse_subscripts)
+                parse_subscripts=the_expr.parse_subscripts,
+                allow_index_resample=allow_index_resample)
         except IndexError:
             raise IndexError("Insufficient entries for random list group: " \
                                      + the_expr.random_list_group)
@@ -1008,9 +1072,18 @@ def evaluate_expression(the_expr, rng,
             except TypeError:
                 pass
 
+        # record index chosen for random outcomes
+        random_outcomes[str(the_expr.id)] = index
+
+
     elif the_expr.expression_type == the_expr.RANDOM_NUMBER:
-        math_expr = return_random_number_sample(
-            the_expr.expression, local_dict=local_dict, rng=rng)
+        # try obtaining index from random outcomes
+        index = random_outcomes.get(str(the_expr.id))
+
+        math_expr, index = return_random_number_sample(
+            the_expr.expression, local_dict=local_dict, rng=rng, index=index)
+        
+        random_outcomes[str(the_expr.id)] = index
 
     # if not randomly generating
     else:
@@ -1044,7 +1117,7 @@ def evaluate_expression(the_expr, rng,
                     assume_real_variables = the_expr.real_variables,
                     parse_subscripts=the_expr.parse_subscripts)
             except ValueError as e:
-                raise ValueError("Invalid format for matrix\n%s" % e.args[0])
+                raise ValueError("Invalid format for matrix<br/>%s" % e.args[0])
             except (TypeError, NotImplementedError, SyntaxError, TokenError):
                 raise ValueError("Invalid format for matrix")
         try:
@@ -1116,20 +1189,35 @@ def evaluate_expression(the_expr, rng,
                 # symbolic will raise type error.  Consider test failed.
                 message= "Could not determine truth value of required condition %s, evaluated as: %s" % (the_expr.expression, math_expr)
                 if re.search('!=[^=]',the_expr.expression):
-                    message += "\nComparison != returns truth value only for numerical values.  Use !== to compare if two symbolic expressions are not identical."
+                    message += "<br/>Comparison != returns truth value only for numerical values.  Use !== to compare if two symbolic expressions are not identical."
                 if re.search('[^<>!=]=[^=]',the_expr.expression):
-                    message += "\nComparison = returns truth value only for numerical values.  Use == to compare if two symbolic expressions are identical."
+                    message += "<br/>Comparison = returns truth value only for numerical values.  Use == to compare if two symbolic expressions are identical."
                 raise TypeError(message)
 
 
         if the_expr.expression_type == the_expr.RANDOM_ORDER_TUPLE:
+            shuffle_indices = random_outcomes.get(str(the_expr.id))
+
+            try:
+                if sorted(shuffle_indices) != list(range(len(math_expr))):
+                    shuffle_indices=None
+            except TypeError:
+                shuffle_indices = None
+
+            if shuffle_indices is None:
+                shuffle_indices = list(range(len(math_expr)))
+                rng.shuffle(shuffle_indices)
+
             if isinstance(math_expr,list):
-                rng.shuffle(math_expr)
+                math_expr=[math_expr[i] for i in shuffle_indices]
             elif isinstance(math_expr, Tuple):
                 the_class=math_expr.__class__
                 math_expr = list(math_expr)
-                rng.shuffle(math_expr)
+                math_expr=[math_expr[i] for i in shuffle_indices]
                 math_expr = the_class(*math_expr)
+                
+            random_outcomes[str(the_expr.id)] = shuffle_indices
+
         elif the_expr.expression_type == the_expr.SORTED_TUPLE:
             if isinstance(math_expr,list):
                 math_expr.sort(key=customized_sort_key)

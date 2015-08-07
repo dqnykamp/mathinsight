@@ -21,7 +21,8 @@ def get_new_seed(rng):
     return str(rng.randint(0,1E8))
 
  
-def setup_expression_context(question, rng, seed=None, user_responses=None):
+def setup_expression_context(question, rng, seed=None, user_responses=None,
+                             random_outcomes={}):
     """
     Set up the question context by parsing all expressions for question.
     Returns context that contains all evaluated expressions 
@@ -92,6 +93,10 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
             seed=get_new_seed(rng)
             rng.seed(seed)
 
+            # remove any specifications for random outcomes
+            # since they caused a failed condition
+            random_outcomes.clear()
+
         expression_context = Context({})
         random_group_indices={}
         error_in_expressions = False
@@ -113,14 +118,14 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
             # as post user response
             for expression in question.expression_set\
                                       .filter(post_user_response=False):
+
                 try:
                     evaluate_results=expression.evaluate(
                         local_dict=local_dict, 
                         user_function_dict=user_function_dict,
                         alternate_dicts = alternate_dicts, 
                         random_group_indices=random_group_indices,
-                        rng=rng)
-
+                        rng=rng, random_outcomes=random_outcomes)
                 # on FailedCondition, reraise to stop evaluating expressions
                 except Expression.FailedCondition:
                     raise
@@ -131,6 +136,8 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                     error_in_expressions = True
                     expression_error[expression.name] = str(exc)
                     expression_context[expression.name] = '??'
+                    if expression.expression_type == expression.RANDOM_WORD:
+                        expression_context[expression.name + "_plural"] = "??"
                 else:
                     # if random word, add singular and plural to context
                     if expression.expression_type == expression.RANDOM_WORD:
@@ -151,7 +158,6 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                             = evaluate_results['alternate_funcs']
 
                         the_expr = expression_context[expression.name]
-
 
             # if make it through all expressions without encountering
             # a failed condition, then record fact and
@@ -237,15 +243,16 @@ def setup_expression_context(question, rng, seed=None, user_responses=None):
                 math_object(math_expr, evaluate_level=EVALUATE_NONE)
 
         # last, process expressions flagged as post user response
-        for (i, expression) in enumerate(question.expression_set\
-                                  .filter(post_user_response=True)):
+        for expression in question.expression_set\
+                                  .filter(post_user_response=True):
+
             try:
                 evaluate_results=expression.evaluate(
                     local_dict=local_dict, 
                     user_function_dict=user_function_dict,
                     alternate_dicts=alternate_dicts,
                     random_group_indices=random_group_indices,
-                    rng=rng)
+                    rng=rng, random_outcomes=random_outcomes)
 
             # record exception and allow to continue processing expressions
             except Exception as exc:
@@ -637,6 +644,7 @@ def render_question(question, rng, seed=None, solution=False,
                     allow_solution_buttons=False,
                     auxiliary_data=None,
                     show_post_user_errors=False,
+                    random_outcomes={},
                 ):
 
     """
@@ -683,6 +691,9 @@ def render_question(question, rng, seed=None, solution=False,
     - show_post_user_errors: if true, display errors when evaluating
       expressions flagged as being post user response.  Even if showing
       errors, such an error does not cause the rendering success to be False
+    - random_outcomes: dictionary keyed by expression id that specify
+      the random results should obtain.  If valid and no failed condition, 
+      then random number generator is not used.
 
     The output is a question_data dictionary.  With the exception of
     question, success, rendered_text, and error_message, all entries
@@ -745,7 +756,9 @@ def render_question(question, rng, seed=None, solution=False,
     # first, setup context due to expressions from question.
     # include any prefilled responses to answers
     context_results = setup_expression_context(question, rng=rng, seed=seed,
-                                        user_responses=prefilled_responses)
+                                            user_responses=prefilled_responses,
+                                            random_outcomes=random_outcomes)
+
 
     # if failed condition, then don't display the question
     # but instead give message that condition failed
@@ -1252,9 +1265,14 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
         question_attempt = question_dict.get("question_attempt")
 
         prefilled_responses=None
+        random_outcomes = {}
 
-        # if have question attempt, load latest responses from that attempt
+        # if have question attempt, load random outcomes and
+        # latest responses from that attempt
         if question_attempt:
+            if question_attempt.random_outcomes:
+                random_outcomes = json.loads(question_attempt.random_outcomes)
+                    
             try:
                 latest_response=question_attempt.responses\
                     .filter(valid=True).latest()
@@ -1262,8 +1280,8 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
                 latest_response=None
 
             if latest_response:
-                import json
                 prefilled_responses = json.loads(latest_response.response)
+
 
         question_data = render_question(
             question, rng=rng, seed=question_seed, solution=solution,
@@ -1275,7 +1293,8 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
             allow_solution_buttons=assessment.allow_solution_buttons,
             auxiliary_data=auxiliary_data,
             prefilled_responses=prefilled_responses,
-            show_post_user_errors=show_post_user_errors)
+            show_post_user_errors=show_post_user_errors,
+            random_outcomes=random_outcomes)
         
         question_dict['question_data']=question_data
 
@@ -1286,21 +1305,24 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
             # then record updated seed to reduce future resampling
             if question_attempt and question_seed==question_attempt.seed:
                 question_attempt.seed = question_data["seed"]
-                question_attempt.save()
+                # will save changes below
 
             # record actual seed used in question_dict
             # so resampling not needed when checking correctness of reponses
             question_dict['seed']=question_data['seed']
 
-        # if have a latest attempt, look for maximum score on question_set
+
+        # if have a latest attempt, save random outcomes and
+        # look for maximum score on question_set
         current_score=None
         if question_attempt:
+            
+            question_attempt.random_outcomes = json.dumps(random_outcomes)
+            question_attempt.save()
+
             current_credit = question_attempt.credit
-            if question_dict.get('points'):
-                current_score = current_credit\
-                    *question_dict['points']
-            else:
-                current_score=0
+            current_score = current_credit*question_dict.get('points',0)
+
         else:
             current_credit = None
 
