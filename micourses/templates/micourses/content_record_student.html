@@ -1,0 +1,32 @@
+{% extends "micourses/course_base.html" %}
+{% load mi_tags testing_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Attempts of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:assessmentattempted' content.id %}">{{thread_content.get_title}}</a>{% endblock %}
+
+{% block content %}
+
+<h3>Record for: {{student.get_full_name}}</h3>
+
+<h4>{{thread_content.get_title}}</h4>
+
+<p>Points: {{thread_content.points}}<br/>
+Score: {{score|floatformat_or_dash:"1"}} (based on {{thread_content.attempt_aggregation_string}} score achieved)<br/>
+Due: <a href='{% url 'micourses:adjustedduedatecalculation' thread_content.id %}'>{{adjusted_due}}</a></p>
+
+{% if attempts %}
+<table class="basic rowclick">
+<thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th></tr></thead>
+<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{thread_content.attempt_aggregation_string}} score achieved)</td><td class="righttext"><b>&nbsp;{{ score|floatformat_or_dash:"1"}}&nbsp;</b></td></tr></tfoot>
+{% for attempt in attempts %}
+<tr><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td><td class="righttext">{{attempt.formatted_score}}</td></tr>
+{% endfor %}
+</table>
+{% else %}
+<p>No attempts recorded</p>
+{% endif %}
+
+<p>Go to {{thread_content.return_link}}.</p>
+
+{% endblock %}

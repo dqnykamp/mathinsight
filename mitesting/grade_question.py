@@ -2,6 +2,7 @@ from django.conf import settings
 from mitesting.models import QuestionAnswerOption, Expression
 from django.core.exceptions import ObjectDoesNotExist
 from sympy.parsing.sympy_tokenize import TokenError
+import json
 
 import logging
 
@@ -608,7 +609,7 @@ def match_max_ones(A):
     return index_list
 
     
-def grade_question_group(group_list, answer_user_responses, answer_info, question,
+def grade_question_group(group_list, user_responses, answer_info, question,
                          expr_context, local_dict, answer_results):
     """
     Grade a group of answers, where responses could match answers
@@ -642,7 +643,7 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
 
     for (i,response_num) in enumerate(group_list):
         answer_array.append([])
-        user_response = answer_user_responses[response_num]["answer"]
+        user_response = user_responses[response_num]["response"]
         for answer_num in group_list:
             the_answer_info = answer_info[answer_num]
 
@@ -723,17 +724,25 @@ def grade_question_group(group_list, answer_user_responses, answer_info, questio
 
 
 def grade_question(question, question_identifier, answer_info, 
-                   answer_user_responses, seed):
+                   question_attempt,
+                   user_responses, seed):
 
     # use local random generator to make sure threadsafe
     import random
     rng=random.Random()
 
+    random_outcomes={}
+    if question_attempt:
+        if question_attempt.random_outcomes:
+            random_outcomes = json.loads(question_attempt.random_outcomes)
+
     from .render_assessments import setup_expression_context
 
     # first obtain context from just the normal expressions
     context_results = setup_expression_context(question, rng=rng, seed=seed,
-                                    user_responses = answer_user_responses)
+                                user_responses = user_responses,
+                                random_outcomes=random_outcomes,
+                                )
     expr_context=context_results['expression_context']
     user_function_dict = expr_context['_user_function_dict_']
 
@@ -771,7 +780,7 @@ def grade_question(question, question_identifier, answer_info,
         if answer_type is None:
             continue
 
-        user_response = answer_user_responses[answer_num]["answer"]
+        user_response = user_responses[answer_num]["response"]
         answer_code = answer_info[answer_num]['code']
         answer_points= answer_info[answer_num]['points']
         answer_identifier = answer_info[answer_num]['identifier']
@@ -803,7 +812,7 @@ def grade_question(question, question_identifier, answer_info,
     for group in question_groups.keys():
         points_achieved += grade_question_group(
             group_list=question_groups[group], 
-            answer_user_responses=answer_user_responses,
+            answer_user=answer_user,
             answer_info=answer_info, question=question,
             expr_context=expr_context, local_dict=user_function_dict,
             answer_results=answer_results)

@@ -1,5 +1,5 @@
 
-from micourses.models import Course, CourseUser, ThreadSection, ThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
+from micourses.models import Course, CourseUser, ThreadSection, ThreadContent, QuestionAttempt, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
 from mitesting.models import Assessment
 from micourses.forms import ContentAttemptForm, thread_content_form_factory
 from django.conf import settings
@@ -10,215 +10,220 @@ from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, Context, Template
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.views.generic import DetailView, View
+from django.views.generic import DetailView, View, ListView
 from django.http import Http404
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.utils import formats
 from django.utils.safestring import mark_safe
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.utils import timezone
 from micourses.templatetags.course_tags import floatformat_or_dash
 from mitesting.render_assessments import render_question_list, render_question
+from micourses.utils import format_datetime
+import pytz
+import reversion
 
-def format_datetime(value):
-    return "%s, %s" % (formats.date_format(value), formats.time_format(value))
 
-class CourseUserAuthenticationMixin(object):
+class SelectCourseView(ListView):
+    context_object_name = "course_list"
+    template_name = 'micourses/select_course.html'
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        self.courseuser = request.user.courseuser
+        self.object_list = self.get_queryset()
+
+        # if only one course enrolled, then automatically redirect to course
+        self.n_courses = len(self.object_list)
+
+        if self.n_courses == 1:
+            return redirect('micourses:coursemain',
+                            course_code=self.object_list.first().code)
+
+        context = self.get_context_data()
+        return self.render_to_response(context)
+
+    def get_queryset(self):
+        return self.courseuser.course_set.filter(active=True)
+
+    def get_context_data(self):
+        context = super(ListView,self).get_context_data()
+        context["n_courses"]=self.n_courses
+        context["cuser"]=self.courseuser
+        return context
+
+        
+class CourseBaseView(DetailView):
     """
     Requires user to be logged in user enrolled in a course
     before being able to access the post/get methods.
     Adds course, courseuser, and noanalytics to context
     """
+    model = Course
+    slug_url_kwarg = 'course_code'
+    slug_field = 'code'
+    instructor_view = False
 
     @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.course = self.object
+        self.courseuser = request.user.courseuser
 
         try:
-            self.courseuser = request.user.courseuser
-        # if courseuser does not exist, redirect to not enrolled page
+            self.enrollment = self.course.courseenrollment_set.get(
+                student=self.courseuser)
         except ObjectDoesNotExist:
-            return redirect('micourses:notenrolled')
-        try:
-            self.course = self.courseuser.return_selected_course()
-        except MultipleObjectsReturned:
-            # courseuser is in multple active courses and hasn't selected one
-            # redirect to select course page
-            return redirect('micourses:selectcourse')
-        except ObjectDoesNotExist:
-            # courseuser is not in an active course
-            # redirect to not enrolled page
-            return redirect('micourses:notenrolled')
+            return redirect('micourses:notenrolled', course_code=self.course.code)
 
-        return super(CourseUserAuthenticationMixin, self)\
-            .dispatch(request, *args, **kwargs) 
+        self.current_role=self.get_current_role(course)
+        
+        if self.instructor_view and not (self.current_role == INSTRUCTOR_ROLE
+                                         or self.current_role == DESIGNER_ROLE):
+            return redirect('micourses:coursemain', course_code=self.course.code)
+            
+        self.student = self.get_student()
+
+        # if student isn't the same as course user, obtain students
+        # enrollment as well
+        if self.student != self.courseuser:
+            try:
+                self.student_enrollment = self.course.courseenrollment_set.get(
+                    student=self.student)
+            except ObjectDoesNotExist:
+                raise Http404('Student %s not enrolled in course %s' \
+                              % (self.student, self.course))
+        else:
+            self.student_enrollment = self.enrollment
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        pass
 
     def get_student(self):
-        return self.courseuser
+        if self.instructor_view:
+            return get_object_or_404(self.course.enrolled_students,
+                                     id=self.kwargs['student_id'])
+        else:
+            return self.courseuser
 
     def get_context_data(self, **kwargs):
-        context = super(CourseUserAuthenticationMixin, self)\
-            .get_context_data(**kwargs)
+        context = super(CourseBaseView, self).get_context_data(**kwargs)
         
         context['courseuser'] = self.courseuser
         context['course'] = self.course
         context['student'] = self.get_student()
+        context['current_role'] = self.current_role
+        context['instructor_view'] = self.instructor_view
 
-
-        # find begining/end of week
-        today= timezone.now().date()
-        day_of_week = (today.weekday()+1) % 7
-        to_beginning_of_week = timezone.timedelta(days=day_of_week)
-        beginning_of_week = today - to_beginning_of_week
-        end_of_week = beginning_of_week + timezone.timedelta(13)
-        context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
-            % (beginning_of_week, end_of_week)
-        
         # no Google analytics for course
         context['noanalytics']=True
-        
-        context.update(self.extra_course_context())
+
+        context.update(self.extra_context())
 
         return context
 
-    def extra_course_context(self):
+    def extra_context(self):
+        # for context that derived classes can easily ignore 
+        # by declaring own extra_context
         return {}
 
 
-@login_required
-def course_main_view(request):
+class CourseView(CourseBaseView):
+    def get_context_data(self, **kwargs):
+        context = super(CourseView, self).get_context_data(**kwargs)
 
-    try:
-        courseuser = request.user.courseuser
-    # if courseuser does not exist, redirect to not enrolled page
-    except ObjectDoesNotExist:
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
+        from micourses.utils import find_week_begin_end
+
+        beginning_of_week, end_of_week = find_week_begin_end(self.course)
+
+        context['week_date_parameters'] = \
+            "begin_date=%s&end_date=%s" % (beginning_of_week, end_of_week)
+
+        begin_date=beginning_of_week
+        end_date=end_of_week+timezone.timedelta(days=7)
+        context['begin_date']=begin_date
+        context['end_date']=end_date
+
+
+        context["upcoming_content"] = self.course.course_content_by_adjusted_due \
+            (self.courseuser, begin_date=begin_date, \
+                 end_date=end_date)
+
+        date_parameters = "begin_date=%s&end_date=%s" % (begin_date,
+                                                         end_date)
+        context['include_completed_parameters'] = date_parameters
+
+        next_begin_date = end_date + timezone.timedelta(microseconds=1)
+        next_end_date = next_begin_date+timezone.timedelta(days=7) \
+                        - timezone.timedelta(microseconds=1)
+        next_period_parameters = "begin_date=%s&end_date=%s" \
+            % (next_begin_date, next_end_date)
+        previous_end_date = begin_date - timezone.timedelta(microseconds=1)
+        previous_begin_date = previous_end_date-timezone.timedelta(days=7)\
+                              + timezone.timedelta(microseconds=1)
+        previous_period_parameters = "begin_date=%s&end_date=%s" \
+            % (previous_begin_date, previous_end_date)
+        previous_period_parameters += "&exclude_completed"
+        next_period_parameters += "&exclude_completed"
+
+        context['previous_period_parameters']=previous_period_parameters
+        context['next_period_parameters']=next_period_parameters
+
+        context['next_items'] = self.course.next_items(self.courseuser, number=5)
+
+        return context
         
-    # if POST, then set selected_course
-    if request.method == 'POST':
-        course_code = request.POST['course']
-        selected_enrollment = courseuser.courseenrollment_set\
-                                        .get(course__code=course_code)
-        courseuser.selected_course_enrollment = selected_enrollment
-        courseuser.save()
-        course=selected_enrollment.course
-    # else get selected_course from database
-    else:
+
+    def get_template_names(self):
+        if self.instructor_view:
+            return ['micourses/course_instructor_view.html',]
+        else:
+            return ['micourses/course_student_view.html',]
+
+
+class ContentRecordView(CourseBaseView):
+
+    def get_additional_objects(self, request, *args, **kwargs):
         try:
-            course = courseuser.return_selected_course()
-        except MultipleObjectsReturned:
-            # courseuser is in multple active courses and hasn't selected one
-            # redirect to select course page
-            return HttpResponseRedirect(reverse('micourses:selectcourse'))
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
         except ObjectDoesNotExist:
-            # courseuser is not in an active course
-            # redirect to not enrolled page
-            return HttpResponseRedirect(reverse('micourses:notenrolled'))
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, self.content_id))
 
-    if courseuser.course_set.count() > 1:
-        multiple_courses = True
-    else:
-        multiple_courses = False
-
-    # no Google analytics for course
-    noanalytics=True
-
-    # find begining/end of week
-    today= timezone.now().date()
-    day_of_week = (today.weekday()+1) % 7
-    to_beginning_of_week = timezone.timedelta(days=day_of_week)
-    beginning_of_week = today - to_beginning_of_week
-    end_of_week = beginning_of_week + timezone.timedelta(6)
-    week_date_parameters = "begin_date=%s&end_date=%s" \
-        % (beginning_of_week, end_of_week)
-
-    begin_date = beginning_of_week
-    end_date = begin_date + timezone.timedelta(13)
+        try:
+            self.content_record = self.thread_content.studentcontentrecord_set\
+                                  .get(enrollment=self.student_enrollment)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                self.content_record = self.thread_content.studentcontentrecord_set\
+                                  .create(enrollment=self.student_enrollment)
 
 
-    upcoming_content = course.course_content_by_adjusted_due_date \
-        (courseuser, begin_date=begin_date, \
-             end_date=end_date)
-    
-    date_parameters = "begin_date=%s&end_date=%s" % (begin_date,
-                                                     end_date)
+    def get_context_data(self, **kwargs):
+        context = super(ContentRecordView, self).get_context_data(**kwargs)
 
-    next_begin_date = end_date + timezone.timedelta(1)
-    next_end_date = next_begin_date+timezone.timedelta(6)
-    next_period_parameters = "begin_date=%s&end_date=%s" \
-        % (next_begin_date, next_end_date)
-    previous_end_date = begin_date - timezone.timedelta(1)
-    previous_begin_date = previous_end_date-timezone.timedelta(6)
-    previous_period_parameters = "begin_date=%s&end_date=%s" \
-        % (previous_begin_date, previous_end_date)
-    previous_period_parameters += "&exclude_completed"
-    next_period_parameters += "&exclude_completed"
-
-    next_items = course.next_items(courseuser, number=5)
-    
-    if courseuser.get_current_role() == INSTRUCTOR_ROLE:
-        return render_to_response \
-            ('micourses/course_instructor_view.html', 
-             {'student': courseuser,
-              'courseuser': courseuser,
-              'course': course,
-              'upcoming_content': upcoming_content,
-              'next_items': next_items,
-              'multiple_courses': multiple_courses,
-              'week_date_parameters': week_date_parameters,
-              'begin_date': begin_date,
-              'end_date': end_date,
-              'previous_period_parameters': previous_period_parameters,
-              'next_period_parameters': next_period_parameters,
-              'include_completed_parameters': date_parameters,
-              'noanalytics': noanalytics,
-              },
-             context_instance=RequestContext(request))
-    else:
-        return render_to_response \
-            ('micourses/course_student_view.html', 
-             {'student': courseuser,
-              'courseuser': courseuser,
-              'course': course,
-              'upcoming_content': upcoming_content,
-              'next_items': next_items,
-              'multiple_courses': multiple_courses,
-              'week_date_parameters': week_date_parameters,
-              'begin_date': begin_date,
-              'end_date': end_date,
-              'previous_period_parameters': previous_period_parameters,
-              'next_period_parameters': next_period_parameters,
-              'include_completed_parameters': date_parameters,
-              'noanalytics': noanalytics,
-              },
-             context_instance=RequestContext(request))
+        context['thread_content'] = self.thread_content
+        context['content_record'] = self.content_record
+        
+        return context
 
 
-class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
-    """
-    should be: AssessmentAttemptList
-    """
-    model = ThreadContent
-    context_object_name = 'content'
-    template_name = 'micourses/assessment_attempted.html'
-
-    def get_object(self):
-        content = super(AssessmentAttempted, self).get_object()
-        self.student = self.get_student()
-        self.assessment=content.content_object
-        self.assessment_attempts = self.student.studentcontentattempt_set\
-            .filter(content=content)
-        return content
-
-    def extra_course_context(self):
+    def extra_context(self):
+        from micourses.utils import format_datetime
         attempt_list = []
-        for (i,attempt) in enumerate(self.assessment_attempts):
-            datetime_text = format_datetime(attempt.datetime)
-            if attempt.have_datetime_interval():
-                datetime_text += " - " \
-                    + format_datetime(attempt.get_latest_datetime())
+        for (i, attempt) in enumerate(self.content_record.attempts.all()):
+            earliest, latest = attempt.return_activity_interval()
+            datetime_text = format_datetime(earliest)
+            if latest:
+                datetime_text += " - " + format_datetime(latest)
             score_text = floatformat_or_dash(attempt.score, 1)
             attempt_dict = {}
             attempt_number = i+1
@@ -231,10 +236,27 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
                 mark_safe('&nbsp;%s&nbsp;' % datetime_text)
             attempt_dict['formatted_score'] = \
                 mark_safe('&nbsp;%s&nbsp;' % score_text)
-            if attempt.questionstudentanswer_set.exists():
-                attempt_url = reverse('micourses:assessmentattempt', 
-                                      kwargs={'pk': self.object.id,
-                                              'attempt_number': attempt_number})
+            
+            # show details if have question_set with credit that isn't None
+            question_set_with_credit = False
+            if attempt.question_sets.exclude(credit_override=None):
+                question_set_with_credit=True
+            elif QuestionAttempt.objects.filter(
+                    content_attempt_question_set__content_attempt=attempt) \
+                    .exclude(credit=None):
+                question_set_with_credit=True
+            if question_set_with_credit:
+                if self.instructor_view:
+                    attempt_url = reverse('micourses:contentattemptinstructor', 
+                                    kwargs={'course_code': self.course.code,
+                                            'content_id': self.object.id,
+                                            'attempt_number': attempt_number,
+                                            'student_id': self.student.id})
+                else:
+                    attempt_url = reverse('micourses:contentattempt', 
+                                    kwargs={'course_code': self.course.code,
+                                            'content_id': self.object.id,
+                                            'attempt_number': attempt_number})
                 attempt_dict['formatted_attempt_number'] = mark_safe \
                 ('<a href="%s">%s</a>' % \
                      (attempt_url, attempt_dict['formatted_attempt_number']))
@@ -247,29 +269,28 @@ class AssessmentAttempted(CourseUserAuthenticationMixin,DetailView):
 
             attempt_list.append(attempt_dict)
                 
-        return {'adjusted_due_date': self.object\
-                    .adjusted_due_date(self.student),
+        return {'adjusted_due': self.thread_content\
+                    .adjusted_due(self.student),
                 'attempts': attempt_list,
-                'score': self.object.student_score(self.student),
+                'score': self.content_record.score,
                 }
 
 
-class AssessmentAttemptedInstructor(AssessmentAttempted):
-    """
-    should be: AssessmentAttemptListInstructor
-    """
+    def get_template_names(self):
+        if self.instructor_view:
+            return ['micourses/content_record_instructor.html',]
+        else:
+            return ['micourses/content_record_student.html',]
 
-    template_name = 'micourses/assessment_attempted_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(AssessmentAttemptedInstructor, self)\
-            .dispatch(request, *args, **kwargs) 
-    
-    def get_student(self):
-        return get_object_or_404(self.course.enrolled_students,
-                                 id=self.kwargs['student_id'])
+
+class ContentRecordInstructor(ContentRecordView):
+    template_name = 'micourses/content_record_instructor.html'
+    instructor_view = True
+
+
     def extra_course_context(self):
+        from micourses.utils import format_datetime
         attempt_list = []
         for (i,attempt) in enumerate(self.assessment_attempts):
             datetime_text = format_datetime(attempt.datetime)
@@ -330,20 +351,23 @@ class AssessmentAttemptedInstructor(AssessmentAttempted):
                 })
 
 
-        return {'adjusted_due_date': self.object\
-                    .adjusted_due_date(self.student),
+        return {'adjusted_due': self.object\
+                    .adjusted_due(self.student),
                 'attempts': attempt_list,
                 'score': self.object.student_score(self.student),
                 'new_attempt_form': new_attempt_form,
                 }
 
 
-class AssessmentAttempt(AssessmentAttempted):
+#class EditContentAttemptView(View):
     
-    template_name = 'micourses/assessment_attempt.html'
+
+class ContentAttemptView(ContentRecordView):
+    
+    template_name = 'micourses/content_attempt.html'
 
     def get_object(self):
-        content = super(AssessmentAttempt, self).get_object()
+        content = super(ContentAttemptView, self).get_object()
         
         # don't pad attempt_number with zeros
         self.attempt_number = self.kwargs['attempt_number']
@@ -393,20 +417,19 @@ class AssessmentAttempt(AssessmentAttempted):
         return context
 
 
-class AssessmentAttemptInstructor(AssessmentAttempt):
+class AssessmentAttemptInstructor(ContentAttemptView):
     template_name = 'micourses/assessment_attempt_instructor.html'
 
     @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
     def dispatch(self, request, *args, **kwargs):
         return super(AssessmentAttemptInstructor, self)\
             .dispatch(request, *args, **kwargs) 
-    
     def get_student(self):
         return get_object_or_404(self.course.enrolled_students,
                                  id=self.kwargs['student_id'])
 
 
-class AssessmentAttemptQuestion(AssessmentAttempt):
+class AssessmentAttemptQuestion(ContentAttemptView):
     
     model = ThreadContent
     context_object_name = 'content'
@@ -602,11 +625,16 @@ def content_list_view(request):
     noanalytics=True
 
     # find begining/end of week
-    today= timezone.now().date()
-    day_of_week = (today.weekday()+1) % 7
-    to_beginning_of_week = timezone.timedelta(days=day_of_week)
-    beginning_of_week = today - to_beginning_of_week
-    end_of_week = beginning_of_week + timezone.timedelta(6)
+    tz = pytz.timezone(course.attendance_time_zone)
+    now = tz.normalize(timezone.now().astimezone(tz))
+    day_of_week = (now.weekday()+1) % 7
+    to_beginning_of_week = timezone.timedelta(
+        days=day_of_week, hours=now.hour,
+        minutes=now.minute, seconds=now.second, microseconds=now.microsecond
+    )
+    beginning_of_week = now - to_beginning_of_week
+    end_of_week = beginning_of_week + timezone.timedelta(days=7) \
+                  - timezone.timedelta(microseconds=1)
     week_date_parameters = "begin_date=%s&end_date=%s" \
         % (beginning_of_week, end_of_week)
 
@@ -622,7 +650,7 @@ def content_list_view(request):
     except:
         end_date = None
 
-    content_list = course.course_content_by_adjusted_due_date\
+    content_list = course.course_content_by_adjusted_due\
         (courseuser, exclude_completed=exclude_completed, \
              begin_date=begin_date, end_date=end_date)
 
@@ -715,28 +743,29 @@ def update_attendance_view(request):
             attendance_date = None
 
         if valid_day:
-            
-            for student in course.enrolled_students_ordered():
-                present=request.POST.get('student_%s' % student.id, 0)
-                try:
-                    present = float(present)
-                except ValueError:
-                    present = 0.0
+            with transaction.atomic(), reversion.create_revision():
 
-                sa, created = course.studentattendance_set.get_or_create(
-                    student=student, date=attendance_date,
-                    defaults = {'present': present})
-                if not created and sa.present != -1:
-                    sa.present = present
-                    sa.save()
-            
-            if not course.last_attendance_date \
-                    or attendance_date > course.last_attendance_date:
-                course.last_attendance_date = attendance_date
-                course.save()
+                for student in course.enrolled_students_ordered():
+                    present=request.POST.get('student_%s' % student.id, 0)
+                    try:
+                        present = float(present)
+                    except ValueError:
+                        present = 0.0
 
-            message = "Attendance updated for %s" % \
-                attendance_date.strftime("%B %d, %Y")
+                    sa, created = course.studentattendance_set.get_or_create(
+                        student=student, date=attendance_date,
+                        defaults = {'present': present})
+                    if not created and sa.present != -1:
+                        sa.present = present
+                        sa.save()
+
+                if not course.last_attendance_date \
+                        or attendance_date > course.last_attendance_date:
+                    course.last_attendance_date = attendance_date
+                    course.save()
+
+                message = "Attendance updated for %s" % \
+                    attendance_date.strftime("%B %d, %Y")
 
         else:
             message = "Attendance not updated.  " \
@@ -869,8 +898,9 @@ def update_individual_attendance_view(request):
                      .filter(date__lte = last_attendance_date).delete()
                  for (date, present) in attendance_dates_form.date_attendance():
                      if present:
-                         student.studentattendance_set.create\
-                             (course=course, date=date, present=present)
+                         with transaction.atomic(), reversion.create_revision():
+                             student.studentattendance_set.create\
+                                 (course=course, date=date, present=present)
                  message = "Updated attendance of %s." % student
              else:
                  message = "Last attendance date for course not set.  Cannot update attendance."
@@ -985,15 +1015,16 @@ def add_excused_absence_view(request):
             attendance_date = None
 
         if valid_day:
-            sa, created = student.studentattendance_set.get_or_create(
-                course=course, date=attendance_date, defaults = {'present': -1})
-            
-            if not created:
-                sa.present=-1
-                sa.save()
+            with transaction.atomic(), reversion.create_revision():
+                sa, created = student.studentattendance_set.get_or_create(
+                    course=course, date=attendance_date, defaults = {'present': -1})
 
-            message = "Added excused absence for %s on %s." % \
-                      (student, attendance_date.strftime("%B %d, %Y"))
+                if not created:
+                    sa.present=-1
+                    sa.save()
+
+                message = "Added excused absence for %s on %s." % \
+                          (student, attendance_date.strftime("%B %d, %Y"))
 
         else:
 
@@ -1136,7 +1167,7 @@ def attendance_display_view(request):
 
 
 @login_required
-def adjusted_due_date_calculation_view(request, pk):
+def adjusted_due_calculation_view(request, pk):
     courseuser = request.user.courseuser
     
     try:
@@ -1152,35 +1183,35 @@ def adjusted_due_date_calculation_view(request, pk):
 
     content = get_object_or_404(ThreadContent, id=pk)
 
-    initial_due_date = content.get_initial_due_date(courseuser)
-    final_due_date = content.get_final_due_date(courseuser)
+    initial_due = content.get_initial_due(courseuser)
+    final_due = content.get_final_due(courseuser)
     
-    calculation_list = content.adjusted_due_date_calculation(courseuser)
+    calculation_list = content.adjusted_due_calculation(courseuser)
     if calculation_list:
-        adjusted_due_date=calculation_list[-1]['resulting_date']
+        adjusted_due=calculation_list[-1]['resulting_date']
     else:
-        adjusted_due_date= initial_due_date
+        adjusted_due= initial_due
 
     # no Google analytics for course
     noanalytics=True
 
     return render_to_response \
-        ('micourses/adjusted_due_date_calculation.html', 
+        ('micourses/adjusted_due_calculation.html', 
          {'course': course,
           'content': content,
           'courseuser': courseuser,
           'student': courseuser, 
           'calculation_list': calculation_list,
-          'adjusted_due_date': adjusted_due_date,
-          'initial_due_date': initial_due_date,
-          'final_due_date': final_due_date,
+          'adjusted_due': adjusted_due,
+          'initial_due': initial_due,
+          'final_due': final_due,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
 
 
 @user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def adjusted_due_date_calculation_instructor_view(request, student_id, pk):
+def adjusted_due_calculation_instructor_view(request, student_id, pk):
     courseuser = request.user.courseuser
     
     try:
@@ -1198,28 +1229,28 @@ def adjusted_due_date_calculation_instructor_view(request, student_id, pk):
 
     student = get_object_or_404(course.enrolled_students, id=student_id)
 
-    initial_due_date = content.get_initial_due_date(student)
-    final_due_date = content.get_final_due_date(student)
+    initial_due = content.get_initial_due(student)
+    final_due = content.get_final_due(student)
     
-    calculation_list = content.adjusted_due_date_calculation(student)
+    calculation_list = content.adjusted_due_calculation(student)
     if calculation_list:
-        adjusted_due_date=calculation_list[-1]['resulting_date']
+        adjusted_due=calculation_list[-1]['resulting_date']
     else:
-        adjusted_due_date= initial_due_date
+        adjusted_due= initial_due
 
     # no Google analytics for course
     noanalytics=True
 
     return render_to_response \
-        ('micourses/adjusted_due_date_calculation_instructor.html', 
+        ('micourses/adjusted_due_calculation_instructor.html', 
          {'course': course,
           'content': content,
           'courseuser': courseuser,
           'student': student, 
           'calculation_list': calculation_list,
-          'adjusted_due_date': adjusted_due_date,
-          'initial_due_date': initial_due_date,
-          'final_due_date': final_due_date,
+          'adjusted_due': adjusted_due,
+          'initial_due': initial_due,
+          'final_due': final_due,
           'noanalytics': noanalytics,
           },
          context_instance=RequestContext(request))
@@ -1291,16 +1322,12 @@ def instructor_gradebook_view(request):
          context_instance=RequestContext(request))
 
 
-class EditAssessmentAttempt(CourseUserAuthenticationMixin,DetailView):
+class EditAssessmentAttempt(CourseBaseView):
     
     model = ThreadContent
     context_object_name = 'content'
     template_name = 'micourses/edit_assessment_attempt.html'
-
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditAssessmentAttempt, self)\
-            .dispatch(request, *args, **kwargs) 
+    instructor_view=True
 
     def get_object(self):
         content = super(EditAssessmentAttempt, self).get_object()
@@ -1390,23 +1417,24 @@ def add_assessment_attempts_view(request, pk):
             attempt_datetime = datetime_form.cleaned_data['datetime']
             n_added = 0
             n_errors = 0
-            for (i,student) in \
-                enumerate(content.course.enrolled_students_ordered()):
+            with transaction.atomic(), reversion.create_revision():
+                for (i,student) in \
+                    enumerate(content.course.enrolled_students_ordered()):
 
-                new_score = request.POST['%i_new' % student.id]
+                    new_score = request.POST['%i_new' % student.id]
 
-                if new_score != "":
-                    try:
-                        content.studentcontentattempt_set.create \
-                            (student = student, datetime=attempt_datetime, 
-                             score=new_score)
-                        
-                        latest_attempts[i]['status'] ="New score saved"
-                        latest_attempts[i]['number_attempts'] += 1
-                        n_added +=1
-                    except ValueError:
-                        latest_attempts[i]['error'] = "Enter a number"
-                        n_errors +=1
+                    if new_score != "":
+                        try:
+                            content.studentcontentattempt_set.create \
+                                (student = student, datetime=attempt_datetime, 
+                                 score=new_score)
+
+                            latest_attempts[i]['status'] ="New score saved"
+                            latest_attempts[i]['number_attempts'] += 1
+                            n_added +=1
+                        except ValueError:
+                            latest_attempts[i]['error'] = "Enter a number"
+                            n_errors +=1
 
             if(n_added):
                 status_message = "%s attempts added." % n_added
@@ -1640,78 +1668,91 @@ def gradebook_csv_view(request):
         for score_comment in comments:
             writer.writerow([score_comment])
 
-
     return response
 
 
-def thread_view(request, course_code):
-    course = get_object_or_404(Course, code=course_code)
+class ThreadView(DetailView):
+    model=Course
+    slug_field='code'
+    slug_url_kwarg ='course_code'
+    template_name = 'micourses/thread_detail.html'
 
-    noanalytics=False
-    if settings.SITE_ID==2:
-        noanalytics=True
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.user = request.user
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
-    courseuser = None
-    include_edit_link = False
 
-    # record if user is logged in
-    if request.user.is_authenticated():
-        try:
-            courseuser = request.user.courseuser
-        except:
-            pass
+    def get_context_data(self, **kwargs):
+        context = super(ThreadView, self).get_context_data(**kwargs)
+
+        noanalytics=False
+        if settings.SITE_ID==2:
+            noanalytics=True
+        context['noanalytics'] = noanalytics
+
+        courseuser = None
+        include_edit_link = False
+
+        # record if user is logged in and is designer
+        if self.user.is_authenticated():
+            courseuser = self.user.courseuser
+            try:
+                enrollment = self.object.courseenrollment_set.get(
+                    student=courseuser)
+            except ObjectDoesNotExist:
+                pass
+            else:
+                if enrollment.role==DESIGNER_ROLE:
+                    include_edit_link = True
+
+        context['student'] = courseuser
+        context['include_edit_link'] = include_edit_link
+        if self.object.numbered:
+            context['ltag'] = "ol"
         else:
-            if courseuser.get_current_role()==INSTRUCTOR_ROLE:
-                include_edit_link = True
+            context['ltag'] = "ul"
+
+        return context
 
 
-    if course.numbered:
-        ltag = "ol"
-    else:
-        ltag = "ul"
+class ThreadEditView(DetailView):
+    model=Course
+    slug_field='code'
+    slug_url_kwarg ='course_code'
+    template_name = 'micourses/thread_edit.html'
 
-    return render_to_response \
-        ('micourses/thread_detail.html', \
-             {'course': course, 
-              'include_edit_link': include_edit_link,
-              'course_list': Course.active_courses.all(),
-              'student': courseuser, 
-              'ltag': ltag,
-              'noanalytics': noanalytics,
-              },
-         context_instance=RequestContext(request))
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
 
+        # must be designer of course
+        is_designer = False
+        if request.user.is_authenticated():
+            courseuser = request.user.courseuser
+            role = courseuser.get_current_role(self.object) 
+            if role==DESIGNER_ROLE:
+                is_designer=True
 
+        if not is_designer:
+            return redirect('mithreads:thread', course_code=self.object.code)
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def thread_edit_view(request, course_code):
-    course = get_object_or_404(Course, code=course_code)
-
-    # record if user has active a course associated with thread
-    course = None
-    try:
-        course = request.user.courseuser.return_selected_course()
-        if course not in thread.course_set.all():
-            course = None
-    except:
-        pass
-
-    # no Google analytics for edit
-    noanalytics=True
-
-    if course.numbered:
-        ltag = "ol"
-    else:
-        ltag = "ul"
-
-    return render_to_response \
-        ('micourses/thread_edit.html', {'course': course, 
-                                        'ltag': ltag,
-                                        'noanalytics': noanalytics,
-                                    },
-         context_instance=RequestContext(request))
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
 
 
+    def get_context_data(self, **kwargs):
+        context = super(ThreadEditView, self).get_context_data(**kwargs)
+
+        # no Google analytics for edit
+        context['noanalytics'] = False
+
+        if self.object.numbered:
+            context['ltag'] = "ol"
+        else:
+            context['ltag'] = "ul"
+
+        return context
 
 
 class RecordContentCompletion(View):
@@ -1727,23 +1768,24 @@ class RecordContentCompletion(View):
             return JsonResponse({})
 
 
-        # if content complete record exists, modify record
-        try:
-            scc=student.studentcontentcompletion_set.get(content=content)
-            scc.complete=complete
-            scc.save()
+        with transaction.atomic(), reversion.create_revision():
+            # if content complete record exists, modify record
+            try:
+                scc=student.studentcontentcompletion_set.get(content=content)
+                scc.complete=complete
+                scc.save()
 
-         # if content complete record exists, add record
-        except ObjectDoesNotExist:
-            student.studentcontentcompletion_set.create \
-                (content=content, complete=complete)
-            
-        
-        # if marking as complete, create attempt record if one doesn't exist
-        if complete:
-            if not student.studentcontentattempt_set.filter(content=content)\
-                    .exists():
-                student.studentcontentattempt_set.create(content=content)
+             # if content complete record exists, add record
+            except ObjectDoesNotExist:
+                student.studentcontentcompletion_set.create \
+                    (content=content, complete=complete)
+
+
+            # if marking as complete, create attempt record if one doesn't exist
+            if complete:
+                if not student.studentcontentattempt_set.filter(content=content)\
+                        .exists():
+                    student.studentcontentattempt_set.create(content=content)
 
         
         return JsonResponse({'student_id': student.id,
@@ -1763,13 +1805,9 @@ class EditSectionView(View):
     - edit: change section name
     - insert: insert new section (below current if exists, else at top)
 
+    # must be designer of course
+    
     """
-
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditSectionView, self)\
-            .dispatch(request, *args, **kwargs) 
-
 
     def post(self, request, *args, **kwargs):
 
@@ -1802,7 +1840,20 @@ class EditSectionView(View):
             except ObjectDoesNotExist:
                 return JsonResponse({})
             course = thread_section.get_course()
+
         
+        # must be designer of course
+        is_designer = False
+        if request.user.is_authenticated():
+            courseuser = request.user.courseuser
+            role = courseuser.get_current_role(course) 
+            if role==DESIGNER_ROLE:
+                is_designer=True
+
+        if not is_designer:
+            return JsonResponse({})
+
+      
         rerender_thread=True
         new_section_html={}
         rerender_sections=[]
@@ -1842,7 +1893,8 @@ class EditSectionView(View):
                     thread_section.parent = parent.parent
                     
 
-                thread_section.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_section.save()
 
 
         # increment level of section
@@ -1855,7 +1907,8 @@ class EditSectionView(View):
                 thread_section.course = None
                 if last_child:
                     thread_section.sort_order = last_child.sort_order+1
-                thread_section.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_section.save()
 
         # move section up
         elif action=="move_up":
@@ -1869,8 +1922,9 @@ class EditSectionView(View):
                 sort_order = thread_section.sort_order
                 thread_section.sort_order = previous_sibling.sort_order
                 previous_sibling.sort_order = sort_order
-                thread_section.save()
-                previous_sibling.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_section.save()
+                    previous_sibling.save()
 
             elif not thread_section.course:
                 previous_parent_sibling = \
@@ -1881,7 +1935,8 @@ class EditSectionView(View):
                     if last_child:
                         thread_section.sort_order = last_child.sort_order+1
                     thread_section.parent = previous_parent_sibling
-                    thread_section.save()
+                    with transaction.atomic(), reversion.create_revision():
+                        thread_section.save()
 
 
         # move section down
@@ -1896,8 +1951,9 @@ class EditSectionView(View):
                 sort_order = thread_section.sort_order
                 thread_section.sort_order = next_sibling.sort_order
                 next_sibling.sort_order = sort_order
-                thread_section.save()
-                next_sibling.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_section.save()
+                    next_sibling.save()
 
             elif not thread_section.course:
                 next_parent_sibling = \
@@ -1908,7 +1964,8 @@ class EditSectionView(View):
                     if first_child:
                         thread_section.sort_order = first_child.sort_order-1
                     thread_section.parent = next_parent_sibling
-                    thread_section.save()
+                    with transaction.atomic(), reversion.create_revision():
+                        thread_section.save()
 
         # delete section
         elif action=="delete":
@@ -1926,7 +1983,8 @@ class EditSectionView(View):
         # edit section name
         elif action=="edit":
             thread_section.name = request.POST['section_name']
-            thread_section.save();
+            with transaction.atomic(), reversion.create_revision():
+                thread_section.save();
             rerender_thread=False
 
         # insert section
@@ -1941,10 +1999,11 @@ class EditSectionView(View):
                 except AttributeError:
                     new_sort_order=0
 
-                new_section = ThreadSection.objects.create(
-                    name=new_section_name, 
-                    parent=thread_section,
-                    sort_order=new_sort_order)
+                with transaction.atomic(), reversion.create_revision():
+                    new_section = ThreadSection.objects.create(
+                        name=new_section_name, 
+                        parent=thread_section,
+                        sort_order=new_sort_order)
 
                 prepend_section = "child_sections_%s" % thread_section.id
 
@@ -1955,10 +2014,11 @@ class EditSectionView(View):
                 except AttributeError:
                     new_sort_order = 0
                     
-                new_section = ThreadSection.objects.create(
-                    name=new_section_name, 
-                    course=course,
-                    sort_order=new_sort_order)
+                with transaction.atomic(), reversion.create_revision():
+                    new_section = ThreadSection.objects.create(
+                        name=new_section_name, 
+                        course=course,
+                        sort_order=new_sort_order)
                     
                 prepend_section = "child_sections_top"
 
@@ -2019,12 +2079,9 @@ class EditContentView(View):
     - edit: edit content attributes
     - insert: insert new content at end of section
 
-    """
+    Must be designer of course
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(EditContentView, self)\
-            .dispatch(request, *args, **kwargs) 
+    """
 
 
     def post(self, request, *args, **kwargs):
@@ -2057,6 +2114,19 @@ class EditContentView(View):
             course = thread_content.course
             thread_section=thread_content.section
 
+        
+        # must be designer of course
+        is_designer = False
+        if request.user.is_authenticated():
+            courseuser = request.user.courseuser
+            role = courseuser.get_current_role(course) 
+            if role==DESIGNER_ROLE:
+                is_designer=True
+
+        if not is_designer:
+            return JsonResponse({})
+
+
         rerender_sections = []
 
         # move content up
@@ -2070,8 +2140,9 @@ class EditContentView(View):
                 sort_order = thread_content.sort_order
                 thread_content.sort_order = previous_in_section.sort_order
                 previous_in_section.sort_order = sort_order
-                thread_content.save()
-                previous_in_section.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_content.save()
+                    previous_in_section.save()
 
                 rerender_sections = [thread_section,]
 
@@ -2086,7 +2157,8 @@ class EditContentView(View):
                 except AttributeError:
                     thread_content.sort_order = 0
                 thread_content.section = previous_section
-                thread_content.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_content.save()
 
                 rerender_sections = [thread_section, previous_section]
 
@@ -2101,8 +2173,9 @@ class EditContentView(View):
                 sort_order = thread_content.sort_order
                 thread_content.sort_order = next_in_section.sort_order
                 next_in_section.sort_order = sort_order
-                thread_content.save()
-                next_in_section.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_content.save()
+                    next_in_section.save()
 
                 rerender_sections = [thread_section,]
 
@@ -2117,7 +2190,8 @@ class EditContentView(View):
                 except AttributeError:
                     thread_content.sort_order = 0
                 thread_content.section = next_section
-                thread_content.save()
+                with transaction.atomic(), reversion.create_revision():
+                    thread_content.save()
 
                 rerender_sections = [thread_section, next_section]
         
@@ -2148,7 +2222,8 @@ class EditContentView(View):
                         auto_id="content_form_%s_%%s" % form_identifier,
                     )
             if form.is_valid():
-                form.save()
+                with transaction.atomic(), reversion.create_revision():
+                    form.save()
                 rerender_sections = [thread_section,]
             else:
                 form_html = form.as_p()
@@ -2185,10 +2260,11 @@ class EditContentView(View):
                         auto_id="content_form_%s_%%s" % form_identifier,
                     )
             if form.is_valid():
-                new_thread_content=form.save(commit=False)
-                new_thread_content.section=thread_section
-                new_thread_content.sort_order = new_sort_order
-                new_thread_content.save()
+                with transaction.atomic(), reversion.create_revision():
+                    new_thread_content=form.save(commit=False)
+                    new_thread_content.section=thread_section
+                    new_thread_content.sort_order = new_sort_order
+                    new_thread_content.save()
 
                 rerender_sections = [thread_section,]
             else:
@@ -2216,14 +2292,8 @@ class EditContentView(View):
 
 
 class ReturnContentForm(View):
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(ReturnContentForm, self)\
-            .dispatch(request, *args, **kwargs) 
+   def post(self, request, *args, **kwargs):
 
-
-    def post(self, request, *args, **kwargs):
-        
         try:
             form_type = request.POST['form_type']
             the_id = request.POST['id']
@@ -2231,6 +2301,8 @@ class ReturnContentForm(View):
             return JsonResponse({})
 
         instance = None
+        thread_content=None
+        thread_section=None
 
         # If form type is "edit", then the_id must be 
         # a valid thread_content id.
@@ -2260,6 +2332,22 @@ class ReturnContentForm(View):
             return JsonResponse({})
 
 
+        # must be designer of course
+        if thread_content:
+            course=thread_content.course
+        else:
+            course=thread_section.get_course()
+        is_designer = False
+        if request.user.is_authenticated():
+            courseuser = request.user.courseuser
+            role = courseuser.get_current_role(course) 
+            if role==DESIGNER_ROLE:
+                is_designer=True
+
+        if not is_designer:
+            return JsonResponse({})
+
+
         form_identifier = "%s_%s" % (form_type, the_id)
 
         update_options_command="update_content_options('%s', this.value)" % \
@@ -2282,14 +2370,19 @@ class ReturnContentForm(View):
 
 
 class ReturnContentOptions(View):
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(ReturnContentOptions, self)\
-            .dispatch(request, *args, **kwargs) 
-
 
     def post(self, request, *args, **kwargs):
         
+        # must be designer of some course
+        is_designer = False
+        if request.user.is_authenticated():
+            courseuser = request.user.courseuser
+            role = courseuser.get_current_role() 
+            if role==DESIGNER_ROLE:
+                is_designer=True
+        if not is_designer:
+            return JsonResponse({})
+
         try:
             form_id = request.POST['form_id']
             this_content_type = ContentType.objects.get(id=request.POST['option'])

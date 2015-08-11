@@ -535,16 +535,16 @@ class AnswerNode(template.Node):
                 applet_object_name, answer_field_name=answer_field_name,
                 kwargs=kwargs, context=context)
 
-        given_answer=None
+        given_response=None
         try:
-            prefilled_answers = answer_data['prefilled_answers']
-            the_answer_dict = prefilled_answers[answer_number-1]
+            prefilled_responses = answer_data['prefilled_responses']
+            the_response_dict = prefilled_responses[answer_number-1]
 
-            if the_answer_dict["code"] == answer_code:
-                given_answer = the_answer_dict["answer"]
+            if the_response_dict["code"] == answer_code:
+                given_response = the_response_dict["response"]
             else:
-                logger.warning("Invalid previous answer for question %s: %s != %s" % 
-                    (answer_data.get("question"), the_answer_dict["code"], 
+                logger.warning("Invalid previous response for question %s: %s != %s" % 
+                    (answer_data.get("question"), the_response_dict["code"], 
                      answer_code))
         except (KeyError, IndexError, TypeError):
             pass
@@ -553,7 +553,7 @@ class AnswerNode(template.Node):
             {'code': answer_code, 'points': points, 
              'type': answer_type, 'identifier': answer_identifier,
              'group': group, 'assign_to_expression': assign_to_expression,
-             'prefilled_answer': given_answer,
+             'prefilled_response': given_response,
              'expression_type': expression_type})
 
 
@@ -564,14 +564,14 @@ class AnswerNode(template.Node):
             value_string = ''
 
             if expression_type == Expression.MATRIX:
-                if given_answer is not None:
-                    value_string = given_answer                
+                if given_response is not None:
+                    value_string = given_response                
                 input_html = '<span class="matrix"><textarea class="mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea></span>' %\
                     (answer_field_name, answer_field_name,
                      rows, cols, value_string)
             else:
-                if given_answer is not None:
-                    value_string = ' value="%s"' %  given_answer
+                if given_response is not None:
+                    value_string = ' value="%s"' %  given_response
                 input_html = '<input class="mi_answer" type="text" id="id_%s" maxlength="200" name="%s" size="%i"%s%s%s />' % \
                     (answer_field_name, answer_field_name,
                      size, readonly_string, value_string, onchange_string, )
@@ -620,8 +620,8 @@ class AnswerNode(template.Node):
                 for answer in rendered_answer_list:
                     ans_id = answer['answer_id']
                     selected_string = ""
-                    if given_answer is not None:
-                        if str(ans_id) == str(given_answer):
+                    if given_response is not None:
+                        if str(ans_id) == str(given_response):
                             selected_string = " selected"
                     html_string += '<option id="id_%s_%s" value="%s"%s> %s</option>' % \
                         (answer_field_name, ans_id, 
@@ -634,8 +634,8 @@ class AnswerNode(template.Node):
                 for answer in rendered_answer_list:
                     ans_id = answer['answer_id']
                     checked_string = ""
-                    if given_answer is not None:
-                        if str(ans_id) == str(given_answer):
+                    if given_response is not None:
+                        if str(ans_id) == str(given_response):
                             checked_string = " checked"
                     html_string += '<li><label for="%s_%s" id="label_%s_%s"><input type="radio" id="id_%s_%s" value="%s" name="%s"%s%s /> %s</label></li>' % \
                         (answer_field_name, ans_id, answer_field_name,

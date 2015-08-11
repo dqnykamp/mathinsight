@@ -11,12 +11,20 @@
 
 
 <h3>{{ assessment_name }}</h3>
-{% if course %}<h5>{{ course }}</h5>{%endif%}
 
 <section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>
 
 <section class="assessment_main">
 {% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+
+<div id="assessment_points">
+{% if thread_content_points %}
+Total points: {{ thread_content_points}}
+<div id="assessment_score_achieved">{% if multiple_attempts %}Score this attempt: <span id="current_attempt_score">{{ attempt_score }}</span><br/>Overall score: <span id="overall_score">{{content_score}}</span>
+{% else %}Score: <span id="overall_score">{{ current_attempt.record.score }}</span>{% endif %}
+</div>
+{% endif %}
+</div>
 
 {% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
 
@@ -31,8 +39,8 @@
 
 {% if not assessment.single_version %}
 <section id="more_questions_link">
-  {% if course_thread_content %}
-  <form action="{% url 'mitesting:generatenewassessmentattempt' course_code=assessment.course.code assessment_code=assessment.code %}" method="post">{% csrf_token %}
+  {% if current_attempt %}
+  <form action="{% url 'mitesting:generatenewassessmentattempt' pk=thread_content.pk %}" method="post">{% csrf_token %}
     <input type="submit" value="Generate new assessment attempt" />
   </form>
   {% else %}

@@ -135,10 +135,6 @@ class Question(models.Model):
         return author_list_full(self.questionauthor_set.all(), 
                                 include_link=include_link)
 
-    def render(*args, **kwargs):
-        from .render_assessments import render_question
-        return render_question(*args, **kwargs)
-
     def get_new_seed(self):
         from .render_assessments import get_new_seed
         return get_new_seed()

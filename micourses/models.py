@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
@@ -9,9 +9,11 @@ from django.utils import timezone
 from django.conf import settings
 from math import ceil
 import pytz
+import reversion
 
 STUDENT_ROLE = 'S'
 INSTRUCTOR_ROLE = 'I'
+DESIGNER_ROLE = 'R'
 NOT_YET_AVAILABLE = 0
 AVAILABLE = 1
 PAST_DUE = -1
@@ -32,6 +34,25 @@ def day_of_week_to_python(day_of_week):
         return 4
     elif day_of_week.upper() == 'SA':
         return 5
+
+class  ChangeLog(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    courseuser = models.ForeignKey('CourseUser', null=True)
+    action = models.CharField(choices=(("change score", "change score"), 
+                                       ("change date", "change date"), 
+                                       ("delete", "delete"),
+                                       ("create", "create"),
+                                   ),
+                              max_length=20)
+    field_name = models.CharField(max_length=50, blank=True, null=True)
+    old_value = models.CharField(max_length=100, blank=True, null=True)
+    new_value = models.CharField(max_length=100, blank=True, null=True)
+    time = models.DateTimeField(blank=True, default=timezone.now)
+    
+
 
 class CourseUser(models.Model):
     user = models.OneToOneField(User)
@@ -74,18 +95,31 @@ class CourseUser(models.Model):
     def active_courses(self):
         return self.course_set.filter(active=True)
     
+    def get_current_role(self, course=None):
+        if course:
+            try:
+                course_enrollment = course.courseenrollment_set.get(student=self)
+            except ObjectDoesNotExist:
+                return None
+            return course_enrollment.role
 
-    def get_current_role(self):
-        if self.selected_course_enrollment:
-            return self.selected_course_enrollment.role
+        else:
+            # if no course specified, then treat as instructor/designer
+            # if user is an instructor/designer in any course
+            role = STUDENT_ROLE
+            for enrollment in self.courseenrollment_set.all():
+                if enrollment.role==DESIGNER_ROLE:
+                    return DESIGNER_ROLE
+                elif enrollment.role == INSTRUCTOR_ROLE:
+                    role=INSTRUCTOR_ROLE
+            return role
 
-    def return_permission_level(self):
-        if not self.selected_course_enrollment:
-            return None
+    def return_permission_level(self, course=None):
 
-        role = self.selected_course_enrollment.role
-
-        if role == INSTRUCTOR_ROLE:
+        role = self.get_current_role(course)
+        if role==DESIGNER_ROLE:
+            return 3
+        elif role == INSTRUCTOR_ROLE:
             return 2
         else:
             return 1
@@ -99,16 +133,17 @@ class CourseUser(models.Model):
                 return None
 
         if date:
+            tz = pytz.timezone(course.attendance_time_zone)
             try:
-                with timezone.override(self.attendance_time_zone):
-                    date = date.date()
+                date= tz.normalize(date.astimezone(tz)).date()
             except AttributeError:
                 pass
         else:
             date = course.last_attendance_day_previous_week()
             if not date:
                 return None
-        
+
+
         course_enrollment = self.courseenrollment_set.get(course=course)
         date_enrolled = course_enrollment.date_enrolled
         course_days = course.to_date_attendance_days(date, 
@@ -203,7 +238,7 @@ class Course(models.Model):
     end_date = models.DateField(blank=True, null=True)
     days_of_week = models.CharField(max_length=50, blank=True, null=True)
     track_attendance = models.BooleanField(default=False)
-    adjust_due_date_attendance = models.BooleanField(default=False)
+    adjust_due_attendance = models.BooleanField(default=False)
     last_attendance_date = models.DateField(blank=True, null=True)
     attendance_end_of_week = models.CharField(max_length = 2, 
                                               default='F')
@@ -289,19 +324,20 @@ class Course(models.Model):
         
         timeshift = timezone.timedelta(days=n_days)
 
-        self.start_date += timeshift
-        self.end_date += timeshift
-        self.save()
+        with transaction.atomic(), reversion.create_revision():
+            self.start_date += timeshift
+            self.end_date += timeshift
+            self.save()
 
-        for tc in self.thread_contents.all():
-            if tc.assigned_date:
-                tc.assigned_date += timeshift
-            if tc.initial_due_date:
-                tc.initial_due_date += timeshift
-            if tc.final_due_date:
-                tc.final_due_date += timeshift
-            if tc.assigned_data or tc.initial_due_date or tc.final_due_date:
-                tc.save()
+            for tc in self.thread_contents.all():
+                if tc.assigned:
+                    tc.assigned += timeshift
+                if tc.initial_due:
+                    tc.initial_due += timeshift
+                if tc.final_due:
+                    tc.final_due += timeshift
+                if tc.assigned_data or tc.initial_due or tc.final_due:
+                    tc.save()
 
     def enrolled_students_ordered(self, active_only=True, section=None):
         student_enrollments = self.courseenrollment_set.filter(role=STUDENT_ROLE)
@@ -613,14 +649,15 @@ class Course(models.Model):
 
     def previous_week_end(self, date=None):
 
-        with timezone.override(self.attendance_time_zone):
-            if not date:
-                date = timezone.now().date()
-            else:
-                try:
-                    date = date.date()
-                except AttributeError:
-                    pass
+        tz = pytz.timezone(self.attendance_time_zone)
+
+        if not date:
+            date= tz.normalize(timezone.now().astimezone(tz)).date()
+        else:
+            try:
+                date= tz.normalize(date.astimezone(tz)).date()
+            except AttributeError:
+                pass
 
         # find end of previous week
         week_end_day = day_of_week_to_python(self.attendance_end_of_week)
@@ -683,14 +720,16 @@ class Course(models.Model):
         if not self.last_attendance_date:
             return None
 
-        with timezone.override(self.attendance_time_zone):
-            if not date:
-                date = timezone.now().date()
-            else:
-                try:
-                    date = date.date()
-                except AttributeError:
-                    pass
+        tz = pytz.timezone(self.attendance_time_zone)
+
+        if not date:
+            date= tz.normalize(timezone.now().astimezone(tz)).date()
+        else:
+            try:
+                date= tz.normalize(date.astimezone(tz)).date()
+            except AttributeError:
+                pass
+
 
         previous_week_end = self.previous_week_end(date)
         
@@ -711,7 +750,7 @@ class Course(models.Model):
             .filter(date__gte = start_date).count()
 
 
-    def course_content_by_adjusted_due_date \
+    def course_content_by_adjusted_due \
             (self, student, begin_date=None, end_date=None, \
                  exclude_completed=True, \
                  assessments_only=False):
@@ -732,44 +771,44 @@ class Course(models.Model):
     
         # exclude content without an initial or final due date
         # since those cannot have an adjusted due date
-        content_list = content_list.exclude(final_due_date=None)\
-            .exclude(initial_due_date=None)
+        content_list = content_list.exclude(final_due=None)\
+            .exclude(initial_due=None)
 
         if exclude_completed:
             content_list = content_list.exclude \
                 (id__in=self.thread_contents.filter \
-                     (studentcontentcompletion__student=student,
-                      studentcontentcompletion__complete=True))
+                     (studentcontentrecord__enrollment__student=student,
+                      studentcontentrecord__complete=True))
 
         # for each of content, calculate adjusted due date
-        adjusted_due_date_content = []
+        adjusted_due_content = []
         for coursecontent in content_list:
-            adjusted_due_date = coursecontent.adjusted_due_date(student)
-            adjusted_due_date_content.append((adjusted_due_date,coursecontent, coursecontent.sort_order))
+            adjusted_due = coursecontent.adjusted_due(student)
+            adjusted_due_content.append((adjusted_due,coursecontent, coursecontent.sort_order))
 
         # sort by adjusted due date, then by coursecontent
         from operator import itemgetter
-        adjusted_due_date_content.sort(key=itemgetter(0,2))
+        adjusted_due_content.sort(key=itemgetter(0,2))
         
         #remove content outside dates
         if begin_date:
             last_too_early_index=-1
-            for (i, coursecontent) in enumerate(adjusted_due_date_content):
-                if adjusted_due_date_content[i][0] < begin_date:
+            for (i, coursecontent) in enumerate(adjusted_due_content):
+                if adjusted_due_content[i][0] < begin_date:
                     last_too_early_index=i
                 else:
                     break
         
-            adjusted_due_date_content=adjusted_due_date_content\
+            adjusted_due_content=adjusted_due_content\
                 [last_too_early_index+1:]
             
         if end_date:
-            for (i, coursecontent) in enumerate(adjusted_due_date_content):
-                if adjusted_due_date_content[i][0] > end_date:
-                    adjusted_due_date_content=adjusted_due_date_content[:i]
+            for (i, coursecontent) in enumerate(adjusted_due_content):
+                if adjusted_due_content[i][0] > end_date:
+                    adjusted_due_content=adjusted_due_content[:i]
                     break
 
-        return adjusted_due_date_content
+        return adjusted_due_content
 
     def next_items(self, student, number=5):
         # use subqueries with filter rather than exclude
@@ -780,11 +819,11 @@ class Course(models.Model):
         return self.thread_contents\
             .exclude(optional=True)\
             .exclude(id__in=self.thread_contents.filter \
-                         (studentcontentcompletion__student=student,
-                          studentcontentcompletion__complete=True))\
+                         (studentcontentrecord__enrollment__student=student,
+                          studentcontentrecord__complete=True))\
             .exclude(id__in=self.thread_contents.filter \
-                         (studentcontentcompletion__student=student,\
-                              studentcontentcompletion__skip=True))[:number]
+                         (studentcontentrecord__enrollment__student=student,\
+                              studentcontentrecord__skip=True))[:number]
 
 
 class CourseURLs(models.Model):
@@ -797,6 +836,7 @@ class CourseEnrollment(models.Model):
     ROLE_CHOICES = (
         (STUDENT_ROLE, 'Student'),
         (INSTRUCTOR_ROLE, 'Instructor'),
+        (DESIGNER_ROLE, 'Designer'),
     )
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
@@ -816,7 +856,7 @@ class CourseEnrollment(models.Model):
         unique_together = ("course","student")
         ordering = ['student']
 
-        
+@reversion.register
 class StudentAttendance(models.Model):
     enrollment = models.ForeignKey(CourseEnrollment)
     date = models.DateField()
@@ -839,6 +879,7 @@ class DeletedManager(models.Manager):
         return super(DeletedManager, self).get_queryset() \
             .filter(deleted=True)
 
+@reversion.register
 class ThreadSection(models.Model):
     name =  models.CharField(max_length=200, db_index=True)
     course = models.ForeignKey(Course, related_name = "thread_sections", 
@@ -961,12 +1002,14 @@ class ThreadSection(models.Model):
 
 
     def mark_deleted(self):
-        for thread_content in self.thread_contents.all():
-            thread_content.mark_deleted()
-        self.deleted=True
-        self.save()
+        with transaction.atomic(), reversion.create_revision():
+            for thread_content in self.thread_contents.all():
+                thread_content.mark_deleted()
+            self.deleted=True
+            self.save()
 
 
+@reversion.register
 class ThreadContent(models.Model):
     AGGREGATE_CHOICES = (
         ('Max', 'Maximum'),
@@ -1083,8 +1126,9 @@ class ThreadContent(models.Model):
             return None
 
     def mark_deleted(self):
-        self.deleted=True
-        self.save()
+        with transaction.atomic(), reversion.create_revision():
+            self.deleted=True
+            self.save()
 
 
     def return_availability(self, student=None):
@@ -1105,21 +1149,24 @@ class ThreadContent(models.Model):
         if not self.available_before_assigned:
 
             assigned = self.assigned
+            if not assigned:
+                return NOT_YET_AVAILABLE
+
             if student:
                 try:
-                    record = self.studentcontentrecordset_get(
+                    record = self.studentcontentrecord_set.get(
                         enrollment__student=student)
                 except ObjectDoesNotExist:
                     pass
                 else:
                      if record.assigned_adjustment:
                          assigned = record.assigned_adjustment
-           
+
             if now < assigned:
                 return NOT_YET_AVAILABLE
 
         due = self.adjusted_due(student)
-        if now <= due:
+        if not due or now <= due:
             return AVAILABLE
 
         return PAST_DUE
@@ -1166,7 +1213,7 @@ class ThreadContent(models.Model):
                     'student': student,
                     'attempt': self.get_student_latest_attempt(student),
                     'current_score': self.student_score(student),
-                    'adjusted_due_date': self.adjusted_due_date(student),
+                    'adjusted_due': self.adjusted_due(student),
                     'number_attempts': self.studentcontentattempt_set.filter(student=student).count(),
                     })
         return latest_attempts
@@ -1261,15 +1308,15 @@ class ThreadContent(models.Model):
 
 
 
-    def adjusted_due_date_calculation(self, student):
+    def adjusted_due_calculation(self, student):
         # return data for calculation of adjust due date
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
 
-        due_date = self.get_initial_due_date(student)
-        final_due_date = self.get_final_due_date(student)
+        due = self.get_initial_due(student)
+        final_due = self.get_final_due(student)
         
-        if not due_date or not final_due_date:
+        if not due or not final_due:
             return []
 
         today = timezone.now().date()
@@ -1277,17 +1324,17 @@ class ThreadContent(models.Model):
         course = self.course        
         
         calculation_list = []
-        while due_date < today + timezone.timedelta(7):
+        while due < today + timezone.timedelta(7):
 
             previous_week_end = \
-                course.previous_week_end(due_date)
+                course.previous_week_end(due)
 
-            calculation = {'initial_date': due_date,
+            calculation = {'initial_date': due,
                            'previous_week_end': previous_week_end,
                            'attendance_data': False,
                            'attendance_percent': 'NA',
                            'reached_threshold': False,
-                           'resulting_date': due_date,
+                           'resulting_date': due,
                            'reached_latest': False,
                            }
 
@@ -1309,20 +1356,21 @@ class ThreadContent(models.Model):
 
             calculation['reached_threshold'] = True
             
-            due_date += timezone.timedelta(7)
-            if due_date >= final_due_date:
-                due_date = final_due_date
-                calculation['resulting_date'] = due_date
+            due += timezone.timedelta(7)
+            if due >= final_due:
+                due = final_due
+                calculation['resulting_date'] = due
                 calculation['reached_latest'] = True
                 calculation_list.append(calculation)
                 break
 
-            calculation['resulting_date'] = due_date
+            calculation['resulting_date'] = due
             calculation_list.append(calculation)
 
         return calculation_list
 
 
+@reversion.register
 class StudentContentRecord(models.Model):
     enrollment = models.ForeignKey(CourseEnrollment)
     content = models.ForeignKey(ThreadContent)
@@ -1349,17 +1397,34 @@ class StudentContentRecord(models.Model):
         if not kwargs.pop('skip_last_modified', False):
             self.last_modified = timezone.now()
 
+        cuser = kwargs.pop("cuser", None)
+    
         # if changed score override, then recalculate score
         score_override_changed=True
+        old_score=None
+
         if self.pk is not None:
             old_scc = StudentContentRecord.objects.get(pk=self.pk)
             if self.score_override == old_scc.score_override:
                 score_override_changed = False
+            else:
+                old_score = old_scc.score_override
 
-        super(StudentContentRecord, self).save(*args, **kwargs)
+        with transaction.atomic(), reversion.create_revision():
+            super(StudentContentRecord, self).save(*args, **kwargs)
 
         if score_override_changed:
             self.recalculate_score()
+
+            ChangeLog.objects.create(
+                courseuser=cuser,
+                content_type=ContentType.objects.get(model="studentcontentrecord"),
+                object_id=self.id,
+                action="changed score",
+                field_name = "score_override",
+                old_value=old_score,
+                new_value=self.score_override
+            )
 
 
     def recalculate_score(self, total_recalculation=False):
@@ -1392,10 +1457,21 @@ class StudentContentRecord(models.Model):
 
         valid_attempts = self.attempts.filter(valid=True)
 
+        if not valid_attempts:
+            self.score=None
+            self.save()
+            return None
+
         if total_recalculation:
             for attempt in valid_attempts:
                 attempt.recalculate_score(propagate=False,
                                           total_recalculation=True)
+
+        valid_nonzero_attempts = valid_attempts.exclude(score=None)
+        if not valid_nonzero_attempts:
+            self.score=None
+            self.save()
+            return None
                 
         if self.content.attempt_aggregation=='Avg':
             # calculate average score of attempts
@@ -1411,8 +1487,20 @@ class StudentContentRecord(models.Model):
 
         return self.score
 
+@reversion.register
+class CourseContentAttempt(models.Model):
+    content = models.ForeignKey(ThreadContent)
+    created = models.DateTimeField(blank=True, default=timezone.now)
+    begin_time = models.DateTimeField()
+    end_time = models.DateTimeField(blank=True, null=True)
+    seed = models.CharField(max_length=150)
+    
+    class Meta:
+        ordering = ['begin_time']
+        get_latest_by = "begin_time"
 
 
+@reversion.register
 class ContentAttempt(models.Model):
     record = models.ForeignKey(StudentContentRecord, related_name="attempts")
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
@@ -1420,6 +1508,8 @@ class ContentAttempt(models.Model):
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)
+
+    derived_from = models.ForeignKey(CourseContentAttempt, null=True)
 
     def __str__(self):
         return "%s's attempt on %s" % (self.record.enrollment.student,
@@ -1430,24 +1520,40 @@ class ContentAttempt(models.Model):
         get_latest_by = "attempt_began"
         
     def save(self, *args, **kwargs):
+        cuser = kwargs.pop("cuser", None)
+
         # if changed score override, then recalculate score
         score_override_changed=True
+        old_score=None
+
         if self.pk is not None:
             old_sca = ContentAttempt.objects.get(pk=self.pk)
             if self.score_override == old_sca.score_override:
                 score_override_changed=False
+            else:
+                old_score = old_sca.score_override
 
-        super(ContentAttempt, self).save(*args, **kwargs)
+        with transaction.atomic(), reversion.create_revision():
+            super(ContentAttempt, self).save(*args, **kwargs)
 
         if score_override_changed:
             self.recalculate_score()
             
+            ChangeLog.objects.create(
+                courseuser=cuser,
+                content_type=ContentType.objects.get(model="contentattempt"),
+                object_id=self.id,
+                action="changed score",
+                field_name = "score_override",
+                old_value=old_score,
+                new_value=self.score_override
+            )
 
-    def get_percent_credit(self):
-        points = self.content.total_points()
-        if self.score is None or points is None:
+
+    def get_fraction_credit(self):
+        if self.score is None or self.record.content.points is None:
             return None
-        return int(round(self.score*100.0/points))
+        return self.score/self.record.content.points
 
 
     def recalculate_score(self, propagate=True, total_recalculation=False):
@@ -1485,19 +1591,22 @@ class ContentAttempt(models.Model):
                 if question_sets:
                     total_weight = 0.0
                     self.score = 0.0
-                    for question_set in questions_sets:
+                    for question_set in question_sets:
                         if total_recalculation:
                             for qa in question_set.question_attempts.all():
                                 qa.recalculate_credit(propagate=False)
                                 
                         try:
                             weight = question_set_details.get(
-                                question_set.question_set).weight
+                                question_set=question_set.question_set).weight
                         except ObjectDoesNotExist:
                             weight = 1
-                        self.score += question_set.get_credit()*weight
+                        qs_credit=question_set.get_credit()
+                        if qs_credit is None:
+                            qs_credit=0
+                        self.score += qs_credit*weight
                         total_weight += weight
-                    self.score *= record.content.points/total_weight
+                    self.score *= self.record.content.points/total_weight
                     
                 else: 
                     self.score = None
@@ -1510,76 +1619,111 @@ class ContentAttempt(models.Model):
         return self.score
 
 
-    def get_percent_credit_question_set(self, question_set):
-        question_answers = self.questionstudentanswer_set\
-            .filter(question_set=question_set)
+    def get_latest_activity_time(self):
+        latest_time = self.attempt_began
 
-        if question_answers:
+        for question_set in self.question_sets.all()\
+            .prefetch_related('question_attempts'):
 
-            if self.content.attempt_aggregation=='Avg':
-                credit = question_answers.aggregate(credit=Avg('credit'))\
-                         ['credit']
-            elif self.content.attempt_aggregation=='Las':
-                credit = question_answers.latest('datetime').credit
-            else:
-                credit = question_answers.aggregate(credit=Max('credit'))\
-                         ['credit']
-                
-            return int(round(credit*100))
+            try:
+                latest_time = max(latest_time, question_set.question_attempts\
+                                  .latest().get_lastest_activity_time())
+            except ObjectDoesNotExist:
+                pass
+
+        return latest_time
+
+    def return_activity_interval(self):
+        # return time attempt began and latest time of activity
+        # if difference between is less than a minute, 
+        # then return None for second
+
+        latest_activity = self.get_latest_activity_time()
+        if latest_activity-self.attempt_began >= timezone.timedelta(minutes=1):
+            return (self.attempt_began, latest_activity)
         else:
-            return 0
+            return (self.attempt_began, None)
 
 
-    def get_latest_datetime(self):
-        assessment=self.content.content_object
-        # must be an assessment 
-        from mitesting.models import Assessment
-        if not isinstance(assessment,Assessment):
-            return None
-        
-
-        try:
-            return self.questionstudentanswer_set.all()\
-                .latest('datetime').datetime
-        except ObjectDoesNotExist:
-            return self.datetime
-
-    def have_datetime_interval(self):
-        # true if difference between earliest and latest datetimes
-        # is at least a minute
-        latest_datetime = self.get_latest_datetime()
-        if latest_datetime and latest_datetime -self.datetime \
-                >= timezone.timedelta(0,60):
-            return True
-        else:
-            return False
+@reversion.register
+class CourseContentAttemptQuestionSet(models.Model):
+    content_attempt = models.ForeignKey(CourseContentAttempt,
+                                        related_name="question_sets")
+    question_number = models.SmallIntegerField()
+    question_set = models.SmallIntegerField()
+    
+    class Meta:
+        ordering = ['question_number']
+        unique_together = [('content_attempt', 'question_number'),
+                           ('content_attempt', 'question_set')]
 
 
+@reversion.register
 class ContentAttemptQuestionSet(models.Model):
     content_attempt = models.ForeignKey(ContentAttempt,
                                         related_name="question_sets")
     #remove null
     question_number = models.SmallIntegerField(blank=True, null=True)
     question_set = models.SmallIntegerField()
-    
+
+    credit_override = models.FloatField(blank=True, null=True)
+
 
     class Meta:
         ordering = ['question_number']
         unique_together = [('content_attempt', 'question_number'),
                            ('content_attempt', 'question_set')]
 
+    def save(self, *args, **kwargs):
+        cuser = kwargs.pop("cuser", None)
+    
+        # if changed credit override, then recalculate score of question attempt
+        credit_override_changed=True
+        old_credit=None
+
+        if self.pk is not None:
+            old_qs = ContentAttemptQuestionSet.objects.get(pk=self.pk)
+            if self.credit_override == old_qs.credit_override:
+                credit_override_changed=False
+            else:
+                old_credit = old_qs.credit_override
+
+        with transaction.atomic(), reversion.create_revision():
+            super(ContentAttemptQuestionSet, self).save(*args, **kwargs)
+
+        if credit_override_changed:
+            self.content_attempt.recalculate_score()
+            
+            ChangeLog.objects.create(
+                courseuser=cuser,
+                content_type=ContentType.objects.get(model="contentattemptquestionset"),
+                object_id=self.id,
+                action="changed score",
+                field_name = "credit_override",
+                old_value=old_credit,
+                new_value=self.credit_override
+            )
+
+
     def get_credit(self):
         """
         Get credit of question set for content attempt.
 
         The credit earned is aggregate over all question attempts,
-        where aggregate function is determined from thread_content 
+        where aggregate function is determined from thread_content.
+
+        Return credit_override if set.
+
+        Return None if no question_attempts with credit.
 
         """
-        question_attempts = self.question_attempts.all()
+        if self.credit_override:
+            return self.credit_override
+
+        question_attempts = self.question_attempts.filter(valid=True)
 
         if not question_attempts:
-            return 0
+            return None
 
         content = self.content_attempt.record.content
 
@@ -1595,6 +1739,16 @@ class ContentAttemptQuestionSet(models.Model):
         return credit
 
 
+@reversion.register
+class CourseQuestionAttempt(models.Model):
+    content_attempt_question_set = models.ForeignKey(
+        CourseContentAttemptQuestionSet, related_name="question_attempts")
+    question = models.ForeignKey('mitesting.Question')
+    seed = models.CharField(max_length=150)
+    random_outcomes = models.TextField()
+
+
+@reversion.register
 class QuestionAttempt(models.Model):
     # to delete
     content_attempt = models.ForeignKey(ContentAttempt,
@@ -1614,7 +1768,7 @@ class QuestionAttempt(models.Model):
 
     solution_viewed = models.DateTimeField(blank=True, null=True)
 
-    credit = models.FloatField(default=0)
+    credit = models.FloatField(blank=True, null=True)
 
 
     class Meta:
@@ -1637,23 +1791,23 @@ class QuestionAttempt(models.Model):
 
         """
 
-        responses = self.responses.filter(post_solution_view=False)
+        responses = self.responses.filter(valid=True)
 
         content_attempt = self.content_attempt_question_set.content_attempt
 
         if not responses:
-            credit=0
+            self.credit=None
         else:
         
             content = content_attempt.record.content
 
             if content.attempt_aggregation=='Avg':
-                credit = responses.aggregate(credit=Avg('credit'))\
+                self.credit = responses.aggregate(credit=Avg('credit'))\
                          ['credit']
             elif content.attempt_aggregation=='Las':
-                credit = responses.latest('datetime').credit
+                self.credit = responses.latest('datetime').credit
             else:
-                credit = responses.aggregate(credit=Max('credit'))\
+                self.credit = responses.aggregate(credit=Max('credit'))\
                          ['credit']
 
         self.save()
@@ -1663,6 +1817,13 @@ class QuestionAttempt(models.Model):
 
         return self.credit
 
+    def get_lastest_activity_time(self):
+        try:
+            latest_response = self.responses.latest()
+        except ObjectDoesNotExist:
+            return self.attempt_began
+        else:
+            return max(self.attempt_began, latest_response.response_submitted)
 
 
 class QuestionResponse(models.Model):
@@ -1676,7 +1837,6 @@ class QuestionResponse(models.Model):
     question_attempt = models.ForeignKey(QuestionAttempt,
                                          related_name="responses", null=True)
     response = models.TextField()
-    identifier_in_response = models.CharField(max_length=50)
     credit = models.FloatField()
     response_submitted =  models.DateTimeField(blank=True, default=timezone.now)
     valid = models.BooleanField(default=True, db_index=True)
@@ -1692,3 +1852,6 @@ class QuestionResponse(models.Model):
         super(QuestionResponse, self).save(*args, **kwargs)
 
         self.question_attempt.recalculate_credit()
+
+
+

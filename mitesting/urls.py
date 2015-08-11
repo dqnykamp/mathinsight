@@ -5,30 +5,9 @@ from django.contrib.auth.decorators import permission_required
 from mitesting.models import Assessment
 from mitesting.views import QuestionView, \
     GradeQuestionView, InjectQuestionSolutionView, \
-    AssessmentView, GenerateNewAssessmentAttemptView
+    AssessmentView, GenerateNewAssessmentAttemptView, GenerateAssessmentView
 from mitesting.permissions import user_can_administer_assessment_decorator
 from mitesting import views
-
-class GenerateAssessmentView(DetailView):
-    context_object_name = "assessment"
-    model = Assessment
-    template_name = "mitesting/assessment_generate.html"
-    slug_url_kwarg = 'assessment_code'
-    slug_field = 'code'
-
-    @method_decorator(user_can_administer_assessment_decorator())
-    def dispatch(self, *args, **kwargs):
-        return super(GenerateAssessmentView, self).dispatch(*args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super(GenerateAssessmentView, self).get_context_data(**kwargs)
-        context['the_assessment_name'] = self.get_object().name
-        return context
-
-    def get_queryset(self):
-        return self.model._default_manager.filter(course__code=
-                                                  self.kwargs["course_code"])
-
 
 urlpatterns = [
     url(r'^assessment/list$',views.assessment_list_view, name='assessmentlist'),
@@ -50,7 +29,7 @@ urlpatterns = [
         views.assessment_overview_view, name='assessmentoverview'),
     url(r'^(?P<course_code>\w+)/(?P<assessment_code>\w+)/solution$',
         AssessmentView.as_view(solution=True), name='assessmentsolution'),
-    url(r'^(?P<course_code>\w+)/(?P<assessment_code>\w+)/generatenewattempt$',
+    url(r'^(?P<pk>\d+)/generate/newattempt$',
         GenerateNewAssessmentAttemptView.as_view(),
         name='generatenewassessmentattempt'),
     url(r'^(?P<course_code>\w+)/(?P<assessment_code>\w+)/avoid$',

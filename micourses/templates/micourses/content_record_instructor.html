@@ -1,22 +1,22 @@
 {% extends "micourses/course_base.html" %}
 {% load mi_tags testing_tags course_tags %}
 {% block nolinksection %}{% endblock %}
-{% block title %}Attempts of {{ student.get_full_name }} on {{content.thread_content.content_object}}{%endblock%}
+{% block title %}Attempts of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
 
 {% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
 
 {% block content %}
-<h3>Student: {{student.get_full_name}}</h3>
+<h3>Record for: {{student.get_full_name}}</h3>
 
-<h4>{{content.thread_content.content_object}}</h4>
+<h4>{{thread_content.get_title}}</h4>
 
-<p>Points: {{content.total_points}}<br/>
-Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{content.attempt_aggregation_string}} score achieved)<br/>
-Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculation' student.id content.id %}'>{{adjusted_due_date}}</a></p>
+<p>Points: {{thread_content.points}}<br/>
+Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{thread_content.attempt_aggregation_string}} score achieved)<br/>
+Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculation' student.id thread_content.id %}'>{{adjusted_due}}</a></p>
 
 <table id="attempt_table" class="basic rowclick">
-<thead><tr><th>Attempt</th><th>Date and time</th><th>Score</th><th>Link</th></tr></thead>
-<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{content.attempt_aggregation_string}} score achieved)</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
+<thead><tr><th>Attempt</th><th>Date and time</th><th>Version</th><th>Score</th></tr></thead>
+<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{thread_content.attempt_aggregation_string}} score achieved)</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
 {% for attempt in attempts %}
 <tr><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td><td class="righttext">{{attempt.score_or_edit}}</td><td class="righttext">{{attempt.direct_link}}</td></tr>
 {% endfor %}

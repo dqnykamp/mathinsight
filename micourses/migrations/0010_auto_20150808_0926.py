@@ -46,4 +46,13 @@ class Migration(migrations.Migration):
             name='seed',
             field=models.CharField(null=True, max_length=150),
         ),
+        migrations.RenameField(
+            model_name='course',
+            old_name='adjust_due_date_attendance',
+            new_name='adjust_due_attendance',
+        ),
+        migrations.RemoveField(
+            model_name='questionresponse',
+            name='identifier_in_response',
+        ),
     ]

@@ -1,9 +1,10 @@
 Python packages:
 
-Django==1.8.2
+Django==1.8.3
 django-haystack==2.4.0
 django-reversion==1.8.7
-elasticsearch==0.4.5
+django_hitcount==1.1.0
+elasticsearch==1.6.0
 Pillow==2.9.0
 sympy==0.7.6
 mpmath==0.19
@@ -15,7 +16,7 @@ selenium==2.46.1
 
 Ubuntu packages:
 
-elasticsearch (0.90)
+elasticsearch (1.70)
 python3-scipy (0.13.3)
 ipython3
 

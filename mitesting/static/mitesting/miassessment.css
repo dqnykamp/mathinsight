@@ -188,6 +188,9 @@ table.question_scores td.blank {
     header {
 	display: none;
     }
+    #assessment_score_achieved {
+	display: none;
+    }
     .citation
     {
 	display: none;

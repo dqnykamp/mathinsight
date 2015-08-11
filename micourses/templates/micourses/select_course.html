@@ -4,15 +4,14 @@
 {% block title %}Select course for {{request.user.courseuser.get_full_name}}{%endblock%}
 
 {% block content %}
-<p>{{request.user.courseuser.get_full_name}} is enrolled in more than one active course on Math Insight.</p>
-
-<p>Select a course to continue.</p>
-{% for course in request.user.courseuser.active_courses %}
-<p>{{ course }}<br/>
-<form action="{% url 'micourses:coursemain' %}" method="post">{% csrf_token %}
-<input type="hidden" id="id_course" name="course" value="{{course.code}}">
-<input type="submit" value="Select course" />
-</form>
+{% if n_courses %}
+<p>Select course:</p>
+<ul>
+{% for course in course_list %}
+<li><a href="{% url 'micourses:coursemain' course.code%}">{{ course }}</a></li>
 {% endfor %}
-
+</ul>
+{% else %}
+<p>{{cuser}} is no enrolled in any active courses on Math Insight.</p>
+{% endif %}
 {% endblock %}

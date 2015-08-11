@@ -633,18 +633,16 @@ def add_help_data(render_data, render_results, subparts=None):
     render_results['hint_template_error'] = hint_template_error
 
 
-def render_question(question, rng, seed=None, solution=False, 
+def render_question(question_dict, rng, solution=False, 
                     question_identifier="",
                     user=None, show_help=True,
-                    assessment=None, question_set=None, 
+                    assessment=None, 
                     assessment_seed=None, 
-                    prefilled_responses=None, 
                     readonly=False, auto_submit=False, 
-                    record_answers=True,
+                    record_response=True,
                     allow_solution_buttons=False,
                     auxiliary_data=None,
                     show_post_user_errors=False,
-                    random_outcomes={},
                 ):
 
     """
@@ -682,7 +680,7 @@ def render_question(question, rng, seed=None, solution=False,
       Useful with prefilled answers.
     - auto_submit: automatically submit answers (instead of submit button)
       Useful with prefilled answers
-    - record_answers: if true, record answer upon submit
+    - record_response: if true, record answer upon submit
     - allow_solution_buttons: if true, allow a solution button to be displayed
       on computer graded questions
     - auxiliary_data: dictionary for information that should be accessible 
@@ -736,7 +734,7 @@ def render_question(question, rng, seed=None, solution=False,
       - seed
       - identifier
       - show_solution_button
-      - record_answers
+      - record_response
       - question_set
       - assessment_seed
       - course_code (of assessment from input)
@@ -748,10 +746,33 @@ def render_question(question, rng, seed=None, solution=False,
         (not sure if need this)
    """
 
+
+    question = question_dict['question']
+    question_set = question_dict.get('question_set')
+    seed = question_dict["seed"]
+    question_attempt = question_dict.get("question_attempt")
+    response = question_dict.get("response")
+
     if seed is None:
         seed=get_new_seed(rng)
 
     rng.seed(seed)
+
+
+    random_outcomes={}
+
+    # if have question attempt, load random outcomes and
+    # latest responses from that attempt
+    if question_attempt:
+        if question_attempt.random_outcomes:
+            random_outcomes = json.loads(question_attempt.random_outcomes)
+
+    # if have response, load to be prefilled
+    if response:
+        prefilled_responses = json.loads(response.response)
+    else:
+        prefilled_responses = None
+
 
     # first, setup context due to expressions from question.
     # include any prefilled responses to answers
@@ -775,8 +796,27 @@ def render_question(question, rng, seed=None, solution=False,
         }
         return question_data
 
+
+    # if seed changed from resampling to avoid failed expression conditions
+    if seed != context_results["seed"]:
+        # if initial question seed matched that from question_attempt,
+        # then record updated seed to reduce future resampling
+        if question_attempt and seed==question_attempt.seed:
+            question_attempt.seed = context_results["seed"]
+            # will save changes below
+
     # set seed to be successful seed from rendering context
     seed = context_results['seed']
+
+    # if have question attempt, save random_outcomes
+    if question_attempt:
+        question_attempt.random_outcomes = json.dumps(random_outcomes)
+        question_attempt.save()
+    
+
+    # record actual seed used in question_dict
+    # not sure if need this
+    question_dict['seed']=seed
 
     render_data = {
         'question': question, 'show_help': show_help, 
@@ -837,7 +877,7 @@ def render_question(question, rng, seed=None, solution=False,
         'dynamictext_javascript': dynamictext_javascript,
     })
 
-    # if have prefilled answers, check to see that the number matches the
+    # if have prefilled responses, check to see that the number matches the
     # number of answer blanks (template tag already checked if
     # the answer_codes matched for those answers that were found)
     # If so, log warning but otherwise ignore.
@@ -891,6 +931,30 @@ def render_question(question, rng, seed=None, solution=False,
             "<ul>" + question_data['error_message'] + "</ul>")
 
 
+    # if rendering a solution 
+    # return without adding computer grading data or solution buttons
+    if solution:
+        return question_data
+    
+
+    # if have a question attempt, determine credit
+    # also score if question_dict contains points for question set
+    current_score=None
+    if question_attempt:
+        from mitesting.utils import round_and_int
+        current_percent_credit = round_and_int(question_attempt.credit*100,1)
+        current_score = question_attempt.credit*question_dict.get('points',0)
+
+    else:
+        current_percent_credit = None
+
+
+    # record information about score and points in question_data
+    # so is available in question_body.html template
+    question_data['points']=question_dict.get('points')
+    question_data['current_score']=current_score
+    question_data['current_percent_credit']=current_percent_credit
+
 
     # if allow_solution_buttons is true, then determine if
     # solution is visible to user (ie. user has permissions)
@@ -934,11 +998,6 @@ def render_question(question, rng, seed=None, solution=False,
         question_data['enable_solution_button'] = not question.computer_graded \
                         or  (question.show_solution_button_after_attempts == 0)
 
-    # if rendering a solution 
-    # return without adding computer grading data
-    if solution:
-        return question_data
-    
     # if computer graded and answer data available,
     # add submit button (unless auto_submit or error)
     question_data['submit_button'] = question.computer_graded and\
@@ -954,7 +1013,7 @@ def render_question(question, rng, seed=None, solution=False,
     # - number of applets encountered so far (not sure if need this)
 
     computer_grade_data = {'seed': seed, 'identifier': question_identifier, 
-                           'record_answers': record_answers,
+                           'record_response': record_response,
                            'show_solution_button': show_solution_button}
     if assessment:
         computer_grade_data['course_code'] = assessment.course.code
@@ -962,6 +1021,9 @@ def render_question(question, rng, seed=None, solution=False,
         computer_grade_data['assessment_seed'] = assessment_seed
         if question_set is not None:
             computer_grade_data['question_set'] = question_set
+
+    if question_attempt:
+        computer_grade_data['question_attempt_id'] = question_attempt.id
 
     if answer_data['answer_info']:
         computer_grade_data['answer_info'] \
@@ -1250,6 +1312,27 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
         (Used as indicator for templates that questions belong together.)
     """
 
+
+    """
+    Question: can we move all this logic to render_question?
+    Or do we need simpler version of render_question somewhere?
+    
+    render_question called:
+    inject solution view
+    
+    render in question model, which is called by
+    _render_question in testing_tags
+    question view
+
+    I hope we can move it all over. 
+    Then, here we just set the question identifier and pass in the
+    question_dict from question_list.
+
+    then just add question_data to question_dict.
+    or have it automatically added...
+
+    """
+
     if not rng:
         import random
         rng=random.Random()
@@ -1259,78 +1342,22 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
         # use qa for identifier since coming from assessment
         identifier="qa%s" % i
 
-        question = question_dict['question']
-        question_set = question_dict['question_set']
-        question_seed = question_dict["seed"]
-        question_attempt = question_dict.get("question_attempt")
-
-        prefilled_responses=None
-        random_outcomes = {}
-
-        # if have question attempt, load random outcomes and
-        # latest responses from that attempt
-        if question_attempt:
-            if question_attempt.random_outcomes:
-                random_outcomes = json.loads(question_attempt.random_outcomes)
-                    
-            try:
-                latest_response=question_attempt.responses\
-                    .filter(valid=True).latest()
-            except ObjectDoesNotExist:
-                latest_response=None
-
-            if latest_response:
-                prefilled_responses = json.loads(latest_response.response)
-
 
         question_data = render_question(
-            question, rng=rng, seed=question_seed, solution=solution,
+            question_dict,
+            rng=rng, solution=solution,
             question_identifier=identifier,
             user=user, show_help=not solution,
-            assessment=assessment, question_set=question_set,
+            assessment=assessment,
             assessment_seed=assessment_seed, 
-            record_answers=True,
+            record_response=True,
             allow_solution_buttons=assessment.allow_solution_buttons,
             auxiliary_data=auxiliary_data,
-            prefilled_responses=prefilled_responses,
-            show_post_user_errors=show_post_user_errors,
-            random_outcomes=random_outcomes)
+            show_post_user_errors=show_post_user_errors)
         
         question_dict['question_data']=question_data
 
-        # if question seed changed 
-        # (from resampling question expressions until valid combination found)
-        if question_seed != question_data["seed"]:
-            # if initial question seed matched that from question_attempt,
-            # then record updated seed to reduce future resampling
-            if question_attempt and question_seed==question_attempt.seed:
-                question_attempt.seed = question_data["seed"]
-                # will save changes below
 
-            # record actual seed used in question_dict
-            # so resampling not needed when checking correctness of reponses
-            question_dict['seed']=question_data['seed']
-
-
-        # if have a latest attempt, save random outcomes and
-        # look for maximum score on question_set
-        current_score=None
-        if question_attempt:
-            
-            question_attempt.random_outcomes = json.dumps(random_outcomes)
-            question_attempt.save()
-
-            current_credit = question_attempt.credit
-            current_score = current_credit*question_dict.get('points',0)
-
-        else:
-            current_credit = None
-
-        # record information about score and points in question_data
-        # so is available in question_body.html template
-        question_data['points']=question_dict.get('points')
-        question_data['current_score']=current_score
-        question_data['current_credit']=current_credit
 
 
     return question_list

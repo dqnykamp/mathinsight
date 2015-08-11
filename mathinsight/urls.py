@@ -54,6 +54,8 @@ urlpatterns = [
     url(r'^assess/', include('mitesting.urls', namespace="mitesting")),
     url(r'^thread/', include('micourses.threadurls', namespace="mithreads")),
     url(r'^course/', include('micourses.urls', namespace="micourses")),
+    url(r'^forbidden', TemplateView.as_view(template_name="forbidden.html"),
+        name="mi-forbidden"),
     url(r'^', include('midocs.urls')), # include last as will absorb xx/xx urls
 ] \
 + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

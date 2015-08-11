@@ -80,19 +80,19 @@ class InitialDueDateNode(Node):
         course_thread_content = self.course_thread_content.resolve(context)
         student = self.student.resolve(context)
         try:
-            initial_due_date= course_thread_content.get_initial_due_date(student)
+            initial_due= course_thread_content.get_initial_due(student)
         except:
             return ""
 
         if self.asvar:
-            context[self.asvar]=initial_due_date
+            context[self.asvar]=initial_due
             return ""
         else:
-            return initial_due_date
+            return initial_due
 
 
 @register.tag
-def get_initial_due_date(parser, token):
+def get_initial_due(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
         raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
@@ -116,19 +116,19 @@ class FinalDueDateNode(Node):
         course_thread_content = self.course_thread_content.resolve(context)
         student = self.student.resolve(context)
         try:
-            final_due_date= course_thread_content.get_final_due_date(student)
+            final_due= course_thread_content.get_final_due(student)
         except:
             return ""
 
         if self.asvar:
-            context[self.asvar]=final_due_date
+            context[self.asvar]=final_due
             return ""
         else:
-            return final_due_date
+            return final_due
 
 
 @register.tag
-def get_final_due_date(parser, token):
+def get_final_due(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
         raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
@@ -148,11 +148,12 @@ class CompleteSkipButtonNode(Node):
         self.course_thread_content = course_thread_content
         self.student = student
     def render(self, context):
-        course_thread_content = self.course_thread_content.resolve(context)
-        student = self.student.resolve(context)
+        return "[Add complete skip button]"
+        # course_thread_content = self.course_thread_content.resolve(context)
+        # student = self.student.resolve(context)
 
-        return course_thread_content.complete_skip_button_html(student,
-                                                               full_html=True)
+        # return course_thread_content.complete_skip_button_html(student,
+        #                                                        full_html=True)
 
 @register.inclusion_tag('micourses/thread_section.html', takes_context=True)
 def thread_section(context, section):

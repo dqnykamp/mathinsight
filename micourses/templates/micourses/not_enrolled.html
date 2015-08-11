@@ -4,5 +4,5 @@
 {% block title %}{{request.user.get_full_name}} not enrolled{%endblock%}
 
 {% block content %}
-<p>{{request.user.get_full_name}} is not enrolled in any active courses on Math Insight</p>
+<p>{{request.user.get_full_name}} is not enrolled in the course {{course}}.</p>
 {% endblock %}

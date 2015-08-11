@@ -1,13 +1,14 @@
 from mitesting.models import Question, Assessment, QuestionAnswerOption
 from midocs.models import Applet
-from micourses.models import QuestionResponse
-from django.db import IntegrityError
+from micourses.models import QuestionResponse, QuestionAttempt, ThreadContent
+from django.db import IntegrityError, transaction
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect, HttpResponseForbidden, \
-    HttpResponse
+    HttpResponse, JsonResponse
 from django.template import RequestContext, Template, Context
-from django.contrib.auth.decorators import permission_required, user_passes_test
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+from django.utils.decorators import method_decorator
 from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -18,6 +19,8 @@ from django.views.generic import DetailView, View
 from django.views.generic.detail import SingleObjectMixin
 from django.template import TemplateSyntaxError
 import json 
+import reversion
+from django.utils import timezone
 
 import logging
 
@@ -28,8 +31,8 @@ class QuestionView(DetailView):
     """
     View question or question solution by itself on a page
 
-    Checks if logged in user has level 2 permissions.
-    If not, redirects to login page.
+    Checks if logged in user has level 3 permissions.
+    If not, redirects to forbidden page
     If not solution, then shows help and solution buttons, if available.
 
     Random number seed can be given as a GET parameter;
@@ -49,20 +52,26 @@ class QuestionView(DetailView):
     pk_url_kwarg = 'question_id'
     solution=False
 
-    def render_to_response(self, context, **response_kwargs):
-        if self.solution:
-            self.template_name = 'mitesting/question_solution.html'
 
+
+    def get(self, request, *args, **kwargs):
         # determine if user has full permissions on assessments
-        # (i.e., permission level 2),
+        # (i.e., permission level 3),
         if not user_has_given_assessment_permission_level(
-            self.request.user, 2):
-            path = self.request.build_absolute_uri()
-            from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(path)
+                self.request.user, 3):
+            return redirect("mi-forbidden")
+
+        self.object = self.get_object()
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+
+    def get_template_names(self):
+        if self.solution:
+            return ['mitesting/question_solution.html',]
         else:
-            return super(QuestionView, self)\
-                .render_to_response(context, **response_kwargs)
+            return ['mitesting/question_detail.html',]
+            
 
     def get_context_data(self, **kwargs):
         context = super(QuestionView, self).get_context_data(**kwargs)
@@ -72,7 +81,7 @@ class QuestionView(DetailView):
         except:
             seed = None
 
-        # show help if no rendering solution
+        # show help if not rendering solution
         show_help = not self.solution
         
         # In question view, there will be only one question on page.
@@ -85,8 +94,12 @@ class QuestionView(DetailView):
         import random
         rng = random.Random()
 
-        context['question_data']= self.object.render(
-            rng=rng, seed=seed, user=self.request.user,
+        question_dict={'question': self.object,
+                       'seed': seed,}
+        from mitesting.render_assessments import render_question
+        context['question_data']= render_question(
+            question_dict=question_dict,
+            rng=rng,  user=self.request.user,
             question_identifier=identifier, 
             allow_solution_buttons=True,
             solution=self.solution,
@@ -110,7 +123,7 @@ class QuestionView(DetailView):
 class GradeQuestionView(SingleObjectMixin, View):
     """
     Grade user responses for computer graded questions.
-    Record answer for logged in users, if record_answers for computer_grade_data
+    Record answer for logged in users, if record_response for computer_grade_data
     is set.
 
     Expects the following POST data:
@@ -122,7 +135,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       - identifier: the identifier for the question
       - allow_solution_buttons: if set to true, show a solution  button if
         other criteria are met
-      - record_answers: if set to true, record logged in user answers
+      - record_response: if set to true, record logged in user answers
       - course_code: code of course of assessment
       - assessment_code: code of assessment in which the question was rendered
       - question_set: question_set of this assessment in which question appeared
@@ -149,7 +162,7 @@ class GradeQuestionView(SingleObjectMixin, View):
       the solution
     - attempt_credit: fraction question is correct on this attempt
 
-    If record_answers is set to true and user is logged in, then record
+    If record_response is set to true and user is logged in, then record
     users answers, associating answer with a course if associated with a course
     that is set up for recording answers and assessment not past due
 
@@ -188,40 +201,32 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         answer_info = computer_grade_data['answer_info']
         
-        answer_user_responses = []
+        user_responses = []
         for answer_num in range(len(answer_info)):
             answer_identifier = answer_info[answer_num]['identifier']
-            answer_user_responses.append({
+            user_responses.append({
                 'identifier': answer_identifier,
                 'code': answer_info[answer_num]['code'],
-                'answer': 
+                'response': 
                 response_data.get('answer_%s' % answer_identifier, "")})
+
+        question_attempt=None
+        question_attempt_id = computer_grade_data.get("question_attempt_id")
+        if question_attempt_id is not None:
+            try:
+                question_attempt = QuestionAttempt.objects.get(
+                    id=question_attempt_id)
+            except QuestionAttempt.DoesNotExist:
+                pass
         
         from .grade_question import grade_question
-        answer_results=grade_question(question=question,
-                question_identifier=question_identifier,
-                answer_info=answer_info, 
-                answer_user_responses=answer_user_responses, seed=seed)
-            
-        # determine if question is part of an assessment
-        course_code = computer_grade_data.get('course_code')
-        assessment_code = computer_grade_data.get('assessment_code')
-        assessment_seed = computer_grade_data.get('assessment_seed')
-        question_set = computer_grade_data.get('question_set')
-
-        if assessment_code and course_code:
-            try:
-                assessment = Assessment.objects.get(course__code=course_code,
-                                                    code=assessment_code)
-            except ObjectDoesNotExist:
-                assessment_code = None
-
-        if not assessment_code:
-            assessment = None
-            question_set = None
-            assessment_seed = None
-
-
+        answer_results=grade_question(
+            question=question,
+            question_identifier=question_identifier,
+            question_attempt=question_attempt,
+            answer_info=answer_info, 
+            user_responses=user_responses, seed=seed)
+        
         # increment number of attempts
         try:
             number_attempts = int(response_data['number_attempts_%s' % 
@@ -242,126 +247,88 @@ class GradeQuestionView(SingleObjectMixin, View):
             enable_solution_button = True
 
         answer_results['enable_solution_button'] = enable_solution_button
-                
-        
-        # untested with courses
-        
-        record_answers = computer_grade_data['record_answers'] 
+
+        record_response = computer_grade_data['record_response'] 
 
         # if not recording the result of the question,
         # we're finished, so return response with the results
-        if not (record_answers and request.user.is_authenticated()):
-            return HttpResponse(json.dumps(answer_results),
-                                content_type = 'application/json')
-
-        try:
-            student = request.user.courseuser
-            course = student.return_selected_course()
-        except:
-            student = None
-            course = None
-
-        # check if assessment given by assessment_code is in course
-        # if so, will link to latest attempt
-        current_attempt = None
-        past_due = False
-        due_date = None
-        solution_viewed = False
-
-        if course and assessment_code:
-                        
-            assessment_content_type = ContentType.objects.get\
-                (model='assessment')
-
-            try:
-                content=course.thread_contents.get\
-                    (object_id=assessment.id,\
-                     content_type=assessment_content_type)
-
-                if not content.record_scores:
-                    record_answers = False
-
-            except ObjectDoesNotExist:
-                content=None
-                record_answers = False
-
-            if record_answers:
-                due_date = content.adjusted_due_date(student)
-                today = datetime.date.today()
-                if due_date and today > due_date:
-                    past_due = True
-                    record_answers = False
-
-            # if content, get or create attempt by student
-            # with same assessment_seed
-            # if not record scores, mark attempt as invalid
-            if content:
-                try:
-                    current_attempt = content.studentcontentattempt_set\
-                        .filter(student=student, seed=assessment_seed,
-                                invalid=not record_answers).latest()
-                except ObjectDoesNotExist:
-                    current_attempt = content.studentcontentattempt_set\
-                        .create(student=student, seed=assessment_seed,
-                                invalid=not record_answers)
+        if not (record_response and question_attempt):
+            return JsonResponse(answer_results)
 
 
-                # check if student already viewed the solution
-                # if so, mark as to not record scores 
-                # and get/create invalid attempt
-                if current_attempt.studentcontentattemptsolutionview_set\
-                        .filter(question_set=question_set).exists():
-                    solution_viewed = True
-                    record_answers = False
+        content_attempt = question_attempt.content_attempt_question_set\
+                         .content_attempt
+        content_record=content_attempt.record
+        content = content_record.content
 
-                    try:
-                        current_attempt = content.studentcontentattempt_set\
-                            .filter(student=student, seed=assessment_seed,
-                                    invalid=not record_answers).latest()
-                    except ObjectDoesNotExist:
-                        current_attempt = content.studentcontentattempt_set\
-                            .create(student=student, seed=assessment_seed,
-                                    invalid=not record_answers)
+        # Verify that logged in user is the student of the content_record.
+        # If not, don't record results
+        if request.user.courseuser != content_record.enrollment.student:
+            return JsonResponse(answer_results)
+            
 
+        if not content.record_scores:
+            record_response = False
 
+        past_due=False
+        if record_response:
+            due = content.adjusted_due(request.user.courseuser)
+            if due and timezone.now() > due:
+                past_due = True
+                record_response = False
 
-        # If have current_attempt, then record answers even if 
-        # record_answers is False.
-        # Since attempt will be marked as invalid,
+        # check if student already viewed the solution
+        # if so, mark as to not record response
+        if question_attempt.solution_viewed:
+            solution_viewed = True
+            record_response = False
+        else:
+            solution_viewed = False
+
+        # Record response even if record_response is False.
+        # Just mark response as invalid so 
         # it won't count toward score and won't be viewable by student
-        if current_attempt:
-            QuestionResponse.objects.create\
-                (user=request.user, question=question, \
-                 question_set=question_set,\
-                 answer=json.dumps(answer_user_responses),\
-                 identifier_in_answer = question_identifier, \
-                 seed=seed, credit=answer_results['credit'],\
-                 course_content_attempt=current_attempt)
+        qr=QuestionResponse.objects.create\
+            (question_attempt=question_attempt,
+             response=json.dumps(user_responses),\
+             credit=answer_results['credit'],\
+             valid = record_response)
 
         if past_due:
-            feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (due_date, assessment)
+            from micourses.utils import format_datetime
+            feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (format_datetime(due), content.get_title())
         elif solution_viewed:
             feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
-        elif not record_answers:
+        elif not record_response:
             feedback_message = "Assessment not set up for recording answers"
         else:
             feedback_message = ""
 
-        if current_attempt and not current_attempt.invalid:
-            feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:assessmentattempted', kwargs={'pk': content.id} ), course)
-
-            current_credit =current_attempt\
-                .get_percent_credit_question_set(question_set)
-            answer_results['current_credit']=current_credit
-
+        if record_response:
+            feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:assessmentattempted', kwargs={'pk': content.id} ), content.course)
 
         answer_results['feedback'] += "<p>%s</p>" % feedback_message
+
+        from mitesting.utils import round_and_int
+        question_attempt.refresh_from_db()
+        answer_results['current_percent_credit']=round_and_int(
+            question_attempt.credit*100,1)
+
+        content_attempt.refresh_from_db()
+        if content_attempt.score is None:
+            answer_results['attempt_score']=0
+        else:
+            answer_results['attempt_score']=round_and_int(
+                content_attempt.score,1)
         
+        content_record.refresh_from_db()
+        if content_record.score is None:
+            answer_results['content_score']=0
+        else:
+            answer_results['content_score']=round_and_int(
+                content_record.score,1)
 
-        data = json.dumps(answer_results)
-
-        return HttpResponse(json.dumps(answer_results),
-                            content_type = 'application/json')
+        return JsonResponse(answer_results)
 
 
 class InjectQuestionSolutionView(SingleObjectMixin, View):
@@ -421,6 +388,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
 
         course_code = computer_grade_data.get('course_code')
         assessment_code = computer_grade_data.get('assessment_code')
+        
         assessment = None
         
         if assessment_code and course_code:
@@ -450,13 +418,28 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         auxiliary_data =  return_new_auxiliary_data()
         auxiliary_data['applet']['suffix'] = "%s_sol" % question_identifier
 
+        question_attempt=None
+        question_attempt_id = computer_grade_data.get("question_attempt_id")
+        if question_attempt_id is not None:
+            try:
+                question_attempt = QuestionAttempt.objects.get(
+                    id=question_attempt_id)
+            except QuestionAttempt.DoesNotExist:
+                pass
+
         import random
         rng=random.Random()
 
+        question_dict={
+            'question': question,
+            'seed': seed,
+            'question_attempt': question_attempt,
+         }
+
         from mitesting.render_assessments import render_question
         question_data= render_question(
-            question=question,
-            rng=rng, seed=seed, user=request.user,
+            question_dict=question_dict,
+            rng=rng, user=request.user,
             question_identifier="%s_sol" % question_identifier, 
             auxiliary_data = auxiliary_data,
             solution=True,
@@ -475,58 +458,26 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                    }
 
 
-        # if don't have logged in user, then just return results
-        if not request.user.is_authenticated():
-            return HttpResponse(json.dumps(results),
-                                content_type = 'application/json')
-            
-        # otherwise, first record that user viewed solution
+        
+        # if not from a question attempt, then just return solution
+        # and don't record fact
+        if not question_attempt:
+            return JsonResponse(results)
 
-        # this code is untested
+        # if question attempt but user is not student from attempt,
+        # then don't return anything
+        if request.user.courseuser != question_attempt\
+                       .content_attempt_question_set\
+                         .content_attempt.record.enrollment.student:
+            return JsonResponse({})
 
-        try:
-            student = request.user.courseuser
-            course = student.return_selected_course()
-        except:
-            course = None
+        # record fact that viewed solution for this question_attempt
+        question_attempt.solution_viewed = timezone.now()
+        with transaction.atomic(), reversion.create_revision():
+            question_attempt.save()
 
-        # check if assessment given by assessment_code is in course
-        # if so, will link to latest attempt
-        if course and assessment_code:
-
-            assessment_seed = computer_grade_data.get('assessment_seed')
-            question_set = computer_grade_data.get('question_set')
-
-            assessment_content_type = ContentType.objects.get\
-                (model='assessment')
-
-            try:
-                content=course.thread_contents.get\
-                    (object_id=assessment.id,\
-                     content_type=assessment_content_type)
-            except ObjectDoesNotExist:
-                content=None
-
-            # if found course content, get or create attempt by student
-            # with same assessment_seed
-            if content:
-                try:
-                    current_attempt = content.studentcontentattempt_set\
-                        .filter(student=student, seed=assessment_seed)\
-                        .latest()
-                except ObjectDoesNotExist:
-                    current_attempt = content.studentcontentattempt_set\
-                        .create(student=student, seed=assessment_seed)
-
-                # record fact that viewed solution
-                # for this content attempt
-                # and this question set
-                current_attempt.studentcontentattemptsolutionview_set\
-                    .create(question_set=question_set)
-
-
-        return HttpResponse(json.dumps(results),
-                            content_type = 'application/json')
+        # return solution
+        return JsonResponse(results)
 
 
 
@@ -537,7 +488,7 @@ class AssessmentView(DetailView):
     Accepts either get or post, with seed given as a parameter.
     Checks if logged in user has required permissions. 
     For solution, checks if logged in user with level 2 permissions.
-    If user doesn't have required permissions, redirects to login page.
+    If user doesn't have required permissions, redirects to forbidden page
     If not solution, then shows help and solution buttons, if available.
 
     Add the following to the context:
@@ -565,9 +516,7 @@ class AssessmentView(DetailView):
             has_permission=True
             
         if not has_permission:
-            path = self.request.build_absolute_uri()
-            from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(path)
+            return redirect("mi-forbidden")
         else:
             return super(AssessmentView, self)\
                 .render_to_response(context, **response_kwargs)
@@ -672,6 +621,23 @@ class AssessmentView(DetailView):
         context['course'] = self.assessment.course
         context['thread_content'] = self.thread_content
         context['attempt_number'] = self.attempt_number
+        context['current_attempt'] = self.current_attempt
+        context['multiple_attempts'] = self.current_attempt.record.attempts.filter(valid=True).count()>1
+
+        from mitesting.utils import round_and_int
+        context['thread_content_points'] = round_and_int(
+            self.thread_content.points)
+        if self.current_attempt.score is None:
+            context['attempt_score']=0
+        else:
+            context['attempt_score']=round_and_int(
+                self.current_attempt.score,1)
+        
+        if self.current_attempt.record.score is None:
+            context['content_score']=0
+        else:
+            context['content_score']=round_and_int(
+                self.current_attempt.record.score,1)
 
         # add attempt url to rendered_list question_data
         if self.thread_content:
@@ -737,7 +703,8 @@ class AssessmentView(DetailView):
         self.current_enrollment
         self.thread_content
         self.attempt_number
-
+        self.current_attempt
+        
         Set the following variables that specify the version of assessment:
         self.assessment_seed
         self.version_string
@@ -825,6 +792,10 @@ class AssessmentView(DetailView):
         If seed is not in GET, treat as student of course
 
 
+        TODO: determine what role attempt_number plays.  
+        It'd be good to have separate attempt number for invalid attempts so that attempts before available don't influence the version seen, especially if not individualized by student.
+
+
         """
 
         # sets the following variables
@@ -833,6 +804,7 @@ class AssessmentView(DetailView):
         self.assessment_seed= None
         self.version_string = ''
         self.attempt_number=1
+        self.current_attempt=None
         self.question_list = []
 
         from mitesting.render_assessments import get_question_list
@@ -911,7 +883,7 @@ class AssessmentView(DetailView):
 
             # If have list of question seeds, ids, and sets
             # then use those for question list
-            if question_seed_list and question_id_list and question_set_list:
+            if question_seeds and question_ids and question_sets:
                 question_seed_list = question_seeds.split(",")
                 question_id_list = question_ids.split(",")
                 question_set_list = question_sets.split(",")
@@ -948,9 +920,9 @@ class AssessmentView(DetailView):
             student_record = self.thread_content.studentcontentrecord_set\
                                     .get(enrollment = self.course_enrollment)
         except ObjectDoesNotExist:
-            student_record = self.thread_content.studentcontentrecord_set\
+            with transaction.atomic(), reversion.create_revision():
+                student_record = self.thread_content.studentcontentrecord_set\
                                     .create(enrollment = self.course_enrollment)
-
 
         assessment_availability = self.thread_content.return_availability(
             student=courseuser)
@@ -970,7 +942,7 @@ class AssessmentView(DetailView):
             elif not latest_attempt.valid:
                 latest_attempt=False
 
-        current_attempt=None
+        self.current_attempt=None
         if latest_attempt:
             # Verify latest attempt has the right number of
             # of question sets with question attempts
@@ -1007,11 +979,18 @@ class AssessmentView(DetailView):
 
                 total_weight += weight
 
+                # find latest valid response, if it exits
+                try:
+                    latest_response=qa.responses.filter(valid=True).latest()
+                except ObjectDoesNotExist:
+                    latest_response=None
+
                 self.question_list.append(
                     {'question_set': ca_question_set.question_set,
                      'question': qa.question,
                      'seed': qa.seed,
                      'question_attempt': qa,
+                     'response': latest_response,
                      'relative_weight': weight,
                      'group': group,
                      'previous_same_group': False
@@ -1027,7 +1006,7 @@ class AssessmentView(DetailView):
             # otherwise, use lastest attempt as current attempt
             # and add remaining data to question list
             else:
-                current_attempt = latest_attempt
+                self.current_attempt = latest_attempt
                 
                 # set assessment seed and version string
                 self.assessment_seed = latest_attempt.seed
@@ -1058,34 +1037,43 @@ class AssessmentView(DetailView):
                 
 
         # If didn't find a current attempt to use, generate new attempt
-        if not current_attempt:
+        if not self.current_attempt:
             
             self.attempt_number +=1
-            self.version_string = str(self.attempt_number)
-            if self.thread_content.individualize_by_student:
-                self.version_string = "%s_%s" % \
-                            (courseuser.user.username, self.version_string)
-            self.assessment_seed = "sd%s_%s" % (self.thread_content.id, 
-                                                self.version_string)
+            if self.assessment.single_version:
+                self.assessment_seed='1'
+                self.version_string = ''
+            elif assessment_availability==NOT_YET_AVAILABLE:
+                self.version_string = str(self.attempt_number)
+                self.assessment_seed=self.version_string
+            else:
+                self.version_string = str(self.attempt_number)
+                if self.thread_content.individualize_by_student:
+                    self.version_string = "%s_%s" % \
+                                (courseuser.user.username, self.version_string)
+                self.assessment_seed = "sd%s_%s" % (self.thread_content.id, 
+                                                    self.version_string)
             valid_attempt=assessment_availability==AVAILABLE
 
             # create the attempt
-            current_attempt = student_record.attempts\
-                            .create(seed=self.assessment_seed,
-                                    valid=valid_attempt)
+            with transaction.atomic(), reversion.create_revision():
+                self.current_attempt = student_record.attempts\
+                                        .create(seed=self.assessment_seed,
+                                            valid=valid_attempt)
 
             self.question_list = get_question_list(
                 self.assessment, seed=self.assessment_seed,
                 thread_content=self.thread_content)
 
             # create the content question sets and question attempts
-            for (i,q_dict) in enumerate(self.question_list):
-                ca_question_set = current_attempt.question_sets.create(
-                    question_number=i+1, question_set=q_dict['question_set'])
-                qa=ca_question_set.question_attempts.create(
-                    question=q_dict['question'],
-                    seed=q_dict['seed'], valid=valid_attempt)
-                q_dict['question_attempt'] = qa
+            with transaction.atomic(), reversion.create_revision():
+                for (i,q_dict) in enumerate(self.question_list):
+                    ca_question_set = self.current_attempt.question_sets.create(
+                        question_number=i+1, question_set=q_dict['question_set'])
+                    qa=ca_question_set.question_attempts.create(
+                        question=q_dict['question'],
+                        seed=q_dict['seed'], valid=valid_attempt)
+                    q_dict['question_attempt'] = qa
 
 
 
@@ -1097,61 +1085,90 @@ class GenerateNewAssessmentAttemptView(SingleObjectMixin, View):
 
     """
 
-    model = Assessment
-    slug_url_kwarg = 'assessment_code'
-    slug_field = 'code'
+    model = ThreadContent
 
     def post(self, request, *args, **kwargs):
         """
         Through post can generate new attempt.
-        Need to test and fix this.
         """
 
-        self.object = self.get_object(queryset=self.model.objects.filter(
-            course__code=self.kwargs["course_code"]))
+        thread_content = self.get_object()
 
-        # First determine if user is enrolled in an course
+        # if content object isn't an assessment, then return 404
+        assessment_content_type = ContentType.objects.get(model='assessment')
+        if thread_content.content_type != assessment_content_type:
+            raise Http404("No assessment found") 
+                        
+        assessment=thread_content.content_object
+        course=thread_content.course
+
+        # determine if user is enrolled in class
         try:
-            courseuser = request.user.courseuser
-            course = courseuser.return_selected_course()
-        except (ObjectDoesNotExist, MultipleObjectsReturned, AttributeError):
+            enrollment = course.courseenrollment_set.get(
+                student=request.user.courseuser)
+        except (ObjectDoesNotExist, AttributeError):
             # if not in course, just redirect to the assessment url
             return HttpResponseRedirect(reverse('mitesting:assessment',
-                            kwargs={'course_code': self.object.course.code,
-                                    'assessment_code': self.object.code }))
+                            kwargs={'course_code': course.code,
+                                    'assessment_code': assessment.code }))
 
-        assessment_content_type = ContentType.objects.get(model='assessment')
-
+        # get or create content record for user
         try:
-            # Find the course version of the specific assessment
-            course_thread_content=course.thread_contents.get\
-                            (object_id=self.object.id,\
-                        content_type=assessment_content_type)
+            student_record = thread_content.studentcontentrecord_set.get(
+                enrollment=enrollment)
         except ObjectDoesNotExist:
-            # if can't find, just redirect to the assessment url
-            return HttpResponseRedirect(reverse('mitesting:assessment',
-                            kwargs={'course_code': self.object.course.code,
-                                    'assessment_code': self.object.code }))
+            with transaction.atomic(), reversion.create_revision():
+                student_record = thread_content.studentcontentrecord_set.create(
+                    enrollment=enrollment)
 
 
-        attempts = course_thread_content.studentcontentattempt_set\
-                                        .filter(student=courseuser) 
-
+        attempts = student_record.attempts.all()
         attempt_number = attempts.count()+1
-        version = str(attempt_number)
-        if course_thread_content.individualize_by_student:
-            version= "%s_%s" % (courseuser.user.username, 
-                                version)
-        seed = "%s_%s_%s" % (course.code, self.object.id, 
-                             version)
 
-        current_attempt = course_thread_content.studentcontentattempt_set\
-                                    .create(student=courseuser, seed=seed)
+        from micourses.models import AVAILABLE, NOT_YET_AVAILABLE
+
+        assessment_availability = thread_content.return_availability(
+            student=request.user.courseuser)
+
+        if assessment.single_version:
+           seed='1'
+           version_string = ''
+        elif assessment_availability==NOT_YET_AVAILABLE:
+            version_string = str(attempt_number)
+            seed=version_string
+        else:
+            version_string = str(attempt_number)
+            if thread_content.individualize_by_student:
+                version_string = "%s_%s" % \
+                            (request.user.username, version_string)
+            seed = "sd%s_%s" % (thread_content.id, version_string)
+        valid_attempt=assessment_availability==AVAILABLE
+
+        # create the new attempt
+        with transaction.atomic(), reversion.create_revision():
+            new_attempt = student_record.attempts.create(seed=seed,
+                                                     valid=valid_attempt)
+
+        from mitesting.render_assessments import get_question_list
+        question_list = get_question_list(
+            assessment, seed=seed,
+            thread_content=thread_content)
+
+        # create the content question sets and question attempts
+        with transaction.atomic(), reversion.create_revision():
+            for (i,q_dict) in enumerate(question_list):
+                ca_question_set = new_attempt.question_sets.create(
+                    question_number=i+1, question_set=q_dict['question_set'])
+                qa=ca_question_set.question_attempts.create(
+                    question=q_dict['question'],
+                    seed=q_dict['seed'], valid=valid_attempt)
+
+
 
         # redirect to assessment url
         return HttpResponseRedirect(reverse('mitesting:assessment', 
-                    kwargs={'course_code': self.object.course.code,
-                            'assessment_code': self.object.code }))
+                    kwargs={'course_code': course.code,
+                            'assessment_code': assessment.code }))
 
 
 
@@ -1281,3 +1298,42 @@ def default_sympy_commands(request):
         [(cmd.pk, cmd.name) for cmd in SympyCommandSet.objects.filter(default=True)])
         
     return HttpResponse(default_commands, content_type = 'application/json')
+
+
+class GenerateAssessmentView(DetailView):
+    context_object_name = "assessment"
+    model = Assessment
+    template_name = "mitesting/assessment_generate.html"
+    slug_url_kwarg = 'assessment_code'
+    slug_field = 'code'
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        # determine if user has instructor or designer access
+        course = self.object.course
+        
+
+        # (i.e., permission level 2),
+        if not user_has_given_assessment_permission_level(
+                self.request.user, 3):
+            return redirect("mi-forbidden")
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    @method_decorator(user_can_administer_assessment_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(GenerateAssessmentView, self).dispatch(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(GenerateAssessmentView, self).get_context_data(**kwargs)
+        context['the_assessment_name'] = self.get_object().name
+        return context
+
+    def get_queryset(self):
+        return self.model._default_manager.filter(course__code=
+                                                  self.kwargs["course_code"])
+
+

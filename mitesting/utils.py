@@ -1499,3 +1499,24 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
             + s[exp_end+exp_skipafter:]
 
     return s
+
+
+def round_and_int(number, ndigits=0):
+    """
+    Round number to ndigits of accuracy.
+    If result is an integer, convert to integer to remove trailing zero.
+
+    If number is None, return None
+
+    """
+
+    if number is None:
+        return None
+
+    number = round(number,ndigits)
+    
+    if round(number)==number:
+        number=int(number)
+
+    return number
+

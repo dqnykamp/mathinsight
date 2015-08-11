@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import ListView
 from micourses.models import Course
 from micourses import views
-from micourses.views import EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
+from micourses.views import ThreadView, ThreadEditView, EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
 
 paginate_by=20
 
@@ -13,9 +13,8 @@ urlpatterns = [
          queryset=Course.active_courses.all(),
          paginate_by=paginate_by),
         name="list"),
-    url(r'^(?P<course_code>\w+)$', views.thread_view, 
-        name="thread"),
-    url(r'^(?P<course_code>\w+)/edit$', views.thread_edit_view, 
+    url(r'^(?P<course_code>\w+)$', ThreadView.as_view(), name="thread"),
+    url(r'^(?P<course_code>\w+)/edit$', ThreadEditView.as_view(),
         name="thread-edit"),
     url(r'^edit/section$', 
         EditSectionView.as_view(), name='edit-section'),
