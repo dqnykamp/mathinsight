@@ -1,40 +1,139 @@
 {% extends "micourses/course_base.html" %}
-{% load mi_tags testing_tags course_tags %}
+{% load  mi_tags course_tags %}
 {% block nolinksection %}{% endblock %}
 {% block title %}Attempts of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+{% block extrastyle2 %}
+<style>
+  .overridden {
+      text-decoration: line-through;
+      color: gray;
+  }
+  .invalid {
+      text-decoration: line-through;
+      color: gray;
+  }
+</style>
+{% endblock %}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a>{% endblock %}
 
 {% block content %}
+<div id="message" class="info">{{message}}</div>
+
 <h3>Record for: {{student.get_full_name}}</h3>
 
 <h4>{{thread_content.get_title}}</h4>
 
 <p>Points: {{thread_content.points}}<br/>
-Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> (based on {{thread_content.attempt_aggregation_string}} score achieved)<br/>
+Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> <br/>
 Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculation' student.id thread_content.id %}'>{{adjusted_due}}</a></p>
 
-<table id="attempt_table" class="basic rowclick">
+<table id="attempt_table" class="basic">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Version</th><th>Score</th></tr></thead>
-<tfoot><tr><td></td><td><b>&nbsp;Assessment score</b> (based on {{thread_content.attempt_aggregation_string}} score achieved)</td><td><b><span id="assessment_score_table">&nbsp;{{ score|floatformat_or_dash:"1"}}</span></b></td></tr></tfoot>
+<tfoot><tr><td></td><td colspan=2><b>&nbsp;Assessment score</b> (<span id="score_comment" {% if score_overridden %}class="overridden" {%endif%}>based on {{thread_content.attempt_aggregation_string}} score</span><span id="score_overridden" {% if not score_overridden %}hidden {%endif%}>, overridden</span>)</td>
+<td class="righttext"><b>
+<div id="attempt_record_score"><span id="score_record">{{score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm('record');"></div><div id="edit_attempt_record_score" hidden><form id="edit_attempt_record_score_form" action="" method="post"><span id="edit_attempt_record_score_form_inner">{{score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('record')"><br/><input type="button" value="Delete override" onclick="post_change_score('record', 'delete');" id="delete_override_record" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
+</tr></tfoot>
 {% for attempt in attempts %}
-<tr><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td><td class="righttext">{{attempt.score_or_edit}}</td><td class="righttext">{{attempt.direct_link}}</td></tr>
+<tr {% if not attempt.valid %}class="invalid"{%endif%}><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td>
+<td><a href="{{attempt.version_url}}" class="assessment">View version {{attempt.version_string}}</a></td>
+<td class="righttext">{% with id=attempt.attempt.id %}<div id="attempt_{{id}}_score"><span id="score_{{id}}">{{attempt.score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm({{id}});"></div><div id="edit_attempt_{{id}}_score" hidden><form id="edit_attempt_{{id}}_score_form"><span id="edit_attempt_{{id}}_score_form_inner">{{attempt.score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{id}})"><br/><input type="button" value="Delete override" onclick="post_change_score({{id}}, 'delete');" id="delete_override_{{id}}" {% if not attempt.score_overridden %}hidden {%endif%}></form></div>{%endwith%}</td></tr>
 {% endfor %}
 </table>
 
-<div id="add_attempt_section" hidden>
-<h4>Add attempt</h4>
-<form id="add_student_content_attempt_form">{{new_attempt_form.as_p }}<div id="add_attempt_errors" class="error"></div><input type="button" value="Save" onclick="Dajaxice.midocs.add_student_content_attempt(Dajax.process,{'form':$('#add_student_content_attempt_form').serializeArray()})"><input type="button" value="Cancel" onclick="toggleAttemptForm();"></p>
-</form></div><input type="button" id="show_add_attempt_button" value="Add attempt" onclick="toggleAttemptForm();">
+{% if new_course_attempt_list %}
+<h4>Add scores for course-wide attempts</h4>
+<form id="add_course_attempts" action="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}" method="post" >{% csrf_token %}
+<table>
+<thead><tr><th>Seed</th><th>Date and time</th><th>Version</th><th>Score</th></tr></thead>
+  {% for item in new_course_attempt_list %}
+<tr><td>{{item.attempt.seed}}</td><td>{{item.attempt.attempt_began}}</td>
+<td><a href="{{item.attempt.return_url}}">View version {{item.attempt.version_string}}</a></td><td>{{item.field.errors}}{{item.field}}</td></tr>
+  {% endfor %}
+</table>
+<div style="text-align: right;"><input type="submit" value="Submit course-wide attempt scores"></div>
+</form>
+{% endif %}
+
+
 <script type="text/javascript">
-  function toggleAttemptForm() {
-      $('#add_attempt_section').toggle();
-      $('#show_add_attempt_button').toggle();
-}
-  function toggleEditForm(num) {
-      $('#attempt_' + num + '_score').toggle();
-      $('#edit_attempt_' + num + '_score').toggle();
-}
+  function toggleEditForm(id) {
+      $('#attempt_' + id + '_score').toggle();
+      $('#edit_attempt_' + id + '_score').toggle();
+      $('#edit_attempt_' + id + '_score_form_score').val($('#score_' + id).html());
+  }
+
+    $("#edit_attempt_record_score_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('record', 'change');
+    });
+  {% for attempt in attempts %}{% with id=attempt.attempt.id %}
+    $("#edit_attempt_{{id}}_score_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('{{id}}', 'change');
+    });
+  {% endwith %}{%endfor%}
+
+  function post_change_score(id, action) {
+      if(id=="record") {
+	  record_type="content_record"
+      }
+      else {
+	  record_type="content_attempt"
+      }
+      
+      var data = "action="+action+"&record_type=" + record_type +"&" +"attempt_id=" + id + "&" + $('#edit_attempt_'+id+'_score_form').serialize()
+
+      var thepost = jQuery.post('{% url "micourses:change_score" course_code=thread_content.course.code content_id=thread_content.id student_id=student.id %}', data);
+      
+      thepost.done(process_change_score);
+  }
+
+
+  function process_change_score(data) {
+      var action = data['action'];
+      var id = data['id'];
+      var score_text = data['score_text']
+      var form = data['form']
+      var success = data['success']
+      $('#edit_attempt_'+ id +'_score_form_inner').html(form);
+
+      if(success) {
+	  $('#score_'+id).html(score_text);
+	  if(id != "record") {
+	      var record_score_text = data['record_score_text'];
+	      $('#score_record').html(record_score_text);
+	      $('#edit_attempt_record_score_form_score').val(record_score_text);
+	      $('#assessment_score').html(record_score_text);
+	  }
+	  else {
+	      $('#assessment_score').html(score_text);
+	  }
+	  toggleEditForm(id);
+	  
+	  if(action=="change") {
+	      $('#delete_override_' + id).toggle(true);
+	      if(id=="record") {
+		  $("#score_comment").addClass("overridden");
+		  $("#score_overridden").toggle(true);
+	      }
+	  }
+	  else if(action=="delete") {
+	      $('#delete_override_' + id).toggle(false);
+	      if(id=="record") {
+		  $("#score_comment").removeClass("overridden");
+		  $("#score_overridden").toggle(false);
+	      }
+	  }
+      }
+      
+      
+  }
+
+
 </script>
 
 

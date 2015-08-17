@@ -196,8 +196,82 @@ class CourseAdmin(reversion.VersionAdmin):
 class GradeCategoryAdmin(reversion.VersionAdmin):
     pass
 
+class QuestionAssignedInline(admin.TabularInline):
+    model = QuestionAssigned
+class QuestionSetDetailInline(admin.TabularInline):
+    model = QuestionSetDetail
+class AssessmentBackgroundPageInline(admin.TabularInline):
+    model = AssessmentBackgroundPage
+class AssessmentAdmin(reversion.VersionAdmin):
+    inlines = [QuestionAssignedInline,QuestionSetDetailInline,AssessmentBackgroundPageInline]
+    list_display = ("code","name", "assessment_type")
+    list_filter = ("course", "assessment_type",)
+    search_fields = ['code', 'name', 'short_name']
+    readonly_fields = ('privacy_level_description',
+                       'privacy_level_solution_description',)
+    save_on_top=True
+    save_as = True
+
+    fieldsets = (
+        (None, {
+                'fields': (('code', 'short_name'),
+                           'name', 
+                           ('assessment_type', 'course'),
+                           ('privacy_level_description',
+                           'privacy_level_solution_description'),
+                           ) 
+                }),
+        ('Privacy overrides', {
+                'classes': ('collapse',),
+                'fields': ('groups_can_view', 'groups_can_view_solution', )
+                }),
+        ('Description', {
+                'classes': ('collapse',),
+                'fields': ('description', 'detailed_description', )
+                }),
+        ('Instructions', {
+                'classes': ('collapse',),
+                'fields': ('instructions', 'instructions2' )
+                }),
+        ('Notes', {
+                'classes': ('collapse',),
+                'fields': ('notes', )
+                }),
+        ('Other configurations', {
+                'fields': (('allow_solution_buttons', 'fixed_order', 'single_version'),
+                           )
+                }),
+        )
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(AssessmentAdmin, self).formfield_for_dbfield(db_field,
+                                                                    **kwargs)
+        if db_field.name == 'name':
+            field.widget.attrs['size'] = 50
+            del field.widget.attrs['class']
+        if db_field.name == 'description':
+            field.widget.attrs['size'] = 60
+            del field.widget.attrs['class']
+        if db_field.name == 'total_points':
+            field.widget.attrs['size'] = 3
+        if db_field.name == 'time_limit':
+            field.widget.attrs['size'] = 20
+            del field.widget.attrs['class']
+        return field
+    class Media:
+        js = ["js/save_me_genie.js",]
+
+class AssessmentTypeAdmin(reversion.VersionAdmin):
+    class Media:
+        js = ["js/save_me_genie.js",]
+
+
 
 admin.site.register(Course, CourseAdmin)
 #admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
 #admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
 admin.site.register(GradeCategory,GradeCategoryAdmin)
+admin.site.register(Assessment, AssessmentAdmin)
+admin.site.register(AssessmentType, AssessmentTypeAdmin)
+
+

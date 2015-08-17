@@ -7,16 +7,6 @@ from django.conf import settings
 
 register=Library()
 
-@register.tag
-def complete_skip_button(parser, token):
-    bits = token.split_contents()
-    if len(bits) != 3:
-        raise template.TemplateSyntaxError("%r tag requires two arguments" % str(bits[0]))
-    course_thread_content = parser.compile_filter(bits[1])
-    student = parser.compile_filter(bits[2])
-    
-    return CompleteSkipButtonNode(course_thread_content, student)
-
 @register.filter(is_safe=True)
 def floatformat_or_dash(text,arg=1):
     if text is None:
@@ -143,6 +133,45 @@ def get_final_due(parser, token):
     return FinalDueDateNode(course_thread_content, student, asvar)
 
 
+@register.inclusion_tag("micourses/assessments/exam_header.html", takes_context=True)
+def new_exam_page(context):
+    return {
+        'course': context.get('course'),
+        'assessment_date': context.get('assessment_date'),
+        'assessment_short_name': context.get('assessment_short_name'),
+        'version_string': context.get('version_string'),
+        }
+
+
+
+@register.tag
+def assessment_user_can_view(parser, token):
+    bits = token.split_contents()
+    if len(bits) < 3:
+        raise TemplateSyntaxError("%r tag requires at least two arguments" \
+                                      % str(bits[0]))
+    assessment = parser.compile_filter(bits[1])
+    user = parser.compile_filter(bits[2])
+    
+    if len(bits)==5 and bits[3]=='as':
+        asvar=bits[4]
+    else:
+        asvar=None
+
+    return AssessmentUserCanViewNode(assessment, user, asvar)
+
+
+@register.tag
+def complete_skip_button(parser, token):
+    bits = token.split_contents()
+    if len(bits) != 3:
+        raise template.TemplateSyntaxError("%r tag requires two arguments" % str(bits[0]))
+    course_thread_content = parser.compile_filter(bits[1])
+    student = parser.compile_filter(bits[2])
+    
+    return CompleteSkipButtonNode(course_thread_content, student)
+
+
 class CompleteSkipButtonNode(Node):
     def __init__(self, course_thread_content, student):
         self.course_thread_content = course_thread_content
@@ -155,93 +184,3 @@ class CompleteSkipButtonNode(Node):
         # return course_thread_content.complete_skip_button_html(student,
         #                                                        full_html=True)
 
-@register.inclusion_tag('micourses/thread_section.html', takes_context=True)
-def thread_section(context, section):
-    return {'thread_section': section, 
-            'id': section.id,
-            'student': context.get('student'),
-            'ltag': context['ltag'],
-    }
-
-@register.inclusion_tag('micourses/thread_section_edit.html',
-                        takes_context=True)
-def thread_section_edit(context, section):
-
-    move_left=True
-    move_right=True
-    move_up=True
-    move_down=True
-
-    if section.course:
-        move_left = False
-    
-    siblings = section.return_siblings()
-    sections_of_grandparent = None
-
-    if section == siblings.first():
-        move_right = False
-
-    if section == siblings.first():
-        if section.course:
-            move_up=False
-        else:
-            sections_of_grandparent=section.parent.return_siblings()
-            if section.parent == sections_of_grandparent.first():
-                move_up=False
-
-    if section == siblings.last():
-        if section.course:
-            move_down=False
-        else:
-            if not sections_of_grandparent:
-                sections_of_grandparent=section.parent.return_siblings()
-            if section.parent == sections_of_grandparent.last():
-                move_down=False
-
-    return {'thread_section': section, 
-            'id': section.id,
-            'ltag': context['ltag'],
-            'move_left': move_left,
-            'move_right': move_right,
-            'move_up': move_up,
-            'move_down': move_down,
-    }
-
-@register.inclusion_tag('micourses/thread_content.html', takes_context=True)
-def thread_content(context, content):
-    student = context.get('student')
-    if student:
-        student_in_course = content.course in student.course_set.all()
-    else:
-        student_in_course = False
-
-    # check if student already completed content
-    try:
-        completed = content.studentcontentcompletion_set\
-            .get(student=student).complete
-    except:
-        completed = False
-
-    return {'thread_content': content, 
-            'id': content.id,
-            'student': student,
-            'student_in_course': student_in_course,
-            'completed': completed,
-    }
-
-
-@register.inclusion_tag('micourses/thread_content_edit.html', 
-                        takes_context=True)
-def thread_content_edit(context, content):
-    move_up=False
-    move_down=False
-    if content.find_previous() or content.section.find_previous():
-        move_up=True
-    if content.find_next() or content.section.find_next():
-        move_down=True
-
-    return {'thread_content': content, 
-            'id': content.id,
-            'move_up': move_up,
-            'move_down': move_down,
-    }

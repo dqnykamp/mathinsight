@@ -1,0 +1,17 @@
+{% load thread_tags %}
+<div id="insert_top"><p><a onclick="if(commands_enabled){toggle_insert_section_form('top')}" class="edit_link" id="insert_section_top">[insert section]</a></p>
+<form id="insert_section_form_top" action="" method="post" accept-charset="utf-8" style="display: none" class="thread_info_box">
+<label for="insert_section_form_top_section_name">Section name:</label> <input id="insert_section_form_top_section_name" maxlength="200" size="50" name="section_name" type="text" value="" />
+<p><input type="submit" value="Insert section"> <input type="button" value="Cancel" onclick="toggle_insert_section_form('top')"></p></form>
+</div>
+<script>
+    $("#insert_section_form_top").submit(function(event) {
+	event.preventDefault();
+	post_edit_section('top', 'insert', $('#insert_section_form_top'), {{course.id}});
+    });
+</script>
+<{{ltag}} class="threadsections" id="child_sections_top">
+{% for section in course.thread_sections.all %}
+<li id="thread_section_{{section.id}}">{% thread_section_edit section %}</li>
+{% endfor %}
+</{{ltag}}>

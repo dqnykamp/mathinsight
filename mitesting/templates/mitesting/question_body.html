@@ -1,4 +1,4 @@
-{% load staticfiles testing_tags mi_tags %}
+{% load staticfiles question_tags mi_tags %}
 
 {% if question_data.error_message %}
 <section class="error">
@@ -11,7 +11,7 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-{% if question_data.points %}({{question_data.points}} point{{question_data.points|pluralize_float}}<span id="{{question_data.identifier}}_credit_info" {% if not question_data.current_percent_credit %}class="hidden_feedback"{%endif%}>, achieved: {% if question_data.attempt_url %}<a href="{{question_data.attempt_url}}"><span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%</a>{%else%}<span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%{%endif%}<span id="{{question_data.identifier}}_complete_icon" {% if question_data.current_percent_credit != 100 %}class="hidden_feedback"{%endif%}> <img src="{% static 'admin/img/icon-yes.gif' %}" alt="Complete" /></span></span>){%endif%}
+{% if question_data.points %}({{question_data.points}} point{{question_data.points|pluralize_float}}<span id="{{question_data.identifier}}_credit_info" {% if question_data.current_percent_credit == None %}class="hidden_feedback"{%endif%}>, achieved: {% if question_data.attempt_url %}<a href="{{question_data.attempt_url}}"><span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%</a>{%else%}<span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%{%endif%}<span id="{{question_data.identifier}}_complete_icon" {% if question_data.current_percent_credit != 100 %}class="hidden_feedback"{%endif%}> <img src="{% static 'admin/img/icon-yes.gif' %}" alt="Complete" /></span></span>){%endif%}
 {{ question_data.rendered_text }}
 
 {% if question_data.help_available %}
@@ -89,7 +89,7 @@
       if(!question_{{question_data.identifier}}_processing) {
 	  set_processing_state_{{question_data.identifier}}()
 	  
-	  var thepost = jQuery.post('{% url "mitesting:gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
+	  var thepost = jQuery.post('{% url "miquestion:gradequestion" question_id=question_data.question.id %}', jQuery('#id_question_{{question_data.identifier}}').serialize()+'&cgd={{question_data.computer_grade_data}}');
 
 	  thepost.done(process_graded_question_{{question_data.identifier}})
 	  .fail(failed_grade_question_{{question_data.identifier}})

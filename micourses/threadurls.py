@@ -3,13 +3,13 @@ from django.conf.urls import patterns, url
 from django.views.generic import ListView
 from micourses.models import Course
 from micourses import views
-from micourses.views import ThreadView, ThreadEditView, EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
+from micourses.threadviews import ThreadView, ThreadEditView, EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
 
 paginate_by=20
 
 urlpatterns = [
     url(r'^list$', ListView.as_view
-        (template_name="micourses/thread_list.html", 
+        (template_name="micourses/threads/thread_list.html", 
          queryset=Course.active_courses.all(),
          paginate_by=paginate_by),
         name="list"),

@@ -39,7 +39,7 @@ def points_to_thread_content(apps, schema_editor):
      Assessment = apps.get_model('mitesting', 'Assessment')
      ThreadContent = apps.get_model('micourses', 'ThreadContent')
      ContentType = apps.get_model('contenttypes', 'ContentType')
-     assessment_content_type = ContentType.objects.get(model='assessment')
+     assessment_content_type = ContentType.objects.get_for_model(Assessment)
 
      for assessment in Assessment.objects.all():
          points = get_total_points(assessment)

@@ -5,6 +5,16 @@ from sympy.parsing.sympy_tokenize import TokenError
 import six
 import re
 
+def get_new_seed(rng=None, seed=None):
+    if not rng:
+        import random
+        rng=random.Random()
+
+    if seed is not None:
+        rng.seed(seed)
+
+    return str(rng.randint(0,1E8))
+
 def return_sympy_local_dict(allowed_sympy_commands=[]):
     """
     Make a whitelist of allowed commands sympy and customized commands.
@@ -360,7 +370,6 @@ def return_parsed_function(expression, function_inputs, name,
                                  parse_subscripts=parse_subscripts)
     except (TokenError, SyntaxError, TypeError, AttributeError):
         raise ValueError("Invalid format for function: " + expression)
-
 
     # parsed_function is a class that stores the expression
     # and the input list, substituting the function arguments
@@ -1145,7 +1154,7 @@ def evaluate_expression(the_expr, rng,
             else:
                 et = "expression"
             raise ValueError("Invalid format for %s: %s" \
-                                 % (et, the_expr.expression))
+                             % (et, the_expr.expression))
         except ValueError as e:
             if "real intervals" in e.args[0]:
                 raise ValueError("Variables used in intervals must be real")

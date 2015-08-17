@@ -1,0 +1,147 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Attempt {{attempt_number}}  of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
+
+{% block extrastyle2 %}
+<style>
+  .invalid {
+      text-decoration: line-through;
+      color: gray;
+  }
+</style>
+{% endblock %}
+
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a>{% endblock %}
+
+{% block content %}
+<h3>Student: {{student.get_full_name}}</h3>
+
+{% if not content_attempt_valid %}
+<h4>Invalid content attempt</h4>
+{% endif %}
+<p{% if not content_attempt_valid%} class="invalid"{%endif%}>Attempt {{attempt_number}} on: {{thread_content.get_title}}</br>
+Date and time: {{datetime}}
+{% if version_string %}<br/>Version: <a href="{{version_url}}" class="assessment">{{version_string}}</a>{%endif%}
+</p>
+<table class="basic">
+<thead><tr><th>Question</th><th>Points</th><th>Percent</th><th>Score</th><th>Link</th></tr></thead>
+<tfoot><tr{% if not content_attempt_valid%} class="invalid"{%endif%}><td><b>&nbsp;Total<span id="score_overridden" {%if not score_overridden%}hidden {%endif%}> (adjusted)</span>{% if not content_attempt_valid %} (invalid){%endif%}</b></td><td><b>&nbsp;{{thread_content.points}}&nbsp;</b></td>
+<td class="righttext"><b><div id="question_attempt_credit"><span id="credit_attempt">{{ content_attempt.get_percent_credit|floatformat_or_dash:"1"}}</span>% <br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'credit', true);"></div><div id="edit_question_attempt_credit" hidden><form id="edit_question_attempt_credit_form"><span id="edit_question_attempt_credit_form_inner">{{credit_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('attempt','credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('attempt', 'delete', 'credit');" id="delete_override_attempt_credit" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
+<td class="righttext"><b><div id="question_attempt_score"><span id="score_attempt">{{ content_attempt.score|floatformat_or_dash:"1" }}</span><br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'score', true);"></div><div id="edit_question_attempt_score" hidden><form id="edit_question_attempt_score_form"><span id="edit_question_attempt_score_form_inner">{{score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('attempt','score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('attempt', 'delete', 'score');" id="delete_override_attempt_score" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
+
+</tr></tfoot>
+{% for q_dict in question_list %}
+<tr><td>{% if q_dict.question_attempts_with_credit%}<a href="{{q_dict.attempt_url}}">&nbsp;{{q_dict.question_number}} (details)</a>{%else%}&nbsp;{{forloop.counter}}&nbsp;{%endif%}</td><td>&nbsp;{{q_dict.points}}&nbsp;</td>
+<td class="righttext">{% with num=q_dict.question_number %}<div id="question_{{num}}_credit"><span id="credit_{{num}}">{{q_dict.percent_credit_text}}</span>%<br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'credit', true);"></div><div id="edit_question_{{num}}_credit" hidden><form id="edit_question_{{num}}_credit_form"><span id="edit_question_{{num}}_credit_form_inner">{{q_dict.credit_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}}, 'credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'credit');" id="delete_override_{{num}}_credit" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div>{%endwith%}</td>
+<td class="righttext">{% with num=q_dict.question_number %}<div id="question_{{num}}_score"><span id="score_{{num}}">{{q_dict.score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'score', true);"></div><div id="edit_question_{{num}}_score" hidden><form id="edit_question_{{num}}_score_form"><span id="edit_question_{{num}}_score_form_inner">{{q_dict.score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}},'score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'score');" id="delete_override_{{num}}_score" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div>{%endwith%}</td>
+<td><a href="{{q_dict.direct_link}}" class="assessment">View question</a></td></tr>
+{% endfor %}
+</table>
+
+<script type="text/javascript">
+  function toggleEditForm(num, score_type, visible) {
+      $('#question_' + num + '_' +score_type).toggle(!visible);
+      $('#edit_question_' + num + '_'+ score_type).toggle(visible);
+      if(num=="attempt") {
+	  var form_id = "attempt_{{content_attempt.id}}";
+      }
+      else {
+	  var form_id = "question_" + num;
+      }
+      if(score_type=="credit") {
+	  $('#edit_' + form_id + '_credit_form_percent').val($('#credit_' + num).html());
+      }
+      else {
+	  $('#edit_' +form_id + '_' + score_type + '_form_' + score_type).val($('#' + score_type + '_' + num).html());
+      }
+  }
+
+    $("#edit_question_attempt_score_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('attempt', 'change', 'score');
+    });
+    $("#edit_question_attempt_credit_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('attempt', 'change', 'credit');
+    });
+  {% for q_dict in question_list %}{% with num=q_dict.question_number %}
+    $("#edit_question_{{num}}_score_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('{{num}}', 'change', 'score');
+    });
+    $("#edit_question_{{num}}_credit_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('{{num}}', 'change', 'credit');
+    });
+  {% endwith %}{%endfor%}
+
+  function post_change_score(num, action, score_type) {
+      if(num=="attempt") {
+	  record_type="content_attempt"
+      }
+      else {
+	  record_type="question_set"
+      }
+      
+      var data = "action="+action+"&record_type=" + record_type+"&score_type=" + score_type +"&" +"attempt_id={{content_attempt.id}}&question_number=" + num + "&" + $('#edit_question_'+num+'_'+score_type+'_form').serialize()
+
+      var thepost = jQuery.post('{% url "micourses:change_score" course_code=thread_content.course.code content_id=thread_content.id student_id=student.id %}', data);
+      
+      thepost.done(process_change_score);
+  }
+
+
+  function process_change_score(data) {
+      var action = data['action'];
+      var num = data['num'];
+      var score_text = data['score_text'];
+      var percent_credit_text = data['percent_credit_text'];
+      var form = data['form'];
+      var success = data['success'];
+      var score_type = data['score_type'];
+
+      $('#edit_question_'+ num +'_'+score_type+'_form_inner').html(form);
+
+      if(success) {
+	  $('#score_'+num).html(score_text);
+	  $('#credit_'+num).html(percent_credit_text);
+	  if(num != "attempt") {
+	      var attempt_score_text = data['attempt_score_text'];
+	      var attempt_percent_credit_text = data['attempt_percent_credit_text'];
+	      $('#score_attempt').html(attempt_score_text);
+	      $('#credit_attempt').html(attempt_percent_credit_text);
+	      $('#edit_attempt_{{content_attempt.id}}_score_form_score').val(attempt_score_text);
+	      $('#edit_attempt_{{content_attempt.id}}_credit_form_percent').val(attempt_percent_credit_text);
+	  }
+	  toggleEditForm(num, "score", false);
+	  toggleEditForm(num, "credit", false);
+	  
+	  if(action=="change") {
+	      $('#delete_override_' + num+"_credit").toggle(true);
+	      $('#delete_override_' + num+"_score").toggle(true);
+	      if(num=="attempt") {
+		  $("#score_overridden").toggle(true);
+	      }
+	  }
+	  else if(action=="delete") {
+	      $('#delete_override_' + num+"_credit").toggle(false);
+	      $('#delete_override_' + num+"_score").toggle(false);
+	      if(num=="attempt") {
+		  $("#score_overridden").toggle(false);
+	      }
+	  }
+      }
+      
+      
+  }
+
+
+</script>
+
+{% endblock %}

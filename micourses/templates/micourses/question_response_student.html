@@ -1,0 +1,33 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags question_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{thread_content.get_title}}{%endblock%}
+
+{% block extrastyle2 %}
+<link href="{{ STATIC_URL }}mitesting/miquestion.css" rel="stylesheet" type="text/css"/>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+{% endblock %}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt' course_code=course.code content_id=thread_content.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ► <a href="{% url 'micourses:question_attempts' course_code=course.code content_id=thread_content.id attempt_number=attempt_number question_number=question_number %}">Question {{question_number}} ►  <a href="{% url 'micourses:question_response' course_code=course.code content_id=thread_content.id attempt_number=attempt_number question_number=question_number response_number=response_number%}">{{ submitted}}</a>{% endblock %}
+
+
+{% block content %}
+
+<h4>Question {{question_number}} of attempt {{attempt_number}} on: {{thread_content.get_title}}</h4>
+
+<p><i>Response submitted on {{submitted}}</i></p>
+
+{% question_body question_data %}
+
+<p>Points: {{ points}}<br/>
+Percent: {{ percent_credit|percent_checked_100 }}<br/>
+Score: {{score|floatformat_or_dash:"1" }}</p>
+
+
+{% endblock %}

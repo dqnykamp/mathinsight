@@ -1,9 +1,9 @@
 {% extends "micourses/course_base.html" %}
-{% load mi_tags testing_tags course_tags %}
+{% load  mi_tags course_tags %}
 {% block nolinksection %}{% endblock %}
 {% block title %}Attempts of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'micourses:assessmentattempted' content.id %}">{{thread_content.get_title}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a>{% endblock %}
 
 {% block content %}
 

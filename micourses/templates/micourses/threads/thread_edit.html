@@ -1,0 +1,242 @@
+{% extends "base.html" %}{% load thread_tags %}
+{% block title %}Math Insight thread: {{course}}{% endblock %}
+{% block threadmenu %}class="active"{% endblock %}
+{% block nolinksection %}{% endblock %}
+{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
+
+{% block extrastyle %}
+<script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% endblock %}
+
+{% block content %}
+<script>var commands_enabled=true;</script>
+
+<h3>Thread: {{course}}</h3>
+
+<p><a href="{% url 'mithreads:thread' course.code %}">Finish editing</a></p>
+
+<p>{{ course.description|safe }} </p>
+
+<div id="thread_contents">
+  {% include "micourses/threads/thread_edit_sub.html" %}
+</div>
+
+<p><a href="{% url 'mithreads:thread' course.code %}">Finish editing</a></p>
+
+<script>
+  
+  'use strict'
+
+  function toggle_delete_section_warning(section_id) {
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#thread_section_commands_'+section_id).toggle(commands_enabled);
+      $('#delete_section_form_'+section_id).toggle(!commands_enabled);
+      $('#thread_section_'+section_id).toggleClass('warning', !commands_enabled);
+  }
+  function toggle_edit_section_form(section_id) {
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#thread_section_heading_'+section_id).toggle(commands_enabled);
+      $('#edit_section_form_container_'+section_id).toggle(!commands_enabled);
+  }
+  function toggle_insert_section_form(section_id) {
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#insert_section_'+section_id).toggle(commands_enabled);
+      $('#insert_section_form_'+section_id).toggle(!commands_enabled);
+  }
+
+  function post_edit_section(section_id, action, form, course_id) {
+      enable_commands(false);
+
+      var data = "action=" + action + "&section_id=" + section_id;
+      
+      if(form!==undefined) {
+	  data += "&" + form.serialize();
+      }
+      if(course_id!==undefined) {
+	  data += "&course_id=" + course_id
+      }
+
+      var thepost = jQuery.post('{% url "mithreads:edit-section" %}', data);
+      
+      thepost.done(process_edit_section);
+      thepost.always(function(event) {enable_commands(true);});
+      
+  }
+  
+  function process_edit_section(data) {
+      var action = data['action'];
+
+      var thread_html=data['thread_html'];
+      if(thread_html) {
+	  $('#thread_contents').html(thread_html);
+      }
+      else {
+	  var new_section_html = data['new_section_html']
+	  $.each(new_section_html, function(selector,the_html) {
+	      $('#'+selector).prepend(the_html);
+	  });
+	  var replace_section_html = data['replace_section_html']
+	  $.each(replace_section_html, function(section_id,the_html) {
+	      $('#thread_section_'+section_id).html(the_html);
+	  });
+
+
+      }
+      if(action=='edit') {
+	  var section_id = data['section_id'];
+	  $("#thread_section_name_"+section_id).html($('#edit_section_form_' + section_id + '_section_name').val());
+	  toggle_edit_section_form(section_id, true);
+      }
+      else if(action=='delete') {
+	  var section_id = data['section_id'];
+	  $("#thread_section_"+section_id).remove()
+	  enable_commands(true)
+      }
+      else if(action=='insert') {
+	  var section_id = data['section_id'];
+	  if(section_id==null) {
+	      section_id="top";
+	  }
+	  toggle_insert_section_form(section_id, true);
+	  $('#insert_section_form_'+section_id+'_section_name').val("");
+	  
+      }
+  }
+
+  function toggle_delete_content_warning(content_id) {
+      commands_enabled=enable_commands(!commands_enabled);
+      $('#thread_content_commands_'+content_id).toggle();
+      $('#delete_content_form_'+content_id).toggle(!commands_enabled);
+      $('#thread_content_title_'+content_id).toggleClass('warning', !commands_enabled);
+  }
+
+  function toggle_content_form(form_type, id) {
+
+      if(form_type=="edit") {
+         $('#thread_content_commands_'+id).toggle();
+      }
+      else if(form_type=="insert") {
+         $('#content_form_link_insert_'+id).toggle();
+      }
+
+
+      $('#content_form_'+ form_type + '_' + id).toggle();
+  }
+
+
+  function post_edit_content(id, action, form) {
+      enable_commands(false);
+
+      var data = "action=" + action + "&" + "id=" + id;
+
+      if(form!==undefined) {
+	  data += "&" + form.serialize();
+      }
+
+      var thepost = jQuery.post('{% url "mithreads:edit-content" %}', data);
+      
+      thepost.done(process_edit_content);
+      thepost.always(function(event) {enable_commands(true);});
+  }
+  
+  function process_edit_content(data) {
+
+      var action = data['action'];
+      var id = data['id'];
+
+      if(!action) {
+	  console.log("Error: invalid data");
+	  return false;
+      }
+
+      var section_contents = data['section_contents'];
+      
+      $.each(section_contents, function(section_id,content_html) {
+	  $('#thread_content_section_'+section_id).html(content_html);
+      });
+
+
+      if(action=='edit' || action=='insert') {
+	  var form_html = data['form_html'];
+	  if(form_html) {
+	      var form_selector_inner = "#content_form_inner_" + action + "_" + id;
+	      
+	      $(form_selector_inner).html(data['form_html']);
+	  }
+	  else if(action=='insert') {
+	      remove_content_form('insert', data['id']);
+	  }
+      }
+  }
+
+
+
+
+  function get_content_form(form_type, id) {
+      enable_commands(false);
+
+      var thepost = jQuery.post('{% url "mithreads:return-content-form" %}', {form_type: form_type, id: id});
+      
+      thepost.done(inject_content_form);
+  }
+
+  function inject_content_form(data) {
+      var form_type = data['form_type'];
+      var id = data['id'];
+
+      var form_selector = "#content_form_" + form_type + "_" + id;
+
+      var form_selector_inner = "#content_form_inner_" + form_type + "_" + id;
+
+      var form_html=data["form_html"];
+
+      $(form_selector_inner).html(data['form_html']);
+
+      toggle_content_form(form_type, id);
+  }
+
+
+  function remove_content_form(form_type,id) {
+      var form_selector_inner = "#content_form_inner_" + form_type + "_" + id;
+      $(form_selector_inner).html("");
+
+      toggle_content_form(form_type, id);
+      enable_commands(true);
+      
+  }
+
+  function update_content_options(form_identifier, option, course_code) {
+
+      var data = {'form_id': form_identifier, 'option': option, 'course_code': course_code};
+
+      var thepost = jQuery.post('{% url "mithreads:return-options" %}', data);
+      
+      thepost.done(inject_content_options);
+      
+  }
+
+  function inject_content_options(data) {
+
+      var form_id = data['form_id'];
+
+      var container_selector = "#content_form_" + form_id + "_object_id";
+
+      $(container_selector).html(data['content_options']);
+
+  }
+  function enable_commands(enable) {
+      if(enable) {
+	  $(".edit_link_disabled").addClass("edit_link").removeClass("edit_link_disabled");
+	  commands_enabled=true;
+      }
+      else {
+	  $(".edit_link").addClass("edit_link_disabled").removeClass("edit_link");
+	  commands_enabled=false;
+      }
+      return commands_enabled;
+  }
+  
+</script>
+
+{% endblock %}

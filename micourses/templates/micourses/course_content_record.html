@@ -1,0 +1,90 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Course-wide attempts on {{thread_content.get_title}}{%endblock%}
+
+{% block extrastyle2 %}
+<style>
+  .deleted {
+      text-decoration: line-through;
+      color: gray;
+      display: none;
+  }
+</style>
+{% endblock %}
+
+{% comment %}{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+{%endcomment%}
+
+{% block content %}
+<h3>Course-wide attempts</h3>
+
+<h4>{{thread_content.get_title}}</h4>
+
+<form action="" method="post" id="edit_course_content">
+{% csrf_token %}
+{{form.as_p}}
+
+<p><a href="{% url 'miassess:generate_course_attempt' content_id=thread_content.id %}">Generate new course wide attempt</a></p>
+
+{% if course_content_attempts %}
+<p style="margin-top:2em;">Course wide attempts (<a id="show_deleted" class="edit_link" onclick="toggle_deleted();">show deleted</a><a id="hide_deleted" class="edit_link" onclick="toggle_deleted();"hidden>hide deleted</a>)</p>
+<ul style="margin-top:0em; list-style: none; text-indent: -1.2em;">
+{% for cca_dict in course_content_attempts %}{% with cca=cca_dict.cca %}
+<li id="cca{{cca.id}}" {% if not cca.valid %}class="deleted"{% endif %}><input type="checkbox" name="cca_ids" value="{{cca_dict.cca.id}}"> <a href="{% url 'miassess:assessment' course_code=thread_content.course.code assessment_code=thread_content.content_object.code%}?content_attempt={{cca_dict.cca.id}}">{{thread_content.get_title}}, version {{cca_dict.cca.version_string}}, seed: {{cca_dict.cca.seed}}, date: {{cca_dict.cca.attempt_began}}</a><br/>
+Question numbers: {{cca_dict.question_numbers}}
+</li> 
+{% endwith %}{% endfor %}
+</ul>
+{% endif %}
+<p style="margin-top: 1em;"><input type="button" value="Delete selected" onclick="post_edit_course_content('delete');"/> <input type="button" value="Undelete selected" id="undelete_button" onclick="post_edit_course_content('undelete');" hidden /> </p>
+</form>
+
+
+<script>
+    var delete_shown=false
+    function toggle_deleted() {
+	$(".deleted").toggle();
+	$("#show_deleted").toggle();
+	$("#hide_deleted").toggle();
+	$("#undelete_button").toggle();
+	delete_shown = !delete_shown
+    }
+
+  function post_edit_course_content(action) {
+
+      var data = "action=" + action + "&" + $("#edit_course_content").serialize();
+      var thepost = jQuery.post('{% url "micourses:edit_course_content_attempts" course_code=thread_content.course.code content_id=thread_content.id %}', data);
+      
+      thepost.done(process_edit_course_content);
+      
+  }
+
+  function process_edit_course_content(data) {
+      var action = data['action'];
+      var ids_changed = data['ids_changed'];
+
+      if(action=="delete") {
+	  for(var i=0; i < ids_changed.length; i++) {
+	      $('#cca'+ ids_changed[i]).addClass("deleted");
+	  }
+      }
+      else if(action=="undelete") {
+	  for(var i=0; i < ids_changed.length; i++) {
+	      $('#cca'+ ids_changed[i]).removeClass("deleted");
+	  }
+      }
+      if(delete_shown) {
+	  $(".deleted").toggle(true);
+
+      }
+      
+      $('input:checkbox').prop("checked",false);
+  }
+
+
+</script>
+
+
+
+{% endblock %}

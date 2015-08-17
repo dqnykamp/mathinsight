@@ -1,5 +1,5 @@
-from micourses.models import STUDENT_ROLE
 from django.utils import formats, timezone
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 import pytz
 
 def check_for_student_activity(content):
@@ -14,6 +14,8 @@ def check_for_student_activity(content):
     Otherwise, return False
     
     """
+
+    from micourses.models import STUDENT_ROLE
 
     for attempt in content.studentcontentattempt_set.all():
         try:
@@ -62,3 +64,44 @@ def find_week_begin_end(course, datetime=None):
                   - timezone.timedelta(microseconds=1)
 
     return beginning_of_week, end_of_week
+
+
+def validate_not_number(value):
+    """
+    Validate that string value is not a number.
+    Use for urls to make sure won't get absorbed by url patterns 
+    with a number in the same location as the code
+    """
+
+    # if code is all digits, raise validation error
+    import re
+    if re.match(r'(\d*)', value).group() == value:
+        raise ValidationError("Cannot be a number")
+
+
+def find_last_course(user, request=None):
+    """"
+    Find course of page that user last visited.  
+    If user is authenticated, course enrolled in takes priority.
+    
+    """
+    if user.is_authenticated():
+        try:
+            course=user.courseuser.return_selected_course_if_exists()
+        except AttributeError:
+            pass
+        else:
+            if course:
+                return course
+    
+    if request:
+        course_id=request.session.get('last_course_viewed')
+        if course_id is not None:
+            from micourses.models import Course
+            try:
+                return Course.objects.get(id=course_id)
+            except (ObjectDoesNotExist, TypeError):
+                pass
+
+    return None
+

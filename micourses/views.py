@@ -1,18 +1,17 @@
 
-from micourses.models import Course, CourseUser, ThreadSection, ThreadContent, QuestionAttempt, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
-from mitesting.models import Assessment
-from micourses.forms import ContentAttemptForm, thread_content_form_factory
+from micourses.models import Course, CourseUser, ThreadContent, QuestionAttempt, Assessment, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
+from micourses.forms import ContentAttemptForm, ScoreForm, CreditForm, AttemptScoresForm
 from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
-from django.contrib.auth.models import User, Group
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, Context, Template
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.views.generic import DetailView, View, ListView
+from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.base import TemplateResponseMixin
 from django.http import Http404
-from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.db import IntegrityError, transaction
@@ -20,7 +19,6 @@ from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.utils import timezone
 from micourses.templatetags.course_tags import floatformat_or_dash
-from mitesting.render_assessments import render_question_list, render_question
 from micourses.utils import format_datetime
 import pytz
 import reversion
@@ -55,10 +53,22 @@ class SelectCourseView(ListView):
         return context
 
         
-class CourseBaseView(DetailView):
+class NotLoggedin(Exception):
+    pass
+class NotEnrolled(Exception):
+    pass
+class NotInstructor(Exception):
+    pass
+
+class CourseBaseMixin(SingleObjectMixin):
     """
-    Requires user to be logged in user enrolled in a course
-    before being able to access the post/get methods.
+    Modifieds get_object to do the following:
+    - raises NotLogged in if user not logged in (should be logged in)
+    - raises NotEnrolled if user not enrolled in course
+    - raises NotInstructor if instruct view and user isn't instructor
+    - adds course, courseuser, and enrollment data
+    - updates courseusers' selected course and session's last course viewed
+
     Adds course, courseuser, and noanalytics to context
     """
     model = Course
@@ -66,24 +76,36 @@ class CourseBaseView(DetailView):
     slug_field = 'code'
     instructor_view = False
 
-    @method_decorator(login_required)
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.course = self.object
-        self.courseuser = request.user.courseuser
+
+    def get_object(self, queryset=None):
+        if not self.request.user.is_authenticated():
+            raise NotLoggedIn
+
+        self.course = super(CourseBaseMixin,self).get_object(queryset)
+    
+        self.courseuser = self.request.user.courseuser
 
         try:
             self.enrollment = self.course.courseenrollment_set.get(
                 student=self.courseuser)
         except ObjectDoesNotExist:
-            return redirect('micourses:notenrolled', course_code=self.course.code)
+            raise NotEnrolled
 
-        self.current_role=self.get_current_role(course)
+        # make sure this course is saved as selected course enrollment
+        if self.enrollment != self.courseuser.selected_course_enrollment:
+            self.courseuser.selected_course_enrollment = self.enrollment
+            self.courseuser.save()
+
+        # also update session with last course viewed
+        self.request.session['last_course_viewed'] = self.course.id
+
+
+        self.current_role=self.courseuser.get_current_role(self.course)
         
         if self.instructor_view and not (self.current_role == INSTRUCTOR_ROLE
                                          or self.current_role == DESIGNER_ROLE):
-            return redirect('micourses:coursemain', course_code=self.course.code)
-            
+            raise NotInstructor
+
         self.student = self.get_student()
 
         # if student isn't the same as course user, obtain students
@@ -98,13 +120,8 @@ class CourseBaseView(DetailView):
         else:
             self.student_enrollment = self.enrollment
 
-        self.get_additional_objects(request, *args, **kwargs)
 
-        context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
-
-    def get_additional_objects(self, request, *args, **kwargs):
-        pass
+        return self.course
 
     def get_student(self):
         if self.instructor_view:
@@ -114,13 +131,14 @@ class CourseBaseView(DetailView):
             return self.courseuser
 
     def get_context_data(self, **kwargs):
-        context = super(CourseBaseView, self).get_context_data(**kwargs)
+        context = super(CourseBaseMixin, self).get_context_data(**kwargs)
         
         context['courseuser'] = self.courseuser
         context['course'] = self.course
         context['student'] = self.get_student()
         context['current_role'] = self.current_role
-        context['instructor_view'] = self.instructor_view
+        context['instructor_role'] = self.current_role==INSTRUCTOR_ROLE \
+                                     or self.current_role==DESIGNER_ROLE
 
         # no Google analytics for course
         context['noanalytics']=True
@@ -133,6 +151,29 @@ class CourseBaseView(DetailView):
         # for context that derived classes can easily ignore 
         # by declaring own extra_context
         return {}
+
+
+
+class CourseBaseView(CourseBaseMixin, TemplateResponseMixin, View):
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except NotEnrolled:
+            return redirect('micourses:notenrolled', 
+                            course_code=self.course.code)
+        except NotInstructor:
+            return redirect('micourses:coursemain', 
+                            course_code=self.course.code)
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        pass
 
 
 class CourseView(CourseBaseView):
@@ -182,10 +223,129 @@ class CourseView(CourseBaseView):
         
 
     def get_template_names(self):
-        if self.instructor_view:
+        # base template on current role
+        if self.current_role == INSTRUCTOR_ROLE \
+           or self.current_role == DESIGNER_ROLE:
             return ['micourses/course_instructor_view.html',]
         else:
             return ['micourses/course_student_view.html',]
+
+
+class CourseContentRecordView(CourseBaseView):
+    instructor_view = True
+    template_name="micourses/course_content_record.html"
+
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        try:
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
+        except ObjectDoesNotExist:
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, kwargs["content_id"]))
+
+        try:
+            self.course_content_record = self.thread_content.contentrecord_set\
+                                  .get(enrollment=None)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                self.course_content_record =\
+                        self.thread_content.contentrecord_set\
+                                  .create(enrollment=None)
+
+    
+    def get_context_data(self, **kwargs):
+        context = super(CourseContentRecordView, self).get_context_data(**kwargs)
+
+        context['thread_content'] = self.thread_content
+        context['course_content_record'] = self.course_content_record
+        cca_dicts=[]
+        for cca in self.course_content_record.attempts.all():
+            question_numbers=[]
+            for qs in cca.question_sets.all():
+                try:
+                    qa = qs.question_attempts.latest()
+                except ObjectDoesNotExist:
+                    continue
+                question_numbers.append(str(qa.question.id))
+            question_numbers = ", ".join(question_numbers)
+            cca_dicts.append({'cca': cca, 
+                              'question_numbers': question_numbers})
+        context['course_content_attempts'] = cca_dicts
+
+        return context
+
+
+class EditCourseContentAttempts(CourseBaseMixin, View):
+    instructor_view=True
+    
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        try:
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
+        except ObjectDoesNotExist:
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, kwargs["content_id"]))
+
+        try:
+            self.course_content_record = self.thread_content.contentrecord_set\
+                                  .get(enrollment=None)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                self.course_content_record =\
+                        self.thread_content.contentrecord_set\
+                                  .create(enrollment=None)
+
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except (NotEnrolled, NotInstructor):
+            return JsonResponse({})
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        try:
+            action = request.POST['action']
+        except KeyError:
+            return JsonResponse({}) 
+
+        coursewide_attempts_selected = request.POST.getlist("cca_ids")
+
+        from micourses.models import ContentAttempt
+        
+        if action=="delete":
+            valid=False
+        elif action=="undelete":
+            valid=True
+        else:
+            return JsonResponse({})
+            
+        ids_changed=[]
+
+        for cca_id in coursewide_attempts_selected:
+            try:
+                cca = ContentAttempt.objects.get(id=cca_id)
+            except ContentAttempt.DoesNotExist:
+                continue
+
+            if cca.record.content != self.thread_content:
+                continue
+
+            cca.valid=valid
+            cca.save(cuser=self.courseuser)
+            ids_changed.append(cca_id)
+
+        return JsonResponse({'ids_changed': ids_changed,
+                             'action': action})
 
 
 class ContentRecordView(CourseBaseView):
@@ -196,15 +356,29 @@ class ContentRecordView(CourseBaseView):
                 id=kwargs["content_id"])
         except ObjectDoesNotExist:
             raise Http404("Thread content not found with course %s and id=%s"\
-                          % (self.course, self.content_id))
+                          % (self.course, kwargs["content_id"]))
 
         try:
-            self.content_record = self.thread_content.studentcontentrecord_set\
+            self.content_record = self.thread_content.contentrecord_set\
                                   .get(enrollment=self.student_enrollment)
         except ObjectDoesNotExist:
             with transaction.atomic(), reversion.create_revision():
-                self.content_record = self.thread_content.studentcontentrecord_set\
+                self.content_record = self.thread_content.contentrecord_set\
                                   .create(enrollment=self.student_enrollment)
+                
+        # if instructor view, also find coursewide record
+        if self.instructor_view:
+            try:
+                self.course_content_record = self.thread_content\
+                                .contentrecord_set.get(enrollment=None)
+            except ObjectDoesNotExist:
+                with transaction.atomic(), reversion.create_revision():
+                    self.course_content_record =\
+                            self.thread_content.contentrecord_set\
+                                      .create(enrollment=None)
+
+        # look for message in get parameters
+        self.message = request.GET.get("message","")
 
 
     def get_context_data(self, **kwargs):
@@ -218,61 +392,127 @@ class ContentRecordView(CourseBaseView):
 
     def extra_context(self):
         from micourses.utils import format_datetime
+        current_tz = timezone.get_current_timezone()
         attempt_list = []
-        for (i, attempt) in enumerate(self.content_record.attempts.all()):
+        if self.instructor_view:
+            attempts = self.content_record.attempts\
+                       .order_by('-valid', 'attempt_began')
+        else:
+            attempts = self.content_record.attempts.filter(valid=True)
+
+        n_invalid_attempts=0
+        for (i, attempt) in enumerate(attempts):
             earliest, latest = attempt.return_activity_interval()
-            datetime_text = format_datetime(earliest)
+            datetime_text = format_datetime(
+                current_tz.normalize(earliest.astimezone(current_tz)))
             if latest:
-                datetime_text += " - " + format_datetime(latest)
+                datetime_text += " - " + format_datetime(
+                    current_tz.normalize(latest.astimezone(current_tz)))
             score_text = floatformat_or_dash(attempt.score, 1)
             attempt_dict = {}
-            attempt_number = i+1
+            attempt_dict["valid"] = attempt.valid
+            if attempt.valid:
+                attempt_number = str(i+1)
+            else:
+                n_invalid_attempts +=1
+                attempt_number = "x%s" % n_invalid_attempts
             attempt_dict['attempt'] = attempt
+            attempt_dict['version_string'] = attempt.version_string
             attempt_dict['score'] = attempt.score
+            attempt_dict['score_text'] = score_text
+            attempt_dict['score_overridden'] = \
+                                    attempt.score_override is not None
             attempt_dict['attempt_number']  = attempt_number
             attempt_dict['formatted_attempt_number'] = \
-                mark_safe('&nbsp;%i&nbsp;' % attempt_number)
+                mark_safe('&nbsp;%s&nbsp;' % attempt_number)
             attempt_dict['datetime'] = \
                 mark_safe('&nbsp;%s&nbsp;' % datetime_text)
             attempt_dict['formatted_score'] = \
                 mark_safe('&nbsp;%s&nbsp;' % score_text)
-            
+
+
             # show details if have question_set with credit that isn't None
             question_set_with_credit = False
             if attempt.question_sets.exclude(credit_override=None):
+                # found question set whose credit was overriden manually
                 question_set_with_credit=True
             elif QuestionAttempt.objects.filter(
                     content_attempt_question_set__content_attempt=attempt) \
                     .exclude(credit=None):
+                # found question set with question attempts with credit set
                 question_set_with_credit=True
             if question_set_with_credit:
                 if self.instructor_view:
-                    attempt_url = reverse('micourses:contentattemptinstructor', 
-                                    kwargs={'course_code': self.course.code,
-                                            'content_id': self.object.id,
-                                            'attempt_number': attempt_number,
-                                            'student_id': self.student.id})
+                    attempt_url = reverse(
+                        'micourses:content_attempt_instructor', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': attempt_number,
+                                'student_id': self.student.id})
+                    attempt_dict['formatted_attempt_number'] = mark_safe \
+                    ('<a href="%s">%s (details)</a>' % \
+                         (attempt_url, attempt_dict['formatted_attempt_number']))
+                    
                 else:
-                    attempt_url = reverse('micourses:contentattempt', 
-                                    kwargs={'course_code': self.course.code,
-                                            'content_id': self.object.id,
-                                            'attempt_number': attempt_number})
-                attempt_dict['formatted_attempt_number'] = mark_safe \
-                ('<a href="%s">%s</a>' % \
-                     (attempt_url, attempt_dict['formatted_attempt_number']))
-                attempt_dict['datetime'] = \
-                    mark_safe('<a href="%s">%s</a>' % \
-                                  (attempt_url, attempt_dict['datetime']))
-                attempt_dict['formatted_score'] = mark_safe\
-                    ('<a href="%s">%s</a>' \
-                         % (attempt_url, attempt_dict['formatted_score']))
+                    attempt_url = reverse(
+                        'micourses:content_attempt', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': attempt_number})
+                    attempt_dict['formatted_attempt_number'] = mark_safe \
+                    ('<a href="%s">%s</a>' % \
+                         (attempt_url, attempt_dict['formatted_attempt_number']))
+                    attempt_dict['datetime'] = \
+                        mark_safe('<a href="%s">%s</a>' % \
+                                      (attempt_url, attempt_dict['datetime']))
+                    attempt_dict['formatted_score'] = mark_safe\
+                        ('<a href="%s">%s</a>' \
+                             % (attempt_url, attempt_dict['formatted_score']))
 
+            if self.instructor_view:
+                attempt_dict['version_url'] = attempt.return_url()
+                score_or_zero = attempt.score
+                if score_or_zero is None:
+                    score_or_zero = 0
+                attempt_dict["score_form"] = ScoreForm({'score': score_or_zero},
+                        auto_id="edit_attempt_%s_score_form_%%s" % attempt.id)
             attempt_list.append(attempt_dict)
-                
+
+        score_overridden = self.content_record.score_override is not None
+        score=self.content_record.score
+        score_text = floatformat_or_dash(score, 1)
+        if score is None:
+            score_or_zero = 0
+        else:
+            score_or_zero = score
+        score_form = ScoreForm({'score': score_or_zero},
+                               auto_id="edit_attempt_record_score_form_%s")
+
+        if self.instructor_view:
+            # find coursewide attempts that aren't used already by student
+            new_course_attempts=self.course_content_record.attempts.exclude(
+                derived_attempts__in=self.content_record.attempts.all())\
+                .filter(valid=True)
+            new_course_attempts_form = AttemptScoresForm(
+                attempts=new_course_attempts, auto_id="coursewide_%s")
+            new_course_attempt_list=[]
+            for (i,field) in enumerate(new_course_attempts_form):
+                new_course_attempt_list.append({
+                    'field': field,
+                    'attempt': new_course_attempts[i],
+                    })
+        else:
+            new_course_attempt_list=None
+
         return {'adjusted_due': self.thread_content\
                     .adjusted_due(self.student),
                 'attempts': attempt_list,
-                'score': self.content_record.score,
+                'score': score,
+                'score_text': score_text,
+                'score_overridden': score_overridden,
+                'score_form': score_form,
+                'new_course_attempt_list': new_course_attempt_list,
+                'message': self.message,
                 }
 
 
@@ -283,281 +523,714 @@ class ContentRecordView(CourseBaseView):
             return ['micourses/content_record_student.html',]
 
 
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        """
+        Called when adding course wide attempts.
+        """
+        if not self.instructor_view:
+            return self.get(request, *args, **kwargs)
 
-class ContentRecordInstructor(ContentRecordView):
-    template_name = 'micourses/content_record_instructor.html'
-    instructor_view = True
+        try:
+            self.object = self.get_object()
+        except NotEnrolled:
+            return redirect('micourses:notenrolled', 
+                            course_code=self.course.code)
+        except NotInstructor:
+            return redirect('micourses:coursemain', 
+                            course_code=self.course.code)
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        new_course_attempts=self.course_content_record.attempts.exclude(
+            derived_attempts__in=self.content_record.attempts.all())\
+                                                    .filter(valid=True)
+        new_course_attempts_form = AttemptScoresForm(
+            request.POST,
+            attempts=new_course_attempts, auto_id="coursewide_%s")
+
+        if new_course_attempts_form.is_valid():
+            n_added=0
+            for attempt in new_course_attempts:
+                new_score = new_course_attempts_form.cleaned_data.get(
+                    'score_%s' % attempt.id)
+                if new_score is not None:
+                    new_attempt=self.content_record.attempts.create(
+                        attempt_began=attempt.attempt_began,
+                        score_override = new_score,
+                        seed=attempt.seed,
+                        valid=True, version_string=attempt.version_string,
+                        base_attempt=attempt)
+                    for qs in attempt.question_sets.all():
+                        new_qs = new_attempt.question_sets.create(
+                            question_number = qs.question_number,
+                            question_set = qs.question_set)
+                        qa = qs.question_attempts.latest()
+                        new_qa = new_qs.question_attempts.create(
+                            question=qa.question,
+                            seed=qa.seed,
+                            random_outcomes=qa.random_outcomes,
+                            attempt_began=qa.attempt_began)
+
+                    n_added+=1
+            from django.utils.encoding import escape_uri_path
+            if n_added==1:
+                message = "%s attempt added." % n_added
+            else:
+                message = "%s attempts added." % n_added
+
+            url = reverse('micourses:content_record_instructor',
+                          kwargs={'course_code': self.course.code,
+                                  'content_id': self.thread_content.id,
+                                  'student_id': self.student.id})
+            url += "?message=%s" % escape_uri_path(message)
+            return redirect(url) 
+        
+        else:
+            context = self.get_context_data(object=self.object)
+
+            new_course_attempt_list=[]
+            for (i,field) in enumerate(new_course_attempts_form):
+                new_course_attempt_list.append({
+                    'field': field,
+                    'attempt': new_course_attempts[i],
+                    })
+            context['new_course_attempt_list']= new_course_attempt_list
+            return self.render_to_response(context)
 
 
-    def extra_course_context(self):
-        from micourses.utils import format_datetime
-        attempt_list = []
-        for (i,attempt) in enumerate(self.assessment_attempts):
-            datetime_text = format_datetime(attempt.datetime)
-            if attempt.have_datetime_interval():
-                datetime_text += " - " \
-                    + format_datetime(attempt.get_latest_datetime())
-            score_text = floatformat_or_dash(attempt.score, 1)
-            attempt_dict = {}
-            attempt_number = i+1
-            attempt_dict['attempt'] = attempt
-            attempt_dict['score'] = attempt.score
-            attempt_dict['attempt_number']  = attempt_number
-            attempt_dict['formatted_attempt_number'] = \
-                mark_safe('&nbsp;%i&nbsp;' % attempt_number)
-            attempt_dict['datetime'] = \
-                mark_safe('&nbsp;%s&nbsp;' % datetime_text)
-            attempt_dict['formatted_score'] = \
-                mark_safe('&nbsp;%s&nbsp;' % score_text)
-            attempt_dict['direct_link'] = attempt.content.content_object.return_link(direct=True, link_text=" try it",seed=attempt.seed)
+class ChangeScore(CourseBaseMixin, View):
+    instructor_view=True
+    
+    def get_additional_objects(self, request, *args, **kwargs):
+        try:
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
+        except ObjectDoesNotExist:
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, kwargs["content_id"]))
 
-            if attempt.questionstudentanswer_set.exists():
-                attempt_url = reverse('micourses:assessmentattemptinstructor', 
-                                      kwargs={'pk': self.object.id,
-                                              'attempt_number': attempt_number,
-                                              'student_id': self.student.id})
-                attempt_dict['formatted_attempt_number'] = mark_safe \
-                ('<a href="%s">%s</a>' % \
-                     (attempt_url, attempt_dict['formatted_attempt_number']))
-                attempt_dict['datetime'] = \
-                    mark_safe('<a href="%s">%s</a>' % \
-                                  (attempt_url, attempt_dict['datetime']))
-                attempt_dict['formatted_score'] = mark_safe\
-                    ('<a href="%s">%s</a>' \
-                         % (attempt_url, attempt_dict['formatted_score']))
+        try:
+            self.content_record = self.thread_content.contentrecord_set\
+                                  .get(enrollment=self.student_enrollment)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                self.content_record = self.thread_content.contentrecord_set\
+                                  .create(enrollment=self.student_enrollment)
 
-            edit_attempt_form = StudentContentAttemptForm\
-                ({'score': attempt.score, 'content': attempt.content.id,
-                  'student': attempt.student.id, 'seed': attempt.seed, 
-                  'datetime': attempt.datetime })
-            edit_content_command = "Dajaxice.midocs.edit_student_content_attempt(Dajax.process,{'form':$('#edit_student_content_attempt_%i_form').serializeArray(), attempt_id: %i, attempt_number: %i })" % (attempt_number, attempt.id, attempt_number)
-            toggle_command = 'toggleEditForm(%i)' % attempt_number
 
-            score_or_edit = '<span id="edit_attempt_%i_score" hidden><form id="edit_student_content_attempt_%i_form"><span id ="edit_student_content_attempt_%i_form_inner" >%s</span><div id="edit_attempt_%i_errors" class="error"></div><input type="button" value="Change" onclick="%s"><input type="button" value="Cancel" onclick="%s"></form></span><span id="attempt_%i_score"><span id="attempt_%i_score_inner">%s</span><input type="button" value="Edit" onclick="%s"></span>' \
-                % (attempt_number, attempt_number, attempt_number, \
-                       edit_attempt_form.as_p(), attempt_number, \
-                       edit_content_command, toggle_command, attempt_number,\
-                       attempt_number,\
-                       attempt_dict['formatted_score'], toggle_command)
-            attempt_dict['score_or_edit'] = mark_safe(score_or_edit)
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except (NotEnrolled, NotInstructor):
+            return JsonResponse({})
 
-            attempt_list.append(attempt_dict)
+        self.get_additional_objects(request, *args, **kwargs)
+
+        try:
+            action = request.POST['action']
+            record_type = request.POST['record_type']
+        except KeyError:
+            return JsonResponse({}) 
+
+        score_type = request.POST.get('score_type', 'score')
+
+        if record_type=="content_record":
+        
+            # have not implemented credit so far
+            if score_type == 'credit':
+                return JsonResponse({})
+
+            success=False
+            score_form = ScoreForm(request.POST,
+                                   auto_id="edit_attempt_record_score_form_%s")
+
+            if action=="change":
+                if score_form.is_valid():
+                    score = score_form.cleaned_data['score']
+                    self.content_record.score_override=score
+                    self.content_record.save(cuser=self.courseuser)
+                    success=True
+
+            elif action=="delete":
+                self.content_record.score_override=None
+                self.content_record.save(cuser=self.courseuser)
+                success=True
+                score_form = ScoreForm({'score': self.content_record.score },
+                                   auto_id="edit_attempt_record_score_form_%s")
+
+
+            score=self.content_record.score
+            score_text = floatformat_or_dash(score, 1)
+
+            return JsonResponse({'action': action,
+                                 'id': 'record', 'score': score, 
+                                 'form': score_form.as_p(),
+                                 'success': success, 'score_text': score_text })
+
+        
+        elif record_type=='content_attempt':
+            try:
+                attempt_id = request.POST['attempt_id']
+                content_attempt=self.content_record.attempts.get(id=attempt_id)
+            except (KeyError, ObjectDoesNotExist):
+                return JsonResponse({})
+            
+            success=False
+            score_text=None
+
+            if score_type == 'credit':
+                score_form = CreditForm(request.POST,
+                        auto_id="edit_attempt_%s_credit_form_%%s" % attempt_id)
+
+            else:
+                score_form = ScoreForm(request.POST,
+                        auto_id="edit_attempt_%s_score_form_%%s" % attempt_id)
+
+            if action=="change":
+                if score_form.is_valid():
+                    if score_type=='credit':
+                        credit = score_form.cleaned_data['percent']/100
+                        points = self.thread_content.points
+                        if points is None:
+                            score=None
+                        else:
+                            score = points*credit
+                    else:
+                        score = score_form.cleaned_data['score']
+                    content_attempt.score_override=score
+                    content_attempt.save(cuser=self.courseuser)
+                    success=True
+
+
+            elif action=="delete":
+                content_attempt.score_override=None
+                content_attempt.save(cuser=self.courseuser)
+                success=True
+                if score_type=='credit':
+                    score_form = CreditForm(
+                        {'percent': content_attempt.get_percent_credit() },
+                        auto_id="edit_attempt_%s_credit_form_%%s" % attempt_id)
+                else:
+                    score_form = ScoreForm({'score': content_attempt.score },
+                        auto_id="edit_attempt_%s_score_form_%%s" % attempt_id)
                 
-        new_attempt_form = StudentContentAttemptForm({
-                'content': self.object.id,
-                'student': self.student.id,
-                'datetime': timezone.now()\
-                    .strftime('%Y-%m-%d %H:%M'),
-                })
+            score=content_attempt.score
+            score_text = floatformat_or_dash(score, 1)
+            percent_credit=content_attempt.get_percent_credit()
+            percent_credit_text=floatformat_or_dash(percent_credit,1)
+            record_score=self.content_record.score
+            record_score_text=floatformat_or_dash(record_score, 1)
+            
+            return JsonResponse({'action': action,
+                                 'id': attempt_id, 
+                                 'num': "attempt",
+                                 'score_type': score_type,
+                                 'form': score_form.as_p(),
+                                 'success': success, 
+                                 'score': score, 'score_text': score_text,
+                                 'percent_credit': percent_credit,
+                                 'percent_credit_text': percent_credit_text,
+                                 'record_score': record_score,
+                                 'record_score_text': record_score_text })
+            
+
+        elif record_type=='question_set':
+            try:
+                attempt_id = request.POST['attempt_id']
+                content_attempt=self.content_record.attempts.get(id=attempt_id)
+            except (KeyError, ObjectDoesNotExist):
+                return JsonResponse({})
+            
+            try:
+                question_number = request.POST['question_number']
+                ca_question_set=content_attempt.question_sets.get(
+                    question_number=question_number)
+            except (KeyError, ObjectDoesNotExist):
+                return JsonResponse({})
+
+            success=False
+            score_text=None
+
+            if score_type == 'credit':
+                score_form = CreditForm(request.POST,
+                    auto_id="edit_question_%s_credit_form_%%s" % question_number)
+            else:
+                score_form = ScoreForm(request.POST,
+                    auto_id="edit_question_%s_score_form_%%s" % question_number)
+
+            points = ca_question_set.get_points()
+
+            if action=="change":
+                if score_form.is_valid():
+                    if score_type=='credit':
+                        credit = score_form.cleaned_data['percent']/100
+                    else:
+                        score = score_form.cleaned_data['score']
+                        credit=score/points
+
+                    ca_question_set.credit_override=credit
+                    ca_question_set.save(cuser=self.courseuser)
+                    success=True
 
 
-        return {'adjusted_due': self.object\
-                    .adjusted_due(self.student),
-                'attempts': attempt_list,
-                'score': self.object.student_score(self.student),
-                'new_attempt_form': new_attempt_form,
-                }
+            elif action=="delete":
+                ca_question_set.credit_override=None
+                ca_question_set.save(cuser=self.courseuser)
+                success=True
+                credit = ca_question_set.get_credit()
+                if credit is None:
+                    credit=0
+                score = points*credit
+                if score_type=='credit':
+                    score_form = CreditForm(
+                        {'percent': credit*100 },
+                        auto_id="edit_question_%s_credit_form_%%s" % \
+                        question_number)
+                else:
+                    score_form = ScoreForm({'score': score },
+                        auto_id="edit_question_%s_score_form_%%s" % \
+                                           question_number)
+                
+            credit = ca_question_set.get_credit()
+            if credit is None:
+                credit=0
+            score = points*credit
+            score_text = floatformat_or_dash(score, 1)
+                        
+            percent_credit = credit*100
+            percent_credit_text=floatformat_or_dash(percent_credit,1)
 
+            attempt_score=content_attempt.score
+            attempt_percent_credit=content_attempt.get_percent_credit()
+            attempt_score_text=floatformat_or_dash(attempt_score, 1)
+            attempt_percent_credit_text=floatformat_or_dash(
+                attempt_percent_credit,1)
 
-#class EditContentAttemptView(View):
+            return JsonResponse({'action': action,
+                                 'id': attempt_id, 
+                                 'num': question_number,
+                                 'form': score_form.as_p(),
+                                 'success': success, 
+                                 'score_type': score_type,
+                                 'score': score, 'score_text': score_text,
+                                 'percent_credit': percent_credit,
+                                 'percent_credit_text': percent_credit_text,
+                                 'attempt_score': attempt_score,
+                                 'attempt_score_text': attempt_score_text,
+                                 'attempt_percent_credit': 
+                                 attempt_percent_credit,
+                                 'attempt_percent_credit_text':
+                                 attempt_percent_credit_text})
+  
     
 
 class ContentAttemptView(ContentRecordView):
     
-    template_name = 'micourses/content_attempt.html'
+    def get_additional_objects(self, request, *args, **kwargs):
+        super(ContentAttemptView,self).get_additional_objects(
+            request, *args, **kwargs)
 
-    def get_object(self):
-        content = super(ContentAttemptView, self).get_object()
-        
-        # don't pad attempt_number with zeros
         self.attempt_number = self.kwargs['attempt_number']
-        if self.attempt_number[0]=='0':
-            raise  Http404('Assessment attempt %s not found.' \
-                               % self.attempt_number)
+        
+        # if attempt_number begins with an x, it is an invalid attempt number
+        if self.attempt_number[0]=="x":
+            if not self.instructor_view:
+                raise Http404('Content attempt %s not found.' \
+                              % self.attempt_number)
+            self.content_attempt_valid = False
+            attempt_number_int = self.attempt_number[1:]
+        else:
+            self.content_attempt_valid = True
+            attempt_number_int = self.attempt_number
+            
+        # don't pad attempt number with a zero
+        if attempt_number_int[0]=='0':
+            raise Http404('Content attempt %s not found.' \
+                              % self.attempt_number)
 
         try:
-            self.attempt = self.assessment_attempts[int(self.attempt_number)-1]
-        except IndexError:
-            raise Http404('Assessment attempt %s not found.' \
-                              % self.attempt_number)
-        
-        return content
+            attempt_number_int = int(attempt_number_int)
+        except ValueError:
+            raise Http404('Content attempt %s not found.' \
+                          % self.attempt_number)
+            
+        if self.content_attempt_valid:
+            attempts = self.content_record.attempts.filter(valid=True)
+        else:
+            attempts = self.content_record.attempts.filter(valid=False)
 
-    def extra_course_context(self):
+        try:
+            self.content_attempt = attempts[attempt_number_int-1]
+        except IndexError:
+            raise Http404('Content attempt %s not found.' \
+                              % self.attempt_number)
+
+        # if content object isn't an assessment, then return 404
+        assessment_content_type = ContentType.objects.get(app_label="micourses",
+                                                          model='assessment')
+        if self.thread_content.content_type != assessment_content_type:
+            raise Http404("No assessment found") 
+
+        self.assessment = self.thread_content.content_object
+
+
+    def get_context_data(self, **kwargs):
+        context = super(ContentAttemptView, self).get_context_data(**kwargs)
+
+        context['content_attempt'] = self.content_attempt
+        context['attempt_number'] = self.attempt_number
+        context['content_attempt_valid'] = self.content_attempt_valid
+
+        return context
+
+
+    def extra_context(self):
+        from micourses.utils import format_datetime
+        current_tz = timezone.get_current_timezone()
         
         context={}
-        context['attempt'] = self.attempt
-        context['attempt_number'] = self.attempt_number
-        context['score_overridden'] = self.attempt.score_override is not None
+        context['score_overridden'] = self.content_attempt.score_override is not None
 
-        import random
-        rng=random.Random()
-        rendered_question_list=render_question_list\
-            (self.assessment, rng=rng, seed=self.attempt.seed,
-             current_attempt=self.attempt)[0]
+        earliest, latest = self.content_attempt.return_activity_interval()
+        datetime_text = format_datetime(
+            current_tz.normalize(earliest.astimezone(current_tz)))
+        if latest:
+            datetime_text += " - " + format_datetime(
+                current_tz.normalize(latest.astimezone(current_tz)))
 
-        question_list = []
-        for qd in rendered_question_list:
-            question_dict={'points': qd['points'],
-                           'current_credit': qd['question_data']['current_credit'],
-                           'current_score': qd['question_data']['current_score'],
-                           'direct_link':\
-                               mark_safe('<a href="%s?seed=%s" class="assessment">try it</a>' \
-                                             % (qd['question'].get_absolute_url(), qd['seed']))
-                           }
+        context['datetime'] = mark_safe('&nbsp;%s&nbsp;' % datetime_text)
+
+        context['version_string'] = self.content_attempt.version_string
+        
+        if self.instructor_view:
+            context['version_url'] = self.content_attempt.return_url()
+
+
+        from micourses.render_assessments import get_question_list_from_attempt
+        question_list = get_question_list_from_attempt(
+            self.assessment, self.content_attempt)
+
+        for q_dict in question_list:
+            ca_question_set=q_dict['ca_question_set']
+            question_number =ca_question_set.question_number
+            q_dict['question_number'] = question_number
+
+            credit =  ca_question_set.get_credit()
+            if credit is None:
+                credit=0
+            score = credit*q_dict['points']
+            percent_credit = credit*100
+            q_dict['percent_credit'] = percent_credit
+            q_dict['percent_credit_text'] = floatformat_or_dash(
+                percent_credit,1)
+            q_dict['score'] = score
+            q_dict['score_text'] = floatformat_or_dash(score, 1)
+            q_dict['credit_overridden'] = \
+                                ca_question_set.credit_override is not None
+
+
+            if self.instructor_view:
+                q_dict['question_attempts_with_credit'] = \
+                    ca_question_set.question_attempts.exclude(credit=None)\
+                                                     .exists()
+            else:
+                q_dict['question_attempts_with_credit'] = \
+                    ca_question_set.question_attempts.exclude(credit=None)\
+                                                .exclude(valid=False).exists()
             
-            question_dict['answers_available'] = \
-                self.attempt.questionstudentanswer_set \
-                .filter(question_set=qd['question_set']).exists()
-            
-            question_list.append(question_dict)
+            if q_dict['question_attempts_with_credit']:
+                if self.instructor_view:
+                    q_dict['attempt_url'] = reverse(
+                        'micourses:question_attempts_instructor', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': self.attempt_number,
+                                'student_id': self.student.id,
+                                'question_number': ca_question_set\
+                                .question_number})
+
+                else:
+                    q_dict['attempt_url'] = reverse(
+                        'micourses:question_attempts', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': self.attempt_number,
+                                'question_number': ca_question_set\
+                                .question_number})
+
+            if self.instructor_view:
+                q_dict['direct_link'] =  self.content_attempt.return_url(
+                    question_number=ca_question_set.question_number)
+                q_dict["score_form"] = ScoreForm({'score': score},
+                    auto_id="edit_question_%s_score_form_%%s" % question_number)
+                q_dict["credit_form"] = CreditForm({'percent': percent_credit},
+                    auto_id="edit_question_%s_credit_form_%%s" % question_number)
+
+
+        if self.instructor_view:
+            score=self.content_attempt.score
+            score_text = floatformat_or_dash(score, 1)
+            if score is None:
+                score_or_zero=0
+            else:
+                score_or_zero=score
+            score_form = ScoreForm({'score': score_or_zero},
+                                   auto_id="edit_attempt_%s_score_form_%%s" %\
+                                   self.content_attempt.id)
+
+            percent_credit = self.content_attempt.get_percent_credit()
+            percent_credit_text = floatformat_or_dash(percent_credit,1)
+            percent_credit_or_zero = percent_credit
+            if percent_credit_or_zero is None:
+                percent_credit_or_zero = 0
+            credit_form = CreditForm({'percent': percent_credit_or_zero},
+                                    auto_id="edit_attempt_%s_credit_form_%%s" %\
+                                    self.content_attempt.id)
+
+            context['score']=score
+            context['score_text']=score_text
+            context['score_form'] = score_form
+            context['percent_credit'] = percent_credit
+            context['percent_credit_text'] = percent_credit_text
+            context['credit_form'] = credit_form
 
         context['question_list'] =question_list
 
         return context
 
 
-class AssessmentAttemptInstructor(ContentAttemptView):
-    template_name = 'micourses/assessment_attempt_instructor.html'
-
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(AssessmentAttemptInstructor, self)\
-            .dispatch(request, *args, **kwargs) 
-    def get_student(self):
-        return get_object_or_404(self.course.enrolled_students,
-                                 id=self.kwargs['student_id'])
+    def get_template_names(self):
+        if self.instructor_view:
+            return ['micourses/content_attempt_instructor.html',]
+        else:
+            return ['micourses/content_attempt_student.html',]
 
 
-class AssessmentAttemptQuestion(ContentAttemptView):
-    
-    model = ThreadContent
-    context_object_name = 'content'
-    template_name = 'micourses/assessment_attempt_question.html'
+class QuestionAttemptsView(ContentAttemptView):
 
-    def get_object(self):
-        content = super(AssessmentAttemptQuestion, self).get_object()
-        
+    def get_additional_objects(self, request, *args, **kwargs):
+        super(QuestionAttemptsView,self).get_additional_objects(
+            request, *args, **kwargs)
+
         # don't pad question_number with zeros
         self.question_number = self.kwargs['question_number']
         if self.question_number[0]=='0':
-            raise  Http404('Question %s not found.' % self.question_number)
+            raise Http404('Question %s not found.' % self.question_number)
 
         self.question_number = int(self.question_number)
 
         try:
-            import random
-            rng=random.Random()
-            self.question_dict=render_question_list\
-                    (self.assessment, rng=rng, seed=self.attempt.seed, 
-                     current_attempt=self.attempt)[0][self.question_number-1]
-        except IndexError:
-            raise  Http404('Question %s not found.' % self.question_number)
+            self.ca_question_set = self.content_attempt.question_sets.get(
+                question_number = self.question_number)
+        except ObjectDoesNotExist:
+            raise Http404('Question number %s not found.' \
+                              % self.question_number)
 
-        question_set = self.question_dict['question_set']
+        self.question_set_points = self.ca_question_set.get_points()
 
-        self.answers=self.attempt.questionstudentanswer_set.filter\
-            (question_set=question_set)
-        
-        if not self.answers:
-            raise Http404('Question %s not found.' % self.question_number)
 
-        return content
+    def get_context_data(self, **kwargs):
+        context = super(QuestionAttemptsView, self).get_context_data(**kwargs)
 
-    def extra_course_context(self):
-        
-        context={}
-        context['attempt'] = self.attempt
-        context['attempt_number'] = self.attempt_number
-        context['points'] = self.question_dict['points']
-        context['score'] = self. question_dict['question_data']['current_score']
-        context['current_credit'] = self.question_dict['question_data']['current_credit']
         context['question_number'] = self.question_number
-
-        answer_list=[]
-        for answer in self.answers:
-            answer_dict = {'datetime': answer.datetime, }
-            try:
-                answer_dict['score'] = answer.credit*self.question_dict['points']
-            except TypeError:
-                answer_dict['score'] = 0
-            answer_dict['credit_percent'] = int(round(answer.credit*100))
-            answer_list.append(answer_dict)
-        context['answers'] = answer_list
+        context['ca_question_set'] = self.ca_question_set
 
         return context
 
+    def extra_context(self):
+        from micourses.utils import format_datetime
+        current_tz = timezone.get_current_timezone()
 
-class AssessmentAttemptQuestionInstructor(AssessmentAttemptQuestion):
-    template_name = 'micourses/assessment_attempt_question_instructor.html'
-
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(AssessmentAttemptQuestionInstructor, self)\
-            .dispatch(request, *args, **kwargs) 
-    
-    def get_student(self):
-        return get_object_or_404(self.course.enrolled_students,
-                                 id=self.kwargs['student_id'])
+        context={}
 
 
-class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
-    
-    template_name = 'micourses/assessment_attempt_question_attempt.html'
+        context['credit_overridden'] = \
+                        self.ca_question_set.credit_override is not None
 
+        earliest, latest = self.ca_question_set.return_activity_interval()
+        datetime_text = format_datetime(
+            current_tz.normalize(earliest.astimezone(current_tz)))
+        if latest:
+            datetime_text += " - " + format_datetime(
+                current_tz.normalize(latest.astimezone(current_tz)))
 
-    def get_object(self):
-        content = super(AssessmentAttemptQuestionAttempt, self).get_object()
-        
+        context['datetime'] = mark_safe('&nbsp;%s&nbsp;' % datetime_text)
 
-        # don't pad question_attempt_number with zeros
-        self.question_attempt_number = self.kwargs['question_attempt_number']
-        if self.question_attempt_number[0]=='0':
-            raise  Http404('Question attempt %s not found.'\
-                               % self.question_attempt_number)
+        question_attempt_list = []
 
-        try:
-            self.answer = self.answers[int(self.question_attempt_number)-1]
-
-        except IndexError:
-            raise Http404('Question attempt %s not found.' \
-                              % self.question_attempt_number)
-
-        return content
-
-
-    def render_to_response(self, *args, **kwargs):
-        # determine if user has permission to view assessment,
-        # given privacy level
-        if not self.assessment.user_can_view(self.request.user, solution=False):
-            path = self.request.build_absolute_uri()
-            from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(path)
+        if self.instructor_view:
+            question_attempts = self.ca_question_set.question_attempts\
+                       .order_by('-valid', 'attempt_began')
         else:
-            return super(AssessmentAttemptQuestionAttempt, self)\
-                .render_to_response(*args, **kwargs)
+            question_attempts = self.ca_question_set.question_attempts\
+                                                    .filter(valid=True)
         
+        valid_response_number = 0
+        invalid_response_number=0
+        for (i,question_attempt) in enumerate(question_attempts):
+            attempt_dict = {'question_attempt': question_attempt,
+                            'version_number': i+1,}
 
-    def extra_course_context(self):
+            if self.instructor_view:
+                responses = question_attempt.responses\
+                       .order_by('-valid', 'response_submitted')
+            else:
+                responses = question_attempt.responses.filter(valid=True)
+            
+            response_list = []
+
+            attempt_valid = question_attempt.valid
+
+            for response in responses:
+
+                response_valid = attempt_valid and response.valid
+
+                if response_valid:
+                    valid_response_number +=1
+                    response_number = str(valid_response_number)
+                else:
+                    invalid_response_number +=1
+                    response_number = "x%s" % invalid_response_number
+
+
+                response_dict = {'submitted': response.response_submitted,
+                                 'valid': response_valid,
+                                 'response_number': response_number}
+
+                percent_credit = response.credit*100
+                score = response.credit * self.question_set_points
+                score_text = floatformat_or_dash(score,1)
+                
+                response_dict['percent_credit']=percent_credit
+                response_dict['score']=score
+                response_dict['score_text']=score_text
+
+
+                if self.instructor_view:
+                    response_dict['response_url'] = reverse(
+                        'micourses:question_response_instructor', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': self.attempt_number,
+                                'student_id': self.student.id,
+                                'question_number': self.ca_question_set\
+                                .question_number,
+                                'response_number': response_number
+                            })
+
+                else:
+                    response_dict['response_url'] = reverse(
+                        'micourses:question_response', 
+                        kwargs={'course_code': self.course.code,
+                                'content_id': self.thread_content.id,
+                                'attempt_number': self.attempt_number,
+                                'question_number': self.ca_question_set\
+                                .question_number,
+                                'response_number': response_number
+                            })
+
+                response_list.append(response_dict)
+
+            attempt_dict['responses'] = response_list
+            question_attempt_list.append(attempt_dict)
+
+        context['question_attempt_list'] = question_attempt_list
+
+        context['multiple_question_attempts'] = len(question_attempt_list)>1
+
+        credit = self.ca_question_set.get_credit()
+        print("c: %s" % credit)
+        if credit is None:
+            percent_credit = None
+            score = None
+        else:
+            percent_credit = credit*100
+            score = self.question_set_points*credit
+
+        score_text = floatformat_or_dash(score,1)
+
+        context['points'] = self.question_set_points
+        context['score'] = score
+        context['score_text'] = score_text
+        context['percent_credit'] = percent_credit
+
+        return context
+
+    def get_template_names(self):
+        if self.instructor_view:
+            return ['micourses/question_attempts_instructor.html',]
+        else:
+            return ['micourses/question_attempts_student.html',]
+
+
+class QuestionResponseView(QuestionAttemptsView):
+    
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        super(QuestionResponseView,self).get_additional_objects(
+            request, *args, **kwargs)
+
+        self.response_number = self.kwargs['response_number']
         
-        answer_dict = {'datetime': self.answer.datetime,
-                       'answer': self.answer.answer  }
+        # if response_number begins with an x, it is an invalid response number
+        if self.response_number[0]=="x":
+            if not self.instructor_view:
+                raise Http404('Response %s not found.' \
+                              % self.response_number)
+            self.response_valid = False
+            response_number_int = self.response_number[1:]
+        else:
+            self.response_valid = True
+            response_number_int = self.response_number
+            
+        # don't pad response_number with a zero
+        if response_number_int[0]=='0':
+            raise Http404('Response %s not found.' \
+                              % self.response_number)
+
         try:
-            answer_dict['score'] = self.answer.credit*self.question_dict['points']
+            response_number_int = int(response_number_int)
+        except ValueError:
+            raise Http404('Response %s not found.' \
+                          % self.response_number)
+
+        from micourses.models import QuestionResponse
+
+        if self.response_valid:
+            responses = QuestionResponse.objects.filter(
+                question_attempt__content_attempt_question_set =\
+                self.ca_question_set,
+                question_attempt__valid = True, valid=True)
+
+        else:
+            responses = QuestionResponse.objects.filter(
+                question_attempt__content_attempt_question_set =\
+                self.ca_question_set)\
+                    .exclude(question_attempt__valid = True, valid=True)
+        try:
+            self.response = responses[response_number_int-1]
+        except IndexError:
+            raise Http404('Response %s not found.' \
+                              % self.response_number)
+            
+
+    def extra_context(self):
+        
+        context = {'submitted': self.response.response_submitted,
+                   'valid': self.response_valid,
+                          }
+        try:
+            context['score'] = self.response.credit*\
+                                     self.question_set_points
         except TypeError:
-            answer_dict['score'] = 0
-        answer_dict['points'] = self.question_dict['points']
-        answer_dict['credit_percent'] = int(round(self.answer.credit*100))
-        answer_dict['attempt_number'] = self.question_attempt_number
-        
+            context['score'] = 0
+        context['points'] = self.question_set_points
+        context['percent_credit'] = self.response.credit*100
+        context['response_number'] = self.response_number
 
-
-        # construct question
-        try:
-            question = self.answer.question
-        except ObjectDoesNotExist:
-            raise Http404('Question not found.')
-
+        question = self.response.question_attempt.question
 
         # use aaqav in identifier since coming from
         # assessment attempt question attempt view
@@ -566,44 +1239,43 @@ class AssessmentAttemptQuestionAttempt(AssessmentAttemptQuestion):
         from midocs.functions import return_new_auxiliary_data
         auxiliary_data =  return_new_auxiliary_data()
 
-        import json
-        prefilled_answers = json.loads(self.answer.answer)
+        question_dict = {
+            'question': question,
+            'question_set': self.ca_question_set.question_set,
+            'seed': self.response.question_attempt.seed,
+            'question_attempt':self.response.question_attempt,
+            'response': self.response
+        }
+
+
 
         import random
         rng=random.Random()
-        question_data = render_question(question, 
-                                        rng=rng, seed=self.answer.seed,
+        from mitesting.render_questions import render_question
+        question_data = render_question(question_dict, 
+                                        rng=rng,
                                         question_identifier=identifier,
                                         user=self.request.user, show_help=False,
-                                        prefilled_answers=prefilled_answers, 
                                         readonly=True, auto_submit=True, 
-                                        record_answers=False,
+                                        record_response=False,
                                         allow_solution_buttons=False,
                                         auxiliary_data=auxiliary_data)
 
-
-        context= {'question': question, 
-                  'question_data': question_data,
-                  '_auxiliary_data_': auxiliary_data,
-                  'attempt': self.attempt,
-                  'attempt_number': self.attempt_number,
-                  'question_number': self.question_number,
-                  'answer_dict': answer_dict,
-        }
+        context['question']=question
+        context['question_data']= question_data
+        context['_auxiliary_data_']= auxiliary_data
+        context['attempt_number']=self.attempt_number
+        context['question_number']= self.question_number
+        context['STATIC_URL'] = settings.STATIC_URL
         
         return context
 
-class AssessmentAttemptQuestionAttemptInstructor(AssessmentAttemptQuestionAttempt):
-    template_name = 'micourses/assessment_attempt_question_attempt_instructor.html'
 
-    @method_decorator(user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(AssessmentAttemptQuestionAttemptInstructor, self)\
-            .dispatch(request, *args, **kwargs) 
-    
-    def get_student(self):
-        return get_object_or_404(self.course.enrolled_students,
-                                 id=self.kwargs['student_id'])
+    def get_template_names(self):
+        if self.instructor_view:
+            return ['micourses/question_response_instructor.html',]
+        else:
+            return ['micourses/question_response_student.html',]
 
 
 @login_required
@@ -1671,88 +2343,6 @@ def gradebook_csv_view(request):
     return response
 
 
-class ThreadView(DetailView):
-    model=Course
-    slug_field='code'
-    slug_url_kwarg ='course_code'
-    template_name = 'micourses/thread_detail.html'
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        self.user = request.user
-        context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
-
-
-    def get_context_data(self, **kwargs):
-        context = super(ThreadView, self).get_context_data(**kwargs)
-
-        noanalytics=False
-        if settings.SITE_ID==2:
-            noanalytics=True
-        context['noanalytics'] = noanalytics
-
-        courseuser = None
-        include_edit_link = False
-
-        # record if user is logged in and is designer
-        if self.user.is_authenticated():
-            courseuser = self.user.courseuser
-            try:
-                enrollment = self.object.courseenrollment_set.get(
-                    student=courseuser)
-            except ObjectDoesNotExist:
-                pass
-            else:
-                if enrollment.role==DESIGNER_ROLE:
-                    include_edit_link = True
-
-        context['student'] = courseuser
-        context['include_edit_link'] = include_edit_link
-        if self.object.numbered:
-            context['ltag'] = "ol"
-        else:
-            context['ltag'] = "ul"
-
-        return context
-
-
-class ThreadEditView(DetailView):
-    model=Course
-    slug_field='code'
-    slug_url_kwarg ='course_code'
-    template_name = 'micourses/thread_edit.html'
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-
-        # must be designer of course
-        is_designer = False
-        if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role(self.object) 
-            if role==DESIGNER_ROLE:
-                is_designer=True
-
-        if not is_designer:
-            return redirect('mithreads:thread', course_code=self.object.code)
-
-        context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
-
-
-    def get_context_data(self, **kwargs):
-        context = super(ThreadEditView, self).get_context_data(**kwargs)
-
-        # no Google analytics for edit
-        context['noanalytics'] = False
-
-        if self.object.numbered:
-            context['ltag'] = "ol"
-        else:
-            context['ltag'] = "ul"
-
-        return context
 
 
 class RecordContentCompletion(View):
@@ -1792,608 +2382,4 @@ class RecordContentCompletion(View):
                              'content_id': content.id,
                              'complete': complete,
                              })
-
-class EditSectionView(View):
-    """
-    Perform one of the following changes to a ThreadSection
-    depending on value of POST parameter action:
-    - dec_level: decrement the level of the section
-    - inc_level: increment the level of the section
-    - move_up: move section up
-    - move_down: move section down
-    - delete: delete section
-    - edit: change section name
-    - insert: insert new section (below current if exists, else at top)
-
-    # must be designer of course
-    
-    """
-
-    def post(self, request, *args, **kwargs):
-
-        try:
-            action = request.POST['action']
-        except KeyError:
-            return JsonResponse({})
-
-
-        try:
-            section_id = int(request.POST.get('section_id'))
-        except ValueError:
-            section_id = None
-
-
-        # if no section id, then action must be insert
-        # and the thread must be specified
-        if section_id is None:
-            if action == 'insert':
-                try:
-                    course = Course.objects.get(id=request.POST['course_id'])
-                except (KeyError, ObjectDoesNotExist):
-                    return JsonResponse({})
-                thread_section=None
-            else:
-                return JsonResponse({})
-        else:
-            try:
-                thread_section = ThreadSection.objects.get(id=section_id)
-            except ObjectDoesNotExist:
-                return JsonResponse({})
-            course = thread_section.get_course()
-
-        
-        # must be designer of course
-        is_designer = False
-        if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role(course) 
-            if role==DESIGNER_ROLE:
-                is_designer=True
-
-        if not is_designer:
-            return JsonResponse({})
-
-      
-        rerender_thread=True
-        new_section_html={}
-        rerender_sections=[]
-        replace_section_html={}
-
-        if course.numbered:
-            ltag = "ol"
-        else:
-            ltag = "ul"
-
-        # decrement level of section
-        if action=='dec_level':
-            if thread_section.course is None:
-                parent = thread_section.parent
-                next_sibling = parent.find_next_sibling()
-
-                if next_sibling:
-                    if parent.sort_order==next_sibling.sort_order:
-                        course.reset_thread_section_sort_order()
-                        parent.refresh_from_db()
-                        next_sibling.refresh_from_db()
-
-                    thread_section.sort_order = \
-                        (parent.sort_order+next_sibling.sort_order)/2
-
-                else:
-                    thread_section.sort_order = parent.sort_order+1
-
-                if parent.course:
-                    if parent.course != course:
-                        return JsonResponse({})
-
-                    thread_section.parent = None
-                    thread_section.course = course
-
-                else:
-                    thread_section.parent = parent.parent
-                    
-
-                with transaction.atomic(), reversion.create_revision():
-                    thread_section.save()
-
-
-        # increment level of section
-        elif action=='inc_level':
-            previous_sibling = thread_section.find_previous_sibling()
-            
-            if previous_sibling:
-                last_child = previous_sibling.child_sections.last()
-                thread_section.parent = previous_sibling
-                thread_section.course = None
-                if last_child:
-                    thread_section.sort_order = last_child.sort_order+1
-                with transaction.atomic(), reversion.create_revision():
-                    thread_section.save()
-
-        # move section up
-        elif action=="move_up":
-
-            previous_sibling = thread_section.find_previous_sibling()
-            if previous_sibling:
-                if previous_sibling.sort_order == thread_section.sort_order:
-                    course.reset_thread_section_sort_order()
-                    previous_sibling.refresh_from_db()
-                    thread_section.refresh_from_db()
-                sort_order = thread_section.sort_order
-                thread_section.sort_order = previous_sibling.sort_order
-                previous_sibling.sort_order = sort_order
-                with transaction.atomic(), reversion.create_revision():
-                    thread_section.save()
-                    previous_sibling.save()
-
-            elif not thread_section.course:
-                previous_parent_sibling = \
-                    thread_section.parent.find_previous_sibling()
-            
-                if previous_parent_sibling:
-                    last_child = previous_parent_sibling.child_sections.last()
-                    if last_child:
-                        thread_section.sort_order = last_child.sort_order+1
-                    thread_section.parent = previous_parent_sibling
-                    with transaction.atomic(), reversion.create_revision():
-                        thread_section.save()
-
-
-        # move section down
-        elif action=="move_down":
-
-            next_sibling = thread_section.find_next_sibling()
-            if next_sibling:
-                if next_sibling.sort_order == thread_section.sort_order:
-                    course.reset_thread_section_sort_order()
-                    next_sibling.refresh_from_db()
-                    thread_section.refresh_from_db()
-                sort_order = thread_section.sort_order
-                thread_section.sort_order = next_sibling.sort_order
-                next_sibling.sort_order = sort_order
-                with transaction.atomic(), reversion.create_revision():
-                    thread_section.save()
-                    next_sibling.save()
-
-            elif not thread_section.course:
-                next_parent_sibling = \
-                    thread_section.parent.find_next_sibling()
-            
-                if next_parent_sibling:
-                    first_child = next_parent_sibling.child_sections.first()
-                    if first_child:
-                        thread_section.sort_order = first_child.sort_order-1
-                    thread_section.parent = next_parent_sibling
-                    with transaction.atomic(), reversion.create_revision():
-                        thread_section.save()
-
-        # delete section
-        elif action=="delete":
-            # rerender next and prevous siblings as commands may have changed
-            sibling=thread_section.find_next_sibling()
-            if sibling:
-                rerender_sections.append(sibling)
-            sibling=thread_section.find_previous_sibling()
-            if sibling:
-                rerender_sections.append(sibling)
-
-            thread_section.mark_deleted()
-            rerender_thread=False
-            
-        # edit section name
-        elif action=="edit":
-            thread_section.name = request.POST['section_name']
-            with transaction.atomic(), reversion.create_revision():
-                thread_section.save();
-            rerender_thread=False
-
-        # insert section
-        elif action=="insert":
-            new_section_name = request.POST['section_name']
-            
-            if thread_section:
-                # add section as first child of current section
-                try:
-                    new_sort_order = thread_section.child_sections.first()\
-                                                                .sort_order-1
-                except AttributeError:
-                    new_sort_order=0
-
-                with transaction.atomic(), reversion.create_revision():
-                    new_section = ThreadSection.objects.create(
-                        name=new_section_name, 
-                        parent=thread_section,
-                        sort_order=new_sort_order)
-
-                prepend_section = "child_sections_%s" % thread_section.id
-
-            else:
-                # add section as first in course
-                try:
-                    new_sort_order = course.thread_sections.first().sort_order-1
-                except AttributeError:
-                    new_sort_order = 0
-                    
-                with transaction.atomic(), reversion.create_revision():
-                    new_section = ThreadSection.objects.create(
-                        name=new_section_name, 
-                        course=course,
-                        sort_order=new_sort_order)
-                    
-                prepend_section = "child_sections_top"
-
-            # rerender next siblings as commands may have changed
-            sibling=new_section.find_next_sibling()
-            if sibling:
-                rerender_sections.append(sibling)
-            
-            template = Template("{% load course_tags %}<li id='thread_section_{{section.id}}'>{% thread_section_edit section %}</li>")
-            context = Context({'section': new_section, 'ltag': ltag})
-
-            new_section_html[prepend_section] = template.render(context)
-
-
-            course.reset_thread_section_sort_order()
-            rerender_thread = False
-
-        
-        for section in rerender_sections:
-            template = Template("{% load course_tags %}{% thread_section_edit section %}")
-            context = Context({'section': section, 'ltag': ltag})
-
-            replace_section_html[section.id] = template.render(context)
-            
-            
-        if rerender_thread:
-
-            # must reset thread section sort order if changed sections
-            # because thread_content ordering depends on thread_sections
-            # as a single group being sorted correctly
-            course.reset_thread_section_sort_order()
-
-            # generate html for entire thread
-            from django.template.loader import render_to_string
-
-            thread_html = render_to_string(
-                template_name='micourses/thread_edit_sub.html',
-                context = {'course': course, 'ltag': ltag }
-            )
-        else:
-            thread_html = None
-
-        return JsonResponse({'action': action,
-                             'section_id': section_id,
-                             'course_id': course.id,
-                             'thread_html': thread_html,
-                             'new_section_html': new_section_html,
-                             'replace_section_html': replace_section_html,
-                             })
-
-class EditContentView(View):
-    """
-    Perform one of the following changes to a ThreadContent
-    depending on value of POST parameter action:
-    - move_up: move content up
-    - move_down: move content down
-    - delete: delete content
-    - edit: edit content attributes
-    - insert: insert new content at end of section
-
-    Must be designer of course
-
-    """
-
-
-    def post(self, request, *args, **kwargs):
-
-        try:
-            action = request.POST['action']
-            the_id = request.POST['id']
-        except KeyError:
-            return JsonResponse({})
-
-        form_html=""
-
-        # if action is insert, then the_id must be a valid section_id
-        if action=='insert':
-            try:
-                thread_section = ThreadSection.objects.get(id=the_id)
-            except (KeyError, ValueError, ObjectDoesNotExist):
-                return JsonResponse({})
-
-            course = thread_section.get_course()
-            thread_content=None
-
-        # else, the_id must be a valid content_id
-        else:
-            try:
-                thread_content = ThreadContent.objects.get(id=the_id)
-            except (KeyError, ValueError, ObjectDoesNotExist):
-                return JsonResponse({})
-
-            course = thread_content.course
-            thread_section=thread_content.section
-
-        
-        # must be designer of course
-        is_designer = False
-        if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role(course) 
-            if role==DESIGNER_ROLE:
-                is_designer=True
-
-        if not is_designer:
-            return JsonResponse({})
-
-
-        rerender_sections = []
-
-        # move content up
-        if action=="move_up":
-            previous_in_section = thread_content.find_previous(in_section=True)
-            if previous_in_section:
-                if previous_in_section.sort_order == thread_content.sort_order:
-                    thread_section.reset_thread_content_sort_order()
-                    previous_in_section.refresh_from_db()
-                    thread_content.refresh_from_db()
-                sort_order = thread_content.sort_order
-                thread_content.sort_order = previous_in_section.sort_order
-                previous_in_section.sort_order = sort_order
-                with transaction.atomic(), reversion.create_revision():
-                    thread_content.save()
-                    previous_in_section.save()
-
-                rerender_sections = [thread_section,]
-
-            else:
-                # if thread_content is first in section, then move up to
-                # end of previous section
-
-                previous_section = thread_section.find_previous()
-                try:
-                    thread_content.sort_order = previous_section\
-                                  .thread_contents.last().sort_order+1
-                except AttributeError:
-                    thread_content.sort_order = 0
-                thread_content.section = previous_section
-                with transaction.atomic(), reversion.create_revision():
-                    thread_content.save()
-
-                rerender_sections = [thread_section, previous_section]
-
-        # move content down
-        if action=="move_down":
-            next_in_section = thread_content.find_next(in_section=True)
-            if next_in_section:
-                if next_in_section.sort_order == thread_content.sort_order:
-                    thread_section.reset_thread_content_sort_order()
-                    next_in_section.refresh_from_db()
-                    thread_content.refresh_from_db()
-                sort_order = thread_content.sort_order
-                thread_content.sort_order = next_in_section.sort_order
-                next_in_section.sort_order = sort_order
-                with transaction.atomic(), reversion.create_revision():
-                    thread_content.save()
-                    next_in_section.save()
-
-                rerender_sections = [thread_section,]
-
-            else:
-                # if thread_content is last in section, then move down to
-                # beginning of next section
-
-                next_section = thread_section.find_next()
-                try:
-                    thread_content.sort_order = next_section\
-                                  .thread_contents.first().sort_order-1
-                except AttributeError:
-                    thread_content.sort_order = 0
-                thread_content.section = next_section
-                with transaction.atomic(), reversion.create_revision():
-                    thread_content.save()
-
-                rerender_sections = [thread_section, next_section]
-        
-        # delete content
-        elif action=="delete":
-            thread_content.mark_deleted()
-            rerender_sections = [thread_section,]
-
-
-        # edit content
-        elif action=="edit":
-            try:
-                content_type = ContentType.objects.get(id=request.POST['content_type'])
-                
-            except (KeyError, ObjectDoesNotExist):
-                return JsonResponse({});
-
-            form_identifier = "edit_%s" % the_id
-
-            update_options_command="update_content_options('%s', this.value)"% \
-                form_identifier
-
-            form = thread_content_form_factory(
-                the_content_type=content_type,
-                update_options_command=update_options_command
-            )
-            form = form(request.POST, instance=thread_content,
-                        auto_id="content_form_%s_%%s" % form_identifier,
-                    )
-            if form.is_valid():
-                with transaction.atomic(), reversion.create_revision():
-                    form.save()
-                rerender_sections = [thread_section,]
-            else:
-                form_html = form.as_p()
-
-
-        # insert content
-        elif action=="insert":
-            try:
-                content_type = ContentType.objects.get(id=request.POST['content_type'])
-                
-            except (KeyError, ObjectDoesNotExist):
-                return JsonResponse({});
-
-            form_identifier = "insert_%s" % the_id
-
-            update_options_command="update_content_options('%s', this.value)"% \
-                form_identifier
-
-            try:
-                new_sort_order = thread_section.thread_contents.last()\
-                                                              .sort_order+1
-            except AttributeError:
-                new_sort_order = 0
-
-            initial={'section': thread_section, 
-                     'course': thread_section.get_course(),
-                     'sort_order': new_sort_order}
-
-            form = thread_content_form_factory(
-                the_content_type=content_type,
-                update_options_command=update_options_command
-            )
-            form = form(request.POST,
-                        auto_id="content_form_%s_%%s" % form_identifier,
-                    )
-            if form.is_valid():
-                with transaction.atomic(), reversion.create_revision():
-                    new_thread_content=form.save(commit=False)
-                    new_thread_content.section=thread_section
-                    new_thread_content.sort_order = new_sort_order
-                    new_thread_content.save()
-
-                rerender_sections = [thread_section,]
-            else:
-                form_html = form.as_p()
-
-
-
-        section_contents={}
-        for section in rerender_sections:
-            # generate html for thread_content of section
-            from django.template.loader import render_to_string
-
-            content_html = render_to_string(
-                template_name='micourses/thread_content_edit_container.html',
-                context = {'thread_section': section }
-            )
-            
-            section_contents[section.id] = content_html
-
-        return JsonResponse({'section_contents': section_contents,
-                             'action': action,
-                             'id': the_id,
-                             'form_html': form_html,
-                             })
-
-
-class ReturnContentForm(View):
-   def post(self, request, *args, **kwargs):
-
-        try:
-            form_type = request.POST['form_type']
-            the_id = request.POST['id']
-        except KeyError:
-            return JsonResponse({})
-
-        instance = None
-        thread_content=None
-        thread_section=None
-
-        # If form type is "edit", then the_id must be 
-        # a valid thread_content id.
-        # Populate form with instance of that thread_content
-        if form_type=="edit":
-            try:
-                thread_content = ThreadContent.objects.get(id=the_id)
-            except (KeyError,ObjectDoesNotExist):
-                return JsonResponse({})
-
-            instance = thread_content
-            the_content_type = thread_content.content_type
-
-        # If form type is "insert", then the_id must be
-        # a valid thread_section id.
-        # Create blank form 
-        elif form_type=="insert":
-            try:
-                thread_section = ThreadSection.objects.get(id=the_id)
-            except ObjectDoesNotExist:
-                return JsonResponse({})
-            the_content_type = None
-
-
-        # else invalid form_type
-        else:
-            return JsonResponse({})
-
-
-        # must be designer of course
-        if thread_content:
-            course=thread_content.course
-        else:
-            course=thread_section.get_course()
-        is_designer = False
-        if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role(course) 
-            if role==DESIGNER_ROLE:
-                is_designer=True
-
-        if not is_designer:
-            return JsonResponse({})
-
-
-        form_identifier = "%s_%s" % (form_type, the_id)
-
-        update_options_command="update_content_options('%s', this.value)" % \
-            form_identifier
-
-        form = thread_content_form_factory(
-            the_content_type=the_content_type,
-            update_options_command=update_options_command
-        )
-        form = form(instance=instance, 
-                    auto_id="content_form_%s_%%s" % form_identifier,
-        )
-
-        form_html = form.as_p()
-
-        return JsonResponse({'form_type': form_type,
-                             'id': the_id,
-                             'form_html': form_html})
-
-
-
-class ReturnContentOptions(View):
-
-    def post(self, request, *args, **kwargs):
-        
-        # must be designer of some course
-        is_designer = False
-        if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role() 
-            if role==DESIGNER_ROLE:
-                is_designer=True
-        if not is_designer:
-            return JsonResponse({})
-
-        try:
-            form_id = request.POST['form_id']
-            this_content_type = ContentType.objects.get(id=request.POST['option'])
-        except (KeyError,ObjectDoesNotExist):
-            return JsonResponse({})
-
-        content_options = '<option selected="selected" value="">---------</option>\n'
-        for item in this_content_type.model_class().objects.all():
-            content_options += "<option value='%s'>%s</option>\n" \
-                                    % (item.id, item)
-
-        return JsonResponse({'form_id': form_id, 
-                             'content_options': content_options})
 

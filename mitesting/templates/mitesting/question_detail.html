@@ -1,5 +1,20 @@
-{% extends "mitesting/assessment_base.html" %}
-{% load testing_tags %}
+{% extends "base.html" %}
+{% load question_tags %}
+
+
+{% block extrastyle %}
+<link href="{{ STATIC_URL }}mitesting/miquestion.css" rel="stylesheet" type="text/css"/>
+<meta name="description" content="{{ question.description}}"/>
+<script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js"></script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+{% endblock %}
 
 {% block title %}Question: {{ question }}, version {{ version }} - Math Insight{%endblock%}
 {% block content %}
@@ -9,12 +24,3 @@
 {% question_body question_data %}
 
 {% endblock %}
-
-{% block rightcolumn %}
-{% if show_lists %}
-<ul class="linklist">
-<li><a href="{% url 'mitesting:questionlist' %}">List of all questions</a></li>
-<li><a href="{% url 'mitesting:assessmentlist' %}">List of all assessment</a></li>
-</ul>
-{% endif %}
-{%endblock%}

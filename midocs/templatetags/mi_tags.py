@@ -1,6 +1,6 @@
 from django import template
 from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type
-from mitesting.models import Assessment
+from micourses.models import Assessment
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.conf import settings
@@ -85,10 +85,46 @@ class InternalLinkNode(template.Node):
                 
             try:
 
-                if target_class != Page:
-                    target=target_class.objects.get(code=target)
-                    
-                else:
+                if target_class == Assessment:
+                    # for assessment, attempt to find last course from context
+                    # and get assessment from that course
+                    last_course=context.get("last_course")
+                    target_code=target
+                    target=None
+                    if last_course:
+                        try:
+                            target=Assessment.objects.get(code=target_code,
+                                                   course=last_course)
+                        except Assessment.DoesNotExist:
+                            pass
+
+                    # if didn't find one from last course
+                    # try course from top of list of thread content list
+                    if not target and top_of_list_course:
+                        try:
+                            target=Assessment.objects.get(code=target_code,
+                                                   course=top_of_list_course)
+                        except Assessment.DoesNotExist:
+                            pass
+
+                    # choose arbitrary version from an active course
+                    if not target:
+                        try:
+                            target = Assessment.objects\
+                            .filter(code=target_code, course__active=True)[0]
+                        except IndexError:
+                            pass
+
+                    # choose arbitrary version 
+                    if not target:
+                        try:
+                            target = Assessment.objects\
+                                               .filter(code=target_code)[0]
+                        except IndexError:
+                            raise Assessment.DoesNotExist
+
+                elif target_class == Page:
+
                     # for Page, determine page type
                     page_type = kwargs.get("page_type")
 
@@ -105,6 +141,8 @@ class InternalLinkNode(template.Node):
                     target=target_class.objects.get(code=target, 
                                                     page_type=page_type)
 
+                else:
+                    target=target_class.objects.get(code=target)
 
             # if object does not exist, set link to point to target
             # mark as broken
@@ -847,9 +885,9 @@ class ProcessMiTagsNode(template.Node):
         try:
             if blank_style:
                 context['blank_style']=1
-                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(context)
+                rendered_text = template.Template("{% load mi_tags question_tags course_tags %}"+templatetext).render(context)
             else:
-                rendered_text = template.Template("{% load mi_tags testing_tags %}"+templatetext).render(context)
+                rendered_text = template.Template("{% load mi_tags question_tags course_tags %}"+templatetext).render(context)
         except Exception as e:
             rendered_text = "Template error (TMPLERR): %s" % e
 
@@ -1629,7 +1667,7 @@ class AppletNode(template.Node):
                 context['_the_applet_identifier'] = applet_identifier
 
                 try:
-                    caption = template.Template("{% load mi_tags testing_tags %}"+applet.default_inline_caption).render(context)
+                    caption = template.Template("{% load mi_tags question_tags %}"+applet.default_inline_caption).render(context)
                 except Exception as e:
                     caption = "Caption template error (TMPLERR): %s" % e
 
@@ -1644,7 +1682,7 @@ class AppletNode(template.Node):
                 context['_the_applet_identifier'] = applet_identifier
 
                 try:
-                    description = template.Template("{% load mi_tags testing_tags %}"+applet.detailed_description).render(context)
+                    description = template.Template("{% load mi_tags question_tags %}"+applet.detailed_description).render(context)
                 except Exception as e:
                     description = "Template error (TMPLERR): %s" % e
 
@@ -2385,7 +2423,7 @@ def render_applet_text(context, applet_text, applet, applet_id_user=None,
     context['_the_hidden_section_identifier']=hidden_section_identifier
 
     rendered_text = template.Template(
-        "{% load mi_tags testing_tags %}"+applet_text.text)\
+        "{% load mi_tags question_tags %}"+applet_text.text)\
                                    .render(context)
     context.pop()
 

@@ -156,6 +156,29 @@ def pageview(request, page_code, page_type_code=None, overview=False):
         # since template already has midefault hard coded in it
         if(notation_config=='midefault'):
             notation_config=None
+
+    from micourses.utils import find_last_course
+    last_course = find_last_course(user=request.user, request=request)
+
+    # find thread content from active threads.
+    # put thread content from any 
+    # enrolled course or last course viewed at top
+    thread_content_list = list(thepage.thread_content_set\
+                               .filter(course__active=True))
+    if last_course:
+        for tc in thepage.thread_content_set.filter(course=last_course)\
+                            .reverse():
+            try:
+                thread_content_list.remove(tc)
+            except ValueError:
+                pass
+            thread_content_list.insert(0,tc)
+        
+    # mark course from top thread content item
+    if thread_content_list:
+        top_of_list_course = thread_content_list[0].course
+    else:
+        top_of_list_course=None
     
     # render page text with extra template tags
     context = Context({})
@@ -166,10 +189,12 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     context['notation_system']=notation_system
     context['STATIC_URL'] = settings.STATIC_URL
     context['MEDIA_URL'] = settings.MEDIA_URL
+    context['last_course'] = last_course
+    context['top_of_list_course'] = top_of_list_course
 
     if thepage.text:
         try:
-            rendered_text = Template("{% load mi_tags testing_tags %}"+thepage.text).render(context)
+            rendered_text = Template("{% load mi_tags question_tags %}"+thepage.text).render(context)
         except Exception as e:
             rendered_text = "Template error in text (TMPLERR): %s" % e
     else:
@@ -177,7 +202,7 @@ def pageview(request, page_code, page_type_code=None, overview=False):
 
     if thepage.header:
         try:
-            rendered_header = Template("{% load mi_tags testing_tags %}"+thepage.header).render(context)
+            rendered_header = Template("{% load mi_tags question_tags %}"+thepage.header).render(context)
         except Exception as e:
             rendered_header = ""
             rendered_text = "<p>Template error in text (TMPLERR): %s</p> %s" \
@@ -187,7 +212,7 @@ def pageview(request, page_code, page_type_code=None, overview=False):
 
     if thepage.javascript:
         try:
-            rendered_javascript = Template("{% load mi_tags testing_tags %}"+thepage.javascript).render(context)
+            rendered_javascript = Template("{% load mi_tags question_tags %}"+thepage.javascript).render(context)
         except Exception as e:
             rendered_javascript = ""
             rendered_text = "<p>Template error in text (TMPLERR): %s</p> %s" \
@@ -200,6 +225,9 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     if request.GET.get("bare"):
         templates = ["midocs/%s_bare.html" % page_type.code, "midocs/page_bare.html"] + templates
 
+
+
+
     context.update({'related_pages': related_pages,
                     'manual_links': manual_links,
                     'notation_config': notation_config,
@@ -208,9 +236,8 @@ def pageview(request, page_code, page_type_code=None, overview=False):
                     'rendered_text': rendered_text,
                     'rendered_header': rendered_header,
                     'rendered_javascript': rendered_javascript,
+                    'thread_content_list': thread_content_list,
                 });
-
-    print("render: %s" % templates);
 
     return render(request, templates, context=context.flatten() )
 

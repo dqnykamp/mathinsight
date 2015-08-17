@@ -736,7 +736,7 @@ def grade_question(question, question_identifier, answer_info,
         if question_attempt.random_outcomes:
             random_outcomes = json.loads(question_attempt.random_outcomes)
 
-    from .render_assessments import setup_expression_context
+    from .render_questions import setup_expression_context
 
     # first obtain context from just the normal expressions
     context_results = setup_expression_context(question, rng=rng, seed=seed,

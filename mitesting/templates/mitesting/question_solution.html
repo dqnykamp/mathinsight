@@ -1,5 +1,5 @@
 {% extends "mitesting/assessment_base.html" %}
-{% load testing_tags %}
+{% load question_tags %}
 
 {% block title %}Solution to question: {{ question }}, version {{ version }} - Math Insight{%endblock%}
 {% block content %}
@@ -12,12 +12,3 @@
 {% question_solution_body question_data %}
 
 {% endblock %}
-
-{% block rightcolumn %}
-{% if show_lists %}
-<ul class="linklist">
-<li><a href="{% url 'mitesting:questionlist' %}">List of all questions</a></li>
-<li><a href="{% url 'mitesting:assessmentlist' %}">List of all assessment</a></li>
-</ul>
-{% endif %}
-{%endblock%}

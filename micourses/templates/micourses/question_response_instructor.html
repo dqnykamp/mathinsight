@@ -1,0 +1,43 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags question_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{thread_content.get_title}}{%endblock%}
+
+{% block extrastyle2 %}
+<link href="{{ STATIC_URL }}mitesting/miquestion.css" rel="stylesheet" type="text/css"/>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+<style>
+  .invalid {
+      text-decoration: line-through;
+      color: gray;
+  }
+</style>
+{% endblock %}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'micourses:question_attempts_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number question_number=question_number%}">Question {{question_number}}</a> ► <a href="{% url 'micourses:question_response_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number question_number=question_number response_number=response_number %}">{{ submitted}}</a>{% endblock %}
+
+
+{% block content %}
+
+<h3>Student: {{student.get_full_name}}</h3>
+
+{% if not valid %}<h4>Invalid question response</h4>{% endif %}
+
+<h4{% if not valid %} class="invalid"{%endif%}>Question {{question_number}} of attempt {{attempt_number}} on: {{thread_content.get_title}}</h4>
+
+<p><i>Response submitted on {{submitted}}</i></p>
+
+{% question_body question_data %}
+
+<p>Points: {{ points}}<br/>
+<span{% if not valid %} class="invalid" {%endif%}>Percent: {{ percent_credit|percent_checked_100 }}<br/>
+Score: {{score|floatformat_or_dash:"1" }}</span></p>
+
+
+{% endblock %}

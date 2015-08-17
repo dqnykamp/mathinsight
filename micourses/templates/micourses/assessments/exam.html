@@ -1,0 +1,66 @@
+{% extends "micourses/assessments/assessment_base.html" %}
+{% load course_tags question_tags %}
+
+{% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
+<div class="yma-grid">
+  <div class="yma-g45 yma-gl">
+    <div class="yma-gbox-left">
+      <table class="examinfo"><tr><td>{{ course.short_name }}</td></tr>
+	<tr><td>{{ course.semester }}</td></tr>
+	<tr><td>{{ assessment_name }}{{version_string}}</td></tr>
+	<tr><td>{{ assessment_date }}</td></tr>
+	{% if assessment.time_limit%}<tr><td>Time limit: {{ assessment.time_limit }}</td></tr>{%endif %}
+      </table>
+    </div>
+  </div>
+  <div class="yma-g55 yma-gr">
+    <div class="yma-gbox-right">
+      <table class="examstudentinfo">
+	<tr><td class="examlabel">Name (print):</td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Student ID:</td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Section: </td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Table/group number: </td><td class="blank"></td></tr>
+	<tr><td class="examlabel">Signature: </td><td class="blank"></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+<section class="exam_instructions">
+{{ assessment.render_instructions }}
+</section>
+<div class="yma-grid">
+  <div class="yma-g50 yma-gl">
+    <div class="yma-gbox-left">
+{{ assessment.render_instructions2 }}
+    </div>
+  </div>
+  <div class="yma-g50 yma-gr">
+    <div class="yma-gbox-right">
+<table class="question_scores">
+{% for question in rendered_list %}
+<tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
+{% endfor %}
+ <tr><td class="examlabel">Total</td><td class="points">{{ thread_content.points }} pts</td><td class="blank"></td></tr>
+</table>
+   </div>
+  </div>
+</div>
+<section class="exam_main">
+<ol class="exam_questions">
+{% for question in rendered_list %}
+{% if not question.previous_same_group %}{% new_exam_page %}{% endif %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
+{% question_body question.question_data %}
+</li>
+{% endfor %}
+</ol>
+</section>
+
+{% endblock %}
+

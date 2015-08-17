@@ -1,0 +1,46 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Question {{question_number}} of attempt {{attempt_number}} on {{thread_content.get_title}}{%endblock%}
+
+{% block extrastyle2 %}
+<style>
+  .invalid {
+      text-decoration: line-through;
+      color: gray;
+  }
+  .invalid2 {
+      text-decoration: line-through;
+  }
+</style>
+{% endblock %}
+
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'micourses:question_attempts_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number question_number=question_number%}">Question {{question_number}}</a>{% endblock %}
+
+{% block content %}
+
+<h3>Student: {{student.get_full_name}}</h3>
+
+{% if not content_attempt_valid %}
+<h4>Invalid content attempt</h4>
+{% endif %}
+
+<h4{% if not content_attempt_valid%} class="invalid"{%endif%}>Question {{question_number}} of attempt {{attempt_number}} on: {{thread_content.get_title}}</h4>
+
+<p>Points: {{ points}}</p>
+
+<h5>Response history</h5>
+
+<table class="basic rowclick">
+<thead><tr>{% if multiple_question_attempts %}<th>Question version</th>{%endif%}<th>Date and time</th><th>Percent</th><th>Score</th></tr></thead>
+<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (based on {{thread_content.attempt_aggregation_string}})</b></td><td><b>&nbsp;{{percent_credit|percent_checked_100 }}&nbsp;</b></td><td><b>&nbsp;{{ score_text }}&nbsp;</b></td></tr></tfoot>
+{% for attempt in question_attempt_list %}
+{% for response in attempt.responses %}
+<tr {% if not response.valid %}class="invalid"{%endif%}>{% if multiple_question_attempts %}<td>{{attempt.version_number}}</td>{%endif%}
+<td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.submitted}}&nbsp;</a></td><td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.percent_credit|percent_checked_100 }}&nbsp;</a></td><td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.score_text}}&nbsp;</a></td></tr>
+{% endfor %}{% endfor %}
+</table>
+
+
+{% endblock %}

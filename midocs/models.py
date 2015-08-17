@@ -278,6 +278,10 @@ class Page(models.Model):
 
         link_url = self.get_absolute_url()
         
+        get_string=kwargs.get("get_string")
+        if get_string:
+            link_url += "?" + get_string
+
         anchor=kwargs.get("anchor")
         if anchor:
             link_url += "#%s" % anchor
@@ -730,7 +734,10 @@ class Image(models.Model):
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "image")
         link_url = self.get_absolute_url()
-        
+        get_string=kwargs.get("get_string")
+        if get_string:
+            link_url += "?" + get_string
+
         return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
                              (link_url, link_class,  link_title, link_text))
 
@@ -1042,6 +1049,9 @@ class Applet(models.Model):
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "applet")
         link_url = self.get_absolute_url()
+        get_string=kwargs.get("get_string")
+        if get_string:
+            link_url += "?" + get_string
         
         return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
                              (link_url, link_class,  link_title, link_text))
@@ -1475,6 +1485,9 @@ class Video(models.Model):
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "video")
         link_url = self.get_absolute_url()
+        get_string=kwargs.get("get_string")
+        if get_string:
+            link_url += "?" + get_string
         
         return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
                              (link_url, link_class,  link_title, link_text))

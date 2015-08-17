@@ -1,6 +1,6 @@
 # customized sympy commands
 
-from sympy import Tuple, sympify, C, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol, Expr
+from sympy import Tuple, sympify, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol, Expr
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
@@ -81,7 +81,7 @@ def modified_round(w, p=0):
         return x
     p = int(p)
 
-    precs = [f._prec for f in x.atoms(C.Float)]
+    precs = [f._prec for f in x.atoms(Float)]
     dps = prec_to_dps(max(precs)) if precs else None
 
     mag_first_dig = _mag(x)
@@ -109,11 +109,11 @@ def modified_round(w, p=0):
     rv = Rational(rv, q)
     if rv.is_Integer:
         # use str or else it won't be a float
-        return C.Float(str(rv), digits_needed)
+        return Float(str(rv), digits_needed)
     else:
         if not allow and rv > w:
             allow += 1
-        return C.Float(rv, allow)
+        return Float(rv, allow)
 
 
 def round_expression(expression, n=0, initial_n_digits=100):

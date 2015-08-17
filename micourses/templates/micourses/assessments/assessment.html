@@ -1,0 +1,59 @@
+{% extends "micourses/assessments/assessment_base.html" %}{% load question_tags %}
+
+
+{% block content %}
+{% if not success %}
+<section class="error">
+<h4>Errors encountered</h4>
+<p>{{error_message}}</p>
+</section>
+{% endif %}
+
+
+<h3>{{ assessment_name }}</h3>
+
+<section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>
+
+<section class="assessment_main">
+{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+
+<div id="assessment_points" style="margin-top: 1em;">
+{% if thread_content_points %}Total points: {{ thread_content_points}}
+{% if users_attempt %}<div id="assessment_score_achieved">
+{% if multiple_attempts %}
+Score this attempt: {% if current_attempt.valid %}<a href="{{attempt_url}}" id="current_attempt_score">{{ attempt_score }}</a>{% else %}not recorded{% endif %}<br/>Overall score:  <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
+{% else %}
+Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score">{{content_score}}</a>{% else %}not recorded{% endif %}
+{% endif %} 
+</div>
+{% endif %}{% endif %}
+</div>
+
+{% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
+
+<ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
+{% for question in rendered_list %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
+{% question_body question.question_data %}
+</li>
+{% endfor %}
+</ol>
+</section>
+
+{% if not assessment.single_version %}
+<section id="more_questions_link">
+  {% if current_attempt %}
+  <form action="{% url 'miassess:generate_new_attempt' content_id=thread_content.id %}" method="post">{% csrf_token %}
+    <input type="submit" value="Generate new assessment attempt" />
+  </form>
+  {% else %}
+  <form action="{{assessment.get_absolute_url}}" method="get">
+    <input type="hidden" name="seed" value="{{ new_seed }}">
+    <input type="submit" value="Generate another sample of the questions" />
+  </form>
+  {%endif%}
+</section>
+{% endif%}
+
+{% endblock %}
+

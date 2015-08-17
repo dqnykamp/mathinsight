@@ -3,7 +3,8 @@ from django.db.models import Sum, Max, Avg
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError, ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.template import TemplateSyntaxError, Context, Template
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.conf import settings
@@ -13,7 +14,7 @@ import reversion
 
 STUDENT_ROLE = 'S'
 INSTRUCTOR_ROLE = 'I'
-DESIGNER_ROLE = 'R'
+DESIGNER_ROLE = 'D'
 NOT_YET_AVAILABLE = 0
 AVAILABLE = 1
 PAST_DUE = -1
@@ -35,7 +36,7 @@ def day_of_week_to_python(day_of_week):
     elif day_of_week.upper() == 'SA':
         return 5
 
-class  ChangeLog(models.Model):
+class ChangeLog(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -50,7 +51,7 @@ class  ChangeLog(models.Model):
     field_name = models.CharField(max_length=50, blank=True, null=True)
     old_value = models.CharField(max_length=100, blank=True, null=True)
     new_value = models.CharField(max_length=100, blank=True, null=True)
-    time = models.DateTimeField(blank=True, default=timezone.now)
+    datetime = models.DateTimeField(blank=True, default=timezone.now)
     
 
 
@@ -765,7 +766,7 @@ class Course(models.Model):
 
         if assessments_only:
             assessment_content_type = ContentType.objects.get\
-                (model='assessment')
+                (app_label="micourses", model='assessment')
             content_list = content_list.filter \
                 (thread_content__content_type=assessment_content_type)
     
@@ -777,8 +778,8 @@ class Course(models.Model):
         if exclude_completed:
             content_list = content_list.exclude \
                 (id__in=self.thread_contents.filter \
-                     (studentcontentrecord__enrollment__student=student,
-                      studentcontentrecord__complete=True))
+                     (contentrecord__enrollment__student=student,
+                      contentrecord__complete=True))
 
         # for each of content, calculate adjusted due date
         adjusted_due_content = []
@@ -819,11 +820,11 @@ class Course(models.Model):
         return self.thread_contents\
             .exclude(optional=True)\
             .exclude(id__in=self.thread_contents.filter \
-                         (studentcontentrecord__enrollment__student=student,
-                          studentcontentrecord__complete=True))\
+                         (contentrecord__enrollment__student=student,
+                          contentrecord__complete=True))\
             .exclude(id__in=self.thread_contents.filter \
-                         (studentcontentrecord__enrollment__student=student,\
-                              studentcontentrecord__skip=True))[:number]
+                         (contentrecord__enrollment__student=student,\
+                              contentrecord__skip=True))[:number]
 
 
 class CourseURLs(models.Model):
@@ -1046,7 +1047,9 @@ class ThreadContent(models.Model):
     optional = models.BooleanField(default=False)
     available_before_assigned = models.BooleanField(default=False)
     record_scores = models.BooleanField(default=True)
-
+    
+    n_of_object=models.SmallIntegerField(default=1)
+    
     sort_order = models.FloatField(blank=True)
 
     deleted = models.BooleanField(default=False, db_index=True)
@@ -1078,6 +1081,14 @@ class ThreadContent(models.Model):
                 self.sort_order = 1
         super(ThreadContent, self).save(*args, **kwargs)
 
+        n_of_object = list(self.course.thread_contents.filter(
+            content_type=self.content_type, object_id=self.object_id))\
+            .index(self)+1
+        if n_of_object != self.n_of_object:
+            self.n_of_object = n_of_object
+            super(ThreadContent, self).save(*args, **kwargs)
+
+
     def get_title(self):
         if(self.substitute_title):
             return self.substitute_title
@@ -1089,12 +1100,17 @@ class ThreadContent(models.Model):
 
 
     def return_link(self):
+        if self.n_of_object > 1:
+            get_string="n=%s" % self.n_of_object
+        else:
+            get_string=""
         try:
             if self.substitute_title:
                 return self.content_object.return_link(
-                    link_text=self.substitute_title)
+                    link_text=self.substitute_title,
+                    get_string=get_string)
             else:
-                return self.content_object.return_link() 
+                return self.content_object.return_link(get_string=get_string)
         except:
             return self.get_title()
 
@@ -1154,7 +1170,7 @@ class ThreadContent(models.Model):
 
             if student:
                 try:
-                    record = self.studentcontentrecord_set.get(
+                    record = self.contentrecord_set.get(
                         enrollment__student=student)
                 except ObjectDoesNotExist:
                     pass
@@ -1195,7 +1211,7 @@ class ThreadContent(models.Model):
 
     def student_score(self, student):
         try:
-            return self.studentcontentrecord_set.get(student=student).score
+            return self.contentrecord_set.get(student=student).score
         except ObjectDoesNotExist:
             return None
 
@@ -1234,7 +1250,7 @@ class ThreadContent(models.Model):
 
         adjustment = None
         try:
-            adjustment = self.studentcontentrecord_set.get(
+            adjustment = self.contentrecord_set.get(
                 enrollment__student=student).initial_due_adjustment
         except ObjectDoesNotExist:
             pass
@@ -1250,7 +1266,7 @@ class ThreadContent(models.Model):
 
         adjustment = None
         try:
-            adjustment = self.studentcontentrecord_set.get(
+            adjustment = self.contentrecord_set.get(
                 enrollment__student=student).final_due_adjustment
         except:
             pass
@@ -1371,8 +1387,10 @@ class ThreadContent(models.Model):
 
 
 @reversion.register
-class StudentContentRecord(models.Model):
-    enrollment = models.ForeignKey(CourseEnrollment)
+class ContentRecord(models.Model):
+
+    # null enrollment indicates record for coursewide attempts
+    enrollment = models.ForeignKey(CourseEnrollment, null=True)
     content = models.ForeignKey(ThreadContent)
 
     complete = models.BooleanField(default=False)
@@ -1388,7 +1406,11 @@ class StudentContentRecord(models.Model):
 
 
     def __str__(self):
-        return "Record for %s on %s" % (self.enrollment.student, self.content)
+        if self.enrollment:
+            return "Record for %s on %s" % (self.enrollment.student, self.content)
+        else:
+            return "Course record on %s" % (self.content)
+            
 
     class Meta:
         unique_together = ['enrollment', 'content']
@@ -1404,21 +1426,22 @@ class StudentContentRecord(models.Model):
         old_score=None
 
         if self.pk is not None:
-            old_scc = StudentContentRecord.objects.get(pk=self.pk)
+            old_scc = ContentRecord.objects.get(pk=self.pk)
             if self.score_override == old_scc.score_override:
                 score_override_changed = False
             else:
                 old_score = old_scc.score_override
 
         with transaction.atomic(), reversion.create_revision():
-            super(StudentContentRecord, self).save(*args, **kwargs)
+            super(ContentRecord, self).save(*args, **kwargs)
 
         if score_override_changed:
             self.recalculate_score()
 
             ChangeLog.objects.create(
                 courseuser=cuser,
-                content_type=ContentType.objects.get(model="studentcontentrecord"),
+                content_type=ContentType.objects.get(app_label="micourses",
+                                                     model="contentrecord"),
                 object_id=self.id,
                 action="changed score",
                 field_name = "score_override",
@@ -1442,6 +1465,11 @@ class StudentContentRecord(models.Model):
 
         """
 
+        if total_recalculation:
+            for attempt in self.attempts.all():
+                attempt.recalculate_score(propagate=False,
+                                          total_recalculation=True)
+
         # if score is overridden, then just set set score to score_override
         if self.score_override is not None:
             self.score = self.score_override
@@ -1449,11 +1477,12 @@ class StudentContentRecord(models.Model):
             return self.score
 
         # must be an assessment 
-        assessment_ct=ContentType.objects.get(model='assessment')
+        assessment_ct=ContentType.objects.get(app_label="micourses", model='assessment')
         if self.content.content_type != assessment_ct:
             self.score = None
             self.save()
             return self.score
+
 
         valid_attempts = self.attempts.filter(valid=True)
 
@@ -1462,13 +1491,9 @@ class StudentContentRecord(models.Model):
             self.save()
             return None
 
-        if total_recalculation:
-            for attempt in valid_attempts:
-                attempt.recalculate_score(propagate=False,
-                                          total_recalculation=True)
 
-        valid_nonzero_attempts = valid_attempts.exclude(score=None)
-        if not valid_nonzero_attempts:
+        valid_nonblank_attempts = valid_attempts.exclude(score=None)
+        if not valid_nonblank_attempts:
             self.score=None
             self.save()
             return None
@@ -1488,32 +1513,25 @@ class StudentContentRecord(models.Model):
         return self.score
 
 @reversion.register
-class CourseContentAttempt(models.Model):
-    content = models.ForeignKey(ThreadContent)
-    created = models.DateTimeField(blank=True, default=timezone.now)
-    begin_time = models.DateTimeField()
-    end_time = models.DateTimeField(blank=True, null=True)
-    seed = models.CharField(max_length=150)
-    
-    class Meta:
-        ordering = ['begin_time']
-        get_latest_by = "begin_time"
-
-
-@reversion.register
 class ContentAttempt(models.Model):
-    record = models.ForeignKey(StudentContentRecord, related_name="attempts")
+    record = models.ForeignKey(ContentRecord, related_name="attempts")
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
     score_override = models.FloatField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)
+    version_string = models.CharField(max_length=100, default="")
 
-    derived_from = models.ForeignKey(CourseContentAttempt, null=True)
+    # for showing that an attempt is derived off a coursewide attempt
+    # (an attempt with record.enrollment=None)
+    base_attempt = models.ForeignKey('self', null=True, related_name="derived_attempts")
 
     def __str__(self):
-        return "%s's attempt on %s" % (self.record.enrollment.student,
-                                     self.record.content)
+        if self.record.enrollment:
+            return "%s's attempt on %s" % (self.record.enrollment.student,
+                                           self.record.content)
+        else:
+            return "Course attempt on %s" % (self.record.content)
 
     class Meta:
         ordering = ['attempt_began']
@@ -1522,38 +1540,88 @@ class ContentAttempt(models.Model):
     def save(self, *args, **kwargs):
         cuser = kwargs.pop("cuser", None)
 
-        # if changed score override, then recalculate score
-        score_override_changed=True
+        # if new attempt, or changed score override or valid, 
+        # then recalculate score
+        new_attempt=False
+        score_override_changed=False
+        valid_changed=False
         old_score=None
+        old_valid=None
 
-        if self.pk is not None:
+        if self.pk is None:
+            new_attempt=True
+        else:
             old_sca = ContentAttempt.objects.get(pk=self.pk)
-            if self.score_override == old_sca.score_override:
-                score_override_changed=False
-            else:
+            if self.score_override != old_sca.score_override:
+                score_override_changed=True
                 old_score = old_sca.score_override
+            if self.valid != old_sca.valid:
+                valid_changed=True
+                old_valid = old_sca.valid
 
         with transaction.atomic(), reversion.create_revision():
             super(ContentAttempt, self).save(*args, **kwargs)
 
-        if score_override_changed:
+        if new_attempt or score_override_changed or valid_changed:
             self.recalculate_score()
             
-            ChangeLog.objects.create(
-                courseuser=cuser,
-                content_type=ContentType.objects.get(model="contentattempt"),
-                object_id=self.id,
-                action="changed score",
-                field_name = "score_override",
-                old_value=old_score,
-                new_value=self.score_override
-            )
+            if score_override_changed:
+                ChangeLog.objects.create(
+                    courseuser=cuser,
+                    content_type=ContentType.objects.get(app_label="micourses",
+                                                        model="contentattempt"),
+                    object_id=self.id,
+                    action="changed score",
+                    field_name = "score_override",
+                    old_value=old_score,
+                    new_value=self.score_override
+                )
+            if valid_changed:
+                ChangeLog.objects.create(
+                    courseuser=cuser,
+                    content_type=ContentType.objects.get(app_label="micourses",
+                                                        model="contentattempt"),
+                    object_id=self.id,
+                    action="changed valid",
+                    field_name = "valid",
+                    old_value=old_valid,
+                    new_value=self.valid
+                )
 
+    def return_url(self, question_number=None):
+        get_string="content_attempt=%s" % self.id
+
+        if self.record.content.n_of_object > 1:
+            get_string+="&n=%s" % self.record.content.n_of_object
+
+        return "%s?%s" % (self.record.content.content_object.get_absolute_url(
+            question_number=question_number),
+                          get_string)
+
+    def return_link(self):
+        get_string="content_attempt=%s" % self.id
+
+        if self.record.content.n_of_object > 1:
+            get_string+="&n=%s" % self.record.content.n_of_object
+        try:
+            if self.substitute_title:
+                return self.content_object.return_link(
+                    link_text=self.substitute_title,
+                    get_string=get_string)
+            else:
+                return self.content_object.return_link(get_string=get_string)
+        except:
+            return self.get_title()
 
     def get_fraction_credit(self):
         if self.score is None or self.record.content.points is None:
             return None
         return self.score/self.record.content.points
+
+    def get_percent_credit(self):
+        if self.score is None or self.record.content.points is None:
+            return None
+        return self.score/self.record.content.points*100
 
 
     def recalculate_score(self, propagate=True, total_recalculation=False):
@@ -1571,31 +1639,32 @@ class ContentAttempt(models.Model):
 
         """
 
+        if total_recalculation:
+            question_sets = self.question_sets\
+                                .prefetch_related('question_attempts')
+            for question_set in question_sets:
+                for qa in question_set.question_attempts.all():
+                    qa.recalculate_credit(propagate=False)
+
         # if score is overridden, then just set set score to score_override
         if self.score_override is not None:
             self.score = self.score_override
 
         else:
             # must be an assessment 
-            assessment_ct=ContentType.objects.get(model='assessment')
-            if self.record.content.content_type != assessment_ct:
+            assessment_ct=ContentType.objects.get(app_label="micourses", 
+                                                  model='assessment')
+            if self.record.content.content_type != assessment_ct or \
+               self.record.content.points is None:
                 self.score = None
             else:
                 assessment = self.record.content.content_object
                 question_set_details = assessment.questionsetdetail_set
-                if total_recalculation:
-                    question_sets = self.question_sets\
-                                        .prefetch_related('question_attempts')
-                else:
-                    question_sets = self.question_sets.all()
+                question_sets = self.question_sets.all()
                 if question_sets:
                     total_weight = 0.0
                     self.score = 0.0
                     for question_set in question_sets:
-                        if total_recalculation:
-                            for qa in question_set.question_attempts.all():
-                                qa.recalculate_credit(propagate=False)
-                                
                         try:
                             weight = question_set_details.get(
                                 question_set=question_set.question_set).weight
@@ -1613,7 +1682,7 @@ class ContentAttempt(models.Model):
         
         self.save()
 
-        if propagate and self.valid:
+        if propagate:
             self.record.recalculate_score()
 
         return self.score
@@ -1626,8 +1695,9 @@ class ContentAttempt(models.Model):
             .prefetch_related('question_attempts'):
 
             try:
-                latest_time = max(latest_time, question_set.question_attempts\
-                                  .latest().get_lastest_activity_time())
+                latest_time = max(
+                    latest_time, question_set.question_attempts\
+                    .filter(valid=True).latest().get_latest_activity_time())
             except ObjectDoesNotExist:
                 pass
 
@@ -1643,19 +1713,6 @@ class ContentAttempt(models.Model):
             return (self.attempt_began, latest_activity)
         else:
             return (self.attempt_began, None)
-
-
-@reversion.register
-class CourseContentAttemptQuestionSet(models.Model):
-    content_attempt = models.ForeignKey(CourseContentAttempt,
-                                        related_name="question_sets")
-    question_number = models.SmallIntegerField()
-    question_set = models.SmallIntegerField()
-    
-    class Meta:
-        ordering = ['question_number']
-        unique_together = [('content_attempt', 'question_number'),
-                           ('content_attempt', 'question_set')]
 
 
 @reversion.register
@@ -1696,7 +1753,8 @@ class ContentAttemptQuestionSet(models.Model):
             
             ChangeLog.objects.create(
                 courseuser=cuser,
-                content_type=ContentType.objects.get(model="contentattemptquestionset"),
+                content_type=ContentType.objects.get(app_label="micourses",
+                                            model="contentattemptquestionset"),
                 object_id=self.id,
                 action="changed score",
                 field_name = "credit_override",
@@ -1739,14 +1797,62 @@ class ContentAttemptQuestionSet(models.Model):
         return credit
 
 
-@reversion.register
-class CourseQuestionAttempt(models.Model):
-    content_attempt_question_set = models.ForeignKey(
-        CourseContentAttemptQuestionSet, related_name="question_attempts")
-    question = models.ForeignKey('mitesting.Question')
-    seed = models.CharField(max_length=150)
-    random_outcomes = models.TextField()
+    def get_points(self):
+        """"
+        Determines points of question set by adding up weights
+        of all question sets of assessment to determine relative
+        weight of this question set, then multiplying by total points.
+        """
+    
+        total_points = self.content_attempt.record.content.points
 
+        # must be an assessment 
+        assessment_ct=ContentType.objects.get(app_label="micourses", 
+                                              model='assessment')
+
+        if self.content_attempt.record.content.content_type != assessment_ct \
+           or total_points is None:
+            return
+        
+
+        assessment = self.content_attempt.record.content.content_object
+        question_set_details = assessment.questionsetdetail_set
+
+        question_sets = self.content_attempt.question_sets.all()
+        total_weight = 0.0
+        this_weight = None
+        for question_set in question_sets:
+            try:
+                weight = question_set_details.get(
+                    question_set=question_set.question_set).weight
+            except ObjectDoesNotExist:
+                weight = 1
+            total_weight += weight
+            if question_set == self:
+                this_weight = weight
+
+        points = this_weight/total_weight*total_points
+
+        return points
+
+
+    def return_activity_interval(self):
+        # return time attempt began and latest time of activity
+        # if difference between is less than a minute, 
+        # then return None for second
+
+        try:
+            latest_activity = self.question_attempts.filter(valid=True)\
+                                        .latest().get_latest_activity_time()
+            attempt_began = self.question_attempts.filter(valid=True)\
+                                                  .earliest().attempt_began
+        except ObjectDoesNotExist:
+            return (self.content_attempt.attempt_began, None)
+
+        if latest_activity-attempt_began >= timezone.timedelta(minutes=1):
+            return (attempt_began, latest_activity)
+        else:
+            return (attempt_began, None)
 
 @reversion.register
 class QuestionAttempt(models.Model):
@@ -1775,12 +1881,15 @@ class QuestionAttempt(models.Model):
         ordering = ['attempt_began']
         get_latest_by = "attempt_began"
 
-        
     def __str__(self):
         qs = self.content_attempt_question_set
-        return "%s's attempt on question %s of %s" % \
-            (qs.content_attempt.record.enrollment.student, \
-             qs.question_number, qs.content_attempt.record.content)
+        if qs.content_attempt.record.enrollment:
+            return "%s's attempt on question %s of %s" % \
+                (qs.content_attempt.record.enrollment.student, \
+                 qs.question_number, qs.content_attempt.record.content)
+        else:
+            return "Course attempt on question %s of %s" % \
+                (qs.question_number, qs.content_attempt.record.content)
 
     def recalculate_credit(self, propagate=True):
         """
@@ -1817,13 +1926,24 @@ class QuestionAttempt(models.Model):
 
         return self.credit
 
-    def get_lastest_activity_time(self):
+    def get_latest_activity_time(self):
         try:
-            latest_response = self.responses.latest()
+            latest_response = self.responses.filter(valid=True).latest()
         except ObjectDoesNotExist:
             return self.attempt_began
         else:
             return max(self.attempt_began, latest_response.response_submitted)
+
+    def return_activity_interval(self):
+        # return time attempt began and latest time of activity
+        # if difference between is less than a minute, 
+        # then return None for second
+
+        latest_activity = self.get_latest_activity_time()
+        if latest_activity-self.attempt_began >= timezone.timedelta(minutes=1):
+            return (self.attempt_began, latest_activity)
+        else:
+            return (self.attempt_began, None)
 
 
 class QuestionResponse(models.Model):
@@ -1845,7 +1965,7 @@ class QuestionResponse(models.Model):
         return  "%s" % self.response
 
     class Meta:
-        ordering = ['response_submitted']
+        ordering = ['question_attempt', 'response_submitted']
         get_latest_by = "response_submitted"
 
     def save(self, *args, **kwargs):
@@ -1855,3 +1975,506 @@ class QuestionResponse(models.Model):
 
 
 
+class AssessmentType(models.Model):
+    PRIVACY_CHOICES = (
+        (0, 'Public'),
+        (1, 'Logged in users'),
+        (2, 'Instructors only'),
+        )
+
+    code = models.SlugField(max_length=50, unique=True)
+    name = models.CharField(max_length=50, unique=True)
+    assessment_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES, 
+                                             default=2)
+    solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
+                                                default=2)
+    template_base_name = models.CharField(max_length=50, blank=True, null=True)
+    
+    def __str__(self):
+        return  self.name
+
+
+
+class Assessment(models.Model):
+    code = models.SlugField(max_length=200, db_index=True)
+    name = models.CharField(max_length=200)
+    short_name = models.CharField(max_length=30, blank=True, null=True)
+    assessment_type = models.ForeignKey(AssessmentType)
+    course = models.ForeignKey('micourses.Course')
+    thread_content_set = GenericRelation('micourses.ThreadContent')
+    description = models.CharField(max_length=400,blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True)
+    questions = models.ManyToManyField('mitesting.Question', through='QuestionAssigned',
+                                       blank=True)
+    instructions = models.TextField(blank=True, null=True)
+    instructions2 = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    groups_can_view = models.ManyToManyField(Group, blank=True, 
+                            related_name = "assessments_can_view")
+    groups_can_view_solution = models.ManyToManyField(Group, blank=True, 
+                            related_name = "assessments_can_view_solution")
+    background_pages = models.ManyToManyField('midocs.Page', 
+                            through='AssessmentBackgroundPage', blank=True)
+    allow_solution_buttons = models.BooleanField(default=True)
+    fixed_order = models.BooleanField(default=False)
+    single_version = models.BooleanField(default=False)
+    resample_question_sets = models.BooleanField(default=False)
+
+
+    class Meta:
+        permissions = (
+            ("administer_assessment","Can administer assessments"),
+        )
+        ordering = ["code",]
+        unique_together = (("course", "code"), ("course", "name"),)
+
+    def __str__(self):
+        return "%s (Assessment: %s)" % (self.code, self.name)
+
+
+    def return_short_name(self):
+        if self.short_name:
+            return self.short_name
+        else:
+            return self.name
+
+    def get_title(self):
+        return self.name
+
+    def annotated_title(self):
+        return "%s: %s" % (self.assessment_type.name,self.name)
+
+    def return_link(self, **kwargs):
+        link_text=kwargs.get("link_text", self.annotated_title())
+        link_title="%s: %s" % (self.annotated_title(),self.description)
+        link_class=kwargs.get("link_class", "assessment")
+        get_string=kwargs.get("get_string", "")
+
+        direct = kwargs.get("direct")
+        if direct:
+            link_url = self.get_absolute_url()
+        
+            seed = kwargs.get("seed")
+            if seed is not None:
+                link_url += "?seed=%s" % seed
+                if get_string:
+                    link_url += "&" + get_string
+            elif get_string:
+                link_url += "?" + get_string
+        else:
+            link_url = self.get_overview_url()
+            if get_string:
+                link_url += "?" + get_string
+
+        return mark_safe('<a href="%s" class="%s" title="%s">%s</a>' % \
+                             (link_url, link_class,  link_title, link_text))
+
+
+    def return_direct_link(self, **kwargs):
+        kwargs['direct']=True
+        return self.return_link(**kwargs)
+
+    @models.permalink
+    def get_absolute_url(self, question_number=None):
+        if question_number is None:
+            return('miassess:assessment', (), {'course_code': self.course.code,
+                                               'assessment_code': self.code})
+        else:
+            return('miassess:assessment_question', (), 
+                   {'course_code': self.course.code,
+                    'assessment_code': self.code,
+                    'question_only': question_number})
+
+
+    @models.permalink
+    def get_overview_url(self):
+        return('miassess:assessment_overview', (), {'course_code': self.course.code,
+                                                    'assessment_code': self.code})
+
+    @models.permalink
+    def get_solution_url(self):
+        return('miassess:assessment_solution', (), {'course_code': self.course.code,
+                                                    'assessment_code': self.code})
+
+
+    def clean(self):
+        """
+        Check if course has changed.
+        If course has changed and already have student activity on
+        assessment, then raise validation error
+
+        """
+        
+        if self.pk:
+            orig = Assessment.objects.get(pk=self.pk)
+        else:
+            orig = None
+
+        if orig and self.course != orig.course:
+
+            found_student_activity = False
+            from micourses.utils import check_for_student_activity
+            for content in self.thread_content_set.filter(course=orig.course):
+                if check_for_student_activity(content):
+                    found_student_activity=True
+                    break
+
+            if found_student_activity:
+                raise ValidationError('Cannot change course of %s from %s to %s since it already has student activity' % (self, orig.course, self.course))
+
+
+
+
+
+
+    def save(self, *args, **kwargs):
+        """
+        Make sure assigned questions as from assessment's course
+
+        If question's course if different, then save question as new question
+        unless course already has a question that is
+        1. derived from this question or
+        2. derived from this question's base question.
+        In that case, instead of creating new question, switch to said question.
+        """
+
+        super(Assessment, self).save(*args, **kwargs)
+
+        for qa in self.questionassigned_set.all():
+            if qa.question.course != self.course:
+                
+                # find related question
+                q=self.course.question_set.filter(base_question=qa.question)\
+                                          .first()
+                if not q and qa.question.base_question:
+                    q=self.course.question_set.filter(
+                        base_question = qa.question.base_question).first()
+                if q:
+                    qa.question = q
+                else:
+                    qa.question = qa.question.save_as_new(course=self.course)
+
+                qa.save()
+
+    def determine_thread_content(self, number_in_thread=1):
+        """
+        Determine the thread content of the assessment.
+
+        Return the thread content.
+        
+        If assessment is not in thread and number in thread is 1,
+        then return None
+
+        Otherwise, if thread content is not found, raise ObjectDoesExist exception
+        """
+        
+        try: 
+            number_in_thread = int(number_in_thread)
+        except TypeError:
+            number_in_thread = 1
+
+        try:
+            return self.thread_content_set.all()[number_in_thread-1]
+        except (IndexError, ValueError, AssertionError):
+            if number_in_thread==1 and \
+               not self.assessment.thread_content_set.all():
+                return None
+            else:
+                raise ThreadContent.DoesNotExist
+
+
+    def user_can_view(self, user, solution=True, include_questions=True):
+        from micourses.permissions import return_user_assessment_permission_level
+        permission_level=return_user_assessment_permission_level(user, self.course)
+        privacy_level=self.return_privacy_level(
+            solution=solution, include_questions=include_questions)
+        # if permission level is high enough, user can view
+        if permission_level >= privacy_level:
+            return True
+        
+        # else check if user is in one of the groups 
+        allowed_users=self.return_users_of_groups_can_view(solution)
+        if user in allowed_users:
+            return True
+        else:
+            return False
+
+    def return_users_of_groups_can_view(self, solution=False):
+        if solution:
+            allowed_groups= self.groups_can_view_solution.all()
+        else:
+            allowed_groups= self.groups_can_view.all()
+        allowed_users = []
+        for group in allowed_groups:
+            allowed_users += list(group.user_set.all())
+        return allowed_users
+
+    def return_privacy_level(self, solution=True, include_questions=True):
+        # privacy level is max of privacy level from assessment type
+        # and (if include_questions==True) all question sets
+        if solution:
+            privacy_level = self.assessment_type.solution_privacy
+        else:
+            privacy_level = self.assessment_type.assessment_privacy
+        if include_questions:
+            for question in self.questions.all():
+                privacy_level = max(privacy_level, 
+                                    question.return_privacy_level(solution))
+        return privacy_level
+    
+    def privacy_level_description(self, solution=False):
+        """
+        Returns description of the privacy of the assessment or solution.
+        using the words of the PRIVACY_CHOICES from AssessmentType.
+        Also includes statements alerting to the following situations:
+        - If the privacy level was increased from that of the assessment type
+          due to a higher privacy level associated with a question
+        - If a privacy override will allow some groups to view a non-public
+          assessment or solution.
+        """
+        privacy_level = self.return_privacy_level(solution=solution)
+        privacy_description= AssessmentType.PRIVACY_CHOICES[privacy_level][1]
+        privacy_description_addenda = []
+        if privacy_level > self.return_privacy_level(solution=solution, 
+                                                     include_questions=False):
+            privacy_description_addenda.append(
+                "increased due to an assigned question")
+        
+        if (solution and self.groups_can_view_solution.exists()) or \
+                (not solution and self.groups_can_view.exists()):
+            if privacy_level > 0:
+                privacy_description_addenda.append("overridden for some groups")
+
+        if privacy_description_addenda:
+            privacy_description += " (%s)" %\
+                ", ".join(privacy_description_addenda)
+        
+        return privacy_description
+    privacy_level_description.short_description = "Assessment privacy"
+
+
+    def privacy_level_solution_description(self):
+        return self.privacy_level_description(solution=True)
+    privacy_level_solution_description.short_description = "Solution privacy"
+
+    def render_instructions(self):
+        if not self.instructions:
+            return ""
+        template_string_base = "{% load testing_tags mi_tags humanize %}"
+        template_string=template_string_base + self.instructions
+        try:
+            t = Template(template_string)
+            return mark_safe(t.render(Context({})))
+        except TemplateSyntaxError as e:
+            return "Error in instructions template: %s" % e
+
+    def render_instructions2(self):
+        if not self.instructions2:
+            return ""
+        template_string_base = "{% load testing_tags mi_tags humanize %}"
+        template_string=template_string_base + self.instructions2
+        try:
+            t = Template(template_string)
+            return mark_safe(t.render(Context({})))
+        except TemplateSyntaxError as e:
+            return "Error in instructions2 template: %s" % e
+
+
+    def question_sets(self):
+        question_set_dicts= self.questionassigned_set.order_by('question_set').values('question_set').distinct()
+        question_sets = []
+        for question_set_dict in question_set_dicts:
+            question_sets.append(question_set_dict['question_set'])
+        return question_sets
+
+
+    def points_of_question_set(self, question_set):
+        try:
+            question_detail=self.questionsetdetail_set.get(
+                question_set=question_set)
+            return question_detail.points
+        except ObjectDoesNotExist:
+            return None
+
+    def get_total_points(self):
+        if self.total_points is None:
+            total_points=0
+            for question_set in self.question_sets():
+                the_points = self.points_of_question_set(question_set)
+                if the_points:
+                    total_points += the_points
+            return total_points
+        else:
+            return self.total_points
+
+
+    def avoid_question_seed(self, avoid_dict, start_seed=None):
+
+        import random
+        rng=random.Random()
+        rng.seed(start_seed)
+
+        question_sets = self.question_sets()
+
+        min_penalty=1000000
+        best_seed=None
+
+        from .render_assessments import get_question_list
+        from mitesting.utils import get_new_seed
+
+        import time
+        t0=time.process_time()
+
+        for iter in range(1000):
+
+            seed = get_new_seed(rng)
+
+            # force fixed order for speed
+            question_list=get_question_list(self, seed=seed, rng=rng, 
+                                            questions_only=True)
+
+            penalty = 0 
+
+            for q_dict in question_list:
+                penalty += avoid_dict.get(q_dict['question'].id,0)
+
+            if penalty==0:
+                return seed
+
+            if penalty < min_penalty:
+                min_penalty = penalty
+                best_seed = seed
+
+                
+        print(time.process_time()-t0)
+            
+        return best_seed
+                    
+
+    def save_as_new(self, name = None, code=None, course=None):
+        """
+        Create a new assessment and copy all fields to new assessment.
+
+        Must either have a new name and code or be assigned to a different course.
+        (Otherwise, will violate uniqueness constraint.)
+        
+        If course changed, then save questions as new questions
+        unless course already has a question that is
+        1. derived from this question
+        2. this question's base question
+        3. derived from this question's base question.
+        In that case, instead of creating new question, switch to said question.
+
+        """
+
+        from copy import copy
+
+        new_a = copy(self)
+        new_a.id = None
+        
+        if name:
+            new_a.name = name
+        if code:
+            new_a.code = code
+
+        course_changed=False
+        if course:
+            if course != new_a.course:
+                course_changed=True
+            new_a.course = course
+
+        new_a.save()
+        
+        for qa in self.questionassigned_set.all():
+            qa.id = None
+            qa.assessment = new_a
+
+            # find related question or create new one
+            if course_changed:
+                qa.question=qa.question.find_replacement_question_for_course(
+                    course)
+
+            qa.save()
+
+        for gcv in self.groups_can_view.all():
+            new_a.groups_can_view.add(gcv)
+        for gcv in self.groups_can_view_solution.all():
+            new_a.groups_can_view_solution.add(gcv)
+
+        for bp in self.assessmentbackgroundpage_set.all():
+            bp.id = None
+            bp.assessment = new_a
+            bp.save()
+            
+        for qsd in self.questionsetdetail_set.all():
+            qsd.id = None
+            qsd.assessment = new_a
+            qsd.save()
+
+        return new_a
+
+
+
+class AssessmentBackgroundPage(models.Model):
+    assessment = models.ForeignKey(Assessment)
+    page = models.ForeignKey('midocs.Page')
+    sort_order = models.FloatField(blank=True)
+
+    class Meta:
+        ordering = ['sort_order']
+    def __str__(self):
+        return "%s for %s" % (self.page, self.assessment)
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.assessment.assessmentbackgroundpage_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(AssessmentBackgroundPage, self).save(*args, **kwargs)
+
+class QuestionSetDetail(models.Model):
+    assessment = models.ForeignKey(Assessment)
+    question_set = models.SmallIntegerField(db_index=True)
+    weight = models.FloatField(default=1)
+    group = models.CharField(max_length=50, blank=True, default="")
+
+    class Meta:
+        unique_together = ("assessment", "question_set")
+    def __str__(self):
+        return "%s for %s" % (self.question_set, self.assessment)
+
+
+class QuestionAssigned(models.Model):
+    assessment = models.ForeignKey(Assessment)
+    question = models.ForeignKey('mitesting.Question')
+    question_set = models.SmallIntegerField(blank=True)
+
+    class Meta:
+        verbose_name_plural = "Questions assigned"
+        ordering = ['question_set', 'id']
+    def __str__(self):
+        return "%s for %s" % (self.question, self.assessment)
+
+    def save(self, *args, **kwargs):
+        # if the question set is null
+        # make it be a unique question set,
+        # i.e., one more than any other in the assessment
+        if self.question_set is None:
+            max_question_set = self.assessment.questionassigned_set.aggregate(Max('question_set'))
+            max_question_set = max_question_set['question_set__max']
+            if max_question_set:
+                self.question_set = max_question_set+1
+            else:
+                self.question_set = 1
+
+        # if question isn't from assessment's course
+        # then find related question from course or create new question
+        if self.question.course != self.assessment.course:
+            self.question = self.question.find_replacement_question_for_course(
+                self.assessment.course)
+
+        super(QuestionAssigned, self).save(*args, **kwargs)

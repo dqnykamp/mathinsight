@@ -1,7 +1,7 @@
 # commands that users can use in questions
 
 
-from sympy import Tuple, Function, C,  Subs, Expr, Abs
+from sympy import Tuple, Function, Subs, Expr, Abs
 from mitesting.sympy_customized import customized_sort_key, TupleNoParen
 from sympy.logic.boolalg import BooleanFunction
 
@@ -126,12 +126,14 @@ class max_including_tuples(Function):
     Else, find max over arguments.
     """
 
+    from sympy import Max
+
     @classmethod
     def eval(cls, *args):
         if len(args)==1 and isinstance(args[0],Tuple):
-            return C.Max(*args[0])
+            return Max(*args[0])
         else:
-            return C.Max(*args)
+            return Max(*args)
 
 
 class min_including_tuples(Function):
@@ -140,12 +142,14 @@ class min_including_tuples(Function):
     Else, find min over arguments.
     """
 
+    from sympy import Min
+    
     @classmethod
     def eval(cls, *args):
         if len(args)==1 and isinstance(args[0],Tuple):
-            return C.Min(*args[0])
+            return Min(*args[0])
         else:
-            return C.Min(*args)
+            return Min(*args)
 
 
 def iif(cond, result_if_true, result_if_false):
@@ -305,7 +309,8 @@ class scalar_multiple_deviation(Function):
             return oo
 
 
-class Point(C.Point):
+from sympy import Point as sympy_Point
+class Point(sympy_Point):
     def evalf(self, prec=None, **options):
         coords = [x.evalf(prec, **options) for x in self.args]
         return type(self)(*coords, evaluate=False)
@@ -367,117 +372,115 @@ Functions will still evaluate to floats when .evalf() is called
 and will otherwise behave normally.
 """
 
-class log(C.log):
+for cmd in ["log", "exp", "acos", "acosh", "acot", "acoth", "asin", "asinh", "atan", "atan2", "atanh", "cos", "cosh", "cot", "coth", "csc", "sec", "sin", "sinh", "tan", "tanh"]:
+    exec("from sympy import %s as sympy_%s" % (cmd,cmd))
+
+class log(sympy_log):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class ln(C.log):
+class ln(sympy_log):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class exp(C.exp):
+class exp(sympy_exp):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class acosh(C.acosh):
+class acos(sympy_acos):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class acos(C.acos):
+class acosh(sympy_acosh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class acosh(C.acosh):
+class acot(sympy_acot):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class acot(C.acot):
+class acoth(sympy_acoth):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class acoth(C.acoth):
+class asin(sympy_asin):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class asin(C.asin):
+class asinh(sympy_asinh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class asinh(C.asinh):
+class atan(sympy_atan):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class atan(C.atan):
+class atan2(sympy_atan2):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class atan2(C.atan2):
+class atanh(sympy_atanh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class atanh(C.atanh):
+class cos(sympy_cos):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class cos(C.cos):
+class cosh(sympy_cosh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class cosh(C.cosh):
+class cot(sympy_cot):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class cot(C.cot):
+class coth(sympy_coth):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class coth(C.coth):
+class csc(sympy_csc):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class csc(C.csc):
+class sec(sympy_sec):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class sec(C.sec):
+class sin(sympy_sin):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class sin(C.sin):
+class sinh(sympy_sinh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class sinh(C.sinh):
+class tan(sympy_tan):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
 
-class tan(C.tan):
-    @classmethod
-    def _should_evalf(cls, arg):
-        return -1
-
-class tanh(C.tanh):
+class tanh(sympy_tanh):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
