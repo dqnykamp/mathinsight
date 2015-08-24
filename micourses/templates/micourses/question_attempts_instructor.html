@@ -5,6 +5,10 @@
 
 {% block extrastyle2 %}
 <style>
+  .overridden {
+      text-decoration: line-through;
+      color: gray;
+  }
   .invalid {
       text-decoration: line-through;
       color: gray;
@@ -33,14 +37,94 @@
 <h5>Response history</h5>
 
 <table class="basic rowclick">
-<thead><tr>{% if multiple_question_attempts %}<th>Question version</th>{%endif%}<th>Date and time</th><th>Percent</th><th>Score</th></tr></thead>
-<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (based on {{thread_content.attempt_aggregation_string}})</b></td><td><b>&nbsp;{{percent_credit|percent_checked_100 }}&nbsp;</b></td><td><b>&nbsp;{{ score_text }}&nbsp;</b></td></tr></tfoot>
+<thead><tr>{% if multiple_question_attempts %}<th>Question version</th>{%endif%}<th>Date and time</th><th class="righttext">Percent</th><th class="righttext">Score</th></tr></thead>
+<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (<span id="score_comment" {% if credit_overridden %}class="overridden" {%endif%}>based on {{thread_content.attempt_aggregation_string}} score</span><span id="score_overridden" {% if not credit_overridden %}hidden {%endif%}>, overridden</span>)</td>
+
+
+<td class="righttext"><b><div id="question_credit"><span id="credit_question">{{ percent_credit|floatformat_or_dash:"1"}}</span>% <br/><input type="button" value="Edit" onclick="toggleEditForm('credit', true);"></div><div id="edit_question_credit" hidden><form id="edit_question_credit_form"><span id="edit_question_credit_form_inner">{{credit_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('delete', 'credit');" id="delete_override_question_credit" {% if not credit_overridden %}hidden {%endif%}></form></div></b></td>
+
+<td class="righttext"><b><div id="question_score"><span id="score_question">{{ score_text }}</span><br/><input type="button" value="Edit" onclick="toggleEditForm('score', true);"></div><div id="edit_question_score" hidden><form id="edit_question_score_form"><span id="edit_question_score_form_inner">{{score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('delete', 'score');" id="delete_override_question_score" {% if not credit_overridden %}hidden {%endif%}></form></div></b></td>
+</tr></tfoot>
 {% for attempt in question_attempt_list %}
 {% for response in attempt.responses %}
-<tr {% if not response.valid %}class="invalid"{%endif%}>{% if multiple_question_attempts %}<td>{{attempt.version_number}}</td>{%endif%}
-<td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.submitted}}&nbsp;</a></td><td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.percent_credit|percent_checked_100 }}&nbsp;</a></td><td><a href="{{response.response_url}}"{% if not response.valid %}class="invalid2"{%endif%}>&nbsp;{{response.score_text}}&nbsp;</a></td></tr>
+<tr {% if not response.valid %}class="invalid"{%endif%} id="response_{{response.response_number}}">{% if multiple_question_attempts %}<td>{{attempt.version_number}}</td>{%endif%}
+<td><a href="{{response.response_url}}"{% if not response.valid %} class="invalid2"{%endif%}>&nbsp;{{response.submitted}}&nbsp;</a></td>
+<td class="righttext" id="response_{{response.response_number}}_credit"><a href="{{response.response_url}}"{% if not response.valid %} class="invalid2"{%endif%}>&nbsp;{{response.percent_credit|percent_checked_100 }}&nbsp;</a></td>
+<td class="righttext" id="response_{{response.response_number}}_score"><a href="{{response.response_url}}"{% if not response.valid %} class="invalid2"{%endif%}>&nbsp;{{response.score_text}}&nbsp;</a></td></tr>
 {% endfor %}{% endfor %}
 </table>
 
+<script type="text/javascript">
+  function toggleEditForm(score_type, visible) {
+      $('#question_' +score_type).toggle(!visible);
+      $('#edit_question_'+ score_type).toggle(visible);
+      if(score_type=="credit") {
+	  $('#edit_question_{{question_number}}_credit_form_percent').val($('#credit_question').html());
+      }
+      else {
+	  $('#edit_question_{{question_number}}_' + score_type + '_form_' + score_type).val($('#' + score_type + '_question').html());
+      }
+      $("#edit_question_" + score_type + "_form_inner").children("ul").remove();
+  }
+
+    $("#edit_question_score_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('change', 'score');
+    });
+    $("#edit_question_credit_form").submit(function(event) {
+	event.preventDefault();
+	post_change_score('change', 'credit');
+    });
+
+  function post_change_score(action, score_type) {
+      var record_type="question_set";
+      
+      var data = "action="+action+"&record_type=" + record_type+"&score_type=" + score_type +"&" +"attempt_id={{content_attempt.id}}&question_number={{question_number}}&" + $('#edit_question_'+score_type+'_form').serialize()
+
+      var thepost = jQuery.post('{% url "micourses:change_score" course_code=thread_content.course.code content_id=thread_content.id student_id=student.id %}', data);
+      
+      thepost.done(process_change_score);
+  }
+
+
+  function process_change_score(data) {
+      var action = data['action'];
+      var num = data['num'];
+      var score_text = data['score_text'];
+      var percent_credit_text = data['percent_credit_text'];
+      var form = data['form'];
+      var success = data['success'];
+      var score_type = data['score_type'];
+
+      $('#edit_question_'+score_type+'_form_inner').html(form);
+
+
+      if(success) {
+	  $('#score_question').html(score_text);
+	  $('#credit_question').html(percent_credit_text);
+	  toggleEditForm("score", false);
+	  toggleEditForm("credit", false);
+	  
+	  if(action=="change") {
+	      $('#delete_override_question_credit').toggle(true);
+	      $('#delete_override_question_score').toggle(true);
+	      $("#score_comment").addClass("overridden");
+	      $("#score_overridden").toggle(true);
+	  }
+	  else if(action=="delete") {
+	      $('#delete_override_question_credit').toggle(false);
+	      $('#delete_override_question_score').toggle(false);
+	      $("#score_comment").removeClass("overridden");
+	      $("#score_overridden").toggle(false);
+	  }
+      }
+      
+      
+  }
+
+
+</script>
 
 {% endblock %}

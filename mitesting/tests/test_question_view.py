@@ -1,6 +1,5 @@
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
-from micourses.models import Course
+from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption
 from django.contrib.auth.models import AnonymousUser, User, Permission
 import json, re
 import pickle, base64
@@ -33,7 +32,7 @@ class TestQuestionView(TestCase):
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
 
         u=User.objects.create_user("user", password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
+        p=Permission.objects.get(codename = "administer_question")
         u.user_permissions.add(p)
         self.client.login(username="user",password="pass")
 
@@ -44,7 +43,7 @@ class TestQuestionView(TestCase):
         self.q.hint_text="Ask your mother."
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertEqual(response.context['question'],self.q)
         self.assertTemplateUsed(response,"mitesting/question_detail.html")
         self.assertContains(response, "What is your name?")
@@ -57,7 +56,7 @@ class TestQuestionView(TestCase):
         self.q.solution_text="The full solution"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s/solution" % self.q.id)
+        response = self.client.get("/question/%s/solution" % self.q.id)
         self.assertEqual(response.context['question'],self.q)
         self.assertTemplateUsed(response,
                                 "mitesting/question_solution.html")
@@ -69,7 +68,7 @@ class TestQuestionView(TestCase):
         self.q.solution_text="The solution is: ${{fun_x}} = {{f}}({{x}})$"
         self.q.save()
         
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         f = response.context["f"]
         x = response.context["x"]
         fun_x = response.context["fun_x"]
@@ -78,35 +77,35 @@ class TestQuestionView(TestCase):
         self.assertContains(response, question_text)
         
         seed = response.context["question_data"]["seed"]
-        response = self.client.get("/assess/question/%s" % self.q.id,
+        response = self.client.get("/question/%s" % self.q.id,
                                    {'seed': seed})
         self.assertContains(response, question_text)
 
-        response = self.client.get("/assess/question/%s/solution" % self.q.id, 
+        response = self.client.get("/question/%s/solution" % self.q.id, 
                                    {'seed': seed})
         self.assertContains(response, solution_text)
 
 
     def test_solution_button_help(self):
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         identifier = response.context['question_data']['identifier']
         self.assertNotContains(response, "Show solution")
 
         self.q.solution_text = "Solution"
         self.q.save()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, "Show solution")
         self.assertTrue(response.context['question_data']\
                             ['enable_solution_button'])
 
-        response = self.client.get("/assess/question/%s/solution" % self.q.id)
+        response = self.client.get("/question/%s/solution" % self.q.id)
         self.assertNotContains(response, "Show solution")
 
         self.q.computer_graded=True
         self.q.show_solution_button_after_attempts=3
         self.q.save()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, "Show solution")
         self.assertFalse(response.context['question_data']\
                             ['enable_solution_button'])
@@ -114,7 +113,7 @@ class TestQuestionView(TestCase):
 
     def test_need_help(self):
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         identifier = response.context['question_data']['identifier']
         need_help_snippet = '<span id="hidden_section_1_show" class="hidden_section_show" style="display: inline;">Need help?</span>'
 
@@ -122,15 +121,15 @@ class TestQuestionView(TestCase):
 
         self.q.hint_text = "help"
         self.q.save()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, need_help_snippet, html=True)
 
-        response = self.client.get("/assess/question/%s/solution" % self.q.id)
+        response = self.client.get("/question/%s/solution" % self.q.id)
         self.assertNotContains(response, need_help_snippet, html=True)
 
         self.q.computer_graded=True
         self.q.save()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, need_help_snippet, html=True)
 
 
@@ -143,7 +142,7 @@ class TestQuestionView(TestCase):
         self.q.questionsubpart_set.create(question_text="({{x}}+1)^2",
                                           solution_text="{{x}}^2+2{{x}}+1")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         f = response.context["f"]
         x = response.context["x"]
         fun_x = response.context["fun_x"]
@@ -159,7 +158,7 @@ class TestQuestionView(TestCase):
         self.assertContains(response, question_textb)
 
         seed = response.context["question_data"]["seed"]
-        response = self.client.get("/assess/question/%s/solution?seed=%s" 
+        response = self.client.get("/question/%s/solution?seed=%s" 
                                    % (self.q.id, seed))
         self.assertContains(response, solution_text)
         self.assertContains(response, solution_texta)
@@ -181,7 +180,7 @@ class TestQuestionView(TestCase):
             answer = "A partially correct answer: {{n}}",
             percent_correct = 50)
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertNotContains(response, "The correct answer")
         self.assertNotContains(response, "An incorrect answer")
         self.assertNotContains(response, "A partially correct answer")
@@ -189,7 +188,7 @@ class TestQuestionView(TestCase):
         self.q.question_text="Which is right? {% answer 'choice' %}"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         f = response.context["f"]
         x = response.context["x"]
         n = response.context["n"]
@@ -228,7 +227,7 @@ class TestQuestionView(TestCase):
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
+        p=Permission.objects.get(codename = "administer_question")
         u.user_permissions.add(p)
 
         for iu in range(3):
@@ -236,10 +235,10 @@ class TestQuestionView(TestCase):
             for iq in range(3):
                 for jq in range(3):
                     response = self.client.get(
-                        "/assess/question/%s" % qpks[iq][jq])
+                        "/question/%s" % qpks[iq][jq])
 
                     if iu < 2:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s' % qpks[iq][jq])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response, "A profound question")
@@ -250,10 +249,10 @@ class TestQuestionView(TestCase):
                         self.assertTrue(response.context['show_lists'])
 
                     response = self.client.get(
-                        "/assess/question/%s/solution" % qpks[iq][jq])
+                        "/question/%s/solution" % qpks[iq][jq])
 
                     if iu < 2:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/question/%s/solution' % qpks[iq][jq])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response, "The only solution")
@@ -272,14 +271,14 @@ class TestQuestionView(TestCase):
 
         submit_button_html = '<input type="submit" id="question_qv_submit" class="mi_answer_submit" value="Submit" >'
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         self.assertContains(response, submit_button_html, html=True)
         
         self.q.question_text="{% answer 'xyz' %}{% badtag %}"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         self.assertNotContains(response, submit_button_html, html=True)
 
@@ -290,7 +289,7 @@ class TestQuestionView(TestCase):
         self.q.question_text="{% answer 'xyz' %}abc={{abc}}"
         self.q.save()
         
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         
         error_message = 'Error in expression: abc'
         self.assertContains(response, error_message)
@@ -302,7 +301,7 @@ class TestQuestionView(TestCase):
         abc.post_user_response=True
         abc.save()
         
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, error_message)
         self.assertContains(response, submit_button_html, html=True)
         self.assertContains(response, 'abc=??')
@@ -352,7 +351,7 @@ class TestGradeQuestionView(TestCase):
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
 
         u=User.objects.create_user("user", password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
+        p=Permission.objects.get(codename = "administer_question")
         u.user_permissions.add(p)
         self.client.login(username="user",password="pass")
 
@@ -362,14 +361,14 @@ class TestGradeQuestionView(TestCase):
 
     def test_view_simple(self):
         computer_grade_data = {
-            'seed': '0', 'identifier': 'a', 'record_answers': True,
+            'seed': '0', 'identifier': 'a', 'record_response': True,
             'allow_solution_buttons': True, 'answer_info': [],
             'applet_counter': 0}
 
         cgd = base64.b64encode(pickle.dumps(computer_grade_data))
 
         data = b"cgd=" + cgd
-        response=self.client.post("/assess/question/%s/grade_question" % self.q.id,
+        response=self.client.post("/question/%s/grade_question" % self.q.id,
                                   data, content_type='application/x-www-form-urlencoded')
 
         self.assertEqual(response.status_code, 200)
@@ -382,18 +381,18 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(results['answers'],{})
         
     def test_simple_grade(self):
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertTrue("computer_grade_data" in response.context["question_data"])
         
         self.q.question_text="Type the answer: {% answer 'fun_x' %}"
         self.q.save()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
         self.assertContains(response,"Invalid answer blank: 'fun_x', resolved as fun_x")
         self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="fun_x", answer="fun_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -404,7 +403,7 @@ class TestGradeQuestionView(TestCase):
         fun_x = response.context['fun_x']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(fun_x.return_expression())}),
@@ -419,7 +418,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(1+fun_x.return_expression())}),
@@ -439,7 +438,7 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="n")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -449,7 +448,7 @@ class TestGradeQuestionView(TestCase):
         n = response.context['n']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(n.return_expression())}),
@@ -463,7 +462,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(2*n.return_expression())}),
@@ -483,7 +482,7 @@ class TestGradeQuestionView(TestCase):
             expression_type = Expression.GENERIC)
 
         ans2=self.new_answer(answer_code="ans", answer="two_n")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -493,7 +492,7 @@ class TestGradeQuestionView(TestCase):
         n = response.context['n']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(n.return_expression())}),
@@ -507,7 +506,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(2*n.return_expression())}),
@@ -522,7 +521,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(3*n.return_expression())}),
@@ -541,7 +540,7 @@ class TestGradeQuestionView(TestCase):
         ans2.percent_correct=50
         ans2.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -551,7 +550,7 @@ class TestGradeQuestionView(TestCase):
         n = response.context['n']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(n.return_expression())}),
@@ -566,7 +565,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(2*n.return_expression())}),
@@ -584,7 +583,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(3*n.return_expression())}),
@@ -610,7 +609,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans", answer="g",
                         answer_type=QuestionAnswerOption.FUNCTION)
         
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -620,7 +619,7 @@ class TestGradeQuestionView(TestCase):
         n = response.context['n']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier:
                                  str(n.return_expression())}),
@@ -634,7 +633,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: "y"}),        
             content_type='application/x-www-form-urlencoded')
@@ -649,7 +648,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: "z"}),
             content_type='application/x-www-form-urlencoded')
@@ -668,7 +667,7 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
         
         self.new_answer(answer_code="ans", answer="x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the same answer twice: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -683,7 +682,7 @@ class TestGradeQuestionView(TestCase):
             answers["answer_%s" % ai] = str(x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -700,7 +699,7 @@ class TestGradeQuestionView(TestCase):
             = str(x.return_expression()+1)
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -724,7 +723,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="ans1", answer="x")
         self.new_answer(answer_code="ans2", answer="fun_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type two different answers: ")
         
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -742,7 +741,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -761,7 +760,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -781,7 +780,7 @@ class TestGradeQuestionView(TestCase):
             = str(x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -805,7 +804,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="ans1", answer="x")
         self.new_answer(answer_code="ans2", answer="fun_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type two different answers: ")
         
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -824,7 +823,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -843,7 +842,7 @@ class TestGradeQuestionView(TestCase):
             = str(n.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -870,7 +869,7 @@ class TestGradeQuestionView(TestCase):
             expression_type = Expression.EXPRESSION_WITH_ALTERNATES)
 
         self.new_answer(answer_code="ans", answer="ts")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -878,7 +877,7 @@ class TestGradeQuestionView(TestCase):
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: "t"}),
             content_type='application/x-www-form-urlencoded')
@@ -892,7 +891,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: "s"}),
             content_type='application/x-www-form-urlencoded')
@@ -906,7 +905,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: "u"}),
             content_type='application/x-www-form-urlencoded')
@@ -920,7 +919,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: "v"}),
             content_type='application/x-www-form-urlencoded')
@@ -944,7 +943,7 @@ class TestGradeQuestionView(TestCase):
         self.q.expression_set.create(
             name="two_ts_plus_x",expression="2*ts+x")
         self.new_answer(answer_code="ans", answer="two_ts_plus_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -954,7 +953,7 @@ class TestGradeQuestionView(TestCase):
         x = response.context['x']
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "2t+%s" % x}),
@@ -969,7 +968,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "2s+%s" % x}),
@@ -984,7 +983,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "2u+%s" % x}),
@@ -1000,7 +999,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "2v + %s" % x}),
@@ -1034,7 +1033,7 @@ class TestGradeQuestionView(TestCase):
             name="ans", expression="num*xx+ts")
 
         self.new_answer(answer_code="ans", answer="ans")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type the answer: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1056,7 +1055,7 @@ class TestGradeQuestionView(TestCase):
             xx3 = "y"
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+t" % (num,xx)}),
@@ -1071,7 +1070,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+s" % (num,xx)}),
@@ -1086,7 +1085,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+u" % (num,xx)}),
@@ -1100,7 +1099,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+t" % (num,xx2)}),
@@ -1115,7 +1114,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+t" % (num,xx3)}),
@@ -1129,7 +1128,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+t" % (num+1,xx)}),
@@ -1145,7 +1144,7 @@ class TestGradeQuestionView(TestCase):
 
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier: 
                                    "%s%s+t" % (num-1,xx)}),
@@ -1167,7 +1166,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="ans1", answer="x")
         self.new_answer(answer_code="ans2", answer="fun_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type in either order: ")
         
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1185,7 +1184,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1204,7 +1203,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1224,7 +1223,7 @@ class TestGradeQuestionView(TestCase):
             = str(x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1248,7 +1247,7 @@ class TestGradeQuestionView(TestCase):
             = str(fun_x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1280,7 +1279,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans2", answer="two_a_x",
                         split_symbols_on_compare = False)
         self.new_answer(answer_code="ans3", answer="two_a_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         
@@ -1300,7 +1299,7 @@ class TestGradeQuestionView(TestCase):
             = "2a%s" % x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1331,7 +1330,7 @@ class TestGradeQuestionView(TestCase):
             = "2a*%s" % x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1356,7 +1355,7 @@ class TestGradeQuestionView(TestCase):
                         split_symbols_on_compare = True)
         self.new_answer(answer_code="ans2", answer="afx",
                         split_symbols_on_compare = False)
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
         
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1374,7 +1373,7 @@ class TestGradeQuestionView(TestCase):
             = "a%s(%s)" % (f.return_expression(), x.return_expression())
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1399,7 +1398,7 @@ class TestGradeQuestionView(TestCase):
             = "a*%s(%s)" % (f.return_expression(), x.return_expression())
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1423,7 +1422,7 @@ class TestGradeQuestionView(TestCase):
             = "a%s" % (f.return_expression())
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1454,7 +1453,7 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
         self.new_answer(answer_code="x_plus_x", answer="x_plus_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
@@ -1464,7 +1463,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1474,7 +1473,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1487,7 +1486,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1497,7 +1496,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1510,7 +1509,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1520,7 +1519,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1532,7 +1531,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "%s + %s" % (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1541,7 +1540,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "2%s" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1558,7 +1557,7 @@ class TestGradeQuestionView(TestCase):
         self.q.save()
         self.new_answer(answer_code="ans", answer="ans")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
@@ -1568,7 +1567,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1577,7 +1576,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1589,7 +1588,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1598,7 +1597,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1610,7 +1609,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1619,7 +1618,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1631,7 +1630,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "6%s + 9" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1640,7 +1639,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "3(2%s+3)" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1660,7 +1659,7 @@ class TestGradeQuestionView(TestCase):
                 name = 'derivative', commands='Derivative')
         self.q.allowed_sympy_commands.add(scs_derivative)
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
@@ -1671,7 +1670,7 @@ class TestGradeQuestionView(TestCase):
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1680,7 +1679,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1693,7 +1692,7 @@ class TestGradeQuestionView(TestCase):
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1702,7 +1701,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1716,7 +1715,7 @@ class TestGradeQuestionView(TestCase):
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1725,7 +1724,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1739,7 +1738,7 @@ class TestGradeQuestionView(TestCase):
             = "Derivative(%s^4,%s)" % \
             (x.return_expression(),x.return_expression())
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1748,7 +1747,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] \
             = "4*%s^3" % x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -1769,7 +1768,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans2", answer="product",
                         normalize_on_compare = False)
         self.new_answer(answer_code="ans3", answer="product")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1788,7 +1787,7 @@ class TestGradeQuestionView(TestCase):
             = "(%s-a)(%s+a)" % (x.return_expression(),x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1809,7 +1808,7 @@ class TestGradeQuestionView(TestCase):
             = "%s^2-a^2" % x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1842,7 +1841,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans", answer="product",
                         normalize_on_compare = True, percent_correct=50)
         self.new_answer(answer_code="ans", answer="product")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1856,7 +1855,7 @@ class TestGradeQuestionView(TestCase):
             % (x.return_expression(),x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1878,7 +1877,7 @@ class TestGradeQuestionView(TestCase):
             expression_type = Expression.GENERIC)
         self.new_answer(answer_code="ans", answer="product2",
                         normalize_on_compare = True, percent_correct=75)
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1892,7 +1891,7 @@ class TestGradeQuestionView(TestCase):
             % (x.return_expression(),x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1922,7 +1921,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans", answer="product", percent_correct=75)
         self.new_answer(answer_code="ans", answer="n")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1935,7 +1934,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s^2-a^2" % x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1966,7 +1965,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans", answer="tuple",
                         match_partial_on_compare=True)
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -1977,7 +1976,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "a, b, c,d"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -1990,7 +1989,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "d, b, c"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2008,7 +2007,7 @@ class TestGradeQuestionView(TestCase):
         expr.save()
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2032,7 +2031,7 @@ class TestGradeQuestionView(TestCase):
         
         the_ans=self.new_answer(answer_code="ans", answer="set")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -2043,7 +2042,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "d, a, c, b"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2056,7 +2055,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "a,b,c,d,a,c,a,a"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2074,7 +2073,7 @@ class TestGradeQuestionView(TestCase):
         the_ans.save()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2121,7 +2120,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans3a", answer="interval3a")
         self.new_answer(answer_code="ans3b", answer="interval3b")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type intervals: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -2144,7 +2143,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier3b] = "[0,1]"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2165,7 +2164,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier3a] = "[0,a]"
         answers["answer_" + answer_identifier3b] = "[0,a]"
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2204,7 +2203,7 @@ class TestGradeQuestionView(TestCase):
         self.new_answer(answer_code="ans2", answer="x1")
         self.new_answer(answer_code="ans3", answer="x2")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2226,7 +2225,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier3] = "y\nz"
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2250,7 +2249,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="ans", answer="f_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response,"Type answers: ")
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -2265,7 +2264,7 @@ class TestGradeQuestionView(TestCase):
             (f.return_expression(),x.return_expression())
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
 
@@ -2291,7 +2290,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="exp_x", answer="exp_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
@@ -2302,7 +2301,7 @@ class TestGradeQuestionView(TestCase):
             x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2310,7 +2309,7 @@ class TestGradeQuestionView(TestCase):
         
         self.q.allowed_sympy_commands.add(scs_explog)
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2319,7 +2318,7 @@ class TestGradeQuestionView(TestCase):
         self.q.customize_user_sympy_commands=True
         self.q.save()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2327,7 +2326,7 @@ class TestGradeQuestionView(TestCase):
         
         self.q.allowed_user_sympy_commands.add(scs_explog)
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2336,7 +2335,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "e^%s" % \
             x.return_expression()
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2348,10 +2347,10 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="function", answer="fun_x")
 
-        from mitesting.render_assessments import get_new_seed
+        from mitesting.utils import get_new_seed
         rng=random.Random()
         seed=get_new_seed(rng)
-        response = self.client.get("/assess/question/%s" % self.q.id, {'seed': seed})
+        response = self.client.get("/question/%s" % self.q.id, {'seed': seed})
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2365,7 +2364,7 @@ class TestGradeQuestionView(TestCase):
             fun_x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2378,7 +2377,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="function", answer="fun_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
@@ -2387,7 +2386,7 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2399,7 +2398,7 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] = ""
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2416,7 +2415,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="function", answer="fun_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2427,7 +2426,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "("
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2441,7 +2440,7 @@ class TestGradeQuestionView(TestCase):
     def test_bad_answer_option(self):
         bad_answer=self.new_answer(answer_code="function", answer="abc")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
         self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertNotContains(response, "Invalid answer blank")
@@ -2451,21 +2450,21 @@ class TestGradeQuestionView(TestCase):
         self.q.question_text="Type answer: {% answer 'function' %}"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
         self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertContains(response, "Invalid answer blank: 'function', resolved as function", count=2)
         self.assertTrue("computer_grade_data" in response.context["question_data"])
 
         self.new_answer(answer_code="function", answer="fun_x")
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, "Invalid answer option of expression type with code <tt>function</tt>")
         self.assertContains(response, "answer <tt>abc</tt> is not the name of an expression.")
         self.assertNotContains(response, "Invalid answer blank")
         self.assertTrue("computer_grade_data" in response.context["question_data"])
         
         bad_answer.delete()
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertNotContains(response, "Invalid answer code")
         self.assertNotContains(response, "Invalid answer blank")
 
@@ -2478,7 +2477,7 @@ class TestGradeQuestionView(TestCase):
         answers["answer_" + answer_identifier] = "%s" % fun_x.return_expression()
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2495,7 +2494,7 @@ class TestGradeQuestionView(TestCase):
         
         self.new_answer(answer_code="function", answer="fun_x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertNotContains(response, solution_button_html_fragment)
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -2505,7 +2504,7 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2513,7 +2512,7 @@ class TestGradeQuestionView(TestCase):
         
         answers['number_attempts_%s' % question_identifier ] = 3
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2522,7 +2521,7 @@ class TestGradeQuestionView(TestCase):
         self.q.solution_text="The solution"
         self.q.save()
         
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         self.assertContains(response, solution_button_html_fragment)
 
         cgd = response.context["question_data"]["computer_grade_data"]
@@ -2532,7 +2531,7 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2540,7 +2539,7 @@ class TestGradeQuestionView(TestCase):
 
         answers['number_attempts_%s' % question_identifier ] = 1
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2548,7 +2547,7 @@ class TestGradeQuestionView(TestCase):
         
         answers['number_attempts_%s' % question_identifier ] = 2
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2572,7 +2571,7 @@ class TestGradeQuestionView(TestCase):
         self.q.question_text="Which is right? {% answer 'choice' %}"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2587,7 +2586,7 @@ class TestGradeQuestionView(TestCase):
         answers = {"cgd": cgd,}
         answers["answer_" + answer_identifier] = "%s" % a1.id
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2599,7 +2598,7 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] = "%s" % a2.id
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2611,7 +2610,7 @@ class TestGradeQuestionView(TestCase):
 
         answers["answer_" + answer_identifier] = "%s" % a3.id
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data(answers),
             content_type='application/x-www-form-urlencoded')
         results = json.loads(response.content.decode())
@@ -2638,14 +2637,14 @@ class TestGradeQuestionView(TestCase):
         self.q.question_text="Meet the criterion: {% answer 'ans' %}"
         self.q.save()
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
         answer_identifier = computer_grade_data["answer_info"][0]['identifier']
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: 9}),
             content_type='application/x-www-form-urlencoded')
@@ -2658,7 +2657,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: 5}),
             content_type='application/x-www-form-urlencoded')
@@ -2671,7 +2670,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: 10}),
             content_type='application/x-www-form-urlencoded')
@@ -2687,7 +2686,7 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier: -20}),
             content_type='application/x-www-form-urlencoded')
@@ -2713,10 +2712,10 @@ class TestGradeQuestionView(TestCase):
 
         self.q.save()
         
-        from mitesting.render_assessments import process_expressions_from_answers
+        from mitesting.render_questions import process_expressions_from_answers
         process_expressions_from_answers(self.q)
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2727,7 +2726,7 @@ class TestGradeQuestionView(TestCase):
         
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier1:
                                  str(fun_x.return_expression()),
@@ -2747,7 +2746,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in results["answers"][answer_identifier2]["answer_feedback"])
 
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                    "answer_%s" % answer_identifier1:
                                    "3*x(y-z)",
@@ -2787,10 +2786,10 @@ class TestGradeQuestionView(TestCase):
 
         self.q.save()
 
-        from mitesting.render_assessments import process_expressions_from_answers
+        from mitesting.render_questions import process_expressions_from_answers
         process_expressions_from_answers(self.q)
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
 
         cgd = response.context["question_data"]["computer_grade_data"]
         computer_grade_data = pickle.loads(base64.b64decode(cgd))
@@ -2804,7 +2803,7 @@ class TestGradeQuestionView(TestCase):
         fun_x = response.context['fun_x']
         
         response=self.client.post(
-            "/assess/question/%s/grade_question" % self.q.id,
+            "/question/%s/grade_question" % self.q.id,
             convert_answer_data({"cgd": cgd,
                                  "answer_%s" % answer_identifier1:
                                  str(fun_x.return_expression()),
@@ -2862,7 +2861,7 @@ class TestInjectQuestionSolutionView(TestCase):
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
         u=User.objects.create_user("user", password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
+        p=Permission.objects.get(codename = "administer_question")
         u.user_permissions.add(p)
         self.client.login(username="user",password="pass")
 
@@ -2870,12 +2869,12 @@ class TestInjectQuestionSolutionView(TestCase):
     def test_simple(self):
         self.q.questionansweroption_set.create(answer_code="ans", answer="x")
 
-        response = self.client.get("/assess/question/%s" % self.q.id)
+        response = self.client.get("/question/%s" % self.q.id)
         cgd = response.context["question_data"]["computer_grade_data"]
         fun_x = response.context['fun_x']
 
         response=self.client.post(
-            "/assess/question/%s/inject_solution" % self.q.id,
+            "/question/%s/inject_solution" % self.q.id,
             convert_answer_data({"cgd": cgd}),
             content_type='application/x-www-form-urlencoded')
 
@@ -2886,7 +2885,7 @@ class TestInjectQuestionSolutionView(TestCase):
         self.q.solution_text = "The solution is ${{fun_x}}$."
         self.q.save()
         response=self.client.post(
-            "/assess/question/%s/inject_solution" % self.q.id,
+            "/question/%s/inject_solution" % self.q.id,
             convert_answer_data({"cgd": cgd}),
             content_type='application/x-www-form-urlencoded')
 
@@ -2897,15 +2896,15 @@ class TestInjectQuestionSolutionView(TestCase):
         
         
     def test_bad_cgd(self):
-        response=self.client.post("/assess/question/%s/inject_solution" % self.q.id)
+        response=self.client.post("/question/%s/inject_solution" % self.q.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,b"")
+        self.assertEqual(response.content,b"{}")
         response=self.client.post(
-            "/assess/question/%s/inject_solution" % self.q.id,
+            "/question/%s/inject_solution" % self.q.id,
             convert_answer_data({"cgd": b"abc"}),
             content_type='application/x-www-form-urlencoded')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content,b"")
+        self.assertEqual(response.content,b"{}")
 
 
     def test_permissions(self):
@@ -2941,7 +2940,7 @@ class TestInjectQuestionSolutionView(TestCase):
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
+        p=Permission.objects.get(codename = "administer_question")
         u.user_permissions.add(p)
 
         for iu in range(3):
@@ -2950,13 +2949,13 @@ class TestInjectQuestionSolutionView(TestCase):
                 for jq in range(3):
 
                     response=self.client.post(
-                        "/assess/question/%s/inject_solution" % 
+                        "/question/%s/inject_solution" % 
                         qpks[iq][jq],
                         convert_answer_data({"cgd": cgd}),
                         content_type='application/x-www-form-urlencoded')
 
-                    if iu < jq:
-                        self.assertEqual(response.content, b"")
+                    if iu<2 and jq>0:
+                        self.assertEqual(response.content, b"{}")
                     else: 
                         results = json.loads(response.content.decode())
                         self.assertTrue("The only solution" in
@@ -2966,6 +2965,8 @@ class TestInjectQuestionSolutionView(TestCase):
 
 
     def test_permissions_in_assessment(self):
+        from micourses.models import Course, Assessment, AssessmentType, \
+            STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
         course = Course.objects.create(name="Course", code="course")
 
         at0 = AssessmentType.objects.create(
@@ -3015,30 +3016,39 @@ class TestInjectQuestionSolutionView(TestCase):
         self.client.logout()
         User.objects.all().delete()
 
+
         users = [""]
 
-        username = "user"
+        username = "student"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
+        course.courseenrollment_set.create(student=u.courseuser)
 
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        course.courseenrollment_set.create(student=u.courseuser,
+                                           role=INSTRUCTOR_ROLE)
 
-        for iu in range(3):
+        username = "designer"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        course.courseenrollment_set.create(student=u.courseuser,
+                                           role=DESIGNER_ROLE)
+
+
+        for iu in range(4):
             self.client.login(username=users[iu],password="pass")
             for iq in range(3): # question_privacy
                 for jq in range(3): # solution_privacy
                     for ic in range(3): # assessment solution privacy
                         response=self.client.post(
-                            "/assess/question/%s/inject_solution" % 
+                            "/question/%s/inject_solution" % 
                             qpks[iq][jq],
                             convert_answer_data({"cgd": cgds[ic]}),
                             content_type='application/x-www-form-urlencoded')
                         if iu < jq or iu < ic:
-                            self.assertEqual(response.content, b"")
+                            self.assertEqual(response.content, b"{}")
                         else: 
                             results = json.loads(response.content.decode())
                             self.assertTrue("The only solution" in

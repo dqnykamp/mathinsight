@@ -174,12 +174,6 @@ def pageview(request, page_code, page_type_code=None, overview=False):
                 pass
             thread_content_list.insert(0,tc)
         
-    # mark course from top thread content item
-    if thread_content_list:
-        top_of_list_course = thread_content_list[0].course
-    else:
-        top_of_list_course=None
-    
     # render page text with extra template tags
     context = Context({})
     from midocs.functions import return_new_auxiliary_data
@@ -190,7 +184,7 @@ def pageview(request, page_code, page_type_code=None, overview=False):
     context['STATIC_URL'] = settings.STATIC_URL
     context['MEDIA_URL'] = settings.MEDIA_URL
     context['last_course'] = last_course
-    context['top_of_list_course'] = top_of_list_course
+    context['thread_content_list'] = thread_content_list
 
     if thepage.text:
         try:
@@ -236,7 +230,6 @@ def pageview(request, page_code, page_type_code=None, overview=False):
                     'rendered_text': rendered_text,
                     'rendered_header': rendered_header,
                     'rendered_javascript': rendered_javascript,
-                    'thread_content_list': thread_content_list,
                 });
 
     return render(request, templates, context=context.flatten() )

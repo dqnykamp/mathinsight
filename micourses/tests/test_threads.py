@@ -4,9 +4,8 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from micourses.models import Course, ThreadSection, ThreadContent, STUDENT_ROLE, INSTRUCTOR_ROLE
+from micourses.models import Course, ThreadSection, ThreadContent, Assessment, AssessmentType, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
 from midocs.models import Page, Image, Video, PageType, VideoType, Applet
-from mitesting.models import Assessment, AssessmentType
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import AnonymousUser, User, Permission
@@ -35,10 +34,10 @@ def set_up_data(tcase):
 
     tcase.course.reset_thread_section_sort_order()
 
-    tcase.page_contenttype = ContentType.objects.get(model='page')
-    tcase.image_contenttype = ContentType.objects.get(model='image')
-    tcase.video_contenttype = ContentType.objects.get(model='video')
-    tcase.assessment_contenttype = ContentType.objects.get(model='assessment')
+    tcase.page_contenttype = ContentType.objects.get_for_model(Page)
+    tcase.image_contenttype = ContentType.objects.get_for_model(Image)
+    tcase.video_contenttype = ContentType.objects.get_for_model(Video)
+    tcase.assessment_contenttype = ContentType.objects.get_for_model(Assessment)
 
     PageType.objects.create(code="pagetype", name="Page Type", default=True)
     video_type = VideoType.objects.create(code="videotype", 
@@ -97,6 +96,9 @@ def set_up_data(tcase):
     )
     tcase.contentlist.append(thecontent)
 
+    for tc in tcase.contentlist:
+        tc.refresh_from_db()
+    
     tcase.thread_url = reverse('mithreads:thread', 
                               kwargs={'course_code': tcase.course.code})
     tcase.thread_edit_url = reverse('mithreads:thread-edit', 
@@ -106,47 +108,57 @@ def set_up_data(tcase):
     tcase.student = u.courseuser
     u=User.objects.create_user("instructor", password="pass")
     tcase.instructor = u.courseuser
+    u=User.objects.create_user("designer", password="pass")
+    tcase.designer = u.courseuser
 
 
     tcase.course.courseenrollment_set.create(
-        student=tcase.student, date_enrolled=timezone.now().date())
+        student=tcase.student, date_enrolled=timezone.now())
     tcase.course.courseenrollment_set.create(
-        student=tcase.instructor, date_enrolled=timezone.now().date(),
+        student=tcase.instructor, date_enrolled=timezone.now(),
         role=INSTRUCTOR_ROLE)
+    tcase.course.courseenrollment_set.create(
+        student=tcase.designer, date_enrolled=timezone.now(),
+        role=DESIGNER_ROLE)
 
     # run return_selected_course() so that course will be selected by default
     tcase.student.return_selected_course()
     tcase.instructor.return_selected_course()
+    tcase.designer.return_selected_course()
 
 
 
 
-class TextThreadContruction(TestCase):
+class TestThreadConstruction(TestCase):
     def setUp(self):
         set_up_data(self)
 
     def test_render_thread(self):
         response = self.client.get(self.thread_url)
         self.assertEqual(response.context['course'],self.course)
-        self.assertTemplateUsed(response,"micourses/thread_detail.html")
-        for i in range(5):
-            self.assertContains(response, self.contentlist[i].return_link())
+        self.assertTemplateUsed(response,"micourses/threads/thread_detail.html")
+        for tc in self.contentlist:
+            self.assertContains(response, tc.return_link())
 
 
     def test_thread_edit_access(self):
         response = self.client.get(self.thread_edit_url)
-        self.assertRedirects(response, '/accounts/login?next=' + self.thread_edit_url)
+        self.assertRedirects(response, self.thread_url)
         
         self.client.login(username="student",password="pass")
         response = self.client.get(self.thread_edit_url)
-        self.assertRedirects(response, '/accounts/login?next=' + self.thread_edit_url)
+        self.assertRedirects(response, self.thread_url)
 
         self.client.login(username="instructor",password="pass")
         response = self.client.get(self.thread_edit_url)
+        self.assertRedirects(response, self.thread_url)
+
+        self.client.login(username="designer",password="pass")
+        response = self.client.get(self.thread_edit_url)
         self.assertEqual(response.context['course'],self.course)
-        self.assertTemplateUsed(response,"micourses/thread_edit.html")
-        for i in range(5):
-            self.assertContains(response, self.contentlist[i].return_link())
+        self.assertTemplateUsed(response,"micourses/threads/thread_edit.html")
+        for tc in self.contentlist:
+            self.assertContains(response, tc.return_link())
 
 
 
@@ -165,6 +177,7 @@ class SeleniumTests(StaticLiveServerTestCase):
 
     def setUp(self):
         set_up_data(self)
+        self.login_url= reverse("mi-login")
 
     def test_thread(self):
         self.selenium.get('%s%s' % (self.live_server_url, self.thread_url))
@@ -196,9 +209,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         timeout=10
         wait = WebDriverWait(self.selenium, timeout)
 
-        self.selenium.get('%s%s' % (self.live_server_url, self.thread_edit_url))
+        self.selenium.get('%s%s?next=%s' %
+                (self.live_server_url, self.login_url, self.thread_edit_url))
         username_input = self.selenium.find_element_by_name("username")
-        username_input.send_keys('instructor')
+        username_input.send_keys('designer')
         password_input = self.selenium.find_element_by_name("password")
         password_input.send_keys('pass')
   
@@ -709,9 +723,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         timeout=10
         wait = WebDriverWait(self.selenium, timeout)
 
-        self.selenium.get('%s%s' % (self.live_server_url, self.thread_edit_url))
+        self.selenium.get('%s%s?next=%s' %
+                (self.live_server_url, self.login_url, self.thread_edit_url))
         username_input = self.selenium.find_element_by_name("username")
-        username_input.send_keys('instructor')
+        username_input.send_keys('designer')
         password_input = self.selenium.find_element_by_name("password")
         password_input.send_keys('pass')
   

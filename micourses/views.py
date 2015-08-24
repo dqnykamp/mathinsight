@@ -5,7 +5,7 @@ from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404, redirect, render
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
-from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, Context, Template
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.views.generic import DetailView, View, ListView
@@ -450,8 +450,9 @@ class ContentRecordView(CourseBaseView):
                                 'attempt_number': attempt_number,
                                 'student_id': self.student.id})
                     attempt_dict['formatted_attempt_number'] = mark_safe \
-                    ('<a href="%s">%s (details)</a>' % \
-                         (attempt_url, attempt_dict['formatted_attempt_number']))
+                    ('<a href="%s" id="attempt_%s_link">%s (details)</a>' % \
+                         (attempt_url, attempt_number,
+                          attempt_dict['formatted_attempt_number']))
                     
                 else:
                     attempt_url = reverse(
@@ -762,6 +763,7 @@ class ChangeScore(CourseBaseMixin, View):
 
             points = ca_question_set.get_points()
 
+
             if action=="change":
                 if score_form.is_valid():
                     if score_type=='credit':
@@ -1029,7 +1031,7 @@ class QuestionAttemptsView(ContentAttemptView):
                               % self.question_number)
 
         self.question_set_points = self.ca_question_set.get_points()
-
+        
 
     def get_context_data(self, **kwargs):
         context = super(QuestionAttemptsView, self).get_context_data(**kwargs)
@@ -1115,8 +1117,7 @@ class QuestionAttemptsView(ContentAttemptView):
                                 'content_id': self.thread_content.id,
                                 'attempt_number': self.attempt_number,
                                 'student_id': self.student.id,
-                                'question_number': self.ca_question_set\
-                                .question_number,
+                                'question_number': self.question_number,
                                 'response_number': response_number
                             })
 
@@ -1126,8 +1127,7 @@ class QuestionAttemptsView(ContentAttemptView):
                         kwargs={'course_code': self.course.code,
                                 'content_id': self.thread_content.id,
                                 'attempt_number': self.attempt_number,
-                                'question_number': self.ca_question_set\
-                                .question_number,
+                                'question_number': self.question_number,
                                 'response_number': response_number
                             })
 
@@ -1141,7 +1141,7 @@ class QuestionAttemptsView(ContentAttemptView):
         context['multiple_question_attempts'] = len(question_attempt_list)>1
 
         credit = self.ca_question_set.get_credit()
-        print("c: %s" % credit)
+
         if credit is None:
             percent_credit = None
             score = None
@@ -1155,6 +1155,14 @@ class QuestionAttemptsView(ContentAttemptView):
         context['score'] = score
         context['score_text'] = score_text
         context['percent_credit'] = percent_credit
+        
+        if self.instructor_view:
+            context["score_form"] = ScoreForm({'score': score},
+                auto_id="edit_question_%s_score_form_%%s" % \
+                                              self.question_number)
+            context["credit_form"] = CreditForm({'percent': percent_credit},
+                auto_id="edit_question_%s_credit_form_%%s" % \
+                                                self.question_number)
 
         return context
 
@@ -1232,9 +1240,9 @@ class QuestionResponseView(QuestionAttemptsView):
 
         question = self.response.question_attempt.question
 
-        # use aaqav in identifier since coming from
-        # assessment attempt question attempt view
-        identifier = "aaqav"
+        # use qrv in identifier since coming from
+        # question response view
+        identifier = "qrv"
 
         from midocs.functions import return_new_auxiliary_data
         auxiliary_data =  return_new_auxiliary_data()

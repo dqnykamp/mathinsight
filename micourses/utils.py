@@ -1,5 +1,7 @@
 from django.utils import formats, timezone
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.db import transaction
+import reversion
 import pytz
 
 def check_for_student_activity(content):
@@ -104,4 +106,70 @@ def find_last_course(user, request=None):
                 pass
 
     return None
+
+
+def set_n_of_objects(course, content_object):
+    from django.contrib.contenttypes.models import ContentType
+    from micourses.models import ThreadContent
+
+    ct = ContentType.objects.get_for_model(content_object.__class__)
+    
+    # loop through all thread_contents with content object
+    # and change n_objects if it doesn't match order in list
+    for (i, tc) in enumerate(course.thread_contents.filter(content_type=ct,
+                                            object_id = content_object.id)):
+        if tc.n_of_object != i+1:
+            tc.n_of_object = i+1
+            super(ThreadContent,tc).save()
+
+        
+def create_new_assessment_attempt(assessment, thread_content, courseuser,
+                                  student_record):
+
+    from micourses.models import AVAILABLE
+    assessment_availability = thread_content.return_availability(
+        student=courseuser)
+
+    valid_attempt=assessment_availability==AVAILABLE
+
+    if assessment.single_version:
+       seed='1'
+       version_string = ''
+    else:
+        if valid_attempt:
+            attempt_number = student_record.attempts.filter(valid=True)\
+                                                    .count()+1
+            version_string = str(attempt_number)
+        else:
+            attempt_number = student_record.attempts.filter(valid=False)\
+                                                    .count()+1
+            version_string = "x%s" % attempt_number
+
+        if thread_content.individualize_by_student:
+            version_string = "%s_%s" % \
+                        (courseuser.user.username, version_string)
+        seed = "sd%s_%s" % (thread_content.id, version_string)
+
+    # create the new attempt
+    with transaction.atomic(), reversion.create_revision():
+        new_attempt = student_record.attempts.create(
+            seed=seed, valid=valid_attempt, version_string=version_string)
+
+    from micourses.render_assessments import get_question_list
+    question_list = get_question_list(assessment, seed=seed,
+                                      thread_content=thread_content)
+
+    # create the content question sets and question attempts
+    with transaction.atomic(), reversion.create_revision():
+        for (i,q_dict) in enumerate(question_list):
+            ca_question_set = new_attempt.question_sets.create(
+                question_number=i+1, question_set=q_dict['question_set'])
+            qa=ca_question_set.question_attempts.create(
+                question=q_dict['question'],
+                seed=q_dict['seed'], valid=valid_attempt)
+            q_dict["question_attempt"] = qa
+
+    return {'new_attempt': new_attempt, 'question_list': question_list,
+            'version_string': version_string, 'assessment_seed': seed,}
+            
 

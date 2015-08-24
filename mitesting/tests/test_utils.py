@@ -45,27 +45,27 @@ class TestRandomNumber(SimpleTestCase):
 
     def test_returns_integer_in_range(self):
         from sympy import Integer
-        the_num = return_random_number_sample("(1,3,1)", rng=self.rng)
-        self.assertTrue(the_num in range(1,4))
+        (the_num,ind) = return_random_number_sample("(1,3,1)", rng=self.rng)
         self.assertTrue(isinstance(the_num, Integer))
+        self.assertEqual(the_num, list(range(1,4))[ind])
 
     def test_with_no_increment(self):
         from sympy import Integer
-        the_num = return_random_number_sample("(-1,5)", rng=self.rng)
-        self.assertTrue(the_num in range(-1,6))
+        (the_num, ind) = return_random_number_sample("(-1,5)", rng=self.rng)
         self.assertTrue(isinstance(the_num, Integer))
+        self.assertEqual(the_num, list(range(-1,6))[ind])
 
     def test_rounding_with_tenths(self):
         valid_answers = [round(0.1*a,1) for a in range(-31,52)]
         for i in range(5):
-            the_num = return_random_number_sample("(-3.1,5.1,0.1)", 
+            (the_num, ind) = return_random_number_sample("(-3.1,5.1,0.1)", 
                                                   rng=self.rng)
-            self.assertTrue(the_num in valid_answers)
+            self.assertEqual(the_num, valid_answers[ind])
 
     def test_can_achieve_max_value(self):
         achieved_max = False
         for i in range(1000):
-            the_num = return_random_number_sample("(4.04,4.15,0.01)",
+            (the_num, ind) = return_random_number_sample("(4.04,4.15,0.01)",
                                                   rng=self.rng)
             if the_num == 4.15:
                 achieved_max = True
@@ -74,9 +74,9 @@ class TestRandomNumber(SimpleTestCase):
     
     def test_with_local_dict(self):
         local_dict = {"x": sympify(-2), "y": sympify(2)}
-        the_num = return_random_number_sample("(x,y)", rng=self.rng,
+        (the_num, ind) = return_random_number_sample("(x,y)", rng=self.rng,
                                               local_dict=local_dict)
-        self.assertTrue(the_num in range(-2,3))
+        self.assertEqual(the_num, list(range(-2,3))[ind])
     
     def test_raises_useful_exceptions(self):
         self.assertRaisesRegex(ValueError, 'Invalid format for random number',

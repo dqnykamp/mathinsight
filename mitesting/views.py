@@ -47,13 +47,13 @@ class QuestionView(DetailView):
     def get(self, request, *args, **kwargs):
         # determine if user has full permissions on assessments
         # (i.e., permission level 3),
-        try:
-            from micourses.permissions import user_has_given_assessment_permission_level
-            if not user_has_given_assessment_permission_level(
-                    self.request.user, 3):
-                return redirect("mi-forbidden")
-        except ImportError:
-            if not user.has_perm('mitesting.administer_assessment'):
+        if not request.user.has_perm('mitesting.administer_question'):
+            try:
+                from micourses.permissions import user_has_given_assessment_permission_level
+                if not user_has_given_assessment_permission_level(
+                        request.user, 3):
+                    return redirect("mi-forbidden")
+            except ImportError:
                 return redirect("mi-forbidden")
 
         self.object = self.get_object()
@@ -327,8 +327,8 @@ class GradeQuestionView(SingleObjectMixin, View):
             feedback_message = "Assessment not set up for recording answers.<br/>Answer not recorded."
         elif assessment_availability == PAST_DUE:
             current_tz = timezone.get_current_timezone()
-            due = self.adjusted_due(student)
-            due = current_tz.normalized(due.astimezone(current_tz))
+            due = content.adjusted_due(request.user.courseuser)
+            due = current_tz.normalize(due.astimezone(current_tz))
 
             from micourses.utils import format_datetime
             feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (format_datetime(due), content.get_title())
@@ -338,12 +338,12 @@ class GradeQuestionView(SingleObjectMixin, View):
         elif solution_viewed:
             feedback_message = "Solution for question already viewed for this attempt.<br/>Answer not recorded. <br/>Generate a new attempt to resume recording answers." 
         elif not (content_attempt.valid and question_attempt.valid):
-            feedback_message = "The current assessment attempt is not valid.<br/>It might have been started before the assessment was available.<br/>Answer not recorded.<br/>Generate a new attempt to start recording answers."
+            feedback_message = "The current assessment attempt is not valid.<br/>It might have been started before the assessment was available.<br/>Answer not recorded.<br/>Generate a new attempt or reload page to start recording answers."
         else:
             feedback_message = ""
 
         if record_valid_response:
-            feedback_message += "Answer recorded for %s<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:content_record', kwargs={'content_id': content.id, 'course_code': content.course.code} ), content.course)
+            feedback_message += "Answer recorded for %s.<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:content_record', kwargs={'content_id': content.id, 'course_code': content.course.code} ), content.course)
 
         answer_results['feedback'] += "<p>%s</p>" % feedback_message
 
@@ -432,7 +432,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                 base64.b64decode(cgd))
         except (TypeError, IndexError, EOFError, binascii.Error) as exc:
             logger.error("cgd malformed: %s" % exc)
-            return HttpResponse("", content_type = 'application/json')
+            return JsonResponse({})
 
         course_code = computer_grade_data.get('course_code')
         assessment_code = computer_grade_data.get('assessment_code')

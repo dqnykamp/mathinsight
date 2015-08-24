@@ -82,46 +82,100 @@ class InternalLinkNode(template.Node):
                 target_class=Assessment
             else:
                 target_class=Page
-                
+            
+            # since target was not an object, try to find
+            # target instance using target varaiable as a code
             try:
 
                 if target_class == Assessment:
-                    # for assessment, attempt to find last course from context
-                    # and get assessment from that course
-                    last_course=context.get("last_course")
+                    # for assessment, the code doens't uniquely specify
+                    # the assessment.  Need course code to specify assessment.
+                    # (Or even n_of_object if more than once in course).
+
+                    # Attempt to find assessment with following methods
+                    # 1. kwarg: thread_content
+                    #    could either be a ThreadContent instance or an id
+                    #    (Only method to choose between versions of the
+                    #    same assessment in a course)
+                    # 2: kwarg: course
+                    #    course could either be a Course instance or a code
+                    # 3. last_course from context
+                    # 4. top course thread_content_list from context
+                    # 5. arbitrary version from an active course
+                    # 6. arbitrary version from any course
+
+                    # For 1 and 2, return broken link if not found.
+                    # For the remainder, continue to next method if not found
+
                     target_code=target
                     target=None
-                    if last_course:
-                        try:
-                            target=Assessment.objects.get(code=target_code,
-                                                   course=last_course)
-                        except Assessment.DoesNotExist:
-                            pass
 
-                    # if didn't find one from last course
-                    # try course from top of list of thread content list
-                    if not target and top_of_list_course:
-                        try:
-                            target=Assessment.objects.get(code=target_code,
-                                                   course=top_of_list_course)
-                        except Assessment.DoesNotExist:
-                            pass
+                    # 1. try thread_content from kwargs
+                    thread_content=kwargs.get("thread_content")
+                    if thread_content:
+                        from micourses.models import ThreadContent
+                        if not isinstance(thread_content, ThreadContent):
+                            # if thread_content doesn't exist
+                            # will return broken link
+                            thread_content=ThreadContent.objects.get(
+                                id = thread_content)
+                        target = thread_content.content_object
+                        # if thread_content doesn't match target code,
+                        # return broken link
+                        if target.code != target_code:
+                            raise ObjecctDoesNotExist
+                        if thread_content.n_of_object > 1:
+                            kwargs['n_of_object'] = thread_content.n_of_object
 
-                    # choose arbitrary version from an active course
+
+                    # 2. try course from kwargs
                     if not target:
-                        try:
-                            target = Assessment.objects\
-                            .filter(code=target_code, course__active=True)[0]
-                        except IndexError:
-                            pass
+                        course = kwargs.get("course")
+                        if course:
+                            from micourses.models import Course
+                            if not isinstance(course, Course):
+                                # if course doesn't exist
+                                # will return broken link
+                                course=Course.objects.get(code = course)
+                            # if assessment not found, return broken link
+                            target=Assessment.objects.get(code=target_code,
+                                                          course=course)
 
-                    # choose arbitrary version 
+                    # 3. try last_course from context
                     if not target:
-                        try:
-                            target = Assessment.objects\
-                                               .filter(code=target_code)[0]
-                        except IndexError:
-                            raise Assessment.DoesNotExist
+                        last_course=context.get("last_course")
+                        if last_course:
+                            try:
+                                target=Assessment.objects.get(code=target_code,
+                                                       course=last_course)
+                            except Assessment.DoesNotExist:
+                                # if assessment not found, try next method
+                                pass
+
+                    # 4. try top course thread_content_list from context
+                    if not target:
+                        thread_content_list = context.get("thread_content_list")
+                        if thread_content_list:
+                            try:
+                                target=Assessment.objects.get(code=target_code,
+                                        course=thread_content_list[0].course)
+                            except Assessment.DoesNotExist:
+                                # if assessment not found, try next method
+                                pass
+
+                    # 5. choose arbitrary version from an active course
+                    if not target:
+                        target = Assessment.objects.filter(code=target_code,
+                                                course__active=True).first()
+
+                    # 6. choose arbitrary version 
+                    if not target:
+                        target = Assessment.objects.filter(code=target_code)\
+                                                   .first()
+
+                    # couldn't find assessment, return broken link
+                    if not target:
+                        raise Assessment.DoesNotExist
 
                 elif target_class == Page:
 
@@ -152,7 +206,7 @@ class InternalLinkNode(template.Node):
                 else:
                     link_url = "/%s/%s" % \
                         (target_class.__name__.lower(), target)
-            
+
                 # if blank style,
                 # don't give link, just return the link text
                 # and show that it is broken so can search for it
@@ -1144,17 +1198,21 @@ def Geogebra_change_object_javascript(context, appletobject,applet_variable,
                  value_string)  
         elif object_type=='Function':
             from sympy import Symbol
-            local_dict=context["_sympy_local_dict_"]
             try:
+                local_dict=context["_sympy_local_dict_"]
                 the_fun = local_dict[str(objectvalue_string)]
             except KeyError:
-                return ""
-            try:
                 javascript = '%s.evalCommand(\'%s(x)=%s\');\n' % \
-                    (applet_variable, object_name,
-                    sstrE(the_fun(Symbol('x'))))
-            except:
-                return ""
+                             (applet_variable, object_name,
+                              objectvalue)
+            else:
+                try:
+                    javascript = '%s.evalCommand(\'%s(x)=%s\');\n' % \
+                                 (applet_variable, object_name,
+                                  sstrE(the_fun(Symbol('x'))))
+                except:
+                    return ""
+
         elif object_type=='Function2D':
             from sympy import Symbol
             local_dict=context["_sympy_local_dict_"]
@@ -1753,9 +1811,9 @@ class AppletNode(template.Node):
                 applet_variable = 'document.%s' % applet_identifier
 
         if iframe:
-            applet_link = '<iframe width=%s height=%s src="%s?width=%s&height=%s&applet_identifier=%s" id="%s" style="display: block; width: %spx; height: %spx; border: none;"></iframe>' % \
-            (width, height, reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
-             width, height, applet_identifier, applet_identifier, width, height)
+            applet_link = '<iframe src="%s?width=%s&height=%s&applet_identifier=%s" id="%s" style="display: block; width: %spx; height: %spx; max-height: %spx; border: none;"></iframe>' % \
+            (reverse('mi-applet_bare', kwargs={'applet_code': applet.code}),
+             width, height, applet_identifier, applet_identifier, width, height, height)
             script_string=""
 
         elif applet.applet_type.code == "LiveGraphics3D":
@@ -3076,7 +3134,7 @@ def return_applet_object_javascript(applet_data, capture_javascript):
 
     interval_javascript = 'for(var object_identifier in math_elements) {\n var content = applet_object_content[object_identifier];\n if(content.new !=content.old) {\n  MathJax.Hub.Queue(["Text", math_elements[object_identifier], content.new]);\n  content.old=content.new; \n}\n}\nMathJax.Hub.Config({ showProcessingMessages: false});'
 
-    interval_javascript = 'window.setInterval(function() {\n%s}, 500);' % interval_javascript
+    interval_javascript = 'window.setInterval(function() {\n%s}, 200);' % interval_javascript
 
     return '<div id="applet_object_capture">\n<script>\n%s%s%s</script>\n</div>\n' % (error_javascript, setup_variables_javascript, interval_javascript)
 

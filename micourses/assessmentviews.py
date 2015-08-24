@@ -119,9 +119,10 @@ class AssessmentView(DetailView):
         context['generate_course_attempt_link'] = False
         context['show_solution_link'] = False
         
-        if self.thread_content and \
-           user_can_administer_assessment(self.request.user, course=self.object.course):
-            context['generate_course_attempt_link'] = True
+        if user_can_administer_assessment(self.request.user, 
+                                          course=self.object.course):
+            if self.thread_content:
+                context['generate_course_attempt_link'] = True
             if not self.solution:
                 context['show_solution_link'] = True
 
@@ -232,15 +233,19 @@ class AssessmentView(DetailView):
         self.assessment = self.object
 
 
-        # determine if user has permission to view assessment or solution
+        # Determine if user has permission to view assessment or solution.
+        # Only users with administer privileges can view solution this way.
+        # All others can view solution only through injecting 
+        # solution of individual questions via the "show solution" button
+        # (where solution views are tracked).
+
         has_permission=False
-        if user_has_given_assessment_permission_level(request.user, 2, 
-                                                    course=self.object.course):
+        if  user_can_administer_assessment(request.user, 
+                                           course=self.object.course):
             has_permission=True
         elif not self.solution and self.object.user_can_view(
                 request.user, solution=False):
             has_permission=True
-            
         if not has_permission:
             return redirect("mi-forbidden")
 
@@ -604,6 +609,7 @@ class AssessmentView(DetailView):
         # If didn't find a current attempt to use, generate new attempt
         if not self.current_attempt:
 
+            from micourses.utils import create_new_assessment_attempt
             new_attempt_info = create_new_assessment_attempt(
                 assessment=self.assessment, thread_content=self.thread_content,
                 courseuser = courseuser,
@@ -656,13 +662,7 @@ class AssessmentOverview(DetailView):
             context['assessment_name'] = self.assessment.name
 
         # user has permission to view the assessment, given privacy level
-        context['assessment_link'] = self.assessment.user_can_view(
-            self.user, solution=False)
-
-        # generate assessment link if can administer and thread content exists
-        if thread_content and user_can_administer_assessment(
-                self.user, course=self.object.course):
-            context['generate_course_attempt_link'] = True
+        if self.assessment.user_can_view(self.user, solution=False):
             if self.number_in_thread > 1:
                 get_string = "n=%s" % self.number_in_thread
             else:
@@ -676,6 +676,13 @@ class AssessmentOverview(DetailView):
                 context['assessment_link'] = self.assessment.return_direct_link(
                     get_string=get_string)
         else:
+            context['assessment_link'] = None
+
+        # generate assessment link if can administer and thread content exists
+        if thread_content and user_can_administer_assessment(
+                self.user, course=self.object.course):
+            context['generate_course_attempt_link'] = True
+        else:
             context['generate_course_attempt_link'] = False
 
 
@@ -687,56 +694,6 @@ class AssessmentOverview(DetailView):
             
         return context
     
-
-def create_new_assessment_attempt(assessment, thread_content, courseuser,
-                                  student_record):
-
-    from micourses.models import AVAILABLE
-    assessment_availability = thread_content.return_availability(
-        student=courseuser)
-
-    valid_attempt=assessment_availability==AVAILABLE
-
-    if assessment.single_version:
-       seed='1'
-       version_string = ''
-    else:
-        if valid_attempt:
-            attempt_number = student_record.attempts.filter(valid=True)\
-                                                    .count()+1
-            version_string = str(attempt_number)
-        else:
-            attempt_number = student_record.attempts.filter(valid=False)\
-                                                    .count()+1
-            version_string = "x%s" % attempt_number
-
-        if thread_content.individualize_by_student:
-            version_string = "%s_%s" % \
-                        (courseuser.user.username, version_string)
-        seed = "sd%s_%s" % (thread_content.id, version_string)
-
-    # create the new attempt
-    with transaction.atomic(), reversion.create_revision():
-        new_attempt = student_record.attempts.create(
-            seed=seed, valid=valid_attempt, version_string=version_string)
-
-    from micourses.render_assessments import get_question_list
-    question_list = get_question_list(assessment, seed=seed,
-                                      thread_content=thread_content)
-
-    # create the content question sets and question attempts
-    with transaction.atomic(), reversion.create_revision():
-        for (i,q_dict) in enumerate(question_list):
-            ca_question_set = new_attempt.question_sets.create(
-                question_number=i+1, question_set=q_dict['question_set'])
-            qa=ca_question_set.question_attempts.create(
-                question=q_dict['question'],
-                seed=q_dict['seed'], valid=valid_attempt)
-            q_dict["question_attempt"] = qa
-
-    return {'new_attempt': new_attempt, 'question_list': question_list,
-            'version_string': version_string, 'assessment_seed': seed,}
-            
 
 
 class GenerateNewAttempt(SingleObjectMixin, View):
@@ -788,6 +745,7 @@ class GenerateNewAttempt(SingleObjectMixin, View):
 
         attempts = student_record.attempts.all()
 
+        from micourses.utils import create_new_assessment_attempt
         create_new_assessment_attempt(
             assessment=assessment, thread_content=thread_content,
             courseuser = request.user.courseuser,

@@ -9,18 +9,18 @@ class MathObjectTests(SimpleTestCase):
     
     def test_round(self):
         context=Context({"a": 1.2345})
-        result=Template("{% load testing_tags %}{{a|round}}").render(context)
+        result=Template("{% load question_tags %}{{a|round}}").render(context)
         self.assertEqual(result,"1")
-        result=Template("{% load testing_tags %}{{a|round:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|round:3}}").render(context)
         self.assertEqual(result,"1.235")
 
         x=Symbol('x')
         context=Context({"a": 1.2345*x})
-        result=Template("{% load testing_tags %}{{a|round:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|round:3}}").render(context)
         self.assertEqual(result,latex(1.235*x))
 
         context=Context({"a": math_object(1.2345*x)})
-        result=Template("{% load testing_tags %}{{a|round:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|round:3}}").render(context)
         self.assertEqual(result,latex(1.235*x))
         
     def test_evalf(self):
@@ -28,29 +28,29 @@ class MathObjectTests(SimpleTestCase):
         #These fail due to behavior of evalf.
 
         context=Context({"a": 1.2345})
-        result=Template("{% load testing_tags %}{{a|evalf:4}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:4}}").render(context)
         self.assertEqual(result,"1.235")
 
         x=Symbol('x')
         context=Context({"a": 1.2345*x})
-        result=Template("{% load testing_tags %}{{a|evalf:4}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:4}}").render(context)
         self.assertEqual(result,latex(1.235*x))
 
         context=Context({"a": math_object(1.2345*x)})
-        result=Template("{% load testing_tags %}{{a|evalf:4}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:4}}").render(context)
         self.assertEqual(result,latex(1.235*x))
         """
 
         context=Context({"a": 1.2345})
-        result=Template("{% load testing_tags %}{{a|evalf:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:3}}").render(context)
         self.assertEqual(result,"1.23")
 
         x=Symbol('x')
         context=Context({"a": 1.2345*x})
-        result=Template("{% load testing_tags %}{{a|evalf:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:3}}").render(context)
         self.assertEqual(result,latex(1.23*x))
 
         context=Context({"a": math_object(1.2345*x)})
-        result=Template("{% load testing_tags %}{{a|evalf:3}}").render(context)
+        result=Template("{% load question_tags %}{{a|evalf:3}}").render(context)
         self.assertEqual(result,latex(1.23*x))
         

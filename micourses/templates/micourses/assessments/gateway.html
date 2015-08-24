@@ -1,44 +1,12 @@
-{% extends "micourses/assessments/assessment_base.html" %}{% load question_tags %}
+{% extends "micourses/assessments/assessment.html" %}
 
-{% block content %}
-{% if not success %}
-<section class="error">
-<h4>Errors encountered</h4>
-<p>{{error_message}}</p>
-</section>
-{% endif %}
+
+{% block assessmentname %}
 <h3>{{ assessment_name }}<span class="visible_print_only">{{version_string}}</span></h3>
 <h5>{{ course }} {{ semester }}</h5>
+{% endblock %}
 
+{% block namesection %}
 <section class="namesection"><div class="nameblank">Name:</div><div class="sectionblank">Section:<br/>Table/group #:</div></section>
-
-<section class="assessment_main">
-{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
-
-{% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
-
-<ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
-{% for question in rendered_list %}
-<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
-{% question_body question.question_data %}</li>
-{% endfor %}
-</ol>
-</section>
-
-{% if not assessment.single_version %}
-<section id="more_questions_link">
-  {% if thread_content %}
-  <form action="{% url 'miassess:generate_new_attempt' content_id=thread_content.id %}" method="post">{% csrf_token %}
-    <input type="submit" value="Generate new assessment attempt" />
-  </form>
-  {% else %}
-  <form action="{{assessment.get_absolute_url}}" method="get">
-    <input type="hidden" name="seed" value="{{ new_seed }}">
-    <input type="submit" class="mi_submit" value="Generate another sample of the questions" />
-  </form>
-  {%endif%}
-</section>
-{% endif%}
-
 {% endblock %}
 

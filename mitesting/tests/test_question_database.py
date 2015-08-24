@@ -1,5 +1,5 @@
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, QuestionSubpart
+from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, QuestionSubpart
 from midocs.models import Page, Keyword, Subject, Author, PageType
 from micourses.models import Course
 from django.db import IntegrityError, transaction
@@ -270,6 +270,7 @@ class TestInAssessments(TestCase):
         )
         self.q6a = self.q6b.save_as_new(course=self.coursea)
 
+        from micourses.models import AssessmentType, Assessment
         self.at = AssessmentType.objects.create(
             code="a", name="a", assessment_privacy=0, solution_privacy=0)
 

@@ -620,7 +620,7 @@ def grade_question_group(group_list, user_responses, answer_info, question,
 
     Inputs:
     - group_list: list of answer numbers in the given group
-    - answer_user_responses: list identifiers, codes and answers giving user's
+    - user_responses: list identifiers, codes and answers giving user's
       response to questions
     - answer_info: list of identifiers, codes, points, answer types,
       and groups of answers in question
@@ -812,7 +812,7 @@ def grade_question(question, question_identifier, answer_info,
     for group in question_groups.keys():
         points_achieved += grade_question_group(
             group_list=question_groups[group], 
-            answer_user=answer_user,
+            user_responses=user_responses,
             answer_info=answer_info, question=question,
             expr_context=expr_context, local_dict=user_function_dict,
             answer_results=answer_results)

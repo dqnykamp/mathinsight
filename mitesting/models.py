@@ -82,6 +82,10 @@ class Question(models.Model):
     objects = models.Manager()
     question_database = QuestionDatabaseManager()
 
+    class Meta:
+        permissions = (
+            ("administer_question","Can administer questions"),
+        )
 
     def __str__(self):
         return "%s: %s" % (self.id, self.name)
@@ -100,6 +104,10 @@ class Question(models.Model):
     question_with_number.short_description = "Question"
 
     def user_can_view(self, user, solution=True, course=None):
+
+        if user.has_perm('mitesting.administer_question'):
+            return True
+
         from micourses.permissions import return_user_assessment_permission_level
         permission_level=return_user_assessment_permission_level(user, course)
         privacy_level=self.return_privacy_level(solution)
@@ -136,7 +144,7 @@ class Question(models.Model):
                                 include_link=include_link)
 
     def get_new_seed(self):
-        from .render_assessments import get_new_seed
+        from .utils import get_new_seed
         return get_new_seed()
 
     def return_sympy_local_dict(self, user_response=False):
@@ -167,7 +175,7 @@ class Question(models.Model):
             if self.solution_javascript:
                 template_string += self.solution_javascript
         if template_string:
-            template_string_base = "{% load testing_tags mi_tags humanize %}"
+            template_string_base = "{% load question_tags mi_tags humanize %}"
             template_string = template_string_base+template_string
             try:
                 t = Template(template_string)
@@ -236,7 +244,7 @@ class Question(models.Model):
             expr.question = new_q
             expr.save()
 
-        from mitesting.render_assessments import process_expressions_from_answers
+        from mitesting.render_questions import process_expressions_from_answers
         process_expressions_from_answers(new_q)
 
         return new_q
@@ -304,7 +312,7 @@ class Question(models.Model):
             expr.question = base_q
             expr.save()
 
-        from mitesting.render_assessments import process_expressions_from_answers
+        from mitesting.render_questions import process_expressions_from_answers
         process_expressions_from_answers(base_q)
 
         return base_q
@@ -483,7 +491,7 @@ class QuestionAnswerOption(models.Model):
     def render_feedback(self, expr_context):
         if not self.feedback:
             return ""
-        template_string = "{% load testing_tags mi_tags humanize %}"
+        template_string = "{% load question_tags mi_tags humanize %}"
         template_string += self.feedback
         try:
             t = Template(template_string)

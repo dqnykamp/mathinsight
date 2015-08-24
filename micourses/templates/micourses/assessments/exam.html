@@ -1,13 +1,7 @@
-{% extends "micourses/assessments/assessment_base.html" %}
+{% extends "micourses/assessments/assessment.html" %}
 {% load course_tags question_tags %}
 
-{% block content %}
-{% if not success %}
-<section class="error">
-<h4>Errors encountered</h4>
-<p>{{error_message}}</p>
-</section>
-{% endif %}
+{% block assessmentname %}
 <div class="yma-grid">
   <div class="yma-g45 yma-gl">
     <div class="yma-gbox-left">
@@ -31,6 +25,11 @@
     </div>
   </div>
 </div>
+{% endblock %}
+{% block namesection %}{% endblock %}
+{% block scoretotals %}{% endblock %}
+
+{% block instructions %}
 <section class="exam_instructions">
 {{ assessment.render_instructions }}
 </section>
@@ -51,6 +50,9 @@
    </div>
   </div>
 </div>
+{% endblock %}
+
+{% block assessmentmain %}
 <section class="exam_main">
 <ol class="exam_questions">
 {% for question in rendered_list %}
@@ -61,6 +63,6 @@
 {% endfor %}
 </ol>
 </section>
-
 {% endblock %}
 
+{% block newattempts %}{% endblock %}

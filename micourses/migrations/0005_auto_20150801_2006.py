@@ -80,7 +80,7 @@ def base_attendance_on_enrollment(apps, schema_editor):
         try:
             ce = CourseEnrollment.objects.get(student=sa.student, 
                                               course=sa.course)
-        except CourseEnrollment.DoesNotExist():
+        except CourseEnrollment.DoesNotExist:
             ce = None
 
         if ce:

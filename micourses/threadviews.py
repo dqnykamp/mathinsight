@@ -8,6 +8,7 @@ from django.views.generic import DetailView, View
 from django.db import transaction
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from django.template import Context, Template
 import pytz
 import reversion
 
@@ -351,7 +352,7 @@ class EditSectionView(View):
             if sibling:
                 rerender_sections.append(sibling)
             
-            template = Template("{% load course_tags %}<li id='thread_section_{{section.id}}'>{% thread_section_edit section %}</li>")
+            template = Template("{% load thread_tags %}<li id='thread_section_{{section.id}}'>{% thread_section_edit section %}</li>")
             context = Context({'section': new_section, 'ltag': ltag})
 
             new_section_html[prepend_section] = template.render(context)
@@ -362,7 +363,7 @@ class EditSectionView(View):
 
         
         for section in rerender_sections:
-            template = Template("{% load course_tags %}{% thread_section_edit section %}")
+            template = Template("{% load thread_tags %}{% thread_section_edit section %}")
             context = Context({'section': section, 'ltag': ltag})
 
             replace_section_html[section.id] = template.render(context)

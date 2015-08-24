@@ -2,11 +2,19 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import django.utils.timezone
-import re
-import micourses.utils
-import django.core.validators
+from django.utils import timezone
+import django.db.models.deletion
 
+def adjust_datetimes_to_right_timezone(apps, schema_editor):
+    # Apparently, dates are convert to datetimes assuming UTC
+    # Adjust so new datatime is correct date assuming current time zone
+
+    CourseEnrollment = apps.get_model('micourses', 'CourseEnrollment')
+    for ce in CourseEnrollment.objects.all():
+        ce.date_enrolled = timezone.make_aware(
+            timezone.make_naive(ce.date_enrolled,
+                                timezone=ce.date_enrolled.tzinfo))
+        ce.save()
 
 class Migration(migrations.Migration):
 
@@ -53,4 +61,19 @@ class Migration(migrations.Migration):
             name='questionresponse',
             options={'get_latest_by': 'response_submitted', 'ordering': ['question_attempt', 'response_submitted']},
         ),
+        migrations.AlterModelOptions(
+            name='assessment',
+            options={'ordering': ['code']},
+        ),
+        migrations.AlterField(
+            model_name='courseuser',
+            name='selected_course_enrollment',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.SET_NULL, to='micourses.CourseEnrollment', blank=True, null=True),
+        ),
+        migrations.AlterField(
+            model_name='courseenrollment',
+            name='date_enrolled',
+            field=models.DateTimeField(blank=True),
+        ),
+        migrations.RunPython(adjust_datetimes_to_right_timezone),
     ]

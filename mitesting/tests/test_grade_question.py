@@ -1116,18 +1116,18 @@ class TestQuestionGroups(TestCase):
         expr_context["cx"]=math_object(c*x)
 
         
-        answer_user_responses=[]
+        user_responses=[]
 
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "cx"})
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "cx"})
 
         answer_results={'answers': {}}
 
         group_list=[0,1]
         
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1146,16 +1146,16 @@ class TestQuestionGroups(TestCase):
         
         # switch order of first two
 
-        answer_user_responses=[]
+        user_responses=[]
 
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "cx"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "cx"})
 
         answer_results={'answers': {}}
 
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1174,16 +1174,16 @@ class TestQuestionGroups(TestCase):
 
         # repeat first answer
 
-        answer_user_responses=[]
+        user_responses=[]
 
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "cx"})
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "cx"})
 
         answer_results={'answers': {}}
 
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1201,16 +1201,16 @@ class TestQuestionGroups(TestCase):
 
         # repeat second answer
 
-        answer_user_responses=[]
+        user_responses=[]
 
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "cx"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "cx"})
 
         answer_results={'answers': {}}
 
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1228,16 +1228,16 @@ class TestQuestionGroups(TestCase):
 
         # switch first and third answer
 
-        answer_user_responses=[]
+        user_responses=[]
 
-        answer_user_responses.append({'answer': "cx"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "ax"})
+        user_responses.append({'response': "cx"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "ax"})
 
         answer_results={'answers': {}}
 
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1291,14 +1291,14 @@ class TestQuestionGroups(TestCase):
         self.new_answer(answer_code="c", answer="cy")
         expr_context["cy"]=math_object(c*y)
         
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "cx"})
-        answer_user_responses.append({'answer': "ax"})
+        user_responses=[]
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "cx"})
+        user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1311,14 +1311,14 @@ class TestQuestionGroups(TestCase):
         self.assertTrue(answer_results['answers'][id3]['answer_correct'])
         self.assertEqual(answer_results['answers'][id3]['percent_correct'],100)
 
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "by"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "ay"})
+        user_responses=[]
+        user_responses.append({'response': "by"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "ay"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1331,14 +1331,14 @@ class TestQuestionGroups(TestCase):
         self.assertTrue(answer_results['answers'][id3]['answer_correct'])
         self.assertEqual(answer_results['answers'][id3]['percent_correct'],100)
 
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "cy"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "ax"})
+        user_responses=[]
+        user_responses.append({'response': "cy"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1391,14 +1391,14 @@ class TestQuestionGroups(TestCase):
         self.new_answer(answer_code="c", answer="ax")
  
          
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "ax"})
+        user_responses=[]
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1411,14 +1411,14 @@ class TestQuestionGroups(TestCase):
         self.assertFalse(answer_results['answers'][id3]['answer_correct'])
         self.assertEqual(answer_results['answers'][id3]['percent_correct'],0)
 
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "bx"})
+        user_responses=[]
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "bx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1431,14 +1431,14 @@ class TestQuestionGroups(TestCase):
         self.assertTrue(answer_results['answers'][id3]['answer_correct'])
         self.assertEqual(answer_results['answers'][id3]['percent_correct'],100)
 
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "dx"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "bx"})
+        user_responses=[]
+        user_responses.append({'response': "dx"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "bx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1496,15 +1496,15 @@ class TestQuestionGroups(TestCase):
         ans44=self.new_answer(answer_code="d", answer="dx")
  
          
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "cx"})
-        answer_user_responses.append({'answer': "dx"})
+        user_responses=[]
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "cx"})
+        user_responses.append({'response': "dx"})
         answer_results={'answers': {}}
         group_list=[0,1,2,3]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1526,7 +1526,7 @@ class TestQuestionGroups(TestCase):
         answer_results={'answers': {}}
         group_list=[0,1,2,3]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1579,14 +1579,14 @@ class TestQuestionGroups(TestCase):
         ans31=self.new_answer(answer_code="c", answer="ax", percent_correct=50)
  
          
-        answer_user_responses=[]
-        answer_user_responses.append({'answer': "ax"})
-        answer_user_responses.append({'answer': "bx"})
-        answer_user_responses.append({'answer': "cx"})
+        user_responses=[]
+        user_responses.append({'response': "ax"})
+        user_responses.append({'response': "bx"})
+        user_responses.append({'response': "cx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
@@ -1610,7 +1610,7 @@ class TestQuestionGroups(TestCase):
         answer_results={'answers': {}}
         group_list=[0,1,2]
         points_times_100 = grade_question_group(
-            group_list=group_list, answer_user_responses=answer_user_responses, 
+            group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)

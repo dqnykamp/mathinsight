@@ -59,7 +59,8 @@ class CourseUser(models.Model):
     user = models.OneToOneField(User)
     userid = models.CharField(max_length=20, blank=True, null=True)
     selected_course_enrollment = models.ForeignKey(
-        'CourseEnrollment', blank=True, null=True)
+        'CourseEnrollment', blank=True, null=True,
+        on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['user__last_name', 'user__first_name']
@@ -97,6 +98,16 @@ class CourseUser(models.Model):
         return self.course_set.filter(active=True)
     
     def get_current_role(self, course=None):
+        """
+        Returns role of course user in course.  Values:
+        - None (if not enrolled in course)
+        - STUDENT_ROLE
+        - INSTRUCTOR_ROLE
+        - DESIGNER_ROLE
+
+        If course is None, then returns maximum role over all courses.
+        """
+
         if course:
             try:
                 course_enrollment = course.courseenrollment_set.get(student=self)
@@ -107,24 +118,56 @@ class CourseUser(models.Model):
         else:
             # if no course specified, then treat as instructor/designer
             # if user is an instructor/designer in any course
-            role = STUDENT_ROLE
+            role = None
             for enrollment in self.courseenrollment_set.all():
                 if enrollment.role==DESIGNER_ROLE:
                     return DESIGNER_ROLE
                 elif enrollment.role == INSTRUCTOR_ROLE:
                     role=INSTRUCTOR_ROLE
+                elif role != INSTRUCTOR_ROLE:
+                    role=STUDENT_ROLE
             return role
 
+
     def return_permission_level(self, course=None):
+        """
+        Returns the assessment permission level of course user, based on 
+        role of user in course.
+
+        Values are:
+        0. not enrolled in course
+        1. STUDENT_ROLE
+        2. INSTRUCTOR_ROLE
+        3. DESIGNER_ROLE
+
+        If course is not specified, 
+        then the maximum is taken over all enrolled courses.
+
+        """
 
         role = self.get_current_role(course)
         if role==DESIGNER_ROLE:
             return 3
         elif role == INSTRUCTOR_ROLE:
             return 2
-        else:
+        elif role == STUDENT_ROLE:
             return 1
+        else:
+            return 0
         
+
+    def can_administer_assessment(self, course):
+        """
+        Return true if course user is instructor or designer of course
+
+        """
+
+        # course must be specified
+        if course is None:
+            return False
+            
+        return self.return_permission_level(course) >= 2
+
 
     def percent_attendance(self, course=None, date=None):
         if not course:
@@ -843,7 +886,7 @@ class CourseEnrollment(models.Model):
     student = models.ForeignKey(CourseUser)
     section = models.IntegerField(blank=True, null=True)
     group = models.SlugField(max_length=20, blank=True, null=True)
-    date_enrolled = models.DateField()
+    date_enrolled = models.DateTimeField(blank=True)
     withdrew = models.BooleanField(default=False)
     role = models.CharField(max_length=1,
                             choices = ROLE_CHOICES,
@@ -856,6 +899,12 @@ class CourseEnrollment(models.Model):
     class Meta:
         unique_together = ("course","student")
         ordering = ['student']
+
+    def save(self, *args, **kwargs):
+        if not self.date_enrolled:
+            self.date_enrolled = timezone.now()
+        super(CourseEnrollment, self).save(*args, **kwargs)
+
 
 @reversion.register
 class StudentAttendance(models.Model):
@@ -1079,14 +1128,22 @@ class ThreadContent(models.Model):
                 self.sort_order = ceil(max_sort_order+1)
             else:
                 self.sort_order = 1
+
+        # if points changed, should recalculate score of content records
+        points_changed = False
+        if self.pk is not None:
+            old_tc = ThreadContent.objects.get(pk=self.pk)
+            if old_tc.points != self.points:
+                points_changed=True
+
         super(ThreadContent, self).save(*args, **kwargs)
 
-        n_of_object = list(self.course.thread_contents.filter(
-            content_type=self.content_type, object_id=self.object_id))\
-            .index(self)+1
-        if n_of_object != self.n_of_object:
-            self.n_of_object = n_of_object
-            super(ThreadContent, self).save(*args, **kwargs)
+        from micourses.utils import set_n_of_objects
+        set_n_of_objects(self.course, self.content_object)
+
+        if points_changed:
+            for record in self.contentrecord_set.all():
+                record.recalculate_score(total_recalculation=True)
 
 
     def get_title(self):
@@ -1211,14 +1268,14 @@ class ThreadContent(models.Model):
 
     def student_score(self, student):
         try:
-            return self.contentrecord_set.get(student=student).score
+            return self.contentrecord_set.get(enrollment__student=student).score
         except ObjectDoesNotExist:
             return None
 
     def get_student_latest_attempt(self, student):
         try:
-            return self.studentcontentattempt_set.filter(student=student)\
-                .latest()
+            return self.contentrecord_set.get(enrollment__student=student)\
+                .attempts.latest()
         except ObjectDoesNotExist:
             return None
     
@@ -1455,9 +1512,13 @@ class ContentRecord(models.Model):
         Recalculate score of student for content.
 
         Set to score_override if it exists and to None if not assessment.
+        Also set to None if no valid content attempt with nonblank score
+
         Else score is aggregate of scores from each valid attempt 
         for student on this thread_content.
         Aggregate based on attempt_aggregration of thread_content.
+
+
         
         If total_recalculation, then first recalculate
         the scores of each attempt.  Otherwise, just use the
@@ -1629,7 +1690,13 @@ class ContentAttempt(models.Model):
         Recalculate score of student content attempt.
         
         Set to score_override if it exists and to None if not assessment.
-        Else, score is sum of scores from each associated question set.
+        Also set to None if no question set have a non blank credit.
+
+        Else, score is sum of the score from each associated question set
+        Score of a question set is its credited multiplied by a fraction
+        of the points of the thread content.
+        The fraction of points is the relative magnitude of the question
+        set weight, as determined by the question set details of assessment.
 
         If propagate and attempt is valid,
         then also calculate overall score for student content.
@@ -1661,6 +1728,9 @@ class ContentAttempt(models.Model):
                 assessment = self.record.content.content_object
                 question_set_details = assessment.questionsetdetail_set
                 question_sets = self.question_sets.all()
+                
+                found_non_blank_credit = False
+                
                 if question_sets:
                     total_weight = 0.0
                     self.score = 0.0
@@ -1673,11 +1743,13 @@ class ContentAttempt(models.Model):
                         qs_credit=question_set.get_credit()
                         if qs_credit is None:
                             qs_credit=0
+                        else:
+                            found_non_blank_credit = True
                         self.score += qs_credit*weight
                         total_weight += weight
                     self.score *= self.record.content.points/total_weight
                     
-                else: 
+                if not found_non_blank_credit:
                     self.score = None
         
         self.save()
@@ -1772,7 +1844,8 @@ class ContentAttemptQuestionSet(models.Model):
 
         Return credit_override if set.
 
-        Return None if no question_attempts with credit.
+        Return None if no valid question_attempts
+        but return 0 if have valid question attempts, but just no credit
 
         """
         if self.credit_override:
@@ -1794,7 +1867,11 @@ class ContentAttemptQuestionSet(models.Model):
             credit = question_attempts.aggregate(credit=Max('credit'))\
                      ['credit']
                 
-        return credit
+        # since have valid question attempts, make credit 0 rather than None
+        if credit is None:
+            return 0
+        else:
+            return credit
 
 
     def get_points(self):
@@ -1895,7 +1972,10 @@ class QuestionAttempt(models.Model):
         """
         Recalculate credit of question attempt according to attempt
         aggregation of content
-        
+
+        Credit is calculated from valid responses.
+        If have no valid responses, then credit is None
+
         If propagate, also recalculate score for content attempt
 
         """
@@ -1920,7 +2000,7 @@ class QuestionAttempt(models.Model):
                          ['credit']
 
         self.save()
-
+        
         if propagate:
             content_attempt.recalculate_score()
 
@@ -2022,9 +2102,6 @@ class Assessment(models.Model):
 
 
     class Meta:
-        permissions = (
-            ("administer_assessment","Can administer assessments"),
-        )
         ordering = ["code",]
         unique_together = (("course", "code"), ("course", "name"),)
 
@@ -2177,7 +2254,7 @@ class Assessment(models.Model):
             return self.thread_content_set.all()[number_in_thread-1]
         except (IndexError, ValueError, AssertionError):
             if number_in_thread==1 and \
-               not self.assessment.thread_content_set.all():
+               not self.thread_content_set.all():
                 return None
             else:
                 raise ThreadContent.DoesNotExist
@@ -2185,7 +2262,8 @@ class Assessment(models.Model):
 
     def user_can_view(self, user, solution=True, include_questions=True):
         from micourses.permissions import return_user_assessment_permission_level
-        permission_level=return_user_assessment_permission_level(user, self.course)
+        permission_level=return_user_assessment_permission_level(
+            user, self.course)
         privacy_level=self.return_privacy_level(
             solution=solution, include_questions=include_questions)
         # if permission level is high enough, user can view
@@ -2286,26 +2364,6 @@ class Assessment(models.Model):
         for question_set_dict in question_set_dicts:
             question_sets.append(question_set_dict['question_set'])
         return question_sets
-
-
-    def points_of_question_set(self, question_set):
-        try:
-            question_detail=self.questionsetdetail_set.get(
-                question_set=question_set)
-            return question_detail.points
-        except ObjectDoesNotExist:
-            return None
-
-    def get_total_points(self):
-        if self.total_points is None:
-            total_points=0
-            for question_set in self.question_sets():
-                the_points = self.points_of_question_set(question_set)
-                if the_points:
-                    total_points += the_points
-            return total_points
-        else:
-            return self.total_points
 
 
     def avoid_question_seed(self, avoid_dict, start_seed=None):

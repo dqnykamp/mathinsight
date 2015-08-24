@@ -32,7 +32,7 @@
 {% if course.tutoring_url %}<a href="{{course.tutoring_url}}">Tutoring options</a><br/>{% endif %}
 {% if courseuser.selected_course_enrollment.group %}
 <h5>Section and group</h5>
-Section: 
+<p>Section: 
 {{courseuser.selected_course_enrollment.section}}<br/>Group: {{ courseuser.selected_course_enrollment.group }}</p>{% endif %}
 
 {% endblock %}

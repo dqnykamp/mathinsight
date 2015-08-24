@@ -37,8 +37,8 @@ Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculati
 <input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('record')"><br/><input type="button" value="Delete override" onclick="post_change_score('record', 'delete');" id="delete_override_record" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
 </tr></tfoot>
 {% for attempt in attempts %}
-<tr {% if not attempt.valid %}class="invalid"{%endif%}><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td>
-<td><a href="{{attempt.version_url}}" class="assessment">View version {{attempt.version_string}}</a></td>
+<tr {% if not attempt.valid %}class="invalid"{%endif%}  id="attempt_{{attempt.attempt_number}}"><td>{{ attempt.formatted_attempt_number }}</td><td>{{attempt.datetime}}</td>
+<td><a href="{{attempt.version_url}}" class="assessment" id="version_{{attempt.attempt_number}}_link">View version {{attempt.version_string}}</a></td>
 <td class="righttext">{% with id=attempt.attempt.id %}<div id="attempt_{{id}}_score"><span id="score_{{id}}">{{attempt.score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm({{id}});"></div><div id="edit_attempt_{{id}}_score" hidden><form id="edit_attempt_{{id}}_score_form"><span id="edit_attempt_{{id}}_score_form_inner">{{attempt.score_form.as_p}}</span>
 <input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{id}})"><br/><input type="button" value="Delete override" onclick="post_change_score({{id}}, 'delete');" id="delete_override_{{id}}" {% if not attempt.score_overridden %}hidden {%endif%}></form></div>{%endwith%}</td></tr>
 {% endfor %}
@@ -64,6 +64,7 @@ Adjusted due date: <a href='{% url 'micourses:instructoradjustedduedatecalculati
       $('#attempt_' + id + '_score').toggle();
       $('#edit_attempt_' + id + '_score').toggle();
       $('#edit_attempt_' + id + '_score_form_score').val($('#score_' + id).html());
+      $("#edit_attempt_" + id + "_score_form_inner").find("ul").remove();
   }
 
     $("#edit_attempt_record_score_form").submit(function(event) {

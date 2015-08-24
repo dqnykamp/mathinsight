@@ -481,12 +481,14 @@ class TestExpressions(TestCase):
         local_dict={}
         expr1=self.new_expr(name="tuple1",expression="(5,-1,b^2-a,c,b)", \
                                 expression_type=Expression.RANDOM_ORDER_TUPLE)
-        tuple_orig = (5, -1, b**2-a,c,b)
+        tuple_orig = sympify((5, -1, b**2-a,c,b))
+        sorted_list_tuple_orig = sorted(list(tuple_orig),
+                                        key=lambda x: x.sort_key())
         found_different_order = False
-        for i in range(100):
+        for i in range(200):
             tuple1 = expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated'].return_expression()
-            for j in range(5):
-                self.assertTrue(tuple1[j] in tuple_orig)
+            self.assertEqual(sorted(list(tuple1),key=lambda x: x.sort_key()),
+                             sorted_list_tuple_orig)
             if tuple1 != tuple_orig:
                 found_different_order=True
                 break

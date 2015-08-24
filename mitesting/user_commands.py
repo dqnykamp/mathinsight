@@ -126,10 +126,9 @@ class max_including_tuples(Function):
     Else, find max over arguments.
     """
 
-    from sympy import Max
-
     @classmethod
     def eval(cls, *args):
+        from sympy import Max
         if len(args)==1 and isinstance(args[0],Tuple):
             return Max(*args[0])
         else:
@@ -142,10 +141,9 @@ class min_including_tuples(Function):
     Else, find min over arguments.
     """
 
-    from sympy import Min
-    
     @classmethod
     def eval(cls, *args):
+        from sympy import Min
         if len(args)==1 and isinstance(args[0],Tuple):
             return Min(*args[0])
         else:

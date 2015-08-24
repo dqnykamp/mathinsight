@@ -1,8 +1,10 @@
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType
-from micourses.models import Course
+from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption
+from micourses.models import Course, Assessment, AssessmentType, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
 from django.contrib.auth.models import AnonymousUser, User, Permission, Group
 import random
+from django.contrib.contenttypes.models import ContentType
+
 
 
 class TestAssessmentView(TestCase):
@@ -55,7 +57,8 @@ class TestAssessmentView(TestCase):
         response = self.client.get("/assess/course/the_test")
         self.assertEqual(response.context['assessment'],self.asmt)
         self.assertEqual(response.context['seed'],'1')
-        self.assertTemplateUsed(response,"mitesting/assessment.html")
+        self.assertTemplateUsed(response,
+                                "micourses/assessments/assessment.html")
         self.assertContains(response, "The first question", count=1)
         self.assertContains(response, "The second question", count=1)
         self.assertContains(response, "The third question", count=1)
@@ -116,9 +119,9 @@ class TestAssessmentView(TestCase):
     def test_single_version(self):
 
         u=User.objects.create_user("user1", password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
         self.client.login(username="user1",password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
 
         self.q1.expression_set.create(
             name="n", expression="(-100,100)", 
@@ -331,8 +334,8 @@ class TestAssessmentView(TestCase):
 
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
         response = self.client.get("/assess/course/the_test/solution")
         self.assertEqual(response.context['assessment_name'], 
                          "This complex assessment solution")
@@ -353,20 +356,8 @@ class TestAssessmentView(TestCase):
                          "complex sol.")
 
     def test_question_numbers(self):
-        
-        begin_seed = random.randint(1,100000)
-        for seed in range(begin_seed,begin_seed+3):
-            response = self.client.get("/assess/course/the_test", 
-                                       {'seed': '%s' % seed,
-                                        'question_numbers': ''})
-            
-            question_numbers = [str(q['question'].id) for q in \
-                                    response.context['rendered_list']]
-            question_numbers = ", ".join(question_numbers)
-
-
-            self.assertEqual(response.context['question_numbers'],
-                             question_numbers)
+        u=User.objects.create_user("user1", password="pass")
+        self.client.login(username="user1",password="pass")
 
         begin_seed = random.randint(1,100000)
         for seed in range(begin_seed,begin_seed+3):
@@ -376,6 +367,19 @@ class TestAssessmentView(TestCase):
             self.assertEqual(response.context['question_numbers'],
                              None)
         
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
+        begin_seed = random.randint(1,100000)
+        for seed in range(begin_seed,begin_seed+3):
+            response = self.client.get("/assess/course/the_test", 
+                                       {'seed': '%s' % seed})
+            
+            question_numbers = [str(q['question'].id) for q in \
+                                    response.context['rendered_list']]
+            question_numbers = ", ".join(question_numbers)
+
+            self.assertEqual(response.context['question_numbers'],
+                             question_numbers)
 
     def test_question_only(self):
         seed = random.randint(1,100000)
@@ -395,20 +399,63 @@ class TestAssessmentView(TestCase):
             self.assertEqual(qid[0], question_ids[i])
 
 
-    def test_generate_assessment_link(self):
+    def test_generate_course_attempt_link(self):
         response = self.client.get("/assess/course/the_test")
-        self.assertFalse(response.context['generate_assessment_link'])
+        self.assertFalse(response.context['generate_course_attempt_link'])
 
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
         response = self.client.get("/assess/course/the_test")
-        self.assertFalse(response.context['generate_assessment_link'])
+        self.assertFalse(response.context['generate_course_attempt_link'])
 
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        ce=self.course.courseenrollment_set.create(student=u.courseuser,
+                                                   role=STUDENT_ROLE)
         response = self.client.get("/assess/course/the_test")
-        self.assertTrue(response.context['generate_assessment_link'])
-                                   
+        self.assertFalse(response.context['generate_course_attempt_link'])
+
+        ce.role=INSTRUCTOR_ROLE
+        ce.save()
+        response = self.client.get("/assess/course/the_test")
+        self.assertFalse(response.context['generate_course_attempt_link'])
+
+        ce.role=DESIGNER_ROLE
+        ce.save()
+        response = self.client.get("/assess/course/the_test")
+        self.assertFalse(response.context['generate_course_attempt_link'])
+        
+        self.client.logout()
+
+        ce.delete()
+
+        assessment_ct = ContentType.objects.get_for_model(Assessment)
+        ts=self.course.thread_sections.create(name="a section")
+        ts.thread_contents.create(content_type=assessment_ct,
+                                  object_id=self.asmt.id)
+
+        response = self.client.get("/assess/course/the_test")
+        self.assertFalse(response.context['generate_course_attempt_link'])
+
+        self.client.login(username="user1",password="pass")
+        response = self.client.get("/assess/course/the_test")
+        self.assertFalse(response.context['generate_course_attempt_link'])
+
+        ce=self.course.courseenrollment_set.create(student=u.courseuser,
+                                                   role=STUDENT_ROLE)
+        response = self.client.get("/assess/course/the_test")
+        self.assertFalse(response.context['generate_course_attempt_link'])
+
+        ce.role=INSTRUCTOR_ROLE
+        ce.save()
+        response = self.client.get("/assess/course/the_test")
+        self.assertTrue(response.context['generate_course_attempt_link'])
+
+        ce.role=DESIGNER_ROLE
+        ce.save()
+        response = self.client.get("/assess/course/the_test")
+        self.assertTrue(response.context['generate_course_attempt_link'])
+        
+        
+        
         
     def test_solution_link(self):
         response = self.client.get("/assess/course/the_test")
@@ -419,8 +466,8 @@ class TestAssessmentView(TestCase):
         response = self.client.get("/assess/course/the_test")
         self.assertFalse(response.context['show_solution_link'])
 
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
         response = self.client.get("/assess/course/the_test")
         self.assertTrue(response.context['show_solution_link'])
         response = self.client.get("/assess/course/the_test/solution")
@@ -443,10 +490,17 @@ class TestAssessmentView(TestCase):
         
 
     def test_assessment_date(self):
-        import datetime
+
+        from django.utils import timezone
+        current_tz = timezone.get_current_timezone()
+        today_string = current_tz.normalize(timezone.now()
+                                            .astimezone(current_tz))\
+                                 .strftime("%B %d, %Y")
+
         response = self.client.get("/assess/course/the_test")
+
         self.assertEqual(response.context['assessment_date'],
-                         datetime.date.today().strftime("%B %d, %Y"))
+                         today_string)
         response = self.client.get("/assess/course/the_test",
                                    {'date': 'Feb 41, 3102'})
         self.assertEqual(response.context['assessment_date'], 'Feb 41, 3102')
@@ -455,8 +509,8 @@ class TestAssessmentView(TestCase):
     def test_seed(self):
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
 
         self.q1.expression_set.create(
             name="n", expression="(-100,100)", 
@@ -504,15 +558,17 @@ class TestAssessmentView(TestCase):
     def test_template_selected(self):
 
         u=User.objects.create_user("instructor", password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
         self.client.login(username="instructor", password="pass")
 
         response = self.client.get("/assess/course/the_test")
-        self.assertTemplateUsed(response,"mitesting/assessment.html")
+        self.assertTemplateUsed(response,
+                                "micourses/assessments/assessment.html")
 
         response = self.client.get("/assess/course/the_test/solution")
-        self.assertTemplateUsed(response,"mitesting/assessment_solution.html")
+        self.assertTemplateUsed(response,
+                            "micourses/assessments/assessment_solution.html")
 
         at_exam = AssessmentType.objects.create(
             code="exam", name="exam", assessment_privacy=0, solution_privacy=0,
@@ -526,13 +582,13 @@ class TestAssessmentView(TestCase):
         asmt_exam.questionassigned_set.create(question=self.q3)
 
         response = self.client.get("/assess/course/the_exam")
-        self.assertTemplateUsed(response,"mitesting/exam.html")
-        self.assertTemplateNotUsed(response,"mitesting/assessment.html")
+        self.assertTemplateUsed(response,"micourses/assessments/exam.html")
 
         response = self.client.get("/assess/course/the_exam/solution")
-        self.assertTemplateUsed(response,"mitesting/exam_solution.html")
+        self.assertTemplateUsed(response,
+                                "micourses/assessments/exam_solution.html")
         self.assertTemplateNotUsed(response,
-                                   "mitesting/assessment_solution.html")
+                            "micourses/assessments/assessment_solution.html")
 
         at_wonky_one = AssessmentType.objects.create(
             code="wonky_one", name="wonky_one", assessment_privacy=0, solution_privacy=0,
@@ -546,10 +602,12 @@ class TestAssessmentView(TestCase):
         asmt_wonky_one.questionassigned_set.create(question=self.q3)
 
         response = self.client.get("/assess/course/the_wonky_one")
-        self.assertTemplateUsed(response,"mitesting/assessment.html")
+        self.assertTemplateUsed(response,
+                                "micourses/assessments/assessment.html")
 
         response = self.client.get("/assess/course/the_wonky_one/solution")
-        self.assertTemplateUsed(response, "mitesting/assessment_solution.html")
+        self.assertTemplateUsed(response, 
+                            "micourses/assessments/assessment_solution.html")
 
 
     def test_errors(self):
@@ -621,8 +679,8 @@ class TestAssessmentView(TestCase):
 
         u=User.objects.create_user("user1", password="pass")
         self.client.login(username="user1",password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
 
         response = self.client.get("/assess/course/the_test")
 
@@ -698,29 +756,44 @@ class TestAssessmentViewPermissions(TestCase):
         users.append(username)
         u=User.objects.create_user(username, password="pass")
 
+        username = "student"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=STUDENT_ROLE)
+
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
 
-        for iu in range(3):
+        username = "designer"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=DESIGNER_ROLE)
+
+        for iu in range(4):
             if users[iu]:
                 self.client.login(username=users[iu],password="pass")
+            uper = iu-1
+            if iu==0:
+                uper=0
             for ia in range(3):
                 for ja in range(3):
                     response = self.client.get(
                         "/assess/course/%s" % asmt_codes[ia][ja])
 
-                    if iu < ia:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s' % asmt_codes[ia][ja])
+                    if uper < ia:
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s" % (ia,ja))
                         self.assertContains(
                             response,"The %s question" % (ia+1))
 
-                        if iu < ja:
+                        if uper < ja:
                             self.assertNotContains(
                                 response, "Show solution")
                         else: 
@@ -730,8 +803,8 @@ class TestAssessmentViewPermissions(TestCase):
                     response = self.client.get(
                         "/assess/course/%s/solution" % asmt_codes[ia][ja])
 
-                    if iu < 2:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s/solution' % asmt_codes[ia][ja])
+                    if uper < 2:
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia,ja))
@@ -771,29 +844,45 @@ class TestAssessmentViewPermissions(TestCase):
         users.append(username)
         u=User.objects.create_user(username, password="pass")
 
+        username = "student"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=STUDENT_ROLE)
+
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
+
+        username = "designer"
+        users.append(username)
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=DESIGNER_ROLE)
+
 
         for iu in range(3):
             if users[iu]:
                 self.client.login(username=users[iu],password="pass")
+            uper = iu-1
+            if iu==0:
+                uper=0
             for ia in range(3):
                 for ja in range(3):
                     response = self.client.get(
                         "/assess/course/%s" % asmt_codes[ia][ja])
 
-                    if iu < ia:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s' % asmt_codes[ia][ja])
+                    if uper < ia:
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s" % (ia,ja))
                         self.assertContains(
                             response,"A profound question")
 
-                        if iu < ja:
+                        if uper < ja:
                             self.assertNotContains(
                                 response, "Show solution")
                         else: 
@@ -803,8 +892,8 @@ class TestAssessmentViewPermissions(TestCase):
                     response = self.client.get(
                         "/assess/course/%s/solution" % asmt_codes[ia][ja])
 
-                    if iu < 2:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s/solution' % asmt_codes[ia][ja])
+                    if uper < 2:
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia,ja))
@@ -847,14 +936,16 @@ class TestAssessmentViewPermissions(TestCase):
         username = "user"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=STUDENT_ROLE)
         user_objects.append(u)
         u.groups.add(group1)
 
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
         user_objects.append(u)
         u.groups.add(group1)
 
@@ -864,9 +955,8 @@ class TestAssessmentViewPermissions(TestCase):
                 for ja in range(2):
                     response = self.client.get(
                         "/assess/course/%s" % asmt_codes[ia][ja])
-
                     if iu < ia:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s" % (ia+1,ja+1))
@@ -884,7 +974,7 @@ class TestAssessmentViewPermissions(TestCase):
                         "/assess/course/%s/solution" % asmt_codes[ia][ja])
 
                     if iu < 1:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s/solution' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia+1,ja+1))
@@ -920,7 +1010,7 @@ class TestAssessmentViewPermissions(TestCase):
                         "/assess/course/%s/solution" % asmt_codes[ia][ja])
 
                     if iu < 1:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s/solution' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia+1,ja+1))
@@ -939,7 +1029,7 @@ class TestAssessmentViewPermissions(TestCase):
                         "/assess/course/%s" % asmt_codes[ia][ja])
 
                     if iu < ia:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s" % (ia+1,ja+1))
@@ -953,7 +1043,7 @@ class TestAssessmentViewPermissions(TestCase):
                         "/assess/course/%s/solution" % asmt_codes[ia][ja])
 
                     if iu < 1:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s/solution' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s solution" % (ia+1,ja+1))
@@ -989,6 +1079,7 @@ class TestAssessmentViewPermissions(TestCase):
                     name = "Test %s %s" % (i,j),
                     assessment_type = at,
                     course=self.course,
+                    fixed_order=True,
                     )
                 asmt_codes[i].append(asmt.code) 
                 asmt.questionassigned_set.create(question=self.q1)
@@ -1001,12 +1092,14 @@ class TestAssessmentViewPermissions(TestCase):
         username = "user"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=STUDENT_ROLE)
 
         username = "instructor"
         users.append(username)
         u=User.objects.create_user(username, password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                                role=INSTRUCTOR_ROLE)
 
         for iu in range(3):
             if users[iu]:
@@ -1017,7 +1110,7 @@ class TestAssessmentViewPermissions(TestCase):
                         "/assess/course/%s" % asmt_codes[ia][ja])
 
                     if iu < ia:
-                        self.assertRedirects(response, '/accounts/login?next=http%%3A//testserver/assess/course/%s' % asmt_codes[ia][ja])
+                        self.assertRedirects(response, '/forbidden')
                     else:
                         self.assertContains(
                             response,"Test %s %s" % (ia,ja))

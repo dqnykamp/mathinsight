@@ -64,7 +64,8 @@ def return_sympy_local_dict(allowed_sympy_commands=[]):
 
 def return_random_number_sample(expression, rng, local_dict=None, index=None):
     """
-    Returns a randomly generated number based on string.
+    Returns a randomly generated number based on string, along with the
+    index chosen from list of all possibilities
     Expression is first parsed via sympy using local_dict, if specified.
     Resulting expression should be a tuple: (minval, maxval, [increment])
     If increment is omitted, set it to 1.

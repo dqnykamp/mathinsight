@@ -27,27 +27,36 @@ Date and time: {{datetime}}
 </p>
 <table class="basic">
 <thead><tr><th>Question</th><th>Points</th><th>Percent</th><th>Score</th><th>Link</th></tr></thead>
+
 <tfoot><tr{% if not content_attempt_valid%} class="invalid"{%endif%}><td><b>&nbsp;Total<span id="score_overridden" {%if not score_overridden%}hidden {%endif%}> (adjusted)</span>{% if not content_attempt_valid %} (invalid){%endif%}</b></td><td><b>&nbsp;{{thread_content.points}}&nbsp;</b></td>
-<td class="righttext"><b><div id="question_attempt_credit"><span id="credit_attempt">{{ content_attempt.get_percent_credit|floatformat_or_dash:"1"}}</span>% <br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'credit', true);"></div><div id="edit_question_attempt_credit" hidden><form id="edit_question_attempt_credit_form"><span id="edit_question_attempt_credit_form_inner">{{credit_form.as_p}}</span>
+<td class="righttext"><b><div id="content_attempt_credit"><span id="credit_attempt">{{ content_attempt.get_percent_credit|floatformat_or_dash:"1"}}</span>% <br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'credit', true);"></div><div id="edit_content_attempt_credit" hidden><form id="edit_content_attempt_credit_form"><span id="edit_content_attempt_credit_form_inner">{{credit_form.as_p}}</span>
 <input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('attempt','credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('attempt', 'delete', 'credit');" id="delete_override_attempt_credit" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
-<td class="righttext"><b><div id="question_attempt_score"><span id="score_attempt">{{ content_attempt.score|floatformat_or_dash:"1" }}</span><br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'score', true);"></div><div id="edit_question_attempt_score" hidden><form id="edit_question_attempt_score_form"><span id="edit_question_attempt_score_form_inner">{{score_form.as_p}}</span>
+
+<td class="righttext"><b><div id="content_attempt_score"><span id="score_attempt">{{ content_attempt.score|floatformat_or_dash:"1" }}</span><br/><input type="button" value="Edit" onclick="toggleEditForm('attempt', 'score', true);"></div><div id="edit_content_attempt_score" hidden><form id="edit_content_attempt_score_form"><span id="edit_content_attempt_score_form_inner">{{score_form.as_p}}</span>
 <input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm('attempt','score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score('attempt', 'delete', 'score');" id="delete_override_attempt_score" {% if not score_overridden %}hidden {%endif%}></form></div></b></td>
 
 </tr></tfoot>
-{% for q_dict in question_list %}
-<tr><td>{% if q_dict.question_attempts_with_credit%}<a href="{{q_dict.attempt_url}}">&nbsp;{{q_dict.question_number}} (details)</a>{%else%}&nbsp;{{forloop.counter}}&nbsp;{%endif%}</td><td>&nbsp;{{q_dict.points}}&nbsp;</td>
-<td class="righttext">{% with num=q_dict.question_number %}<div id="question_{{num}}_credit"><span id="credit_{{num}}">{{q_dict.percent_credit_text}}</span>%<br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'credit', true);"></div><div id="edit_question_{{num}}_credit" hidden><form id="edit_question_{{num}}_credit_form"><span id="edit_question_{{num}}_credit_form_inner">{{q_dict.credit_form.as_p}}</span>
-<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}}, 'credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'credit');" id="delete_override_{{num}}_credit" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div>{%endwith%}</td>
-<td class="righttext">{% with num=q_dict.question_number %}<div id="question_{{num}}_score"><span id="score_{{num}}">{{q_dict.score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'score', true);"></div><div id="edit_question_{{num}}_score" hidden><form id="edit_question_{{num}}_score_form"><span id="edit_question_{{num}}_score_form_inner">{{q_dict.score_form.as_p}}</span>
-<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}},'score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'score');" id="delete_override_{{num}}_score" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div>{%endwith%}</td>
-<td><a href="{{q_dict.direct_link}}" class="assessment">View question</a></td></tr>
-{% endfor %}
+
+{% for q_dict in question_list %}{% with num=q_dict.question_number %}
+<tr><td>{% if q_dict.question_attempts_with_credit%}<a href="{{q_dict.attempt_url}}" id="attempt_{{num}}_link">&nbsp;{{num}} (details)</a>{%else%}&nbsp;{{num}}&nbsp;{%endif%}</td><td>&nbsp;{{q_dict.points}}&nbsp;</td>
+<td class="righttext"><div id="question_{{num}}_credit"><span id="credit_{{num}}">{{q_dict.percent_credit_text}}</span>%<br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'credit', true);"></div><div id="edit_question_{{num}}_credit" hidden><form id="edit_question_{{num}}_credit_form"><span id="edit_question_{{num}}_credit_form_inner">{{q_dict.credit_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}}, 'credit', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'credit');" id="delete_override_{{num}}_credit" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div></td>
+<td class="righttext"><div id="question_{{num}}_score"><span id="score_{{num}}">{{q_dict.score_text}}</span><br/><input type="button" value="Edit" onclick="toggleEditForm({{num}}, 'score', true);"></div><div id="edit_question_{{num}}_score" hidden><form id="edit_question_{{num}}_score_form"><span id="edit_question_{{num}}_score_form_inner">{{q_dict.score_form.as_p}}</span>
+<input type="submit" value="Change" style="margin-top:1em;"><input type="button" value="Cancel" onclick="toggleEditForm({{num}},'score', false)"><br/><input type="button" value="Delete override" onclick="post_change_score({{num}}, 'delete', 'score');" id="delete_override_{{num}}_score" {% if not q_dict.credit_overridden %}hidden {%endif%}></form></div></td>
+<td><a href="{{q_dict.direct_link}}" class="assessment" id="question_{{num}}_link">View question</a></td></tr>
+{%endwith%}{% endfor %}
 </table>
 
 <script type="text/javascript">
   function toggleEditForm(num, score_type, visible) {
-      $('#question_' + num + '_' +score_type).toggle(!visible);
-      $('#edit_question_' + num + '_'+ score_type).toggle(visible);
+      if(num=="attempt") {
+	  var score_id = "content_attempt";
+      }
+      else {
+	  var score_id = "question_" + num;
+      }
+      $('#' + score_id + '_' +score_type).toggle(!visible);
+      $('#edit_' + score_id + '_'+ score_type).toggle(visible);
       if(num=="attempt") {
 	  var form_id = "attempt_{{content_attempt.id}}";
       }
@@ -60,13 +69,14 @@ Date and time: {{datetime}}
       else {
 	  $('#edit_' +form_id + '_' + score_type + '_form_' + score_type).val($('#' + score_type + '_' + num).html());
       }
+      $("#edit_" + score_id + "_" + score_type + "_form_inner").children("ul").remove();
   }
 
-    $("#edit_question_attempt_score_form").submit(function(event) {
+    $("#edit_content_attempt_score_form").submit(function(event) {
 	event.preventDefault();
 	post_change_score('attempt', 'change', 'score');
     });
-    $("#edit_question_attempt_credit_form").submit(function(event) {
+    $("#edit_content_attempt_credit_form").submit(function(event) {
 	event.preventDefault();
 	post_change_score('attempt', 'change', 'credit');
     });
@@ -83,13 +93,15 @@ Date and time: {{datetime}}
 
   function post_change_score(num, action, score_type) {
       if(num=="attempt") {
-	  record_type="content_attempt"
+	  var record_type="content_attempt";
+	  var form_id = "edit_content_attempt";
       }
       else {
-	  record_type="question_set"
+	  var record_type="question_set";
+	  var form_id = "edit_question_" + num;
       }
       
-      var data = "action="+action+"&record_type=" + record_type+"&score_type=" + score_type +"&" +"attempt_id={{content_attempt.id}}&question_number=" + num + "&" + $('#edit_question_'+num+'_'+score_type+'_form').serialize()
+      var data = "action="+action+"&record_type=" + record_type+"&score_type=" + score_type +"&" +"attempt_id={{content_attempt.id}}&question_number=" + num + "&" + $('#'+form_id+'_'+score_type+'_form').serialize()
 
       var thepost = jQuery.post('{% url "micourses:change_score" course_code=thread_content.course.code content_id=thread_content.id student_id=student.id %}', data);
       
@@ -105,8 +117,13 @@ Date and time: {{datetime}}
       var form = data['form'];
       var success = data['success'];
       var score_type = data['score_type'];
-
-      $('#edit_question_'+ num +'_'+score_type+'_form_inner').html(form);
+      
+      if(num=="attempt") {
+	  $('#edit_content_attempt_'+score_type+'_form_inner').html(form);
+      }
+      else {
+	  $('#edit_question_'+ num +'_'+score_type+'_form_inner').html(form);
+      }
 
       if(success) {
 	  $('#score_'+num).html(score_text);

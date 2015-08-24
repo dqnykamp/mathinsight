@@ -1,36 +1,71 @@
-{% extends "micourses/assessments/assessment_base.html" %}{% load question_tags %}
+{% extends "base.html" %}{% load question_tags %}
 
+
+{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'micourses:assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
+
+{% block title %}{{ assessment_name }} - Math Insight{%endblock%}
+
+{% block extrastyle %}
+<link href="{{ STATIC_URL }}mitesting/miquestion.css" rel="stylesheet" type="text/css"/>
+<link href="{{ STATIC_URL }}micourses/micourse.css" rel="stylesheet" type="text/css"/>
+<meta name="description" content="{{ assessment.description}}"/>
+<script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js"></script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+
+{% block extrastyle2 %}{% endblock %}
+{% endblock %}
 
 {% block content %}
+
+{% block errors %}
 {% if not success %}
 <section class="error">
 <h4>Errors encountered</h4>
 <p>{{error_message}}</p>
 </section>
 {% endif %}
+{% endblock %}
 
 
+{% block assessmentname %}
 <h3>{{ assessment_name }}</h3>
+{% endblock %}
 
+{% block namesection %}
 <section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>
+{% endblock %}
 
-<section class="assessment_main">
-{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
-
+{% block scoretotals %}
 <div id="assessment_points" style="margin-top: 1em;">
-{% if thread_content_points %}Total points: {{ thread_content_points}}
+{% if thread_content_points %}Total points: <span id="total_points">{{ thread_content_points}}</span>
 {% if users_attempt %}<div id="assessment_score_achieved">
 {% if multiple_attempts %}
-Score this attempt: {% if current_attempt.valid %}<a href="{{attempt_url}}" id="current_attempt_score">{{ attempt_score }}</a>{% else %}not recorded{% endif %}<br/>Overall score:  <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
+Score this attempt: {% if current_attempt.valid %}<a href="{{attempt_url}}" id="current_attempt_score">{{ attempt_score }}</a>{% else %}<span id="current_attempt_score">not recorded</span>{% endif %}<br/>Overall score:  <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
 {% else %}
-Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score">{{content_score}}</a>{% else %}not recorded{% endif %}
+Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score">{{content_score}}</a>{% else %}<span id="overall_score">not recorded</span>{% endif %}
 {% endif %} 
 </div>
 {% endif %}{% endif %}
 </div>
+{% endblock %}
 
+
+{% block instructions %}
+{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+{% endblock %}
+
+{% block assessment_main %}
+<section class="assessment_main">
 {% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
 
+{% block questions %}
 <ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
 {% for question in rendered_list %}
 <li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
@@ -38,22 +73,55 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 </li>
 {% endfor %}
 </ol>
-</section>
+{% endblock %}
 
+</section>
+{% endblock %}
+
+{% block newattempts %}
 {% if not assessment.single_version %}
 <section id="more_questions_link">
   {% if current_attempt %}
-  <form action="{% url 'miassess:generate_new_attempt' content_id=thread_content.id %}" method="post">{% csrf_token %}
+  <form action="{% url 'miassess:generate_new_attempt' content_id=thread_content.id %}" method="post" id="generate_new_attempt_form">{% csrf_token %}
     <input type="submit" value="Generate new assessment attempt" />
   </form>
   {% else %}
-  <form action="{{assessment.get_absolute_url}}" method="get">
+  <form action="{{assessment.get_absolute_url}}" method="get" id="generate_new_sample_form">
     <input type="hidden" name="seed" value="{{ new_seed }}">
     <input type="submit" value="Generate another sample of the questions" />
   </form>
   {%endif%}
 </section>
-{% endif%}
+{% endif %}
+{% endblock %}
 
 {% endblock %}
 
+{% block rightcolumn %}
+{% if thread_content %}
+<a id="threads" class="anchor"></a>
+<section class="box threadbox">
+<h4><a href="{% url 'mithreads:list' %}" class="normaltext">Thread navigation</a></h4>
+<a id="thread_{{ thread_content.course.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads:thread' thread_content.course.code %}#s{{ thread_content.section.id }}" class="normaltext">{{  thread_content.course }}</a></h5>
+<ul class="linklist">
+  {% with thread_content.find_previous as previous_in_thread %}
+  {% if previous_in_thread %}
+  <li> Previous: {{ previous_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+  {% with thread_content.find_next as next_in_thread %}
+  {% if next_in_thread %}
+  <li> Next: {{ next_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+</ul>
+</section>
+{% endif %}
+{% if question_numbers %}<p>Question numbers: <span id="question_numbers">{{ question_numbers }}</span></p>{% endif %}
+<p>{% if generate_course_attempt_link %}<a href="{% url 'miassess:generate_course_attempt' content_id=thread_content.id %}" id="generate_course_attempt">Generate course-wide attempt</a><br/>
+<small>Current seed: <span id="current_seed">{{seed}}</span></small><br/>
+{%endif%}
+{% if show_solution_link %}<a href="{% url 'miassess:assessment_solution' course_code=assessment.course.code assessment_code=assessment.code %}?{{request.GET.urlencode}}" id="show_solution">View solution</a>{%endif%}</p>
+
+{%endblock%}

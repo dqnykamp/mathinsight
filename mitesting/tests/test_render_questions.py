@@ -1,15 +1,17 @@
 from django.test import TestCase
-from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, Assessment, AssessmentType, ExpressionFromAnswer
-from micourses.models import Course
+from mitesting.models import Expression, Question, QuestionType, SympyCommandSet, QuestionAnswerOption, ExpressionFromAnswer
 from midocs.models import Page, PageType
-from mitesting.render_assessments import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, get_question_list, render_question_list, process_expressions_from_answers
+from mitesting.render_questions import setup_expression_context, return_valid_answer_codes, render_question_text, render_question, process_expressions_from_answers
+from mitesting.utils import get_new_seed
+from micourses.models import Course, Assessment, AssessmentType, \
+    STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
 from mitesting.sympy_customized import SymbolCallable, Symbol, Dummy
 from django.contrib.auth.models import AnonymousUser, User, Permission
 
 
 from sympy import sympify
 import random
-
+import json
 
 class TestSetupExpressionContext(TestCase):
     def setUp(self):
@@ -29,8 +31,7 @@ class TestSetupExpressionContext(TestCase):
     def test_with_single_expression(self):
         self.new_expr(name="the_x",expression="x")
         rng = random.Random()
-        rng.seed(0)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=0)
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -44,8 +45,7 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="expr3",expression="5*expr2 + expr*z")
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=1)
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -68,8 +68,7 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="a",expression="x+y")
 
         rng = random.Random()
-        rng.seed(2)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=2)
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
@@ -89,10 +88,9 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="a",expression="3*f(x)+2")
 
         rng = random.Random()
-        rng.seed()
 
         for i in range(10):
-            results=setup_expression_context(self.q, rng=rng)
+            results=setup_expression_context(self.q, rng=rng, seed=i)
             self.assertTrue(results['expression_context']['_user_function_dict_'] in  \
                                 [{item: SymbolCallable(str(item),real=True)} for item in \
                                      ['f','g','h','k']])
@@ -121,10 +119,9 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.CONDITION)
         
         rng = random.Random()
-        rng.seed()
 
         for i in range(10):
-            results=setup_expression_context(self.q, rng=rng)
+            results=setup_expression_context(self.q, rng=rng, seed=i)
             self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -148,8 +145,8 @@ class TestSetupExpressionContext(TestCase):
 
         rng = random.Random()
         rng.seed()
-
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertTrue(results['failed_conditions'])
         self.assertEqual("Condition n_greater_than_4 was not met",
@@ -176,13 +173,12 @@ class TestSetupExpressionContext(TestCase):
                       expression_type = Expression.CONDITION)
 
         for i in range(10):
-            from mitesting.render_assessments import get_new_seed
 
             rng = random.Random()
             rng.seed()
             seed=get_new_seed(rng=rng)
-            rng.seed(seed)
-            results=setup_expression_context(self.q, rng=rng)
+
+            results=setup_expression_context(self.q, rng=rng, seed=seed)
             self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -201,8 +197,7 @@ class TestSetupExpressionContext(TestCase):
             self.assertTrue(n in range(-10,11))
         
             #try again with same seed
-            rng.seed(seed)
-            results=setup_expression_context(self.q, rng=rng)
+            results=setup_expression_context(self.q, rng=rng, seed=seed)
             self.assertEqual(results['expression_context']['_user_function_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
@@ -218,7 +213,9 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
 
         self.new_expr(name="x", expression="(")
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
+
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
@@ -232,7 +229,9 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
 
         self.new_expr(name="x", expression="(", post_user_response=True)
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
+
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         self.assertTrue(results['error_in_expressions_post_user'])
@@ -253,7 +252,8 @@ class TestSetupExpressionContext(TestCase):
 
         rng = random.Random()
         rng.seed()
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
         self.assertEqual(results['expression_context']['_user_function_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
@@ -355,7 +355,8 @@ class TestSetupExpressionContext(TestCase):
 
         rng = random.Random()
         rng.seed()
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
         expression_context = results['expression_context']
 
         self.assertEqual(Symbol('sin')*Symbol('cos')*x**2,
@@ -384,7 +385,8 @@ class TestSetupExpressionContext(TestCase):
                          expression_context['_sympy_local_dict_']["complex"])
 
         self.add_allowed_sympy_commands_sets(['trig'])
-        results=setup_expression_context(self.q, rng=rng)
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
         expression_context = results['expression_context']
         self.assertEqual(sin(x)*cos(x),
                          expression_context["sincos"])
@@ -413,7 +415,9 @@ class TestSetupExpressionContext(TestCase):
        
         self.add_allowed_sympy_commands_sets(['explog'])
         self.add_allowed_sympy_commands_sets(['i'])
-        results=setup_expression_context(self.q, rng=rng)
+
+        seed = get_new_seed(rng)
+        results=setup_expression_context(self.q, rng=rng, seed=seed)
         expression_context = results['expression_context']
         self.assertEqual(sin(x)*cos(x),
                          expression_context["sincos"])
@@ -457,7 +461,8 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
 
         for i in range(10):
-            results=setup_expression_context(self.q, rng=rng)
+            seed = get_new_seed(rng)
+            results=setup_expression_context(self.q, rng=rng, seed=seed)
 
             expr_context = results['expression_context']
             n = expr_context['n'].return_expression()
@@ -476,8 +481,7 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="f_y_1",expression="f(y)+1")
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=1)
         expression_context = results['expression_context']
         x=Symbol('x', real=True)
         y=Symbol('y', real=True)
@@ -501,8 +505,7 @@ class TestSetupExpressionContext(TestCase):
         
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=1)
         expression_context = results['expression_context']
 
         self.assertEqual(expression_context['a'], a)
@@ -534,8 +537,7 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="xx_plus_5_xx_nn",expression="xx+5xx_nn", parse_subscripts=True)
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng)
+        results=setup_expression_context(self.q, rng=rng, seed=1)
         expression_context = results['expression_context']
 
         xx=expression_context['xx']
@@ -581,10 +583,9 @@ class TestSetupExpressionContextUserResponse(TestCase):
         user_responses=[]
         user_responses.append({'identifier': 0,
                               'code': "borig",
-                              'answer': "x+1" })
+                              'response': "x+1" })
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         x=Symbol('x', real=True)
@@ -610,13 +611,12 @@ class TestSetupExpressionContextUserResponse(TestCase):
         user_responses=[]
         user_responses.append({'identifier': 0,
                               'code': "borig",
-                              'answer': "a" })
+                              'response': "a" })
         user_responses.append({'identifier': 0,
                               'code': "corig",
-                              'answer': "g" })
+                              'response': "g" })
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertEqual(expression_context['b'], Symbol('a', real=True))
@@ -633,8 +633,7 @@ class TestSetupExpressionContextUserResponse(TestCase):
         user_responses=[]
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertTrue(expression_context['b'].return_expression().dummy_eq(Dummy('\uff3f')))
@@ -651,14 +650,13 @@ class TestSetupExpressionContextUserResponse(TestCase):
         user_responses=[]
         user_responses.append({'identifier': 0,
                               'code': "borig",
-                              'answer': ")" })
+                              'response': ")" })
         user_responses.append({'identifier': 1,
                               'code': "corig",
-                              'answer': ")" })
+                              'response': ")" })
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertTrue(expression_context['b'].return_expression().dummy_eq(Dummy('\uff3f')))
@@ -675,33 +673,30 @@ class TestSetupExpressionContextUserResponse(TestCase):
         user_responses=[]
         user_responses.append({'identifier': 0,
                               'code': "borig",
-                              'answer': "456" })
+                              'response': "456" })
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertEqual(expression_context['b'], Symbol('bye'))
 
         user_responses[0]={'identifier': 0,
                            'code': "borig",
-                           'answer': "1" }
+                           'response': "1" }
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertEqual(expression_context['b'], Symbol('\uff3f'))
 
         user_responses[0]={'identifier': 0,
                            'code': "borig",
-                           'answer': "x" }
+                           'response': "x" }
 
         rng = random.Random()
-        rng.seed(1)
-        results=setup_expression_context(self.q, rng=rng,
+        results=setup_expression_context(self.q, rng=rng, seed=1,
                                          user_responses=user_responses)
         expression_context = results['expression_context']
         self.assertEqual(expression_context['b'], Symbol('\uff3f'))
@@ -857,7 +852,8 @@ class TestRenderQuestionText(TestCase):
             name="x",expression="x,y,z",
             expression_type =Expression.RANDOM_EXPRESSION)
         self.q.expression_set.create(name="fun_x",expression="fun(x)")
-        results=setup_expression_context(self.q, rng=self.rng)
+        seed = get_new_seed(self.rng)
+        results=setup_expression_context(self.q, rng=self.rng, seed=seed)
         self.expr_context = results["expression_context"]
 
 
@@ -1151,23 +1147,24 @@ class TestRenderQuestion(TestCase):
         self.q.expression_set.create(
             name="x",expression="u,v,w,x,y,z,a,b,c,U,V,W,X,Y,Z,A,B,C",
             expression_type =Expression.RANDOM_EXPRESSION)
+        self.q_dict = {'question': self.q, }
 
     def test_render_blank(self):
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       question_identifier="blank")
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
         self.assertEqual(question_data["identifier"],"blank")
 
-        question_data=render_question(self.q, rng=self.rng, solution=True, 
+        question_data=render_question(self.q_dict, rng=self.rng, solution=True, 
                                       question_identifier="blank_sol")
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
         self.assertEqual(question_data["identifier"],"blank_sol")
         
-        question_data=render_question(self.q, rng=self.rng, solution=False)
+        question_data=render_question(self.q_dict, rng=self.rng, solution=False)
         self.assertEqual(question_data["question"],self.q)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"")
@@ -1179,25 +1176,25 @@ class TestRenderQuestion(TestCase):
         self.q.hint_text = "Because"
         self.q.save()
         
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"What?")
         self.assertTrue(question_data.get("help_available"))
         self.assertEqual(question_data["hint_text"], "Because")
         
-        question_data=render_question(self.q, rng=self.rng, solution=True)
+        question_data=render_question(self.q_dict, rng=self.rng, solution=True)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"This.")
         self.assertFalse(question_data.get("help_available"))
         self.assertEqual(question_data.get("hint_text",""), "")
 
-        question_data=render_question(self.q, rng=self.rng, show_help=False)
+        question_data=render_question(self.q_dict, rng=self.rng, show_help=False)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"What?")
         self.assertFalse(question_data.get("help_available"))
         self.assertEqual(question_data.get("hint_text",""), "")
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser())
         self.assertTrue(question_data.get("help_available"))
         
@@ -1214,7 +1211,7 @@ class TestRenderQuestion(TestCase):
                                           solution_text="subsolution2",
                                           hint_text="subhint2")
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["rendered_text"],"Main question")
         self.assertTrue(question_data.get("help_available"))
@@ -1242,10 +1239,11 @@ class TestRenderQuestion(TestCase):
     def test_seed(self):
         self.q.question_text = "${{x}} = {{n}}$"
         self.q.save()
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         text = question_data["rendered_text"]
         seed = question_data["seed"]
-        question_data=render_question(self.q, rng=self.rng, seed=seed)
+        new_q_dict={'question': self.q, 'seed': seed}
+        question_data=render_question(new_q_dict, rng=self.rng)
         self.assertEqual(question_data["rendered_text"],text)
         self.assertEqual(question_data["seed"],seed)
         
@@ -1255,30 +1253,30 @@ class TestRenderQuestion(TestCase):
         self.q.solution_text = "This."
         self.q.save()
   
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       allow_solution_buttons=True)
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser())
         self.assertFalse(question_data.get("show_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url",""),"")
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser(),
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/%s/inject_solution" % self.q.id)
+                         "/question/%s/inject_solution" % self.q.id)
 
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser(),
                                       allow_solution_buttons=False)
         self.assertFalse(question_data.get("show_solution_button",False))
@@ -1287,13 +1285,13 @@ class TestRenderQuestion(TestCase):
 
         self.q.computer_graded=True
         self.q.save()
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser(),
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/%s/inject_solution" % self.q.id)
+                         "/question/%s/inject_solution" % self.q.id)
 
         self.q.computer_graded=False
         self.q.save()
@@ -1303,7 +1301,7 @@ class TestRenderQuestion(TestCase):
         asmt = Assessment.objects.create(
             code="a", name="a", assessment_type=at, course=self.course)
         
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser(),
                                       assessment=asmt,
                                       allow_solution_buttons=True)
@@ -1313,14 +1311,14 @@ class TestRenderQuestion(TestCase):
         at.question_privacy=0;
         at.solution_privacy=0;
         at.save()
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       user=AnonymousUser(),
                                       assessment=asmt,
                                       allow_solution_buttons=True)
         self.assertTrue(question_data.get("show_solution_button",False))
         self.assertTrue(question_data.get("enable_solution_button",False))
         self.assertEqual(question_data.get("inject_solution_url"),
-                         "/assess/question/%s/inject_solution" % self.q.id)
+                         "/question/%s/inject_solution" % self.q.id)
 
 
     def test_readonly(self):
@@ -1332,60 +1330,76 @@ class TestRenderQuestion(TestCase):
         self.q.question_text = "{% answer 'ans' %}"
         self.q.save()
         
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       question_identifier=identifier)
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       question_identifier=identifier,
                                       readonly=True)
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' readonly>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
-    def test_prefilled_answers(self):
+    def test_prefilled_responses(self):
         answer_code='ans'
         identifier = "abc_5"
         answer_identifier ="1_%s" % (identifier)
-        previous_answer = "complete guess"
-        prefilled_answers = []
-        prefilled_answers.append({ 
+        previous_response = "complete guess"
+        prefilled_responses = []
+        prefilled_responses.append({ 
             'code': answer_code,
-            'answer': previous_answer })
+            'response': previous_response })
+
 
         self.q.questionansweroption_set.create(answer_code=answer_code, answer="x")
         self.q.question_text = "{% answer '" + answer_code + "' %}"
         self.q.save()
         
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers)
+        new_q_dict = self.q_dict.copy()
+
+        class ResponseObject(object):
+            pass
+        response=ResponseObject()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict['response'] = response
+        
+        question_data=render_question(new_q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
 
         self.assertTrue(question_data["success"])
-        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' value='%s'>" % (answer_identifier, answer_identifier, previous_answer)
+        answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20' value='%s'>" % (answer_identifier, answer_identifier, previous_response)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
-        prefilled_answers[0]= { 
+        prefilled_responses[0]= { 
             'code': answer_code+"a",
-            'answer': previous_answer }
+            'response': previous_response }
 
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers)
+        new_q_dict = self.q_dict.copy()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict['response'] = response
+
+        question_data=render_question(new_q_dict, rng=self.rng, 
+                                      question_identifier=identifier
+)
         self.assertTrue(question_data['success'])
         answerblank_html = "<input type='text' class='mi_answer' id='id_answer_%s' name='answer_%s' maxlength='200' size='20'>" % (answer_identifier, answer_identifier)
         self.assertInHTML(answerblank_html, question_data["rendered_text"])
 
 
-        prefilled_answers[0]= { 
+        prefilled_responses[0]= { 
             'code': answer_code,
-            'answer': previous_answer }
-        prefilled_answers.append({ 
+            'response': previous_response }
+        prefilled_responses.append({ 
             'code': answer_code,
-            'answer': previous_answer })
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers)
+            'response': previous_response })
+
+        new_q_dict = self.q_dict.copy()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict['response'] = response
+
+        question_data=render_question(new_q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
         self.assertTrue(question_data['success'])
         
  
@@ -1393,7 +1407,7 @@ class TestRenderQuestion(TestCase):
         self.q.hint_text="hint"
         self.q.save()
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
@@ -1402,7 +1416,7 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
@@ -1412,19 +1426,19 @@ class TestRenderQuestion(TestCase):
         self.q.question_text="{% answer 'x' %}"
         self.q.save()
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertTrue(question_data.get("help_available",False))
 
-        question_data=render_question(self.q, rng=self.rng, show_help=False)
+        question_data=render_question(self.q_dict, rng=self.rng, show_help=False)
         
         self.assertTrue(question_data.get("submit_button",False))
         self.assertFalse(question_data.get("auto_submit",False))
         self.assertFalse(question_data.get("help_available",False))
 
-        question_data=render_question(self.q, rng=self.rng, auto_submit=True)
+        question_data=render_question(self.q_dict, rng=self.rng, auto_submit=True)
         
         self.assertFalse(question_data.get("submit_button",False))
         self.assertTrue(question_data.get("auto_submit",False))
@@ -1450,9 +1464,10 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q, rng=self.rng,
+        new_q_dict = {'question': self.q, 'seed': seed}
+        question_data=render_question(new_q_dict, rng=self.rng,
                                       question_identifier=identifier,
-                                      seed=seed, user=AnonymousUser())
+                                      user=AnonymousUser())
 
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
@@ -1460,7 +1475,7 @@ class TestRenderQuestion(TestCase):
         self.assertEqual(cgd['identifier'],identifier)
         self.assertEqual(cgd['seed'], seed)
         self.assertFalse(cgd['show_solution_button'])
-        self.assertTrue(cgd['record_answers'])
+        self.assertTrue(cgd['record_response'])
         self.assertEqual(cgd.get('question_set'),None)
         self.assertEqual(cgd.get('course_code'),None)
         self.assertEqual(cgd.get('assessment_code'),None)
@@ -1470,25 +1485,25 @@ class TestRenderQuestion(TestCase):
                            'code': answer_code, 'points': 1, 
                            'type': QuestionAnswerOption.EXPRESSION,
                            'group': None, 'assign_to_expression': None,
-                           'prefilled_answer': None,
+                           'prefilled_response': None,
                            'expression_type': Expression.GENERIC}])
 
-        question_data=render_question(self.q, rng=self.rng,
-                                      record_answers=False,
+        question_data=render_question(self.q_dict, rng=self.rng,
+                                      record_response=False,
                                       allow_solution_buttons=True,
                                       user=AnonymousUser())
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
-        self.assertFalse(cgd['record_answers'])
+        self.assertFalse(cgd['record_response'])
         self.assertTrue(cgd['show_solution_button'])
          
-        question_data=render_question(self.q, rng=self.rng,
-                                      record_answers=True,
+        question_data=render_question(self.q_dict, rng=self.rng,
+                                      record_response=True,
                                       allow_solution_buttons=False,
                                       user=AnonymousUser())
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
-        self.assertTrue(cgd['record_answers'])
+        self.assertTrue(cgd['record_response'])
         self.assertFalse(cgd['show_solution_button'])
 
     def test_computer_grade_data_assessment(self):
@@ -1514,11 +1529,12 @@ class TestRenderQuestion(TestCase):
         self.q.computer_graded=True
         self.q.save()
 
-        question_data=render_question(self.q, rng=self.rng,
+        new_q_dict = {'question': self.q, 'question_set': question_set,
+                      'seed': seed}
+        question_data=render_question(new_q_dict, rng=self.rng,
                                       question_identifier=identifier,
-                                      seed=seed, assessment=asmt,
-                                      assessment_seed=assessment_seed,
-                                      question_set = question_set)
+                                      assessment=asmt,
+                                      assessment_seed=assessment_seed)
         cgd = pickle.loads(
             base64.b64decode(question_data["computer_grade_data"]))
         
@@ -1535,23 +1551,23 @@ class TestRenderQuestion(TestCase):
             name="n", expression=")", 
             post_user_response=True)
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["error_message"],"")
         
-        question_data=render_question(self.q, rng=self.rng,
+        question_data=render_question(self.q_dict, rng=self.rng,
                                       show_post_user_errors=False)
         self.assertTrue(question_data["success"])
         self.assertEqual(question_data["error_message"],"")
         
-        question_data=render_question(self.q, rng=self.rng, 
+        question_data=render_question(self.q_dict, rng=self.rng, 
                                       show_post_user_errors=True)
         self.assertTrue(question_data["success"])
         self.assertTrue("Error in expression" in question_data["error_message"])
 
         self.q.expression_set.create(name="m", expression=")")
 
-        question_data=render_question(self.q, rng=self.rng)
+        question_data=render_question(self.q_dict, rng=self.rng)
         self.assertFalse(question_data["success"])
         self.assertTrue("Error in expression" in question_data["error_message"])
 
@@ -1567,7 +1583,7 @@ class TestRenderQuestion(TestCase):
         qid = "thisqid"
         dtid = dt.return_identifier(instance_identifier=qid)
 
-        question_data=render_question(self.q, rng=self.rng,
+        question_data=render_question(self.q_dict, rng=self.rng,
                                       question_identifier=qid)
         self.assertHTMLEqual('<span id="id_%s">Hello</span>' % dtid,
                              question_data['rendered_text'])
@@ -1588,7 +1604,7 @@ class TestRenderQuestion(TestCase):
         dt0id = dt0.return_identifier(instance_identifier=qid)
         dt1id = dt1.return_identifier(instance_identifier=qid)
 
-        question_data=render_question(self.q, rng=self.rng,
+        question_data=render_question(self.q_dict, rng=self.rng,
                                       question_identifier=qid)
         self.assertHTMLEqual('Is this <span id="id_%s">dynamic</span> text? <span id="id_%s">Yes.</span>' % (dt0id, dt1id),
                              question_data['rendered_text'])
@@ -1608,10 +1624,10 @@ class TestRenderQuestion(TestCase):
         identifier="abc"
         answer_code='z'
         response = "x+1"
-        prefilled_answers = []
-        prefilled_answers.append({ 
+        prefilled_responses = []
+        prefilled_responses.append({ 
             'code': answer_code,
-            'answer': response })
+            'response': response })
 
         self.q.questionansweroption_set.create(answer_code=answer_code, 
                                                answer="n")
@@ -1620,9 +1636,14 @@ class TestRenderQuestion(TestCase):
         
         process_expressions_from_answers(self.q)
 
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers)
+        class ResponseObject(object):
+            pass
+        response=ResponseObject()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict = {'question': self.q, 'response': response}
+
+        question_data=render_question(new_q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
 
         self.assertTrue(question_data["success"])
         self.assertTrue('n=y,' in question_data["rendered_text"])
@@ -1630,9 +1651,8 @@ class TestRenderQuestion(TestCase):
         self.assertTrue('m=x + 2,' in question_data["rendered_text"])
         
 
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=[])
+        question_data=render_question(self.q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
 
         self.assertTrue(question_data["success"])
         self.assertTrue('n=y,' in question_data["rendered_text"])
@@ -1643,9 +1663,8 @@ class TestRenderQuestion(TestCase):
         self.q.save()
         process_expressions_from_answers(self.q)
 
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=[])
+        question_data=render_question(self.q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
 
         self.assertTrue(question_data["success"])
         self.assertTrue('n=y,' in question_data["rendered_text"])
@@ -1677,13 +1696,13 @@ class TestRenderQuestion(TestCase):
         identifier="abc"
         answer_code='z'
         response = "x+1"
-        prefilled_answers = []
-        prefilled_answers.append({ 
+        prefilled_responses = []
+        prefilled_responses.append({ 
             'code': 'one',
-            'answer': "" })
-        prefilled_answers.append({ 
+            'response': "" })
+        prefilled_responses.append({ 
             'code': answer_code,
-            'answer': response })
+            'response': response })
 
         self.q.questionansweroption_set.create(answer_code=answer_code, 
                                                answer="n")
@@ -1698,9 +1717,14 @@ class TestRenderQuestion(TestCase):
         from midocs.functions import return_new_auxiliary_data
         auxiliary_data = return_new_auxiliary_data()
 
-        question_data=render_question(self.q, rng=self.rng, 
+        class ResponseObject(object):
+            pass
+        response=ResponseObject()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict = {'question': self.q, 'response': response}
+
+        question_data=render_question(new_q_dict, rng=self.rng, 
                                       question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers,
                                       auxiliary_data=auxiliary_data)
 
         self.assertTrue(question_data["success"])
@@ -1724,18 +1748,23 @@ class TestRenderQuestion(TestCase):
             answer_code=answer_code, answer="steak",
             answer_type=QuestionAnswerOption.MULTIPLE_CHOICE)
 
-        prefilled_answers = []
-        prefilled_answers.append({ 
+        prefilled_responses = []
+        prefilled_responses.append({ 
             'code': answer_code,
-            'answer': str(option3.id) })
+            'response': str(option3.id) })
 
         self.q.question_text = "{% answer '" + answer_code + "' assign_to_expression='apple' %}, apple={{apple}}"
         self.q.save()
         process_expressions_from_answers(self.q)
 
-        question_data=render_question(self.q, rng=self.rng, 
-                                      question_identifier=identifier,
-                                      prefilled_answers=prefilled_answers)
+        class ResponseObject(object):
+            pass
+        response=ResponseObject()
+        response.response = json.dumps(prefilled_responses)
+        new_q_dict = {'question': self.q, 'response': response}
+
+        question_data=render_question(new_q_dict, rng=self.rng, 
+                                      question_identifier=identifier)
 
         self.assertTrue(question_data["success"])
         self.assertTrue('apple=steak' in question_data["rendered_text"])
@@ -1748,34 +1777,48 @@ class TestShowSolutionButton(TestCase):
         self.rng = random.Random()
         self.rng.seed()
         qt = QuestionType.objects.create(name="question type")
-        self.qs=[[],[],[]]
+        self.q_dicts=[[],[],[]]
         for i in range(3):
             for j in range(3):
-                self.qs[i].append(Question.objects.create(
-                    name="question",
-                    question_type = qt,
-                    question_privacy = i,
-                    solution_privacy = j,
-                    solution_text="solution",
-                    course=self.course,
-                ))
+                self.q_dicts[i].append(
+                    {'question': Question.objects.create(
+                        name="question",
+                        question_type = qt,
+                        question_privacy = i,
+                        solution_privacy = j,
+                        solution_text="solution",
+                        course=self.course)
+                })
 
         self.users = [AnonymousUser()]
 
-        u=User.objects.create_user("user", password="pass")
+
+        username = "student"
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser)
         self.users.append(u)
 
-        u=User.objects.create_user("instructor", password="pass")
-        p=Permission.objects.get(codename = "administer_assessment")
-        u.user_permissions.add(p)
+        username = "instructor"
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                           role=INSTRUCTOR_ROLE)
         self.users.append(u)
+
+        username = "designer"
+        u=User.objects.create_user(username, password="pass")
+        self.course.courseenrollment_set.create(student=u.courseuser,
+                                           role=DESIGNER_ROLE)
+        self.users.append(u)
+
             
     def test_show_solution_button(self):
         for iq in range(3):
             for jq in range(3):
-                for iu in range(3):
+                for iu in range(4):
+                    
                     question_data = render_question(
-                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
+                        self.q_dicts[iq][jq], rng=self.rng, 
+                        question_identifier="q",
                         user=self.users[iu], allow_solution_buttons=True)
                                                     
                     if iu >= jq:
@@ -1786,14 +1829,16 @@ class TestShowSolutionButton(TestCase):
                                 'show_solution_button',False))
 
                     question_data = render_question(
-                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
+                        self.q_dicts[iq][jq], rng=self.rng, 
+                        question_identifier="q",
                         user=self.users[iu], allow_solution_buttons=False)
                     
                     self.assertFalse(question_data.get(
                             'show_solution_button',False))
 
                     question_data = render_question(
-                        self.qs[iq][jq], rng=self.rng, question_identifier="q",
+                        self.q_dicts[iq][jq], rng=self.rng, 
+                        question_identifier="q",
                         user=self.users[iu])
                     
                     self.assertFalse(question_data.get(
@@ -1821,7 +1866,8 @@ class TestShowSolutionButton(TestCase):
                 for ia in range(3):
 
                     question_data = render_question(
-                        self.qs[0][jq], rng=self.rng, question_identifier="q",
+                        self.q_dicts[0][jq], rng=self.rng, 
+                        question_identifier="q",
                         user=self.users[iu], 
                         assessment=asmts[ia],
                         allow_solution_buttons=True)
@@ -1832,479 +1878,3 @@ class TestShowSolutionButton(TestCase):
                     else:
                         self.assertFalse(question_data.get(
                                 'show_solution_button',False))
-
-
-class TestGetQuestionList(TestCase):
-
-    def setUp(self):
-        self.rng = random.Random()
-        self.rng.seed()
-
-        self.course = Course.objects.create(name="course", code="course")
-        
-        self.qt = QuestionType.objects.create(name="question type")
-        self.q1  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            course=self.course,
-            )
-        self.q2  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            course=self.course,
-            )
-        self.q3  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            course=self.course,
-            )
-
-        self.q4  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            course=self.course,
-            )
-
-        self.at = AssessmentType.objects.create(
-            code="a", name="a", assessment_privacy=0, solution_privacy=0)
-
-        self.asmt = Assessment.objects.create(
-            code="the_test", name="The test", assessment_type=self.at,
-            course=self.course)
-        
-        self.qsa1=self.asmt.questionassigned_set.create(question=self.q1)
-        self.qsa2=self.asmt.questionassigned_set.create(question=self.q2)
-        self.qsa3=self.asmt.questionassigned_set.create(question=self.q3)
-        self.qsa4=self.asmt.questionassigned_set.create(question=self.q4)
-
-    
-    def test_one_question_per_question_set(self):
-        
-        for i in range(10):
-            question_list = get_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            self.assertEqual(questions, [self.q1, self.q2, self.q3, self.q4])
-            
-            question_sets = [ql['question_set'] for ql in question_list]
-            self.assertEqual(question_sets, [1,2,3,4])
-            
-            points = [ql['points'] for ql in question_list]
-            self.assertEqual(points,["","","",""])
-
-            for ql in question_list:
-                seed = ql['seed']
-                self.assertTrue(int(seed) >= 0)
-                self.assertTrue(int(seed) <= 1000000000000)
-
-
-    def test_multiple_questions_per_question_set(self):
-        self.qsa1.question_set=2
-        self.qsa1.save()
-        self.qsa3.question_set=4
-        self.qsa3.save()
-
-        valid_options = [[self.q1,self.q3],[self.q1,self.q4],[self.q2,self.q3],[self.q2,self.q4]]
-
-        options_used = [False, False, False, False]
-
-        for i in range(100):
-            question_list = get_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            self.assertTrue(questions in valid_options)
-
-            one_used = valid_options.index(questions)
-            options_used[one_used]=True
-            
-            if False not in options_used:
-                break
-
-        self.assertTrue(False not in options_used)
-
-
-        self.qsa1.question_set=4
-        self.qsa1.save()
-
-        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q2,self.q4]]
-
-        options_used = [False, False, False]
-
-        for i in range(100):
-            question_list = get_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            self.assertTrue(questions in valid_options)
-
-            one_used = valid_options.index(questions)
-            options_used[one_used]=True
-            
-            if False not in options_used:
-                break
-
-        self.assertTrue(False not in options_used)
-
-
-    def test_with_points(self):
-        
-        self.qsa1.question_set=3
-        self.qsa1.save()
-        self.qsa4.question_set=2
-        self.qsa4.save()
-
-        self.asmt.questionsetdetail_set.create(question_set=3,
-                                               points = 5)
-        self.asmt.questionsetdetail_set.create(question_set=2,
-                                               points = 7.3)
-
-        
-        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q4,self.q1],[self.q4,self.q3]]
-
-        options_used = [False, False, False, False]
-
-        for i in range(100):
-            question_list = get_question_list(self.asmt, rng=self.rng)
-            
-            points = [ql['points'] for ql in question_list]
-            self.assertEqual(points, [7.3,5])
-
-            questions = [ql['question'] for ql in question_list]
-            self.assertTrue(questions in valid_options)
-
-            one_used = valid_options.index(questions)
-            options_used[one_used]=True
-            
-            if False not in options_used:
-                break
-
-        self.assertTrue(False not in options_used)
-
-
-class TestRenderQuestionList(TestCase):
-    
-    def setUp(self):
-        self.rng = random.Random()
-        self.rng.seed()
-   
-        self.course = Course.objects.create(name="Course", code="course")
-
-        self.qt = QuestionType.objects.create(name="question type")
-        self.q1  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            question_privacy = 0,
-            solution_privacy = 0,
-            question_text = "Question number 1 text.",
-            solution_text = "Question number 1 solution.",
-            course=self.course
-            )
-        self.q2  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            question_privacy = 0,
-            solution_privacy = 0,
-            question_text = "Question number 2 text.",
-            solution_text = "Question number 2 solution.",
-            course=self.course,
-            )
-        self.q3  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            question_privacy = 0,
-            solution_privacy = 0,
-            question_text = "Question number 3 text.",
-            solution_text = "Question number 3 solution.",
-            course=self.course,
-            )
-
-        self.q4  = Question.objects.create(
-            name="a question",
-            question_type = self.qt,
-            question_privacy = 0,
-            solution_privacy = 0,
-            question_text = "Question number 4 text.",
-            solution_text = "Question number 4 solution.",
-            course=self.course,
-            )
-
-
-        self.at = AssessmentType.objects.create(
-            code="a", name="a", assessment_privacy=0, solution_privacy=0)
-
-        self.asmt = Assessment.objects.create(
-            code="the_test", name="The test", assessment_type=self.at,
-            course=self.course)
-        
-        self.qsa1=self.asmt.questionassigned_set.create(question=self.q1)
-        self.qsa2=self.asmt.questionassigned_set.create(question=self.q2)
-        self.qsa3=self.asmt.questionassigned_set.create(question=self.q3)
-        self.qsa4=self.asmt.questionassigned_set.create(question=self.q4)
-
-
-    def test_no_question_groups_all_orders(self):
-        self.qsa4.delete()
-        
-        qs = [self.q1, self.q2, self.q3, self.q4]
-        valid_orders = []
-        orders_used = []
-        for i in range(3):
-            for j in range(3):
-                if i==j:
-                    continue
-                for k in range(3):
-                    if k==i or k==j:
-                        continue
-                    valid_orders.append([qs[i], qs[j], qs[k]])
-                    orders_used.append(False)
-
-        for i in range(200):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            for question_dict in question_list:
-                self.assertEqual(question_dict['points'],"")
-                self.assertFalse(question_dict['previous_same_group'])
-            questions = [ql['question'] for ql in question_list]
-            self.assertTrue(questions in valid_orders)
-            one_used = valid_orders.index(questions)
-            orders_used[one_used]=True
-            
-            if False not in orders_used:
-                break
-
-        self.assertTrue(False not in orders_used)
-
-
-    def test_no_question_groups_fixed_order(self):
-        self.asmt.fixed_order=True
-        self.asmt.save()
-
-        qs = [self.q1, self.q2, self.q3, self.q4]
-        for j in range(10):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            for (i,question_dict) in enumerate(question_list):
-                self.assertEqual(question_dict['question'], qs[i])
-                self.assertEqual(question_dict['question_set'], i+1)
-                self.assertEqual(question_dict['points'],"")
-                qseed = int(question_dict['seed'])
-                self.assertTrue(qseed >= 0 and qseed < 100000000000)
-                self.assertEqual(question_dict['group'],"")
-                self.assertEqual(
-                    question_dict['question_data']['rendered_text'],
-                    "Question number %s text." % (i+1))
-                self.assertFalse(question_dict['previous_same_group'])
-
-
-    def test_groups_random_order(self):
-        self.asmt.questionsetdetail_set.create(question_set=1,
-                                               group="apple")
-        self.asmt.questionsetdetail_set.create(question_set=4,
-                                               group="apple")
-        qs = [self.q1, self.q2, self.q3, self.q4]
-        for j in range(10):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            hit_first_group_member=False
-            expected_next_group_member=None
-            for (i,question_dict) in enumerate(question_list):
-                if hit_first_group_member:
-                    self.assertTrue(question_dict['previous_same_group'])
-                    self.assertEqual(question_dict['group'],'apple')
-                    self.assertEqual(qs.index(question_dict['question'])+1, 
-                                     expected_next_group_member)
-                    hit_first_group_member = False
-                        
-                else:
-                    self.assertFalse(question_dict['previous_same_group'])
-                    if question_dict['group'] == 'apple':
-                        hit_first_group_member = True
-                        if qs.index(question_dict['question']) == 0:
-                            expected_next_group_member = 4
-                        else:
-                            expected_next_group_member = 1
-
-                self.assertEqual(
-                    question_dict['question_data']['rendered_text'],
-                    "Question number %i text." % (qs.index(question_dict['question'])+1))
-
-
-        self.asmt.questionsetdetail_set.create(question_set=2,
-                                               group="appl")
-        self.asmt.questionsetdetail_set.create(question_set=3,
-                                               group="appl")
-
-        for j in range(10):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            hit_first_group_member=False
-            expected_next_group_member=None
-            for (i,question_dict) in enumerate(question_list):
-                if hit_first_group_member:
-                    self.assertTrue(question_dict['previous_same_group'])
-                    self.assertEqual(question_dict['group'],group_found)
-                    self.assertEqual(qs.index(question_dict['question'])+1, 
-                                     expected_next_group_member)
-                    hit_first_group_member = False
-                        
-                else:
-                    self.assertFalse(question_dict['previous_same_group'])
-                    group_found = question_dict['group']
-                    if group_found == 'apple':
-                        hit_first_group_member = True
-                        if qs.index(question_dict['question']) == 0:
-                            expected_next_group_member = 4
-                        else:
-                            expected_next_group_member = 1
-                    elif group_found == 'appl':
-                        hit_first_group_member = True
-                        if qs.index(question_dict['question']) == 1:
-                            expected_next_group_member = 3
-                        else:
-                            expected_next_group_member = 2
-                        
-                self.assertEqual(
-                    question_dict['question_data']['rendered_text'],
-                    "Question number %s text." % (qs.index(question_dict['question'])+1))
-
-
-
-    def test_groups_fixed_order(self):
-        self.asmt.fixed_order=True
-        self.asmt.save()
-
-        self.asmt.questionsetdetail_set.create(question_set=1,
-                                               group="apple")
-        self.asmt.questionsetdetail_set.create(question_set=4,
-                                               group="apple")
-        for i in range(3):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
-            psg = [ql['previous_same_group'] for ql in question_list]
-            self.assertEqual(psg, [False,False,False,False])
-            groups = [ql['group'] for ql in question_list]
-            self.assertEqual(groups[0], "apple")
-            self.assertEqual(groups[3], "apple")
-
-
-        self.asmt.questionsetdetail_set.create(question_set=2,
-                                               group="appl")
-        self.asmt.questionsetdetail_set.create(question_set=3,
-                                               group="appl")
-
-        for i in range(3):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            self.assertEqual(questions, [self.q1,self.q2,self.q3,self.q4])
-            psg = [ql['previous_same_group'] for ql in question_list]
-            self.assertEqual(psg, [False,False,True,False])
-            groups = [ql['group'] for ql in question_list]
-            self.assertEqual(groups, ["apple", "appl", "appl", "apple"])
-
-
-    def test_multiple_in_question_set(self):
-        
-        self.qsa1.question_set=3
-        self.qsa1.save()
-        self.qsa2.question_set=7
-        self.qsa2.save()
-        self.qsa3.question_set=3
-        self.qsa3.save()
-        self.qsa4.question_set=7
-        self.qsa4.save()
-        
-        valid_options=[[self.q1,self.q2],[self.q2,self.q1],[self.q1,self.q4],[self.q4,self.q1],
-                       [self.q3,self.q2],[self.q2,self.q3],[self.q3,self.q4],[self.q4,self.q3]]
-
-        options_used = [False, False, False, False,
-                        False, False, False, False]
-
-        for j in range(200):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-            questions = [ql['question'] for ql in question_list]
-            
-            self.assertTrue(questions in valid_options)
-            
-            one_used = valid_options.index(questions)
-            options_used[one_used]=True
-            
-            if False not in options_used:
-                break
-
-        self.assertTrue(False not in options_used)
-    
-
-
-    def test_points(self):
-        self.assertEqual(self.asmt.get_total_points(),0)
-        question_list, seed = render_question_list(self.asmt, rng=self.rng)
-        
-        points = [ql['points'] for ql in question_list]
-        self.assertEqual(points,["","","",""])
-
-        self.asmt.questionsetdetail_set.create(question_set=3,
-                                               points = 5)
-        self.assertEqual(self.asmt.get_total_points(),5)
-        
-        self.qsa1.question_set=3
-        self.qsa1.save()
-        self.qsa4.question_set=2
-        self.qsa4.save()
-
-        self.asmt.questionsetdetail_set.create(question_set=2,
-                                               points = 7.3)
-
-        
-        valid_options = [[self.q2,self.q1],[self.q2,self.q3],[self.q4,self.q1],[self.q4,self.q3],
-                         [self.q1,self.q2],[self.q3,self.q2],[self.q1,self.q4],[self.q3,self.q4]]
-
-        options_used = [False, False, False, False,
-                        False, False, False, False]
-
-        self.assertEqual(self.asmt.get_total_points(),12.3)
-
-        for i in range(100):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng)
-
-            points = [ql['points'] for ql in question_list]
-            qs1 = question_list[0]['question_set']
-            if qs1 == 3:
-                self.assertEqual(points, [5,7.3])
-            else:
-                self.assertEqual(points, [7.3,5])
-
-            questions = [ql['question'] for ql in question_list]
-            self.assertTrue(questions in valid_options)
-
-            one_used = valid_options.index(questions)
-            options_used[one_used]=True
-            
-            if False not in options_used:
-                break
-
-        self.assertTrue(False not in options_used)
-
-
-    def test_solution(self):
-        
-        self.qsa1.question_set=3
-        self.qsa1.save()
-        self.qsa2.question_set=7
-        self.qsa2.save()
-        self.qsa3.question_set=3
-        self.qsa3.save()
-        self.qsa4.question_set=7
-        self.qsa4.save()
-        
-        valid_options=[[self.q1,self.q2],[self.q2,self.q1],[self.q1,self.q4],[self.q4,self.q1],
-                       [self.q3,self.q2],[self.q2,self.q3],[self.q3,self.q4],[self.q4,self.q3]]
-
-
-        qs = [self.q1, self.q2, self.q3, self.q4]
-
-        for j in range(3):
-            question_list, seed = render_question_list(self.asmt, rng=self.rng,
-                                                       solution=True)
-            questions = [ql['question'] for ql in question_list]
-
-            self.assertTrue(questions in valid_options)
-            
-            for (i,question_dict) in enumerate(question_list):
-                self.assertEqual(
-                    question_dict['question_data']['rendered_text'],
-                    "Question number %i solution."
-                    % (qs.index(question_dict['question'])+1))
-            

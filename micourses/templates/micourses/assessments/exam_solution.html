@@ -1,4 +1,4 @@
-{% extends "micourses/assessments/assessment_base.html" %}
+{% extends "micourses/assessments/assessment.html" %}
 {% load question_tags %}
 
 {% block extrastyle2 %}
@@ -6,18 +6,14 @@
 {% endblock %}
 {% block title %}{{ assessment_name }}{{ version_string }} - Math Insight{%endblock%}
 
-{% block content %}
-{% if not success %}
-<section class="error">
-<h4>Errors encountered</h4>
-<p>{{error_message}}</p>
-</section>
-{% endif %}
-
+{% block namesection %}
 <table class="examinfo"><tr><td>{{ course }}</td></tr>
 <tr><td>{{ assessment_name }}{{ version_string }}</td></tr>
 <tr><td>{{ assessment_date }}</td></tr>
 </table>
+{% endblock %}
+
+{% block assessment_main %}
 <section class="exam_main">
 <ol class="exam_solutions">
 {% for solution in rendered_list %}

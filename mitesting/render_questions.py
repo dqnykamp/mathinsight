@@ -202,6 +202,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
             math_expr= Dummy(default_value)
 
             answer_number=expression.answer_number
+
             try:
                 response=user_responses[answer_number-1]
             except (IndexError, TypeError):
@@ -212,14 +213,14 @@ def setup_expression_context(question, rng, seed, user_responses=None,
                        QuestionAnswerOption.MULTIPLE_CHOICE:
                         mc_dict=pickle.loads(base64.b64decode(expression.answer_data))
                         try:
-                            response_text=mc_dict[int(response['answer'])]
+                            response_text=mc_dict[int(response['response'])]
                         except (ValueError, KeyError):
                             response_text=default_value
                         math_expr=Symbol(response_text)
                     else:
                         try:
                             math_expr =  parse_and_process(
-                                response['answer'], 
+                                response['response'], 
                                 local_dict=user_function_dict, 
                                 split_symbols=\
                                 expression.split_symbols_on_compare,
@@ -264,7 +265,6 @@ def setup_expression_context(question, rng, seed, user_responses=None,
                     = evaluate_results['alternate_exprs']
                 alternate_funcs[expression.name] \
                     = evaluate_results['alternate_funcs']
-
 
     results = {
         'error_in_expressions': error_in_expressions,
@@ -417,6 +417,7 @@ def process_expressions_from_answers(question):
         {'question': question, 'show_help': True,
          'expression_context': update_context,
      })
+
 
 
 def render_question_text(render_data, solution=False):
@@ -745,7 +746,7 @@ def render_question(question_dict, rng, solution=False,
 
     question = question_dict['question']
     question_set = question_dict.get('question_set')
-    seed = question_dict["seed"]
+    seed = question_dict.get("seed")
     question_attempt = question_dict.get("question_attempt")
     response = question_dict.get("response")
 

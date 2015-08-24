@@ -31,7 +31,7 @@ content_attempt_patterns = [
     url(r'^/student_record/(?P<student_id>\d+)/(?P<attempt_number>\w+)/(?P<question_number>\d+)/(?P<response_number>\w+)$',
         QuestionResponseView.as_view(instructor_view=True),
         name='question_response_instructor'),
-    url(r'^/student_record/(?P<student_id>\d+)/change_attempt_score',
+    url(r'^/student_record/(?P<student_id>\d+)/change/score',
         ChangeScore.as_view(),
         name="change_score"),
 ]
