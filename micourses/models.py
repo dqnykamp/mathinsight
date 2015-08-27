@@ -1791,8 +1791,7 @@ class ContentAttempt(models.Model):
 class ContentAttemptQuestionSet(models.Model):
     content_attempt = models.ForeignKey(ContentAttempt,
                                         related_name="question_sets")
-    #remove null
-    question_number = models.SmallIntegerField(blank=True, null=True)
+    question_number = models.SmallIntegerField()
     question_set = models.SmallIntegerField()
 
     credit_override = models.FloatField(blank=True, null=True)
@@ -1933,17 +1932,9 @@ class ContentAttemptQuestionSet(models.Model):
 
 @reversion.register
 class QuestionAttempt(models.Model):
-    # to delete
-    content_attempt = models.ForeignKey(ContentAttempt,
-                                        related_name="question_attempts",
-                                        null=True)
-    question_set = models.SmallIntegerField(null=True)
-
-    # remove null
     content_attempt_question_set = models.ForeignKey(
-        ContentAttemptQuestionSet, related_name="question_attempts",
-        null=True)
-    question = models.ForeignKey('mitesting.Question', null=True)
+        ContentAttemptQuestionSet, related_name="question_attempts")
+    question = models.ForeignKey('mitesting.Question')
     seed = models.CharField(max_length=150)
     random_outcomes = models.TextField(null=True)
     attempt_began = models.DateTimeField(blank=True, default=timezone.now)
@@ -2027,15 +2018,8 @@ class QuestionAttempt(models.Model):
 
 
 class QuestionResponse(models.Model):
-    #to delete
-    question = models.ForeignKey('mitesting.Question', null=True)
-    seed = models.CharField(max_length=150, null=True)
-    question_set = models.SmallIntegerField(null=True)
-    content_attempt = models.ForeignKey(ContentAttempt, null=True)
-
-    # remove null
     question_attempt = models.ForeignKey(QuestionAttempt,
-                                         related_name="responses", null=True)
+                                         related_name="responses")
     response = models.TextField()
     credit = models.FloatField()
     response_submitted =  models.DateTimeField(blank=True, default=timezone.now)
