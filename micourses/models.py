@@ -246,12 +246,7 @@ class CourseGradeCategory(models.Model):
                 self.sort_order = 1
         super(CourseGradeCategory, self).save(*args, **kwargs)
 
-    def save_to_new_course(self, course):
-        new_coursegradecategory = self
-        new_coursegradecategory.pk = None
-        new_coursegradecategory.course = course
-        new_coursegradecategory.save()
-    
+
 
 class AttendanceDate(models.Model):
     course = models.ForeignKey('Course')
@@ -334,31 +329,30 @@ class Course(models.Model):
     # save course as a new course
     # copy course thread content
     # not users
-    # also create new thread
-    def save_as(self, new_code, new_name, new_thread_code, new_thread_name):
-        original_code = self.code
+    def save_as_new(self, code, name):
 
-        thread = self.thread
-        new_thread = thread.save_as(new_thread_code, new_thread_name)
-    
-        new_course = self
-        new_course.pk = None
-        new_course.code = new_code
-        new_course.name = new_name
-        new_course.thread = new_thread
+        from copy import copy
+
+        new_course = copy(self)
+        new_course.id = None
+        
+        new_course.code = code
+        new_course.name = name
         new_course.last_attendance_date = None
+
         new_course.save()
-        
-        original_course = Course.objects.get(code=original_code)
-        
-        for ca_category in original_course.coursegradecategory_set.all():
-            ca_category.save_to_new_course(new_course)
+
+        for cgc in self.coursegradecategory_set.all():
+            cgc.id = None
+            cgc.course = new_course
+            cgc.save()
 
 
-        for course_thread_content in \
-            original_course.thread_contents.all():
-            
-            course_thread_content.save_to_new_course(new_course, new_thread)
+        for section in self.thread_sections.all():
+            section.save_as_new(course=new_course)
+
+        return new_course
+
             
             
     def shift_dates(self, n_days):
@@ -380,7 +374,7 @@ class Course(models.Model):
                     tc.initial_due += timeshift
                 if tc.final_due:
                     tc.final_due += timeshift
-                if tc.assigned_data or tc.initial_due or tc.final_due:
+                if tc.assigned or tc.initial_due or tc.final_due:
                     tc.save()
 
     def enrolled_students_ordered(self, active_only=True, section=None):
@@ -1058,6 +1052,34 @@ class ThreadSection(models.Model):
             self.deleted=True
             self.save()
 
+    def save_as_new(self, course=None, parent=None):
+        """
+        Save to a new thread section with new course or parent.
+
+        Then save all child sections as new sections.
+        Does this recursively and doesn't check for infinite loops.
+
+        Saves all thread content as new content.
+
+        """
+        from copy import copy
+
+        new_section = copy(self)
+        new_section.id = None
+        
+        new_section.course = course
+        new_section.parent = parent
+
+        new_section.save()
+
+        for section in self.child_sections.all():
+            section.save_as_new(parent=new_section)
+
+        for content in self.thread_contents.all():
+            content.save_as_new(section=new_section)
+
+        return new_section
+    
 
 @reversion.register
 class ThreadContent(models.Model):
@@ -1245,26 +1267,42 @@ class ThreadContent(models.Model):
         return PAST_DUE
 
 
-    def save_to_new_course(self, course, thread):
-        original_pk = self.pk
+    def save_as_new(self, section):
+        """
+        Save to a new thread content with new parent section.
+        Determine course from section.
 
-        new_content = self
-        new_content.pk = None
-        new_content.course = course
+        For any content objects that are assessments,
+        if assessment for course exists, point to that assessment
+        else save a new copy of the assessment with the course.
 
-        old_thread_content = self.thread_content
-        old_thread_section = old_thread_content.section
-        new_thread_section = thread.thread_sections.get(
-            code = old_thread_section.code)
-        # use filter rather than get, as it is possible to have 
-        # same content_object appear multiple times
-        # in that case, just take first one
-        new_thread_content = new_thread_section.thread_contents.filter(
-            content_type = old_thread_content.content_type,
-            object_id = old_thread_content.object_id)[0]
-        new_content.thread_content = new_thread_content
+        """
+        from copy import copy
+
+        new_content = copy(self)
+        new_content.id = None
+        
+        new_content.section = section
+        new_content.course = section.get_course()
+        
+        assessment_ct = ContentType.objects.get_for_model(Assessment)
+        if self.content_type == assessment_ct:
+            old_assessment = self.content_object
+            try:
+                # check if the assessment for this course exists already
+                new_assessment = Assessment.objects.get(
+                    course=new_content.course,
+                    code = old_assessment.code)
+            except Assessment.DoesNotExist:
+                # if not, create a new copy
+                new_assessment = old_assessment.save_as_new(
+                    course=new_content.course)
+            new_content.object_id = new_assessment.id
+
         new_content.save()
 
+        return new_content
+        
 
     def student_score(self, student):
         try:
