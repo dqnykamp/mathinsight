@@ -193,7 +193,7 @@ class CourseView(CourseBaseView):
         context['end_date']=end_date
 
 
-        context["upcoming_content"] = self.course.course_content_by_adjusted_due \
+        context["upcoming_content"] = self.course.content_by_date \
             (self.courseuser, begin_date=begin_date, \
                  end_date=end_date)
 
@@ -506,7 +506,7 @@ class ContentRecordView(CourseBaseView):
             new_course_attempt_list=None
 
         return {'adjusted_due': self.thread_content\
-                    .adjusted_due(self.student),
+                    .get_adjusted_due(self.student),
                 'attempts': attempt_list,
                 'score': score,
                 'score_text': score_text,
@@ -1286,104 +1286,86 @@ class QuestionResponseView(QuestionAttemptsView):
             return ['micourses/question_response_student.html',]
 
 
-@login_required
-def content_list_view(request):
-    courseuser = request.user.courseuser
+class ContentListView(CourseBaseView):
+    template_name='micourses/content_list.html'
 
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
+    def get_context_data(self, **kwargs):
+        context = super(ContentListView, self).get_context_data(**kwargs)
 
-    # no Google analytics for course
-    noanalytics=True
-
-    # find begining/end of week
-    tz = pytz.timezone(course.attendance_time_zone)
-    now = tz.normalize(timezone.now().astimezone(tz))
-    day_of_week = (now.weekday()+1) % 7
-    to_beginning_of_week = timezone.timedelta(
-        days=day_of_week, hours=now.hour,
-        minutes=now.minute, seconds=now.second, microseconds=now.microsecond
-    )
-    beginning_of_week = now - to_beginning_of_week
-    end_of_week = beginning_of_week + timezone.timedelta(days=7) \
-                  - timezone.timedelta(microseconds=1)
-    week_date_parameters = "begin_date=%s&end_date=%s" \
-        % (beginning_of_week, end_of_week)
+        # find begining/end of week
+        tz = pytz.timezone(self.course.attendance_time_zone)
+        now = tz.normalize(timezone.now().astimezone(tz))
+        day_of_week = (now.weekday()+1) % 7
+        to_beginning_of_week = timezone.timedelta(
+            days=day_of_week, hours=now.hour,
+            minutes=now.minute, seconds=now.second, microseconds=now.microsecond
+        )
+        beginning_of_week = now - to_beginning_of_week
+        end_of_week = beginning_of_week + timezone.timedelta(days=7) \
+                      - timezone.timedelta(microseconds=1)
+        context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
+            % (beginning_of_week, end_of_week)
 
 
-    exclude_completed='exclude_completed' in request.GET
-    exclude_past_due='exclude_past_due' in request.GET
-    try:
-        begin_date = datetime.datetime.strptime(request.GET.get('begin_date'),"%Y-%m-%d").date()
-    except:
-        begin_date = None
-    try:
-        end_date = datetime.datetime.strptime(request.GET.get('end_date'),"%Y-%m-%d").date()
-    except:
-        end_date = None
+        exclude_completed='exclude_completed' in self.request.GET
+        exclude_past_due='exclude_past_due' in self.request.GET
 
-    content_list = course.course_content_by_adjusted_due\
-        (courseuser, exclude_completed=exclude_completed, \
-             begin_date=begin_date, end_date=end_date)
+        try:
+            begin_date = datetime.datetime.strptime(self.request.GET.get('begin_date'),"%Y-%m-%d").date()
+        except:
+            begin_date = None
+        try:
+            end_date = datetime.datetime.strptime(self.request.GET.get('end_date'),"%Y-%m-%d").date()
+        except:
+            end_date = None
 
-    if begin_date and end_date:
-        next_begin_date = end_date + timezone.timedelta(1)
-        next_end_date = next_begin_date+(end_date-begin_date)
-        next_period_parameters = "begin_date=%s&end_date=%s" \
-            % (next_begin_date, next_end_date)
-        previous_end_date = begin_date - timezone.timedelta(1)
-        previous_begin_date = previous_end_date+(begin_date-end_date)
-        previous_period_parameters = "begin_date=%s&end_date=%s" \
-            % (previous_begin_date, previous_end_date)
+        context['begin_date'] = begin_date
+        context['end_date'] = end_date
+        context['content_list'] = self.course.content_by_date\
+            (self.courseuser, exclude_completed=exclude_completed, \
+                 begin_date=begin_date, end_date=end_date)
+
+        if begin_date and end_date:
+            next_begin_date = end_date + timezone.timedelta(1)
+            next_end_date = next_begin_date+(end_date-begin_date)
+            next_period_parameters = "begin_date=%s&end_date=%s" \
+                % (next_begin_date, next_end_date)
+            previous_end_date = begin_date - timezone.timedelta(1)
+            previous_begin_date = previous_end_date+(begin_date-end_date)
+            previous_period_parameters = "begin_date=%s&end_date=%s" \
+                % (previous_begin_date, previous_end_date)
+            if exclude_completed:
+                previous_period_parameters += "&exclude_completed"
+                next_period_parameters += "&exclude_completed"
+        else:
+            previous_period_parameters=None
+            next_period_parameters=None
+
+        all_dates_parameters = ""
         if exclude_completed:
-            previous_period_parameters += "&exclude_completed"
-            next_period_parameters += "&exclude_completed"
-    else:
-        previous_period_parameters=None
-        next_period_parameters=None
+            all_dates_parameters = "exclude_completed"
 
-    all_dates_parameters = ""
-    if exclude_completed:
-        all_dates_parameters = "exclude_completed"
+        date_parameters=""
+        if begin_date:
+            date_parameters += "begin_date=%s" % begin_date
+        if end_date:
+            if date_parameters:
+                date_parameters += "&"
+            date_parameters += "end_date=%s" % end_date
 
-    date_parameters=""
-    if begin_date:
-        date_parameters += "begin_date=%s" % begin_date
-    if end_date:
+        exclude_completed_parameters="exclude_completed"
         if date_parameters:
-            date_parameters += "&"
-        date_parameters += "end_date=%s" % end_date
+            exclude_completed_parameters += "&" + date_parameters
 
-    exclude_completed_parameters="exclude_completed"
-    if date_parameters:
-        exclude_completed_parameters += "&" + date_parameters
-    
-    return render_to_response \
-        ('micourses/content_list.html', 
-         {'student': courseuser,
-          'courseuser': courseuser,
-          'course': course,
-          'content_list': content_list,
-          'exclude_completed': exclude_completed,
-          'week_date_parameters': week_date_parameters,
-          'begin_date': begin_date, 'end_date': end_date,
-          'previous_period_parameters': previous_period_parameters,
-          'next_period_parameters': next_period_parameters,
-          'exclude_completed_parameters': exclude_completed_parameters,
-          'include_completed_parameters': date_parameters,
-          'all_dates_parameters': all_dates_parameters,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
+        context['exclude_completed']=exclude_completed
 
+        context['previous_period_parameters']=previous_period_parameters
+        context['next_period_parameters']=next_period_parameters
+        context['exclude_completed_parameters']=exclude_completed_parameters
+        context['include_completed_parameters']=date_parameters
+        context['all_dates_parameters']=all_dates_parameters
+        
+        return context
 
 
 @user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)

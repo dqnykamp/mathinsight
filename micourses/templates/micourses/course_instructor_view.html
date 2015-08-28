@@ -28,15 +28,16 @@
 
 <h4>Due dates in the coming weeks</h4>
 <p>From {{begin_date}} through {{end_date}}
-(<a href="{% url 'micourses:contentlist' %}?{{previous_period_parameters}}">previous week</a>) (<a href="{% url 'micourses:contentlist' %}?{{next_period_parameters}}">next week</a>) (<a href="{% url 'micourses:contentlist' %}?exclude_completed">all</a>)
+(<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{previous_period_parameters}}">previous week</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{next_period_parameters}}">next week</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?exclude_completed">all</a>)
 </p>
-<p>Excluding items marked as completed (<a href="{% url 'micourses:contentlist' %}?{{include_completed_parameters}}">include</a>)</p>
+<p>Excluding items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{include_completed_parameters}}">include</a>)</p>
 
 <table class="basic">
-<tr><th>Material</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
-{% for content in upcoming_content %}
-<tr><td>{% intlink content.1.content_object %}{%endintlink%}</td><td>{% get_initial_due content.1 student as idd %}{{idd}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjustedduedatecalculation' content.1.id %}'>{{content.0}}</a></td>{%endif%}<td>{% if content.1.total_points %}<a href='{% url 'micourses:assessmentattempted' content.1.id %}'>{% assessment_student_score content.1 student %}</a>{% else %}NA{% endif %}</td></tr>
-{% endfor %}
+<tr><th>Material</th><th>Comment</th><th>Assigned</th><th>{% if course.adjust_due_attendance %}Adjusted due{%else%}Due{%endif%}</th><th>Score</th></tr>
+{% for content in upcoming_content %}{% with thread_content=content_dict.thread_content %}
+<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{% if course.adjust_due_attendance %}<a href='{% url 'micourses:adjustedduedatecalculation' thread_content.id %}'>{{content_dict.adjusted_due}}</a>{% else %}{{content_dict.initial_due}}{%endif%}</td><td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score}}</a>{% else %}NA{%endif%}</td></tr>
+
+{% endwith %}{% endfor %}
 </table>
 
 

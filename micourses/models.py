@@ -788,14 +788,15 @@ class Course(models.Model):
             .filter(date__gte = start_date).count()
 
 
-    def course_content_by_adjusted_due \
-            (self, student, begin_date=None, end_date=None, \
-                 exclude_completed=True, \
-                 assessments_only=False):
+    def content_by_date(
+            self, student, begin_date=None, end_date=None, 
+            exclude_completed=True,  assessments_only=False,
+            by_assigned=False):
         
-        # create list of course content for student sorted by adjusted due date
+        # create list of course content for student
+        # sorted by adjusted due date or by assigned date
         # if begin_date and/or end_date, then show only those with 
-        # adjusted due date from begin_date until end_date
+        # date from begin_date until end_date
         # if exclude_completed, then exclude those a student marked complete
         # if assessments_only, then show only those with contenttype=assessment
 
@@ -807,10 +808,15 @@ class Course(models.Model):
             content_list = content_list.filter \
                 (thread_content__content_type=assessment_content_type)
     
-        # exclude content without an initial or final due date
+        # if sorting by assigned date, then exclude those without assigned
+        if by_assigned:
+            content_list = content_list.exclude(assigned=None)
+
+        # else, exclude content without an initial or final due date
         # since those cannot have an adjusted due date
-        content_list = content_list.exclude(final_due=None)\
-            .exclude(initial_due=None)
+        else:
+            content_list = content_list.exclude(final_due=None)\
+                                       .exclude(initial_due=None)
 
         if exclude_completed:
             content_list = content_list.exclude \
@@ -819,34 +825,49 @@ class Course(models.Model):
                       contentrecord__complete=True))
 
         # for each of content, calculate adjusted due date
-        adjusted_due_content = []
+        content_with_dates = []
         for coursecontent in content_list:
-            adjusted_due = coursecontent.adjusted_due(student)
-            adjusted_due_content.append((adjusted_due,coursecontent, coursecontent.sort_order))
+            initial_due = coursecontent.get_initial_due(student)
+            adjusted_due = coursecontent.get_adjusted_due(student)
+            assigned = coursecontent.assigned
+            if not assigned:
+                assigned = "--"
+            content_with_dates.append({
+                'assigned': assigned,
+                'initial_due': initial_due,
+                'adjusted_due': adjusted_due,
+                'thread_content': coursecontent, 
+                'sort_order': coursecontent.sort_order,
+                'score': coursecontent.student_score(student),
+            })
 
-        # sort by adjusted due date, then by coursecontent
+        if by_assigned:
+            date_column='assigned'
+        else:
+            date_column='adjusted_due'
+
+        # sort by appropriate date, then by coursecontent
         from operator import itemgetter
-        adjusted_due_content.sort(key=itemgetter(0,2))
+        content_with_dates.sort(key=itemgetter(date_column,'sort_order'))
         
         #remove content outside dates
         if begin_date:
             last_too_early_index=-1
-            for (i, coursecontent) in enumerate(adjusted_due_content):
-                if adjusted_due_content[i][0] < begin_date:
+            for (i, coursecontent) in enumerate(content_with_dates):
+                if content_with_dates[i][date_column] < begin_date:
                     last_too_early_index=i
                 else:
                     break
         
-            adjusted_due_content=adjusted_due_content\
-                [last_too_early_index+1:]
+            content_with_dates=content_with_dates[last_too_early_index+1:]
             
         if end_date:
-            for (i, coursecontent) in enumerate(adjusted_due_content):
-                if adjusted_due_content[i][0] > end_date:
-                    adjusted_due_content=adjusted_due_content[:i]
+            for (i, coursecontent) in enumerate(content_with_dates):
+                if content_with_dates[i][date_column] > end_date:
+                    content_with_dates=content_with_dates[:i]
                     break
 
-        return adjusted_due_content
+        return content_with_dates
 
     def next_items(self, student, number=5):
         # use subqueries with filter rather than exclude
@@ -1101,6 +1122,7 @@ class ThreadContent(models.Model):
 
     substitute_title = models.CharField(max_length=200, blank=True, null=True)
 
+    comment = models.CharField(max_length=100, blank=True, default="")
     instructions = models.TextField(blank=True, null=True)
 
     assigned=models.DateTimeField(blank=True, null=True)
@@ -1260,7 +1282,7 @@ class ThreadContent(models.Model):
             if now < assigned:
                 return NOT_YET_AVAILABLE
 
-        due = self.adjusted_due(student)
+        due = self.get_adjusted_due(student)
         if not due or now <= due:
             return AVAILABLE
 
@@ -1324,7 +1346,7 @@ class ThreadContent(models.Model):
                     'student': student,
                     'attempt': self.get_student_latest_attempt(student),
                     'current_score': self.student_score(student),
-                    'adjusted_due': self.adjusted_due(student),
+                    'adjusted_due': self.get_adjusted_due(student),
                     'number_attempts': self.studentcontentattempt_set.filter(student=student).count(),
                     })
         return latest_attempts
@@ -1370,7 +1392,7 @@ class ThreadContent(models.Model):
         else:
             return self.final_due
 
-    def adjusted_due(self, student=None):
+    def get_adjusted_due(self, student=None):
         # adjust when due in increments of weeks
         # based on percent attendance at end of each previous week
 

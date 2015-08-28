@@ -1,22 +1,29 @@
-{% extends "micourses/course_base.html" %}
+{% extends "base.html" %}
 {% load  mi_tags course_tags  %}
 {% block nolinksection %}{% endblock %}
+{% block extrastyle %}
+<link href="{{ STATIC_URL }}micourses/micourse.css" rel="stylesheet" type="text/css"/>
+<script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
+<script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
+{% block extrastyle2 %}{% endblock %}
+{% endblock %}
+
 {% block title %}Due dates for {{course}}{%endblock%}
 
-{% block content %}
+{% block main_columns %}
 <h3>Due dates for {{course}}</h3>
 
 <p>{% if begin_date and end_date %}From {{begin_date}} through {{end_date}}
-(<a href="{% url 'micourses:contentlist' %}?{{previous_period_parameters}}">previous</a>) (<a href="{% url 'micourses:contentlist' %}?{{next_period_parameters}}">next</a>) (<a href="{% url 'micourses:contentlist' %}?{{all_dates_parameters}}">all</a>) 
-{% else %}{% if begin_date %}From {{begin_date}} (<a href="{% url 'micourses:contentlist' %}?{{all_dates_parameters}}">all</a>){%endif%}{% if end_date %}Through {{end_date}} (<a href="{% url 'micourses:contentlist' %}?{{all_dates_parameters}}">all</a>){%endif%}{%endif%}</p>
-<p>{% if exclude_completed %}Excluding items marked as completed (<a href="{% url 'micourses:contentlist' %}?{{include_completed_parameters}}">include</a>)
-{% else %}Including items marked as completed (<a href="{% url 'micourses:contentlist' %}?{{exclude_completed_parameters}}">exclude</a>){%endif%}
+(<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{previous_period_parameters}}">previous</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{next_period_parameters}}">next</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>) 
+{% else %}{% if begin_date %}From {{begin_date}} (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>){%endif%}{% if end_date %}Through {{end_date}} (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>){%endif%}{%endif%}</p>
+<p>{% if exclude_completed %}Excluding items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{include_completed_parameters}}">include</a>)
+{% else %}Including items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{exclude_completed_parameters}}">exclude</a>){%endif%}
 
 <table class="basic">
-<tr><th>Material</th><th>{% if course.adjust_due_date_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_date_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
-{% for content in content_list %}
-<tr><td>{% intlink content.1.thread_content.content_object %}{%endintlink%}</td><td>{% get_initial_due_date content.1 student as idd %}{{idd}}</td>{% if course.adjust_due_date_attendance %}<td><a href='{% url 'micourses:adjustedduedatecalculation' content.1.id %}'>{{content.0}}</a></td>{%endif%}<td>{% if content.1.total_points %}<a href='{% url 'micourses:assessmentattempted' content.1.id %}'>{% assessment_student_score content.1 student %}</a>{% else %}NA{%endif%}</td></tr>
-{% endfor %}
+<tr><th>Material</th><th>Comment</th><th>Assigned</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
+{% for content_dict in content_list %}{% with thread_content=content_dict.thread_content %}
+<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{{content_dict.initial_due}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjustedduedatecalculation' thread_content.id %}'>{{content_dict.adjusted_due}}</a></td>{%endif%}<td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score}}</a>{% else %}NA{%endif%}</td></tr>
+{% endwith %}{% endfor %}
 </table>
 
 

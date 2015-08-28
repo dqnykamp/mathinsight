@@ -64,7 +64,7 @@ def thread_content_form_factory(the_content_type=None, update_options_command=""
 
         class Meta:
             model=ThreadContent
-            fields = ('content_type', 'object_id', 'substitute_title', 'assigned', 'initial_due', 'final_due', 'grade_category', 'points', 'individualize_by_student', 'attempt_aggregation', 'optional', 'available_before_assigned', 'record_scores')
+            fields = ('content_type', 'object_id', 'substitute_title', 'comment', 'assigned', 'initial_due', 'final_due', 'grade_category', 'points', 'individualize_by_student', 'attempt_aggregation', 'optional', 'available_before_assigned', 'record_scores')
 
 
     return ThreadContentForm

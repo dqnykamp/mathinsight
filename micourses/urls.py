@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import TemplateView, ListView, DetailView
-from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditAssessmentAttempt, RecordContentCompletion
+from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditAssessmentAttempt, RecordContentCompletion, ContentListView
 from micourses import views
 from micourses.models import Course
 
@@ -46,7 +46,8 @@ urlpatterns = [
                            template_name="micourses/not_enrolled.html"), 
         name='notenrolled'),
     url(r'^record/(?P<course_code>\w+)/(?P<content_id>\d+)', include(content_attempt_patterns)),
-    url(r'^contentlist$',views.content_list_view, name='contentlist'),
+    url(r'^(?P<course_code>\w+)/contentlist$', ContentListView.as_view(),
+        name='contentlist'),
     url(r'^update_attendance$', views.update_attendance_view, name='updateattendance'),
     url(r'^update_individual_attendance$', views.update_individual_attendance_view, name='updateindividualattendance'),
     url(r'^add_excused_absence$', views.add_excused_absence_view, name='addexcusedabsence'),

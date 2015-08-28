@@ -33,15 +33,15 @@ def percent_checked_100(text, arg=0, autoescape=None):
     return mark_safe(escaped_text)
 
 class AssessmentStudentScoreNode(Node):
-    def __init__(self, course_thread_content, student, float_format):
-        self.course_thread_content = course_thread_content
+    def __init__(self, thread_content, student, float_format):
+        self.thread_content = thread_content
         self.student = student
         self.float_format = float_format
     def render(self, context):
-        course_thread_content = self.course_thread_content.resolve(context)
+        thread_content = self.thread_content.resolve(context)
         student = self.student.resolve(context)
         float_format = self.float_format.resolve(context)
-        score = course_thread_content.student_score(student)
+        score = thread_content.student_score(student)
         return floatformat_or_dash(score)
 
 
@@ -50,27 +50,27 @@ def assessment_student_score(parser, token):
     bits = token.split_contents()
     if len(bits) < 3:
         raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
-    course_thread_content = parser.compile_filter(bits[1])
+    thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     float_format = "1"
     if len(bits) > 3:
         float_format = bits[3]
     float_format = parser.compile_filter(float_format)
     
-    return AssessmentStudentScoreNode(course_thread_content, student,
+    return AssessmentStudentScoreNode(thread_content, student,
                                       float_format)
 
 
 class InitialDueDateNode(Node):
-    def __init__(self, course_thread_content, student, asvar):
-        self.course_thread_content = course_thread_content
+    def __init__(self, thread_content, student, asvar):
+        self.thread_content = thread_content
         self.student = student
         self.asvar = asvar
     def render(self, context):
-        course_thread_content = self.course_thread_content.resolve(context)
+        thread_content = self.thread_content.resolve(context)
         student = self.student.resolve(context)
         try:
-            initial_due= course_thread_content.get_initial_due(student)
+            initial_due= thread_content.get_initial_due(student)
         except:
             return ""
 
@@ -86,7 +86,7 @@ def get_initial_due(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
         raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
-    course_thread_content = parser.compile_filter(bits[1])
+    thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     
     if len(bits)==5 and bits[3]=='as':
@@ -94,19 +94,19 @@ def get_initial_due(parser, token):
     else:
         asvar=None
 
-    return InitialDueDateNode(course_thread_content, student, asvar)
+    return InitialDueDateNode(thread_content, student, asvar)
 
 
 class FinalDueDateNode(Node):
-    def __init__(self, course_thread_content, student, asvar):
-        self.course_thread_content = course_thread_content
+    def __init__(self, thread_content, student, asvar):
+        self.thread_content = thread_content
         self.student = student
         self.asvar = asvar
     def render(self, context):
-        course_thread_content = self.course_thread_content.resolve(context)
+        thread_content = self.thread_content.resolve(context)
         student = self.student.resolve(context)
         try:
-            final_due= course_thread_content.get_final_due(student)
+            final_due= thread_content.get_final_due(student)
         except:
             return ""
 
@@ -122,7 +122,7 @@ def get_final_due(parser, token):
     bits = token.split_contents()
     if len(bits) <= 3:
         raise template.TemplateSyntaxError("%r tag requires at least two arguments" % str(bits[0]))
-    course_thread_content = parser.compile_filter(bits[1])
+    thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     
     if len(bits)==5 and bits[3]=='as':
@@ -130,7 +130,7 @@ def get_final_due(parser, token):
     else:
         asvar=None
 
-    return FinalDueDateNode(course_thread_content, student, asvar)
+    return FinalDueDateNode(thread_content, student, asvar)
 
 
 @register.inclusion_tag("micourses/assessments/exam_header.html", takes_context=True)
@@ -166,21 +166,21 @@ def complete_skip_button(parser, token):
     bits = token.split_contents()
     if len(bits) != 3:
         raise template.TemplateSyntaxError("%r tag requires two arguments" % str(bits[0]))
-    course_thread_content = parser.compile_filter(bits[1])
+    thread_content = parser.compile_filter(bits[1])
     student = parser.compile_filter(bits[2])
     
-    return CompleteSkipButtonNode(course_thread_content, student)
+    return CompleteSkipButtonNode(thread_content, student)
 
 
 class CompleteSkipButtonNode(Node):
-    def __init__(self, course_thread_content, student):
-        self.course_thread_content = course_thread_content
+    def __init__(self, thread_content, student):
+        self.thread_content = thread_content
         self.student = student
     def render(self, context):
         return "[Add complete skip button]"
-        # course_thread_content = self.course_thread_content.resolve(context)
+        # thread_content = self.thread_content.resolve(context)
         # student = self.student.resolve(context)
 
-        # return course_thread_content.complete_skip_button_html(student,
+        # return thread_content.complete_skip_button_html(student,
         #                                                        full_html=True)
 
