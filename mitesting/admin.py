@@ -208,9 +208,9 @@ class QuestionDatabaseAdmin(admin.ModelAdmin):
 
 
     def save_related(self, request, form, formsets, change):
-        super(QuestionAdmin, self).save_related(request, form, formsets, change)
+        super(QuestionDatabaseAdmin, self).save_related(request, form, formsets, change)
 
-        from mitesting.render_assessments import process_expressions_from_answers
+        from mitesting.render_questions import process_expressions_from_answers
         process_expressions_from_answers(form.instance)
 
 

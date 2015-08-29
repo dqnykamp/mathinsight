@@ -31,7 +31,7 @@
 <p style="margin-top:2em;">Course wide attempts (<a id="show_deleted" class="edit_link" onclick="toggle_deleted();">show deleted</a><a id="hide_deleted" class="edit_link" onclick="toggle_deleted();"hidden>hide deleted</a>)</p>
 <ul style="margin-top:0em; list-style: none; text-indent: -1.2em;">
 {% for cca_dict in course_content_attempts %}{% with cca=cca_dict.cca %}
-<li id="cca{{cca.id}}" {% if not cca.valid %}class="deleted"{% endif %}><input type="checkbox" name="cca_ids" value="{{cca_dict.cca.id}}"> <a href="{% url 'miassess:assessment' course_code=thread_content.course.code assessment_code=thread_content.content_object.code%}?content_attempt={{cca_dict.cca.id}}">{{thread_content.get_title}}, version {{cca_dict.cca.version_string}}, seed: {{cca_dict.cca.seed}}, date: {{cca_dict.cca.attempt_began}}</a><br/>
+<li id="cca{{cca.id}}" {% if not cca.valid %}class="deleted"{% endif %}><input type="checkbox" name="cca_ids" value="{{cca_dict.cca.id}}"> <a href="{% url 'miassess:assessment' course_code=thread_content.course.code assessment_code=thread_content.content_object.code%}?content_attempt={{cca_dict.cca.id}}">{{thread_content.get_title}}, version {{cca_dict.cca.version}}, seed: {{cca_dict.cca.seed}}, date: {{cca_dict.cca.attempt_began}}</a><br/>
 Question numbers: {{cca_dict.question_numbers}}
 </li> 
 {% endwith %}{% endfor %}

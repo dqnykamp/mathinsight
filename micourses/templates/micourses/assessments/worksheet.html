@@ -6,6 +6,6 @@
 
 {% block namesection %}
 <section class="namesection"><div class="nameblank">{% if course %}{{ course }}<br/>{%endif%}
-Name:<br/>ID #:</div><div class="sectionblank">{% if course_thread_content %}Due date: {% if course_thread_content.adjusted_due_date %} {{course_thread_content.adjusted_due_date}}{% endif %}<br/>{%endif%}Table/group #:<br/>Group members:</div></section>
+Name:<br/>ID #:</div><div class="sectionblank">{% if thread_content %}Due date: {% if thread_content.get_adjusted_due %} {{thread_content.get_adjusted_due}}{% endif %}<br/>{%endif%}Table/group #:<br/>Group members:</div></section>
 {% endblock %}
 

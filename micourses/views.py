@@ -417,7 +417,7 @@ class ContentRecordView(CourseBaseView):
                 n_invalid_attempts +=1
                 attempt_number = "x%s" % n_invalid_attempts
             attempt_dict['attempt'] = attempt
-            attempt_dict['version_string'] = attempt.version_string
+            attempt_dict['version'] = attempt.version
             attempt_dict['score'] = attempt.score
             attempt_dict['score_text'] = score_text
             attempt_dict['score_overridden'] = \
@@ -560,7 +560,7 @@ class ContentRecordView(CourseBaseView):
                         attempt_began=attempt.attempt_began,
                         score_override = new_score,
                         seed=attempt.seed,
-                        valid=True, version_string=attempt.version_string,
+                        valid=True, version=attempt.version,
                         base_attempt=attempt)
                     for qs in attempt.question_sets.all():
                         new_qs = new_attempt.question_sets.create(
@@ -904,7 +904,7 @@ class ContentAttemptView(ContentRecordView):
 
         context['datetime'] = mark_safe('&nbsp;%s&nbsp;' % datetime_text)
 
-        context['version_string'] = self.content_attempt.version_string
+        context['version'] = self.content_attempt.version
         
         if self.instructor_view:
             context['version_url'] = self.content_attempt.return_url()

@@ -136,10 +136,17 @@ class AssessmentView(DetailView):
         if self.solution:
             context['assessment_short_name'] += " sol."
 
-        if self.version_string:
-            context['version_string'] = ', version %s' % self.version_string
+        if self.version:
+            context['version'] =  self.version
+            context['assessment_name_with_version'] = "%s, version %s" % \
+                        (context['assessment_name'], context['version'])
+            context['assessment_short_name_with_version'] = "%s, version %s" % \
+                        (context['assessment_short_name'], context['version'])
         else:
-            context['version_string'] = ''
+            context['version'] = ''
+            context['assessment_name_with_version'] = context['assessment_name']
+            context['assessment_short_name_with_version'] \
+                = context['assessment_short_name']
 
         context['course'] = self.assessment.course
         context['thread_content'] = self.thread_content
@@ -308,7 +315,7 @@ class AssessmentView(DetailView):
         
         Set the following variables that specify the version of assessment:
         self.assessment_seed
-        self.version_string
+        self.version
         self.question_list
 
         question_list is a list of dictionaries with the following info 
@@ -402,7 +409,7 @@ class AssessmentView(DetailView):
         self.course_enrollment=None
         self.thread_content=None
         self.assessment_seed= None
-        self.version_string = ''
+        self.version = ''
         self.current_attempt=None
         self.question_list = []
 
@@ -453,13 +460,13 @@ class AssessmentView(DetailView):
         if not (self.course_enrollment and self.thread_content):
             if self.assessment.single_version:
                 self.assessment_seed='1'
-                self.version_string = ''
+                self.version = ''
             else:
                 if seed is None:
                     self.assessment_seed='1'
                 else:
                     self.assessment_seed=seed
-                self.version_string = str(self.assessment_seed)
+                self.version = str(self.assessment_seed)[-4:]
 
 
             self.question_list = get_question_list(self.assessment, 
@@ -519,7 +526,7 @@ class AssessmentView(DetailView):
 
                     # set assessment seed and version string
                     self.assessment_seed = self.current_attempt.seed
-                    self.version_string = self.current_attempt.version_string
+                    self.version = self.current_attempt.version
 
                     return
                 else:
@@ -533,7 +540,7 @@ class AssessmentView(DetailView):
                 self.question_list = get_question_list(
                     self.assessment, seed=self.assessment_seed,
                     thread_content=self.thread_content)
-                self.version_string=str(seed)
+                self.version=str(seed)
 
                 return
 
@@ -602,7 +609,7 @@ class AssessmentView(DetailView):
                 
                 # set assessment seed and version string
                 self.assessment_seed = latest_attempt.seed
-                self.version_string = latest_attempt.version_string
+                self.version = latest_attempt.version
 
                 return
                 
@@ -618,7 +625,7 @@ class AssessmentView(DetailView):
             self.current_attempt = new_attempt_info['new_attempt']
             self.question_list = new_attempt_info['question_list']
             self.assessment_seed = new_attempt_info['assessment_seed']
-            self.version_string = new_attempt_info['version_string']
+            self.version = new_attempt_info['version']
 
 
 
@@ -723,6 +730,11 @@ class GenerateNewAttempt(SingleObjectMixin, View):
         assessment=thread_content.content_object
         course=thread_content.course
 
+        if thread_content.n_of_object != 1:
+            get_string = "?n=%s" % thread_content.n_of_object
+        else:
+            get_string = ""
+
         # determine if user is enrolled in class
         try:
             enrollment = course.courseenrollment_set.get(
@@ -731,7 +743,8 @@ class GenerateNewAttempt(SingleObjectMixin, View):
             # if not in course, just redirect to the assessment url
             return HttpResponseRedirect(reverse('miassess:assessment',
                             kwargs={'course_code': course.code,
-                                    'assessment_code': assessment.code }))
+                                    'assessment_code': assessment.code })\
+                                        + get_string)
 
         # get or create content record for user
         try:
@@ -754,7 +767,8 @@ class GenerateNewAttempt(SingleObjectMixin, View):
         # redirect to assessment url
         return HttpResponseRedirect(reverse('miassess:assessment', 
                     kwargs={'course_code': course.code,
-                            'assessment_code': assessment.code }))
+                            'assessment_code': assessment.code })\
+                                    + get_string)
 
 
 
@@ -829,7 +843,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
 
         avoid_list= form.cleaned_data['avoid_list']
         seed = form.cleaned_data['seed']
-        version_string = form.cleaned_data['version_description']
+        version = form.cleaned_data['version_description']
 
         if seed == "":
             seed = str(timezone.now())
@@ -875,8 +889,8 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
             new_seed=get_new_seed(seed=seed)
 
 
-        if not version_string:
-            version_string = new_seed[-3:]
+        if not version:
+            version = new_seed[-3:]
 
         try:
             course_record = self.thread_content.contentrecord_set\
@@ -891,7 +905,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
             course_attempt = course_record.attempts\
                                     .create(seed=new_seed, valid=True,
                                             attempt_began = assessment_datetime,
-                                            version_string=version_string)
+                                            version=version)
 
             from micourses.render_assessments import get_question_list
             question_list = get_question_list(

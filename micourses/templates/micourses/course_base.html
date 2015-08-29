@@ -24,7 +24,7 @@
 {%endif%}
 
 {%else%} {% comment %}student view{% endcomment %}
-<a href="{% url 'micourses:contentlist' %}?{{week_date_parameters}}">Due dates by week</a><br/>
+<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{week_date_parameters}}">Due dates by week</a><br/>
 <a href="{% url 'micourses:studentgradebook' %}">Grades</a><br/>
 {% if course.track_attendance %}<a href="{% url 'micourses:attendancedisplay' %}">Attendance record</a><br/>{% endif %}
 {%endif%}

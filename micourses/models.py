@@ -1641,7 +1641,7 @@ class ContentAttempt(models.Model):
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)
-    version_string = models.CharField(max_length=100, default="")
+    version = models.CharField(max_length=100, default="")
 
     # for showing that an attempt is derived off a coursewide attempt
     # (an attempt with record.enrollment=None)

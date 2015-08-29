@@ -54,6 +54,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 </div>
 {% endif %}{% endif %}
 </div>
+
 {% endblock %}
 
 
@@ -88,6 +89,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
   {% else %}
   <form action="{{assessment.get_absolute_url}}" method="get" id="generate_new_sample_form">
     <input type="hidden" name="seed" value="{{ new_seed }}">
+    {% if number_in_thread %}<input type="hidden" name="n" value="{{ number_in_thread }}">{% endif %}
     <input type="submit" value="Generate another sample of the questions" />
   </form>
   {%endif%}
@@ -120,7 +122,8 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 {% endif %}
 {% if question_numbers %}<p>Question numbers: <span id="question_numbers">{{ question_numbers }}</span></p>{% endif %}
 <p>{% if generate_course_attempt_link %}<a href="{% url 'miassess:generate_course_attempt' content_id=thread_content.id %}" id="generate_course_attempt">Generate course-wide attempt</a><br/>
-<small>Current seed: <span id="current_seed">{{seed}}</span></small><br/>
+<small>Current seed: <span id="current_seed">{{seed}}</span><br/>
+Current version: <span id="version">{{version}}</span></small><br/>
 {%endif%}
 {% if show_solution_link %}<a href="{% url 'miassess:assessment_solution' course_code=assessment.course.code assessment_code=assessment.code %}?{{request.GET.urlencode}}" id="show_solution">View solution</a>{%endif%}</p>
 

@@ -23,7 +23,7 @@
 {% endif %}
 <p{% if not content_attempt_valid%} class="invalid"{%endif%}>Attempt {{attempt_number}} on: {{thread_content.get_title}}</br>
 Date and time: {{datetime}}
-{% if version_string %}<br/>Version: <a href="{{version_url}}" class="assessment">{{version_string}}</a>{%endif%}
+{% if version %}<br/>Version: <a href="{{version_url}}" class="assessment">{{version}}</a>{%endif%}
 </p>
 <table class="basic">
 <thead><tr><th>Question</th><th>Points</th><th>Percent</th><th>Score</th><th>Link</th></tr></thead>

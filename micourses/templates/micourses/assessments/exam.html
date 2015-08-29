@@ -7,7 +7,7 @@
     <div class="yma-gbox-left">
       <table class="examinfo"><tr><td>{{ course.short_name }}</td></tr>
 	<tr><td>{{ course.semester }}</td></tr>
-	<tr><td>{{ assessment_name }}{{version_string}}</td></tr>
+	<tr><td>{{ assessment_name_with_version }}</td></tr>
 	<tr><td>{{ assessment_date }}</td></tr>
 	{% if assessment.time_limit%}<tr><td>Time limit: {{ assessment.time_limit }}</td></tr>{%endif %}
       </table>

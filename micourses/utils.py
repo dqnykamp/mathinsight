@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction
 import reversion
 import pytz
+import re
 
 def check_for_student_activity(content):
     """
@@ -126,34 +127,39 @@ def set_n_of_objects(course, content_object):
 def create_new_assessment_attempt(assessment, thread_content, courseuser,
                                   student_record):
 
-    from micourses.models import AVAILABLE
+    from micourses.models import AVAILABLE, NOT_YET_AVAILABLE
     assessment_availability = thread_content.return_availability(
         student=courseuser)
+
+    # treat assessment not set up for recording as not available
+    if not thread_content.record_scores:
+        assessment_availability = NOT_YET_AVAILABLE
 
     valid_attempt=assessment_availability==AVAILABLE
 
     if assessment.single_version:
        seed='1'
-       version_string = ''
+       version = ''
     else:
         if valid_attempt:
             attempt_number = student_record.attempts.filter(valid=True)\
                                                     .count()+1
-            version_string = str(attempt_number)
+            version = str(attempt_number)
         else:
             attempt_number = student_record.attempts.filter(valid=False)\
                                                     .count()+1
-            version_string = "x%s" % attempt_number
+            version = "x%s" % attempt_number
 
         if thread_content.individualize_by_student:
-            version_string = "%s_%s" % \
-                        (courseuser.user.username, version_string)
-        seed = "sd%s_%s" % (thread_content.id, version_string)
+            version = "%s_%s" % \
+                        (courseuser.user.username, version)
+        seed = "sd%s_%s" % (thread_content.id, version)
+        version = re.sub("_", " ", version)
 
     # create the new attempt
     with transaction.atomic(), reversion.create_revision():
         new_attempt = student_record.attempts.create(
-            seed=seed, valid=valid_attempt, version_string=version_string)
+            seed=seed, valid=valid_attempt, version=version)
 
     from micourses.render_assessments import get_question_list
     question_list = get_question_list(assessment, seed=seed,
@@ -170,6 +176,6 @@ def create_new_assessment_attempt(assessment, thread_content, courseuser,
             q_dict["question_attempt"] = qa
 
     return {'new_attempt': new_attempt, 'question_list': question_list,
-            'version_string': version_string, 'assessment_seed': seed,}
+            'version': version, 'assessment_seed': seed,}
             
 

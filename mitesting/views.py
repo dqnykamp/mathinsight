@@ -327,7 +327,7 @@ class GradeQuestionView(SingleObjectMixin, View):
             feedback_message = "Assessment not set up for recording answers.<br/>Answer not recorded."
         elif assessment_availability == PAST_DUE:
             current_tz = timezone.get_current_timezone()
-            due = content.adjusted_due(request.user.courseuser)
+            due = content.get_adjusted_due(request.user.courseuser)
             due = current_tz.normalize(due.astimezone(current_tz))
 
             from micourses.utils import format_datetime
