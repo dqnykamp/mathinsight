@@ -524,7 +524,7 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr("x >= y")
         self.assertEqual(expr, Ge(x,y))
 
-        expr = parse_expr("x=y | x^2 != y")
+        expr = parse_expr("x=y or x^2 != y")
         self.assertEqual(expr,Or(Eq(x,y),Ne(x**2,y)))
         
         expr = parse_expr("(x=1)=(y=2)")
@@ -565,6 +565,23 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(expr), "a > b \geq c \geq x")
         
         
+    def test_conditional_probability_expression(self):
+        from mitesting.customized_commands import conditional_probability_expression
+        from mitesting.sympy_customized import SymbolCallable
+
+        A=Symbol("A")
+        B=Symbol("B")
+        P=SymbolCallable("P")
+
+        expr=parse_expr("A|B")
+        self.assertEqual(expr, conditional_probability_expression(A,B))
+        self.assertEqual(latex(expr), "A ~|~ B")
+
+        expr=parse_expr("P(A|B)", local_dict={'P': P})
+        self.assertEqual(expr, P(conditional_probability_expression(A,B)))
+        self.assertEqual(latex(expr), "P{\\left (A ~|~ B \\right )}")
+
+
     def test_tuple_no_parens(self):
         from mitesting.sympy_customized import TupleNoParen
 

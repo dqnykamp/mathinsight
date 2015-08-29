@@ -539,35 +539,37 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     return expr
     
 
-def replace_boolean_equals_in(s, evaluate=True):
+def replace_cond_boolean_equals_in(s, evaluate=True):
     """
-    Replace and/&, or/|, =, != and "in" contain in s
+    Replace |, and/&, or, =, != and "in" contain in s
     with operators to be parsed by sympy
     
-    1. Replace 
+    1. Replace | (not ||) with __cond_prob__(lhs,rhs)
+
+    2. Replace 
        - and with &
        - or with |
        - in with placeholder symbol
 
-    2. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
+    3. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
     If evaluate=False, add evaluate=False
 
-    3. replace in placeholder with (rhs).contains(lhs),
+    4. replace in placeholder with (rhs).contains(lhs),
     If evaluate=False, add evaluate=False
    
-    4. replace & (not an &&) with __And__(lhs,rhs), 
+    5. replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
 
-    5. if evaluate=False, replace == with __python_Eq__(lhs,rhs)
+    6. if evaluate=False, replace == with __python_Eq__(lhs,rhs)
     and !== with __python__Ne__(lhs,rhs)
     
-    6. replace expressions such as a <= b < c < d
+    7. replace expressions such as a <= b < c < d
     with __Lts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
 
-    6. replace expressions such as a >= b > c > d
+    8. replace expressions such as a >= b > c > d
     with __Gts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
@@ -594,19 +596,34 @@ def replace_boolean_equals_in(s, evaluate=True):
 
     import re
 
-    # replace and/or with &/|
-    s=re.sub(r'\band\b',r'&', s)
-    s=re.sub(r'\bor\b',r'|', s)
-
-    # replace in with __in_op_pl__
-    s=re.sub(r'\bin\b', r'___in_op_pl___', s)
-
 
     #####################################
     # replace commands with two arguments
     #####################################
-    for i in range(7):
+    for i in range(9):
         if i==0:
+            pattern = re.compile('[^\|](\|)[^\|]')
+            len_op=1
+            new_op='__cond_prob__(%s,%s)'
+            reverse_arguments=False
+            replace_rhs_intervals=False
+            # characters captured in pattern to left of operator
+            loffset=1
+            # characters that signal end of expression if not in ()
+            break_chars="|" 
+
+        elif i==1:
+
+            # replace and/or with &/|
+            s=re.sub(r'\band\b',r'&', s)
+            s=re.sub(r'\bor\b',r'|', s)
+
+            # replace in with __in_op_pl__
+            s=re.sub(r'\bin\b', r'___in_op_pl___', s)
+            
+            continue
+            
+        elif i==2:
             pattern = re.compile('[^<>!=](=)[^=]')
             len_op=1
             if evaluate:
@@ -619,7 +636,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
-        elif i==1:
+        elif i==3:
             pattern = re.compile('[^<>!=](!=)[^=]')
             len_op=2
             if evaluate:
@@ -632,7 +649,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
-        elif i==2:
+        elif i==4:
             pattern = re.compile('(___in_op_pl___)')
             len_op=14
             if evaluate:
@@ -645,7 +662,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=0
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
-        elif i==3:
+        elif i==5:
             pattern = re.compile('[^&](&)[^&]')
             len_op=1
             new_op='__And__(%s,%s)'
@@ -655,7 +672,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|" 
-        elif i==4:
+        elif i==6:
             pattern = re.compile('[^\|](\|)[^\|]')
             len_op=1
             new_op='__Or__(%s,%s)'
@@ -665,7 +682,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|" 
-        if i==5:
+        elif i==7:
             if evaluate:
                 continue
             pattern = re.compile('[^<>!=](==)[^=]')
@@ -677,7 +694,7 @@ def replace_boolean_equals_in(s, evaluate=True):
             loffset=1
             # characters that signal end of expression if not in ()
             break_chars=",&|!=<>" 
-        elif i==6:
+        elif i==8:
             if evaluate:
                 continue
             pattern = re.compile('[^<>!=](!==)[^=]')

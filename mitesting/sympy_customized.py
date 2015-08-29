@@ -245,9 +245,9 @@ def parse_expr(s, global_dict=None, local_dict=None,
     #   and/& with __And__(lhs,rhs)
     #    or/| with __Or__(lhs,rhs)
     #     in  with (rhs).contains(lhs)
-    from mitesting.utils import replace_boolean_equals_in, replace_intervals
+    from mitesting.utils import replace_cond_boolean_equals_in, replace_intervals
 
-    s=replace_boolean_equals_in(s, evaluate=evaluate)
+    s=replace_cond_boolean_equals_in(s, evaluate=evaluate)
     s=replace_intervals(s, replace_symmetric=replace_symmetric_intervals)
 
     # map those replace booleans and equals to sympy functions
@@ -258,10 +258,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     new_global_dict['__Or__'] = Or
     new_global_dict['__Interval__'] = Interval
 
-    from mitesting.customized_commands import Gts, Lts
+    from mitesting.customized_commands import Gts, Lts, \
+        conditional_probability_expression
     new_global_dict['__Lts__'] = Lts
     new_global_dict['__Gts__'] = Gts
-
+    new_global_dict['__cond_prob__'] = conditional_probability_expression
 
     if not evaluate:
         from mitesting.customized_commands import python_equal_uneval,\

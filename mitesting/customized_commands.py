@@ -561,3 +561,15 @@ class subscript_symbol(Expr):
             return Symbol(symbol_name, real=True)
         else:
             return Symbol(symbol_name)
+
+
+class conditional_probability_expression(Function):
+    """
+    An unevaluated function that latexes as A|B
+    """
+
+    nargs=2
+
+    def _latex(self, prtr):
+        return "%s ~|~ %s" % (prtr._print(self.args[0]), 
+                            prtr._print(self.args[1]))
