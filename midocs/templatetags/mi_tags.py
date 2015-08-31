@@ -3004,6 +3004,8 @@ def find_applet_identifier(applet_id_dict, applet, applet_id_user=None):
     
     """
 
+    print(applet_id_dict, applet, applet_id_user)
+
     try:
         # information about instances of applet in page
         this_applet_info=applet_id_dict[applet.code]
@@ -3023,7 +3025,7 @@ def find_applet_identifier(applet_id_dict, applet, applet_id_user=None):
 
     # try to pick an arbitrary applet_identifier associated with applet
     try:
-        return this_applet_info.values()[0]
+        return list(this_applet_info.values())[0]
     except IndexError:
         raise ObjectDoesNotExist
 

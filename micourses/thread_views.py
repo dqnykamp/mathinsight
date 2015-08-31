@@ -23,20 +23,22 @@ class ThreadView(DetailView):
         self.object = self.get_object()
         self.user = request.user
 
-        enrollment=None
         if self.user.is_authenticated():
-            courseuser = self.user.courseuser
+            self.courseuser = self.user.courseuser
 
             # make sure this course is saved as selected course enrollment
             try:
-                enrollment = self.object.courseenrollment_set.get(
-                    student=courseuser)
+                self.enrollment = self.object.courseenrollment_set.get(
+                    student=self.courseuser)
             except ObjectDoesNotExist:
-                pass
-
-        if enrollment and enrollment != courseuser.selected_course_enrollment:
-            courseuser.selected_course_enrollment =enrollment
-            courseuser.save()
+                self.enrollment=None
+            else:
+                if self.enrollment!=self.courseuser.selected_course_enrollment:
+                    self.courseuser.selected_course_enrollment =self.enrollment
+                    self.courseuser.save()
+        else:
+            self.courseuser= None
+            self.enrollment=None
 
         # update session with last course viewed
         request.session['last_course_viewed'] = self.object.id
@@ -49,27 +51,19 @@ class ThreadView(DetailView):
         context = super(ThreadView, self).get_context_data(**kwargs)
 
         noanalytics=False
-        if settings.SITE_ID==2:
+        if settings.SITE_ID <= 2:
             noanalytics=True
+
         context['noanalytics'] = noanalytics
 
-        courseuser = None
-        include_edit_link = False
+        if self.enrollment and self.enrollment.role==DESIGNER_ROLE:
+            context['include_edit_link'] = True
+        else:
+            context['include_edit_link'] = False
 
-        # record if user is logged in and is designer
-        if self.user.is_authenticated():
-            courseuser = self.user.courseuser
-            try:
-                enrollment = self.object.courseenrollment_set.get(
-                    student=courseuser)
-            except ObjectDoesNotExist:
-                pass
-            else:
-                if enrollment.role==DESIGNER_ROLE:
-                    include_edit_link = True
+        context['student'] = self.courseuser
+        context['enrollment'] = self.enrollment
 
-        context['student'] = courseuser
-        context['include_edit_link'] = include_edit_link
         if self.object.numbered:
             context['ltag'] = "ol"
         else:

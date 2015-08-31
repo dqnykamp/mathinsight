@@ -15,7 +15,7 @@
 {% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
 
 {% if instructor_role %}
-<a href="{% url 'micourses:instructorgradebook' %}">Gradebook</a><br/>
+<a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a><br/>
 <a href="{% url 'micourses:exportgradebook' %}">Export gradebook</a><br/>
 <a href="{% url 'micourses:instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
 {% if course.track_attendance %}
@@ -25,8 +25,8 @@
 
 {%else%} {% comment %}student view{% endcomment %}
 <a href="{% url 'micourses:contentlist' course_code=course.code %}?{{week_date_parameters}}">Due dates by week</a><br/>
-<a href="{% url 'micourses:studentgradebook' %}">Grades</a><br/>
-{% if course.track_attendance %}<a href="{% url 'micourses:attendancedisplay' %}">Attendance record</a><br/>{% endif %}
+<a href="{% url 'micourses:student_gradebook' course_code=course.code %}">Grades</a><br/>
+{% if course.track_attendance %}<a href="{% url 'micourses:attendance_display' course_code=course.code %}">Attendance record</a><br/>{% endif %}
 {%endif%}
 
 {% if course.tutoring_url %}<a href="{{course.tutoring_url}}">Tutoring options</a><br/>{% endif %}

@@ -1,5 +1,5 @@
 from django.conf.urls import url, include
-from micourses.assessmentviews import AssessmentView, GenerateNewAttempt, GenerateCourseAttempt, AssessmentOverview
+from micourses.assessment_views import AssessmentView, GenerateNewAttempt, GenerateCourseAttempt, AssessmentOverview
 
 assessment_patterns = [
     url(r'^$', 

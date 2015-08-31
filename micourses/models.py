@@ -44,13 +44,13 @@ class ChangeLog(models.Model):
     courseuser = models.ForeignKey('CourseUser', null=True)
     action = models.CharField(choices=(("change score", "change score"), 
                                        ("change date", "change date"), 
+                                       ("change", "change"), 
                                        ("delete", "delete"),
                                        ("create", "create"),
                                    ),
                               max_length=20)
-    field_name = models.CharField(max_length=50, blank=True, null=True)
-    old_value = models.CharField(max_length=100, blank=True, null=True)
-    new_value = models.CharField(max_length=100, blank=True, null=True)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
     datetime = models.DateTimeField(blank=True, default=timezone.now)
     
 
@@ -395,9 +395,9 @@ class Course(models.Model):
         
 
         point_list = []
-        for ctc in self.thread_contents\
+        for tc in self.thread_contents\
                 .filter(grade_category=grade_category):
-            total_points = ctc.total_points()
+            total_points = tc.points
             if total_points:
                 point_list.append(total_points)
 
@@ -416,15 +416,15 @@ class Course(models.Model):
 
             cgc_assessments = []
             number_assessments = 0
-            for ctc in self.thread_contents\
+            for tc in self.thread_contents\
                     .filter(grade_category=cgc.grade_category):
-                ctc_points = ctc.total_points()
-                if ctc_points:
+                tc_points = tc.points
+                if tc_points:
                     number_assessments += 1
                     assessment_results =  \
-                    {'content': ctc,
-                     'assessment': ctc.content_object,
-                     'points': ctc_points,
+                    {'content': tc,
+                     'assessment': tc.content_object,
+                     'points': tc_points,
                      }
                     cgc_assessments.append(assessment_results)
 
@@ -461,14 +461,14 @@ class Course(models.Model):
     def all_assessments_with_points(self):
         assessments = []
         # number_assessments = 0
-        for ctc in self.thread_contents.all():
-            ctc_points = ctc.total_points()
-            if ctc_points:
+        for tc in self.thread_contents.all():
+            tc_points = tc.points
+            if tc_points:
                 # number_assessments += 1
                 assessment_results =  \
-                    {'content': ctc, \
-                         'assessment': ctc.content_object, \
-                         'points': ctc_points, \
+                    {'content': tc, \
+                         'assessment': tc.content_object, \
+                         'points': tc_points, \
                          }
                 assessments.append(assessment_results)
 
@@ -484,9 +484,9 @@ class Course(models.Model):
             return 0
         
         score_list = []
-        for ctc in self.thread_contents\
+        for tc in self.thread_contents\
                 .filter(grade_category=grade_category):
-            total_score = ctc.student_score(student)
+            total_score = tc.student_score(student)
             if total_score:
                 score_list.append(total_score)
 
@@ -501,19 +501,19 @@ class Course(models.Model):
     def student_scores_for_grade_category(self, student, cgc):
 
         cgc_assessments = []
-        for ctc in self.thread_contents\
+        for tc in self.thread_contents\
                 .filter(grade_category=cgc.grade_category):
-            ctc_points = ctc.total_points()
-            if ctc_points:
-                student_score = ctc.student_score(student)
+            tc_points = tc.points
+            if tc_points:
+                student_score = tc.student_score(student)
                 if student_score:
-                    percent = student_score/ctc_points*100
+                    percent = student_score/tc_points*100
                 else:
                     percent = 0
                 assessment_results =  \
-                {'content': ctc,
-                 'assessment': ctc.content_object,
-                 'points': ctc_points,
+                {'content': tc,
+                 'assessment': tc.content_object,
+                 'points': tc_points,
                  'student_score': student_score,
                  'percent': percent,
                  }
@@ -580,14 +580,14 @@ class Course(models.Model):
             student_categories = []
             for cgc in self.coursegradecategory_set.all():
                 category_scores = []
-                for ctc in self.thread_contents\
+                for tc in self.thread_contents\
                     .filter(grade_category=cgc.grade_category):
-                    ctc_points = ctc.total_points()
-                    if ctc_points:
-                        student_score = ctc.student_score(student)
+                    tc_points = tc.points
+                    if tc_points:
+                        student_score = tc.student_score(student)
                         assessment_results =  \
-                            {'content': ctc,
-                             'assessment': ctc.content_object,
+                            {'content': tc,
+                             'assessment': tc.content_object,
                              'score': student_score,}
                         category_scores.append(assessment_results)
                 category_student_score = \
@@ -1342,12 +1342,29 @@ class ThreadContent(models.Model):
     def latest_student_attempts(self):
         latest_attempts=[]
         for student in self.course.enrolled_students_ordered():
+            content_record=None
+            attempt=None
+            number_attempt=0
+
+            try:
+                content_record =  self.contentrecord_set.get(
+                    enrollment__student=student)
+            except ObjectDoesNotExist:
+                pass
+            else:
+                try:
+                    attempt = content_record.attempts.latest()
+                except ObjectDoesNotExist:
+                    pass
+                else:
+                    number_attempts=content_record.attempts.count()
+
             latest_attempts.append({
                     'student': student,
-                    'attempt': self.get_student_latest_attempt(student),
+                    'attempt': attempt,
                     'current_score': self.student_score(student),
                     'adjusted_due': self.get_adjusted_due(student),
-                    'number_attempts': self.studentcontentattempt_set.filter(student=student).count(),
+                    'number_attempts': number_attempts
                     })
         return latest_attempts
         
@@ -1452,12 +1469,12 @@ class ThreadContent(models.Model):
         if not due or not final_due:
             return []
 
-        today = timezone.now().date()
+        now = timezone.now()
 
         course = self.course        
         
         calculation_list = []
-        while due < today + timezone.timedelta(7):
+        while due < now + timezone.timedelta(days=7):
 
             previous_week_end = \
                 course.previous_week_end(due)
@@ -1465,7 +1482,7 @@ class ThreadContent(models.Model):
             calculation = {'initial_date': due,
                            'previous_week_end': previous_week_end,
                            'attendance_data': False,
-                           'attendance_percent': 'NA',
+                           'attendance_percent': None,
                            'reached_threshold': False,
                            'resulting_date': due,
                            'reached_latest': False,
@@ -1521,6 +1538,9 @@ class ContentRecord(models.Model):
     initial_due_adjustment = models.DateTimeField(blank=True, null=True)
     final_due_adjustment = models.DateTimeField(blank=True, null=True)
 
+    fields_to_dump = ["score_override", "assigned_adjustment",
+                      "initial_due_adjustment", "final_due_adjustment"]
+
 
     def __str__(self):
         if self.enrollment:
@@ -1532,6 +1552,7 @@ class ContentRecord(models.Model):
     class Meta:
         unique_together = ['enrollment', 'content']
 
+
     def save(self, *args, **kwargs):
         if not kwargs.pop('skip_last_modified', False):
             self.last_modified = timezone.now()
@@ -1540,14 +1561,22 @@ class ContentRecord(models.Model):
     
         # if changed score override, then recalculate score
         score_override_changed=True
-        old_score=None
+        date_changed=True
+        new_record = False
+        old_cr=None
 
-        if self.pk is not None:
-            old_scc = ContentRecord.objects.get(pk=self.pk)
-            if self.score_override == old_scc.score_override:
+        if self.pk is None:
+            new_record=True
+        else:
+            old_cr = ContentRecord.objects.get(pk=self.pk)
+            if self.score_override == old_cr.score_override:
                 score_override_changed = False
-            else:
-                old_score = old_scc.score_override
+
+            if old_cr.assigned_adjustment==self.assigned_adjustment and \
+               old_cr.initial_due_adjustment==self.initial_due_adjustment and \
+               old_cr.final_due_adjustment==self.final_due_adjustment:
+                date_changed=False
+                
 
         with transaction.atomic(), reversion.create_revision():
             super(ContentRecord, self).save(*args, **kwargs)
@@ -1555,17 +1584,36 @@ class ContentRecord(models.Model):
         if score_override_changed:
             self.recalculate_score()
 
+            if new_record:
+                action="create"
+            else:
+                action="change score"
+
+            from micourses.utils import json_dump_fields
             ChangeLog.objects.create(
                 courseuser=cuser,
                 content_type=ContentType.objects.get(app_label="micourses",
                                                      model="contentrecord"),
                 object_id=self.id,
-                action="changed score",
-                field_name = "score_override",
-                old_value=old_score,
-                new_value=self.score_override
+                action=action,
+                old_value= json_dump_fields(old_cr),
+                new_value=json_dump_fields(self),
             )
 
+        elif date_changed:
+
+            from micourses.utils import json_dump_fields
+            ChangeLog.objects.create(
+                courseuser=cuser,
+                content_type=ContentType.objects.get(app_label="micourses",
+                                                     model="contentrecord"),
+                object_id=self.id,
+                action="change date",
+                old_value=json_dump_fields(old_cr),
+                new_value=json_dump_fields(self),
+            )
+            
+            
 
     def recalculate_score(self, total_recalculation=False):
         """
@@ -1633,6 +1681,7 @@ class ContentRecord(models.Model):
 
         return self.score
 
+
 @reversion.register
 class ContentAttempt(models.Model):
     record = models.ForeignKey(ContentRecord, related_name="attempts")
@@ -1647,6 +1696,9 @@ class ContentAttempt(models.Model):
     # (an attempt with record.enrollment=None)
     base_attempt = models.ForeignKey('self', null=True, related_name="derived_attempts")
 
+    fields_to_dump = ["score_override", "valid", "seed", "version"]
+
+
     def __str__(self):
         if self.record.enrollment:
             return "%s's attempt on %s" % (self.record.enrollment.student,
@@ -1658,56 +1710,53 @@ class ContentAttempt(models.Model):
         ordering = ['attempt_began']
         get_latest_by = "attempt_began"
         
+
+
     def save(self, *args, **kwargs):
         cuser = kwargs.pop("cuser", None)
 
         # if new attempt, or changed score override or valid, 
         # then recalculate score
         new_attempt=False
-        score_override_changed=False
-        valid_changed=False
-        old_score=None
-        old_valid=None
+        score_override_changed=True
+        valid_changed=True
+        old_ca=None
 
         if self.pk is None:
             new_attempt=True
         else:
-            old_sca = ContentAttempt.objects.get(pk=self.pk)
-            if self.score_override != old_sca.score_override:
-                score_override_changed=True
-                old_score = old_sca.score_override
-            if self.valid != old_sca.valid:
-                valid_changed=True
-                old_valid = old_sca.valid
+            old_ca = ContentAttempt.objects.get(pk=self.pk)
+            if self.score_override == old_ca.score_override:
+                score_override_changed=False
+            if self.valid == old_ca.valid:
+                valid_changed=False
 
         with transaction.atomic(), reversion.create_revision():
             super(ContentAttempt, self).save(*args, **kwargs)
 
-        if new_attempt or score_override_changed or valid_changed:
+        if score_override_changed or valid_changed:
             self.recalculate_score()
             
-            if score_override_changed:
-                ChangeLog.objects.create(
-                    courseuser=cuser,
-                    content_type=ContentType.objects.get(app_label="micourses",
-                                                        model="contentattempt"),
-                    object_id=self.id,
-                    action="changed score",
-                    field_name = "score_override",
-                    old_value=old_score,
-                    new_value=self.score_override
-                )
-            if valid_changed:
-                ChangeLog.objects.create(
-                    courseuser=cuser,
-                    content_type=ContentType.objects.get(app_label="micourses",
-                                                        model="contentattempt"),
-                    object_id=self.id,
-                    action="changed valid",
-                    field_name = "valid",
-                    old_value=old_valid,
-                    new_value=self.valid
-                )
+            if new_attempt:
+                action="create"
+            elif score_override_changed:
+                action="change score"
+            else:
+                action="change"
+
+            from micourses.utils import json_dump_fields
+
+            ChangeLog.objects.create(
+                courseuser=cuser,
+                content_type=ContentType.objects.get(app_label="micourses",
+                                                     model="contentattempt"),
+                object_id=self.id,
+                action=action,
+                old_value=json_dump_fields(old_ca),
+                new_value=json_dump_fields(self),
+            )
+
+
 
     def return_url(self, question_number=None):
         get_string="content_attempt=%s" % self.id
@@ -1847,6 +1896,26 @@ class ContentAttempt(models.Model):
             return (self.attempt_began, None)
 
 
+    def create_derived_attempt(self, content_record, score=None, valid=True):
+        new_attempt=content_record.attempts.create(
+            attempt_began=self.attempt_began,
+            score_override = score,
+            seed=self.seed, valid=valid, version=self.version,
+            base_attempt=self)
+        for qs in self.question_sets.all():
+            new_qs = new_attempt.question_sets.create(
+                question_number = qs.question_number,
+                question_set = qs.question_set)
+            qa = qs.question_attempts.latest()
+            new_qa = new_qs.question_attempts.create(
+                question=qa.question,
+                seed=qa.seed,
+                random_outcomes=qa.random_outcomes,
+                attempt_began=qa.attempt_began)
+
+        return new_attempt
+
+
 @reversion.register
 class ContentAttemptQuestionSet(models.Model):
     content_attempt = models.ForeignKey(ContentAttempt,
@@ -1856,41 +1925,51 @@ class ContentAttemptQuestionSet(models.Model):
 
     credit_override = models.FloatField(blank=True, null=True)
 
+    fields_to_dump = ["credit_override", "question_number",
+                      "question_set"]
 
     class Meta:
         ordering = ['question_number']
         unique_together = [('content_attempt', 'question_number'),
                            ('content_attempt', 'question_set')]
 
+
+
     def save(self, *args, **kwargs):
         cuser = kwargs.pop("cuser", None)
     
         # if changed credit override, then recalculate score of question attempt
         credit_override_changed=True
-        old_credit=None
-
-        if self.pk is not None:
+        old_qs=None
+        new_qs = False
+        
+        if self.pk is None:
+            new_qs=True
+        else:
             old_qs = ContentAttemptQuestionSet.objects.get(pk=self.pk)
             if self.credit_override == old_qs.credit_override:
                 credit_override_changed=False
-            else:
-                old_credit = old_qs.credit_override
 
         with transaction.atomic(), reversion.create_revision():
             super(ContentAttemptQuestionSet, self).save(*args, **kwargs)
 
         if credit_override_changed:
             self.content_attempt.recalculate_score()
+
+            if new_qs:
+                action="create"
+            else:
+                action="change score"
             
+            from micourses.utils import json_dump_fields
             ChangeLog.objects.create(
                 courseuser=cuser,
                 content_type=ContentType.objects.get(app_label="micourses",
                                             model="contentattemptquestionset"),
                 object_id=self.id,
-                action="changed score",
-                field_name = "credit_override",
-                old_value=old_credit,
-                new_value=self.credit_override
+                action=action,
+                old_value=json_dump_fields(old_qs),
+                new_value=json_dump_fields(self),
             )
 
 

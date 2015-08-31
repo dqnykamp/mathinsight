@@ -3,7 +3,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import ListView
 from micourses.models import Course
 from micourses import views
-from micourses.threadviews import ThreadView, ThreadEditView, EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
+from micourses.thread_views import ThreadView, ThreadEditView, EditSectionView, EditContentView, ReturnContentForm, ReturnContentOptions
 
 paginate_by=20
 

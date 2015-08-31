@@ -4,6 +4,7 @@ from django.db import transaction
 import reversion
 import pytz
 import re
+import json
 
 def check_for_student_activity(content):
     """
@@ -179,3 +180,25 @@ def create_new_assessment_attempt(assessment, thread_content, courseuser,
             'version': version, 'assessment_seed': seed,}
             
 
+def json_dump_fields(model_instance):
+    try:
+        fields_to_dump = model_instance.fields_to_dump
+    except AttributeError:
+        return None
+
+    data = {}
+    for f in fields_to_dump:
+        data[f] = getattr(model_instance,f)
+
+    from datetime import datetime
+
+    def json_datetime_serial(obj):
+        """JSON serializer to include datetimee"""
+
+        if isinstance(obj, datetime):
+            serial = obj.isoformat()
+            return serial
+        raise TypeError ("Type not serializable")
+
+
+    return json.dumps(data, default=json_datetime_serial)

@@ -13,7 +13,7 @@
 
 <p>Points: {{thread_content.points}}<br/>
 Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> <br/>
-Due: <a href='{% url 'micourses:adjustedduedatecalculation' thread_content.id %}'>{{adjusted_due}}</a></p>
+Due: <a href="{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}">{{adjusted_due}}</a></p>
 
 {% if attempts %}
 <table class="basic rowclick">

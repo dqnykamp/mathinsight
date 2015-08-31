@@ -1,5 +1,5 @@
 
-from micourses.models import Course, CourseUser, ThreadContent, QuestionAttempt, Assessment, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
+from micourses.models import Course, CourseUser, ThreadContent, QuestionAttempt, QuestionResponse, Assessment, STUDENT_ROLE, INSTRUCTOR_ROLE, DESIGNER_ROLE
 from micourses.forms import ContentAttemptForm, ScoreForm, CreditForm, AttemptScoresForm
 from django.conf import settings
 from django.shortcuts import render_to_response, get_object_or_404, redirect, render
@@ -18,7 +18,7 @@ from django.db import IntegrityError, transaction
 from django.contrib.contenttypes.models import ContentType
 from django import forms
 from django.utils import timezone
-from micourses.templatetags.course_tags import floatformat_or_dash
+from micourses.templatetags.course_tags import floatformat_or_dash, floatformat
 from micourses.utils import format_datetime
 import pytz
 import reversion
@@ -139,6 +139,8 @@ class CourseBaseMixin(SingleObjectMixin):
         context['current_role'] = self.current_role
         context['instructor_role'] = self.current_role==INSTRUCTOR_ROLE \
                                      or self.current_role==DESIGNER_ROLE
+        context['enrollment'] = self.enrollment
+        context['student_enrollment'] = self.student_enrollment
 
         # no Google analytics for course
         context['noanalytics']=True
@@ -180,12 +182,17 @@ class CourseView(CourseBaseView):
     def get_context_data(self, **kwargs):
         context = super(CourseView, self).get_context_data(**kwargs)
 
+        if self.courseuser.courseenrollment_set.filter(
+                withdrew=False,course__active=True).exclude(course=self.course)\
+                                               .exists():
+            context['multiple_courses']=True
+        else:
+            context['multiple_courses']=False
+
+
         from micourses.utils import find_week_begin_end
 
         beginning_of_week, end_of_week = find_week_begin_end(self.course)
-
-        context['week_date_parameters'] = \
-            "begin_date=%s&end_date=%s" % (beginning_of_week, end_of_week)
 
         begin_date=beginning_of_week
         end_date=end_of_week+timezone.timedelta(days=7)
@@ -197,20 +204,27 @@ class CourseView(CourseBaseView):
             (self.courseuser, begin_date=begin_date, \
                  end_date=end_date)
 
-        date_parameters = "begin_date=%s&end_date=%s" % (begin_date,
-                                                         end_date)
+        datetime_format = '%Y-%m-%d %H:%M:%S.%f%z'
+
+        date_parameters = "begin_date=%s&end_date=%s" %\
+                          (begin_date.strftime(datetime_format),
+                           end_date.strftime(datetime_format))
+
         context['include_completed_parameters'] = date_parameters
 
         next_begin_date = end_date + timezone.timedelta(microseconds=1)
         next_end_date = next_begin_date+timezone.timedelta(days=7) \
                         - timezone.timedelta(microseconds=1)
         next_period_parameters = "begin_date=%s&end_date=%s" \
-            % (next_begin_date, next_end_date)
+            % (next_begin_date.strftime(datetime_format),
+               next_end_date.strftime(datetime_format))
+
         previous_end_date = begin_date - timezone.timedelta(microseconds=1)
         previous_begin_date = previous_end_date-timezone.timedelta(days=7)\
                               + timezone.timedelta(microseconds=1)
         previous_period_parameters = "begin_date=%s&end_date=%s" \
-            % (previous_begin_date, previous_end_date)
+            % (previous_begin_date.strftime(datetime_format),
+               previous_end_date.strftime(datetime_format))
         previous_period_parameters += "&exclude_completed"
         next_period_parameters += "&exclude_completed"
 
@@ -432,16 +446,21 @@ class ContentRecordView(CourseBaseView):
 
 
             # show details if have question_set with credit that isn't None
-            question_set_with_credit = False
+            show_details = False
             if attempt.question_sets.exclude(credit_override=None):
                 # found question set whose credit was overriden manually
-                question_set_with_credit=True
+                show_details=True
             elif QuestionAttempt.objects.filter(
                     content_attempt_question_set__content_attempt=attempt) \
-                    .exclude(credit=None):
+                    .exclude(credit=None).exists():
                 # found question set with question attempts with credit set
-                question_set_with_credit=True
-            if question_set_with_credit:
+                show_details=True
+            # for instructor view, show details if any responses
+            if not show_details and self.instructor_view:
+                if QuestionResponse.objects.filter(
+                    question_attempt__content_attempt_question_set__content_attempt=attempt).exists():
+                    show_details=True
+            if show_details:
                 if self.instructor_view:
                     attempt_url = reverse(
                         'micourses:content_attempt_instructor', 
@@ -556,23 +575,9 @@ class ContentRecordView(CourseBaseView):
                 new_score = new_course_attempts_form.cleaned_data.get(
                     'score_%s' % attempt.id)
                 if new_score is not None:
-                    new_attempt=self.content_record.attempts.create(
-                        attempt_began=attempt.attempt_began,
-                        score_override = new_score,
-                        seed=attempt.seed,
-                        valid=True, version=attempt.version,
-                        base_attempt=attempt)
-                    for qs in attempt.question_sets.all():
-                        new_qs = new_attempt.question_sets.create(
-                            question_number = qs.question_number,
-                            question_set = qs.question_set)
-                        qa = qs.question_attempts.latest()
-                        new_qa = new_qs.question_attempts.create(
-                            question=qa.question,
-                            seed=qa.seed,
-                            random_outcomes=qa.random_outcomes,
-                            attempt_began=qa.attempt_began)
-
+                    new_attempt = attempt.create_derived_attempt(
+                        content_record = self.content_record,
+                        score=new_score)
                     n_added+=1
             from django.utils.encoding import escape_uri_path
             if n_added==1:
@@ -934,15 +939,19 @@ class ContentAttemptView(ContentRecordView):
 
 
             if self.instructor_view:
-                q_dict['question_attempts_with_credit'] = \
+                q_dict['show_details'] = \
                     ca_question_set.question_attempts.exclude(credit=None)\
                                                      .exists()
+                if not q_dict['show_details']:
+                    q_dict['show_details'] = QuestionResponse.objects.filter(
+                        question_attempt__content_attempt_question_set=ca_question_set).exists()
+                               
             else:
-                q_dict['question_attempts_with_credit'] = \
+                q_dict['show_details'] = \
                     ca_question_set.question_attempts.exclude(credit=None)\
                                                 .exclude(valid=False).exists()
             
-            if q_dict['question_attempts_with_credit']:
+            if q_dict['show_details']:
                 if self.instructor_view:
                     q_dict['attempt_url'] = reverse(
                         'micourses:question_attempts_instructor', 
@@ -1204,8 +1213,6 @@ class QuestionResponseView(QuestionAttemptsView):
             raise Http404('Response %s not found.' \
                           % self.response_number)
 
-        from micourses.models import QuestionResponse
-
         if self.response_valid:
             responses = QuestionResponse.objects.filter(
                 question_attempt__content_attempt_question_set =\
@@ -1292,31 +1299,19 @@ class ContentListView(CourseBaseView):
     def get_context_data(self, **kwargs):
         context = super(ContentListView, self).get_context_data(**kwargs)
 
-        # find begining/end of week
-        tz = pytz.timezone(self.course.attendance_time_zone)
-        now = tz.normalize(timezone.now().astimezone(tz))
-        day_of_week = (now.weekday()+1) % 7
-        to_beginning_of_week = timezone.timedelta(
-            days=day_of_week, hours=now.hour,
-            minutes=now.minute, seconds=now.second, microseconds=now.microsecond
-        )
-        beginning_of_week = now - to_beginning_of_week
-        end_of_week = beginning_of_week + timezone.timedelta(days=7) \
-                      - timezone.timedelta(microseconds=1)
-        context['week_date_parameters'] = "begin_date=%s&end_date=%s" \
-            % (beginning_of_week, end_of_week)
-
 
         exclude_completed='exclude_completed' in self.request.GET
         exclude_past_due='exclude_past_due' in self.request.GET
 
+        datetime_format = '%Y-%m-%d %H:%M:%S.%f%z'
+
         try:
-            begin_date = datetime.datetime.strptime(self.request.GET.get('begin_date'),"%Y-%m-%d").date()
-        except:
+            begin_date = timezone.datetime.strptime(self.request.GET.get('begin_date'),datetime_format)
+        except TypeError:
             begin_date = None
         try:
-            end_date = datetime.datetime.strptime(self.request.GET.get('end_date'),"%Y-%m-%d").date()
-        except:
+            end_date = timezone.datetime.strptime(self.request.GET.get('end_date'),datetime_format)
+        except TypeError:
             end_date = None
 
         context['begin_date'] = begin_date
@@ -1329,11 +1324,13 @@ class ContentListView(CourseBaseView):
             next_begin_date = end_date + timezone.timedelta(1)
             next_end_date = next_begin_date+(end_date-begin_date)
             next_period_parameters = "begin_date=%s&end_date=%s" \
-                % (next_begin_date, next_end_date)
+                % (next_begin_date.strftime(datetime_format),
+                   next_end_date.strftime(datetime_format))
             previous_end_date = begin_date - timezone.timedelta(1)
             previous_begin_date = previous_end_date+(begin_date-end_date)
             previous_period_parameters = "begin_date=%s&end_date=%s" \
-                % (previous_begin_date, previous_end_date)
+                % (previous_begin_date.strftime(datetime_format),
+                   previous_end_date.strftime(datetime_format))
             if exclude_completed:
                 previous_period_parameters += "&exclude_completed"
                 next_period_parameters += "&exclude_completed"
@@ -1347,11 +1344,11 @@ class ContentListView(CourseBaseView):
 
         date_parameters=""
         if begin_date:
-            date_parameters += "begin_date=%s" % begin_date
+            date_parameters += "begin_date=%s" % begin_date.strftime(datetime_format)
         if end_date:
             if date_parameters:
                 date_parameters += "&"
-            date_parameters += "end_date=%s" % end_date
+            date_parameters += "end_date=%s" % end_date.strftime(datetime_format)
 
         exclude_completed_parameters="exclude_completed"
         if date_parameters:
@@ -1368,645 +1365,194 @@ class ContentListView(CourseBaseView):
         return context
 
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def update_attendance_view(request):
+class StudentGradebook(CourseBaseView):
+    template_name = "micourses/student_gradebook.html"
+    def get_context_data(self, **kwargs):
+        context = super(StudentGradebook, self).get_context_data(**kwargs)
+
+        context['category_scores']=self.course.student_scores_by_grade_category(self.courseuser)
     
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
+        return context
 
-    class DateForm(forms.Form):
-        date = forms.DateField()
 
+class InstructorGradebook(CourseBaseView):
+    template_name = "micourses/instructor_gradebook.html"
+    def get_context_data(self, **kwargs):
+        context = super(InstructorGradebook, self).get_context_data(**kwargs)
+        context['assessment_categories'] = self.course.all_assessments_by_category()
+        context['student_scores'] = self.course.all_student_scores_by_grade_category()
+        context['total_points'] = self.course.total_points()
 
-    # if POST, then update attendance, assuming date is valid
-    if request.method == 'POST':
-        date_form = DateForm({'date':  request.POST['attendance_date']})
-        valid_day = False
-        if date_form.is_valid():
-            attendance_date = date_form.cleaned_data['date']
-            
-            # check if date is a class day
-            for class_day in course.attendancedate_set.all():
-                if attendance_date == class_day.date:
-                    valid_day = True
-                    break
-            
-        else:
-            attendance_date = None
+        return context
 
-        if valid_day:
-            with transaction.atomic(), reversion.create_revision():
 
-                for student in course.enrolled_students_ordered():
-                    present=request.POST.get('student_%s' % student.id, 0)
-                    try:
-                        present = float(present)
-                    except ValueError:
-                        present = 0.0
+class EditCourseContentAttemptScores(CourseBaseView):
 
-                    sa, created = course.studentattendance_set.get_or_create(
-                        student=student, date=attendance_date,
-                        defaults = {'present': present})
-                    if not created and sa.present != -1:
-                        sa.present = present
-                        sa.save()
-
-                if not course.last_attendance_date \
-                        or attendance_date > course.last_attendance_date:
-                    course.last_attendance_date = attendance_date
-                    course.save()
-
-                message = "Attendance updated for %s" % \
-                    attendance_date.strftime("%B %d, %Y")
-
-        else:
-            message = "Attendance not updated.  " \
-                + "%s is not a valid course day: %s" % \
-                (request.POST['attendance_date'], attendance_date)
-
-            
-    else:
-        message = None
-
-
-    # get next_attendance date
-    next_attendance_date = course.find_next_attendance_date()
-            
-    enrollment_list = course.courseenrollment_set.filter(role=STUDENT_ROLE,withdrew=False).order_by('group', 'student__user__last_name', 'student__user__first_name')
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/update_attendance.html', 
-         {'course': course,
-          'courseuser': courseuser,
-          'enrollment_list': enrollment_list,
-          'message': message,
-          'next_attendance_date': next_attendance_date,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def update_individual_attendance_view(request):
-    
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-    message=''
-
-    class SelectStudentForm(forms.Form):
-        student = forms.ModelChoiceField(queryset=course.enrolled_students_ordered())           
-    
-
-    # get student from request
-    student_id = request.REQUEST.get('student')
-    try:
-        student = CourseUser.objects.get(id=student_id)
-        select_student_form = SelectStudentForm(request.REQUEST)
-    except (ObjectDoesNotExist, ValueError):
-        student = None
-        select_student_form = SelectStudentForm()
-
-    thestudent=student
-    class AttendanceDatesForm(forms.Form):
-        student = forms.ModelChoiceField\
-            (queryset=course.enrolled_students_ordered(), \
-                 widget=forms.HiddenInput,\
-                 initial=thestudent)
-        
-        def __init__(self, *args, **kwargs):
-            try:
-                dates = kwargs.pop('dates')
-            except:
-                dates =[]
-            super(AttendanceDatesForm, self).__init__(*args, **kwargs)
-
-            for i, attendance_date in enumerate(dates):
-                self.fields['date_%s' % i] = forms.ChoiceField\
-                    (label=str(attendance_date['date']),\
-                         initial=attendance_date['present'],\
-                         choices=((1,1),(0.5,0.5),(0,0),(-1,-1)),\
-                         widget=forms.RadioSelect,
-                     )
-                
-        def date_attendance(self):
-            for name, value in self.cleaned_data.items():
-                if name.startswith('date_'):
-                    yield (self.fields[name].label, value)
-
-
-
-    if student:
-        # get list of attendance up to last_attendance_date
-
-        attendance=[]
-        last_attendance_date = course.last_attendance_date
-        if last_attendance_date:
-            date_enrolled = student.courseenrollment_set.get(course=course)\
-                .date_enrolled
-            attendance_dates = course.attendancedate_set\
-                .filter(date__lte = last_attendance_date)\
-                .filter(date__gte = date_enrolled)
-            days_attended = student.studentattendance_set.filter \
-                (course=course).filter(date__lte = last_attendance_date)\
-                .filter(date__gte = date_enrolled)
-            
-            for date in attendance_dates:
-                try:
-                    attended = days_attended.get(date=date.date)
-
-                    # for integer values, present must be integer
-                    # so that radio button shows initial value
-                    if attended.present==1 or attended.present==0 or attended.present==-1:
-                        present=int(round(attended.present))
-                    else:
-                        present = attended.present
-                except ObjectDoesNotExist:
-                    present = 0
-
-                attendance.append({'date': date.date, 'present': present})
-
-
-    # if POST, then update attendance, assuming data is valid
-    if request.method == 'POST':
-
-         attendance_dates_form = AttendanceDatesForm(request.POST or None, dates=attendance, label_suffix="")
-
-         if attendance_dates_form.is_valid():
-             if last_attendance_date:
-                 student.studentattendance_set.filter(course=course)\
-                     .filter(date__lte = last_attendance_date).delete()
-                 for (date, present) in attendance_dates_form.date_attendance():
-                     if present:
-                         with transaction.atomic(), reversion.create_revision():
-                             student.studentattendance_set.create\
-                                 (course=course, date=date, present=present)
-                 message = "Updated attendance of %s." % student
-             else:
-                 message = "Last attendance date for course not set.  Cannot update attendance."
-
-    # if get
-    else:
-        if student:
-            attendance_dates_form = AttendanceDatesForm(dates=attendance, label_suffix="")
-        else:            
-            attendance_dates_form = AttendanceDatesForm()
-
-
-    # get next_attendance date
-    next_attendance_date = course.find_next_attendance_date()
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/update_individual_attendance.html', 
-         {'course': course,
-          'courseuser': courseuser,
-          'select_student_form': select_student_form,
-          'student': student,
-          'attendance_dates_form': attendance_dates_form,
-          'next_attendance_date': next_attendance_date,
-          'message': message,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def add_excused_absence_view(request):
-    
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-
-    if request.method == "GET":
-        return HttpResponseRedirect(reverse('micourses:updateindividualattendance') + '?' + request.GET.urlencode())
-
-    class SelectStudentForm(forms.Form):
-        student = forms.ModelChoiceField(queryset=course.enrolled_students_ordered())           
-    # get student from request
-    student_id = request.POST.get('student')
-    try:
-        student = CourseUser.objects.get(id=student_id)
-        select_student_form = SelectStudentForm(request.POST)
-    except (ObjectDoesNotExist, ValueError):
-        return HttpResponseRedirect(reverse('micourses:updateindividualattendance'))
-
-
-    thestudent=student
-    class AttendanceDatesForm(forms.Form):
-        student = forms.ModelChoiceField\
-            (queryset=course.enrolled_students_ordered(), \
-                 widget=forms.HiddenInput,\
-                 initial=thestudent)
-        
-        def __init__(self, *args, **kwargs):
-            try:
-                dates = kwargs.pop('dates')
-            except:
-                dates =[]
-            super(AttendanceDatesForm, self).__init__(*args, **kwargs)
-
-            for i, attendance_date in enumerate(dates):
-                self.fields['date_%s' % i] = forms.ChoiceField\
-                    (label=str(attendance_date['date']),\
-                         initial=attendance_date['present'],\
-                         choices=((1,1),(0.5,0.5),(0,0),(-1,-1)),\
-                         widget=forms.RadioSelect,
-                     )
-                
-        def date_attendance(self):
-            for name, value in self.cleaned_data.items():
-                if name.startswith('date_'):
-                    yield (self.fields[name].label, value)
-
-
-
-
-
-    class DateForm(forms.Form):
-        date = forms.DateField()
-
-    # if POST, then update attendance, assuming date is valid
-    if request.method == 'POST':
-        date_form = DateForm({'date':  request.POST['attendance_date']})
-        valid_day = False
-        if date_form.is_valid():
-            attendance_date = date_form.cleaned_data['date']
-            
-            # check if date is a class day
-            for class_day in course.attendancedate_set.all():
-                if attendance_date == class_day.date:
-                    valid_day = True
-                    break
-        else:
-            attendance_date = None
-
-        if valid_day:
-            with transaction.atomic(), reversion.create_revision():
-                sa, created = student.studentattendance_set.get_or_create(
-                    course=course, date=attendance_date, defaults = {'present': -1})
-
-                if not created:
-                    sa.present=-1
-                    sa.save()
-
-                message = "Added excused absence for %s on %s." % \
-                          (student, attendance_date.strftime("%B %d, %Y"))
-
-        else:
-
-            message = "Excused absence not added.  " \
-                + "%s is not a valid course day: %s" % \
-                (request.POST['attendance_date'], attendance_date)
-
-    # no Google analytics for course
-    noanalytics=True
-
-    # get list of attendance up to last_attendance_date
-    attendance=[]
-    last_attendance_date = course.last_attendance_date
-    if last_attendance_date:
-        date_enrolled = student.courseenrollment_set.get(course=course)\
-            .date_enrolled
-        attendance_dates = course.attendancedate_set\
-            .filter(date__lte = last_attendance_date)\
-            .filter(date__gte = date_enrolled)
-        days_attended = student.studentattendance_set.filter \
-            (course=course).filter(date__lte = last_attendance_date)\
-            .filter(date__gte = date_enrolled)
-
-        for date in attendance_dates:
-            try:
-                attended = days_attended.get(date=date.date)
-
-                # for integer values, present must be integer
-                # so that radio button shows initial value
-                if attended.present==1 or attended.present==0 or attended.present==-1:
-                    present=int(round(attended.present))
-                else:
-                    present = attended.present
-            except ObjectDoesNotExist:
-                present = 0
-
-            attendance.append({'date': date.date, 'present': present})
-
-
-    attendance_dates_form = AttendanceDatesForm(dates=attendance, label_suffix="")
-
-
-    return render_to_response \
-        ('micourses/update_individual_attendance.html', 
-         {'course': course,
-          'courseuser': courseuser,
-          'select_student_form': select_student_form,
-          'student': student,
-          'attendance_dates_form': attendance_dates_form,
-          'next_attendance_date': attendance_date,
-          'message': message,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-        
-
-
-@login_required
-def attendance_display_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-    attendance = []
-    date_enrolled = courseuser.courseenrollment_set.get(course=course)\
-        .date_enrolled
-
-    percent = 0
-
-    last_attendance_date = course.last_attendance_date
-    if last_attendance_date:
-
-        attendance_dates = course.attendancedate_set\
-            .filter(date__lte = last_attendance_date)\
-            .filter(date__gte = date_enrolled)
-        days_attended = courseuser.studentattendance_set.filter(course=course)\
-            .filter(date__lte = last_attendance_date)\
-            .filter(date__gte = date_enrolled)
-
-        number_days=0
-        number_present=0
-        for date in attendance_dates:
-            number_days += 1
-            try:
-                attended = days_attended.get(date=date.date)
-                if attended.present==1:
-                    present = 'Y'
-                elif attended.present==0:
-                    present = 'N'
-                elif attended.present==-1:
-                    present = 'E'
-                elif attended.present==0.5:
-                    present = mark_safe('&frac12;')
-                else:
-                    present = '%.0f%%' % (attended.present*100)
-
-                if attended.present==-1:
-                    number_days -= 1
-                else:
-                    number_present += attended.present
-                    
-                    
-            except ObjectDoesNotExist:
-                present = 'N'
-                
-            try:
-                percent = 100.0*number_present/float(number_days)
-            except ZeroDivisionError:
-                percent = 0
-
-            attendance.append({'date': date.date, 'present': present, \
-                                   'percent': percent })
-    
-        final_percent = percent
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/attendance_display.html', 
-         {'course': course,
-          'courseuser': courseuser,
-          'student': courseuser, 
-          'attendance': attendance,
-          'date_enrolled': date_enrolled,
-          'noanalytics': noanalytics,
-          'last_attendance_date': last_attendance_date,
-          'final_attendance_percent': percent,
-          },
-         context_instance=RequestContext(request))
-
-
-@login_required
-def adjusted_due_calculation_view(request, pk):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-    content = get_object_or_404(ThreadContent, id=pk)
-
-    initial_due = content.get_initial_due(courseuser)
-    final_due = content.get_final_due(courseuser)
-    
-    calculation_list = content.adjusted_due_calculation(courseuser)
-    if calculation_list:
-        adjusted_due=calculation_list[-1]['resulting_date']
-    else:
-        adjusted_due= initial_due
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/adjusted_due_calculation.html', 
-         {'course': course,
-          'content': content,
-          'courseuser': courseuser,
-          'student': courseuser, 
-          'calculation_list': calculation_list,
-          'adjusted_due': adjusted_due,
-          'initial_due': initial_due,
-          'final_due': final_due,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def adjusted_due_calculation_instructor_view(request, student_id, pk):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-    content = get_object_or_404(ThreadContent, id=pk)
-
-    student = get_object_or_404(course.enrolled_students, id=student_id)
-
-    initial_due = content.get_initial_due(student)
-    final_due = content.get_final_due(student)
-    
-    calculation_list = content.adjusted_due_calculation(student)
-    if calculation_list:
-        adjusted_due=calculation_list[-1]['resulting_date']
-    else:
-        adjusted_due= initial_due
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/adjusted_due_calculation_instructor.html', 
-         {'course': course,
-          'content': content,
-          'courseuser': courseuser,
-          'student': student, 
-          'calculation_list': calculation_list,
-          'adjusted_due': adjusted_due,
-          'initial_due': initial_due,
-          'final_due': final_due,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-@login_required
-def student_gradebook_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-        
-    category_scores=course.student_scores_by_grade_category(courseuser)
-    
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/student_gradebook.html', 
-         {'course': course,
-          'courseuser': courseuser,
-          'student': courseuser, 
-          'enrollment': course.courseenrollment_set.get(student=courseuser),
-          'category_scores': category_scores,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def instructor_gradebook_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-    assessment_categories = course.all_assessments_by_category()
-    student_scores = course.all_student_scores_by_grade_category()
-    total_points = course.total_points()
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/instructor_gradebook.html', 
-         {'course': course,
-          'courseuser': courseuser, 
-          'assessment_categories': assessment_categories,
-          'student_scores': student_scores,
-          'total_points': total_points,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-class EditAssessmentAttempt(CourseBaseView):
-    
-    model = ThreadContent
-    context_object_name = 'content'
-    template_name = 'micourses/edit_assessment_attempt.html'
+    template_name = 'micourses/edit_course_content_attempt_scores.html'
     instructor_view=True
 
-    def get_object(self):
-        content = super(EditAssessmentAttempt, self).get_object()
-        self.assessment=content.content_object
-        self.latest_attempts = content.latest_student_attempts()
-        return content
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
 
-    def extra_course_context(self):
-        latest_attempts_present=False
-        for attempt in self.latest_attempts:
-            if attempt['attempt']:
-                latest_attempts_present = True
-                break
-        return {'latest_attempts': self.latest_attempts,
-                'assessment': self.assessment,
-                'latest_attempts_present': latest_attempts_present,
-                }
+    def get_additional_objects(self, request, *args, **kwargs):
+        try:
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
+        except ObjectDoesNotExist:
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, kwargs["content_id"]))
+
+        try:
+            self.course_content_record = self.thread_content.contentrecord_set\
+                                  .get(enrollment=None)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                self.course_content_record =\
+                        self.thread_content.contentrecord_set\
+                                  .create(enrollment=None)
+
+
+
+
+    def get_context_data(self, **kwargs):
+        context = super(EditCourseContentAttemptScores, self).get_context_data(**kwargs)
+
+        context['thread_content']=self.thread_content
+
+        ccas = self.course_content_record.attempts.filter(valid=True)
+        context['ccas'] = ccas
+
+        enrollment_list = []
+
+        ces =  self.course.courseenrollment_set.filter(role=STUDENT_ROLE)
+        for (i,ce) in enumerate(ces):
+            try:
+                content_record = self.thread_content.contentrecord_set\
+                                                    .get(enrollment=ce)
+            except ObjectDoesNotExist:
+                with transaction.atomic(), reversion.create_revision():
+                    content_record = self.thread_content.contentrecord_set\
+                                                        .create(enrollment=ce)
+
+            if i < len(ces)-1:
+                next_enrollment_id = ces[i+1].id
+            else:
+                next_enrollment_id = 'null'
+
+            enrollment_list.append({
+                'enrollment': ce,
+                'content_record': content_record,
+                'attempts': [],
+                'next_enrollment_id': next_enrollment_id,
+            })
+
+
+        for cca in ccas:
+            # for each enrollment, find the associated attempt if exists
+            for enrollment_dict in enrollment_list:
+                content_record = enrollment_dict['content_record']
+                try:
+                    attempt = content_record.attempts.get(
+                        base_attempt=cca, valid=True)
+                    score = attempt.score
+                    if score is None:
+                        score=""
+                except ObjectDoesNotExist:
+                    attempt = None
+                    score = ""
+
+                print(self.thread_content.get_adjusted_due(
+                        student=enrollment_dict['enrollment'].student))
+                print(cca.attempt_began)
+                print(self.thread_content.get_adjusted_due(
+                        student=enrollment_dict['enrollment'].student)
+                    < cca.attempt_began)
+
+                enrollment_dict['attempts'].append({
+                    'base_attempt': cca,
+                    'attempt': attempt,
+                    'score': floatformat(score,1),
+                    'past_due': self.thread_content.get_adjusted_due(
+                        student=enrollment_dict['enrollment'].student)
+                    < cca.attempt_began,
+                })
+                
+                
+
+        context['enrollment_list'] = enrollment_list
+
+        return context
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        """
+        Called when edit course wide attempts.
+        """
+
+        try:
+            self.object = self.get_object()
+        except (NotEnrolled, NotInstructor):
+            return JsonResponse({})
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        try:
+            enrollment_id = request.POST['enrollment_id']
+            base_attempt_id = request.POST['base_attempt_id']
+            enrollment = self.course.courseenrollment_set.get(
+                id = enrollment_id)
+            base_attempt = self.course_content_record.attempts.get(
+                id=base_attempt_id)
+
+        except (KeyError, ObjectDoesNotExist):
+            return JsonResponse({})
+
+        try:
+            value = request.POST['value']
+            if value=="":
+                value=None
+            else:
+                value=float(value)
+        except (KeyError,ValueError):
+            return JsonResponse({
+                'enrollment_id': enrollment_id,
+                'base_attempt_id': base_attempt_id,
+                'error_message': "Enter a number",
+            })
+            
+        
+        try:
+            content_record = self.thread_content.contentrecord_set\
+                                                .get(enrollment=enrollment)
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                content_record = self.thread_content.contentrecord_set\
+                                                .create(enrollment=enrollment)
+                
+        try:
+            attempt = content_record.attempts.get(
+                base_attempt=base_attempt, valid=True)
+            attempt.score_override=value
+            attempt.save()
+        except ObjectDoesNotExist:
+            with transaction.atomic(), reversion.create_revision():
+                attempt = base_attempt.create_derived_attempt(
+                    content_record = content_record, score=value)
+
+
+
+        content_record.refresh_from_db()
+
+        return JsonResponse({
+            'enrollment_id': enrollment_id,
+            'base_attempt_id': base_attempt_id,
+            'error_message': "",
+            'score': floatformat(attempt.score,1),
+            'overall_score': floatformat_or_dash(content_record.score,1),
+        })
+
+
 
 
 # temporary view while gradebook view is so slow
@@ -2334,42 +1880,37 @@ def gradebook_csv_view(request):
 
 
 
+class RecordContentCompletion(CourseBaseMixin, View):
 
-class RecordContentCompletion(View):
-
+    @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except (NotEnrolled, NotInstructor):
+            return JsonResponse({})
 
         try:
-            student = CourseUser.objects.get(id=request.POST['student_id'])
-            content = ThreadContent.objects.get(id=request.POST['content_id'])
-            complete = int(request.POST['complete'])
 
+            thread_content = self.course.thread_contents.get(
+                id=request.POST["content_id"])
+            complete = int(request.POST['complete'])
         except (KeyError, ObjectDoesNotExist, ValueError):
             return JsonResponse({})
 
-
         with transaction.atomic(), reversion.create_revision():
-            # if content complete record exists, modify record
             try:
-                scc=student.studentcontentcompletion_set.get(content=content)
-                scc.complete=complete
-                scc.save()
-
-             # if content complete record exists, add record
+                content_record = thread_content.contentrecord_set\
+                                    .get(enrollment=self.student_enrollment)
             except ObjectDoesNotExist:
-                student.studentcontentcompletion_set.create \
-                    (content=content, complete=complete)
-
-
-            # if marking as complete, create attempt record if one doesn't exist
-            if complete:
-                if not student.studentcontentattempt_set.filter(content=content)\
-                        .exists():
-                    student.studentcontentattempt_set.create(content=content)
+                content_record = thread_content.contentrecord_set\
+                                  .create(enrollment=self.student_enrollment,
+                                          complete=complete)
+            else:
+                content_record.complete=complete
+                content_record.save()
 
         
-        return JsonResponse({'student_id': student.id,
-                             'content_id': content.id,
+        return JsonResponse({'content_id': thread_content.id,
                              'complete': complete,
                              })
 

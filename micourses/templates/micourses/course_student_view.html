@@ -1,5 +1,5 @@
 {% extends "micourses/course_base.html" %}
-{% load  mi_tags course_tags  %}
+{% load  mi_tags course_tags thread_tags %}
 {% block nolinksection %}{% endblock %}
 {% block title %}Main page for {{course}}{%endblock%}
 
@@ -11,9 +11,8 @@
 <p>(See entire list organized by topic on <a href="{% url 'mithreads:thread' course.code %}">{{course}} thread</a>.)</p>
 
 <ul>
-{% for item in next_items %}
-<li>{% intlink item.content_object %}{%endintlink%} {% complete_skip_button item student %}<br/>
-</li>
+{% for content in next_items %}
+{% thread_content content %}
 {% endfor %}
 </ul>
 
@@ -25,12 +24,37 @@
 
 
 <table class="basic">
-<tr><th>Material</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
-{% for content in upcoming_content %}
-<tr><td>{% intlink content.1.content_object %}{%endintlink%}</td><td>{% get_initial_due content.1 student as idd %}{{idd}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjustedduedatecalculation' content.1.id %}'>{{content.0}}</a></td>{%endif%}<td>{% if content.1.total_points %}<a href='{% url 'micourses:assessmentattempted' content.1.id %}'>{% assessment_student_score content.1 student %}</a>{% else %}NA{%endif%}</td></tr>
-{% endfor %}
+<tr><th>Material</th><th>Comment</th><th>Assigned</th><th>Due</th><th>Score</th></tr>
+{% for content_dict in upcoming_content %}{% with thread_content=content_dict.thread_content %}
+<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{% if course.adjust_due_attendance %}<a href='{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}'>{{content_dict.adjusted_due}}</a>{% else %}{{content_dict.initial_due}}{%endif%}</td><td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score|floatformat_or_dash:1}}</a>{% else %}NA{%endif%}</td></tr>
+{% endwith %}{% endfor %}
 </table>
 
 
 {% endblock %}
 
+{% block tail %}
+<script>
+  function mark_completion(content_id, complete) {
+      var thepost = jQuery.post('{% url "micourses:record-completion" course_code=course.code %}', { 'content_id': content_id, 'complete': complete });
+
+      thepost.done(process_completion);
+  }
+  function process_completion(data) {
+      var content_id = data['content_id'];
+      var complete = data['complete'];
+
+      $('#undo_complete_' + content_id).toggle(false);
+      
+      if(complete) {
+	  $('#completed_' + content_id).toggle(true);
+	  $('#not_completed_' + content_id).toggle(false);
+      }
+      else {
+	  $('#completed_' + content_id).toggle(false);
+	  $('#not_completed_' + content_id).toggle(true);
+      }
+  }
+
+</script>
+{% endblock %}

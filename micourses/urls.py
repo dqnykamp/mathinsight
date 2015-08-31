@@ -1,9 +1,11 @@
 from django.conf.urls import url, include
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import TemplateView, ListView, DetailView
-from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditAssessmentAttempt, RecordContentCompletion, ContentListView
+from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditCourseContentAttemptScores, RecordContentCompletion, ContentListView, InstructorGradebook, StudentGradebook
+from micourses.attendance_views import AdjustedDueCalculation, AttendanceDisplay
 from micourses import views
 from micourses.models import Course
+from micourses import attendance_views
 
 content_attempt_patterns = [
     url(r'^$', ContentRecordView.as_view(),
@@ -40,27 +42,35 @@ content_attempt_patterns = [
 urlpatterns = [
     url(r'^$',  SelectCourseView.as_view(), name='selectcourse'),
     url(r'^(?P<course_code>\w+)$', CourseView.as_view(), name='coursemain'),
-    url(r'^(?P<course_code>\w+)/not_enrolled$', 
+    url(r'^not_enrolled/(?P<course_code>\w+)$', 
         DetailView.as_view(model=Course, 
                            slug_url_kwarg = 'course_code', slug_field = 'code',
                            template_name="micourses/not_enrolled.html"), 
         name='notenrolled'),
     url(r'^record/(?P<course_code>\w+)/(?P<content_id>\d+)', include(content_attempt_patterns)),
-    url(r'^(?P<course_code>\w+)/contentlist$', ContentListView.as_view(),
+    url(r'^contentlist/(?P<course_code>\w+)$', ContentListView.as_view(),
         name='contentlist'),
-    url(r'^update_attendance$', views.update_attendance_view, name='updateattendance'),
-    url(r'^update_individual_attendance$', views.update_individual_attendance_view, name='updateindividualattendance'),
-    url(r'^add_excused_absence$', views.add_excused_absence_view, name='addexcusedabsence'),
-    url(r'^attendance_display$', views.attendance_display_view, name='attendancedisplay'),
-    url(r'^adjusted_due_calculation/(?P<pk>\w+)$',views.adjusted_due_calculation_view, name='adjustedduedatecalculation'),
-    url(r'^gradebook/(?P<student_id>\w+)/adjusted_due_calculation/(?P<pk>\w+)$',views.adjusted_due_calculation_instructor_view, name='instructoradjustedduedatecalculation'),
-    url(r'^grades$',views.student_gradebook_view, name='studentgradebook'),
-    url(r'^gradebook$',views.instructor_gradebook_view, name='instructorgradebook'),
+    url(r'^update_attendance$', attendance_views.update_attendance_view, name='updateattendance'),
+    url(r'^update_individual_attendance$', attendance_views.update_individual_attendance_view, name='updateindividualattendance'),
+    url(r'^add_excused_absence$', attendance_views.add_excused_absence_view, name='addexcusedabsence'),
+    url(r'^attendance_display/(?P<course_code>\w+)$', 
+        AttendanceDisplay.as_view(), name='attendance_display'),
+    url(r'^adjusted_due_calculation/(?P<course_code>\w+)/(?P<content_id>\d+)$',
+        AdjustedDueCalculation.as_view(), name='adjusted_due_calculation'),
+    url(r'^adjusted_due_calculation/(?P<course_code>\w+)/(?P<content_id>\d+)/student/(?P<student_id>\w+)$',
+        AdjustedDueCalculation.as_view(instructor_view=True),
+        name='instructor_adjusted_due_calculation'),
+    url(r'^grades/(?P<course_code>\w+)$',StudentGradebook.as_view(),
+        name='student_gradebook'),
+    url(r'^gradebook/(?P<course_code>\w+)$', InstructorGradebook.as_view(),
+        name='instructor_gradebook'),
     url(r'^gradebook/export$',views.export_gradebook_view, name='exportgradebook'),
     url(r'^gradebook/exportcsv$',views.gradebook_csv_view, name='gradebookcsv'),
     url(r'^list_assessments$',views.instructor_list_assessments_view, name='instructorlistassessments'),
-    url(r'^gradebook/assessment/(?P<pk>\w+)$',EditAssessmentAttempt.as_view(), name='editassessmentattempt'),
-    url(r'^gradebook/assessment/(?P<pk>\w+)/add_new_attempt$',views.add_assessment_attempts_view, name='addnewassessmentattempt'),
-    url(r'^record_content_completion', RecordContentCompletion.as_view(),
+    url(r'^gradebook/(?P<course_code>\w+)/(?P<content_id>\d+)$',
+        EditCourseContentAttemptScores.as_view(), 
+        name='edit_course_content_attempt_scores'),
+    url(r'^gradebook/(?P<course_code>\w+)/(?P<content_id>\d+)/add_new_attempt$',views.add_assessment_attempts_view, name='addnewassessmentattempt'),
+    url(r'^record_content_completion/(?P<course_code>\w+)$', RecordContentCompletion.as_view(),
         name = "record-completion"),
 ]

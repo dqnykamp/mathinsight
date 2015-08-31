@@ -20,7 +20,7 @@
 {% endblock %}
 
 
-{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'micourses:question_attempts_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number question_number=question_number%}">Question {{question_number}}</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">{{thread_content.get_title}}</a> ►  <a href="{% url 'micourses:content_attempt_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number %}">Attempt {{attempt_number}}</a> ►  <a href="{% url 'micourses:question_attempts_instructor' course_code=course.code content_id=thread_content.id student_id=student.id attempt_number=attempt_number question_number=question_number%}">Question {{question_number}}</a>{% endblock %}
 
 {% block content %}
 

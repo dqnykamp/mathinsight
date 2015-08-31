@@ -1,0 +1,88 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Edit attempts for {{thread_content.get_title}}{%endblock%}
+
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a> ► <a href="{% url 'micourses:edit_course_content_attempt_scores' course_code=course.code content_id=thread_content.id%}">{{thread_content.get_title}}</a>{% endblock %}
+
+{% block extrastyle2 %}
+<style>
+  td.past_due {
+      background: red;
+  }
+  tr:hover td.past_due {
+      background: red;
+  }
+</style>
+
+<script>
+  function change_score(event) {
+      data = event.data;
+      
+      data.value = event.target.value;
+
+
+      var thepost = jQuery.post("{% url 'micourses:edit_course_content_attempt_scores' course_code=course.code content_id=thread_content.id%}", data);
+      
+      thepost.done(process_change_score);
+  }
+  function move_down_on_enter(event) {
+      if(event.keyCode == 13 && event.data.next_enrollment_id !== null) {
+	  $('#score_' + event.data.next_enrollment_id + '_' + event.data.base_attempt_id).focus();
+      }
+  }
+
+  function process_change_score(data) {
+      var enrollment_id = data['enrollment_id'];
+      var base_attempt_id = data['base_attempt_id'];
+      var score = data['score'];
+      var overall_score = data['overall_score'];
+      var error_message = data['error_message'];
+
+      $('#score_' + enrollment_id + '_' + base_attempt_id).val(score)
+      $('#' + enrollment_id + '_overall_score').html(overall_score)
+      $('#error_' + enrollment_id + '_' + base_attempt_id).html(error_message);
+      
+  }
+
+</script>
+
+{% endblock %}
+
+
+{% block main_columns %}
+
+<h4>Change scores for course-wide attempts: {{thread_content.get_title}}</h4>
+
+<p>Total points: {{thread_content.points}}</p>
+
+
+<p><a href="{% url 'micourses:course_content_record' course_code=course.code content_id=thread_content.id %}">Edit course content attempts</a></p>
+
+<div style="overflow: auto;">
+{% comment %}<form id="edit_student_content_attempts_form" action=
+"url 'micourses:addnewassessmentattempt' content.id" method="post">{% csrf_token%}<input type="hidden" name="content_id" value="{{content.id}}">{%endcomment%}
+<table class="bordertable">
+<thead><tr><th>Name</th>
+{% for cca in ccas %}<th><a href="{% url 'miassess:assessment' course_code=course.code assessment_code=thread_content.content_object.code%}?content_attempt={{cca.id}}">Version {{cca.version}}</a></th>{% endfor %}
+<th>Score</th>
+</tr></thead>
+<tbody>
+  {% for enrollment_dict in enrollment_list %}{% with student=enrollment_dict.enrollment.student enrollment=enrollment_dict.enrollment %}
+  <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}} (<a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">edit all attempts</a>)</td>
+    {% for score_dict in enrollment_dict.attempts %}<td {% if score_dict.past_due %}class="past_due" {%endif%}><input type="text" id="score_{{enrollment.id}}_{{score_dict.base_attempt.id}}" value="{{score_dict.score}}" size=4>
+<div class="error" id="error_{{enrollment.id}}_{{score_dict.base_attempt.id}}"></div>
+<script>$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').change({enrollment_id: {{enrollment.id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, change_score);$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').keyup({next_enrollment_id: {{enrollment_dict.next_enrollment_id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, move_down_on_enter);
+</script></td>
+    {% endfor %}
+<td id="{{enrollment.id}}_overall_score">{{enrollment_dict.content_record.score|floatformat_or_dash:"1"}}</td></tr>
+{% endwith %}{% endfor %}
+<tr></td></tr>
+</tbody>
+</table>
+
+</div>
+
+<p>Red highlight indicates attempt is past the due date for the student.</p>
+
+{% endblock %}

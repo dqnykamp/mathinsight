@@ -22,7 +22,7 @@
 <table class="basic">
 <tr><th>Material</th><th>Comment</th><th>Assigned</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
 {% for content_dict in content_list %}{% with thread_content=content_dict.thread_content %}
-<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{{content_dict.initial_due}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjustedduedatecalculation' thread_content.id %}'>{{content_dict.adjusted_due}}</a></td>{%endif%}<td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score}}</a>{% else %}NA{%endif%}</td></tr>
+<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{{content_dict.initial_due}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}'>{{content_dict.adjusted_due}}</a></td>{%endif%}<td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score|floatformat_or_dash:1}}</a>{% else %}NA{%endif%}</td></tr>
 {% endwith %}{% endfor %}
 </table>
 

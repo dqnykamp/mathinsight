@@ -68,7 +68,6 @@ class AssessmentView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(AssessmentView, self).get_context_data(**kwargs)
 
-        context['assessment_date'] = kwargs['assessment_date']
 
         from midocs.functions import return_new_auxiliary_data
         auxiliary_data =  return_new_auxiliary_data()
@@ -157,6 +156,14 @@ class AssessmentView(DetailView):
         context['multiple_attempts'] = False
         context['attempt_url']=None
         context['record_url']=None
+
+
+        # set date from current_attempt, else as now
+        if self.current_attempt:
+            context['assessment_date'] = self.current_attempt.attempt_began
+        else:
+            context['assessment_date'] = timezone.now()
+
 
         # Check if have current attempt that belongs to user
         # (so can show score)
@@ -287,14 +294,7 @@ class AssessmentView(DetailView):
         # update session with last course viewed
         request.session['last_course_viewed'] = self.object.course.id
 
-        # other data from GET
-        current_tz = timezone.get_current_timezone()
-        assessment_date = request.GET.get('date',
-                current_tz.normalize(timezone.now().astimezone(current_tz))\
-                                          .strftime("%B %d, %Y"))
-        
-        context = self.get_context_data(object=self.object, 
-                                assessment_date=assessment_date)
+        context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
 
@@ -560,6 +560,10 @@ class AssessmentView(DetailView):
 
         assessment_availability = self.thread_content.return_availability(
             student=courseuser)
+
+        # treat assessment not set up for recording as not available
+        if not self.thread_content.record_scores:
+            assessment_availability = NOT_YET_AVAILABLE
 
         try:
             latest_attempt = student_record.attempts.latest()

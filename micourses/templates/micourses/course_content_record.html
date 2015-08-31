@@ -13,7 +13,7 @@
 </style>
 {% endblock %}
 
-{% comment %}{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructorgradebook'%}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
+{% comment %}{% block coursebreadcrumb %} ► <a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a> ► {{student.get_full_name}} ► <a href="{% url 'micourses:assessmentattemptedinstructor' pk=content.id student_id=student.id %}">{{content.thread_content.content_object}}</a>{% endblock %}
 {%endcomment%}
 
 {% block content %}

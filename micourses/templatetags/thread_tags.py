@@ -1,5 +1,6 @@
 from django import template
 from django.template.base import (Node, NodeList, Template, Context, Library, Variable, TemplateSyntaxError, VariableDoesNotExist)
+from django.core.exceptions import ObjectDoesNotExist
 from django.template.defaultfilters import floatformat
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -12,6 +13,7 @@ def thread_section(context, section):
     return {'thread_section': section, 
             'id': section.id,
             'student': context.get('student'),
+            'enrollment': context.get('enrollment'),
             'ltag': context['ltag'],
     }
 
@@ -62,22 +64,19 @@ def thread_section_edit(context, section):
 @register.inclusion_tag('micourses/threads/thread_content.html', takes_context=True)
 def thread_content(context, content):
     student = context.get('student')
-    if student:
-        student_in_course = content.course in student.course_set.all()
-    else:
-        student_in_course = False
+    enrollment = context.get('enrollment')
 
     # check if student already completed content
     try:
-        completed = content.studentcontentcompletion_set\
-            .get(student=student).complete
-    except:
+        completed = content.contentrecord_set\
+            .get(enrollment=enrollment).complete
+    except ObjectDoesNotExist:
         completed = False
 
     return {'thread_content': content, 
             'id': content.id,
             'student': student,
-            'student_in_course': student_in_course,
+            'enrollment': enrollment,
             'completed': completed,
     }
 

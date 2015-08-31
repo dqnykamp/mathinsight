@@ -3,7 +3,7 @@
 {% block nolinksection %}{% endblock %}
 {% block title %}Grades for {{ student.get_full_name }}{%endblock%}
 
-{% block coursebreadcrumb %} ► <a href="{% url 'micourses:studentgradebook' %}"> Grades</a>{% endblock %}
+{% block coursebreadcrumb %} ► <a href="{% url 'micourses:student_gradebook' course_code=course.code %}"> Grades</a>{% endblock %}
 
 {% block content %}
 
@@ -17,7 +17,7 @@ Group: {{enrollment.group}}</p>
 <tbody>{% for category in category_scores.scores %}
 <tr class="subheading"><th colspan=4 scope="row">{{category.category}}</th></tr>
 {% for assessment in category.assessments %}
-<tr><td>{{ assessment.assessment.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'micourses:assessmentattempted' assessment.content.id %}">{{assessment.student_score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
+<tr><td>{{ assessment.assessment.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'micourses:content_record' course_code=course.code content_id=assessment.content.id %}">{{assessment.student_score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}
 <tr class="subtotal"><td>Subtotal for {{category.category}} {{ category.score_comment}}</td><td class="righttext">{{category.points|floatformat:"1"}}</td><td class="righttext">{{category.student_score|floatformat:"1"}}</td><td class="righttext">{{category.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}
