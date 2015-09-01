@@ -1198,7 +1198,7 @@ class Applet(models.Model):
                     import base64
                     self.encoded_content = base64.b64encode\
                         (self.applet_file.read())
-                    self.applet_file.close()
+                    #self.applet_file.close()
                 except:
                     raise
 
