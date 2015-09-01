@@ -103,11 +103,10 @@ def pageview(request, page_code, page_type_code=None, overview=False):
         manual_links=False
     
     
-    # turn off google analytics for localhost or hidden page
+    # turn off google analytics for localhost/staging or hidden
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3 or thepage.hidden:
+    if settings.SITE_ID <= 2 or thepage.hidden:
         noanalytics=True
-        
         
     if request.method == 'GET':
         if "logout" in request.GET:
@@ -251,9 +250,9 @@ def imageview(request, image_code):
     
     in_pages=theimage.in_pages.all()
 
-    # turn off google analytics for localhost or hidden
+    # turn off google analytics for localhost/staging or hidden
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3 or theimage.hidden:
+    if settings.SITE_ID <= 2 or theimage.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -374,9 +373,9 @@ def appletview(request, applet_code):
     
     in_pages=theapplet.in_pages.all()
 
-    # turn off google analytics for localhost or hidden applet
+    # turn off google analytics for localhost/staging or hidden
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3 or theapplet.hidden:
+    if settings.SITE_ID <= 2 or theapplet.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -462,9 +461,9 @@ def videoview(request, video_code):
     
     in_pages=thevideo.in_pages.all()
 
-    # turn off google analytics for localhost or hidden video
+    # turn off google analytics for localhost/staging or hidden
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3 or thevideo.hidden:
+    if settings.SITE_ID <= 2 or thevideo.hidden:
         noanalytics=True
 
     if request.method == 'GET':
@@ -487,9 +486,9 @@ def indexview(request, index_code):
         index_type = None
         index_entries = None
 
-    # turn off google analytics for localhost
+    # turn off google analytics for localhost/staging
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3:
+    if settings.SITE_ID <= 2:
         noanalytics=True
 
     return render(request, "midocs/index_detail.html", 
@@ -503,9 +502,9 @@ def newsview(request, news_code):
     newsitem = get_object_or_404(NewsItem, code=news_code)
     today = datetime.date.today()
 
-    # turn off google analytics for localhost
+    # turn off google analytics for localhost/staging
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3:
+    if settings.SITE_ID <= 2:
         noanalytics=True
 
     return render(request, "midocs/news_detail.html", 
@@ -617,9 +616,9 @@ def whatsnewview(request, items):
         recent_news=None
 
 
-    # turn off google analytics for localhost
+    # turn off google analytics for localhost/staging
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3:
+    if settings.SITE_ID <= 2:
         noanalytics=True
 
     return render(request, the_template, 
@@ -675,9 +674,9 @@ def home(request):
     news = NewsItem.objects.filter(publish_date__lte=today).order_by('-publish_date','-pk')[:max_news]
     newpages=Page.objects.exclude(page_type__code="definition").filter(publish_date__lte= today,hidden=False).order_by('-publish_date','-pk')[0:max_new_pages]
 
-    # turn off google analytics for localhost
+    # turn off google analytics for localhost/staging
     noanalytics=False
-    if settings.SITE_ID==2 or settings.SITE_ID==3:
+    if settings.SITE_ID <= 2:
         noanalytics=True
 
     return render(request, "home.html", 

@@ -50,6 +50,7 @@ class ThreadView(DetailView):
     def get_context_data(self, **kwargs):
         context = super(ThreadView, self).get_context_data(**kwargs)
 
+        # turn off google analytics for localhost/staging
         noanalytics=False
         if settings.SITE_ID <= 2:
             noanalytics=True

@@ -234,7 +234,7 @@ class AssessmentView(DetailView):
         context['question_numbers']=question_numbers
 
         # turn off Google analytics for localhost/development site
-        context['noanalytics']=(settings.SITE_ID > 1)
+        context['noanalytics']=(settings.SITE_ID <= 2)
 
         from mitesting.utils import get_new_seed
         context['new_seed']=get_new_seed(rng)
@@ -697,11 +697,8 @@ class AssessmentOverview(DetailView):
             context['generate_course_attempt_link'] = False
 
 
-        # turn off google analytics for localhost
-        if settings.SITE_ID==2 or settings.SITE_ID==3:
-            context['noanalytics']=True
-        else:
-            context['noanalytics']=False
+        # turn off Google analytics for localhost/development site
+        context['noanalytics']=(settings.SITE_ID <= 2)
             
         return context
     
