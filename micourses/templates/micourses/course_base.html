@@ -11,16 +11,14 @@
 
 {% block rightcolumn %}
  <a href="{% url 'mithreads:thread' course.code %}">{{course}} thread</a><br/>
-{% if course.syllabus_url %}<a href="{{course.syllabus_url}}">Course syllabus</a><br/>{% endif %}
-{% if course.instructor_url %}<a href="{{course.instructor_url}}">Instructors and office hours</a><br/>{% endif %}
+{% for url in course.courseurl_set.all %}<a href="{{url.url}}">{{url.name}}</a><br/>{% endfor %}
 
 {% if instructor_role %}
 <a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a><br/>
 <a href="{% url 'micourses:exportgradebook' %}">Export gradebook</a><br/>
-<a href="{% url 'micourses:instructorlistassessments' %}">List assessments</a> (enter grades)<br/>
 {% if course.track_attendance %}
-<a href="{% url 'micourses:updateattendance' %}">Update attendance</a><br/>
-<a href = "{% url 'micourses:updateindividualattendance' %}">Update individual attendance</a>
+<a href="{% url 'micourses:update_attendance' course_code=course.code %}">Update attendance</a><br/>
+<a href = "{% url 'micourses:update_individual_attendance' course_code=course.code %}">Update individual attendance</a>
 {%endif%}
 
 {%else%} {% comment %}student view{% endcomment %}
@@ -29,7 +27,7 @@
 {% if course.track_attendance %}<a href="{% url 'micourses:attendance_display' course_code=course.code %}">Attendance record</a><br/>{% endif %}
 {%endif%}
 
-{% if course.tutoring_url %}<a href="{{course.tutoring_url}}">Tutoring options</a><br/>{% endif %}
+
 {% if courseuser.selected_course_enrollment.group %}
 <h5>Section and group</h5>
 <p>Section: 

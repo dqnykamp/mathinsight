@@ -9,19 +9,19 @@
 {%endif %}
 <p>Update attendance for {{course}}.</p>
 
-<form action="{% url 'micourses:updateattendance' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:update_attendance' course_code=course.code %}" method="post">{% csrf_token %}
 <div>
 <label for="id_attendance_date">Attendance date:</label> <input id="id_attendance_date" name="attendance_date" size="10" type="text" value="{{ next_attendance_date|date:'M j, Y'}}" />
 </div>
 <input type="submit" value="Update attendance" />
 
 <table class="narrow" style="width:10%">
-<tr><td>1</td><td>&frac12;</td><td>0</td><td>E</td></tr>
+<tr><td>Present</td><td>Absent</td><td>Excused absence</td></tr>
 {% regroup enrollment_list by group as group_list %}
 {% for group in group_list %}
 <tr><td colspan=5>Group: {{group.grouper}}</td></tr>
 {% for enrollment in group.list %}
-<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="1" checked /></td><td><input id="id_student_halfpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0.5" /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="0"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{enrollment.student.id}}" value="-1"  /></td><td class="nowrap">{{enrollment.student}}</td></tr>
+<tr><td><input id="id_student_present_{{forloop.counter}}" type="radio" name="student_{{enrollment.id}}" value="{{PRESENT}}" checked /></td><td><input id="id_student_notpresent_{{forloop.counter}}" type="radio" name="student_{{enrollment.id}}" value="{{ABSENT}}"  /></td><td><input id="id_student_excused_{{forloop.counter}}" type="radio" name="student_{{enrollment.id}}" value="{{EXCUSED}}"  /></td><td class="nowrap">{{enrollment.student}}</td></tr>
 {% endfor %}{% endfor%}
 </table>
 </form>

@@ -95,6 +95,25 @@
   </script>
   {% endif %}
 
+<script type="text/javascript">
+ function showHide(shID) {
+	if (document.getElementById(shID)) {
+		if (document.getElementById(shID).style.display == 'none') {
+			document.getElementById(shID+'_show').style.display = 'none';
+			document.getElementById(shID+'_hide').style.display = 'inline';
+			document.getElementById(shID).style.display = 'block';
+		}
+		else {
+			document.getElementById(shID+'_show').style.display = 'inline';
+			document.getElementById(shID+'_hide').style.display = 'none';
+			document.getElementById(shID).style.display = 'none';
+		}
+	}
+  }
+
+</script>
+
+
     {% accumulated_javascript %}
   </body>
 

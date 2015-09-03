@@ -18,6 +18,9 @@ DESIGNER_ROLE = 'D'
 NOT_YET_AVAILABLE = 0
 AVAILABLE = 1
 PAST_DUE = -1
+ABSENT = 0
+PRESENT = 1
+EXCUSED = -1
 
 
 def day_of_week_to_python(day_of_week):
@@ -196,9 +199,9 @@ class CourseUser(models.Model):
         attendance_data = course_enrollment.studentattendance_set\
             .filter(date__lte = date).filter(date__gte = date_enrolled)
         
-        n_excused_absenses = attendance_data.filter(present = -1).count()
+        n_excused_absenses = attendance_data.filter(present = EXCUSED).count()
         
-        days_attended = attendance_data.exclude(present = -1)\
+        days_attended = attendance_data.exclude(present = EXCUSED)\
             .aggregate(Sum('present'))['present__sum']
 
         if course_days:
@@ -885,10 +888,26 @@ class Course(models.Model):
                               contentrecord__skip=True))[:number]
 
 
-class CourseURLs(models.Model):
+class CourseURL(models.Model):
     course = models.ForeignKey(Course)
     name = models.CharField(max_length=100)
     url = models.URLField()
+    sort_order = models.FloatField(blank=True)
+
+    class Meta:
+        ordering = ['sort_order']
+
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.course.courseurl_set\
+                    .aggregate(Max('sort_order'))['sort_order__max']
+
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(CourseURL, self).save(*args, **kwargs)
 
 
 class CourseEnrollment(models.Model):
@@ -925,12 +944,20 @@ class CourseEnrollment(models.Model):
 class StudentAttendance(models.Model):
     enrollment = models.ForeignKey(CourseEnrollment)
     date = models.DateField()
-    # 0: absent, 1: present, -1: excused absense
-    present = models.FloatField(default=1.0)
+    present = models.SmallIntegerField(default=PRESENT)
 
     class Meta:
         unique_together = ['enrollment', 'date']
 
+
+    def present_as_word(self):
+        if self.present == PRESENT:
+            return "Present"
+        elif self.present == EXCUSED:
+            return "Excused absence"
+        else:
+            return "Absent"
+        
 
 
 class NondeletedManager(models.Manager):

@@ -21,6 +21,8 @@ class CourseUserChoiceField(forms.ModelChoiceField):
 class CourseGradeCategoryInline(admin.TabularInline):
     model = CourseGradeCategory
 
+class CourseURLInline(admin.TabularInline):
+    model = CourseURL
 
 class CourseEnrollmentInline(admin.TabularInline):
     model = CourseEnrollment
@@ -108,7 +110,7 @@ class CourseSkipDate(admin.TabularInline):
 
 
 class CourseAdmin(reversion.VersionAdmin):
-    inlines=[CourseGradeCategoryInline, CourseEnrollmentInline, CourseSkipDate]
+    inlines=[CourseGradeCategoryInline, CourseEnrollmentInline, CourseSkipDate, CourseURLInline]
     fieldsets = (
         (None, {
                 'fields': ('code', ('name',  'short_name'), 'semester',

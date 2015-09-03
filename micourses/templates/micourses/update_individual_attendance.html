@@ -9,24 +9,25 @@
 {%endif %}
 <h4>Update attendance of individual for {{course}}</h4>
 
-<form action="{% url 'micourses:updateindividualattendance' %}" method="get">
-{{select_student_form.student.label_tag}}: {{select_student_form.student}}
+<form action="{% url 'micourses:update_individual_attendance' course_code=course.code %}" method="get">
+{{select_student_form.student.label_tag}} {{select_student_form.student}}
 <input type="submit" value="Select student" />
 </form>
 
 {% if student %}
 <h5>Update existing attendance data for {{student.get_full_name}}</h5>
-<form action="{% url 'micourses:updateindividualattendance' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:update_individual_attendance' course_code=course.code %}" method="post">{% csrf_token %}
+{% for hidden in attendance_dates_form.hidden_fields %}
+{{ hidden }}
+{% endfor %}
+<input name="action" type="hidden" value="update" />
 <table class="narrow" style="width:10%">
-<tr><td>1</td><td>&frac12;</td><td>0</td><td>E</td></tr>
-{% for field in attendance_dates_form %}
-  {% if field.is_hidden %}{{ field}}
-  {% else %}
+<tr><td>Present</td><td>Absent</td><td>Excused Absence</td></tr>
+{% for field in attendance_dates_form.visible_fields %}
     <tr>
     {% for radio in field %}<td>{{radio.tag}}</td>{%endfor%}
     <td> {{ field.label_tag }}</td>
    </tr>
-   {% endif %}
 {%endfor%}
 </table>
 
@@ -35,15 +36,29 @@
 </form>
 
 
-<h5>Add upcoming excused absense for {{student.get_full_name}}</h5>
+<h5>Add upcoming excused absence for {{student.get_full_name}}</h5>
 
-<form action="{% url 'micourses:addexcusedabsence' %}" method="post">{% csrf_token %}
-<input id="id_student_excused" name="student" type="hidden" value="{{student.id}}" />
+<form action="{% url 'micourses:update_individual_attendance' course_code=course.code%}" method="post">{% csrf_token %}
+<input id="id_student_excused" name="student" type="hidden" value="{{student.id}}" /><input name="action" type="hidden" value="add_excused" />
 <div>
 <label for="id_attendance_date">Attendance date:</label> <input id="id_attendance_date" name="attendance_date" size="10" type="text" value="{{ next_attendance_date|date:'M j, Y'}}" />
 </div>
-<input type="submit" value="Add excused absense" />
+<input type="submit" value="Add excused absence" />
+</form>
 
+{% if future_excused_absences %}
+<h5>Upcoming excused absences for {{student.get_full_name}}</h5>
+
+<form action="{% url 'micourses:update_individual_attendance' course_code=course.code%}" method="post">{% csrf_token %}
+<input id="id_student_delete_excused" name="student" type="hidden" value="{{student.id}}" /><input name="action" type="hidden" value="delete_excused" />
+<ul style="margin-top:0em; list-style: none; text-indent: -1.2em;">
+{% for date in future_excused_absences %}
+<li><input type="checkbox" name="excused_date" value="{{date.id}}">{{date.date}}</li>{% endfor %}
+</ul>
+<input type="submit" value="Delete excused absences" />
+</form>
+
+{% endif %}
 
 {% endif %}
 

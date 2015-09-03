@@ -135,7 +135,7 @@ class CourseBaseMixin(SingleObjectMixin):
         
         context['courseuser'] = self.courseuser
         context['course'] = self.course
-        context['student'] = self.get_student()
+        context['student'] = self.student
         context['current_role'] = self.current_role
         context['instructor_role'] = self.current_role==INSTRUCTOR_ROLE \
                                      or self.current_role==DESIGNER_ROLE
@@ -1553,133 +1553,6 @@ class EditCourseContentAttemptScores(CourseBaseView):
         })
 
 
-
-
-# temporary view while gradebook view is so slow
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def instructor_list_assessments_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-
-    assessments_with_points = course.all_assessments_with_points()
-
-    # no Google analytics for course
-    noanalytics=True
-
-    return render_to_response \
-        ('micourses/instructor_list_assessments.html', 
-         {'course': course,
-          'courseuser': courseuser, 
-          'assessments': assessments_with_points,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-
-# eventually change this to use generic view
-# view to add assessment attempts
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def add_assessment_attempts_view(request, pk):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-
-    content = get_object_or_404(ThreadContent, id=pk)
-
-    assessment=content.content_object
-    latest_attempts = content.latest_student_attempts()
-
-    class DateTimeForm(forms.Form):
-        datetime = forms.DateTimeField()
-
-    error_message = ""
-    status_message = ""
-
-    # if POST, then add assessment attempts, assuming valid date
-    if request.method == 'POST':
-        datetime_form = DateTimeForm({'datetime': request.POST['new_datetime']})
-        valid_day = False
-        if datetime_form.is_valid():
-            attempt_datetime = datetime_form.cleaned_data['datetime']
-            n_added = 0
-            n_errors = 0
-            with transaction.atomic(), reversion.create_revision():
-                for (i,student) in \
-                    enumerate(content.course.enrolled_students_ordered()):
-
-                    new_score = request.POST['%i_new' % student.id]
-
-                    if new_score != "":
-                        try:
-                            content.studentcontentattempt_set.create \
-                                (student = student, datetime=attempt_datetime, 
-                                 score=new_score)
-
-                            latest_attempts[i]['status'] ="New score saved"
-                            latest_attempts[i]['number_attempts'] += 1
-                            n_added +=1
-                        except ValueError:
-                            latest_attempts[i]['error'] = "Enter a number"
-                            n_errors +=1
-
-            if(n_added):
-                status_message = "%s attempts added." % n_added
-            if(n_errors):
-                error_message = "%s errors encountered." % n_errors
-            if(not n_added and not n_errors):
-                error_message = "No attempts added.  Enter at least one score."
-
-            return render(request, 'micourses/edit_assessment_attempt.html',
-                          {'latest_attempts': latest_attempts,
-                           'assessment': assessment,
-                           'content': content,
-                           'error_message': error_message,
-                           'status_message': status_message,
-                       })
-            
-        else:
-            datetime_error = datetime_form['datetime'].errors
-            error_message = "Invalid date/time, no attempts added"
-            
-            for (i,student) in \
-                enumerate(content.course.enrolled_students_ordered()):
-
-                new_score = request.POST['%i_new' % student.id]
-                latest_attempts[i]['old_value_string'] = 'value=%s' % new_score
-                
-            return render(request, 'micourses/edit_assessment_attempt.html',
-                          {'latest_attempts': latest_attempts,
-                           'assessment': assessment,
-                           'content': content,
-                           'error_message': error_message,
-                           'datetime_error': datetime_error,
-                    })
-            
-        
-    else:
-        return HttpResponseRedirect(reverse('micourses:editassessmentattempt',args=(pk,)))
 
 
 @user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)

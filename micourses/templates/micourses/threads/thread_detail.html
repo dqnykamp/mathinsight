@@ -41,7 +41,7 @@
 {% block tail %}
 <script>
   function mark_completion(content_id, complete) {
-      var thepost = jQuery.post('{% url "micourses:record-completion" course_code=course.code %}', { 'content_id': content_id, 'complete': complete });
+      var thepost = jQuery.post('{% url "micourses:record_completion" course_code=course.code %}', { 'content_id': content_id, 'complete': complete });
 
       thepost.done(process_completion);
   }
