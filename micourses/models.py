@@ -390,12 +390,6 @@ class Course(models.Model):
         return self.enrolled_students.filter(courseenrollment__in=student_enrollments).order_by('user__last_name', 'user__first_name')
 
     def points_for_grade_category(self, grade_category):
-        try:
-            cgc=self.coursegradecategory_set.get\
-                (grade_category=grade_category)
-        except ObjectDoesNotExist:
-            return 0
-        
 
         point_list = []
         for tc in self.thread_contents\
@@ -406,11 +400,11 @@ class Course(models.Model):
 
         point_list.sort()
         
-        n = cgc.number_count_for_grade
+        n = grade_category.number_count_for_grade
         if n is not None and n < len(point_list):
             point_list = point_list[-n:]
         
-        return sum(point_list)*cgc.rescale_factor
+        return sum(point_list)*grade_category.rescale_factor
 
 
     def all_assessments_by_category(self):
@@ -420,7 +414,7 @@ class Course(models.Model):
             cgc_assessments = []
             number_assessments = 0
             for tc in self.thread_contents\
-                    .filter(grade_category=cgc.grade_category):
+                    .filter(grade_category=cgc):
                 tc_points = tc.points
                 if tc_points:
                     number_assessments += 1
@@ -431,8 +425,7 @@ class Course(models.Model):
                      }
                     cgc_assessments.append(assessment_results)
 
-            category_points = self.points_for_grade_category \
-                               (cgc.grade_category)
+            category_points = self.points_for_grade_category(cgc)
 
             score_comment = ""
             if cgc.number_count_for_grade and \
@@ -478,141 +471,174 @@ class Course(models.Model):
 
         return assessments
  
-    def student_score_for_grade_category(self, grade_category,
-                                              student):
-        try:
-            cgc=self.coursegradecategory_set.get\
-                (grade_category=grade_category)
-        except ObjectDoesNotExist:
-            return 0
-        
-        score_list = []
-        for tc in self.thread_contents\
-                .filter(grade_category=grade_category):
-            total_score = tc.student_score(student)
-            if total_score:
-                score_list.append(total_score)
 
-        score_list.sort()
+    def student_scores_by_grade_category(self, student=None):
+        student_scores = []
+
+        enrollment=None
+        cgc = None
+        student_categories = []
+        total_student_score = 0
+        category_score_results = []
+        category_scores=[]
         
-        n = cgc.number_count_for_grade
-        if n is not None and n < len(score_list):
-            score_list = score_list[-n:]
-        return sum(score_list)*cgc.rescale_factor
+        include_details = student is not None
+
+
+        def summarize_category(cgc, category_scores, category_score_results,
+                               include_details=False):
+            n_count = cgc.number_count_for_grade
+            n_assessments = len(category_scores)
+            if n_count is not None and n_count < n_assessments:
+                category_student_score = sum(sorted(category_scores)[-n_count:])
+            else:
+                category_student_score = sum(category_scores)
+            category_student_score *= cgc.rescale_factor
+            category_results = {
+                'category': cgc.grade_category,
+                'student_score': category_student_score,
+                'scores': category_score_results,
+            }
+
+            if include_details:
+                category_points = self.points_for_grade_category(cgc)
+                if category_student_score and category_points:
+                    category_percent = category_student_score/category_points\
+                                       *100
+                else:
+                    category_percent = 0
+
+                score_comment = ""
+                if n_count is not None and n_count < n_assessments:
+                    score_comment = "top %s scores out of %s" % \
+                        (n_count, n_assessments)
+                if cgc.rescale_factor != 1.0:
+                    if score_comment:
+                        score_comment += " and "
+                    score_comment += "rescaling by %s%%" % \
+                        (round(cgc.rescale_factor*1000)/10)
+                if score_comment:
+                    score_comment = mark_safe(
+                        "<br/><small>(based on %s)</small>" % score_comment)
+
+                category_results['points'] = category_points
+                category_results['percent'] = category_percent
+                category_results['number_count'] = n_count
+                category_results['rescale_factor'] = cgc.rescale_factor
+                category_results['score_comment']= score_comment
+
+
+            return category_results
+
+
+        records = ContentRecord.objects.filter(content__course=self) \
+            .exclude(content__points=None).exclude(content__points=0)
+        if student:
+            records = records.filter(enrollment__student=student) \
+                .order_by('content__grade_category', 'content')
+
+        else:
+            records = records.exclude(enrollment=None) \
+                .order_by('enrollment__student', 'content__grade_category',
+                          'content')\
  
 
-    def student_scores_for_grade_category(self, student, cgc):
+        for cr in records \
+            .select_related('enrollment', 'enrollment__student', 
+                            'content', 'content__grade_category'):
 
-        cgc_assessments = []
-        for tc in self.thread_contents\
-                .filter(grade_category=cgc.grade_category):
+            if enrollment != cr.enrollment:
+                # if have previous student, then record student results
+                if enrollment:
+
+                    category_results = summarize_category(
+                        cgc, category_scores, category_score_results,
+                        include_details=include_details)
+                    student_categories.append(category_results)
+                    total_student_score += category_results['student_score']
+
+                    student_scores.append(
+                        {'student': enrollment.student,
+                         'section': enrollment.section,
+                         'group': enrollment.group,
+                         'total_score': total_student_score,
+                         'categories': student_categories
+                     })
+                category_score_results=[]
+                category_scores=[]
+                cgc = cr.content.grade_category
+                student_categories=[]
+                total_student_score=0
+                enrollment=cr.enrollment
+                
+            elif cgc != cr.content.grade_category:
+                # if have previous cgc, then compute totals
+                if cgc:
+                    category_results = summarize_category(
+                        cgc, category_scores, category_score_results,
+                        include_details=include_details)
+                    student_categories.append(category_results)
+                    total_student_score += category_results['student_score']
+
+                category_score_results=[]
+                category_scores=[]
+                cgc = cr.content.grade_category
+            
+            tc=cr.content
             tc_points = tc.points
             if tc_points:
-                student_score = tc.student_score(student)
-                if student_score:
-                    percent = student_score/tc_points*100
-                else:
-                    percent = 0
-                assessment_results =  \
-                {'content': tc,
-                 'assessment': tc.content_object,
-                 'points': tc_points,
-                 'student_score': student_score,
-                 'percent': percent,
-                 }
-                cgc_assessments.append(assessment_results)
-        return cgc_assessments
+                assessment_results = {
+                    'content': tc,
+                    'assessment': tc.content_object,
+                    'score': cr.score,}
+                score_or_zero = cr.score
+                if not score_or_zero:
+                    score_or_zero=0
+                if include_details:
+                    percent = score_or_zero/tc_points*100
+                    assessment_results['points'] = tc_points
+                    assessment_results['percent'] = percent
 
-    def student_scores_by_grade_category(self, student):
-        scores_by_category = []
-        for cgc in self.coursegradecategory_set.all():
+                category_scores.append(score_or_zero)
+                category_score_results.append(assessment_results)
 
-            cgc_assessments = self.student_scores_for_grade_category(\
-                                                            student, cgc)
-            number_assessments=len(cgc_assessments)
 
-            category_points = self.points_for_grade_category \
-                               (cgc.grade_category)
-            category_student_score = \
-                self.student_score_for_grade_category \
-                (cgc.grade_category, student)
-            if category_student_score and category_points:
-                category_percent = category_student_score/category_points*100
+
+        # compute totals for last student and cgc
+        category_results = summarize_category(
+            cgc, category_scores, category_score_results,
+                        include_details=include_details)
+        student_categories.append(category_results)
+        total_student_score += category_results['student_score']
+
+        # if specified student, then return results as just
+        # a dictionary, with percent and points included
+        if student:
+            total_points = self.total_points()
+            if total_points and total_student_score:
+                total_percent = total_student_score/total_points*100
             else:
-                category_percent = 0
-
-            score_comment = ""
-            if cgc.number_count_for_grade and \
-                    cgc.number_count_for_grade < number_assessments:
-                score_comment = "top %s scores out of %s" % \
-                    (cgc.number_count_for_grade, number_assessments)
-            if cgc.rescale_factor != 1.0:
-                if score_comment:
-                    score_comment += " and "
-                score_comment += "rescaling by %s%%" % \
-                    (round(cgc.rescale_factor*1000)/10)
-            if score_comment:
-                score_comment = mark_safe("<br/><small>(based on %s)</small>"\
-                                              % score_comment)
-
-            cgc_results = {'category': cgc.grade_category,
-                           'points': category_points,
-                           'student_score': category_student_score,
-                           'percent': category_percent,
-                           'number_count': cgc.number_count_for_grade,
-                           'rescale_factor': cgc.rescale_factor,
-                           'score_comment': score_comment,
-                           'assessments': cgc_assessments,
-                           }
-            scores_by_category.append(cgc_results)
-        total_points = self.total_points()
-        total_student_score = self.total_student_score(student)
-        if total_points and total_student_score:
-            total_percent = total_student_score/total_points*100
-        else:
-            total_percent = 0
-        return {'scores': scores_by_category,
-                'total_points': total_points,
-                'total_student_score': total_student_score,
-                'total_percent': total_percent,
+                total_percent = 0
+            return {'categories': student_categories,
+                    'total_points': total_points,
+                    'total_score': total_student_score,
+                    'total_percent': total_percent,
                 }
-    
-    def all_student_scores_by_grade_category(self):
-        student_scores = []
-        for student in self.enrolled_students_ordered():
-            student_categories = []
-            for cgc in self.coursegradecategory_set.all():
-                category_scores = []
-                for tc in self.thread_contents\
-                    .filter(grade_category=cgc.grade_category):
-                    tc_points = tc.points
-                    if tc_points:
-                        student_score = tc.student_score(student)
-                        assessment_results =  \
-                            {'content': tc,
-                             'assessment': tc.content_object,
-                             'score': student_score,}
-                        category_scores.append(assessment_results)
-                category_student_score = \
-                    self.student_score_for_grade_category \
-                    (cgc.grade_category, student)
-                student_categories.append({'category': cgc.grade_category,
-                                           'category_score': \
-                                               category_student_score,
-                                           'scores': category_scores})
 
-            student_scores.append({'student': student,
-                                   'section': self.courseenrollment_set.get(student=student).section,
-                                   'total_score': \
-                                       self.total_student_score(student),
-                                   'categories': student_categories})
-        return student_scores    
+        else:
+            student_scores.append(
+                {'student': enrollment.student,
+                 'section': enrollment.section,
+                 'group': enrollment.group,
+                 'total_score': total_student_score,
+                 'categories': student_categories
+             })
+            return student_scores    
                     
     def total_points(self):
         total_points=0
         for cgc in self.coursegradecategory_set.all():
-            total_points += self.points_for_grade_category\
-                (cgc.grade_category)
+            total_points += self.points_for_grade_category(cgc)
         return total_points
 
     def total_student_score(self, student):
@@ -981,8 +1007,8 @@ class CourseEnrollment(models.Model):
     )
     course = models.ForeignKey(Course)
     student = models.ForeignKey(CourseUser)
-    section = models.IntegerField(blank=True, null=True)
-    group = models.SlugField(max_length=20, blank=True, null=True)
+    section = models.CharField(max_length=20, blank=True, null=True)
+    group = models.CharField(max_length=20, blank=True, null=True)
     date_enrolled = models.DateTimeField(blank=True)
     withdrew = models.BooleanField(default=False)
     role = models.CharField(max_length=1,
@@ -1001,6 +1027,11 @@ class CourseEnrollment(models.Model):
         if not self.date_enrolled:
             self.date_enrolled = timezone.now()
         super(CourseEnrollment, self).save(*args, **kwargs)
+
+        # create content records for all thread content of course
+        # that has points
+        for tc in self.course.thread_contents.exclude(points=None):
+            tc.contentrecord_set.get_or_create(enrollment=self)
 
 
 @reversion.register
@@ -1219,7 +1250,8 @@ class ThreadContent(models.Model):
     initial_due=models.DateTimeField(blank=True, null=True)
     final_due=models.DateTimeField(blank=True, null=True)
 
-    grade_category = models.ForeignKey(GradeCategory, blank=True, null=True)
+    grade_category = models.ForeignKey(CourseGradeCategory, 
+                                       blank=True, null=True)
     points = models.FloatField(blank=True, null=True)
     attempt_aggregation = models.CharField(max_length=3,
                                            choices = AGGREGATE_CHOICES,
@@ -1264,11 +1296,17 @@ class ThreadContent(models.Model):
                 self.sort_order = 1
 
         # if points changed, should recalculate score of content records
+        # and if newly has nonzero points, create content records
         points_changed = False
+        newly_with_points = bool(self.points)
         if self.pk is not None:
             old_tc = ThreadContent.objects.get(pk=self.pk)
             if old_tc.points != self.points:
                 points_changed=True
+                if old_tc.points:
+                    newly_with_points=False
+            else:
+                newly_with_points=False
 
         super(ThreadContent, self).save(*args, **kwargs)
 
@@ -1278,6 +1316,11 @@ class ThreadContent(models.Model):
         if points_changed:
             for record in self.contentrecord_set.all():
                 record.recalculate_score(total_recalculation=True)
+
+        if newly_with_points:
+            for ce in self.course.courseenrollment_set.all():
+                self.contentrecord_set.get_or_create(enrollment=ce)
+
 
 
     def get_title(self):

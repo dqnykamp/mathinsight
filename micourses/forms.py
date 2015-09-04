@@ -36,7 +36,7 @@ class ContentAttemptRequiredScoreForm(forms.ModelForm):
 
 
 
-def thread_content_form_factory(the_content_type=None, update_options_command=""):
+def thread_content_form_factory(course, the_content_type=None, update_options_command=""):
 
     if the_content_type is None:
         the_content_type = ContentType.objects.get(app_label="midocs", model="page")
@@ -60,6 +60,9 @@ def thread_content_form_factory(the_content_type=None, update_options_command=""
         object_id =forms.ChoiceField(
             choices=default_object_choices,
             label="Object"
+        )
+        grade_category = forms.ModelChoiceField(
+            queryset = course.coursegradecategory_set.all()
         )
 
         class Meta:

@@ -1381,7 +1381,7 @@ class InstructorGradebook(CourseBaseView):
     def get_context_data(self, **kwargs):
         context = super(InstructorGradebook, self).get_context_data(**kwargs)
         context['assessment_categories'] = self.course.all_assessments_by_category()
-        context['student_scores'] = self.course.all_student_scores_by_grade_category()
+        context['student_scores'] = self.course.student_scores_by_grade_category()
         context['total_points'] = self.course.total_points()
 
         return context

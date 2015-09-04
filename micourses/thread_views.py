@@ -535,6 +535,7 @@ class EditContentView(View):
                 form_identifier
 
             form = thread_content_form_factory(
+                course=thread_content.course,
                 the_content_type=content_type,
                 update_options_command=update_options_command
             )
@@ -568,11 +569,8 @@ class EditContentView(View):
             except AttributeError:
                 new_sort_order = 0
 
-            initial={'section': thread_section, 
-                     'course': thread_section.get_course(),
-                     'sort_order': new_sort_order}
-
             form = thread_content_form_factory(
+                course = thread_section.get_course(),
                 the_content_type=content_type,
                 update_options_command=update_options_command
             )
@@ -674,6 +672,7 @@ class ReturnContentForm(View):
             (form_identifier, course.code)
 
         form = thread_content_form_factory(
+            course=course,
             the_content_type=the_content_type,
             update_options_command=update_options_command
         )
