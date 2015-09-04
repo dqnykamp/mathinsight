@@ -110,7 +110,7 @@ class CourseSkipDate(admin.TabularInline):
 
 
 class CourseAdmin(reversion.VersionAdmin):
-    inlines=[CourseGradeCategoryInline, CourseEnrollmentInline, CourseSkipDate, CourseURLInline]
+    inlines=[CourseGradeCategoryInline, CourseSkipDate, CourseURLInline]
     fieldsets = (
         (None, {
                 'fields': ('code', ('name',  'short_name'), 'semester',
@@ -138,37 +138,37 @@ class CourseAdmin(reversion.VersionAdmin):
 
 
 
-# class CourseWithThreadContent(Course):
-#     class Meta:
-#         proxy = True
-#         verbose_name_plural = "Courses with thread content"
+class CourseWithEnrollment(Course):
+    class Meta:
+        proxy = True
+        verbose_name_plural = "Courses with enrollment"
 
 
-# class CourseWithThreadContentAdmin(admin.ModelAdmin):
-#     inlines=[CourseThreadContentInline,]
-#     fieldsets = (
-#         (None, {
-#                 'fields': ('code', 'name',  'short_name', 'semester',
-#                            'description', 'thread', 'active')
-#                 }),
-#         ('Dates and attendance', {
-#                 'classes': ('collapse',),
-#                 'fields': ('start_date', 'end_date',
-#                            'days_of_week', 
-#                            ('track_attendance', 'adjust_due_attendance'),
-#                            ('last_attendance_date', 'attendance_end_of_week',
-#                             'attendance_threshold_percent'),
-#                            )
-#                 }),
-#         )
-    
-#     class Media:
-#         js = [
-#             "%sjs/jquery-latest.js" % settings.STATIC_URL,
-#             "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
-#         ]
+class CourseWithEnrollmentAdmin(admin.ModelAdmin):
+    inlines=[CourseEnrollmentInline,]
+    fieldsets = (
+        (None, {
+                'fields': ('code', ('name',  'short_name'), 'semester',
+                           'description', 'active')
+                }),
+        ('Dates and attendance', {
+                'classes': ('collapse',),
+                'fields': ('start_date', 'end_date',
+                           'days_of_week', 
+                           ('track_attendance', 'adjust_due_attendance'),
+                           ('last_attendance_date', 'attendance_end_of_week',
+                            'attendance_threshold_percent'),
+                           'attendance_time_zone',
+                           )
+                }),
+        )
+    class Media:
+        js = [
+            "%sjs/jquery-latest.js" % settings.STATIC_URL,
+            "%sjs/django_admin_collapsed_inlines.js" % settings.STATIC_URL,
+        ]
 
-#     save_on_top=True
+    save_on_top=True
 
 
 # class CourseWithAssessmentThreadContent(Course):
@@ -270,7 +270,7 @@ class AssessmentTypeAdmin(reversion.VersionAdmin):
 
 
 admin.site.register(Course, CourseAdmin)
-#admin.site.register(CourseWithThreadContent, CourseWithThreadContentAdmin)
+admin.site.register(CourseWithEnrollment, CourseWithEnrollmentAdmin)
 #admin.site.register(CourseWithAssessmentThreadContent, CourseWithAssessmentThreadContentAdmin)
 admin.site.register(GradeCategory,GradeCategoryAdmin)
 admin.site.register(Assessment, AssessmentAdmin)
