@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load  mi_tags course_tags  %}
+{% load  mi_tags course_tags staticfiles %}
 {% block nolinksection %}{% endblock %}
 {% block extrastyle %}
 <link href="{{ STATIC_URL }}micourses/micourse.css" rel="stylesheet" type="text/css"/>
@@ -21,11 +21,44 @@
 
 <table class="basic">
 <tr><th>Material</th><th>Comment</th><th>Assigned</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
-{% for content_dict in content_list %}{% with thread_content=content_dict.thread_content %}
-<tr><td>{{ thread_content.return_link }}</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{{content_dict.initial_due}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}'>{{content_dict.adjusted_due}}</a></td>{%endif%}<td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score|floatformat_or_dash:1}}</a>{% else %}NA{%endif%}</td></tr>
+{% for content_dict in content_list %}{% with thread_content=content_dict.thread_content id=content_dict.thread_content.id completed=content_dict.completed %}
+<tr><td>{{ thread_content.return_link }}
+{% if not thread_content.optional %}
+<span id="completed_{{id}}" {% if not completed %}hidden{% endif %}><img src="{% static 'admin/img/icon-yes.gif' %}" alt="Complete" onclick="$('#undo_complete_{{id}}').toggle(true);"/>
+<span id ="undo_complete_{{id}}" hidden> <input type="button" class="coursecontentbutton" value="Undo completion" onclick="mark_completion({{id}}, 0);"></span></span>
+<span id="not_completed_{{id}}" {% if completed %}hidden{% endif %}>
+<input type="button" class="coursecontentbutton" value="Done" onclick="mark_completion({{id}}, 1)">
+</span>
+{% endif %}
+</td><td>{{thread_content.comment}}</td><td>{{content_dict.assigned}}</td><td>{{content_dict.initial_due}}</td>{% if course.adjust_due_attendance %}<td><a href='{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}'>{{content_dict.adjusted_due}}</a></td>{%endif%}<td>{% if thread_content.points %}<a href='{% url 'micourses:content_record' course_code=course.code content_id=thread_content.id  %}'>{{content_dict.score|floatformat_or_dash:1}}</a>{% else %}NA{%endif%}</td></tr>
 {% endwith %}{% endfor %}
 </table>
 
 
 {% endblock %}
 
+{% block tail %}
+<script>
+  function mark_completion(content_id, complete) {
+      var thepost = jQuery.post('{% url "micourses:record_completion" course_code=course.code %}', { 'content_id': content_id, 'complete': complete });
+
+      thepost.done(process_completion);
+  }
+  function process_completion(data) {
+      var content_id = data['content_id'];
+      var complete = data['complete'];
+
+      $('#undo_complete_' + content_id).toggle(false);
+      
+      if(complete) {
+	  $('#completed_' + content_id).toggle(true);
+	  $('#not_completed_' + content_id).toggle(false);
+      }
+      else {
+	  $('#completed_' + content_id).toggle(false);
+	  $('#not_completed_' + content_id).toggle(true);
+      }
+  }
+
+</script>
+{% endblock %}

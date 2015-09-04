@@ -120,6 +120,11 @@ class CourseBaseMixin(SingleObjectMixin):
         else:
             self.student_enrollment = self.enrollment
 
+        from micourses.utils import find_week_begin_end
+        self.beginning_of_week, self.end_of_week = find_week_begin_end(
+            self.course)
+        
+        self.datetime_format = '%Y-%m-%d %H:%M:%S.%f%z'
 
         return self.course
 
@@ -141,6 +146,10 @@ class CourseBaseMixin(SingleObjectMixin):
                                      or self.current_role==DESIGNER_ROLE
         context['enrollment'] = self.enrollment
         context['student_enrollment'] = self.student_enrollment
+
+        context['week_date_parameters'] = "begin_date=%s&end_date=%s" % \
+                        (self.beginning_of_week.strftime(self.datetime_format), 
+                         self.end_of_week.strftime(self.datetime_format))
 
         # no Google analytics for course
         context['noanalytics']=True
@@ -190,12 +199,8 @@ class CourseView(CourseBaseView):
             context['multiple_courses']=False
 
 
-        from micourses.utils import find_week_begin_end
-
-        beginning_of_week, end_of_week = find_week_begin_end(self.course)
-
-        begin_date=beginning_of_week
-        end_date=end_of_week+timezone.timedelta(days=7)
+        begin_date=self.beginning_of_week
+        end_date=self.end_of_week+timezone.timedelta(days=7)
         context['begin_date']=begin_date
         context['end_date']=end_date
 
@@ -204,11 +209,9 @@ class CourseView(CourseBaseView):
             (self.courseuser, begin_date=begin_date, \
                  end_date=end_date)
 
-        datetime_format = '%Y-%m-%d %H:%M:%S.%f%z'
-
         date_parameters = "begin_date=%s&end_date=%s" %\
-                          (begin_date.strftime(datetime_format),
-                           end_date.strftime(datetime_format))
+                          (begin_date.strftime(self.datetime_format),
+                           end_date.strftime(self.datetime_format))
 
         context['include_completed_parameters'] = date_parameters
 
@@ -216,15 +219,15 @@ class CourseView(CourseBaseView):
         next_end_date = next_begin_date+timezone.timedelta(days=7) \
                         - timezone.timedelta(microseconds=1)
         next_period_parameters = "begin_date=%s&end_date=%s" \
-            % (next_begin_date.strftime(datetime_format),
-               next_end_date.strftime(datetime_format))
+            % (next_begin_date.strftime(self.datetime_format),
+               next_end_date.strftime(self.datetime_format))
 
         previous_end_date = begin_date - timezone.timedelta(microseconds=1)
         previous_begin_date = previous_end_date-timezone.timedelta(days=7)\
                               + timezone.timedelta(microseconds=1)
         previous_period_parameters = "begin_date=%s&end_date=%s" \
-            % (previous_begin_date.strftime(datetime_format),
-               previous_end_date.strftime(datetime_format))
+            % (previous_begin_date.strftime(self.datetime_format),
+               previous_end_date.strftime(self.datetime_format))
         previous_period_parameters += "&exclude_completed"
         next_period_parameters += "&exclude_completed"
 
@@ -1303,14 +1306,12 @@ class ContentListView(CourseBaseView):
         exclude_completed='exclude_completed' in self.request.GET
         exclude_past_due='exclude_past_due' in self.request.GET
 
-        datetime_format = '%Y-%m-%d %H:%M:%S.%f%z'
-
         try:
-            begin_date = timezone.datetime.strptime(self.request.GET.get('begin_date'),datetime_format)
+            begin_date = timezone.datetime.strptime(self.request.GET.get('begin_date'),self.datetime_format)
         except TypeError:
             begin_date = None
         try:
-            end_date = timezone.datetime.strptime(self.request.GET.get('end_date'),datetime_format)
+            end_date = timezone.datetime.strptime(self.request.GET.get('end_date'),self.datetime_format)
         except TypeError:
             end_date = None
 
@@ -1324,13 +1325,13 @@ class ContentListView(CourseBaseView):
             next_begin_date = end_date + timezone.timedelta(1)
             next_end_date = next_begin_date+(end_date-begin_date)
             next_period_parameters = "begin_date=%s&end_date=%s" \
-                % (next_begin_date.strftime(datetime_format),
-                   next_end_date.strftime(datetime_format))
+                % (next_begin_date.strftime(self.datetime_format),
+                   next_end_date.strftime(self.datetime_format))
             previous_end_date = begin_date - timezone.timedelta(1)
             previous_begin_date = previous_end_date+(begin_date-end_date)
             previous_period_parameters = "begin_date=%s&end_date=%s" \
-                % (previous_begin_date.strftime(datetime_format),
-                   previous_end_date.strftime(datetime_format))
+                % (previous_begin_date.strftime(self.datetime_format),
+                   previous_end_date.strftime(self.datetime_format))
             if exclude_completed:
                 previous_period_parameters += "&exclude_completed"
                 next_period_parameters += "&exclude_completed"
@@ -1344,11 +1345,11 @@ class ContentListView(CourseBaseView):
 
         date_parameters=""
         if begin_date:
-            date_parameters += "begin_date=%s" % begin_date.strftime(datetime_format)
+            date_parameters += "begin_date=%s" % begin_date.strftime(self.datetime_format)
         if end_date:
             if date_parameters:
                 date_parameters += "&"
-            date_parameters += "end_date=%s" % end_date.strftime(datetime_format)
+            date_parameters += "end_date=%s" % end_date.strftime(self.datetime_format)
 
         exclude_completed_parameters="exclude_completed"
         if date_parameters:

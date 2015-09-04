@@ -803,6 +803,11 @@ class Course(models.Model):
         # if exclude_completed, then exclude those a student marked complete
         # if assessments_only, then show only those with contenttype=assessment
 
+        try:
+            enrollment = self.courseenrollment_set.get(student=student)
+        except ObjectDoesNotExist:
+            return []
+
         content_list= self.thread_contents.all()
 
         if assessments_only:
@@ -824,24 +829,34 @@ class Course(models.Model):
         if exclude_completed:
             content_list = content_list.exclude \
                 (id__in=self.thread_contents.filter \
-                     (contentrecord__enrollment__student=student,
+                     (contentrecord__enrollment=enrollment,
                       contentrecord__complete=True))
 
         # for each of content, calculate adjusted due date
         content_with_dates = []
-        for coursecontent in content_list:
-            initial_due = coursecontent.get_initial_due(student)
-            adjusted_due = coursecontent.get_adjusted_due(student)
-            assigned = coursecontent.assigned
+        for content in content_list:
+            initial_due = content.get_initial_due(student)
+            adjusted_due = content.get_adjusted_due(student)
+            assigned = content.assigned
             if not assigned:
                 assigned = "--"
+            if exclude_completed:
+                completed=False
+            else:
+                try:
+                    completed = content.contentrecord_set\
+                                       .get(enrollment=enrollment).complete
+                except ObjectDoesNotExist:
+                    completed = False
+
             content_with_dates.append({
                 'assigned': assigned,
                 'initial_due': initial_due,
                 'adjusted_due': adjusted_due,
-                'thread_content': coursecontent, 
-                'sort_order': coursecontent.sort_order,
-                'score': coursecontent.student_score(student),
+                'thread_content': content, 
+                'sort_order': content.sort_order,
+                'score': content.student_score(student),
+                'completed': completed,
             })
 
         if by_assigned:
@@ -849,15 +864,15 @@ class Course(models.Model):
         else:
             date_column='adjusted_due'
 
-        # sort by appropriate date, then by coursecontent
+        # sort by appropriate date, then by content
         from operator import itemgetter
         content_with_dates.sort(key=itemgetter(date_column,'sort_order'))
         
         #remove content outside dates
         if begin_date:
             last_too_early_index=-1
-            for (i, coursecontent) in enumerate(content_with_dates):
-                if content_with_dates[i][date_column] < begin_date:
+            for (i, content) in enumerate(content_with_dates):
+                if content[date_column] < begin_date:
                     last_too_early_index=i
                 else:
                     break
@@ -865,8 +880,8 @@ class Course(models.Model):
             content_with_dates=content_with_dates[last_too_early_index+1:]
             
         if end_date:
-            for (i, coursecontent) in enumerate(content_with_dates):
-                if content_with_dates[i][date_column] > end_date:
+            for (i, content) in enumerate(content_with_dates):
+                if content[date_column] > end_date:
                     content_with_dates=content_with_dates[:i]
                     break
 
