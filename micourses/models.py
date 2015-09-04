@@ -538,14 +538,13 @@ class Course(models.Model):
                 .order_by('content__grade_category', 'content')
 
         else:
-            records = records.exclude(enrollment=None) \
+            records = records.filter(enrollment__role=STUDENT_ROLE) \
                 .order_by('enrollment__student', 'content__grade_category',
                           'content')\
  
 
         for cr in records \
-            .select_related('enrollment', 'enrollment__student', 
-                            'content', 'content__grade_category'):
+            .select_related('enrollment__student', 'content__grade_category'):
 
             if enrollment != cr.enrollment:
                 # if have previous student, then record student results
@@ -558,9 +557,7 @@ class Course(models.Model):
                     total_student_score += category_results['student_score']
 
                     student_scores.append(
-                        {'student': enrollment.student,
-                         'section': enrollment.section,
-                         'group': enrollment.group,
+                        {'enrollment': enrollment,
                          'total_score': total_student_score,
                          'categories': student_categories
                      })
@@ -627,9 +624,7 @@ class Course(models.Model):
 
         else:
             student_scores.append(
-                {'student': enrollment.student,
-                 'section': enrollment.section,
-                 'group': enrollment.group,
+                {'enrollment': enrollment,
                  'total_score': total_student_score,
                  'categories': student_categories
              })
