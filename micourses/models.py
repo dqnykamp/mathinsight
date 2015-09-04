@@ -903,6 +903,54 @@ class Course(models.Model):
                               contentrecord__skip=True))[:number]
 
 
+    def import_roster(self, filename):
+        """
+        Import course enrollment from csv file.
+        Assume CSV file has these columns:
+        ID, Last Name, First Name, Internet ID, Email, Section, Group
+        (ID is for courseuser.userid, Internet ID is for username)
+
+        All new users have unusuable passwords set
+
+        """
+
+        import csv
+
+        with open(filename) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                try:
+                    u = User.objects.get(username=row[3])
+                except ObjectDoesNotExist:
+                    u=User.objects.create_user(username=row[3], email=row[4], 
+                                        first_name=row[2], last_name=row[1])
+
+                else:
+                    u.email=row[4]
+                    u.first_name=row[2]
+                    u.last_name=row[1]
+                    u.save()
+
+                u.courseuser.userid=row[0]
+                u.courseuser.save()
+
+                try:
+                    ce = self.courseenrollment_set.get(
+                        student=u.courseuser)
+                except ObjectDoesNotExist:
+                    ce = self.courseenrollment_set.create(
+                        student=u.courseuser,
+                        section=row[5],
+                        group=row[6]
+                    )
+                else:
+                    ce.section=row[5]
+                    ce.group=row[6]
+                    ce.save()
+
+
+
+
 class CourseURL(models.Model):
     course = models.ForeignKey(Course)
     name = models.CharField(max_length=100)
