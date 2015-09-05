@@ -66,7 +66,7 @@ class CourseUser(models.Model):
         on_delete=models.SET_NULL)
 
     class Meta:
-        ordering = ['user__last_name', 'user__first_name']
+        ordering = ['user__last_name', 'user__first_name', 'user__username']
 
     def __str__(self):
         return "%s, %s" % (self.user.last_name, self.user.first_name)
@@ -533,6 +533,10 @@ class Course(models.Model):
 
         records = ContentRecord.objects.filter(content__course=self) \
             .exclude(content__points=None).exclude(content__points=0)
+
+        # since starting with ContentRecord, could have records
+        # associated with content that was deleted
+        records = records.filter(content__deleted=False)
         if student:
             records = records.filter(enrollment__student=student) \
                 .order_by('content__grade_category', 'content')
@@ -1086,7 +1090,10 @@ class ThreadSection(models.Model):
         for i in range(10):
             if ancestor.course:
                 return ancestor.course
-            ancestor=ancestor.parent
+            # allow ancestor to be deleted section
+            # so doesn't break in this case
+            ancestor = ThreadSection.all_objects.get(id=ancestor.parent_id)
+            #ancestor=ancestor.parent
         return None
 
     def return_siblings(self):
@@ -1184,6 +1191,9 @@ class ThreadSection(models.Model):
 
     def mark_deleted(self):
         with transaction.atomic(), reversion.create_revision():
+            # could get in an infinite loop here
+            for child_section in self.child_sections.all():
+                child_section.mark_deleted()
             for thread_content in self.thread_contents.all():
                 thread_content.mark_deleted()
             self.deleted=True
@@ -1278,12 +1288,14 @@ class ThreadContent(models.Model):
 
 
     def save(self, *args, **kwargs):
-        # set course to be course of section
-        self.course=self.section.get_course()
+        # Set course to be course of section.
+        # Allow section to be a deleted section so this doesn't break
+        section = ThreadSection.all_objects.get(id=self.section_id)
+        self.course=section.get_course()
 
         # if sort_order is null, make it one more than the max
         if self.sort_order is None:
-            max_sort_order = self.section.thread_contents\
+            max_sort_order = section.thread_contents\
                 .aggregate(Max('sort_order'))['sort_order__max']
             if max_sort_order:
                 self.sort_order = ceil(max_sort_order+1)

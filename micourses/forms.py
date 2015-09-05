@@ -62,7 +62,8 @@ def thread_content_form_factory(course, the_content_type=None, update_options_co
             label="Object"
         )
         grade_category = forms.ModelChoiceField(
-            queryset = course.coursegradecategory_set.all()
+            queryset = course.coursegradecategory_set.all(),
+            required=False,
         )
 
         class Meta:
