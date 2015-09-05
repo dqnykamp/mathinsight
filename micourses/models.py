@@ -848,8 +848,9 @@ class Course(models.Model):
         # else, exclude content without an initial or final due date
         # since those cannot have an adjusted due date
         else:
-            content_list = content_list.exclude(final_due=None)\
-                                       .exclude(initial_due=None)
+            from django.db.models import Q
+            content_list = content_list\
+                .filter(~Q(initial_due=None)|~Q(final_due=None))
 
         if exclude_completed:
             content_list = content_list.exclude \
