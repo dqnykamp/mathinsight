@@ -1249,7 +1249,7 @@ class ThreadContent(models.Model):
 
     substitute_title = models.CharField(max_length=200, blank=True, null=True)
 
-    comment = models.CharField(max_length=100, blank=True, default="")
+    comment = models.CharField(max_length=200, blank=True, default="")
     instructions = models.TextField(blank=True, null=True)
 
     assigned=models.DateTimeField(blank=True, null=True)
