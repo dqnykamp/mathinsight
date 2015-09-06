@@ -1304,7 +1304,9 @@ class ContentListView(CourseBaseView):
 
 
         exclude_completed='exclude_completed' in self.request.GET
-        exclude_past_due='exclude_past_due' in self.request.GET
+        #exclude_past_due='exclude_past_due' in self.request.GET
+        by_assigned='by_assigned' in self.request.GET
+
 
         try:
             begin_date = timezone.datetime.strptime(self.request.GET.get('begin_date'),self.datetime_format)
@@ -1317,24 +1319,31 @@ class ContentListView(CourseBaseView):
 
         context['begin_date'] = begin_date
         context['end_date'] = end_date
+        context['by_assigned'] = by_assigned
         context['content_list'] = self.course.content_by_date\
-            (self.courseuser, exclude_completed=exclude_completed, \
-                 begin_date=begin_date, end_date=end_date)
+            (self.courseuser, exclude_completed=exclude_completed, 
+             begin_date=begin_date, end_date=end_date,
+             by_assigned=by_assigned)
 
         if begin_date and end_date:
-            next_begin_date = end_date + timezone.timedelta(1)
-            next_end_date = next_begin_date+(end_date-begin_date)
+            next_begin_date = end_date + timezone.timedelta(microseconds=1)
+            next_end_date = next_begin_date+timezone.timedelta(days=7) \
+                            - timezone.timedelta(microseconds=1)
             next_period_parameters = "begin_date=%s&end_date=%s" \
                 % (next_begin_date.strftime(self.datetime_format),
                    next_end_date.strftime(self.datetime_format))
-            previous_end_date = begin_date - timezone.timedelta(1)
-            previous_begin_date = previous_end_date+(begin_date-end_date)
+            previous_end_date = begin_date - timezone.timedelta(microseconds=1)
+            previous_begin_date = previous_end_date-timezone.timedelta(days=7)\
+                                  + timezone.timedelta(microseconds=1)
             previous_period_parameters = "begin_date=%s&end_date=%s" \
                 % (previous_begin_date.strftime(self.datetime_format),
                    previous_end_date.strftime(self.datetime_format))
             if exclude_completed:
                 previous_period_parameters += "&exclude_completed"
                 next_period_parameters += "&exclude_completed"
+            if by_assigned:
+                previous_period_parameters += "&by_assigned"
+                next_period_parameters += "&by_assigned"
         else:
             previous_period_parameters=None
             next_period_parameters=None
@@ -1342,6 +1351,11 @@ class ContentListView(CourseBaseView):
         all_dates_parameters = ""
         if exclude_completed:
             all_dates_parameters = "exclude_completed"
+        if by_assigned:
+            if all_dates_parameters:
+                all_dates_parameters += "&by_assigned"
+            else:
+                all_dates_parameters = "by_assigned"
 
         date_parameters=""
         if begin_date:
@@ -1354,15 +1368,40 @@ class ContentListView(CourseBaseView):
         exclude_completed_parameters="exclude_completed"
         if date_parameters:
             exclude_completed_parameters += "&" + date_parameters
+        if by_assigned:
+            exclude_completed_parameters += "&by_assigned"
+
+        include_completed_parameters=date_parameters
+        if by_assigned:
+            if include_completed_parameters:
+                include_completed_parameters += "&by_assigned"
+            else:
+                include_completed_parmaeters = "by_assigned"
+
+
+        by_assigned_parameters="by_assigned"
+        if date_parameters:
+            by_assigned_parameters += "&" + date_parameters
+        if exclude_completed:
+            by_assigned_parameters += "&exclude_completed"
+
+        by_due_parameters = date_parameters
+        if exclude_completed:
+            if by_due_parameters:
+                by_due_parameters += "&exclude_completed"
+            else:
+                by_due_parameters = "exclude_completed"
 
         context['exclude_completed']=exclude_completed
 
         context['previous_period_parameters']=previous_period_parameters
         context['next_period_parameters']=next_period_parameters
         context['exclude_completed_parameters']=exclude_completed_parameters
-        context['include_completed_parameters']=date_parameters
+        context['include_completed_parameters']=include_completed_parameters
         context['all_dates_parameters']=all_dates_parameters
-        
+        context['by_assigned_parameters']=by_assigned_parameters
+        context['by_due_parameters']=by_due_parameters
+
         return context
 
 

@@ -8,19 +8,19 @@
 {% block extrastyle2 %}{% endblock %}
 {% endblock %}
 
-{% block title %}Due dates for {{course}}{%endblock%}
+{% block title %}Assigned material for {{course}}{%endblock%}
 
 {% block main_columns %}
-<h3>Due dates for {{course}}</h3>
+<h3>Assigned material for {{course}}</h3>
 
-<p>{% if begin_date and end_date %}From {{begin_date}} through {{end_date}}
+<p>{% if begin_date and end_date %}Showing material {% if by_assigned %}assigned{% else %}due{% endif %} between {{begin_date}} and {{end_date}}
 (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{previous_period_parameters}}">previous</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{next_period_parameters}}">next</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>) 
 {% else %}{% if begin_date %}From {{begin_date}} (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>){%endif%}{% if end_date %}Through {{end_date}} (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{all_dates_parameters}}">all</a>){%endif%}{%endif%}</p>
 <p>{% if exclude_completed %}Excluding items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{include_completed_parameters}}">include</a>)
 {% else %}Including items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{exclude_completed_parameters}}">exclude</a>){%endif%}
 
 <table class="basic">
-<tr><th>Material</th><th>Comment</th><th>Assigned</th><th>{% if course.adjust_due_attendance %}Initial due date{%else%}Due date{%endif%}</th>{% if course.adjust_due_attendance %}<th>Adjusted due date</th>{%endif%}<th>Score</th></tr>
+<tr><th>Material</th><th>Comment</th><th><a href="{% url 'micourses:contentlist' course_code=course.code %}?{{by_assigned_parameters}}">Assigned{% if by_assigned %}<img src="{% static 'image/descending.png' %}"/>{%endif%}</a></th><th>{% if course.adjust_due_attendance %}Initial due{%else%}<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{by_due_parameters}}">Due{% if not by_assigned %}<img src="{% static 'image/descending.png' %}"/>{%endif%}</a>{%endif%}</th>{% if course.adjust_due_attendance %}<th><a href="{% url 'micourses:contentlist' course_code=course.code %}?{{by_due_parameters}}" >Adjusted due{% if not by_assigned %}<img src="{% static 'image/descending.png' %}"/>{%endif%}</a></th>{%endif%}<th>Score</th></tr>
 {% for content_dict in content_list %}{% with thread_content=content_dict.thread_content id=content_dict.thread_content.id completed=content_dict.completed %}
 <tr><td>{{ thread_content.return_link }}
 {% if not thread_content.optional %}

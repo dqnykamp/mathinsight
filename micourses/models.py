@@ -841,16 +841,10 @@ class Course(models.Model):
             content_list = content_list.filter \
                 (thread_content__content_type=assessment_content_type)
     
-        # if sorting by assigned date, then exclude those without assigned
-        if by_assigned:
-            content_list = content_list.exclude(assigned=None)
-
-        # else, exclude content without an initial or final due date
-        # since those cannot have an adjusted due date
-        else:
-            from django.db.models import Q
-            content_list = content_list\
-                .filter(~Q(initial_due=None)|~Q(final_due=None))
+        # else, exclude content without an assigned, initial or final due date
+        from django.db.models import Q
+        content_list = content_list\
+            .filter(~Q(initial_due=None)|~Q(final_due=None)|~Q(assigned=None))
 
         if exclude_completed:
             content_list = content_list.exclude \
@@ -863,9 +857,8 @@ class Course(models.Model):
         for content in content_list:
             initial_due = content.get_initial_due(student)
             adjusted_due = content.get_adjusted_due(student)
-            assigned = content.assigned
-            if not assigned:
-                assigned = "--"
+            assigned = content.get_assigned()
+
             if exclude_completed:
                 completed=False
             else:
@@ -880,7 +873,10 @@ class Course(models.Model):
                 'initial_due': initial_due,
                 'adjusted_due': adjusted_due,
                 'thread_content': content, 
-                'sort_order': content.sort_order,
+                'content_sort_order': content.sort_order,
+                'content_id': content.id,
+                'section_sort_order': content.section.sort_order,
+                'section_id': content.section.id,
                 'score': content.student_score(student),
                 'completed': completed,
             })
@@ -890,9 +886,12 @@ class Course(models.Model):
         else:
             date_column='adjusted_due'
 
-        # sort by appropriate date, then by content
+        # sort by appropriate date, then by order in thread,
+        # which is determined by by section/content sort_order/id
         from operator import itemgetter
-        content_with_dates.sort(key=itemgetter(date_column,'sort_order'))
+        content_with_dates.sort(key=itemgetter(
+            date_column,'section_sort_order', 'section_id',
+            'content_sort_order', 'content_id'))
         
         #remove content outside dates
         if begin_date:
@@ -1519,9 +1518,43 @@ class ThreadContent(models.Model):
             return "Maximum"
 
 
-    def get_initial_due(self, student=None):
-        if not student:
+    def get_assigned(self, allow_fallback=True):
+        """
+        Return assigned date of thread content
+        If assigned is not defined, use initial due.
+        If initial due is not defined, use final due.
+
+        If allow_fallback is False, then don't fall back to initial or final.
+
+        """
+        
+        if self.assigned or not allow_fallback:
+            return self.assigned
+        elif self.initial_due:
             return self.initial_due
+        else:
+            return self.final_due
+
+
+
+    def get_initial_due(self, student=None, allow_fallback=True):
+        """
+        Return initial due date of thread content.
+        If initial due is not defined, use final due.
+        If final due is not defined, use assigned.
+
+        If allow_fallback is False, then don't fall back to final or assigned.
+
+        If student is specified, use adjustments to date, if given.
+        """
+
+        if not student:
+            if self.initial_due or not allow_fallback:
+                return self.initial_due
+            elif self.final_due:
+                return self.final_due
+            else:
+                return self.assigned
 
         adjustment = None
         try:
@@ -1531,11 +1564,39 @@ class ThreadContent(models.Model):
             pass
 
         if adjustment:
-            return adjustment
+            initial_due = adjustment
         else:
-            return self.initial_due
+            initial_due = self.initial_due
 
-    def get_final_due(self, student=None):
+        if initial_due or not allow_fallback:
+            return initial_due
+        else:
+            final_due = self.get_final_due(student, allow_fallback=False)
+            if final_due:
+                return final_due
+            else:
+                return self.assigned
+
+
+    def get_final_due(self, student=None, allow_fallback=True):
+        """
+        Return find due date of thread content.
+        If final due is not defined, use initial due.
+        If inital due is not defined, use assigned.
+
+        If allow_fallback is False, then don't fall back to initial or assigned.
+
+        If student is specified, use adjustments to date, if given.
+        """
+
+        if not student:
+            if self.final_due or not allow_fallback:
+                return self.final_due
+            elif self.initial_due:
+                return self.initial_due
+            else:
+                return self.assigned
+
         if not student:
             return self.final_due
 
@@ -1545,10 +1606,21 @@ class ThreadContent(models.Model):
                 enrollment__student=student).final_due_adjustment
         except:
             pass
+
         if adjustment:
-            return adjustment
+            final_due=adjustment
         else:
-            return self.final_due
+            final_due= self.final_due
+
+        if final_due or not allow_fallback:
+            return final_due
+        else:
+            initial_due = self.get_initial_due(student, allow_fallback=False)
+            if initial_due:
+                return initial_due
+            else:
+                return self.assigned
+
 
     def get_adjusted_due(self, student=None):
         # adjust when due in increments of weeks
