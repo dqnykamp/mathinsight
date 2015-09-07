@@ -11,9 +11,7 @@ def check_for_student_activity(content):
     Check if thread content has any student activity.
 
     Return True if, for a courseuser enrolled in course as STUDENT ROLE,
-    there is either
-    1. a content attempt, or
-    2. a content completion with score_override
+    there is a content record with a score_override or content attempt,
 
     Otherwise, return False
     
@@ -21,26 +19,14 @@ def check_for_student_activity(content):
 
     from micourses.models import STUDENT_ROLE
 
-    for attempt in content.studentcontentattempt_set.all():
-        try:
-            enrollment = attempt.student.courseenrollment_set.get(
-                course=content.course)
-        except ObjectDoesNotExist:
+    for record in content.contentrecord_set.all():
+        if not record.enrollment or record.enrollment.role != STUDENT_ROLE:
             continue
 
-        if enrollment.role == STUDENT_ROLE:
+        if record.score_override is not None:
             return True
 
-    for completion in content.studentcontentcompletion_set\
-        .exclude(score_override=None):
-
-        try:
-            enrollment = completion.student.courseenrollment_set.get(
-                course=content.course)
-        except ObjectDoesNotExist:
-            continue
-
-        if enrollment.role == STUDENT_ROLE:
+        if record.attempts.exists():
             return True
 
     return False

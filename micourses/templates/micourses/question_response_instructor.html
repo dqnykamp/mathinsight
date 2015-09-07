@@ -35,7 +35,7 @@ MathJax.Hub.Config({
 
 {% question_body question_data %}
 
-<p>Points: {{ points}}<br/>
+<p>Points: {{ points|floatformat:"-2"}}<br/>
 <span{% if not valid %} class="invalid" {%endif%}>Percent: <span id="response_credit">{{ percent_credit|percent_checked_100 }}</span><br/>
 Score: <span id="response_score">{{score|floatformat_or_dash:"1" }}</span></span></p>
 

@@ -188,8 +188,8 @@ def set_up_attempts(tcase):
     tcase.thread_content.available_before_assigned=True
     tcase.thread_content.save()
 
-    # create content record
-    tcase.record = tcase.thread_content.contentrecord_set.create(
+    # get content record
+    tcase.record = tcase.thread_content.contentrecord_set.get(
         enrollment=tcase.student_enrollment)
 
     # create two valid content attempts
@@ -253,10 +253,8 @@ class SeleniumTests(StaticLiveServerTestCase):
         timeout=10
         wait = WebDriverWait(self.selenium, timeout)
 
-        # initially no content record
-        self.assertRaises(ObjectDoesNotExist,
-                          self.thread_content.contentrecord_set.get,
-                          enrollment=self.student_enrollment)
+        content_record = self.thread_content.contentrecord_set.get(
+            enrollment=self.student_enrollment)
         self.assertEqual(self.thread_content.student_score(self.student), None)
 
 
@@ -274,10 +272,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.selenium.find_element_by_xpath('//input[@value="login"]').click()
 
 
-        # now have content record
-        content_record = self.thread_content.contentrecord_set.get(
-            enrollment=self.student_enrollment)
-        # and have invalid attempts
+        # have invalid attempts
         content_attempt_x1 = content_record.attempts.first()
         self.assertFalse(content_attempt_x1.valid)
 

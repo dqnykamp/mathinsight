@@ -12,6 +12,7 @@ from math import ceil
 import pytz
 import reversion
 
+AUDITOR_ROLE = 'A'
 STUDENT_ROLE = 'S'
 INSTRUCTOR_ROLE = 'I'
 DESIGNER_ROLE = 'D'
@@ -119,8 +120,8 @@ class CourseUser(models.Model):
             return course_enrollment.role
 
         else:
-            # if no course specified, then treat as instructor/designer
-            # if user is an instructor/designer in any course
+            # if no course specified, then treat as highest level
+            # in any course
             role = None
             for enrollment in self.courseenrollment_set.all():
                 if enrollment.role==DESIGNER_ROLE:
@@ -128,7 +129,10 @@ class CourseUser(models.Model):
                 elif enrollment.role == INSTRUCTOR_ROLE:
                     role=INSTRUCTOR_ROLE
                 elif role != INSTRUCTOR_ROLE:
-                    role=STUDENT_ROLE
+                    if enrollment.role == STUDENT_ROLE:
+                        role=STUDENT_ROLE
+                    elif role != STUDENT_ROLE:
+                        role=AUDITOR_ROLE
             return role
 
 
@@ -139,7 +143,7 @@ class CourseUser(models.Model):
 
         Values are:
         0. not enrolled in course
-        1. STUDENT_ROLE
+        1. STUDENT_ROLE or AUDITOR_ROLE
         2. INSTRUCTOR_ROLE
         3. DESIGNER_ROLE
 
@@ -153,7 +157,7 @@ class CourseUser(models.Model):
             return 3
         elif role == INSTRUCTOR_ROLE:
             return 2
-        elif role == STUDENT_ROLE:
+        elif role == STUDENT_ROLE or role == AUDITOR_ROLE:
             return 1
         else:
             return 0
@@ -1000,6 +1004,7 @@ class CourseURL(models.Model):
 
 class CourseEnrollment(models.Model):
     ROLE_CHOICES = (
+        (AUDITOR_ROLE, 'Auditor'),
         (STUDENT_ROLE, 'Student'),
         (INSTRUCTOR_ROLE, 'Instructor'),
         (DESIGNER_ROLE, 'Designer'),

@@ -945,7 +945,7 @@ def render_question(question_dict, rng, solution=False,
             current_score=0
         else:
             current_percent_credit = round_and_int(question_attempt.credit*100,1)
-            current_score = question_attempt.credit*question_dict.get('points',0)
+            current_score = round_and_int(question_attempt.credit*question_dict.get('points',0),2)
 
     else:
         current_percent_credit = None

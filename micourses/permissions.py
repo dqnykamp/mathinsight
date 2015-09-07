@@ -8,7 +8,7 @@ def return_user_assessment_permission_level(user, course=None):
  
     Values are:
     0: user is not logged in, is inactive, or is not enrolled in course
-    1. STUDENT_ROLE
+    1. STUDENT_ROLE or AUDITOR_ROLE
     2. INSTRUCTOR_ROLE
     3. DESIGNER_ROLE
 
