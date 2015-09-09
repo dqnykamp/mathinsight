@@ -83,7 +83,7 @@ class CourseUser(models.Model):
 
         # Try to find unique enrolled, active course.
         # Will raise MultipleObjectReturned if multiple enrolled courses.
-        # Will raise ObjectDoesNotExist is no enrolled courses
+        # Will raise ObjectDoesNotExist if no enrolled courses
         course_enrollment = self.courseenrollment_set.get(
             course__active=True)
         
@@ -93,10 +93,11 @@ class CourseUser(models.Model):
         return course_enrollment.course
 
     def return_selected_course_if_exists(self):
-        if self.selected_course_enrollment:
-            return self.selected_course_enrollment.course
-        else:
+        try:
+            return self.return_selected_course()
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
             return None
+
 
     def active_courses(self):
         return self.course_set.filter(active=True)
@@ -1030,8 +1031,20 @@ class CourseEnrollment(models.Model):
     def save(self, *args, **kwargs):
         if not self.date_enrolled:
             self.date_enrolled = timezone.now()
+
         super(CourseEnrollment, self).save(*args, **kwargs)
 
+
+        # set this enrollment to student's selected enrollment if either
+        # 1) the student doesn't have a selected course enrollment, or
+        # 2) the student's selected course enrollment is inactive and
+        #    this enrollment is active
+        if not self.student.selected_course_enrollment or \
+           (not self.student.selected_course_enrollment.course.active 
+               and self.course.active):
+            self.student.selected_course_enrollment = self
+            self.student.save()
+            
         # create content records for all thread content of course
         # that has points
         for tc in self.course.thread_contents.exclude(points=None):

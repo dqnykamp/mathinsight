@@ -7,7 +7,7 @@
 {% block questions %}
 <ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
 {% for solution in rendered_list %}
-<li class="question{%if solution.question.spacing_css%} {{ solution.question.spacing_css }}{%endif%}{%if solution.question.css_class%} {{ solution.question.css_class }}{%endif%}">{% if solution.points %}({{solution.points}} point{{solution.points|pluralize_float}}){%endif%}
+<li class="question{%if solution.question.css_class%} {{ solution.question.css_class }}{%endif%}">{% if solution.points %}({{solution.points}} point{{solution.points|pluralize_float}}){%endif%}
 {% question_solution_body solution.question_data %}</li>
 {% endfor %}
 </ol>
