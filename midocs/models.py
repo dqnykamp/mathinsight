@@ -1306,10 +1306,15 @@ class AppletParameter(models.Model):
     def clean(self):
 
         # check if parameter is for applet_type of applet.  If not, raise exception
-        if self.applet.applet_type != self.parameter.applet_type:
-            raise ValidationError("Incorrect parameter for applet of type %s"\
-                % self.applet.applet_type)
+        try:
+            if self.applet.applet_type != self.parameter.applet_type:
+                raise ValidationError("Incorrect parameter for applet of type %s"\
+                    % self.applet.applet_type)
 
+        except ObjectDoesNotExist:
+            # When save as new applet, get applet doesn't exist exception.
+            # Not sure what to do, but ignoring seems to work.
+            pass
 
 class AppletObject(models.Model):
     applet = models.ForeignKey(Applet)

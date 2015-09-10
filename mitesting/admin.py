@@ -138,6 +138,7 @@ class QuestionDatabase(Question):
     class Meta:
         proxy = True
         verbose_name_plural = "Question database"
+        verbose_name = "question"
 
 class QuestionDatabaseAdmin(admin.ModelAdmin):
     inlines = [QuestionSubpartInline,ExpressionInline, QuestionAnswerInline, QuestionReferencePageInline, QuestionAuthorInline]
