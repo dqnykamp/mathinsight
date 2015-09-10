@@ -337,7 +337,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "not recorded")
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
 
         # make assessment be available before assigned
         self.thread_content.available_before_assigned=True
@@ -366,7 +366,7 @@ class SeleniumTests(StaticLiveServerTestCase):
 
         # no record of score should be shown
         self.assertEqual(overall_score_element.text, "not recorded")
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
 
 
         # Reloading page should create a new, valid attempt
@@ -376,12 +376,12 @@ class SeleniumTests(StaticLiveServerTestCase):
         overall_score_element = self.selenium.find_element_by_id(
             'overall_score')
         self.assertEqual(overall_score_element.text, "0")
-        self.assertEqual(self.thread_content.student_score(self.student), 0)
+        self.assertEqual(self.thread_content.student_score(self.student), None)
 
         # question itself doesn't say zero yet, as no valid response saved yet.
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
         
         # submitting the correct answer should now get recorded
         answer1 = self.selenium.find_element_by_id("id_answer_1_qa0")
@@ -397,7 +397,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         # score shown and recorded
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertTrue("5.0 points" in question1_point_section.text)
+        self.assertTrue("5 points" in question1_point_section.text)
         self.assertTrue("achieved: 100%" in question1_point_section.text)
 
         # have new content valid content attempt
@@ -432,7 +432,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(self.thread_content.student_score(self.student), 5)
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
         
         # submit incorrect answer
         answer1 = self.selenium.find_element_by_id("id_answer_1_qa0")
@@ -449,7 +449,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(current_attempt_score_element.text, "0")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertTrue("5.0 points" in question1_point_section.text)
+        self.assertTrue("5 points" in question1_point_section.text)
         self.assertTrue("achieved: 0%" in question1_point_section.text)
 
         # give the assessment a future due date
@@ -475,7 +475,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(self.thread_content.student_score(self.student), 5)
         question2_point_section = self.selenium.find_element_by_id(
             'qa1_point_info')
-        self.assertTrue("5.0 points" in question2_point_section.text)
+        self.assertTrue("5 points" in question2_point_section.text)
         self.assertTrue("achieved: 100%" in question2_point_section.text)
 
 
@@ -501,7 +501,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(current_attempt_score_element.text, "5")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertTrue("0 points" in question1_point_section.text)
+        self.assertTrue("5 points" in question1_point_section.text)
         self.assertTrue("achieved: 0%" in question1_point_section.text)
 
 
@@ -558,10 +558,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(self.thread_content.student_score(self.student), 5)
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
         question2_point_section = self.selenium.find_element_by_id(
             'qa1_point_info')
-        self.assertEqual(question2_point_section.text,"(5.0 points)")
+        self.assertEqual(question2_point_section.text,"(5 points)")
 
 
         # submit correct answer for question 1
@@ -619,7 +619,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(current_attempt_score_element.text, "5")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertTrue("5.0 points" in question2_point_section.text)
+        self.assertTrue("5 points" in question2_point_section.text)
         self.assertTrue("achieved: 0%" in question2_point_section.text)
 
         
@@ -638,11 +638,11 @@ class SeleniumTests(StaticLiveServerTestCase):
         # check credit for questions
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertTrue("5.0 points" in question1_point_section.text)
+        self.assertTrue("5 points" in question1_point_section.text)
         self.assertTrue("achieved: 100%" in question1_point_section.text)
         question2_point_section = self.selenium.find_element_by_id(
             'qa1_point_info')
-        self.assertTrue("5.0 points" in question2_point_section.text)
+        self.assertTrue("5 points" in question2_point_section.text)
         self.assertTrue("achieved: 0%" in question2_point_section.text)
 
         
@@ -673,7 +673,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(current_attempt_score_element.text, "5")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertTrue("5.0 points" in question2_point_section.text)
+        self.assertTrue("5 points" in question2_point_section.text)
         self.assertTrue("achieved: 0%" in question2_point_section.text)
 
 
@@ -692,10 +692,10 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(self.thread_content.student_score(self.student), 5)
         question1_point_section = self.selenium.find_element_by_id(
             'qa0_point_info')
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
         question2_point_section = self.selenium.find_element_by_id(
             'qa1_point_info')
-        self.assertEqual(question2_point_section.text,"(5.0 points)")
+        self.assertEqual(question2_point_section.text,"(5 points)")
 
 
         # submit correct answer for question 1
@@ -729,8 +729,8 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(overall_score_element.text, "5")
         self.assertEqual(current_attempt_score_element.text, "not recorded")
         self.assertEqual(self.thread_content.student_score(self.student), 5)
-        self.assertEqual(question1_point_section.text,"(5.0 points)")
-        self.assertEqual(question2_point_section.text,"(5.0 points)")
+        self.assertEqual(question1_point_section.text,"(5 points)")
+        self.assertEqual(question2_point_section.text,"(5 points)")
 
 
         # check record for attempt 3

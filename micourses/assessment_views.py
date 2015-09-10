@@ -147,6 +147,13 @@ class AssessmentView(DetailView):
             context['assessment_short_name_with_version'] \
                 = context['assessment_short_name']
 
+        if self.course_enrollment and self.thread_content:
+            if self.course_enrollment.role == STUDENT_ROLE:
+                context['due'] = self.thread_content.get_adjusted_due(
+                    student=self.course_enrollment.student)
+            else:
+                context['due'] = self.thread_content.get_adjusted_due()
+
         context['course'] = self.assessment.course
         context['thread_content'] = self.thread_content
         context['number_in_thread'] = self.number_in_thread

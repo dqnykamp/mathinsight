@@ -1798,6 +1798,8 @@ class ContentRecord(models.Model):
 
         if self.pk is None:
             new_record=True
+            if self.score_override is None:
+                socre_override_changed = False
         else:
             old_cr = ContentRecord.objects.get(pk=self.pk)
             if self.score_override == old_cr.score_override:
@@ -1808,18 +1810,21 @@ class ContentRecord(models.Model):
                old_cr.final_due_adjustment==self.final_due_adjustment:
                 date_changed=False
                 
-
         with transaction.atomic(), reversion.create_revision():
             super(ContentRecord, self).save(*args, **kwargs)
 
         if score_override_changed:
             self.recalculate_score()
 
-            if new_record:
-                action="create"
-            else:
-                action="change score"
+        action=None
+        if new_record:
+            action="create"
+        elif score_override_changed:
+            action="change score"
+        elif date_changed:
+            action="change date"
 
+        if action:
             from micourses.utils import json_dump_fields
             ChangeLog.objects.create(
                 courseuser=cuser,
@@ -1831,20 +1836,6 @@ class ContentRecord(models.Model):
                 new_value=json_dump_fields(self),
             )
 
-        elif date_changed:
-
-            from micourses.utils import json_dump_fields
-            ChangeLog.objects.create(
-                courseuser=cuser,
-                content_type=ContentType.objects.get(app_label="micourses",
-                                                     model="contentrecord"),
-                object_id=self.id,
-                action="change date",
-                old_value=json_dump_fields(old_cr),
-                new_value=json_dump_fields(self),
-            )
-            
-            
 
     def recalculate_score(self, total_recalculation=False):
         """
@@ -1955,6 +1946,9 @@ class ContentAttempt(models.Model):
 
         if self.pk is None:
             new_attempt=True
+            if self.score_override is None:
+                score_override_changed=False
+                valid_changed=False
         else:
             old_ca = ContentAttempt.objects.get(pk=self.pk)
             if self.score_override == old_ca.score_override:
@@ -1968,13 +1962,15 @@ class ContentAttempt(models.Model):
         if score_override_changed or valid_changed:
             self.recalculate_score()
             
-            if new_attempt:
-                action="create"
-            elif score_override_changed:
-                action="change score"
-            else:
-                action="change"
+        action=None
+        if new_attempt:
+            action="create"
+        elif score_override_changed:
+            action="change score"
+        elif valid_changed:
+            action="change"
 
+        if action:
             from micourses.utils import json_dump_fields
 
             ChangeLog.objects.create(
@@ -2176,6 +2172,8 @@ class ContentAttemptQuestionSet(models.Model):
         
         if self.pk is None:
             new_qs=True
+            if self.credit_override is None:
+                credit_override_changed=False
         else:
             old_qs = ContentAttemptQuestionSet.objects.get(pk=self.pk)
             if self.credit_override == old_qs.credit_override:
@@ -2187,11 +2185,13 @@ class ContentAttemptQuestionSet(models.Model):
         if credit_override_changed:
             self.content_attempt.recalculate_score()
 
-            if new_qs:
-                action="create"
-            else:
-                action="change score"
+        action=None
+        if new_qs:
+            action="create"
+        elif credit_override_changed:
+            action="change score"
             
+        if action:
             from micourses.utils import json_dump_fields
             ChangeLog.objects.create(
                 courseuser=cuser,
