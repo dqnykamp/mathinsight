@@ -124,7 +124,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
     # If evaluate==False, then operators could be included
     # so must add them to global_dict if not present
-    if evaluate==False:
+    if not evaluate:
         if 'Add' not in new_global_dict:
             new_global_dict['Add'] = AddUnsort
         if 'Mul' not in new_global_dict:
@@ -1048,21 +1048,6 @@ class MulUnsort(Mul):
         - don't break apart large fractions
         """
 
-        tex = ""
-
-        # don't display the initial factor of negative one 
-        # if just came from negation
-        if not self.display_initial_negative_one and self.args[0]==-1:
-            tex = "-"
-            self = MulUnsort(*self.args[1:])
-
-            if not self.is_Mul:
-                return tex + prtr._print(self)
-
-        numer, denom = fraction_MulUnsort(self, exact=True)
-        separator = prtr._settings['mul_symbol_latex']
-        numbersep = prtr._settings['mul_symbol_latex_numbers']
-
         def _needs_mul_brackets(expr, first=False, last=False):
             """
             Returns True if the expression needs to be wrapped in brackets when
@@ -1072,6 +1057,7 @@ class MulUnsort(Mul):
             specifies that this expr is the last to appear in a Mul.
             ``first=True`` specifies that this expr is the first to appear in a Mul.
             """
+
             from sympy import Integral, Piecewise, Product, Sum
 
             if expr.is_Add:
@@ -1090,6 +1076,25 @@ class MulUnsort(Mul):
                 return True
 
             return False
+
+
+        tex = ""
+
+        # don't display the initial factor of negative one 
+        # if just came from negation
+        if not self.display_initial_negative_one and self.args[0]==-1:
+            tex = "-"
+            self = MulUnsort(*self.args[1:])
+
+            if not self.is_Mul:
+                if _needs_mul_brackets(self, last=True):
+                    return tex + r"\left(%s\right)" %  prtr._print(self)
+                else:
+                    return tex + prtr._print(self)
+
+        numer, denom = fraction_MulUnsort(self, exact=True)
+        separator = prtr._settings['mul_symbol_latex']
+        numbersep = prtr._settings['mul_symbol_latex_numbers']
 
 
         def convert(expr):

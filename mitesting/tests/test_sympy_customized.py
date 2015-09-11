@@ -303,6 +303,9 @@ class ParseExprTests(SimpleTestCase):
         expr1=parse_expr("5/1", evaluate=False)
         self.assertEqual(latex(expr1), '\\frac{5}{1}')
 
+        expr1=parse_expr("-(x-y)", evaluate=False)
+        self.assertEqual(latex(expr1), r'-\left(x - y\right)')
+
 
     def test_no_evaluate_functions(self):
         from mitesting.user_commands import roots_tuple, index
