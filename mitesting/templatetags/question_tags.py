@@ -483,7 +483,7 @@ class AnswerNode(template.Node):
                                    [answer_code]
                 answer_type=answer_code_dict['answer_type']
                 expression_type=answer_code_dict.get('expression_type')
-            except KeyError:
+            except (KeyError, TypeError):
                 return return_error("Invalid answer blank: %s, resolved as %s"\
                                     % (self.answer_code_string, answer_code))
 

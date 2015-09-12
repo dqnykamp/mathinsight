@@ -73,6 +73,8 @@ class math_object(object):
         if isinstance(other, math_object):
             other=other._expression
         return self._expression.__eq__(other)
+    def __hash__(self):
+        return hash(self._expression)
     def __ne__(self, other):
         if isinstance(other, math_object):
             other=other._expression
