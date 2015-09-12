@@ -59,8 +59,11 @@ class QuestionAnswerInline(admin.TabularInline):
         if db_field.name == 'round_on_compare':
             field.widget.attrs['size'] = 3
             del field.widget.attrs['class']
-        if db_field.name == 'round_partial_credit':
-            field.widget.attrs['size'] = 6
+        if db_field.name == 'round_partial_credit_digits':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
+        if db_field.name == 'round_partial_credit_percent':
+            field.widget.attrs['size'] = 3
             del field.widget.attrs['class']
         return field
 

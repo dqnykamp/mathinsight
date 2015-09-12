@@ -462,7 +462,8 @@ class QuestionAnswerOption(models.Model):
 
     round_on_compare = models.IntegerField(blank=True, null=True)
     round_absolute = models.BooleanField(default=False)
-    round_partial_credit = models.CharField(max_length=10,blank=True,null=True)
+    round_partial_credit_digits = models.IntegerField(blank=True,null=True)
+    round_partial_credit_percent = models.IntegerField(blank=True,null=True)
 
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)

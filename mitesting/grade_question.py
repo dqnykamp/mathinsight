@@ -190,17 +190,12 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             # determine if have partial credit for less rounding
             round_partial_credit_digits=0
             round_partial_credit_percent=0
-            if answer_option.round_partial_credit:
-                try:
-                    rnd=sympify(answer_option.round_partial_credit)
-                    if isinstance(rnd, tuple):
-                        round_partial_credit_digits = int(rnd[0])
-                    else:
-                        round_partial_credit_digits = int(rnd)
-                    if round_partial_credit_digits > 0:
-                        round_partial_credit_percent=int(rnd[1])
-                except (TypeError, IndexError, ValueError):
-                    pass
+            if answer_option.round_partial_credit_digits:
+                round_partial_credit_digits = \
+                        answer_option.round_partial_credit_digits
+            if answer_option.round_partial_credit_percent:
+                round_partial_credit_percent = \
+                        answer_option.round_partial_credit_percent
 
             user_response_parsed=None
             

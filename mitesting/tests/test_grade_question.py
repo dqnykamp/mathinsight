@@ -269,7 +269,7 @@ class TestCompareResponse(TestCase):
         self.assertEqual(answer_results['percent_correct'],0)
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
 
-        the_ans.round_partial_credit="1"
+        the_ans.round_partial_credit_digits=1
         the_ans.save()
 
         answer_results=compare_response_with_answer_code\
@@ -284,7 +284,8 @@ class TestCompareResponse(TestCase):
         self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
 
 
-        the_ans.round_partial_credit="1, 0"
+        the_ans.round_partial_credit_digits=1
+        the_ans.round_partial_credit_percent=0
         the_ans.save()
 
         answer_results=compare_response_with_answer_code\
@@ -298,7 +299,8 @@ class TestCompareResponse(TestCase):
         self.assertTrue("matched to 3 significant digits" in answer_results["answer_feedback"])
         self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
 
-        the_ans.round_partial_credit="1, 70"
+        the_ans.round_partial_credit_digits=1
+        the_ans.round_partial_credit_percent=70
         the_ans.save()
 
         answer_results=compare_response_with_answer_code\
@@ -324,7 +326,8 @@ class TestCompareResponse(TestCase):
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
         self.assertTrue("2 significant digits" not in answer_results["answer_feedback"])
 
-        the_ans.round_partial_credit="2, 70"
+        the_ans.round_partial_credit_digits=2
+        the_ans.round_partial_credit_percent=70
         the_ans.save()
 
         answer_results=compare_response_with_answer_code\
@@ -352,7 +355,8 @@ class TestCompareResponse(TestCase):
         self.assertTrue("4 significant digits are required" in answer_results["answer_feedback"])
 
 
-        the_ans.round_partial_credit="3, 70"
+        the_ans.round_partial_credit_digits=3
+        the_ans.round_partial_credit_percent=70
         the_ans.round_absolute=True
         the_ans.save()
 
