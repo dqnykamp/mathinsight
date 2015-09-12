@@ -32,7 +32,7 @@ class TestSetupExpressionContext(TestCase):
         self.new_expr(name="the_x",expression="x")
         rng = random.Random()
         results=setup_expression_context(self.q, rng=rng, seed=0)
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
@@ -46,7 +46,7 @@ class TestSetupExpressionContext(TestCase):
 
         rng = random.Random()
         results=setup_expression_context(self.q, rng=rng, seed=1)
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
@@ -69,7 +69,7 @@ class TestSetupExpressionContext(TestCase):
 
         rng = random.Random()
         results=setup_expression_context(self.q, rng=rng, seed=2)
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertFalse(results['error_in_expressions'])
         expression_context = results['expression_context']
@@ -91,7 +91,7 @@ class TestSetupExpressionContext(TestCase):
 
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng, seed=i)
-            self.assertTrue(results['expression_context']['_user_function_dict_'] in  \
+            self.assertTrue(results['expression_context']['_user_dict_'] in  \
                                 [{item: SymbolCallable(str(item),real=True)} for item in \
                                      ['f','g','h','k']])
             self.assertFalse(results['failed_conditions'])
@@ -122,7 +122,7 @@ class TestSetupExpressionContext(TestCase):
 
         for i in range(10):
             results=setup_expression_context(self.q, rng=rng, seed=i)
-            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+            self.assertEqual(results['expression_context']['_user_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -147,7 +147,7 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
         seed = get_new_seed(rng)
         results=setup_expression_context(self.q, rng=rng, seed=seed)
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertTrue(results['failed_conditions'])
         self.assertEqual("Condition n_greater_than_4 was not met",
                          results['failed_condition_message'])
@@ -179,7 +179,7 @@ class TestSetupExpressionContext(TestCase):
             seed=get_new_seed(rng=rng)
 
             results=setup_expression_context(self.q, rng=rng, seed=seed)
-            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+            self.assertEqual(results['expression_context']['_user_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -198,7 +198,7 @@ class TestSetupExpressionContext(TestCase):
         
             #try again with same seed
             results=setup_expression_context(self.q, rng=rng, seed=seed)
-            self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+            self.assertEqual(results['expression_context']['_user_dict_'], {})
             self.assertFalse(results['failed_conditions'])
             self.assertFalse(results['error_in_expressions'])
             expression_context = results['expression_context']
@@ -216,7 +216,7 @@ class TestSetupExpressionContext(TestCase):
         seed = get_new_seed(rng)
         results=setup_expression_context(self.q, rng=rng, seed=seed)
 
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
@@ -254,7 +254,7 @@ class TestSetupExpressionContext(TestCase):
         rng.seed()
         seed = get_new_seed(rng)
         results=setup_expression_context(self.q, rng=rng, seed=seed)
-        self.assertEqual(results['expression_context']['_user_function_dict_'], {})
+        self.assertEqual(results['expression_context']['_user_dict_'], {})
         self.assertFalse(results['failed_conditions'])
         self.assertTrue(results['error_in_expressions'])
         expression_error = results['expression_error']
@@ -599,7 +599,7 @@ class TestSetupExpressionContextUserResponse(TestCase):
         self.assertEqual(expression_context['d'], y+b)
 
         
-    def test_use_user_function_dict_not_global(self):
+    def test_use_user_dict_not_global(self):
         self.new_expr(name="a",expression="y+x^2")
         self.new_expr(name="f",expression="g", 
                       expression_type = Expression.FUNCTION_NAME)

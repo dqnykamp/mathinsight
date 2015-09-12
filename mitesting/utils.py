@@ -990,7 +990,7 @@ def replace_simplified_derivatives(s, local_dict, global_dict,
 
 
 def evaluate_expression(the_expr, rng, 
-                        local_dict=None, user_function_dict=None,
+                        local_dict=None, user_dict=None,
                         random_group_indices=None,
                         new_alternate_dicts=[],
                         new_alternate_exprs=[],
@@ -1077,7 +1077,7 @@ def evaluate_expression(the_expr, rng,
                                  % math_expr)
 
 
-            # turn to SymbolCallable and add to user_function_dict
+            # turn to SymbolCallable and add to user_dict
             # should use:
             # function_text = six.text_type(math_expr)
             # but sympy doesn't yet accept unicode for function name
@@ -1087,7 +1087,7 @@ def evaluate_expression(the_expr, rng,
             else:
                 math_expr = SymbolCallable(function_text)
             try:
-                user_function_dict[function_text] = math_expr
+                user_dict[function_text] = math_expr
             except TypeError:
                 pass
 
@@ -1263,17 +1263,28 @@ def evaluate_expression(the_expr, rng,
                                  % math_expr)
 
 
-            # turn to SymbolCallable and add to user_function_dict
-            # should use:
-            # function_text = six.text_type(math_expr)
-            # but sympy doesn't yet accept unicode for function name
+            # turn to SymbolCallable and add to user_dict
             function_text = str(math_expr)
             if the_expr.real_variables:
                 math_expr = SymbolCallable(function_text,real=True)
             else:
                 math_expr = SymbolCallable(function_text)
             try:
-                user_function_dict[function_text] = math_expr
+                user_dict[function_text] = math_expr
+            except TypeError:
+                pass
+
+        if the_expr.expression_type == the_expr.UNSPLIT_SYMBOL:
+            # math_expr should be a Symbol
+            if not isinstance(math_expr,Symbol):
+                raise ValueError("Invalid unsplit symbol: %s " \
+                                 % math_expr)
+
+
+            # add to user_dict
+            symbol_text = str(math_expr)
+            try:
+                user_dict[symbol_text] = math_expr
             except TypeError:
                 pass
 
@@ -1450,27 +1461,34 @@ def replace_unevaluated_commands(expr, replace_dict={}):
 
 
 
-def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
+def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
+                       local_dict=None):
     """
     Replace any instances of x_y with __subscript_symbol__(x,y) in string s.
 
-    If split_symbols, then x can be only one letter. 
+    If split symbols, x can be only one letter, or a combination of numbers or
+    letters, beginning with a letter, that is a key in local_dict.
     Otherwise, x can be any combination of numbers or letters
     but must begin with a letter.
 
     If split_symbols, then y can be only one character unless it is 
-    a number or in parentheses.
+    a number, a key in local_dict, or in parentheses.
     Otherwise, y can be any combination of numbers or letters.
     If the first character of y is "(", then y continues until matching ")".
+
+    For split_symbols, exclude keys in local_dict that include a _
 
     If assume_real_variables, add third argument of True to command
 
     """
 
-    if split_symbols:
-        pattern = re.compile(r"([a-zA-Z])_[^_]")
-    else:
-        pattern = re.compile(r"([a-zA-Z][a-zA-Z0-9]*)_[^_]")
+    unsplit_symbols = []
+    if split_symbols and local_dict:
+        for sym in local_dict.keys():
+            if not '_' in sym:
+                unsplit_symbols.append(sym)
+
+    pattern = re.compile(r"([a-zA-Z][a-zA-Z0-9]*)_[^_]")
 
     while True:
         mo= pattern.search(s)
@@ -1479,13 +1497,25 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
         base_begin = mo.start(0)
         base_end = mo.end(0)-1
 
-        exp_begin=base_end
-        exp_end=len(s)
-        exp_skipafter=0
+        base = s[base_begin:base_end-1]
+
+        # if split symbols, narrow to just last letter, unless in local_dict
+        if split_symbols:
+            if not base in unsplit_symbols:
+                base_begin=base_end-2
+                base=s[base_begin:base_end-1]
+                # if last character isn't letter, skip
+                if not base.isalpha():
+                    continue
+
+
+        sub_begin=base_end
+        sub_end=len(s)
+        sub_skipafter=0
 
         # if next character after "_" is "(", then find matching )
         if s[base_end]=="(":
-            exp_begin+=1
+            sub_begin+=1
             n_openpar=0
             for (j,c) in enumerate(s[base_end:]):
                 if c=="(":
@@ -1493,28 +1523,33 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
                 elif c==")":
                     n_openpar-=1
                     if n_openpar == 0:
-                        exp_end=base_end+j
-                        exp_skipafter=1
+                        sub_end=base_end+j
+                        sub_skipafter=1
                         break
-
-        elif split_symbols:
-            if s[base_end].isdigit():
-                for (j,c) in enumerate(s[base_end:]):
-                    if not c.isdigit():
-                        exp_end=base_end+j
-                        break
-            else:
-                exp_end=base_end+1
+            subscript = s[sub_begin:sub_end]
 
         else:
             for (j,c) in enumerate(s[base_end:]): 
                 if not c.isalnum():
-                    exp_end=base_end+j
+                    sub_end=base_end+j
                     break
 
+            subscript = s[sub_begin:sub_end]
 
-        base = s[base_begin:base_end-1]
-        subscript = s[exp_begin:exp_end]
+            # if split_symbols, if exp is not in unsplit symbols,
+            # then change to be number or the first letter
+
+            if split_symbols and subscript not in unsplit_symbols:
+                if s[base_end].isdigit():
+                    for (j,c) in enumerate(s[base_end:]):
+                        if not c.isdigit():
+                            sub_end=base_end+j
+                            break
+                else:
+                    sub_end=base_end+1
+
+                subscript = s[sub_begin:sub_end]
+            
         
         if assume_real_variables:
             subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
@@ -1523,7 +1558,7 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False):
             subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
                                        (base,subscript)
         s = s[:base_begin] + subscript_command_string \
-            + s[exp_end+exp_skipafter:]
+            + s[sub_end+sub_skipafter:]
 
     return s
 

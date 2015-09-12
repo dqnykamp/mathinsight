@@ -744,7 +744,7 @@ def grade_question(question, question_identifier, answer_info,
                                 random_outcomes=random_outcomes,
                                 )
     expr_context=context_results['expression_context']
-    user_function_dict = expr_context['_user_function_dict_']
+    user_dict = expr_context['_user_dict_']
 
 
     # render any dynamic text from question
@@ -795,7 +795,7 @@ def grade_question(question, question_identifier, answer_info,
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 local_dict=user_function_dict)
+                 local_dict=user_dict)
 
             points_achieved += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
@@ -814,7 +814,7 @@ def grade_question(question, question_identifier, answer_info,
             group_list=question_groups[group], 
             user_responses=user_responses,
             answer_info=answer_info, question=question,
-            expr_context=expr_context, local_dict=user_function_dict,
+            expr_context=expr_context, local_dict=user_dict,
             answer_results=answer_results)
 
         

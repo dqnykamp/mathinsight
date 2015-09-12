@@ -226,7 +226,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
 
         from mitesting.utils import replace_subscripts
         s=replace_subscripts(s, split_symbols=split_symbols,
-                             assume_real_variables=assume_real_variables)
+                             assume_real_variables=assume_real_variables,
+                             local_dict=new_local_dict)
 
         # map subscript sympy
         from mitesting.customized_commands import subscript_symbol

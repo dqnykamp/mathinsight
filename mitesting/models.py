@@ -510,6 +510,7 @@ class Expression(models.Model):
     RANDOM_FUNCTION_NAME = "RF"
     FUNCTION = "FN"
     FUNCTION_NAME = "FE"
+    UNSPLIT_SYMBOL = "US"
     CONDITION = "CN"
     GENERIC = "EX"
     UNORDERED_TUPLE = "UT"
@@ -526,6 +527,7 @@ class Expression(models.Model):
             (RANDOM_NUMBER, "Rand number"),
             (FUNCTION, "Function"),
             (FUNCTION_NAME, "Function name"),
+            (UNSPLIT_SYMBOL, "Unsplit symbol"),
             (CONDITION, "Required cond"),
         )
      ),
@@ -596,7 +598,7 @@ class Expression(models.Model):
         super(Expression, self).save(*args, **kwargs)
 
 
-    def evaluate(self, rng, local_dict=None, user_function_dict=None,
+    def evaluate(self, rng, local_dict=None, user_dict=None,
                  alternate_dicts=[], 
                  random_group_indices=None,
                  random_outcomes={}):
@@ -610,10 +612,10 @@ class Expression(models.Model):
         - alternate_funcs: if alternate_dicts passed in and expression is
           a FUNCTION, a list of alternate versions of the function
 
-        Add result to local_dict and user_function_dict:
+        Add result to local_dict and user_dict:
         Add sympy version of result to local_dict with key self.name.
         If result is a function name that user may enter to answer 
-        question, then add function to user_function_dict.
+        question, then add function to user_dict.
 
         If alternate_dicts passed, each dict is treated as local_dict
         and sympy version is added with key self.name.
@@ -630,7 +632,7 @@ class Expression(models.Model):
         be substituted in following expressions.
         
         If error occurs, add Symbol("??") to local_dict,
-        don't add to user_function_dict, and raise an exception
+        don't add to user_dict, and raise an exception
 
         For entries selected randomly from lists,
         (RANDOM_WORD, RANDOM_EXPRESSION, RANDOM_FUNCTION_NAME),
@@ -696,8 +698,16 @@ class Expression(models.Model):
         Expression should must parse to a single Symbol() 
         (multiple characters are fine).  
         The function name "f" will then be treated as undefined function
-        so that f(x) is function evaluation, not multipliation
+        so that f(x) is function evaluation, not multiplication
+        Expression is added to user dictionary so will act as undefined function
+        in answers
         
+        UNSPLIT_SYMBOL
+        Expression should must parse to a single Symbol() 
+        (multiple characters are fine).  
+        Expression is added to user dictionary so will act as an unsplit symbol
+        in answers
+
         RANDOM_FUNCTION_NAME
         Expression should be a list of expressions of the form
         f1, f2, ....
@@ -705,6 +715,8 @@ class Expression(models.Model):
         (multiple characters are fine).  
         The function name chosen will then be treated as undefined function
         so that f(x) is function evaluation, not multipliation
+        Expression is added to user dictionary so will act as undefined function
+        in answers
 
         FUNCTION
         The expression field must be a mathematical expression
@@ -797,7 +809,7 @@ class Expression(models.Model):
             expression_evaluated= evaluate_expression(
                 self, rng=rng,
                 local_dict=local_dict,
-                user_function_dict=user_function_dict,
+                user_dict=user_dict,
                 random_group_indices=random_group_indices,
                 new_alternate_dicts=new_alternate_dicts_sub,
                 new_alternate_exprs=new_alternate_exprs_sub,
@@ -842,7 +854,7 @@ class Expression(models.Model):
                 expression_evaluated_sub= evaluate_expression(
                     self, rng=rng,
                     local_dict=alt_dict,
-                    user_function_dict=user_function_dict,
+                    user_dict=user_dict,
                     random_group_indices=random_group_indices,
                     new_alternate_dicts=new_alternate_dicts_sub,
                     new_alternate_exprs=new_alternate_exprs_sub,

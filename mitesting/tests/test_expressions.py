@@ -124,19 +124,33 @@ class TestExpressions(TestCase):
     def test_function_name(self):
         x = Symbol('x', real=True)
         local_dict={}
-        test_dict = {}
-        user_function_dict = {}
+        user_dict = {}
 
-        expr1=self.new_expr(name="f", expression="f",
+        expr1=self.new_expr(name="the_f", expression="f",
                             expression_type = Expression.FUNCTION_NAME)
 
         f = expr1.evaluate(rng=self.rng, local_dict=local_dict, 
-                           user_function_dict=user_function_dict)['expression_evaluated']\
+                           user_dict=user_dict)['expression_evaluated']\
                  .return_expression()
         self.assertEqual(f, SymbolCallable(str("f"), real=True))
-        test_dict["f"] = f
-        self.assertEqual(local_dict, test_dict)
-        self.assertEqual(user_function_dict, test_dict)
+        self.assertEqual(local_dict, {'the_f': f})
+        self.assertEqual(user_dict, {'f': f})
+        
+
+    def test_unsplit_symbol(self):
+        x = Symbol('x', real=True)
+        local_dict={}
+        user_dict = {}
+
+        expr1=self.new_expr(name="unsplit_one", expression="group",
+                            expression_type = Expression.UNSPLIT_SYMBOL)
+
+        unsplit_one = expr1.evaluate(rng=self.rng, local_dict=local_dict, 
+                           user_dict=user_dict)['expression_evaluated']\
+                 .return_expression()
+        self.assertEqual(unsplit_one, Symbol(str("group"), real=True))
+        self.assertEqual(local_dict, {'unsplit_one': unsplit_one})
+        self.assertEqual(user_dict, {'group': unsplit_one})
         
 
     def test_real_variable(self):
@@ -1283,16 +1297,16 @@ class TestRandomFromList(TestCase):
             test_local_dict["b"] = b
             self.assertEqual(local_dict, test_local_dict)
 
-            user_function_dict = {}
+            user_dict = {}
             expr3=self.new_expr(name="f",expression="this, that, the,other",
                                 expression_type = 
                                 Expression.RANDOM_FUNCTION_NAME)
             f = expr3.evaluate(rng=self.rng, local_dict=local_dict, \
-                                   user_function_dict=user_function_dict)['expression_evaluated']\
+                                   user_dict=user_dict)['expression_evaluated']\
                                    .return_expression()
             self.assertTrue(f in [SymbolCallable(str(item), real=True) for item in
                                   ("this","that","the","other")])
-            self.assertEqual( user_function_dict , { str(f): f})
+            self.assertEqual( user_dict , { str(f): f})
             test_local_dict["f"] = f
             self.assertEqual(local_dict, test_local_dict)
 

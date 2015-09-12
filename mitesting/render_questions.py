@@ -39,13 +39,13 @@ def setup_expression_context(question, rng, seed, user_responses=None,
     user_responses is a list of dictionaries of user responses to answers
     embedded in the question.  If any answers have been marked to be
     asssigned to expressions, the second step is to parse those responses
-    using user_function_dict for local_dict and assign the result
+    using user_dict for local_dict and assign the result
     to the corresponding expression.
 
     The third step is to evaluate any expressions flagged as being 
     post user response.
 
-    Both the local_dict and user_function_dict are added to the
+    Both the local_dict and user_dict are added to the
     expression context.
 
     In addition, if some expressions were EXPRESSION_WITH_ALTERNATES,
@@ -102,7 +102,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
         # found in allowed_sympy_commands.
         # Also adds standard symbols to dictionary.
         local_dict = question.return_sympy_local_dict()
-        user_function_dict = question.return_sympy_local_dict(
+        user_dict = question.return_sympy_local_dict(
             user_response=True)
         alternate_dicts = []
         alternate_exprs = {}
@@ -118,7 +118,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
                 try:
                     evaluate_results=expression.evaluate(
                         local_dict=local_dict, 
-                        user_function_dict=user_function_dict,
+                        user_dict=user_dict,
                         alternate_dicts = alternate_dicts, 
                         random_group_indices=random_group_indices,
                         rng=rng, random_outcomes=random_outcomes)
@@ -170,7 +170,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
     # reset state if not generating regular expression
     # Also, sympy global dict is accessed from template tags
     expression_context['_sympy_local_dict_'] = local_dict
-    expression_context['_user_function_dict_'] = user_function_dict
+    expression_context['_user_dict_'] = user_dict
     expression_context['_alternate_dicts_'] = alternate_dicts
     expression_context['_alternate_exprs_'] = alternate_exprs
     expression_context['_alternate_funcs_'] = alternate_funcs
@@ -221,7 +221,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
                         try:
                             math_expr =  parse_and_process(
                                 response['response'], 
-                                local_dict=user_function_dict, 
+                                local_dict=user_dict, 
                                 split_symbols=\
                                 expression.split_symbols_on_compare,
                                 evaluate_level=EVALUATE_NONE,
@@ -246,7 +246,7 @@ def setup_expression_context(question, rng, seed, user_responses=None,
             try:
                 evaluate_results=expression.evaluate(
                     local_dict=local_dict, 
-                    user_function_dict=user_function_dict,
+                    user_dict=user_dict,
                     alternate_dicts=alternate_dicts,
                     random_group_indices=random_group_indices,
                     rng=rng, random_outcomes=random_outcomes)
