@@ -24,6 +24,14 @@ class DynamicText(models.Model):
     def render(self, context, include_container=False,
                instance_identifier=""):
         nodelist=pickle.loads(base64.b64decode(self.nodelisttext))
+
+        # if context doesn't have a template associated with it,
+        # add template so that context.template.engine.string_if_invalid
+        # is defined, which is needed if a variable doesn't exist
+        if not context.template:
+            from django.template import Template
+            context.template = Template("")
+
         content= nodelist.render(context)
 
         if include_container:

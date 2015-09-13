@@ -496,8 +496,15 @@ class AnswerNode(template.Node):
             readonly_string = ' readonly'
         else:
             readonly_string = ''
-
-        assign_to_expression = kwargs.get('assign_to_expression')
+            
+        try:
+            assign_to_expression = kwargs['assign_to_expression']
+        except KeyError:
+            assign_to_expression = None
+        else:
+            if not assign_to_expression:
+                return return_error("Invalid assign_to_expression for answer: %s" % answer_code)
+                
         expressionfromanswer = None
         if assign_to_expression and \
            context.get("_process_expressions_from_answers"):
