@@ -318,6 +318,76 @@ class Question(models.Model):
         return base_q
 
         
+
+    def update_from_base_question(self):
+        """
+        Overwrite the question with all fields from base question
+        except preserves fields: .course and .base_question
+        """
+
+        from copy import copy
+
+        base_question = self.base_question
+        if base_question is None:
+            return
+        
+        new_self = copy(base_question)
+        new_self.id = self.id
+        new_self.base_question = base_question
+        new_self.course = self.course
+
+        new_self.save()
+        
+        new_self.questionreferencepage_set.all().delete()
+        for qrp in base_question.questionreferencepage_set.all():
+            qrp.id = None
+            qrp.question = new_self
+            qrp.save()
+
+        new_self.allowed_sympy_commands.clear()
+        for asc in base_question.allowed_sympy_commands.all():
+            new_self.allowed_sympy_commands.add(asc)
+        new_self.allowed_user_sympy_commands.clear()
+        for ausc in base_question.allowed_user_sympy_commands.all():
+            new_self.allowed_user_sympy_commands.add(ausc)
+        new_self.keywords.clear()
+        for kw in base_question.keywords.all():
+            new_self.keywords.add(kw)
+        new_self.subjects.clear()
+        for sb in base_question.subjects.all():
+            new_self.subjects.add(sb)
+
+        new_self.questionauthor_set.all().delete()
+        for qa in base_question.questionauthor_set.all():
+            qa.id = None
+            qa.question = new_self
+            qa.save()
+
+        new_self.questionsubpart_set.all().delete()
+        for qsp in base_question.questionsubpart_set.all():
+            qsp.id = None
+            qsp.question = new_self
+            qsp.save()
+
+        new_self.questionansweroption_set.all().delete()
+        for qao in base_question.questionansweroption_set.all():
+            qao.id = None
+            qao.question = new_self
+            qao.save()
+
+        new_self.expression_set.all().delete()
+        for expr in base_question.expression_set.all():
+            expr.id = None
+            expr.question = new_self
+            expr.save()
+
+        from mitesting.render_questions import process_expressions_from_answers
+        process_expressions_from_answers(new_self)
+
+        return new_self
+
+        
+
     def find_replacement_question_for_course(self, course):
         # If question is from assessment's course, return question.
         # Else, attempt the following in order
