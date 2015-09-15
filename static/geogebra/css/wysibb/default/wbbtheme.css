@@ -54,6 +54,13 @@ html{height:100% !important;}
 .wysibb .wysibb-text{
   margin:0 0 0 70px;
 }
+
+.wysibb .wysibb-text .jlatexmath {
+  cursor: pointer;
+  border: 1px solid #0398CA;
+  display: inline;
+}
+
 .wysibb .wysibb-toolbar .modeSwitch{
   display:block;
   position:relative;
@@ -782,14 +789,14 @@ html{height:100% !important;}
     background-color: white;
     box-shadow: 0 0 2px 1px rgba(204,204,204,0.5) ;
     margin-top: -135px;
-    min-width: 800px;
+    /*min-width: 833px;*/
     z-index: 3000;
     border-radius: 5px;
 }
 
 @media (min-width: 750px) {
     .wysibb-toolbar-container-group {
-        margin-top: -40px;
+        margin-top: -70px;
     }
 }
 
@@ -855,5 +862,27 @@ html{height:100% !important;}
 
 .font-size-5 {
     font-size: 32px;
+}
+
+blockquote {
+    quotes: "\201C""\201D";
+    overflow: visible !important;
+}
+blockquote:before {
+    color: #ccc;
+    content: open-quote;
+    font-size: 4em;
+    line-height: 0.1em;
+    margin-right: 0.25em;
+    vertical-align: -0.4em;
+}
+blockquote:after {
+    color: #ccc;
+    content: close-quote;
+    font-size: 4em;
+    line-height: 0.1em;
+    margin-left: 0.25em;
+    vertical-align: -0.8em;
+    padding: 5px;
 }
 
