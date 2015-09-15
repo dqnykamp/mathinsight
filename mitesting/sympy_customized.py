@@ -21,7 +21,7 @@ EVALUATE_NONE = 0
 EVALUATE_PARTIAL = 1
 EVALUATE_FULL = 2
 
-def bottom_up(rv, F, atoms=False, nonbasic=False):
+def bottom_up(rv, F, atoms=False, nonbasic=False, evaluate=None):
     """Apply ``F`` to all expressions in an expression tree from the
     bottom up. If ``atoms`` is True, apply ``F`` even if there are no args;
     if ``nonbasic`` is True, try to apply ``F`` to non-Basic objects.
@@ -36,14 +36,50 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
        as in the case when rv is a function
     """
 
+    if evaluate is None:
+        if isinstance(rv, list) or isinstance(rv,tuple):
+            rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
+        elif isinstance(rv, Tuple):
+            rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
+        elif isinstance(rv,Matrix):
+            rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
+            if nonbasic:
+                rv=F(rv)
+        else:
+            try:
+                rvargs=rv.args
+                rvfunc = rv.func
+            except AttributeError:
+                if nonbasic:
+                    try:
+                        rv = F(rv)
+                    except TypeError:
+                        pass
+
+            else:
+                if rvargs and not isinstance(rvargs, property):
+                    args = tuple([bottom_up(a, F, atoms, nonbasic)
+                                  for a in rvargs])
+                    rv = rvfunc(*args)
+                    rv = F(rv)
+                elif atoms:
+                    rv = F(rv)
+
+        return rv
+
+
+    # if evaluate is specified
     if isinstance(rv, list) or isinstance(rv,tuple):
-        rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
+        rv = rv.__class__(bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv)
     elif isinstance(rv, Tuple):
-        rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
+        rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv])
     elif isinstance(rv,Matrix):
-        rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
+        rv = rv.__class__([bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv.tolist()])
         if nonbasic:
-            rv=F(rv)
+            try:
+                rv=F(rv, evaluate=evaluate)
+            except:
+                rv=F(rv)
     else:
         try:
             rvargs=rv.args
@@ -51,17 +87,30 @@ def bottom_up(rv, F, atoms=False, nonbasic=False):
         except AttributeError:
             if nonbasic:
                 try:
-                    rv = F(rv)
-                except TypeError:
-                    pass
+                    rv=F(rv, evaluate=evaluate)
+                except:
+                    try:
+                        rv = F(rv)
+                    except TypeError:
+                        pass
+
         else:
             if rvargs and not isinstance(rvargs, property):
-                args = tuple([bottom_up(a, F, atoms, nonbasic)
+                args = tuple([bottom_up(a, F, atoms, nonbasic, evaluate=evaluate)
                               for a in rvargs])
-                rv = rvfunc(*args)
-                rv = F(rv)
+                try:
+                    rv = rvfunc(*args, evaluate=evaluate)
+                except:
+                    rv = rvfunc(*args)
+                try:
+                    rv = F(rv, evaluate=evaluate)
+                except:
+                    rv = F(rv)
             elif atoms:
-                rv = F(rv)
+                try:
+                    rv = F(rv, evaluate=evaluate)
+                except:
+                    rv = F(rv)
 
     return rv
 

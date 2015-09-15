@@ -116,7 +116,7 @@ def modified_round(w, p=0):
         return Float(rv, allow)
 
 
-def round_expression(expression, n=0, initial_n_digits=100):
+def round_expression(expression, n=0, initial_n_digits=100, evaluate=None):
     """
     Customized version of round
     Attempts to round expressions to n decimal places in a way to get 
@@ -139,8 +139,10 @@ def round_expression(expression, n=0, initial_n_digits=100):
 
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(expression, 
-            lambda w: _initial_evalf(w,initial_n_digits), atoms=True)
+    if evaluate is not False:
+        expression =  bottom_up(
+            expression, lambda w: _initial_evalf(w,initial_n_digits), 
+            atoms=True, evaluate=evaluate)
 
     # next, round numbers
     if n <= 0:
@@ -148,17 +150,17 @@ def round_expression(expression, n=0, initial_n_digits=100):
         expression =  bottom_up(
             expression,
             lambda w: w if not w.is_Number else Integer(modified_round(w,n)),
-            atoms=True)
+            atoms=True, evaluate=evaluate)
     else:
         expression =  bottom_up(
             expression,
             lambda w: w if not w.is_Number else Float(str(modified_round(w,n))),
-            atoms=True)
+            atoms=True, evaluate=evaluate)
         
     return expression
 
 
-def evalf_expression(expression, n=15):
+def evalf_expression(expression, n=15, evaluate=None):
     """
     Customized version of evalf.
     Attempts to truncate expressions to n digits in a way to get 
@@ -179,21 +181,23 @@ def evalf_expression(expression, n=15):
 
     # first convert every number to a float with initial_n_digits
     # for consistency
-    expression =  bottom_up(expression, 
-            lambda w: _initial_evalf(w,initial_n_digits), atoms=True)
+    if evaluate is not False:
+        expression =  bottom_up(
+            expression, lambda w: _initial_evalf(w,initial_n_digits), 
+            atoms=True, evaluate=evaluate)
 
     expression =  bottom_up(
         expression,
         lambda w: w if not w.is_Number else Float(str(w.evalf(n))),
-        atoms=True)
+        atoms=True, evaluate=evaluate)
 
     return expression
 
 
-def normalize_floats(expression):
+def normalize_floats(expression, n_digits=14, evaluate=None):
     """
     To ensure consistency of expression with floats in presence of
-    machine precision errors, round all floats to 14 digits,
+    machine precision errors, round all floats to n_digits,
     converting expression to string and back to lose memory
     of original value and ensure two expression will be the same 
     if their conversion to string is the same
@@ -201,8 +205,8 @@ def normalize_floats(expression):
     expression = sympify(expression)
     expression =  bottom_up(
         expression,
-        lambda w: w if not w.is_Float else Float(str(w.evalf(14))),
-        atoms=True)
+        lambda w: w if not w.is_Float else Float(str(w.evalf(n_digits))),
+        atoms=True, evaluate=evaluate)
         
     return expression
 

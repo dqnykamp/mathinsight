@@ -267,6 +267,307 @@ class MathObjectTests(SimpleTestCase):
         # self.assertEqual(mobject.compare_with_expression(expression_rounded)\
         #                  ['fraction_equal'],1)
 
+    def test_round_on_compare_evaluate_false(self):
+        from mitesting.user_commands import log
+        from mitesting.sympy_customized import parse_expr
+        from mitesting.sympy_customized import parse_expr, EVALUATE_NONE, \
+            EVALUATE_PARTIAL, EVALUATE_FULL
+ 
+        local_dict = {'log': log }
+
+        expr_string = "log(572.1241/15.2343)/log(0.3)"
+        expr_string2 = "log(572.1241/15.2343)/log(3/10)"
+        expr_string_rounded = "log(572.1/15.234)/log(0.3)"
+        expr_string_rounded2 = "log(572.1/15.234)/log(3/10)"
+        expr_string_too_rounded = "log(572/15.234)/log(0.3)"
+        expr_string_too_rounded2 = "log(572.1/15.2)/log(3/10)"
+
+        expr_string_lf = "log(37.554997)/log(0.3)"
+        expr_string_lf_rounded = "log(37.555)/log(0.3)"
+        expr_string_lf_too_rounded = "log(37.6)/log(0.3)"
+
+        expr_evalf = sympify(-3.01153518444347);
+        expr_evalf_rounded = sympify(-3.012);
+        expr_evalf_too_rounded = sympify(-3.01);
+
+        expr = parse_expr(expr_string, local_dict=local_dict,
+                          evaluate=False)
+        expr2 = parse_expr(expr_string2, local_dict=local_dict,
+                          evaluate=False)
+        expr_rounded = parse_expr(expr_string_rounded, local_dict=local_dict,
+                                  evaluate=False)
+        expr_rounded2 = parse_expr(expr_string_rounded2, local_dict=local_dict,
+                                   evaluate=False)
+        expr_too_rounded = parse_expr(expr_string_too_rounded, 
+                                      local_dict=local_dict, evaluate=False)
+        expr_too_rounded2 = parse_expr(expr_string_too_rounded2, 
+                                       local_dict=local_dict, evaluate=False)
+        expr_lf = parse_expr(expr_string_lf, local_dict=local_dict,
+                          evaluate=False)
+        expr_lf_rounded = parse_expr(expr_string_lf_rounded, 
+                                     local_dict=local_dict, evaluate=False)
+        expr_lf_too_rounded = parse_expr(expr_string_lf_too_rounded, 
+                                         local_dict=local_dict, evaluate=False)
+
+
+        mobject = math_object(expr, round_on_compare=4,
+                              evaluate_level=EVALUATE_NONE)
+        self.assertEqual(mobject,expr)
+        self.assertNotEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertNotEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertNotEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+
+        mobject = math_object(expr2, round_on_compare=4,
+                              evaluate_level=EVALUATE_NONE)
+        self.assertNotEqual(mobject,expr)
+        self.assertEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertNotEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertNotEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+        mobject = math_object(expr_lf, round_on_compare=4,
+                              evaluate_level=EVALUATE_NONE)
+        self.assertNotEqual(mobject,expr)
+        self.assertNotEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertNotEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+
+        mobject = math_object(expr_evalf, round_on_compare=4,
+                              evaluate_level=EVALUATE_NONE)
+        self.assertNotEqual(mobject,expr)
+        self.assertNotEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertNotEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+
+        mobject = math_object(expr, evaluate_level=EVALUATE_NONE)
+        self.assertEqual(mobject,expr)
+        self.assertNotEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertNotEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertNotEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+
+        expr = parse_expr(expr_string, local_dict=local_dict,
+                          evaluate=True)
+        expr2 = parse_expr(expr_string2, local_dict=local_dict,
+                          evaluate=True)
+        expr_rounded = parse_expr(expr_string_rounded, local_dict=local_dict,
+                                  evaluate=True)
+        expr_rounded2 = parse_expr(expr_string_rounded2, local_dict=local_dict,
+                                   evaluate=True)
+        expr_too_rounded = parse_expr(expr_string_too_rounded, 
+                                      local_dict=local_dict, evaluate=True)
+        expr_too_rounded2 = parse_expr(expr_string_too_rounded2, 
+                                       local_dict=local_dict, evaluate=True)
+        expr_lf = parse_expr(expr_string_lf, local_dict=local_dict,
+                          evaluate=True)
+        expr_lf_rounded = parse_expr(expr_string_lf_rounded, 
+                                     local_dict=local_dict, evaluate=True)
+        expr_lf_too_rounded = parse_expr(expr_string_lf_too_rounded, 
+                                         local_dict=local_dict, evaluate=True)
+
+
+        mobject = math_object(expr, round_on_compare=4,
+                              evaluate_level=EVALUATE_FULL)
+        self.assertEqual(mobject,expr)
+        self.assertNotEqual(mobject,expr2)
+        self.assertNotEqual(mobject,expr_rounded)
+        self.assertNotEqual(mobject,expr_rounded2)
+        self.assertNotEqual(mobject,expr_too_rounded)
+        self.assertNotEqual(mobject,expr_too_rounded2)
+        self.assertNotEqual(mobject,expr_lf)
+        self.assertNotEqual(mobject,expr_lf_rounded)
+        self.assertNotEqual(mobject,expr_lf_too_rounded)
+        self.assertNotEqual(mobject,expr_evalf)
+        self.assertNotEqual(mobject,expr_evalf_rounded)
+        self.assertNotEqual(mobject,expr_evalf_too_rounded)
+        self.assertEqual(mobject.compare_with_expression(expr)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr2)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_rounded2)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_too_rounded2)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_lf)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_lf_too_rounded)\
+                         ['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_rounded)\
+                         ['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr_evalf_too_rounded)\
+                         ['fraction_equal'],0)
+
+
 
     def test_normalize_on_compare(self):
         from sympy.abc import x,y

@@ -168,7 +168,8 @@ class math_object(object):
         return self._parameters.get('expression_type')
 
     def eval_to_comparison_precision(self, expression, 
-                                     additional_rounding=None):
+                                     additional_rounding=None,
+                                     evaluate=None):
         """
         If parameter round_on_compare is set, 
         evaluate all numbers and numbersymbols (like pi) 
@@ -196,15 +197,16 @@ class math_object(object):
             round_absolute = self._parameters.get('round_absolute', False)
             
             if round_absolute:
-                expression = round_expression(expression, 
-                                              round_on_compare)
+                expression = round_expression(
+                    expression, round_on_compare, evaluate=evaluate)
                 modified = True
             elif round_on_compare > 0:
-                expression = evalf_expression(expression, round_on_compare)
+                expression = evalf_expression(
+                    expression, round_on_compare, evaluate=evaluate)
                 modified = True
 
         if not modified:
-            expression = normalize_floats(expression)
+            expression = normalize_floats(expression, evaluate=evaluate)
             
         return expression
 
@@ -403,10 +405,17 @@ class math_object(object):
         # evaluate both expressions to precision as specified by
         # round_on_compare and round_absolute (with additional rounding)
         if evaluate_level != EVALUATE_NONE:
-            new_expr = self.eval_to_comparison_precision(new_expr,
-                                additional_rounding=additional_rounding)
-            expression = self.eval_to_comparison_precision(expression, 
-                                additional_rounding=additional_rounding)
+            comparison_evaluate = None
+        else:
+            comparison_evaluate = False
+            
+        new_expr = self.eval_to_comparison_precision(
+            new_expr, additional_rounding=additional_rounding,
+            evaluate=comparison_evaluate)
+        expression = self.eval_to_comparison_precision(
+            expression, additional_rounding=additional_rounding,
+            evaluate=comparison_evaluate)
+
 
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         match_partial_on_compare = self._parameters.get(

@@ -1502,13 +1502,6 @@ class EditCourseContentAttemptScores(CourseBaseView):
                     attempt = None
                     score = ""
 
-                print(self.thread_content.get_adjusted_due(
-                        student=enrollment_dict['enrollment'].student))
-                print(cca.attempt_began)
-                print(self.thread_content.get_adjusted_due(
-                        student=enrollment_dict['enrollment'].student)
-                    < cca.attempt_began)
-
                 enrollment_dict['attempts'].append({
                     'base_attempt': cca,
                     'attempt': attempt,
