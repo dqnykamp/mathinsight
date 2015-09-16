@@ -394,7 +394,7 @@ class Page(models.Model):
         # parse the text field with flags to enter links into database
         try:
 
-            Template("{% load mi_tags testing_tags %}"+self.text).render(Context(update_context))
+            Template("{% load mi_tags question_tags %}"+self.text).render(Context(update_context))
             # save without updating links again
             super(Page, self).save() 
 

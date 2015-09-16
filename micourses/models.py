@@ -2692,7 +2692,7 @@ class Assessment(models.Model):
     def render_instructions(self):
         if not self.instructions:
             return ""
-        template_string_base = "{% load testing_tags mi_tags humanize %}"
+        template_string_base = "{% load question_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions
         try:
             t = Template(template_string)
@@ -2703,7 +2703,7 @@ class Assessment(models.Model):
     def render_instructions2(self):
         if not self.instructions2:
             return ""
-        template_string_base = "{% load testing_tags mi_tags humanize %}"
+        template_string_base = "{% load question_tags mi_tags humanize %}"
         template_string=template_string_base + self.instructions2
         try:
             t = Template(template_string)

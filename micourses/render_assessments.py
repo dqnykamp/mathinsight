@@ -376,7 +376,7 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
     inject solution view
     
     render in question model, which is called by
-    _render_question in testing_tags
+    _render_question in question_tags
     question view
 
     I hope we can move it all over. 
