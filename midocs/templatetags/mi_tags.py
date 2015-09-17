@@ -1,3 +1,4 @@
+from django.db import models, transaction
 from django import template
 from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type
 from micourses.models import Assessment
@@ -436,37 +437,32 @@ class NavigationTagNode(template.Node):
                 # first try to find the phrase already there
                 # and just create subphrase entry
                 try:
-                    navigation_entry = PageNavigation.objects.get \
-                        (page=thepage, \
-                             navigation_phrase=navigation_phrase)
-                    navigation_sub_entry=PageNavigationSub.objects.create \
-                        (navigation=navigation_entry, \
-                             navigation_subphrase=navigation_subphrase, \
-                             page_anchor=page_anchor)
+                    with transaction.atomic():
+                        navigation_entry = PageNavigation.objects.get(
+                            page=thepage, navigation_phrase=navigation_phrase)
+                        navigation_sub_entry=PageNavigationSub.objects.create(
+                            navigation=navigation_entry,
+                            navigation_subphrase=navigation_subphrase,
+                            page_anchor=page_anchor)
                 except:
                     # next try to create both phrase and subphrase entries
-                    try:
-                        navigation_entry = PageNavigation.objects.create \
-                            (page=thepage, \
-                                 navigation_phrase=navigation_phrase,\
-                                 page_anchor=page_anchor)
-                        navigation_sub_entry=PageNavigationSub.objects.create \
-                            (navigation=navigation_entry, \
-                                 navigation_subphrase=navigation_subphrase, \
-                                 page_anchor=page_anchor)
+                    with transaction.atomic():
+                        navigation_entry = PageNavigation.objects.create(
+                            page=thepage,
+                            navigation_phrase=navigation_phrase,
+                            page_anchor=page_anchor)
+                        navigation_sub_entry=PageNavigationSub.objects.create(
+                            navigation=navigation_entry,
+                            navigation_subphrase=navigation_subphrase,
+                            page_anchor=page_anchor)
                             
-                            
-                    except:
-                        raise #pass
             else:
                 # if no subphrase, just create phrase entry
-                try:
-                    navigation_entry = PageNavigation.objects.create \
-                        (page=thepage, 
-                         navigation_phrase=navigation_phrase,
-                         page_anchor=page_anchor)
-                except:
-                    raise #pass
+                with transaction.atomic():
+                    navigation_entry = PageNavigation.objects.create(
+                        page=thepage, 
+                        navigation_phrase=navigation_phrase,
+                        page_anchor=page_anchor)
                         
 
         # check if blank_style is set 
@@ -516,13 +512,13 @@ class FootnoteNode(template.Node):
                 previous_reference_number=previous_citations.aggregate(Max('reference_number'))['reference_number__max']
                 
             try:
-                # add footnote entry
-                footnote_text = self.nodelist.render(context)
-                footnote_entry = PageCitation.objects.create \
-                    (page=thepage, \
-                         code=cite_code, \
-                         footnote_text=footnote_text, \
-                         reference_number = previous_reference_number+1)
+                with transaction.atomic():
+                    # add footnote entry
+                    footnote_text = self.nodelist.render(context)
+                    footnote_entry = PageCitation.objects.create(
+                        page=thepage, code=cite_code,
+                        footnote_text=footnote_text,
+                        reference_number = previous_reference_number+1)
             
             # fail silently
             except:
@@ -586,15 +582,15 @@ class CitationNode(template.Node):
             # find references based on cite_code
             for cite_code in cite_codes:
                 try:
-                    the_reference=Reference.objects.get(code=cite_code)
+                    with transaction.atomic():
+                        the_reference=Reference.objects.get(code=cite_code)
                         
-                    # add citation entry
-                    citation_entry = PageCitation.objects.create \
-                        (page=thepage, \
-                             code=cite_code, \
-                             reference=the_reference, \
-                             reference_number = previous_reference_number+1)
-                    previous_reference_number += 1
+                        # add citation entry
+                        citation_entry = PageCitation.objects.create(
+                            page=thepage, code=cite_code,
+                            reference=the_reference,
+                            reference_number = previous_reference_number+1)
+                        previous_reference_number += 1
 
                 # fail silently
                 except:
@@ -742,11 +738,12 @@ class TitleNode(template.Node):
                 thepage = context.get("thepage")
                 if thepage:
                     try:
-                        # add an navigation_entry, ignore any errors
-                        navigation_entry = PageNavigation.objects.create \
-                            (page=thepage, 
-                             navigation_phrase=self.navigation_phrase,
-                             page_anchor="main")
+                        with transaction.atomic():
+                            # add an navigation_entry, ignore any errors
+                            navigation_entry = PageNavigation.objects.create(
+                                page=thepage, 
+                                navigation_phrase=self.navigation_phrase,
+                                page_anchor="main")
                     except:
                         pass
                         
