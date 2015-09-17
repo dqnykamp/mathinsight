@@ -493,9 +493,9 @@ def navigation_tag(parser, token):
 
 
 class FootnoteNode(template.Node):
-    def __init__(self,cite_code,footnote_text):
+    def __init__(self,cite_code,nodelist):
         self.cite_code=cite_code
-        self.footnote_text=footnote_text
+        self.nodelist=nodelist
     def render(self, context):
         # get page object, if doesn't exist, just return blank string
         thepage=context.get("thepage")
@@ -517,7 +517,7 @@ class FootnoteNode(template.Node):
                 
             try:
                 # add footnote entry
-                footnote_text = self.footnote_text.resolve(context)
+                footnote_text = self.nodelist.render(context)
                 footnote_entry = PageCitation.objects.create \
                     (page=thepage, \
                          code=cite_code, \
@@ -545,13 +545,15 @@ class FootnoteNode(template.Node):
 @register.tag
 def footnote(parser, token):
     bits = token.split_contents()
-    if len(bits) < 3:
-        raise template.TemplateSyntaxError("%r tag requires at least two argument" % bits[0])
+    if len(bits) != 2:
+        raise template.TemplateSyntaxError("%r tag requires one argument" % bits[0])
 
     cite_code=parser.compile_filter(bits[1])
-    footnote_text=parser.compile_filter(bits[2])
 
-    return FootnoteNode(cite_code,footnote_text)
+    nodelist = parser.parse(('endfootnote',))
+    parser.delete_first_token()
+
+    return FootnoteNode(cite_code,nodelist)
 
 
 
