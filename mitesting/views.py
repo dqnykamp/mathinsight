@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse, JsonResponse
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
+from django.utils.decorators import method_decorator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.views.generic import DetailView, View
@@ -162,6 +163,15 @@ class GradeQuestionView(SingleObjectMixin, View):
     model = Question
     pk_url_kwarg = 'question_id'
 
+
+    # Don't wrap entire request in a single transaction
+    # as we are getting transaction deadlocks.
+    # Instead, will create transaction when save data
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, *args, **kwargs):
+        return super(GradeQuestionView, self).dispatch(*args, **kwargs)
+
+
     def post(self, request, *args, **kwargs):
 
         # Look up the question to grade
@@ -310,11 +320,23 @@ class GradeQuestionView(SingleObjectMixin, View):
         # Invalid responses won't count toward score and 
         # won't be viewable by student
         from micourses.models import QuestionResponse
-        QuestionResponse.objects.create\
-            (question_attempt=question_attempt,
-             response=json.dumps(user_responses),\
-             credit=answer_results['credit'],\
-             valid = record_valid_response)
+        from django.db.utils import OperationalError
+
+        # in case get deadlock, try to save answer (and recalculate score)
+        # five times
+        for trans_i in range(5):
+            try:
+                with transaction.atomic():
+                    QuestionResponse.objects.create(
+                        question_attempt=question_attempt,
+                        response=json.dumps(user_responses),
+                        credit=answer_results['credit'],
+                        valid = record_valid_response)
+            except OperationalError:
+                if trans_i==4:
+                    raise
+            else:
+                break
 
         # if did not have a valid attempt, treat as though 
         # response were marked as invalid, since it won't count.
