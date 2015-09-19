@@ -40,11 +40,10 @@ def thread_content_form_factory(course, the_content_type=None, update_options_co
 
     if the_content_type is None:
         the_content_type = ContentType.objects.get(app_label="midocs", model="page")
-    
-    allowed_content_types = ContentType.objects.filter(\
-        Q(app_label="midocs", model='applet') | Q(app_label="midocs", model='page') |\
-        Q(app_label="micourses", model='assessment') |\
-                                            Q(app_label="midocs", model='video'))
+
+
+    from micourses.utils import return_allowed_content_types
+    allowed_content_types = return_allowed_content_types()
 
     default_object_choices = [(None, "---------")]
     for item in the_content_type.model_class().objects.all():

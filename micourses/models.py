@@ -412,14 +412,63 @@ class Course(models.Model):
         return sum(point_list)*grade_category.rescale_factor
 
 
+    def thread_content_select_related_content_objects(self, thread_content_queryset=None,
+                                                      as_dictionary=False):
+        """
+        Effectively selects related content objects for thread content queryset,
+        using only one query per content type in the query set.
+
+        If as_dictionary, returns a dictionary keyed by thread_content id,
+        else returns the queryset itself with the content_objects cached using _content_object_cache
+
+        Based on http://stackoverflow.com/questions/2939552/django-select-related-and-genericrelation
+
+        """
+
+        if thread_content_queryset:
+            queryset = thread_content_queryset
+        else:
+            queryset = self.thread_contents.all()
+
+        # create a dictionary of sets of object_ids indexed by content_type_id
+        generics = {}
+        for item in queryset:
+            generics.setdefault(item.content_type_id, set()).add(item.object_id)
+
+        content_types = ContentType.objects.in_bulk(generics.keys())
+
+        # looks up all the content objects with one query per content_type
+        relations = {}
+        for ct, fk_list in generics.items():
+            ct_model = content_types[ct].model_class()
+            relations[ct] = ct_model.objects.in_bulk(list(fk_list))
+
+        if as_dictionary:
+            # return dictionary of content_objects keyed on thread_content id
+            content_dict = {}
+            for item in queryset:
+                content_dict[item.id] = relations[item.content_type_id][item.object_id]
+            return content_dict
+
+        else:
+            # prepopulate _content_object_cache so that when call item.content_object
+            # django won't issues a separate query but will used cached object
+            for item in queryset:
+                setattr(item, '_content_object_cache', 
+                        relations[item.content_type_id][item.object_id])
+
+            return queryset
+
+
+
     def all_assessments_by_category(self):
         grade_categories=[]
         for cgc in self.coursegradecategory_set.all():
 
             cgc_assessments = []
             number_assessments = 0
-            for tc in self.thread_contents\
-                    .filter(grade_category=cgc):
+            for tc in self.thread_content_select_related_content_objects(
+                self.thread_contents.filter(grade_category=cgc)):
                 tc_points = tc.points
                 if tc_points:
                     number_assessments += 1
@@ -462,15 +511,15 @@ class Course(models.Model):
     def all_assessments_with_points(self):
         assessments = []
         # number_assessments = 0
-        for tc in self.thread_contents.all():
+        for tc in self.thread_content_select_related_content_objects():
             tc_points = tc.points
             if tc_points:
                 # number_assessments += 1
-                assessment_results =  \
-                    {'content': tc, \
-                         'assessment': tc.content_object, \
-                         'points': tc_points, \
-                         }
+                assessment_results =  {
+                    'content': tc, 
+                    'assessment': tc.content_object, 
+                    'points': tc_points,
+                }
                 assessments.append(assessment_results)
 
 
@@ -551,9 +600,10 @@ class Course(models.Model):
                 .order_by('enrollment__student', 'content__grade_category',
                           'content')\
  
+        content_dict = self.thread_content_select_related_content_objects(as_dictionary=True)
 
         for cr in records \
-            .select_related('enrollment__student', 'content__grade_category'):
+            .select_related('enrollment__student__user', 'content__grade_category__grade_category'):
 
             if enrollment != cr.enrollment:
                 # if have previous student, then record student results
@@ -595,7 +645,7 @@ class Course(models.Model):
             if tc_points:
                 assessment_results = {
                     'content': tc,
-                    'assessment': tc.content_object,
+                    'assessment': content_dict[tc.id],
                     'score': cr.score,}
                 score_or_zero = cr.score
                 if not score_or_zero:

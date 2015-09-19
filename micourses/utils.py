@@ -188,3 +188,13 @@ def json_dump_fields(model_instance):
 
 
     return json.dumps(data, default=json_datetime_serial)
+
+
+
+def return_allowed_content_types():
+    from django.contrib.contenttypes.models import ContentType
+    from django.db.models import Q
+    
+    return ContentType.objects.filter(
+        Q(app_label="midocs", model='applet') | Q(app_label="midocs", model='page') |
+        Q(app_label="micourses", model='assessment') | Q(app_label="midocs", model='video'))
