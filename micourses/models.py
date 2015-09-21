@@ -177,47 +177,6 @@ class CourseUser(models.Model):
         return self.return_permission_level(course) >= 2
 
 
-    def percent_attendance(self, course=None, date=None):
-        if not course:
-            try:
-                course = self.return_selected_course()
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                return None
-
-        if date:
-            tz = pytz.timezone(course.attendance_time_zone)
-            try:
-                date= tz.normalize(date.astimezone(tz)).date()
-            except AttributeError:
-                pass
-        else:
-            date = course.last_attendance_day_previous_week()
-            if not date:
-                return None
-
-
-        course_enrollment = self.courseenrollment_set.get(course=course)
-        date_enrolled = course_enrollment.date_enrolled
-        course_days = course.to_date_attendance_days(date, 
-                                                     start_date=date_enrolled)
-        
-        attendance_data = course_enrollment.studentattendance_set\
-            .filter(date__lte = date).filter(date__gte = date_enrolled)
-        
-        n_excused_absenses = attendance_data.filter(present = EXCUSED).count()
-        
-        days_attended = attendance_data.exclude(present = EXCUSED)\
-            .aggregate(Sum('present'))['present__sum']
-
-        if course_days:
-            try:
-                return 100.0*days_attended/float(course_days-n_excused_absenses)
-            except (TypeError, ZeroDivisionError):
-                return 0
-        else:
-            return 0
-    
-
 
 class GradeCategory(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -425,10 +384,10 @@ class Course(models.Model):
 
         """
 
-        if thread_content_queryset:
-            queryset = thread_content_queryset
-        else:
+        if thread_content_queryset is None:
             queryset = self.thread_contents.all()
+        else:
+            queryset = thread_content_queryset
 
         # create a dictionary of sets of object_ids indexed by content_type_id
         generics = {}
@@ -600,7 +559,10 @@ class Course(models.Model):
                 .order_by('enrollment__student', 'content__grade_category',
                           'content')\
  
-        content_dict = self.thread_content_select_related_content_objects(as_dictionary=True)
+        thread_content_with_related = self.thread_content_select_related_content_objects()
+        content_dict = {tc.id: {'assessment': tc.content_object,
+                                'title': tc.get_title()} for tc in thread_content_with_related }
+                        
 
         for cr in records \
             .select_related('enrollment__student__user', 'content__grade_category__grade_category'):
@@ -645,7 +607,8 @@ class Course(models.Model):
             if tc_points:
                 assessment_results = {
                     'content': tc,
-                    'assessment': content_dict[tc.id],
+                    'assessment': content_dict[tc.id]['assessment'],
+                    'title': content_dict[tc.id]['title'],
                     'score': cr.score,}
                 score_or_zero = cr.score
                 if not score_or_zero:
@@ -768,7 +731,7 @@ class Course(models.Model):
         except:
             return None
 
-    def previous_week_end(self, date=None):
+    def previous_week_end(self, date=None, skipdate_dict=None):
 
         tz = pytz.timezone(self.attendance_time_zone)
 
@@ -803,12 +766,15 @@ class Course(models.Model):
             # find previous day of class, up to one week in past
             skipdate=False
             try:
-                self.courseskipdate_set.get(date=previous_week_end)
+                if skipdate_dict is None:
+                    self.courseskipdate_set.get(date=previous_week_end)
+                else:
+                    skipdate_dict[previous_week_end]
                 original_previous_week_end=previous_week_end
                 skipdate=True
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, KeyError):
                 pass
-
+            
             
             while skipdate:
                 
@@ -831,13 +797,16 @@ class Course(models.Model):
                 
                 # determine if is a skip date
                 try:
-                    self.courseskipdate_set.get(date=previous_week_end)
-                except ObjectDoesNotExist:
+                    if skipdate_dict is None:
+                        self.courseskipdate_set.get(date=previous_week_end)
+                    else:
+                        skipdate_dict[previous_week_end]
+                except (ObjectDoesNotExist, KeyError):
                     skipdate=False
                 
         return previous_week_end
         
-    def last_attendance_day_previous_week(self, date=None):
+    def last_attendance_day_previous_week(self, date=None, skipdate_dict=None):
         if not self.last_attendance_date:
             return None
 
@@ -852,7 +821,7 @@ class Course(models.Model):
                 pass
 
 
-        previous_week_end = self.previous_week_end(date)
+        previous_week_end = self.previous_week_end(date, skipdate_dict=None)
         
         return min(self.last_attendance_date, previous_week_end)
 
@@ -872,21 +841,17 @@ class Course(models.Model):
 
 
     def content_by_date(
-            self, student, begin_date=None, end_date=None, 
+            self, enrollment, begin_date=None, end_date=None, 
             exclude_completed=True,  assessments_only=False,
             by_assigned=False):
         
-        # create list of course content for student
+        # create list of course content for student of enrollment
         # sorted by adjusted due date or by assigned date
         # if begin_date and/or end_date, then show only those with 
         # date from begin_date until end_date
         # if exclude_completed, then exclude those a student marked complete
         # if assessments_only, then show only those with contenttype=assessment
 
-        try:
-            enrollment = self.courseenrollment_set.get(student=student)
-        except ObjectDoesNotExist:
-            return []
 
         content_list= self.thread_contents.all()
 
@@ -907,21 +872,37 @@ class Course(models.Model):
                      (contentrecord__enrollment=enrollment,
                       contentrecord__complete=True))
 
+        content_list = content_list.select_related('section')
+        content_list = self.thread_content_select_related_content_objects(content_list)
+
+        content_records = {
+            cr.content.id: cr for cr in \
+               enrollment.contentrecord_set.filter(content__deleted=False).select_related('content')
+        }
+
         # for each of content, calculate adjusted due date
         content_with_dates = []
+        skipdate_dict = {sd.date: sd.id for sd in self.courseskipdate_set.all() }
+
         for content in content_list:
-            initial_due = content.get_initial_due(student)
-            adjusted_due = content.get_adjusted_due(student)
+            cr = content_records.get(content.id)
+
+            initial_due = content.get_initial_due(cr)
+            adjusted_due = content.get_adjusted_due(cr, skipdate_dict=skipdate_dict)
             assigned = content.get_assigned()
 
             if exclude_completed:
                 completed=False
             else:
                 try:
-                    completed = content.contentrecord_set\
-                                       .get(enrollment=enrollment).complete
-                except ObjectDoesNotExist:
+                    completed = cr.complete
+                except AttributeError:
                     completed = False
+
+            if cr:
+                score = cr.score
+            else:
+                score = None
 
             content_with_dates.append({
                 'assigned': assigned,
@@ -932,7 +913,7 @@ class Course(models.Model):
                 'content_id': content.id,
                 'section_sort_order': content.section.sort_order,
                 'section_id': content.section.id,
-                'score': content.student_score(student),
+                'score': score,
                 'completed': completed,
             })
 
@@ -1101,6 +1082,42 @@ class CourseEnrollment(models.Model):
             tc.contentrecord_set.get_or_create(enrollment=self)
 
 
+    def percent_attendance(self, date=None):
+
+        if date:
+            tz = pytz.timezone(self.course.attendance_time_zone)
+            try:
+                date= tz.normalize(date.astimezone(tz)).date()
+            except AttributeError:
+                pass
+        else:
+            date = self.course.last_attendance_day_previous_week()
+            if not date:
+                return None
+
+
+        date_enrolled = self.date_enrolled
+        course_days = self.course.to_date_attendance_days(date, 
+                                                     start_date=date_enrolled)
+        
+        attendance_data = self.studentattendance_set\
+            .filter(date__lte = date).filter(date__gte = date_enrolled)
+        
+        n_excused_absenses = attendance_data.filter(present = EXCUSED).count()
+        
+        days_attended = attendance_data.exclude(present = EXCUSED)\
+            .aggregate(Sum('present'))['present__sum']
+
+        if course_days:
+            try:
+                return 100.0*days_attended/float(course_days-n_excused_absenses)
+            except (TypeError, ZeroDivisionError):
+                return 0
+        else:
+            return 0
+    
+
+
 @reversion.register
 class StudentAttendance(models.Model):
     enrollment = models.ForeignKey(CourseEnrollment)
@@ -1170,8 +1187,9 @@ class ThreadSection(models.Model):
         else:
             return self.parent.child_sections.all()
 
-    def find_next_sibling(self):
-        siblings = self.return_siblings()
+    def find_next_sibling(self, siblings=None):
+        if siblings is None:
+            siblings = self.return_siblings()
         for (i,ts) in enumerate(siblings):
             if ts == self:
                 break
@@ -1180,8 +1198,9 @@ class ThreadSection(models.Model):
         else:
             return None
 
-    def find_previous_sibling(self):
-        siblings = self.return_siblings()
+    def find_previous_sibling(self, siblings=None):
+        if siblings is None:
+            siblings = self.return_siblings()
         for (i,ts) in enumerate(siblings):
             if ts == self:
                 break
@@ -1424,8 +1443,10 @@ class ThreadContent(models.Model):
             return self.get_title()
 
 
-    def find_previous(self, in_section=False):
-        if in_section:
+    def find_previous(self, in_section=False, thread_contents=None):
+        if thread_contents is not None:
+            tcs = thread_contents
+        elif in_section:
             tcs = self.section.thread_contents.all()
         else:
             tcs = self.course.thread_contents.all()
@@ -1437,8 +1458,10 @@ class ThreadContent(models.Model):
         else:
             return None
 
-    def find_next(self, in_section=False):
-        if in_section:
+    def find_next(self, in_section=False, thread_contents=None):
+        if thread_contents is not None:
+            tcs = thread_contents
+        elif in_section:
             tcs = self.section.thread_contents.all()
         else:
             tcs = self.course.thread_contents.all()
@@ -1456,7 +1479,7 @@ class ThreadContent(models.Model):
             self.save()
 
 
-    def return_availability(self, student=None):
+    def return_availability(self, content_record=None, skipdate_dict=None):
         """
         Returns availablity of ThreadContent based on
         when assigned and initially due
@@ -1477,20 +1500,13 @@ class ThreadContent(models.Model):
             if not assigned:
                 return NOT_YET_AVAILABLE
 
-            if student:
-                try:
-                    record = self.contentrecord_set.get(
-                        enrollment__student=student)
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                     if record.assigned_adjustment:
-                         assigned = record.assigned_adjustment
+            if content_record and content_record.assigned_adjustment:
+                assigned = content_record.assigned_adjustment
 
             if now < assigned:
                 return NOT_YET_AVAILABLE
 
-        due = self.get_adjusted_due(student)
+        due = self.get_adjusted_due(content_record, skipdate_dict=skipdate_dict)
         if not due or now <= due:
             return AVAILABLE
 
@@ -1540,42 +1556,6 @@ class ThreadContent(models.Model):
         except ObjectDoesNotExist:
             return None
 
-    def get_student_latest_attempt(self, student):
-        try:
-            return self.contentrecord_set.get(enrollment__student=student)\
-                .attempts.latest()
-        except ObjectDoesNotExist:
-            return None
-    
-    def latest_student_attempts(self):
-        latest_attempts=[]
-        for student in self.course.enrolled_students_ordered():
-            content_record=None
-            attempt=None
-            number_attempt=0
-
-            try:
-                content_record =  self.contentrecord_set.get(
-                    enrollment__student=student)
-            except ObjectDoesNotExist:
-                pass
-            else:
-                try:
-                    attempt = content_record.attempts.latest()
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                    number_attempts=content_record.attempts.count()
-
-            latest_attempts.append({
-                    'student': student,
-                    'attempt': attempt,
-                    'current_score': self.student_score(student),
-                    'adjusted_due': self.get_adjusted_due(student),
-                    'number_attempts': number_attempts
-                    })
-        return latest_attempts
-        
 
     def attempt_aggregation_string(self):
         if self.attempt_aggregation=='Avg':
@@ -1605,7 +1585,7 @@ class ThreadContent(models.Model):
 
 
 
-    def get_initial_due(self, student=None, allow_fallback=True):
+    def get_initial_due(self, content_record=None, allow_fallback=True):
         """
         Return initial due date of thread content.
         If initial due is not defined, use final due.
@@ -1613,10 +1593,10 @@ class ThreadContent(models.Model):
 
         If allow_fallback is False, then don't fall back to final or assigned.
 
-        If student is specified, use adjustments to date, if given.
+        If content_record is specified, use adjustments to date, if given.
         """
 
-        if not student:
+        if not content_record:
             if self.initial_due or not allow_fallback:
                 return self.initial_due
             elif self.final_due:
@@ -1624,12 +1604,7 @@ class ThreadContent(models.Model):
             else:
                 return self.assigned
 
-        adjustment = None
-        try:
-            adjustment = self.contentrecord_set.get(
-                enrollment__student=student).initial_due_adjustment
-        except ObjectDoesNotExist:
-            pass
+        adjustment = content_record.initial_due_adjustment
 
         if adjustment:
             initial_due = adjustment
@@ -1639,14 +1614,14 @@ class ThreadContent(models.Model):
         if initial_due or not allow_fallback:
             return initial_due
         else:
-            final_due = self.get_final_due(student, allow_fallback=False)
+            final_due = self.get_final_due(content_record, allow_fallback=False)
             if final_due:
                 return final_due
             else:
                 return self.assigned
 
 
-    def get_final_due(self, student=None, allow_fallback=True):
+    def get_final_due(self, content_record=None, allow_fallback=True):
         """
         Return find due date of thread content.
         If final due is not defined, use initial due.
@@ -1657,7 +1632,7 @@ class ThreadContent(models.Model):
         If student is specified, use adjustments to date, if given.
         """
 
-        if not student:
+        if not content_record:
             if self.final_due or not allow_fallback:
                 return self.final_due
             elif self.initial_due:
@@ -1665,15 +1640,7 @@ class ThreadContent(models.Model):
             else:
                 return self.assigned
 
-        if not student:
-            return self.final_due
-
-        adjustment = None
-        try:
-            adjustment = self.contentrecord_set.get(
-                enrollment__student=student).final_due_adjustment
-        except:
-            pass
+        adjustment = content_record.final_due_adjustment
 
         if adjustment:
             final_due=adjustment
@@ -1683,24 +1650,24 @@ class ThreadContent(models.Model):
         if final_due or not allow_fallback:
             return final_due
         else:
-            initial_due = self.get_initial_due(student, allow_fallback=False)
+            initial_due = self.get_initial_due(content_record, allow_fallback=False)
             if initial_due:
                 return initial_due
             else:
                 return self.assigned
 
 
-    def get_adjusted_due(self, student=None):
+    def get_adjusted_due(self, content_record=None, skipdate_dict=None):
         # adjust when due in increments of weeks
         # based on percent attendance at end of each previous week
 
         # if only one of initial due or final due is specified,
         # use that one
         
-        # if no student specified, use initial due
+        # if no content_record is specified, use initial due
 
-        due = self.get_initial_due(student)
-        final_due = self.get_final_due(student)
+        due = self.get_initial_due(content_record)
+        final_due = self.get_final_due(content_record)
 
         if not due:
             if not final_due:
@@ -1710,7 +1677,7 @@ class ThreadContent(models.Model):
         elif not final_due:
             return due
         
-        if not student:
+        if not content_record:
             return due
             
         now = timezone.now()
@@ -1718,15 +1685,15 @@ class ThreadContent(models.Model):
         course = self.course        
         while due < now + timezone.timedelta(days=7):
             previous_week_end = \
-                course.previous_week_end(due)
+                course.previous_week_end(due, skipdate_dict=skipdate_dict)
 
             # only update if have attendance through previous_week_end
             if not course.last_attendance_date \
                     or course.last_attendance_date < previous_week_end:
                 break
 
-            if student.percent_attendance \
-                    (course=course, date=previous_week_end) \
+            if content_record.enrollment.percent_attendance \
+                    (date=previous_week_end) \
                     < course.attendance_threshold_percent:
                 break
             
@@ -1739,13 +1706,13 @@ class ThreadContent(models.Model):
 
 
 
-    def adjusted_due_calculation(self, student):
+    def adjusted_due_calculation(self, content_record, skipdate_dict=None):
         # return data for calculation of adjust due date
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
 
-        due = self.get_initial_due(student)
-        final_due = self.get_final_due(student)
+        due = self.get_initial_due(content_record)
+        final_due = self.get_final_due(content_record)
         
         if not due or not final_due:
             return []
@@ -1758,7 +1725,7 @@ class ThreadContent(models.Model):
         while due < now + timezone.timedelta(days=7):
 
             previous_week_end = \
-                course.previous_week_end(due)
+                course.previous_week_end(due, skipdate_dict=None)
 
             calculation = {'initial_date': due,
                            'previous_week_end': previous_week_end,
@@ -1777,8 +1744,8 @@ class ThreadContent(models.Model):
 
             calculation['attendance_data']=True
 
-            attendance_percent = student.percent_attendance \
-                    (course=course, date=previous_week_end)
+            attendance_percent = content_record.course_enrollment.percent_attendance \
+                    (date=previous_week_end)
             calculation['attendance_percent'] = round(attendance_percent,1)
 
             if attendance_percent < course.attendance_threshold_percent:

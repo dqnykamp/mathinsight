@@ -15,7 +15,7 @@
   <div id="delete_section_form_{{id}}" style="display: none" class="thread_info_box">
     <h5>Confirm delete section</h5>
     <p>Are you sure you want to delete the section: {{thread_section.name}}?</p>
-    <p>This will delete all subsections and remove the content from the thread.  This command cannot be undone.</p>
+    <p>This will delete all subsections and remove the content from the thread.</p>
 <p><input type="button" value="Delete section and contents" onclick="post_edit_section({{id}}, 'delete')" id="thread_section_delete_submit_{{id}}"><input type="button" value="Cancel" onclick="toggle_delete_section_warning({{id}})" style="margin-left: 3px;"></p>
 </div>
 
@@ -39,7 +39,7 @@
 </div>
 
 <{{ltag}} class="threadsections" id="child_sections_{{id}}">
-{% for section in thread_section.child_sections.all %}
+{% for section in child_sections %}
 <li id="thread_section_{{section.id}}">{% thread_section_edit section %}</li>
 {% endfor %}
 </{{ltag}}>

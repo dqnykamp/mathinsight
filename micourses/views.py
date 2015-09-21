@@ -100,7 +100,7 @@ class CourseBaseMixin(SingleObjectMixin):
         self.request.session['last_course_viewed'] = self.course.id
 
 
-        self.current_role=self.courseuser.get_current_role(self.course)
+        self.current_role=self.enrollment.role
         
         if self.instructor_view and not (self.current_role == INSTRUCTOR_ROLE
                                          or self.current_role == DESIGNER_ROLE):
@@ -206,7 +206,7 @@ class CourseView(CourseBaseView):
 
 
         context["upcoming_content"] = self.course.content_by_date \
-            (self.courseuser, begin_date=begin_date, \
+            (enrollment=self.enrollment, begin_date=begin_date, \
                  end_date=end_date)
 
         date_parameters = "begin_date=%s&end_date=%s" %\
@@ -528,7 +528,7 @@ class ContentRecordView(CourseBaseView):
             new_course_attempt_list=None
 
         return {'adjusted_due': self.thread_content\
-                    .get_adjusted_due(self.student),
+                    .get_adjusted_due(self.content_record),
                 'attempts': attempt_list,
                 'score': score,
                 'score_text': score_text,
@@ -1321,7 +1321,7 @@ class ContentListView(CourseBaseView):
         context['end_date'] = end_date
         context['by_assigned'] = by_assigned
         context['content_list'] = self.course.content_by_date\
-            (self.courseuser, exclude_completed=exclude_completed, 
+            (enrollment=self.enrollment, exclude_completed=exclude_completed, 
              begin_date=begin_date, end_date=end_date,
              by_assigned=by_assigned)
 
@@ -1465,12 +1465,17 @@ class EditCourseContentAttemptScores(CourseBaseView):
 
         enrollment_list = []
 
-        ces =  self.course.courseenrollment_set.filter(role=STUDENT_ROLE)
+        record_dict = {
+            record.enrollment.id: record for \
+            record in self.thread_content.contentrecord_set.filter(enrollment__role=STUDENT_ROLE)\
+            .select_related('enrollment')
+        }
+
+        ces =  self.course.courseenrollment_set.filter(role=STUDENT_ROLE).select_related('student__user')
+
         for (i,ce) in enumerate(ces):
-            try:
-                content_record = self.thread_content.contentrecord_set\
-                                                    .get(enrollment=ce)
-            except ObjectDoesNotExist:
+            content_record = record_dict.get(ce.id)
+            if not content_record:
                 with transaction.atomic(), reversion.create_revision():
                     content_record = self.thread_content.contentrecord_set\
                                                         .create(enrollment=ce)
@@ -1488,17 +1493,29 @@ class EditCourseContentAttemptScores(CourseBaseView):
             })
 
 
+        from micourses.models import ContentAttempt
+
+        skipdate_dict = {sd.date: sd.id for sd in self.course.courseskipdate_set.all() }
+
+
         for cca in ccas:
+            attempts = ContentAttempt.objects.filter(
+                record__content=self.thread_content,
+                record__enrollment__role=STUDENT_ROLE,
+                base_attempt=cca, valid=True).select_related('record')
+
+            attempt_dict = { attempt.record.id: attempt for attempt in attempts}
+
+            
             # for each enrollment, find the associated attempt if exists
             for enrollment_dict in enrollment_list:
                 content_record = enrollment_dict['content_record']
                 try:
-                    attempt = content_record.attempts.get(
-                        base_attempt=cca, valid=True)
+                    attempt = attempt_dict[content_record.id]
                     score = attempt.score
                     if score is None:
                         score=""
-                except ObjectDoesNotExist:
+                except KeyError:
                     attempt = None
                     score = ""
 
@@ -1506,8 +1523,8 @@ class EditCourseContentAttemptScores(CourseBaseView):
                     'base_attempt': cca,
                     'attempt': attempt,
                     'score': floatformat(score,1),
-                    'past_due': self.thread_content.get_adjusted_due(
-                        student=enrollment_dict['enrollment'].student)
+                    'past_due': self.thread_content.get_adjusted_due(content_record,
+                                                                     skipdate_dict=skipdate_dict)
                     < cca.attempt_began,
                 })
                 

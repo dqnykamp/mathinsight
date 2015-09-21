@@ -786,6 +786,7 @@ class SeleniumTests(StaticLiveServerTestCase):
         # first section contains first_content
         content_section = self.selenium.find_element_by_id(
             'thread_content_section_%s' % first_section.id)
+
         content_by_xpath=content_section.find_element_by_xpath('li')
         content_by_id = self.selenium.find_element_by_id(
             'thread_content_%s' % first_content.id)

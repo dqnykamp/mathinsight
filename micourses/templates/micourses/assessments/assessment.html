@@ -68,7 +68,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 {% if question_only %}<p>Question {{question_only}}:</p>{%endif%}
 
 {% block questions %}
-<ol class="assessment_questions"{% if question_only %}start="{{question_only}}"{%endif%}>
+<ol class="assessment_questions"{% if question_only %} start="{{question_only}}"{%endif%}>
 {% for question in rendered_list %}
 <li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
 {% question_body question.question_data %}

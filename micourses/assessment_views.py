@@ -148,9 +148,9 @@ class AssessmentView(DetailView):
                 = context['assessment_short_name']
 
         if self.course_enrollment and self.thread_content:
-            if self.course_enrollment.role == STUDENT_ROLE:
+            if self.course_enrollment.role == STUDENT_ROLE and self.current_attempt:
                 context['due'] = self.thread_content.get_adjusted_due(
-                    student=self.course_enrollment.student)
+                    self.current_attempt.record)
             else:
                 context['due'] = self.thread_content.get_adjusted_due()
 
@@ -565,8 +565,7 @@ class AssessmentView(DetailView):
                 student_record = self.thread_content.contentrecord_set\
                                     .create(enrollment = self.course_enrollment)
 
-        assessment_availability = self.thread_content.return_availability(
-            student=courseuser)
+        assessment_availability = self.thread_content.return_availability(student_record)
 
         # treat assessment not set up for recording as not available
         if not self.thread_content.record_scores:

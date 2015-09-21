@@ -11,7 +11,7 @@
     });
 </script>
 <{{ltag}} class="threadsections" id="child_sections_top">
-{% for section in course.thread_sections.all %}
+{% for section in child_sections %}
 <li id="thread_section_{{section.id}}">{% thread_section_edit section %}</li>
 {% endfor %}
 </{{ltag}}>

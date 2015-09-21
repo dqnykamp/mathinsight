@@ -65,6 +65,10 @@ class ThreadView(DetailView):
         context['student'] = self.courseuser
         context['enrollment'] = self.enrollment
 
+        if self.enrollment:
+            context['content_records'] = \
+            {cr.content.id: cr for cr in self.enrollment.contentrecord_set.filter(content__deleted=False) }
+        
         if self.object.numbered:
             context['ltag'] = "ol"
         else:
@@ -110,6 +114,11 @@ class ThreadEditView(DetailView):
         else:
             context['ltag'] = "ul"
 
+        context['child_sections'] = self.object.thread_sections.all()
+
+        context['all_thread_contents'] = self.object.thread_contents.all()
+
+
         return context
 
 
@@ -152,6 +161,7 @@ class EditSectionView(View):
                 except (KeyError, ObjectDoesNotExist):
                     return JsonResponse({})
                 thread_section=None
+                section_siblings=None
             else:
                 return JsonResponse({})
         else:
@@ -160,6 +170,7 @@ class EditSectionView(View):
             except ObjectDoesNotExist:
                 return JsonResponse({})
             course = thread_section.get_course()
+            section_siblings = thread_section.return_siblings()
 
         
         # must be designer of course
@@ -183,6 +194,8 @@ class EditSectionView(View):
             ltag = "ol"
         else:
             ltag = "ul"
+
+        all_thread_contents = course.thread_contents.all()
 
         # decrement level of section
         if action=='dec_level':
@@ -219,7 +232,8 @@ class EditSectionView(View):
 
         # increment level of section
         elif action=='inc_level':
-            previous_sibling = thread_section.find_previous_sibling()
+            previous_sibling = thread_section.find_previous_sibling(
+                siblings=section_siblings)
             
             if previous_sibling:
                 last_child = previous_sibling.child_sections.last()
@@ -233,7 +247,8 @@ class EditSectionView(View):
         # move section up
         elif action=="move_up":
 
-            previous_sibling = thread_section.find_previous_sibling()
+            previous_sibling = thread_section.find_previous_sibling(
+                siblings=section_siblings)
             if previous_sibling:
                 if previous_sibling.sort_order == thread_section.sort_order:
                     course.reset_thread_section_sort_order()
@@ -262,7 +277,8 @@ class EditSectionView(View):
         # move section down
         elif action=="move_down":
 
-            next_sibling = thread_section.find_next_sibling()
+            next_sibling = thread_section.find_next_sibling(
+                siblings=section_siblings)
             if next_sibling:
                 if next_sibling.sort_order == thread_section.sort_order:
                     course.reset_thread_section_sort_order()
@@ -290,10 +306,10 @@ class EditSectionView(View):
         # delete section
         elif action=="delete":
             # rerender next and prevous siblings as commands may have changed
-            sibling=thread_section.find_next_sibling()
+            sibling=thread_section.find_next_sibling(siblings=section_siblings)
             if sibling:
                 rerender_sections.append(sibling)
-            sibling=thread_section.find_previous_sibling()
+            sibling=thread_section.find_previous_sibling(siblings=section_siblings)
             if sibling:
                 rerender_sections.append(sibling)
 
@@ -343,12 +359,26 @@ class EditSectionView(View):
                 prepend_section = "child_sections_top"
 
             # rerender next siblings as commands may have changed
-            sibling=new_section.find_next_sibling()
+            new_section_siblings = new_section.return_siblings()
+            sibling=new_section.find_next_sibling(siblings=new_section_siblings)
             if sibling:
                 rerender_sections.append(sibling)
             
+                
             template = Template("{% load thread_tags %}<li id='thread_section_{{section.id}}'>{% thread_section_edit section %}</li>")
-            context = Context({'section': new_section, 'ltag': ltag})
+            context = Context({'section': new_section, 'ltag': ltag, 'course': course,
+                           })
+
+            # siblings of section are called child_sections in the context where
+            # get thread_section_edit tag
+            context['child_sections'] = new_section_siblings
+            
+            # sections of grandparent are called sibling_sections in the context
+            if not new_section.course:
+                context['sibling_sections'] = new_section.parent.return_siblings()
+
+            context['all_thread_contents'] = all_thread_contents
+            context['course'] = course
 
             new_section_html[prepend_section] = template.render(context)
 
@@ -360,7 +390,18 @@ class EditSectionView(View):
         for section in rerender_sections:
             template = Template("{% load thread_tags %}{% thread_section_edit section %}")
             context = Context({'section': section, 'ltag': ltag})
+            
+            # siblings of section are called child_sections in the context where
+            # get thread_section_edit tag
+            context['child_sections'] = section.return_siblings()
+            
+            # sections of grandparent are called sibling_sections in the context
+            if not section.course:
+                context['sibling_sections'] = section.parent.return_siblings()
 
+            context['all_thread_contents'] = all_thread_contents
+            context['course'] = course
+            
             replace_section_html[section.id] = template.render(context)
             
             
@@ -376,7 +417,10 @@ class EditSectionView(View):
 
             thread_html = render_to_string(
                 template_name='micourses/threads/thread_edit_sub.html',
-                context = {'course': course, 'ltag': ltag }
+                context = {'course': course, 'ltag': ltag,
+                           'child_sections': course.thread_sections.all(),
+                           'all_thread_contents': all_thread_contents,
+                       }
             )
         else:
             thread_html = None
@@ -589,15 +633,22 @@ class EditContentView(View):
                 form_html = form.as_p()
 
 
+        all_thread_contents = course.thread_contents.all()
 
         section_contents={}
         for section in rerender_sections:
             # generate html for thread_content of section
             from django.template.loader import render_to_string
+            
+            thread_contents = section.thread_contents.all()
+            thread_contents = course.thread_content_select_related_content_objects(
+                thread_contents)
+
 
             content_html = render_to_string(
                 template_name='micourses/threads/thread_content_edit_container.html',
-                context = {'thread_section': section }
+                context = {'thread_contents': thread_contents,
+                           'all_thread_contents': all_thread_contents,},
             )
             
             section_contents[section.id] = content_html

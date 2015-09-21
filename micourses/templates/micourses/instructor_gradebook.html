@@ -27,7 +27,7 @@
 </thead>
 <tbody>
   {% for student_dict in student_scores %}{% with student=student_dict.enrollment.student %}
-  <tr{% if student_dict.enrollment.withdrew %} class="withdrawn"{% endif %}><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}}</td><td>{{student_dict.enrollment.section}}</td><td>{{student_dict.enrollment.group}}</td>{% for ac in student_dict.categories%}{% for score in ac.scores %}<td id="{{student.id}}_{{score.content.id}}"><a href="{% url 'micourses:content_record_instructor' student_id=student.id content_id=score.content.id course_code=course.code %}" title="{{student.get_full_name}}&#10;{{score.assessment}}"{% if student_dict.enrollment.withdrew %} class="withdrawn2"{% endif %}>{{score.score|floatformat_or_dash:"1"}}</a></td>{%endfor%}<td>{{ac.student_score|floatformat:"1"}}</td>{%endfor%}<td>{{student_dict.total_score|floatformat:"1"}}</td></tr>
+  <tr{% if student_dict.enrollment.withdrew %} class="withdrawn"{% endif %}><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}}</td><td>{{student_dict.enrollment.section}}</td><td>{{student_dict.enrollment.group}}</td>{% for ac in student_dict.categories%}{% for score in ac.scores %}<td id="{{student.id}}_{{score.content.id}}"><a href="{% url 'micourses:content_record_instructor' student_id=student.id content_id=score.content.id course_code=course.code %}" title="{{student.get_full_name}}&#10;{{score.title}}"{% if student_dict.enrollment.withdrew %} class="withdrawn2"{% endif %}>{{score.score|floatformat_or_dash:"1"}}</a></td>{%endfor%}<td>{{ac.student_score|floatformat:"1"}}</td>{%endfor%}<td>{{student_dict.total_score|floatformat:"1"}}</td></tr>
   {% endwith %}{% endfor %}
 </tbody>
 </table>

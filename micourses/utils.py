@@ -115,8 +115,7 @@ def create_new_assessment_attempt(assessment, thread_content, courseuser,
                                   student_record):
 
     from micourses.models import AVAILABLE, NOT_YET_AVAILABLE
-    assessment_availability = thread_content.return_availability(
-        student=courseuser)
+    assessment_availability = thread_content.return_availability(student_record)
 
     # treat assessment not set up for recording as not available
     if not thread_content.record_scores:
