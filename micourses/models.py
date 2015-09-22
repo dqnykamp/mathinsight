@@ -887,8 +887,9 @@ class Course(models.Model):
         for content in content_list:
             cr = content_records.get(content.id)
 
-            initial_due = content.get_initial_due(cr)
-            adjusted_due = content.get_adjusted_due(cr, skipdate_dict=skipdate_dict)
+            initial_due = content.get_initial_due(content_record=cr)
+            adjusted_due = content.get_adjusted_due(content_record=cr,
+                                                    skipdate_dict=skipdate_dict)
             assigned = content.get_assigned()
 
             if exclude_completed:
@@ -1506,7 +1507,8 @@ class ThreadContent(models.Model):
             if now < assigned:
                 return NOT_YET_AVAILABLE
 
-        due = self.get_adjusted_due(content_record, skipdate_dict=skipdate_dict)
+        due = self.get_adjusted_due(content_record=content_record,
+                                    skipdate_dict=skipdate_dict)
         if not due or now <= due:
             return AVAILABLE
 
@@ -1614,7 +1616,8 @@ class ThreadContent(models.Model):
         if initial_due or not allow_fallback:
             return initial_due
         else:
-            final_due = self.get_final_due(content_record, allow_fallback=False)
+            final_due = self.get_final_due(content_record=content_record,
+                                           allow_fallback=False)
             if final_due:
                 return final_due
             else:
@@ -1650,7 +1653,8 @@ class ThreadContent(models.Model):
         if final_due or not allow_fallback:
             return final_due
         else:
-            initial_due = self.get_initial_due(content_record, allow_fallback=False)
+            initial_due = self.get_initial_due(content_record=content_record,
+                                               allow_fallback=False)
             if initial_due:
                 return initial_due
             else:
@@ -1666,8 +1670,8 @@ class ThreadContent(models.Model):
         
         # if no content_record is specified, use initial due
 
-        due = self.get_initial_due(content_record)
-        final_due = self.get_final_due(content_record)
+        due = self.get_initial_due(content_record=content_record)
+        final_due = self.get_final_due(content_record=content_record)
 
         if not due:
             if not final_due:
@@ -1706,20 +1710,27 @@ class ThreadContent(models.Model):
 
 
 
-    def adjusted_due_calculation(self, content_record, skipdate_dict=None):
-        # return data for calculation of adjust due date
+    def adjusted_due_calculation(self, content_record=None, skipdate_dict=None,
+                                 enrollment=None):
+        # return data for calculation of adjusted due date
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
 
-        due = self.get_initial_due(content_record)
-        final_due = self.get_final_due(content_record)
+        if not enrollment:
+            if content_record:
+                enrollment = content_record.enrollment
+            else:
+                return []
+
+        due = self.get_initial_due(content_record=content_record)
+        final_due = self.get_final_due(content_record=content_record)
         
         if not due or not final_due:
             return []
 
         now = timezone.now()
 
-        course = self.course        
+        course = self.course
         
         calculation_list = []
         while due < now + timezone.timedelta(days=7):
@@ -1744,7 +1755,7 @@ class ThreadContent(models.Model):
 
             calculation['attendance_data']=True
 
-            attendance_percent = content_record.course_enrollment.percent_attendance \
+            attendance_percent = enrollment.percent_attendance \
                     (date=previous_week_end)
             calculation['attendance_percent'] = round(attendance_percent,1)
 

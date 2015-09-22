@@ -460,11 +460,20 @@ class AdjustedDueCalculation(CourseBaseView):
 
         context['thread_content'] = self.thread_content
         
-        initial_due = self.thread_content.get_initial_due(self.student)
-        final_due = self.thread_content.get_final_due(self.student)
+        try:
+            content_record = self.thread_content.contentrecord_set.get(
+                enrollment=self.student_enrollment)
+        except ObjectDoesNotExist:
+            content_record = None
+
+
+        initial_due = self.thread_content.get_initial_due(
+            content_record=content_record)
+        final_due = self.thread_content.get_final_due(
+            content_record=content_record)
     
         calculation_list = self.thread_content.adjusted_due_calculation(
-            self.student)
+            content_record=content_record, enrollment=self.student_enrollment)
         if calculation_list:
             adjusted_due=calculation_list[-1]['resulting_date']
         else:
