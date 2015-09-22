@@ -1858,11 +1858,11 @@ class AppletNode(template.Node):
             applet_link = top_text + applet_link + bottom_text
 
 
-        prefilled_answers=None
+        prefilled_responses=None
         if answer_data:
-            prefilled_answers = answer_data.get('prefilled_answers')
+            prefilled_responses = answer_data.get('prefilled_responses')
 
-        prefilled_answers_by_object = {}
+        prefilled_responses_by_object = {}
 
         # Check if any applet objects are specified 
         # to be captured with javascript to answer blanks.
@@ -1948,16 +1948,16 @@ class AppletNode(template.Node):
                  'type': answer_type, 'identifier': answer_identifier, \
                  'group': group, 'expression_type': expression_type })
 
-            # check if object is in prefilled_answers
+            # check if object is in prefilled_responses
             # if so, use that value for input box
             value_string = ""
-            if prefilled_answers:
+            if prefilled_responses:
                 try:
-                    the_answer_dict = prefilled_answers[answer_number-1]
+                    the_answer_dict = prefilled_responses[answer_number-1]
                     if the_answer_dict["code"] == answer_code:
-                        value_string = ' value="%s"' % the_answer_dict["answer"]
-                        prefilled_answers_by_object[appletobject.pk] \
-                            = the_answer_dict["answer"]
+                        value_string = ' value="%s"' % the_answer_dict["response"]
+                        prefilled_responses_by_object[appletobject.pk] \
+                            = the_answer_dict["response"]
                 except (KeyError, IndexError, TypeError):
                     pass
 
@@ -2027,17 +2027,17 @@ class AppletNode(template.Node):
             objectvalue = kwargs.get(appletobject.name)
             objectvalue_string = kwargs_string.get(appletobject.name)
             
-            # check if object is in prefilled_answers
+            # check if object is in prefilled_responses
             # if so, overwrite and use that value instead
-            the_prefilled_answer = \
-                prefilled_answers_by_object.get(appletobject.pk) 
-            if the_prefilled_answer is not None:
+            the_prefilled_response = \
+                prefilled_responses_by_object.get(appletobject.pk) 
+            if the_prefilled_response is not None:
                 # check if applet object is set to be captured
                 # or is a state variable
                 the_kw = "answer_%s" % appletobject.name
                 if the_kw in kwargs or appletobject.state_variable:
-                    # target as it would have been in prefilled_answer
-                    objectvalue = the_prefilled_answer
+                    # target as it would have been in prefilled_response
+                    objectvalue = the_prefilled_response
 
             # if objectvalue is none, set to default value, if exists
             if objectvalue is None:
@@ -3002,8 +3002,6 @@ def find_applet_identifier(applet_id_dict, applet, applet_id_user=None):
     raises ObjectDoesNotExist if unable to find.
     
     """
-
-    print(applet_id_dict, applet, applet_id_user)
 
     try:
         # information about instances of applet in page
