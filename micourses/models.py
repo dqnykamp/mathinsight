@@ -1683,7 +1683,9 @@ class ThreadContent(models.Model):
         
         if not content_record:
             return due
-            
+        
+        final_due = max(due, final_due)
+        
         now = timezone.now()
         
         course = self.course        
@@ -1727,6 +1729,8 @@ class ThreadContent(models.Model):
         
         if not due or not final_due:
             return []
+
+        final_due = max(due, final_due)
 
         now = timezone.now()
 
