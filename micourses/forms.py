@@ -89,13 +89,18 @@ def validate_number_list(value):
 
     
 class GenerateCourseAttemptForm(forms.Form):
-    assessment_datetime = forms.SplitDateTimeField(label='Assessment date and time',
-                                                   initial=timezone.now)
-    version_description = forms.CharField(max_length=100, label="Version description (optional)",
-                                          required=False)
-    seed = forms.CharField(max_length=50, label="Starting seed (optional)", required=False)
-    avoid_list = forms.CharField(max_length=200, validators=[validate_number_list],
-                                 label="Question numbers to avoid", required=False)
+    assessment_datetime = forms.SplitDateTimeField(
+        label='Assessment date and time', initial=timezone.now)
+    version_description = forms.CharField(
+        max_length=100, label="Version description (optional)", required=False)
+    seed = forms.CharField(
+        max_length=50, label="Starting seed (optional)", required=False)
+    include_list = forms.CharField(
+        max_length=200, validators=[validate_number_list],
+        label="Question numbers to include", required=False)
+    avoid_list = forms.CharField(
+        max_length=200, validators=[validate_number_list],
+        label="Question numbers to avoid", required=False)
 
 class ScoreForm(forms.Form):
     score = forms.FloatField(widget=forms.TextInput(attrs={'size': 4}))

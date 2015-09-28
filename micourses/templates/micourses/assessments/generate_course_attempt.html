@@ -10,9 +10,11 @@
 
 {% endblock %}
 
+{% block title %}Generate attempt for {{ assessment_name }} - Math Insight{%endblock%}
+
 
 {% block content %}
-<h3>{{ the_assessment_name }}</h3>
+<h3>{{ assessment_name }}</h3>
 
 <p>Generate an assessment</p>
 
@@ -21,14 +23,15 @@
 {{form.as_p}}
 
 {% if course_content_attempts %}
-<p style="margin-top:2em;">Select previous attempt to avoid their questions (<a href="{% url 'micourses:course_content_record' course_code=threadcontent.course.code content_id=threadcontent.id %}">edit attempts</a>).</p>
-<ul style="margin-top:0em; list-style: none; text-indent: -1.2em;">
+<p style="margin-top:2em;">Select previous attempt to include or avoid their questions (<a href="{% url 'micourses:course_content_record' course_code=threadcontent.course.code content_id=threadcontent.id %}">edit attempts</a>).</p>
+<table style="margin-top:0em;">
+<tr><th style="padding: 0 5px;">include</th><th style="padding: 0 5px;">avoid</th></tr>
 {% for cca_dict in course_content_attempts %}
-<li><input type="checkbox" name="cca_ids" value="{{cca_dict.cca.id}}" {% if cca_dict.selected %}checked {%endif%}> <a href="{% url 'miassess:assessment' course_code=threadcontent.course.code assessment_code=assessment.code%}?content_attempt={{cca_dict.cca.id}}">{{threadcontent.get_title}}, version {{cca_dict.cca.version}}, seed: {{cca_dict.cca.seed}}, date: {{cca_dict.cca.attempt_began}}</a><br/>
+<tr><td style="text-align: center;"><input type="checkbox" name="include_cca_ids" value="{{cca_dict.cca.id}}" {% if cca_dict.include_selected %}checked {%endif%}></td><td style="text-align: center;"><input type="checkbox" name="avoid_cca_ids" value="{{cca_dict.cca.id}}" {% if cca_dict.avoid_selected %}checked {%endif%}></td><td><a href="{% url 'miassess:assessment' course_code=threadcontent.course.code assessment_code=assessment.code%}?content_attempt={{cca_dict.cca.id}}">{{threadcontent.get_title}}, version {{cca_dict.cca.version}}, seed: {{cca_dict.cca.seed}}, date: {{cca_dict.cca.attempt_began}}</a><br/>
 Question numbers: {{cca_dict.question_numbers}}
-</li> 
+</td></tr>
 {% endfor %}
-</ul>
+</table>
 {% endif %}
 <p style="margin-top: 1em;"><input type="submit" value="Generate" /></p>
 </form>

@@ -2748,13 +2748,19 @@ class Assessment(models.Model):
         return question_sets
 
 
-    def avoid_question_seed(self, avoid_dict, start_seed=None):
+    def include_avoid_question_seed(self, include_dict, avoid_dict, 
+                                    start_seed=None):
 
         import random
         rng=random.Random()
         rng.seed(start_seed)
 
         question_sets = self.question_sets()
+
+        try:
+            n_include = len(include_dict)
+        except TypeError:
+            n_include = 0
 
         min_penalty=1000000
         best_seed=None
@@ -2769,13 +2775,13 @@ class Assessment(models.Model):
 
             seed = get_new_seed(rng)
 
-            # force fixed order for speed
             question_list=get_question_list(self, seed=seed, rng=rng, 
                                             questions_only=True)
 
-            penalty = 0 
+            penalty = n_include
 
             for q_dict in question_list:
+                penalty -= include_dict.get(q_dict['question'].id,0)
                 penalty += avoid_dict.get(q_dict['question'].id,0)
 
             if penalty==0:
@@ -2786,8 +2792,6 @@ class Assessment(models.Model):
                 best_seed = seed
 
                 
-        print(time.process_time()-t0)
-            
         return best_seed
                     
 

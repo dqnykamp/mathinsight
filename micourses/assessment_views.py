@@ -802,8 +802,6 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         self.course=self.thread_content.course
 
 
-
-
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
 
@@ -817,7 +815,8 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         if not user_can_administer_assessment(request.user, course=self.course):
             return redirect("mi-forbidden")
 
-        self.coursewide_attempts_selected = []
+        self.coursewide_attempts_include = []
+        self.coursewide_attempts_avoid = []
 
         form = self.get_form()
 
@@ -839,7 +838,9 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
 
         form = self.get_form()
 
-        self.coursewide_attempts_selected = request.POST.getlist("cca_ids")
+        self.coursewide_attempts_include = request.POST.getlist(
+            "include_cca_ids")
+        self.coursewide_attempts_avoid = request.POST.getlist("avoid_cca_ids")
 
         if form.is_valid():
             return self.form_valid(form)
@@ -848,6 +849,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
 
     def form_valid(self, form):
 
+        include_list= form.cleaned_data['include_list']
         avoid_list= form.cleaned_data['avoid_list']
         seed = form.cleaned_data['seed']
         version = form.cleaned_data['version_description']
@@ -863,6 +865,12 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         assessment_date = assessment_datetime.date()
 
         
+        include_dict={}
+        if include_list:
+            for item in include_list.split(","):
+                ind = int(item)
+                include_dict[ind] = include_dict.get(ind,0)+1
+
         avoid_dict={}
         if avoid_list:
             for item in avoid_list.split(","):
@@ -871,7 +879,24 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
 
         from micourses.models import ContentAttempt
                 
-        for cca_id in self.coursewide_attempts_selected:
+        for cca_id in self.coursewide_attempts_include:
+            try:
+                cca = ContentAttempt.objects.get(id=cca_id)
+            except ContentAttempt.DoesNotExist:
+                continue
+
+            if cca.record.content != self.thread_content:
+                continue
+
+            for qs in cca.question_sets.all():
+                try:
+                    qa = qs.question_attempts.latest()
+                except ObjectDoesNotExist:
+                    continue
+                ind = qa.question.id
+                include_dict[ind] = include_dict.get(ind,0)+1
+
+        for cca_id in self.coursewide_attempts_avoid:
             try:
                 cca = ContentAttempt.objects.get(id=cca_id)
             except ContentAttempt.DoesNotExist:
@@ -889,8 +914,10 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
                 avoid_dict[ind] = avoid_dict.get(ind,0)+1
 
 
-        if avoid_dict:
-            new_seed = self.assessment.avoid_question_seed(avoid_dict, start_seed=seed)
+        if include_dict or avoid_dict:
+            new_seed = self.assessment.include_avoid_question_seed(
+                include_dict=include_dict, avoid_dict=avoid_dict, 
+                start_seed=seed)
         else:
             from mitesting.utils import get_new_seed
             new_seed=get_new_seed(seed=seed)
@@ -943,7 +970,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super(GenerateCourseAttempt, self).get_context_data(**kwargs)
 
-        context['the_assessment_name'] = self.thread_content.get_title()
+        context['assessment_name'] = self.thread_content.get_title()
         
         context['assessment'] = self.thread_content.content_object
 
@@ -956,7 +983,9 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         cca_dicts = []
         if coursewide_record:
             for cca in coursewide_record.attempts.filter(valid=True):
-                selected = str(cca.id) in self.coursewide_attempts_selected
+                include_selected = str(cca.id) in \
+                                   self.coursewide_attempts_include
+                avoid_selected = str(cca.id) in self.coursewide_attempts_avoid
                 question_numbers=[]
                 for qs in cca.question_sets.all():
                     try:
@@ -965,8 +994,10 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
                         continue
                     question_numbers.append(str(qa.question.id))
                 question_numbers = ", ".join(question_numbers)
-                cca_dicts.append({'cca': cca, 'selected': selected,
-                                  'question_numbers': question_numbers})
+                cca_dicts.append({
+                    'cca': cca, 'include_selected': include_selected,
+                    'avoid_selected': avoid_selected,
+                    'question_numbers': question_numbers})
         context['course_content_attempts'] = cca_dicts
 
 
