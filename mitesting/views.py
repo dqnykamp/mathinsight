@@ -474,7 +474,8 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         # or if user cannot view assessment solution (in case question is
         # part of an assessment)
         # then return empty json object
-        if not question.user_can_view(request.user, solution=True, course=course):
+        if not question.user_can_view(request.user, solution=True, 
+                                      course=course):
             return JsonResponse({})
         if assessment:
             if not assessment.user_can_view(request.user, solution=True,
@@ -538,17 +539,26 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         if not question_attempt:
             return JsonResponse(results)
 
-        # if question attempt but user is not student from attempt,
-        # then don't return anything
-        if request.user.courseuser != question_attempt\
-                       .content_attempt_question_set\
-                         .content_attempt.record.enrollment.student:
-            return JsonResponse({})
+        
+        ce = course.courseenrollment_set.get(student=request.user.courseuser)
 
-        # record fact that viewed solution for this question_attempt
-        question_attempt.solution_viewed = timezone.now()
-        with transaction.atomic(), reversion.create_revision():
-            question_attempt.save()
+        own_attempt = True
+        if ce != question_attempt.content_attempt_question_set\
+                                 .content_attempt.record.enrollment:
+            own_attempt = False
+        
+        # if not an instructor, then show solutiono only if question attempt
+        # is own attempt
+        from micourses.models import INSTRUCTOR_ROLE, DESIGNER_ROLE
+        if not (ce.role == INSTRUCTOR_ROLE or ce.role == DESIGNER_ROLE):
+            if not own_attempt:
+                return JsonResponse({})
+
+        if own_attempt:
+            # record fact that viewed solution for this question_attempt
+            question_attempt.solution_viewed = timezone.now()
+            with transaction.atomic(), reversion.create_revision():
+                question_attempt.save()
 
         # return solution
         return JsonResponse(results)
