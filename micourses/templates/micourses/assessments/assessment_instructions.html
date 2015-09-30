@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load mi_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Instructions of: {{assessment.name}} - Math Insight{%endblock%}
+
+{% block coursebreadcrumb %}{% if thread_content %} ► <a href="{% url 'micourses:content_record' course_code=thread_content.course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a> ► instructions{% endif %}{% endblock %}
+
+{% block content %}
+
+<h3>Instructions: {{assessment_name}}</h3>
+
+<div>
+{{ assessment.render_instructions }}
+</div>
+
+<div>
+{{ assessment.render_instructions2 }}
+</div>
+
+{% if assessment_link %}
+<p>Go to: {{assessment_link}}</p>
+{% endif %}
+
+{% endblock %}
+ 
+{% block rightcolumn %}
+{% if thread_content %}
+<a id="threads" class="anchor"></a>
+<section class="box threadbox">
+<h4><a href="{% url 'mithreads:list' %}" class="normaltext">Thread navigation</a></h4>
+<a id="thread_{{ thread_content.course.code }}" class="anchor"></a>
+<h5 class="pre_list"><a href="{% url 'mithreads:thread' thread_content.course.code %}#s{{ thread_content.section.id }}" class="normaltext">{{  thread_content.course }}</a></h5>
+<ul class="linklist">
+  {% with thread_content.find_previous as previous_in_thread %}
+  {% if previous_in_thread %}
+  <li> Previous: {{ previous_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+  {% with thread_content.find_next as next_in_thread %}
+  {% if next_in_thread %}
+  <li> Next: {{ next_in_thread.return_link }}</li>
+  {% endif %}
+  {% endwith %}
+</ul>
+</section>
+{% endif %}
+
+{% if generate_course_attempt_link %}<p><a href="{% url 'miassess:generate_course_attempt' content_id=thread_content.id %}">Generate course-wide attempt</a></p>
+{%endif%}
+
+
+{%endblock%}

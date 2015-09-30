@@ -2513,8 +2513,7 @@ class Assessment(models.Model):
         link_class=kwargs.get("link_class", "assessment")
         get_string=kwargs.get("get_string", "")
 
-        direct = kwargs.get("direct")
-        if direct:
+        if kwargs.get("direct"):
             link_url = self.get_absolute_url()
         
             seed = kwargs.get("seed")
@@ -2523,6 +2522,10 @@ class Assessment(models.Model):
                 if get_string:
                     link_url += "&" + get_string
             elif get_string:
+                link_url += "?" + get_string
+        elif kwargs.get("instructions"):
+            link_url = self.get_instructions_url()
+            if get_string:
                 link_url += "?" + get_string
         else:
             link_url = self.get_overview_url()
@@ -2552,6 +2555,10 @@ class Assessment(models.Model):
     @models.permalink
     def get_overview_url(self):
         return('miassess:assessment_overview', (), {'course_code': self.course.code,
+                                                    'assessment_code': self.code})
+    @models.permalink
+    def get_instructions_url(self):
+        return('miassess:assessment_instructions', (), {'course_code': self.course.code,
                                                     'assessment_code': self.code})
 
     @models.permalink

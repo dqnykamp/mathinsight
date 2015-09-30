@@ -708,6 +708,8 @@ class AssessmentOverview(DetailView):
             
         return context
     
+class AssessmentInstructions(AssessmentOverview):
+    template_name='micourses/assessments/assessment_instructions.html'
 
 
 class GenerateNewAttempt(SingleObjectMixin, View):
