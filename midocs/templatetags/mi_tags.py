@@ -3448,8 +3448,9 @@ class AccumulatedJavascriptNode(template.Node):
                                  (applet_identifier, on_init_commands)
                 
 
-        if all_init_commands:
-            script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\nif(inIframe()) { parent.ggbOnInit(arg);} \n}\n</script></div>' % all_init_commands
+        # always add geogebra on init commands
+        # so will call parent OnInit if in iframe
+        script_string += '<div id="geogebra_onit"><script type="text/javascript">\nfunction ggbOnInit(arg) {\nconsole.log(arg);\n%s\nif(inIframe()) { parent.ggbOnInit(arg);} \n}\n</script></div>' % all_init_commands
 
         three_javascript = context.get('three_javascript', '')
         run_three_javascript = context.get('run_three_javascript', '')
