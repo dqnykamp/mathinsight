@@ -554,7 +554,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
             if not own_attempt:
                 return JsonResponse({})
 
-        if own_attempt:
+        if own_attempt and not question_attempt.solution_viewed:
             # record fact that viewed solution for this question_attempt
             question_attempt.solution_viewed = timezone.now()
             with transaction.atomic(), reversion.create_revision():
