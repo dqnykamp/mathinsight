@@ -865,8 +865,12 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(expr2), "x_{n + 1}")
 
         expr=parse_expr("xx_nn", parse_subscripts=True, 
-                        local_dict={'xx': y, 'nn': m})
+                        local_dict={'xx': y, 'nn': m })
         self.assertEqual(expr, Symbol('y_m'))
+
+        expr=parse_expr("xx_nn", parse_subscripts=True,
+                        local_dict={'xx': y, 'nn': m, 'xx_nn': Symbol('a')})
+        self.assertEqual(expr, Symbol('a'))
 
         expr=parse_expr("y+xx_nn/2", parse_subscripts=True)
         self.assertEqual(expr, y+Symbol('xx_nn')/2)
@@ -908,3 +912,8 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, y+Symbol('xx_28 n')/2)
 
 
+        expr=parse_expr("a1_b", parse_subscripts=True, split_symbols=True)
+        self.assertEqual(expr,  Symbol('a1_b'))
+
+        expr=parse_expr("1a_b", parse_subscripts=True, split_symbols=True)
+        self.assertEqual(expr,  Symbol('a_b'))

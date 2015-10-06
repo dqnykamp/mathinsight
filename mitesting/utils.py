@@ -1464,7 +1464,7 @@ def replace_unevaluated_commands(expr, replace_dict={}):
 def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
                        local_dict=None):
     """
-    Replace any instances of x_y with __subscript_symbol__(x,y) in string s.
+    Replace any instances of x_y with __subscriptsymbol__(x,y) in string s.
 
     If split symbols, x can be only one letter, or a combination of numbers or
     letters, beginning with a letter, that is a key in local_dict.
@@ -1479,6 +1479,8 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
     For split_symbols, exclude keys in local_dict that include a _
 
     If assume_real_variables, add third argument of True to command
+
+    If x_y is in local_dict, then don't replace with subscript_command
 
     """
 
@@ -1506,6 +1508,8 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
                 base=s[base_begin:base_end-1]
                 # if last character isn't letter, skip
                 if not base.isalpha():
+                    s = s[:base_end-1] + '__notasubscriptsymbol__' + s[base_end:]
+
                     continue
 
 
@@ -1551,14 +1555,19 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
                 subscript = s[sub_begin:sub_end]
             
         
-        if assume_real_variables:
-            subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
-                                       (base,subscript)
+        if s[base_begin:sub_end+sub_skipafter] in local_dict:
+            s = s[:base_end-1] + '__notasubscriptsymbol__' + s[base_end:]
         else:
-            subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
-                                       (base,subscript)
-        s = s[:base_begin] + subscript_command_string \
-            + s[sub_end+sub_skipafter:]
+            if assume_real_variables:
+                subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
+                                           (base,subscript)
+            else:
+                subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
+                                           (base,subscript)
+            s = s[:base_begin] + subscript_command_string \
+                + s[sub_end+sub_skipafter:]
+
+    s=re.sub('__notasubscriptsymbol__', '_', s)
 
     return s
 
