@@ -15,6 +15,7 @@ def return_localized_commands():
     localized_commands = \
         {'roots_tuple': roots_tuple, 
          'real_roots_tuple': real_roots_tuple, 
+         'eigenvals_tuple': eigenvals_tuple,
          'round': round_expression,
          'smallest_factor': smallest_factor,
          'e': E,
@@ -77,6 +78,21 @@ class real_roots_tuple(Function):
         rootslist = list(roots(f, *gens, filter='R').keys())
         rootslist.sort(key=customized_sort_key)
         return TupleNoParen(*rootslist)
+
+class eigenvals_tuple(Function):
+    """
+    Finds eigenvalues of a matrix
+    Returns a TupleNoParen of the sorted eigenvalues (using customized_sort_key)
+    ignoring multiplicity
+    
+    """
+
+    @classmethod
+    def eval(cls, A):
+        eiglist=list(A.eigenvals())
+        eiglist.sort(key=customized_sort_key)
+
+        return TupleNoParen(*eiglist)
 
 
 class index(Function):
