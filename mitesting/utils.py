@@ -892,11 +892,40 @@ def replace_simplified_derivatives(s, local_dict, global_dict,
         DerivativeSimplifiedNotation
 
     # replace f'(x) with DerivativePrimeNotation(f(x),x)
-    if split_symbols:
-        pattern=r"([a-zA-Z])'\ *\("
-    else:
-        pattern=r"([a-zA-Z_][a-zA-Z0-9_]*)'\ *\("
-    s = re.sub(pattern, r' __DerivativePrimeNotation__(\1,', s)
+
+    unsplit_symbols = []
+    if split_symbols and local_dict:
+        unsplit_symbols = list(local_dict.keys())
+
+    pattern=re.compile(r"([a-zA-Z_][a-zA-Z0-9_]*)'\ *\(")
+
+    while True:
+        mo= pattern.search(s)
+        if not mo:
+            break
+        funname_begin = mo.start(1)
+        funname_end = mo.end(1)
+
+        funname = s[funname_begin:funname_end]
+
+        # if split symbols, narrow to just last letter, unless in local_dict
+        if split_symbols:
+            if not funname in unsplit_symbols:
+                funname_begin=funname_end-1
+                funname=s[funname_begin:funname_end]
+                # if last character isn't letter, skip
+                if not funname.isalpha():
+                    s = s[:funname_end] + '__tempprimesymbol__' + \
+                        s[funname_end+1:]
+                    continue
+
+        match_end = mo.end(0)
+        s = s[:funname_begin] + ' __DerivativePrimeNotation__(' + funname + \
+            "," + s[match_end:]
+
+
+    s=re.sub("__tempprimesymbol__", "'", s)
+
 
     global_dict['__DerivativePrimeNotation__'] = DerivativePrimeNotation
  
@@ -969,7 +998,7 @@ def replace_simplified_derivatives(s, local_dict, global_dict,
 
         if new_symbol is None:
             if not callable(fun_mapped):
-                # if not differentiating with response to callable
+                # if not differentiating with respect to callable
                 # convert to regular derivative and don't attempt
                 # to evaluate at the variable of differentiation
                 for dvar in functions_differentiated_dvar[fun]:

@@ -663,11 +663,23 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("yf'(x)", local_dict=local_dict, split_symbols=True)
         self.assertEqual(expr, y*DerivativePrimeSimple(f(x),x))
 
+        expr=parse_expr("yf'(x)", local_dict=local_dict)
+        self.assertEqual(expr, DerivativePrimeSimple(Function('yf')(x),x))
+
         expr=parse_expr("2f'(x)", local_dict=local_dict)
         self.assertEqual(expr, 2*DerivativePrimeSimple(f(x),x))
 
         expr=parse_expr("fn'(x)", local_dict=local_dict)
         self.assertEqual(expr, DerivativePrimeSimple(fn(x),x))
+
+        expr=parse_expr("fn'(x)", local_dict=local_dict, split_symbols=True)
+        self.assertEqual(expr, DerivativePrimeSimple(fn(x),x))
+
+        expr=parse_expr("f0'(x)", local_dict=local_dict)
+        self.assertEqual(expr, DerivativePrimeSimple(Function('f0')(x),x))
+
+        self.assertRaises(SyntaxError, parse_expr,"f0'(x)", 
+                          local_dict=local_dict, split_symbols=True)
 
         expr=parse_expr("2f'(x*y)", local_dict=local_dict)
         self.assertEqual(expr, 2*DerivativePrimeNotation(f,x*y))
