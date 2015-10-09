@@ -1167,8 +1167,11 @@ def Geogebra_change_object_javascript(context, appletobject,applet_variable,
                 value_y = value.y
             except AttributeError:
                 # else try as a Tuple
-                value_x = value[0]
-                value_y = value[1]
+                try:
+                    value_x = value[0]
+                    value_y = value[1]
+                except TypeError:
+                    return ""
             try:
                 javascript = '%s.setCoords("%s", %E, %E);\n' % \
                     (applet_variable, object_name,
