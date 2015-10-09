@@ -880,7 +880,15 @@ class ParseExprTests(SimpleTestCase):
                         local_dict={'xx': y, 'nn': m })
         self.assertEqual(expr, Symbol('y_m'))
 
+        expr=parse_expr("xx_nn", parse_subscripts=True, split_symbols=True,
+                        local_dict={'xx': y, 'nn': m })
+        self.assertEqual(expr, Symbol('y_m'))
+
         expr=parse_expr("xx_nn", parse_subscripts=True,
+                        local_dict={'xx': y, 'nn': m, 'xx_nn': Symbol('a')})
+        self.assertEqual(expr, Symbol('a'))
+
+        expr=parse_expr("xx_nn", parse_subscripts=True, split_symbols=True,
                         local_dict={'xx': y, 'nn': m, 'xx_nn': Symbol('a')})
         self.assertEqual(expr, Symbol('a'))
 

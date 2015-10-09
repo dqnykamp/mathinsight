@@ -1530,24 +1530,16 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
 
         base = s[base_begin:base_end-1]
 
-        # if split symbols, narrow to just last letter, unless in local_dict
-        if split_symbols:
-            if not base in unsplit_symbols:
-                base_begin=base_end-2
-                base=s[base_begin:base_end-1]
-                # if last character isn't letter, skip
-                if not base.isalpha():
-                    s = s[:base_end-1] + '__notasubscriptsymbol__' + s[base_end:]
-
-                    continue
 
 
         sub_begin=base_end
         sub_end=len(s)
         sub_skipafter=0
+        used_parens=False
 
         # if next character after "_" is "(", then find matching )
         if s[base_end]=="(":
+            used_parens=True
             sub_begin+=1
             n_openpar=0
             for (j,c) in enumerate(s[base_end:]):
@@ -1569,24 +1561,48 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
 
             subscript = s[sub_begin:sub_end]
 
-            # if split_symbols, if exp is not in unsplit symbols,
-            # then change to be number or the first letter
 
-            if split_symbols and subscript not in unsplit_symbols:
-                if s[base_end].isdigit():
-                    for (j,c) in enumerate(s[base_end:]):
-                        if not c.isdigit():
-                            sub_end=base_end+j
-                            break
-                else:
-                    sub_end=base_end+1
+        # if captured pattern is in local_dict,
+        # will leave subscripts unmodified
+        if s[base_begin:sub_end+sub_skipafter] in local_dict:
+            s = s[:base_begin] + \
+                re.sub('_','__notasubscriptsymbol__',
+                        s[base_begin:sub_end+sub_skipafter]) \
+                + s[sub_end+sub_skipafter:]
+        else:
+            # If split symbols then
+            # (a) shorten base to last letter unless in unsplit_symbols, and
+            # (b) shorten subscript to number or first less
+            #     unless used parenthesis or is in unsplit_symbols
 
-                subscript = s[sub_begin:sub_end]
+            if split_symbols:
+                # narrow base to last letter unless in unsplit_symbols
+                if not base in unsplit_symbols:
+                    base_begin=base_end-2
+                    base=s[base_begin:base_end-1]
+                    # if last character isn't letter, skip
+                    if not base.isalpha():
+                        s = s[:base_end-1] + '__notasubscriptsymbol__' + \
+                            s[base_end:]
+                        continue
+
+
+                # if subscript is not in unsplit symbols and didn't user parens
+                # then change to be number or the first letter
+                if split_symbols and not used_parens and \
+                   subscript not in unsplit_symbols:
+                    if s[base_end].isdigit():
+                        for (j,c) in enumerate(s[base_end:]):
+                            if not c.isdigit():
+                                sub_end=base_end+j
+                                break
+                    else:
+                        sub_end=base_end+1
+
+                    subscript = s[sub_begin:sub_end]
             
         
-        if s[base_begin:sub_end+sub_skipafter] in local_dict:
-            s = s[:base_end-1] + '__notasubscriptsymbol__' + s[base_end:]
-        else:
+
             if assume_real_variables:
                 subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
                                            (base,subscript)
