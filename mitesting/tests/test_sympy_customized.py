@@ -88,6 +88,9 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("5xy", split_symbols=False), 5*xy)
         self.assertEqual(parse_expr("5xy", split_symbols=True), 5*x*y)
 
+        expr=parse_expr("x61y", split_symbols=True)
+        self.assertEqual(expr, 61*x*y)
+
         x = Symbol('x', real=True)
         y = Symbol('y', real=True)
         xy = Symbol('xy', real=True)

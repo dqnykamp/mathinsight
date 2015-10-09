@@ -1,5 +1,5 @@
 from sympy import sympify, default_sort_key
-from sympy.parsing.sympy_tokenize import NAME, OP
+from sympy.parsing.sympy_tokenize import NAME, OP, NUMBER
 from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
@@ -678,27 +678,58 @@ def split_symbols_custom(predicate):
             elif split and tok[0] == NAME:
                 symbol = tok[1][1:-1]
                 if predicate(symbol):
+                    integer_chars=''
                     for char in symbol:
                         if char in local_dict or char in global_dict:
                             # Get rid of the call to Symbol
                             del result[-2:]
                             result.extend([(NAME, "%s" % char),
                                            (NAME, 'Symbol'), (OP, '(')])
+                            continue
+
+                        if char.isnumeric():
+                            integer_chars += char
+                            continue
+
+                        if integer_chars:
+                            # We have been accumulating integer characters
+                            # but now have encountered a different character.
+
+                            # Get rid of the call to Symbol
+                            del result[-2:]
+                            # add the integer
+                            result.extend([(NAME, 'Integer'), (OP, '('),
+                                           (NUMBER, "'%s'" % integer_chars),
+                                           (OP, ')')])
+                            # add back the call to Symbol
+                            result.extend([(NAME, 'Symbol'), (OP, '(')])
+
+                            # reset to mark not accumulating integer characters
+                            integer_chars=''
+                                
+                        if splitting_real:
+                            result.extend([(NAME, "'%s'" % char), (OP, ','),
+                                           (NAME, 'real'), (OP, '='),
+                                           (NAME, 'True'), (OP, ')'),
+                                           (NAME, 'Symbol'), (OP, '(')])
                         else:
-                            if splitting_real:
-                                result.extend([(NAME, "'%s'" % char), (OP, ','),
-                                               (NAME, 'real'), (OP, '='),
-                                               (NAME, 'True'), (OP, ')'),
-                                               (NAME, 'Symbol'), (OP, '(')])
-                            else:
-                                result.extend([(NAME, "'%s'" % char), (OP, ')'),
-                                               (NAME, 'Symbol'), (OP, '(')])
+                            result.extend([(NAME, "'%s'" % char), (OP, ')'),
+                                           (NAME, 'Symbol'), (OP, '(')])
+
                     # Delete the last two tokens: get rid of the extraneous
                     # Symbol( we just added
-                    # Also, set split_previous so will skip
+                    del result[-2:]
+
+                    # if ended with an integer, add that integer
+                    if integer_chars:
+                        # add the integer
+                        result.extend([(NAME, 'Integer'), (OP, '('),
+                                       (NUMBER, "'%s'" % integer_chars),
+                                       (OP, ')')])
+                    
+                    # Set split_previous so will skip
                     # the closing parenthesis (and possibly, real=True)
                     # of the original Symbol
-                    del result[-2:]
                     split = False
                     if splitting_real:
                         split_previous=5
