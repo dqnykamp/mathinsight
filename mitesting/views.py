@@ -547,7 +547,7 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
                                  .content_attempt.record.enrollment:
             own_attempt = False
         
-        # if not an instructor, then show solutiono only if question attempt
+        # if not an instructor, then show solution only if question attempt
         # is own attempt
         from micourses.models import INSTRUCTOR_ROLE, DESIGNER_ROLE
         if not (ce.role == INSTRUCTOR_ROLE or ce.role == DESIGNER_ROLE):

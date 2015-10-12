@@ -419,7 +419,6 @@ class Course(models.Model):
             return queryset
 
 
-
     def all_assessments_by_category(self):
         grade_categories=[]
         for cgc in self.coursegradecategory_set.all():
@@ -873,11 +872,13 @@ class Course(models.Model):
                       contentrecord__complete=True))
 
         content_list = content_list.select_related('section')
-        content_list = self.thread_content_select_related_content_objects(content_list)
+        content_list = self.thread_content_select_related_content_objects(
+            content_list)
 
         content_records = {
             cr.content.id: cr for cr in \
-               enrollment.contentrecord_set.filter(content__deleted=False).select_related('content')
+               enrollment.contentrecord_set.filter(content__deleted=False)\
+            .select_related('content')
         }
 
         # for each of content, calculate adjusted due date

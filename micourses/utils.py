@@ -197,3 +197,44 @@ def return_allowed_content_types():
     return ContentType.objects.filter(
         Q(app_label="midocs", model='applet') | Q(app_label="midocs", model='page') |
         Q(app_label="micourses", model='assessment') | Q(app_label="midocs", model='video'))
+
+
+def create_content_records(course):
+    from micourses.models import ContentRecord, STUDENT_ROLE
+
+    content_with_points = course.thread_contents.exclude(points=0)\
+                                                .exclude(points=None)
+    
+    enrollments = course.courseenrollment_set.filter(role=STUDENT_ROLE)
+        
+    new_crs=[]
+    
+
+    content_records_missing={}
+    for tc in content_with_points:
+        d = {}
+        for ce in enrollments:
+            d[ce.id]=True
+        content_records_missing[tc.id] = d
+
+    records = ContentRecord.objects.filter(content__course=course) \
+        .exclude(content__points=None).exclude(content__points=0)
+
+    # since starting with ContentRecord, could have records
+    # associated with content that was deleted
+    records = records.filter(content__deleted=False)
+    records = records.filter(enrollment__role=STUDENT_ROLE)
+
+    for cr in records.select_related('enrollment', 'content'):
+        del content_records_missing[cr.content.id][cr.enrollment.id]
+    
+    # create any records left in content_records_missing
+    now = timezone.now()
+    cr_list = []
+    for k1 in content_records_missing:
+        for k2 in content_records_missing[k1]:
+            cr_list.append(ContentRecord(content_id=k1, enrollment_id=k2,
+                                         last_modified=now))
+    
+    ContentRecord.objects.bulk_create(cr_list)
+
