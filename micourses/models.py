@@ -437,32 +437,34 @@ class Course(models.Model):
                      }
                     cgc_assessments.append(assessment_results)
 
-            category_points = self.points_for_grade_category(cgc)
+            if cgc_assessments:
 
-            score_comment = ""
-            if cgc.number_count_for_grade and \
-                    cgc.number_count_for_grade < number_assessments:
-                score_comment = "top %s of %s" % \
-                    (cgc.number_count_for_grade, number_assessments)
-            if cgc.rescale_factor != 1.0:
+                category_points = self.points_for_grade_category(cgc)
+
+                score_comment = ""
+                if cgc.number_count_for_grade and \
+                        cgc.number_count_for_grade < number_assessments:
+                    score_comment = "top %s of %s" % \
+                        (cgc.number_count_for_grade, number_assessments)
+                if cgc.rescale_factor != 1.0:
+                    if score_comment:
+                        score_comment += ", "
+                    score_comment += "rescale %s%%" % \
+                        (round(cgc.rescale_factor*1000)/10)
                 if score_comment:
-                    score_comment += ", "
-                score_comment += "rescale %s%%" % \
-                    (round(cgc.rescale_factor*1000)/10)
-            if score_comment:
-                score_comment = mark_safe("<br/><small style='font-weight:normal'>(%s)</small>"\
-                                              % score_comment)
+                    score_comment = mark_safe("<br/><small style='font-weight:normal'>(%s)</small>"\
+                                                  % score_comment)
 
-            cgc_results = {'category': cgc.grade_category,
-                           'points': category_points,
-                           'number_count': cgc.number_count_for_grade,
-                           'rescale_factor': cgc.rescale_factor,
-                           'score_comment': score_comment,
-                           'number_assessments': number_assessments,
-                           'assessments': cgc_assessments,
-                           'number_assessments_plus_one': len(cgc_assessments)+1,
-                           }
-            grade_categories.append(cgc_results)
+                cgc_results = {'category': cgc.grade_category,
+                               'points': category_points,
+                               'number_count': cgc.number_count_for_grade,
+                               'rescale_factor': cgc.rescale_factor,
+                               'score_comment': score_comment,
+                               'number_assessments': number_assessments,
+                               'assessments': cgc_assessments,
+                               'number_assessments_plus_one': len(cgc_assessments)+1,
+                               }
+                grade_categories.append(cgc_results)
 
         return grade_categories
     
