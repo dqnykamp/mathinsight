@@ -1560,8 +1560,7 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
                     break
 
             subscript = s[sub_begin:sub_end]
-
-
+            
         # if captured pattern is in local_dict,
         # will leave subscripts unmodified
         if s[base_begin:sub_end+sub_skipafter] in local_dict:
@@ -1569,48 +1568,61 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
                 re.sub('_','__notasubscriptsymbol__',
                         s[base_begin:sub_end+sub_skipafter]) \
                 + s[sub_end+sub_skipafter:]
-        else:
-            # If split symbols then
-            # (a) shorten base to last letter unless in unsplit_symbols, and
-            # (b) shorten subscript to number or first less
-            #     unless used parenthesis or is in unsplit_symbols
-
-            if split_symbols:
-                # narrow base to last letter unless in unsplit_symbols
-                if not base in unsplit_symbols:
-                    base_begin=base_end-2
-                    base=s[base_begin:base_end-1]
-                    # if last character isn't letter, skip
-                    if not base.isalpha():
-                        s = s[:base_end-1] + '__notasubscriptsymbol__' + \
-                            s[base_end:]
-                        continue
-
-
-                # if subscript is not in unsplit symbols and didn't user parens
-                # then change to be number or the first letter
-                if split_symbols and not used_parens and \
-                   subscript not in unsplit_symbols:
-                    if s[base_end].isdigit():
-                        for (j,c) in enumerate(s[base_end:]):
-                            if not c.isdigit():
-                                sub_end=base_end+j
-                                break
-                    else:
-                        sub_end=base_end+1
-
-                    subscript = s[sub_begin:sub_end]
+            continue
             
-        
+        # If split symbols then
+        # (a) shorten base to last letter unless in unsplit_symbols, and
+        # (b) shorten subscript to number or first less
+        #     unless used parenthesis or is in unsplit_symbols
 
-            if assume_real_variables:
-                subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
-                                           (base,subscript)
-            else:
-                subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
-                                           (base,subscript)
-            s = s[:base_begin] + subscript_command_string \
-                + s[sub_end+sub_skipafter:]
+        if split_symbols:
+            # narrow base to last letter unless in unsplit_symbols
+            if not base in unsplit_symbols:
+                base_begin=base_end-2
+                base=s[base_begin:base_end-1]
+                # if last character isn't letter, skip
+                if not base.isalpha():
+                    s = s[:base_end-1] + '__notasubscriptsymbol__' + \
+                        s[base_end:]
+                    continue
+
+
+            # if subscript is not in unsplit symbols and didn't user parens
+            # then change to be number or the first letter
+            if split_symbols and not used_parens and \
+               subscript not in unsplit_symbols:
+                if s[base_end].isdigit():
+                    for (j,c) in enumerate(s[base_end:]):
+                        if not c.isdigit():
+                            sub_end=base_end+j
+                            break
+                else:
+                    sub_end=base_end+1
+
+                subscript = s[sub_begin:sub_end]
+
+            # Check if newly shortened pattern is in local_dict.
+            # If so, will leave subscripts unmodified
+            # Also add a space before and after the pattern,
+            # so it won't get turned into a symbol by the parser
+            # and will instead get mapped by local_dict.
+            # (Parser won't split symbols that contain a _.)
+            if s[base_begin:sub_end+sub_skipafter] in local_dict:
+                s = s[:base_begin] + ' ' + \
+                    re.sub('_','__notasubscriptsymbol__',
+                            s[base_begin:sub_end+sub_skipafter]) \
+                    + ' ' + s[sub_end+sub_skipafter:]
+                continue
+
+
+        if assume_real_variables:
+            subscript_command_string = " __subscriptsymbol__(%s,%s, True) " % \
+                                       (base,subscript)
+        else:
+            subscript_command_string = " __subscriptsymbol__(%s,%s) " % \
+                                       (base,subscript)
+        s = s[:base_begin] + subscript_command_string \
+            + s[sub_end+sub_skipafter:]
 
     s=re.sub('__notasubscriptsymbol__', '_', s)
 

@@ -940,3 +940,8 @@ class ParseExprTests(SimpleTestCase):
 
         expr=parse_expr("1a_b", parse_subscripts=True, split_symbols=True)
         self.assertEqual(expr,  Symbol('a_b'))
+
+        S1= Symbol('SS_1')
+        expr=parse_expr("xS_1y", parse_subscripts=True, split_symbols=True,
+                        local_dict={'S_1': S1})
+        self.assertEqual(expr, x*S1*y)
