@@ -685,7 +685,7 @@ class AssessmentOverview(DetailView):
             else:
                 get_string=""
 
-            if thread_content.substitute_title:
+            if thread_content and thread_content.substitute_title:
                 context['assessment_link'] = self.assessment.return_direct_link(
                     link_text=thread_content.substitute_title,
                     get_string=get_string)
