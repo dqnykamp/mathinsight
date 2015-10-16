@@ -1605,201 +1605,190 @@ class EditCourseContentAttemptScores(CourseBaseView):
 
 
 
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def export_gradebook_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
+class ExportGradebook(CourseBaseView):
+    instructor_view=True
+    template_name = 'micourses/export_gradebook.html'
 
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
 
-    assessment_categories = course.coursegradecategory_set.all()
+    def get_context_data(self, **kwargs):
+        context = super(ExportGradebook, self).get_context_data(**kwargs)
 
-    # no Google analytics for course
-    noanalytics=True
-
-    
-    return render_to_response \
-        ('micourses/export_gradebook.html', 
-         {'course': course,
-          'courseuser': courseuser, 
-          'assessment_categories': assessment_categories,
-          'noanalytics': noanalytics,
-          },
-         context_instance=RequestContext(request))
-
-
-    
-@user_passes_test(lambda u: u.is_authenticated() and u.courseuser.get_current_role()==INSTRUCTOR_ROLE)
-def gradebook_csv_view(request):
-    courseuser = request.user.courseuser
-    
-    try:
-        course = courseuser.return_selected_course()
-    except MultipleObjectsReturned:
-        # courseuser is in multple active courses and hasn't selected one
-        # redirect to select course page
-        return HttpResponseRedirect(reverse('micourses:selectcourse'))
-    except ObjectDoesNotExist:
-        # courseuser is not in an active course
-        # redirect to not enrolled page
-        return HttpResponseRedirect(reverse('micourses:notenrolled'))
-
-
-    try:
-        section = int(request.POST.get('section'))
-    except ValueError:
-        section = None
-    include_total=False
-    if request.POST.get("course_total")=="t":
-        include_total=True
-    if request.POST.get("replace_numbers"):
-        replace_numbers=True
-    else:
-        replace_numbers=False
-
-    included_categories = []
-    totaled_categories = []
-    assessments_in_category = {}
-    assessment_points_in_category = {}
-
-    for cgc in course.coursegradecategory_set.all():
-        include_category = request.POST.get('category_%s' % cgc.id, 'e')
-        if include_category=="i":
-            assessments = course.thread_content\
-                        .filter(grade_category=cgc.grade_category)\
-                        .filter(thread_content__content_type__model='assessment')
-            assessment_list=[]
-            assessment_point_list=[]
-            i=0
-            for assessment in assessments:
-                assessment_points = assessment.total_points()
-                if not assessment_points:
-                    continue
-                i=i+1
-                if replace_numbers:
-                    assessment_list.append(i)
-                else:
-                    try:
-                        name = assessment.content_object.get_short_name()
-                    except AttributeError:
-                        name = assessment.content_object.get_title()
-                    assessment_list.append(name)
-                assessment_point_list.append(assessment_points)
-
-            if(assessment_list):
-                assessments_in_category[cgc.id] = assessment_list
-                assessment_points_in_category[cgc.id] = assessment_point_list
-                included_categories.append(cgc)
-
-        elif include_category=="t":
-            totaled_categories.append(cgc)
+        context['assessment_categories'] = \
+                                self.course.coursegradecategory_set.all()
         
-    
-    # Create the HttpResponse object with the appropriate CSV header.
-    response = HttpResponse(content_type='text/csv; charset=iso-8859-1')
-    response['Content-Disposition'] = 'attachment; filename="gradebook.csv"'
-    
-    import csv
-    writer = csv.writer(response)
-    
-    # write first header row with assessment categories
-    row=["","",""]
-    for cgc in included_categories:
-        row.append(cgc.grade_category.name)
-        row.extend([""]*(len(assessments_in_category[cgc.id])-1))
-        row.append("Total")
-    row.extend(["Total"]*len(totaled_categories))
-    if include_total:
-        row.append("Course")
-    writer.writerow(row)
-    
-        
-    row=["Student", "ID", "Section"]
-    for cgc in included_categories:
-        row.extend(assessments_in_category[cgc.id])
-        row.append(cgc.grade_category.name)
-    for cgc in totaled_categories:
-        row.append(cgc.grade_category.name)
-    if include_total:
-        row.append("Total")
-    writer.writerow(row)
+        return context
 
-    for student in course.enrolled_students_ordered(section=section):
-        student_section = course.courseenrollment_set.get(student=student).section
-        row=[str(student), student.userid, student_section]
+
+class GradebookCSV(CourseBaseMixin, View):
+    instructor_view=True
+    
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
+
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except NotEnrolled:
+            return redirect('micourses:notenrolled', 
+                            course_code=self.course.code)
+        except NotInstructor:
+            return redirect('micourses:coursemain', 
+                            course_code=self.course.code)
+
+        section = request.POST.get('section')
+
+        include_total=False
+        if request.POST.get("course_total")=="t":
+            include_total=True
+        if request.POST.get("replace_numbers"):
+            replace_numbers=True
+        else:
+            replace_numbers=False
+
+        included_categories = []
+        totaled_categories = []
+        assessment_names_in_category = {}
+        assessment_points_in_category = {}
+        
+        grade_categories = self.course.all_assessments_by_category()
+
+        grade_category_dicts = {}
+        
+        for cgc_dict in grade_categories:
+            cgc = cgc_dict['cgc']
+            grade_category_dicts[cgc.id] = cgc_dict
+
+            include_category = request.POST.get('category_%s' % cgc.id, 'e')
+            if include_category=="i":
+                assessments = cgc_dict['assessments']
+
+                assessment_name_list=[]
+                assessment_point_list=[]
+                i=0
+                for assessment in assessments:
+                    assessment_points = assessment['points']
+                    if not assessment_points:
+                        continue
+                    i=i+1
+                    if replace_numbers:
+                        assessment_name_list.append(i)
+                    else:
+                        try:
+                            name = assessment['assessment'].get_short_name()
+                        except AttributeError:
+                            name = assessment['assessment'].get_title()
+                        assessment_name_list.append(name)
+                    assessment_point_list.append(assessment_points)
+
+                if(assessment_name_list):
+                    assessment_names_in_category[cgc.id] = assessment_name_list
+                    assessment_points_in_category[cgc.id] = assessment_point_list
+                    included_categories.append(cgc)
+
+            elif include_category=="t":
+                totaled_categories.append(cgc)
+
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv; charset=iso-8859-1')
+        response['Content-Disposition'] = 'attachment; filename="gradebook.csv"'
+
+        import csv
+        writer = csv.writer(response)
+
+        # write first header row with assessment categories
+        row=["","",""]
         for cgc in included_categories:
-            cgc_assessments=course.student_scores_for_grade_category(student, cgc)
-            for cgc_assessment in cgc_assessments:
-                score = cgc_assessment['student_score']
-                if score is None:
-                    score=0
-                row.append(round(score*10)/10.0)
-            row.append(round(course.student_score_for_grade_category \
-                             (cgc.grade_category, student)*10)/10.0)
-        for cgc in totaled_categories:
-            row.append(round(course.student_score_for_grade_category \
-                             (cgc.grade_category, student)*10)/10.0)
+            row.append(cgc.grade_category.name)
+            row.extend([""]*(len(assessment_names_in_category[cgc.id])-1))
+            row.append("Total")
+        row.extend(["Total"]*len(totaled_categories))
         if include_total:
-            row.append(round(course.total_student_score(student)*10)/10.0)
-
+            row.append("Course")
         writer.writerow(row)
-            
-    comments=[]
 
-    row=["Possible points","",""]
-    for cgc in included_categories:
-        row.extend(assessment_points_in_category[cgc.id])
-        row.append(course.points_for_grade_category \
-                   (cgc.grade_category))
-        number_assessments = len(assessment_points_in_category[cgc.id])
-        score_comment=""
-        if cgc.number_count_for_grade and \
-           cgc.number_count_for_grade < number_assessments:
-            score_comment = "the top %s scores out of %s" % \
-                            (cgc.number_count_for_grade,
-                             number_assessments)
-        if cgc.rescale_factor != 1.0:
+
+        row=["Student", "ID", "Section"]
+        for cgc in included_categories:
+            row.extend(assessment_names_in_category[cgc.id])
+            row.append(cgc.grade_category.name)
+        for cgc in totaled_categories:
+            row.append(cgc.grade_category.name)
+        if include_total:
+            row.append("Total")
+        writer.writerow(row)
+
+        student_scores = self.course.student_scores_by_grade_category(
+            section=section)
+
+        for score_dict in student_scores:
+            ce = score_dict['enrollment']
+            student_section = ce.section
+            student = ce.student
+            row=[str(student), student.userid, student_section]
+            for student_category in score_dict['categories']:
+                if student_category['cgc'] not in included_categories:
+                    continue
+                for assessment_results in student_category['scores']:
+                    score = assessment_results['score']
+                    if score is None:
+                        score=0
+                    row.append(round(score*10)/10.0)
+                row.append(round(student_category['student_score']*10)/10.0)
+
+            for student_category in score_dict['categories']:
+                if student_category['cgc'] not in totaled_categories:
+                    continue
+
+                row.append(round(student_category['student_score']*10)/10.0)
+
+            if include_total:
+                row.append(round(score_dict['total_score']*10)/10.0)
+
+            writer.writerow(row)
+
+        comments=[]
+
+        row=["Possible points","",""]
+        for cgc in included_categories:
+            cgc_dict = grade_category_dicts[cgc.id]
+            row.extend(assessment_points_in_category[cgc.id])
+            row.append(cgc_dict['points'])
+            number_assessments = len(assessment_points_in_category[cgc.id])
+            score_comment=cgc_dict['score_comment_long']
             if score_comment:
-                score_comment += ", "
-            score_comment += "rescaled by %s%%" % \
-                             (round(cgc.rescale_factor*1000)/10)
-        if score_comment:
-            score_comment = "Total %s is %s" % (cgc.grade_category.name,
-                                                score_comment)
+                score_comment = "Total %s is %s" % (cgc.grade_category.name,
+                                                    score_comment)
+                comments.append(score_comment)
+        for cgc in totaled_categories:
+            row.append( grade_category_dicts[cgc.id]['points'])
+        if include_total:
+            row.append(self.course.total_points())
+            score_comment = "Course total is "
+            first=True
+            for cgc in self.course.coursegradecategory_set.all():
+                if (self.course.points_for_grade_category \
+                    (cgc)):
+                    if not first:
+                        score_comment += " + "
+                    else:
+                        first=False
+                    score_comment += "Total %s" %cgc.grade_category.name
             comments.append(score_comment)
-    for cgc in totaled_categories:
-        row.append(course.points_for_grade_category \
-                   (cgc.grade_category))
-    if include_total:
-        row.append(course.total_points())
-        score_comment = "Course total is "
-        first=True
-        for cgc in course.coursegradecategory_set.all():
-            if (course.points_for_grade_category \
-                (cgc.grade_category)):
-                if not first:
-                    score_comment += " + "
-                else:
-                    first=False
-                score_comment += "Total %s" %cgc.grade_category.name
-        comments.append(score_comment)
-    writer.writerow(row)
-    
-    if(comments):
-        writer.writerow([])
-        for score_comment in comments:
-            writer.writerow([score_comment])
+        writer.writerow(row)
 
-    return response
+        if(comments):
+            writer.writerow([])
+            for score_comment in comments:
+                writer.writerow([score_comment])
+
+        return response
 
 
 

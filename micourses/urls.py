@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import TemplateView, ListView, DetailView
-from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditCourseContentAttemptScores, RecordContentCompletion, ContentListView, InstructorGradebook, StudentGradebook
+from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditCourseContentAttemptScores, RecordContentCompletion, ContentListView, InstructorGradebook, StudentGradebook, ExportGradebook, GradebookCSV
 from micourses.attendance_views import AdjustedDueCalculation, AttendanceDisplay, UpdateAttendance, UpdateIndividualAttendance
 from micourses import views
 from micourses.models import Course
@@ -72,11 +72,13 @@ course_patterns = [
         name='edit_course_content_attempt_scores'),
     url(r'^/record_content_completion$', RecordContentCompletion.as_view(),
         name = "record_completion"),
+    url(r'^/gradebook/export$', ExportGradebook.as_view(), 
+        name='exportgradebook'),
+    url(r'^/gradebook/exportcsv$',GradebookCSV.as_view(), name='gradebookcsv'),
+
 ]
 
 urlpatterns = [
     url(r'^$',  SelectCourseView.as_view(), name='selectcourse'),
     url(r'^(?P<course_code>\w+)', include(course_patterns)),
-    url(r'^gradebook/export$',views.export_gradebook_view, name='exportgradebook'),
-    url(r'^gradebook/exportcsv$',views.gradebook_csv_view, name='gradebookcsv'),
 ]

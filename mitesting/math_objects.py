@@ -499,7 +499,7 @@ def try_normalize_expr(expr):
         w=w.doit()
         try:
             w= w.expand()
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
         try:
             w=w.ratsimp().expand()

@@ -15,7 +15,7 @@
 
 {% if instructor_role %}
 <a href="{% url 'micourses:instructor_gradebook' course_code=course.code %}">Gradebook</a><br/>
-<a href="{% url 'micourses:exportgradebook' %}">Export gradebook</a><br/>
+<a href="{% url 'micourses:exportgradebook' course_code=course.code %}">Export gradebook</a><br/>
 {% if course.track_attendance %}
 <a href="{% url 'micourses:update_attendance' course_code=course.code %}">Update attendance</a><br/>
 <a href = "{% url 'micourses:update_individual_attendance' course_code=course.code %}">Update individual attendance</a>

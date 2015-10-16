@@ -9,14 +9,14 @@
 {%endif %}
 <p>Export gradebook for {{course}}.</p>
 
-<form action="{% url 'micourses:gradebookcsv' %}" method="post">{% csrf_token %}
+<form action="{% url 'micourses:gradebookcsv' course_code=course.code %}" method="post">{% csrf_token %}
 <p>Section: <input id="id_section" name="section" size="5" type="text"><br/>
 <input id="id_replace_numbers" type="checkbox" name="replace_numbers"> Replace names with numbers</p>
 
 <table class="narrow" style="width:50%">
 <tr><td>Include</td><td>Total only</td><td>Exclude</td></tr>
 {% for category in assessment_categories %}
-<tr><td><input id="id_include_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="i" checked /></td><td><input id="id_total_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="t" /></td><td><input id="id_exclude_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="e" /></td><td>{{category.assessment_category}}</td></tr>
+<tr><td><input id="id_include_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="i" checked /></td><td><input id="id_total_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="t" /></td><td><input id="id_exclude_category_{{forloop.counter}}" type="radio" name="category_{{category.id}}" value="e" /></td><td>{{category.grade_category}}</td></tr>
 {% endfor %}
 <tr><td></td><td><input id="id_include_total" type="radio" name="course_total" value="t" checked /></td><td><input id="id_exclude_total" type="radio" name="course_total" value="e" /></td><td>Course total</td></tr>
 </table>
@@ -25,5 +25,4 @@
 
 </form>
 
-<p>Export is <b>very</b> slow.</p>
 {% endblock %}

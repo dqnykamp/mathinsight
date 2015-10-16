@@ -441,25 +441,32 @@ class Course(models.Model):
 
                 category_points = self.points_for_grade_category(cgc)
 
-                score_comment = ""
+                score_comment_short = ""
+                score_comment_long = ""
                 if cgc.number_count_for_grade and \
                         cgc.number_count_for_grade < number_assessments:
-                    score_comment = "top %s of %s" % \
+                    score_comment_short = "top %s of %s" % \
                         (cgc.number_count_for_grade, number_assessments)
+                    score_comment_long = "the top %s scores out of %s" % \
+                        (cgc.number_count_for_grade, number_assessments)
+
                 if cgc.rescale_factor != 1.0:
-                    if score_comment:
-                        score_comment += ", "
-                    score_comment += "rescale %s%%" % \
+                    if score_comment_short:
+                        score_comment_short += ", "
+                        score_comment_long += ", "
+                    score_comment_short += "rescale %s%%" % \
                         (round(cgc.rescale_factor*1000)/10)
-                if score_comment:
-                    score_comment = mark_safe("<br/><small style='font-weight:normal'>(%s)</small>"\
-                                                  % score_comment)
+                    score_comment_long += "rescaled by %s%%" % \
+                        (round(cgc.rescale_factor*1000)/10)
+
 
                 cgc_results = {'category': cgc.grade_category,
+                               'cgc': cgc,
                                'points': category_points,
                                'number_count': cgc.number_count_for_grade,
                                'rescale_factor': cgc.rescale_factor,
-                               'score_comment': score_comment,
+                               'score_comment_short': score_comment_short,
+                               'score_comment_long': score_comment_long,
                                'number_assessments': number_assessments,
                                'assessments': cgc_assessments,
                                'number_assessments_plus_one': len(cgc_assessments)+1,
@@ -486,7 +493,7 @@ class Course(models.Model):
         return assessments
  
 
-    def student_scores_by_grade_category(self, student=None):
+    def student_scores_by_grade_category(self, student=None, section=None):
         student_scores = []
 
         enrollment=None
@@ -510,6 +517,7 @@ class Course(models.Model):
             category_student_score *= cgc.rescale_factor
             category_results = {
                 'category': cgc.grade_category,
+                'cgc': cgc,
                 'student_score': category_student_score,
                 'scores': category_score_results,
             }
@@ -556,6 +564,8 @@ class Course(models.Model):
                 .order_by('content__grade_category', 'content')
 
         else:
+            if section:
+                records = records.filter(enrollment__section=section)
             records = records.filter(enrollment__role=STUDENT_ROLE) \
                 .order_by('enrollment__student', 'content__grade_category',
                           'content')\
@@ -563,7 +573,14 @@ class Course(models.Model):
         thread_content_with_related = self.thread_content_select_related_content_objects()
         content_dict = {tc.id: {'assessment': tc.content_object,
                                 'title': tc.get_title()} for tc in thread_content_with_related }
-                        
+
+        records = records.select_related(
+            'enrollment__student__user',
+            'content__grade_category__grade_category')
+
+        if not records:
+            return []
+
 
         for cr in records \
             .select_related('enrollment__student__user', 'content__grade_category__grade_category'):

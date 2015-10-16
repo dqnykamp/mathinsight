@@ -1572,7 +1572,7 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
             
         # If split symbols then
         # (a) shorten base to last letter unless in unsplit_symbols, and
-        # (b) shorten subscript to number or first less
+        # (b) shorten subscript to number or first letter
         #     unless used parenthesis or is in unsplit_symbols
 
         if split_symbols:
