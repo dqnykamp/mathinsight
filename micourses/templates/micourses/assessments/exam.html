@@ -43,9 +43,9 @@
     <div class="yma-gbox-right">
 <table class="question_scores">
 {% for question in rendered_list %}
-<tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points }} pts{%endif%}<td class="blank"></td></tr>
+<tr><td class="examlabel">{{ forloop.counter }}</td><td class="points">{% if question.points %}{{question.points|floatformat:"-2" }} pts{%endif%}<td class="blank"></td></tr>
 {% endfor %}
- <tr><td class="examlabel">Total</td><td class="points">{{ thread_content.points }} pts</td><td class="blank"></td></tr>
+ <tr><td class="examlabel">Total</td><td class="points">{{ thread_content.points|floatformat:"-2" }} pts</td><td class="blank"></td></tr>
 </table>
    </div>
   </div>

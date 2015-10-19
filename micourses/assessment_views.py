@@ -672,7 +672,8 @@ class AssessmentOverview(DetailView):
             
         context['thread_content']=thread_content
         context['number_in_thread'] = self.number_in_thread
-            
+        context['course'] = self.assessment.course
+        
         if thread_content:
             context['assessment_name'] = thread_content.get_title()
         else:
@@ -975,6 +976,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         context['assessment_name'] = self.thread_content.get_title()
         
         context['assessment'] = self.thread_content.content_object
+        context['course'] = self.thread_content.course
 
         try:
             coursewide_record = self.thread_content.contentrecord_set.get(enrollment=None)

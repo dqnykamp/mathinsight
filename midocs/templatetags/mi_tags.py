@@ -142,13 +142,16 @@ class InternalLinkNode(template.Node):
                             target=Assessment.objects.get(code=target_code,
                                                           course=course)
 
-                    # 3. try last_course from context
+                    # 3. try course or last_course from context
                     if not target:
-                        last_course=context.get("last_course")
-                        if last_course:
+                        course=context.get("course")
+                        if not course:
+                            course=context.get("last_course")
+
+                        if course:
                             try:
                                 target=Assessment.objects.get(code=target_code,
-                                                       course=last_course)
+                                                       course=course)
                             except Assessment.DoesNotExist:
                                 # if assessment not found, try next method
                                 pass
