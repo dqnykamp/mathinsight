@@ -161,13 +161,21 @@
     }
 
 
-  function failed_grade_question_{{question_data.identifier}}(data) {
+  function failed_grade_question_{{question_data.identifier}}(jqXHR, textStatus, errorThrown) {
       var question_feedback=jQuery("#question_{{question_data.identifier}}_feedback");
-      question_feedback.html("Server error.  Failed to grade question.");
+
+      var feedback_text;
+      if(errorThrown) {
+	  feedback_text = "Server error.  Failed to grade question."
+      }
+      else {
+	  feedback_text = "Cannot contact server.  Failed to grade question.  Check connection by reloading page or opening in another browser window."}
+
+      question_feedback.html(feedback_text);
       question_feedback.removeClass('success').addClass('error');
 
       var question_answer_feedbacks=jQuery('.answerfeedback_{{question_data.identifier}}')
-      question_answer_feedbacks.html("Server error.  Failed to grade question.");
+      question_answer_feedbacks.html(feedback_text);
       question_answer_feedbacks.removeClass('success').addClass('error');
   }
 
