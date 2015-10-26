@@ -3482,3 +3482,7 @@ class AccumulatedJavascriptNode(template.Node):
 @register.tag
 def accumulated_javascript(parser, token):
     return AccumulatedJavascriptNode()
+
+@register.inclusion_tag('midocs/copyright.html')
+def copyright(theobject):
+    return {'object': theobject}

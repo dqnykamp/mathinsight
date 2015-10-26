@@ -1,0 +1,9 @@
+{% load static from staticfiles %}
+{% if object.copyright_type %}
+<section id="copyright">
+{% with credit_authors=object.author_list_full_copyright copyright=object.copyright_type %}
+<div id="copyright_image"><h4><a rel="license" href="{{copyright.url}}"><img alt="Creative Commons License" style="border-width:0" src="{% static 'image/somerights20.png' %}" /></a></h4></div>
+<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">{{object.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{{object.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="{{copyright.url}}" class="external">{{copyright.name}}</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
+{%endwith%}
+</section>
+{%endif%}

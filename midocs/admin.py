@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from midocs.models import NotationSystem, Author, PageType, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletText
+from midocs.models import NotationSystem, Author, PageType, Objective, Subject, Keyword, RelationshipType, Page, PageAuthor, PageRelationship, IndexType, IndexEntry, ImageType, Image, ImageAuthor, ImageNotationSystem, AppletType, AppletTypeParameter, AppletFeature, Applet, AppletParameter, AppletAuthor, AppletNotationSystem, VideoType, VideoTypeParameter, Video, VideoParameter, VideoAuthor, VideoQuestion, NewsItem, NewsAuthor, Reference, ReferenceType, ReferenceAuthor, AuxiliaryFile, AuxiliaryFileType, AppletObjectType, AppletObject, AppletChildObjectLink, AppletText, CopyrightType
+
 from django.conf import settings
 import reversion
 
@@ -290,7 +291,7 @@ class PageAdmin(reversion.VersionAdmin):
         }),
         ('Copyright and credits', {
             'classes': ('collapse',),
-            'fields': ('author_copyright','additional_credits',),
+            'fields': ('copyright_type', 'additional_credits',),
         }),
         ('Misc', {
             'classes': ('collapse',),
@@ -405,7 +406,8 @@ class AuxiliaryFileTypeAdmin(reversion.VersionAdmin):
     pass
 class AuxiliaryFileAdmin(reversion.VersionAdmin):
     pass
-
+class CopyrightTypeAdmin(reversion.VersionAdmin):
+    pass
 
 admin.site.register(NotationSystem,NotationSystemAdmin)
 admin.site.register(Author,AuthorAdmin)
@@ -434,3 +436,4 @@ admin.site.register(Reference,ReferenceAdmin)
 admin.site.register(ReferenceType,ReferenceTypeAdmin)
 admin.site.register(AuxiliaryFileType,AuxiliaryFileTypeAdmin)
 admin.site.register(AuxiliaryFile,AuxiliaryFileAdmin)
+admin.site.register(CopyrightType, CopyrightTypeAdmin)

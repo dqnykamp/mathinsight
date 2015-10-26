@@ -197,15 +197,8 @@
 {% if comment_credit_progress == 2 %}<p class="comment_credit_achieved">Already received credit for posting a message for {{ credit_group}}.</p>{%endif%}
 {% render_comment_form for thepage %}
 </section>
-{% if thepage.author_copyright %}
-<section id="copyright">
-{% with credit_authors=thepage.author_list_full %}
-<div id="copyright_image"><h4><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="{{STATIC_URL}}image/somerights20.png"/></a></h4></div>
-<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" property="dct:title" rel="dct:type">{{thepage.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{{thepage.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/" class="external">Creative Commons Attribution-Noncommercial-ShareAlike 3.0 License</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
-{%endwith%}
-</section>
-{%endif%}
 
+{% copyright thepage %}
 {% if thepage.additional_credits %}
 <section id="credits">
 <h4>Credits</h4>

@@ -24,6 +24,50 @@ from mitesting.models import Question
 # from django.contrib.comments.moderation import moderator
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
 
+class CopyrightType(models.Model):
+    name = models.CharField(max_length=200)
+    url = models.URLField(blank=True, null=True)
+    default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+
+        # check if newly default
+        if self.default:
+            if self.pk is None:
+                # mark all page_types as not default
+                CopyrightType.objects.update(default=False)
+            else:
+                orig = CopyrightType.objects.get(pk=self.pk)
+                if not orig.default:
+                    # since newly default, set all other page_types as not default
+                    CopyrightTypes.objects.exclude(pk=self.pk)\
+                                          .update(default=False)
+
+        super(CopyrightType, self).save(*args, **kwargs) 
+
+    @classmethod
+    def return_default(theclass):
+        try:
+            return theclass.objects.get(default=True)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            pass
+
+        # if zero or multiple items marked as default
+        # return first copyright_type in database (or None if no CopyrightTypes)
+        try:
+            return theclass.objects.all()[0]
+        except IndexError:
+            return None
+
+def return_default_copyright_type():
+    try:
+        return CopyrightType.return_default();
+    except:
+        return None
+
 class NotationSystem(models.Model):
     code = models.SlugField(max_length=50, unique=True)
     name = models.CharField(max_length=50, unique=True)
@@ -233,7 +277,8 @@ class Page(models.Model):
     publish_date = models.DateField(blank=True,db_index=True)
     notes = models.TextField(blank=True, null=True)
     highlight = models.BooleanField(db_index=True, default=False)
-    author_copyright = models.BooleanField(default=True)
+    copyright_type = models.ForeignKey(CopyrightType, blank=True, null=True,
+                                       default=return_default_copyright_type)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     notation_systems = models.ManyToManyField(NotationSystem, blank=True)
@@ -337,19 +382,27 @@ class Page(models.Model):
             return self.title+'.'
 
     def author_list_abbreviated_link(self):
-        return author_list_abbreviated(self.pageauthor_set.all(), 
+        return author_list_abbreviated(self.pageauthor_set.filter(
+            copyright_only=False),
                                        include_link=True)
 
     def author_list_abbreviated(self, include_link=False):
-        return author_list_abbreviated(self.pageauthor_set.all(), 
+        return author_list_abbreviated(self.pageauthor_set.filter(
+            copyright_only=False),
                                        include_link=include_link)
 
     def author_list_full_link(self):
-        return author_list_full(self.pageauthor_set.all(), 
+        return author_list_full(self.pageauthor_set.filter(
+            copyright_only=False),
                                 include_link=True)
 
     def author_list_full(self, include_link=False):
-        return author_list_full(self.pageauthor_set.all(), 
+        return author_list_full(self.pageauthor_set.filter(
+            copyright_only=False),
+                                include_link=include_link)
+
+    def author_list_full_copyright(self, include_link=False):
+        return author_list_full(self.pageauthor_set.all(),
                                 include_link=include_link)
 
     def save(self, *args, **kwargs):
@@ -574,6 +627,7 @@ class Page(models.Model):
 class PageAuthor(models.Model):
     page = models.ForeignKey(Page)
     author = models.ForeignKey(Author)
+    copyright_only = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
 
     class Meta:
@@ -708,7 +762,8 @@ class Image(models.Model):
     original_file = models.FileField(max_length=150, upload_to=image_source_path,
                                      blank=True,null=True, storage=OverwriteStorage())
     original_file_type=models.ForeignKey(ImageType,blank=True,null=True)
-    author_copyright = models.BooleanField(default=True)
+    copyright_type = models.ForeignKey(CopyrightType, blank=True, null=True,
+                                       default=return_default_copyright_type)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     auxiliary_files = models.ManyToManyField(AuxiliaryFile, blank=True)
@@ -794,18 +849,26 @@ class Image(models.Model):
             return self.title+'.'
 
     def author_list_abbreviated_link(self):
-        return author_list_abbreviated(self.imageauthor_set.all(), 
+        return author_list_abbreviated(self.imageauthor_set.filter(
+            copyright_only=False), 
                                        include_link=True)
 
     def author_list_abbreviated(self, include_link=False):
-        return author_list_abbreviated(self.imageauthor_set.all(), 
+        return author_list_abbreviated(self.imageauthor_set.filter(
+            copyright_only=False),
                                        include_link=include_link)
 
     def author_list_full_link(self):
-        return author_list_full(self.imageauthor_set.all(), 
+        return author_list_full(self.imageauthor_set.filter(
+            copyright_only=False), 
                                 include_link=True)
 
     def author_list_full(self, include_link=False):
+        return author_list_full(self.imageauthor_set.filter(
+            copyright_only=False), 
+                                include_link=include_link)
+
+    def author_list_full_copyright(self, include_link=False):
         return author_list_full(self.imageauthor_set.all(), 
                                 include_link=include_link)
 
@@ -887,6 +950,7 @@ class Image(models.Model):
 class ImageAuthor(models.Model):
     image= models.ForeignKey(Image)
     author = models.ForeignKey(Author)
+    copyright_only = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
 
     class Meta:
@@ -1018,7 +1082,8 @@ class Applet(models.Model):
     image2 = models.ImageField(max_length=150, upload_to=applet_2_image_path, height_field='image2_height', width_field='image2_width', null=True,blank=True, storage=OverwriteStorage())
     image2_width = models.IntegerField(blank=True,null=True)
     image2_height = models.IntegerField(blank=True,null=True)
-    author_copyright = models.BooleanField(default=True)
+    copyright_type = models.ForeignKey(CopyrightType, blank=True, null=True,
+                                       default=return_default_copyright_type)
     hidden = models.BooleanField(db_index=True, default=False)
     iframe = models.BooleanField(default=False)
     additional_credits = models.TextField(blank=True, null=True)
@@ -1112,19 +1177,27 @@ class Applet(models.Model):
             return self.title+'.'
 
     def author_list_abbreviated_link(self):
-        return author_list_abbreviated(self.appletauthor_set.all(), 
+        return author_list_abbreviated(self.appletauthor_set.filter(
+            copyright_only=False),
                                        include_link=True)
 
     def author_list_abbreviated(self, include_link=False):
-        return author_list_abbreviated(self.appletauthor_set.all(), 
+        return author_list_abbreviated(self.appletauthor_set.filter(
+            copyright_only=False), 
                                        include_link=include_link)
 
     def author_list_full_link(self):
-        return author_list_full(self.appletauthor_set.all(), 
+        return author_list_full(self.appletauthor_set.filter(
+            copyright_only=False),
                                 include_link=True)
 
     def author_list_full(self, include_link=False):
-        return author_list_full(self.appletauthor_set.all(), 
+        return author_list_full(self.appletauthor_set.filter(
+            copyright_only=False),
+                                include_link=include_link)
+
+    def author_list_full_copyright(self, include_link=False):
+        return author_list_full(self.appletauthor_set.all(),
                                 include_link=include_link)
 
     def feature_list(self):
@@ -1380,6 +1453,7 @@ class AppletText(models.Model):
 class AppletAuthor(models.Model):
     applet= models.ForeignKey(Applet)
     author = models.ForeignKey(Author)
+    copyright_only = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
 
     class Meta:
@@ -1462,7 +1536,8 @@ class Video(models.Model):
     thumbnail = models.ImageField(max_length=150, upload_to=video_thumbnail_path, height_field='thumbnail_height', width_field='thumbnail_width', null=True,blank=True, storage=OverwriteStorage())
     thumbnail_width = models.IntegerField(blank=True,null=True)
     thumbnail_height = models.IntegerField(blank=True,null=True)
-    author_copyright = models.BooleanField(default=True)
+    copyright_type = models.ForeignKey(CopyrightType, blank=True, null=True,
+                                       default=return_default_copyright_type)
     hidden = models.BooleanField(db_index=True, default=False)
     additional_credits = models.TextField(blank=True, null=True)
     date_created = models.DateField(auto_now_add=True)
@@ -1538,18 +1613,26 @@ class Video(models.Model):
             return self.title+'.'
 
     def author_list_abbreviated_link(self):
-        return author_list_abbreviated(self.videoauthor_set.all(), 
+        return author_list_abbreviated(self.videoauthor_set.filter(
+            copyright_only=False),
                                        include_link=True)
 
     def author_list_abbreviated(self, include_link=False):
-        return author_list_abbreviated(self.videoauthor_set.all(), 
+        return author_list_abbreviated(self.videoauthor_set.filter(
+            copyright_only=False),
                                        include_link=include_link)
 
     def author_list_full_link(self):
-        return author_list_full(self.videoauthor_set.all(), 
+        return author_list_full(self.videoauthor_set.filter(
+            copyright_only=False),
                                 include_link=True)
 
     def author_list_full(self, include_link=False):
+        return author_list_full(self.videoauthor_set.filter(
+            copyright_only=False),
+                                include_link=include_link)
+
+    def author_list_full_copyright(self, include_link=False):
         return author_list_full(self.videoauthor_set.all(), 
                                 include_link=include_link)
 
@@ -1618,6 +1701,7 @@ class VideoQuestion(models.Model):
 class VideoAuthor(models.Model):
     video= models.ForeignKey(Video)
     author = models.ForeignKey(Author)
+    copyright_only = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
 
     class Meta:
@@ -1650,18 +1734,26 @@ class NewsItem(models.Model):
         return('mi-news', (), {'news_code': self.code})
 
     def author_list_abbreviated_link(self):
-        return author_list_abbreviated(self.newsauthor_set.all(), 
+        return author_list_abbreviated(self.newsauthor_set.filter(
+            copyright_only=False),
                                        include_link=True)
 
     def author_list_abbreviated(self, include_link=False):
-        return author_list_abbreviated(self.newsauthor_set.all(), 
+        return author_list_abbreviated(self.newsauthor_set.filter(
+            copyright_only=False),
                                        include_link=include_link)
 
     def author_list_full_link(self):
-        return author_list_full(self.newsauthor_set.all(), 
+        return author_list_full(self.newsauthor_set.filter(
+            copyright_only=False),
                                 include_link=True)
 
     def author_list_full(self, include_link=False):
+        return author_list_full(self.newsauthor_set.filter(
+            copyright_only=False),
+                                include_link=include_link)
+
+    def author_list_full_copyright(self, include_link=False):
         return author_list_full(self.newsauthor_set.all(), 
                                 include_link=include_link)
 
@@ -1675,6 +1767,7 @@ class NewsItem(models.Model):
 class NewsAuthor(models.Model):
     newsitem = models.ForeignKey(NewsItem)
     author = models.ForeignKey(Author)
+    copyright_only = models.BooleanField(default=False)
     sort_order = models.FloatField(default=0)
 
     class Meta:
@@ -1857,3 +1950,4 @@ class PageCitation(models.Model):
             return self.reference.compiled_reference()
         else:
             return "?"
+

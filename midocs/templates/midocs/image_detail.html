@@ -60,13 +60,7 @@
 {% render_comment_form for image %}
 </div>
 
-{% if image.author_copyright %}
-{% with credit_authors=image.author_list_full %}
-<h4><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/"><img alt="Creative Commons License" style="border-width:0" src="{{STATIC_URL}}image/somerights20.png"/></a></h4>
-<p><span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/StillImage" property="dct:title" rel="dct:type">{{image.title}}</span> {%if credit_authors%}by <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{{image.get_absolute_url}}" property="cc:attributionName" rel="cc:attributionURL">{{credit_authors}}</a>{%endif%} is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/" class="external">Creative Commons Attribution-Noncommercial-ShareAlike 3.0 License</a>.  For permissions beyond the scope of this license, please <a xmlns:cc="http://creativecommons.org/ns#" href="http://mathinsight.org{% url 'mi-contact'%}" rel="cc:morePermissions">contact us</a>.</p>
-{%endwith%}
-{% endif %}
-
+{% copyright image %}
 {% if image.additional_credits %}
 <h4>Credits</h4>
 {{ image.additional_credits|safe }}
