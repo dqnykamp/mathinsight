@@ -2,10 +2,13 @@ from django.template import TemplateSyntaxError, Context, Template
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.utils import OperationalError
 import json 
 import re
 import sys
 import logging
+import reversion
 
 logger = logging.getLogger(__name__)
 
@@ -806,10 +809,21 @@ def render_question(question_dict, rng, solution=False,
     # set seed to be successful seed from rendering context
     seed = context_results['seed']
 
-    # if have question attempt, save random_outcomes
+    # if have question attempt, save random_outcomes, if changed
     if question_attempt:
-        question_attempt.random_outcomes = json.dumps(random_outcomes)
-        question_attempt.save()
+        ro_json = json.dumps(random_outcomes)
+        if question_attempt.random_outcomes != ro_json:
+            question_attempt.random_outcomes = ro_json
+            # repeat so that can retry if get transaction deadlock
+            for trans_i in range(5):
+                try:
+                    with transaction.atomic(), reversion.create_revision():
+                        question_attempt.save()
+                except OperationalError:
+                    if trans_i==4:
+                        raise
+                else:
+                    break
     
 
     # record actual seed used in question_dict

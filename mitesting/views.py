@@ -7,6 +7,7 @@ from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from django.utils.decorators import method_decorator
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import OperationalError
 from django.utils import timezone
 from django.views.generic import DetailView, View
 from django.views.generic.detail import SingleObjectMixin
@@ -43,6 +44,12 @@ class QuestionView(DetailView):
     pk_url_kwarg = 'question_id'
     solution=False
 
+    # Don't wrap entire request in a single transaction
+    # so can deal with possible transaction deadlock.
+    # Instead, will create transaction in render_question when save data
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, *args, **kwargs):
+        return super(QuestionView, self).dispatch(*args, **kwargs)
 
 
     def get(self, request, *args, **kwargs):
@@ -319,7 +326,6 @@ class GradeQuestionView(SingleObjectMixin, View):
         # Invalid responses won't count toward score and 
         # won't be viewable by student
         from micourses.models import QuestionResponse
-        from django.db.utils import OperationalError
 
         # in case get deadlock, try to save answer (and recalculate score)
         # five times
@@ -428,6 +434,14 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
     """
     model = Question
     pk_url_kwarg = 'question_id'
+
+    # Don't wrap entire request in a single transaction
+    # since we once experienced a transaction deadlock.
+    # Instead, will create transaction when save data
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, *args, **kwargs):
+        return super(InjectQuestionSolutionView, self).dispatch(*args, **kwargs)
+
 
     def post(self, request, *args, **kwargs):
         # Look up the question to grade
@@ -557,8 +571,15 @@ class InjectQuestionSolutionView(SingleObjectMixin, View):
         if own_attempt and not question_attempt.solution_viewed:
             # record fact that viewed solution for this question_attempt
             question_attempt.solution_viewed = timezone.now()
-            with transaction.atomic(), reversion.create_revision():
-                question_attempt.save()
+            for trans_i in range(5):
+                try:
+                    with transaction.atomic(), reversion.create_revision():
+                        question_attempt.save()
+                except OperationalError:
+                    if trans_i==4:
+                        raise
+                else:
+                    break
 
         # return solution
         return JsonResponse(results)

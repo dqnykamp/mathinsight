@@ -12,6 +12,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.db import transaction
+from django.db.utils import OperationalError
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django import forms
@@ -41,6 +42,13 @@ class AssessmentView(DetailView):
     slug_url_kwarg = 'assessment_code'
     slug_field = 'code'
     solution=False
+
+    # Don't wrap entire request in a single transaction
+    # so can deal with possible transaction deadlock.
+    # Instead, will create transaction save data
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, *args, **kwargs):
+        return super(AssessmentView, self).dispatch(*args, **kwargs)
 
 
     def get_template_names(self):
@@ -296,7 +304,8 @@ class AssessmentView(DetailView):
                     request.user.courseuser.selected_course_enrollment:
             request.user.courseuser.selected_course_enrollment =\
                                                     self.course_enrollment
-            request.user.courseuser.save()
+            with transaction.atomic():
+                request.user.courseuser.save()
 
         # update session with last course viewed
         request.session['last_course_viewed'] = self.object.course.id
@@ -627,10 +636,12 @@ class AssessmentView(DetailView):
         if not self.current_attempt:
 
             from micourses.utils import create_new_assessment_attempt
-            new_attempt_info = create_new_assessment_attempt(
-                assessment=self.assessment, thread_content=self.thread_content,
-                courseuser = courseuser,
-                student_record = student_record)
+            with transaction.atomic():
+                new_attempt_info = create_new_assessment_attempt(
+                    assessment=self.assessment,
+                    thread_content=self.thread_content,
+                    courseuser = courseuser,
+                    student_record = student_record)
 
             self.current_attempt = new_attempt_info['new_attempt']
             self.question_list = new_attempt_info['question_list']
@@ -769,10 +780,11 @@ class GenerateNewAttempt(SingleObjectMixin, View):
         attempts = student_record.attempts.all()
 
         from micourses.utils import create_new_assessment_attempt
-        create_new_assessment_attempt(
-            assessment=assessment, thread_content=thread_content,
-            courseuser = request.user.courseuser,
-            student_record = student_record)
+        with transaction.atomic():
+            create_new_assessment_attempt(
+                assessment=assessment, thread_content=thread_content,
+                courseuser = request.user.courseuser,
+                student_record = student_record)
 
         # redirect to assessment url
         return HttpResponseRedirect(reverse('miassess:assessment', 
@@ -938,27 +950,37 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
                                     .create(enrollment = None)
 
         # create new course attempt
-        with transaction.atomic(), reversion.create_revision():
-            course_attempt = course_record.attempts\
-                                    .create(seed=new_seed, valid=True,
-                                            attempt_began = assessment_datetime,
-                                            version=version)
+        # in case get deadlock, try five times
+        for trans_i in range(5):
+            try:
+                with transaction.atomic(), reversion.create_revision():
+                    course_attempt = course_record.attempts.create(
+                        seed=new_seed, valid=True,
+                        attempt_began = assessment_datetime,
+                        version=version)
 
-            from micourses.render_assessments import get_question_list
-            question_list = get_question_list(
-                self.assessment, seed=new_seed,
-                thread_content=self.thread_content)
+                    from micourses.render_assessments import get_question_list
+                    question_list = get_question_list(
+                        self.assessment, seed=new_seed,
+                        thread_content=self.thread_content)
 
-            # create the content question sets and question attempts
-            with transaction.atomic(), reversion.create_revision():
-                for (i,q_dict) in enumerate(question_list):
-                    ca_question_set = course_attempt.question_sets.create(
-                        question_number=i+1, question_set=q_dict['question_set'])
-                    qa=ca_question_set.question_attempts.create(
-                        question=q_dict['question'],
-                        seed=q_dict['seed'])
-                    q_dict['question_attempt'] = qa
-        
+                    # create the content question sets and question attempts
+                    with transaction.atomic(), reversion.create_revision():
+                        for (i,q_dict) in enumerate(question_list):
+                            ca_question_set = \
+                                course_attempt.question_sets.create(
+                                    question_number=i+1,
+                                    question_set=q_dict['question_set'])
+                            qa=ca_question_set.question_attempts.create(
+                                question=q_dict['question'],
+                                seed=q_dict['seed'])
+                            q_dict['question_attempt'] = qa
+
+            except OperationalError:
+                if trans_i==4:
+                    raise
+            else:
+                break
 
         new_url = "%s?content_attempt=%s&date=%s" % \
                   (reverse('miassess:assessment', 
