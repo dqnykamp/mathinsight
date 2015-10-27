@@ -165,6 +165,14 @@ class PageType(models.Model):
         except IndexError:
             return None
 
+    @classmethod
+    def return_slide_type(theclass):
+        try:
+            return theclass.objects.get(code="slides")
+        except ObjectDoesNotExist:
+            return None
+
+
 def return_default_page_type():
     try:
         return PageType.return_default();
@@ -1516,6 +1524,7 @@ class ActiveVideoManager(models.Manager):
         return super(ActiveVideoManager, self).get_queryset() \
             .filter(publish_date__lte=datetime.date.today()).filter(hidden=False)
 
+
 class Video(models.Model):
     title = models.CharField(max_length=200)
     code = models.SlugField(max_length=100, unique=True)
@@ -1524,6 +1533,8 @@ class Video(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     transcript = models.TextField(blank=True, null=True)
+    slides = models.ForeignKey(Page, blank=True, null=True,
+                limit_choices_to={'page_type': PageType.return_slide_type()})
     thread_content_set = GenericRelation('micourses.ThreadContent')
     parameters = models.ManyToManyField(VideoTypeParameter, 
                                         through='VideoParameter', blank=True)

@@ -35,6 +35,10 @@
 
 <p><a href="{% url 'mi-videolist' %}">List of all videos</a></p>
 
+{% if video.slides %}
+<p>{% intlink video.slides %}Video slides{%endintlink %}</p>
+{% endif %}
+
 {% if video.transcript %}
 <a id="transcript" class="anchor"></a><h4>Transcript of video</h4>
 {{ video.transcript|safe }}

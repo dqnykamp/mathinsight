@@ -2665,10 +2665,13 @@ class VideoNode(template.Node):
             transcript_link = ' <a href="%s#transcript" class="video">Video transcript.</a>' % link_url
         else:
             transcript_link = ''
+        if video.slides:
+            slides_link = ' <a href="%s" class="video">Video slides.</a> ' % video.slides.get_absolute_url()
+        else:
+            slides_link = ''
 
-
-        return '%s<p><i>%s.</i> %s</p><p><a href="%s" %s class="video">More information about video.</a> %s</p></section>' % \
-            (html_string, video.title, caption, link_url, title, transcript_link)
+        return '%s<p><i>%s.</i> %s</p><p><a href="%s" %s class="video">More information about video.</a> %s%s</p></section>' % \
+            (html_string, video.title, caption, link_url, title, transcript_link, slides_link)
 
 
 def video_sub(parser, token):
