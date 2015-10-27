@@ -41,7 +41,7 @@
 
 {% if video.transcript %}
 <a id="transcript" class="anchor"></a><h4>Transcript of video</h4>
-{{ video.transcript|safe }}
+{% process_mi_tags video.transcript|safe %}
 {% endif %}
 
 
