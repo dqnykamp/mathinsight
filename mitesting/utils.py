@@ -539,37 +539,115 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     return expr
     
 
-def replace_cond_boolean_equals_in(s, evaluate=True):
+
+def replace_absolute_value(expression):
+    """
+    Look for combinations of | expr |
+    in nesting group of parenthesis, braces, or brackets
+    (treating all opening (, [, or { as equivalent
+    and all closing ), ], or } as equivalent).
+
+    Ignore case if expr is empty
+
+    If find combination, replace with __Abs__(...)
+
+
+    returns 
+    - string with __Abs__()
+
+    """
+
+    paren_stack = []
+    bar_ind = None
+    left_inds=[]
+    right_inds=[]
+    
+    for (i,char) in enumerate(expression):
+        if char=='(' or char== "[" or char=="{":
+            paren_stack.append(bar_ind)
+            bar_ind = None
+        elif char==')' or char=="]" or char=="}":
+            try:
+                bar_ind = paren_stack.pop()
+            except IndexError:
+                # unmatched parens.  
+                # Just return expression without modification.
+                return expression
+
+        elif char=="|":
+            if bar_ind is None:
+                bar_ind = i
+            elif i > bar_ind+1:
+                left_inds.append(bar_ind)
+                right_inds.append(i)
+                bar_ind = None
+            else:
+                # ignore ||
+                bar_ind = None
+    
+    if len(paren_stack):
+        # unmatched parens.  
+        # Just return expression without modification.
+        return expression
+
+
+    # replace all right_inds with )
+    new_expr_sub=expression
+    for ind in right_inds:
+        new_expr_sub = new_expr_sub[:ind] + ")" + new_expr_sub[ind+1:]
+
+
+    last_ind=0
+    new_expr=""
+    
+    left_inds.sort()
+    for ind in left_inds:
+        new_expr += new_expr_sub[last_ind:ind]
+
+        new_expr += " __Abs__("
+
+        last_ind=ind+1
+
+    new_expr += new_expr_sub[last_ind:]
+
+    return new_expr
+
+
+def replace_bar_boolean_equals_in(s, evaluate=True):
     """
     Replace |, and/&, or, =, != and "in" contain in s
     with operators to be parsed by sympy
     
-    1. Replace | (not ||) with __cond_prob__(lhs,rhs)
 
-    2. Replace 
+    1. Replace matching |arg| within same nesting level of parentheses
+    (or brackets or braces) with __Abs__(arg)
+
+    2. Replace remaining | (not ||) with __cond_prob__(lhs,rhs)
+
+    3. Replace 
        - and with &
        - or with |
        - in with placeholder symbol
 
-    3. replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
+    4. Replace = (not an == or preceded by <, >, or !) with __Eq__(lhs,rhs)
     then replace != (not !==) with __Ne__(lhs,rhs)
     If evaluate=False, add evaluate=False
 
-    4. replace in placeholder with (rhs).contains(lhs),
+    5. Replace in placeholder with (rhs).contains(lhs),
     If evaluate=False, add evaluate=False
    
-    5. replace & (not an &&) with __And__(lhs,rhs), 
+    6. Replace & (not an &&) with __And__(lhs,rhs), 
     then replace | (not ||) with __Or__(lhs,rhs).
 
-    6. if evaluate=False, replace == with __python_Eq__(lhs,rhs)
+    7. If evaluate=False, replace == with __python_Eq__(lhs,rhs)
     and !== with __python__Ne__(lhs,rhs)
     
-    7. replace expressions such as a <= b < c < d
+    8. Replace expressions such as a <= b < c < d
     with __Lts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
 
-    8. replace expressions such as a >= b > c > d
+    9. Replace expressions such as a >= b > c > d
     with __Gts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
@@ -589,12 +667,18 @@ def replace_cond_boolean_equals_in(s, evaluate=True):
     Repeats the procedure until can't find more =, !=, &, |, or in
     or until lhs or rhs is blank
 
-    Step 6 is a separate loop, as it involves multiple arguments.
+    Step 1 is a separate loop, as it is in different form.
+    Call replace_absolute_value
+
+    Step 9 is a separate loop, as it involves multiple arguments.
 
 
     """
 
     import re
+
+    
+    s = replace_absolute_value(s)
 
 
     #####################################

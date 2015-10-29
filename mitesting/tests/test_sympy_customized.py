@@ -588,6 +588,29 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(expr), "P{\\left (A ~|~ B \\right )}")
 
 
+    def test_absolute_values(self):
+        from sympy import Abs
+
+        x=Symbol('x')
+        y=Symbol('y')
+        z=Symbol('z')
+        
+        self.assertEqual(parse_expr("|x+y|"), Abs(x+y))
+        self.assertEqual(parse_expr("x|y|x|z|x"), x**3*Abs(y)*Abs(z))
+        self.assertEqual(parse_expr("|x+y|"), Abs(x+y))
+        self.assertRaises(SyntaxError, parse_expr,"|x+|y||")
+        self.assertEqual(parse_expr("|x+(|y|)|"), Abs(x+Abs(y)))
+
+        from mitesting.customized_commands import conditional_probability_expression
+        from mitesting.sympy_customized import SymbolCallable
+
+        A=Symbol("A")
+        B=Symbol("B")
+        P=SymbolCallable("P")
+        expr=parse_expr("|P(A|B)|", local_dict={'P': P})
+        self.assertEqual(expr, Abs(P(conditional_probability_expression(A,B))))
+
+
     def test_tuple_no_parens(self):
         from mitesting.sympy_customized import TupleNoParen
 
