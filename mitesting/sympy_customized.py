@@ -299,8 +299,8 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # | alone with __cond_prob__(lhs,rhs)
     from mitesting.utils import replace_bar_boolean_equals_in, replace_intervals
 
-    s=replace_bar_boolean_equals_in(s, evaluate=evaluate)
     s=replace_intervals(s, replace_symmetric=replace_symmetric_intervals)
+    s=replace_bar_boolean_equals_in(s, evaluate=evaluate)
 
     # map those replace booleans and equals to sympy functions
     from sympy import Eq, Ne, Abs

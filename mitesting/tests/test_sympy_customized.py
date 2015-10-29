@@ -558,6 +558,9 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("a < b <=c <x")
         self.assertEqual(expr, And(Lt(a,b), Le(b,c), Lt(c,x)))
 
+        expr=parse_expr("a < b <=c <x", replace_symmetric_intervals=True)
+        self.assertEqual(expr, And(Lt(a,b), Le(b,c), Lt(c,x)))
+
         expr=parse_expr("a>b >= c >=x")
         self.assertEqual(expr, And(Gt(a,b), Ge(b,c), Ge(c,x)))
 
@@ -570,6 +573,8 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr, Gts((a,b,c,x), (True, False, False), evaluate=False))
         self.assertEqual(latex(expr), "a > b \geq c \geq x")
         
+        
+
         
     def test_conditional_probability_expression(self):
         from mitesting.customized_commands import conditional_probability_expression
