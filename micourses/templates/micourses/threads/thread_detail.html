@@ -2,13 +2,27 @@
 {% block title %}Math Insight thread: {{course}}{% endblock %}
 {% block threadmenu %}class="active"{% endblock %}
 {% block nolinksection %}{% endblock %}
-{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}
+
+
 
 {% block extrastyle %}
 <link href="{{ STATIC_URL }}micourses/micourse.css" rel="stylesheet" type="text/css"/>
 <script src="{{ STATIC_URL }}js/jquery.cookie.js"></script>
 <script src="{{ STATIC_URL }}js/ajaxcsrf.js" type="text/javascript"></script>
 {% endblock %}
+
+{% block pagenav %}
+  <li><a href="#sitenav">Top</a></li>
+  {% for section in course.thread_sections.all %}
+
+  <li><a href="#s{{section.id}}">{{ section.name|truncatewords:2 }}</a>
+    {% if section.child_sections.all %}<ul>
+      {% for subsection in section.child_sections.all %}
+      <li><a href="#s{{subsection.id}}">{{ subsection.name }}</a></li>
+      {%endfor%}</ul>{%endif%}
+  </li>{%endfor%}
+{% endblock %}
+
 
 {% block content %}
 <h3>Thread: {{course}}</h3>
