@@ -431,17 +431,18 @@ class Page(models.Model):
                           'process_navigation_tags': 1,
                           'process_citations': 1,
                           'update_database': 1,
+                          'process_index_entries': 1,
                           'blank_style': 1,
                           'STATIC_URL': '',
                           '_auxiliary_data_': return_new_auxiliary_data(),
                       }
 
-        # if page is hidden, don't update image/applet/video links
+        # if page is hidden, don't update image/applet/video links or index entries
         if self.hidden:
             update_context['process_applet_entries']=0
             update_context['process_video_entries']=0
             update_context['process_image_entries']=0
-                
+            update_context['process_index_entries']=0
 
         # delete old data regarding links from templates
         self.embedded_images.clear()
@@ -451,6 +452,7 @@ class Page(models.Model):
         self.pagecitation_set.all().delete()
         self.equationtag_set.all().delete()
         self.externallink_set.all().delete()
+        self.indexentry_set.all().delete()
 
         # parse the text field with flags to enter links into database
         try:
