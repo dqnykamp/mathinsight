@@ -1607,7 +1607,8 @@ class ThreadContent(models.Model):
 
 
 
-    def get_initial_due(self, content_record=None, allow_fallback=True):
+    def get_initial_due(self, content_record=None, allow_fallback=True,
+                        student=None):
         """
         Return initial due date of thread content.
         If initial due is not defined, use final due.
@@ -1615,16 +1616,25 @@ class ThreadContent(models.Model):
 
         If allow_fallback is False, then don't fall back to final or assigned.
 
-        If content_record is specified, use adjustments to date, if given.
+        If content_record or student is specified, use any adjustments to date.
+        content_record overrides student, and doesn't require additional query.
         """
 
         if not content_record:
-            if self.initial_due or not allow_fallback:
-                return self.initial_due
-            elif self.final_due:
-                return self.final_due
-            else:
-                return self.assigned
+            if student:
+                try: 
+                    content_record = self.contentrecord_set.get(
+                        enrollment__student=student)
+                except ObjectDoesNotExist:
+                    pass
+
+            if not content_record:
+                if self.initial_due or not allow_fallback:
+                    return self.initial_due
+                elif self.final_due:
+                    return self.final_due
+                else:
+                    return self.assigned
 
         adjustment = content_record.initial_due_adjustment
 
@@ -1644,7 +1654,8 @@ class ThreadContent(models.Model):
                 return self.assigned
 
 
-    def get_final_due(self, content_record=None, allow_fallback=True):
+    def get_final_due(self, content_record=None, allow_fallback=True,
+                      student=None):
         """
         Return find due date of thread content.
         If final due is not defined, use initial due.
@@ -1652,16 +1663,25 @@ class ThreadContent(models.Model):
 
         If allow_fallback is False, then don't fall back to initial or assigned.
 
-        If student is specified, use adjustments to date, if given.
+        If content_record or student is specified, use any adjustments to date.
+        content_record overrides student, and doesn't require additional query.
         """
 
         if not content_record:
-            if self.final_due or not allow_fallback:
-                return self.final_due
-            elif self.initial_due:
-                return self.initial_due
-            else:
-                return self.assigned
+            if student:
+                try: 
+                    content_record = self.contentrecord_set.get(
+                        enrollment__student=student)
+                except ObjectDoesNotExist:
+                    pass
+
+            if not content_record:
+                if self.final_due or not allow_fallback:
+                    return self.final_due
+                elif self.initial_due:
+                    return self.initial_due
+                else:
+                    return self.assigned
 
         adjustment = content_record.final_due_adjustment
 
@@ -1681,17 +1701,27 @@ class ThreadContent(models.Model):
                 return self.assigned
 
 
-    def get_adjusted_due(self, content_record=None, skipdate_dict=None):
+    def get_adjusted_due(self, content_record=None, skipdate_dict=None,
+                         student=None):
         # adjust when due in increments of weeks
         # based on percent attendance at end of each previous week
 
         # if only one of initial due or final due is specified,
         # use that one
         
-        # if no content_record is specified, use initial due
+        # if no content_record or student is specified, use initial due
+
+        if not content_record:
+            if student:
+                try: 
+                    content_record = self.contentrecord_set.get(
+                        enrollment__student=student)
+                except ObjectDoesNotExist:
+                    pass
 
         due = self.get_initial_due(content_record=content_record)
         final_due = self.get_final_due(content_record=content_record)
+
 
         if not due:
             if not final_due:
@@ -1737,6 +1767,11 @@ class ThreadContent(models.Model):
         # return data for calculation of adjusted due date
         # adjust due date in increments of weeks
         # based on percent attendance at end of each previous week
+
+        # if content_record is provided, will use any adjustments to due dates
+        
+        # if enrollment is not provided but a content_record is,
+        # then use enrollment from content record to determine attendance
 
         if not enrollment:
             if content_record:

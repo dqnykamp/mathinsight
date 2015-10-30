@@ -54,7 +54,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 </div>
 {% endif %}{% endif %}
 </div>
-{% if due %}<div id="assessment_due_individual">Due:  <a href="{% url 'micourses:adjusted_due_calculation' course_code=course.code content_id=thread_content.id %}">{{due}}</a></div>{% endif %}
+{% if due %}<div id="assessment_due_individual">Due: {{due}}</div>{% endif %}
 
 {% endblock %}
 

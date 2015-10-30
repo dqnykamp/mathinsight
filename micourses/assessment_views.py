@@ -11,6 +11,7 @@ from django.views.generic import DetailView, View, FormView
 from django.views.generic.detail import SingleObjectMixin
 from django.http import Http404
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.db import transaction
 from django.db.utils import OperationalError
 from django.contrib.contenttypes.models import ContentType
@@ -125,9 +126,11 @@ class AssessmentView(DetailView):
         
         context['generate_course_attempt_link'] = False
         context['show_solution_link'] = False
+
+        course = self.assessment.course
+        context['course'] = course
         
-        if user_can_administer_assessment(self.request.user, 
-                                          course=self.object.course):
+        if user_can_administer_assessment(self.request.user, course=course):
             if self.thread_content:
                 context['generate_course_attempt_link'] = True
             if not self.solution:
@@ -159,10 +162,23 @@ class AssessmentView(DetailView):
             if self.course_enrollment.role == STUDENT_ROLE and self.current_attempt:
                 context['due'] = self.thread_content.get_adjusted_due(
                     self.current_attempt.record)
+
+                if course.adjust_due_attendance:
+                    due_date_url = reverse(
+                        'micourses:adjusted_due_calculation',
+                        kwargs={'course_code': course.code,
+                                'content_id': self.thread_content.id }
+                    )
+                    from micourses.utils import format_datetime
+                    current_tz = timezone.get_current_timezone()
+                    due_string = format_datetime(current_tz.normalize(
+                        context['due'].astimezone(current_tz)))
+                    context['due'] = mark_safe('<a href="%s">%s</a>' % \
+                                               (due_date_url, due_string))
+
             else:
                 context['due'] = self.thread_content.get_adjusted_due()
 
-        context['course'] = self.assessment.course
         context['thread_content'] = self.thread_content
         context['number_in_thread'] = self.number_in_thread
         context['current_attempt'] = self.current_attempt
@@ -195,7 +211,7 @@ class AssessmentView(DetailView):
 
             context['record_url'] = reverse(
                 'micourses:content_record',
-                kwargs={'course_code': self.assessment.course.code,
+                kwargs={'course_code': course.code,
                         'content_id': self.thread_content.id})
 
             if self.current_attempt.valid:
@@ -203,7 +219,7 @@ class AssessmentView(DetailView):
                                  +1
                 context['attempt_url'] = reverse(
                     'micourses:content_attempt', 
-                    kwargs={'course_code': self.assessment.course.code,
+                    kwargs={'course_code': course.code,
                             'content_id': self.thread_content.id,
                             'attempt_number': attempt_number})
 
@@ -211,7 +227,7 @@ class AssessmentView(DetailView):
                 for (ind,q) in enumerate(rendered_list):
                     q["question_data"]["attempt_url"] = reverse(
                         'micourses:question_attempts', 
-                        kwargs={'course_code': self.assessment.course.code, 
+                        kwargs={'course_code': course.code, 
                                 'content_id': self.thread_content.id, 
                                 'attempt_number': attempt_number, 
                                 'question_number': ind+1} )
@@ -238,8 +254,7 @@ class AssessmentView(DetailView):
 
         # get list of the question numbers in assessment
         # if instructor or designer in course
-        if user_can_administer_assessment(self.request.user,
-                                          course=self.object.course):
+        if user_can_administer_assessment(self.request.user, course=course):
             question_numbers=[]
             for q in rendered_list:
                 question_numbers.append(str(q['question'].id))
@@ -683,12 +698,60 @@ class AssessmentOverview(DetailView):
             
         context['thread_content']=thread_content
         context['number_in_thread'] = self.number_in_thread
-        context['course'] = self.assessment.course
+        course = self.assessment.course
+        context['course'] = course
         
         if thread_content:
             context['assessment_name'] = thread_content.get_title()
         else:
             context['assessment_name'] = self.assessment.name
+
+        from mitesting.utils import round_and_int
+        if thread_content:
+            context['thread_content_points'] = round_and_int(
+                thread_content.points)
+
+            try: 
+                student = self.request.user.courseuser
+            except AttributeError:
+                student = None
+
+            if student:
+                try:
+                    cr= thread_content.contentrecord_set.get(
+                        enrollment__student=student)
+                except ObjectDoesNotExist:
+                    cr = None
+
+                if cr:
+                    student_score = cr.score
+                    if student_score is not None:
+                        context['content_score']=round_and_int(student_score,1)
+                    else:
+                        context['content_score'] = '--'
+                    context['have_user_score'] = True
+                    context['record_url'] = reverse(
+                        'micourses:content_record',
+                        kwargs={'course_code': course.code,
+                                'content_id': thread_content.id})
+                    
+            context['assigned'] = thread_content.assigned
+            context['due'] = thread_content.get_final_due(student=student)
+            
+            if student and course.adjust_due_attendance:
+                due_date_url = reverse(
+                    'micourses:adjusted_due_calculation',
+                    kwargs={'course_code': course.code,
+                            'content_id' :thread_content.id }
+                )
+
+                from micourses.utils import format_datetime
+                current_tz = timezone.get_current_timezone()
+                due_string = format_datetime(current_tz.normalize(
+                    context['due'].astimezone(current_tz)))
+                context['due'] = mark_safe('<a href="%s">%s</a>' % \
+                                           (due_date_url, due_string))
+                
 
         # user has permission to view the assessment, given privacy level
         if self.assessment.user_can_view(self.user, solution=False):
@@ -709,7 +772,7 @@ class AssessmentOverview(DetailView):
 
         # generate assessment link if can administer and thread content exists
         if thread_content and user_can_administer_assessment(
-                self.user, course=self.object.course):
+                self.user, course=course):
             context['generate_course_attempt_link'] = True
         else:
             context['generate_course_attempt_link'] = False
