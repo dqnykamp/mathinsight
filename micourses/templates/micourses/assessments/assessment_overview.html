@@ -12,6 +12,7 @@
 
 {% process_mi_tags assessment.detailed_description %}
 
+{% if thread_content_points or assigned or due %}
 <h4>Points and due date summary</h4>
 <div id="assessment_points" style="margin-top: 1em;">
 {% if thread_content_points %}Total points: <span id="total_points">{{ thread_content_points}}</span>
@@ -22,7 +23,7 @@ Score: <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
 </div>
 {% if assigned %}<div id="assessment_assigned">Assigned: {{assigned}}</div>{% endif %}
 {% if due %}<div id="assessment_due_individual">Due:  {{due}}</div>{% endif %}
-
+{% endif %}
 
 <p>{{thread_content.comment}}</p>
 

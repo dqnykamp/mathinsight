@@ -160,10 +160,10 @@ class AssessmentView(DetailView):
 
         if self.course_enrollment and self.thread_content:
             if self.course_enrollment.role == STUDENT_ROLE and self.current_attempt:
-                context['due'] = self.thread_content.get_adjusted_due(
+                due = self.thread_content.get_adjusted_due(
                     self.current_attempt.record)
 
-                if course.adjust_due_attendance:
+                if course.adjust_due_attendance and due:
                     due_date_url = reverse(
                         'micourses:adjusted_due_calculation',
                         kwargs={'course_code': course.code,
@@ -172,10 +172,10 @@ class AssessmentView(DetailView):
                     from micourses.utils import format_datetime
                     current_tz = timezone.get_current_timezone()
                     due_string = format_datetime(current_tz.normalize(
-                        context['due'].astimezone(current_tz)))
-                    context['due'] = mark_safe('<a href="%s">%s</a>' % \
+                        due.astimezone(current_tz)))
+                    due = mark_safe('<a href="%s">%s</a>' % \
                                                (due_date_url, due_string))
-
+                context['due'] = due
             else:
                 context['due'] = self.thread_content.get_adjusted_due()
 
@@ -736,9 +736,9 @@ class AssessmentOverview(DetailView):
                                 'content_id': thread_content.id})
                     
             context['assigned'] = thread_content.assigned
-            context['due'] = thread_content.get_final_due(student=student)
+            due = thread_content.get_adjusted_due(student=student)
             
-            if student and course.adjust_due_attendance:
+            if student and course.adjust_due_attendance and due:
                 due_date_url = reverse(
                     'micourses:adjusted_due_calculation',
                     kwargs={'course_code': course.code,
@@ -748,10 +748,10 @@ class AssessmentOverview(DetailView):
                 from micourses.utils import format_datetime
                 current_tz = timezone.get_current_timezone()
                 due_string = format_datetime(current_tz.normalize(
-                    context['due'].astimezone(current_tz)))
-                context['due'] = mark_safe('<a href="%s">%s</a>' % \
-                                           (due_date_url, due_string))
-                
+                    due.astimezone(current_tz)))
+                due = mark_safe('<a href="%s">%s</a>' % \
+                                (due_date_url, due_string))
+            context['due']=due
 
         # user has permission to view the assessment, given privacy level
         if self.assessment.user_can_view(self.user, solution=False):
