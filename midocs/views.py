@@ -1,4 +1,4 @@
-from midocs.models import NotationSystem, Author, Objective, Subject, Keyword, RelationshipType, Page, PageType, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem, return_default_page_type
+from midocs.models import NotationSystem, Author, Objective, Subject, Keyword, RelationshipType, Page, PageType, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem, return_default_page_type, AuxiliaryFile
 from django import http, forms
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.decorators.http import last_modified
@@ -13,6 +13,7 @@ from django.contrib import auth
 import django.contrib.auth.views
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.views.generic import ListView, DetailView
 from itertools import chain
 from haystack.views import SearchView
 import datetime
@@ -736,3 +737,24 @@ def login(request, *args, **kwargs):
             request.session.set_expiry(0)
     
     return django.contrib.auth.views.login(request, *args, **kwargs)
+
+
+class AuxiliaryFileView(DetailView):
+    template_name = "midocs/auxiliary_file_detail.html"
+    model = AuxiliaryFile
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        
+        queryset = queryset.filter(
+            code=self.kwargs.get("file_code"),
+            file_type__code=self.kwargs.get("file_type_code"))
+
+        try:
+            # Get the single item from the filtered queryset
+            obj = queryset.get()
+        except queryset.model.DoesNotExist:
+            raise Http404(_("No %(verbose_name)s found matching the query") %
+                          {'verbose_name': queryset.model._meta.verbose_name})
+        return obj
+

@@ -2,6 +2,7 @@ from django.conf.urls import patterns, url
 from django.views.generic import ListView, DetailView
 from midocs.models import Applet, Video, Image, Page
 from midocs import views
+from midocs.views import AuxiliaryFileView
 import datetime
 
 paginate_by=20
@@ -18,6 +19,8 @@ urlpatterns = [
     url(r'^index/(?P<index_code>\w+)$', views.indexview, name="mi-index"),
     url(r'^page/list$', ListView.as_view(template_name="midocs/all_page_list.html", queryset=Page.objects.filter(publish_date__lte=datetime.date.today(),hidden=False), paginate_by=paginate_by), name='mi-allpages'),
     url(r'^similar/(?P<slug>\w+)$', DetailView.as_view(template_name="midocs/similar_page_list.html", model=Page, slug_field='code', context_object_name="thepage"), name="mi-similar"),
+    url(r'^auxiliary/(?P<file_type_code>\w+)/(?P<file_code>\w+)$', 
+        AuxiliaryFileView.as_view(), name="mi-auxiliary"),
     url(r'^(?P<page_type_code>\w+)/(?P<page_code>\w+)$', views.pageview, name='mi-page_with_type'),
 ]
 

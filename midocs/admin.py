@@ -403,7 +403,11 @@ class AppletObjectTypeAdmin(reversion.VersionAdmin):
 class ReferenceTypeAdmin(reversion.VersionAdmin):
     pass
 class AuxiliaryFileTypeAdmin(reversion.VersionAdmin):
-    pass
+    def get_readonly_fields(self, request, obj=None):
+        if obj: # editing an existing object
+            return self.readonly_fields + ('code',)
+        return self.readonly_fields
+
 class AuxiliaryFileAdmin(reversion.VersionAdmin):
     pass
 class CopyrightTypeAdmin(reversion.VersionAdmin):

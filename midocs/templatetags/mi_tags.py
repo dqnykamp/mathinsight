@@ -1,6 +1,6 @@
 from django.db import models, transaction
 from django import template
-from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type
+from midocs.models import Page, PageType, PageNavigation, PageNavigationSub, IndexEntry, IndexType, Image, ImageType, Applet, AppletType, Video, EquationTag, ExternalLink, PageCitation, Reference, return_default_page_type, AuxiliaryFile
 from micourses.models import Assessment
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -63,6 +63,8 @@ class InternalLinkNode(template.Node):
             target_class = Image
         elif isinstance(target, Assessment):
             target_class = Assessment
+        elif isinstance(target, AuxiliaryFile):
+            target_class = AuxiliaryFile
             
         # if target is not an object, then check for type kwarg
         # and look for that type of object with code given by target
@@ -81,9 +83,12 @@ class InternalLinkNode(template.Node):
                 target_class=Image
             elif target_class_string=="assessment":
                 target_class=Assessment
+            elif target_class_string=="auxiliary_file":
+                target_class=AuxiliaryFile
             else:
                 target_class=Page
-            
+
+
             # since target was not an object, try to find
             # target instance using target varaiable as a code
             try:
@@ -181,6 +186,39 @@ class InternalLinkNode(template.Node):
                     if not target:
                         raise Assessment.DoesNotExist
 
+                        
+                elif target_class == AuxiliaryFile:
+                    # for auxiliary file, the code doesn't uniquely specify
+                    # the file.  Need file_type_code.
+                    
+                    # If file_type is not a kwarg, then try to find
+                    # a matching auxiliary file with code of any type
+                    
+                    
+                    target_code=target
+                    target=None
+
+                    file_type = kwargs.get("file_type")
+                    if file_type:
+                        from midocs.models import AuxiliaryFileType
+                        if not isinstance(file_type, AuxiliaryFileType):
+                            # if file_type doesn't exist
+                            # will return broken link
+                            file_type=AuxiliaryFileType.objects.get(
+                                code = file_type)
+                        # if auxiliary_file not found, return broken link
+                        target=AuxiliaryFile.objects.get(code=target_code,
+                                                         file_type=file_type)
+
+                    if not target:
+                        target = AuxiliaryFile.objects.filter(code=target_code)\
+                                                      .first()
+
+                    # couldn't find file, return broken link
+                    if not target:
+                        raise AuxiliaryFile.DoesNotExist
+
+                
                 elif target_class == Page:
 
                     # for Page, determine page type
@@ -229,9 +267,6 @@ class InternalLinkNode(template.Node):
             
         if blank_style:
             return " %s " % link_text
-
-        if kwargs.get("extended"):
-            return target.return_extended_link(**kwargs)
 
         return target.return_link(**kwargs)
 

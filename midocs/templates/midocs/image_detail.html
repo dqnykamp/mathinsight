@@ -22,7 +22,7 @@
 <p>Image file: <a href="{{ imagefile.url }}">{{ image_filename }}</a></p>
 {% if image.original_file %}<p>Source image file: <a href="{{ image.original_file.url }}">{{ original_image_filename }}</a>{% if image.original_file_type%}<br/>Source image type: {{ image.original_file_type.name }}{%endif%}</p>{%endif%}
 
-{% for auxiliary in image.auxiliary_files.all %}<p>{{ auxiliary.file_type.heading }}: <a href="{{  auxiliary.auxiliary_file.url }}">{{ auxiliary.get_filename }}</a></p>{% endfor %}
+{% for auxiliary in image.auxiliary_files.all %}<p>{{ auxiliary.file_type.heading }}: {% intlink auxiliary direct=True %}{% endintlink %}</p>{% endfor %}
 
 <h4>Image links</h4>
 {% if in_pages %}

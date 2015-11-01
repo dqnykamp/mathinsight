@@ -10,6 +10,7 @@ from django.contrib.sites.models import Site
 from django.utils.encoding import smart_text
 from django.utils.safestring import mark_safe
 from django.db.models import Max
+from django.core.urlresolvers import reverse
 import re
 import random
 from math import *
@@ -20,6 +21,7 @@ from io import StringIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
 from mitesting.models import Question
+
 
 # from django.contrib.comments.moderation import moderator
 # from micomments.moderation import ModeratorWithoutObject, ModeratorWithObject
@@ -212,20 +214,62 @@ class AuxiliaryFileType(models.Model):
 
 def auxiliary_path(instance, filename):
     extension = os.path.splitext(filename)[1]
-    return os.path.join(settings.AUXILIARY_UPLOAD_TO, "%s%s" % (instance.code, extension))
+    return os.path.join(settings.AUXILIARY_UPLOAD_TO, "%s/%s%s" % \
+                        (instance.file_type.code, instance.code, extension))
 
 class AuxiliaryFile(models.Model):
-    code = models.SlugField(max_length=50, unique=True)
+    code = models.SlugField(max_length=50)
     file_type = models.ForeignKey(AuxiliaryFileType)
-    description = models.CharField(max_length=400)
+    description = models.CharField(max_length=400, blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True)
     auxiliary_file = models.FileField(max_length=150, 
                                       upload_to=auxiliary_path, 
                                       blank=True, verbose_name="file",
                                       storage=OverwriteStorage())
+
+    class Meta:
+        unique_together = ('code', 'file_type')
+
     def __str__(self):
         return self.code
+
     def get_filename(self):
-        return re.sub(settings.AUXILIARY_UPLOAD_TO,"", self.auxiliary_file.name)  # get rid of upload path
+        return re.sub(
+            "%s%s/" % (settings.AUXILIARY_UPLOAD_TO, self.file_type.code), "",
+                       self.auxiliary_file.name)  # get rid of upload path
+
+    def get_absolute_url(self):
+        return reverse('mi-auxiliary', kwargs={
+            'file_type_code': self.file_type.code,
+            'file_code': self.code
+        })
+
+    def get_file_url(self):
+        return self.auxiliary_file.url
+
+        
+    def return_link(self, **kwargs):
+        direct = kwargs.get("direct")
+
+        try:
+            link_text=kwargs["link_text"]
+        except KeyError:
+            if direct:
+                link_text = self.get_filename()
+            else:
+                link_text = "%s: %s" % (self.file_type.heading, 
+                                        self.get_filename())
+
+        link_title="%s: %s" % (self.get_filename() ,self.description)
+
+        if direct:
+            link_url = self.get_file_url()
+        else:
+            link_url = self.get_absolute_url()
+        
+        return mark_safe('<a href="%s" title="%s">%s</a>' % \
+                             (link_url, link_title, link_text))
+
 
     def save(self, *args, **kwargs):
         # check if changed code
@@ -233,7 +277,7 @@ class AuxiliaryFile(models.Model):
         changed_code=False
         if self.pk is not None:
             orig = AuxiliaryFile.objects.get(pk=self.pk)
-            if orig.code != self.code:
+            if orig.code != self.code or orig.file_type != self.file_type:
                 changed_code = True
 
         super(AuxiliaryFile, self).save(*args, **kwargs) 
@@ -314,6 +358,9 @@ class Page(models.Model):
         return "Page: %s" % self.title
 
     def return_link(self, **kwargs):
+        if kwargs.pop('extended', False):
+            return return_extended_link(self, **kwargs)
+
         try:
             link_text=kwargs["link_text"]
         except KeyError:
@@ -795,6 +842,9 @@ class Image(models.Model):
           return "Image: %s" % self.title
 
     def return_link(self, **kwargs):
+        if kwargs.pop('extended', False):
+            return return_extended_link(self, **kwargs)
+
         link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "image")
@@ -1120,6 +1170,9 @@ class Applet(models.Model):
           return "Applet: %s" % self.title
 
     def return_link(self, **kwargs):
+        if kwargs.pop('extended', False):
+            return return_extended_link(self, **kwargs)
+
         link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "applet")
@@ -1574,6 +1627,9 @@ class Video(models.Model):
         return "Video: %s" % self.title
       
     def return_link(self, **kwargs):
+        if kwargs.pop('extended', False):
+            return return_extended_link(self, **kwargs)
+
         link_text=kwargs.get("link_text", self.annotated_title())
         link_title="%s: %s" % (self.annotated_title(),self.description)
         link_class=kwargs.get("link_class", "video")
