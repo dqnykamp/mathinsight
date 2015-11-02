@@ -1190,6 +1190,8 @@ def Geogebra_change_object_javascript(context, appletobject,applet_variable,
     except:
         value = objectvalue
 
+    javascript=""
+
     try:
         if object_type=='Point':
             # sympify to turn strings into tuple
