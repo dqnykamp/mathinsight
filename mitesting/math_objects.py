@@ -383,12 +383,18 @@ class math_object(object):
 
         # As long as evaluate is not False
         # convert customized ln command to customized log command
+        # also convert sympy log to customized log command
         if evaluate_level != EVALUATE_NONE:
             from .user_commands import log, ln
-            expression = bottom_up(expression, 
-                lambda w: w if not w.func==ln else log(*w.args))
-            new_expr = bottom_up(new_expr, 
-                lambda w: w if not w.func==ln else log(*w.args))
+            from sympy import log as sympy_log
+            def replace_logs(w):
+                if w.func == ln or w.func == sympy_log:
+                    return log(*w.args)
+                else:
+                    return w
+            expression = bottom_up(expression, replace_logs)
+            new_expr = bottom_up(new_expr, replace_logs)
+
 
         # Calculate the normalized expressions for both expressions,
         # rounded to precision as specified by 

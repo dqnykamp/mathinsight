@@ -1134,3 +1134,23 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expression3)['fraction_equal'],1)
 
+
+
+    def test_compare_logs(self):
+        from sympy import Integral
+        from mitesting.user_commands import log, ln
+        local_dict = {'Integral': Integral, 'log': log, 'ln': ln}
+        
+        from mitesting.sympy_customized import parse_expr
+        expr1 = parse_expr("Integral(s^2-1/(3s),(s,t))", local_dict=local_dict).doit()
+        expr2 = parse_expr("t^3/3-log(t)/3", local_dict=local_dict).doit()
+        expr3 = parse_expr("t^3/3-ln(t)/3", local_dict=local_dict).doit()
+
+        self.assertNotEqual(expr1,expr2)
+        self.assertNotEqual(expr1,expr3)
+        self.assertNotEqual(expr2,expr3)
+
+        mobject = math_object(expr1)
+
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
