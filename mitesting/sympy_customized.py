@@ -1112,8 +1112,13 @@ class MulUnsort(Mul):
         # keep track if an initial factor of -1 was originally added, 
         # and should be displayed
         # or was just added to switch the sign, and should not be displayed
-        if not self.display_initial_negative_one and self.args[0]==-1:
-            return MulUnsort(*self.args[1:])
+        try:
+            if not self.display_initial_negative_one and self.args[0]==-1:
+                return MulUnsort(*self.args[1:])
+        except AttributeError:
+            # Sometimes get attribute error for display_initial_negative_one.
+            # Not sure what causes it, but we'll ignore it
+            pass
         arg0=_get_coeff(self)
         if arg0.is_Number and arg0.is_negative:
             return MulUnsort(-self.args[0], *self.args[1:])
