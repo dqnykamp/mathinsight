@@ -403,7 +403,7 @@ def return_parsed_function(expression, function_inputs, name,
             if cls.eval_level == EVALUATE_NONE:
                 expr_sub=bottom_up(expr_sub,
                     lambda w: w if w not in replace_dict else replace_dict[w],
-                                   atoms=True)
+                                   atoms=True, evaluate=False)
             else:
                 # if evaluated, then replace unevaluated commands at same time
                 # as substitute in the input values so that function is 

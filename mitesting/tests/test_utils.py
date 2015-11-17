@@ -342,7 +342,19 @@ class TestParsedFunction(SimpleTestCase):
                                      evaluate_level=Expression.EVALUATE_NONE)
         self.assertEqual(repr(fun(z)), '3*z*(-1)*1*z - 1 + 0 - 3 + z')
         self.assertEqual(latex(fun(z)), '3 z \\left(-1\\right) 1 z - 1 + 0 - 3 + z')
-        
+
+        from sympy import log, S
+        fun = return_parsed_function("log(x)", "x", name="f", local_dict={'log': log},
+                                     evaluate_level=Expression.EVALUATE_NONE)
+        fun_34 = fun(S("3/4"))
+        self.assertEqual(fun_34, log(S("3/4"), evaluate=False))
+        self.assertNotEqual(fun_34, log(S("3/4")))
+
+        fun = return_parsed_function("log(x)", "x", name="f", local_dict={'log': log})
+        fun_34 = fun(S("3/4"))
+        self.assertNotEqual(fun_34, log(S("3/4"), evaluate=False))
+        self.assertEqual(fun_34, log(S("3/4")))
+
 
     def test_is_number(self):
         from mitesting.user_commands import is_number
