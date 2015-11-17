@@ -394,10 +394,33 @@ class log(sympy_log):
     def _should_evalf(cls, arg):
         return -1
 
+    @classmethod
+    def eval(cls, arg, base=None):
+        from sympy.core import sympify
+        arg = sympify(arg)
+
+        # don't replace logs of rational with difference of logs
+        if arg.is_Number and arg.is_Rational and arg.q != 1:
+            return
+        else:
+            return super(log, cls).eval(arg,base)
+
+
 class ln(sympy_log):
     @classmethod
     def _should_evalf(cls, arg):
         return -1
+
+    @classmethod
+    def eval(cls, arg, base=None):
+        from sympy.core import sympify
+        arg = sympify(arg)
+
+        # don't replace logs of rational with difference of logs
+        if arg.is_Number and arg.is_Rational and arg.q != 1:
+            return
+        else:
+            return super(ln, cls).eval(arg,base)
 
 class exp(sympy_exp):
     @classmethod

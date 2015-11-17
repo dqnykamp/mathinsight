@@ -531,7 +531,7 @@ class MathObjectTests(SimpleTestCase):
         mobject = math_object(expr, round_on_compare=4,
                               evaluate_level=EVALUATE_FULL)
         self.assertEqual(mobject,expr)
-        self.assertNotEqual(mobject,expr2)
+        self.assertEqual(mobject,expr2)
         self.assertNotEqual(mobject,expr_rounded)
         self.assertNotEqual(mobject,expr_rounded2)
         self.assertNotEqual(mobject,expr_too_rounded)
@@ -1154,3 +1154,34 @@ class MathObjectTests(SimpleTestCase):
 
         self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
         self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+
+        
+        expr1 = parse_expr("log(0.7)", local_dict=local_dict)
+        expr2 = parse_expr("ln(0.7)", local_dict=local_dict)
+        expr3 = parse_expr("log(7/10)", local_dict=local_dict)
+        expr4 = parse_expr("ln(7/10)", local_dict=local_dict)
+        expr5 = parse_expr("log(7) - log(10)", local_dict=local_dict)
+        expr6 = parse_expr("ln(7) - ln(10)", local_dict=local_dict)
+        
+        mobject = math_object(expr1)
+
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr4)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
+
+        # not sure that we want these to be true
+        # but have these tests to alert if change from current implementation
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal_on_normalize'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal_on_normalize'],0)
+
+        mobject = math_object(expr1, round_on_compare=4)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],1)
+        
+        mobject = math_object(expr3)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal_on_normalize'],1)
+        self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal_on_normalize'],1)

@@ -482,7 +482,8 @@ def try_normalize_expr(expr):
     If relational, subtract rhs from both sides.
     Convert any subclass of Matrix to Matrix.
     Convert any subclass of Derivative to Derivative
-    Use, doit, expand, then ratsimp to simplify rationals, then expand again
+    Convert customized log commands to sympy log
+    Use doit, expand, then ratsimp to simplify rationals, then expand again
     """
     
     def _remove_one_coefficient(expr):
@@ -495,6 +496,14 @@ def try_normalize_expr(expr):
                 return Mul(*expr.args[1:])
         else:
             return expr
+
+    from .user_commands import log, ln
+    from sympy import log as sympy_log
+    def replace_logs_to_sympy(w):
+        if w.func == ln or w.func == log:
+            return sympy_log(*w.args)
+        else:
+            return w
 
     def normalize_transformations(w):
         # same as
@@ -549,6 +558,8 @@ def try_normalize_expr(expr):
         pass
 
 
+    # replace logs with sympy log
+    expr = bottom_up(expr, replace_logs_to_sympy)
     # transformations to try to normalize
     expr= bottom_up(expr, normalize_transformations)
     # remove any cofficients of 1.0
