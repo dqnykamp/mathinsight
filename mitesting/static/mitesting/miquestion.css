@@ -10,9 +10,32 @@ th, td, tbody th, thead th, tbody td, thead td {
 /* don't highlight row on mouse over */
 tbody tr:hover th,
 tbody tr:hover td {
-    background: transparaent;
+    background: transparent;
 }
 
+table.contingency th, table.contingency td, table.contingency thead th,table.contingency thead td, table.contingency tbody th, table.contingency tbody td {
+    padding: 0.2em;
+}
+table.contingency thead th {
+    border-bottom: 2px solid black;
+    text-align: center;
+}
+table.contingency tbody th {
+    border-right: 2px solid black;
+}
+table.contingency thead th.ul_corner {
+    border-bottom: 2px solid black;
+    border-right: 2px solid black;
+
+}
+table.contingency .row_total {
+    background: #f9f9f9;
+    border-left: 1px solid gray;
+}
+table.contingency .col_total {
+    background: #f9f9f9;
+    border-top: 1px solid gray;
+}
 
 ol ol {
     list-style-type: lower-alpha;
