@@ -495,6 +495,23 @@ class ParseExprTests(SimpleTestCase):
         expr = parse_expr('f in {fsym,y,z}', local_dict={'f': f, 'fsym': fsym})
         self.assertEqual(expr, True)
 
+
+    def test_callable_symbol_commutative(self):
+        # symbol callable is commutative even with argument such an equality
+        from mitesting.sympy_customized import SymbolCallable
+        
+        P=SymbolCallable('P')
+
+        local_dict = {'P': P}
+        expr = parse_expr("P(R=1)", local_dict=local_dict)
+        self.assertTrue(expr.is_commutative)
+        
+        expr = parse_expr("P(A)/P(R=1)", local_dict=local_dict)
+        self.assertEqual(latex(expr), 
+            '\\frac{P{\\left (A \\right )}}{P{\\left (R = 1 \\right )}}')
+    
+
+
     def test_relational(self):
         from sympy import Eq, Ne, Lt, Ge
         from mitesting.sympy_customized import Or, And

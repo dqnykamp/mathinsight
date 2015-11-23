@@ -500,7 +500,6 @@ def auto_symbol_real(tokens, local_dict, global_dict):
     return result
 
 
-
 class SymbolCallable(Symbol):
     def __eq__(self, other):
         if self is other:
@@ -516,6 +515,10 @@ class SymbolCallable(Symbol):
             h = hash(('Symbol',) + self._hashable_content())
             self._mhash = h
         return h
+
+    def __call__(self, *args):
+        return UndefinedFunction(self.name, is_commutative=True)(*args)
+
 
 def _token_callable(token, local_dict, global_dict, nextToken=None, 
                     include_symbol_callable=True):
