@@ -17,6 +17,7 @@ from django.db.utils import OperationalError
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django import forms
+from django.views.decorators.csrf import ensure_csrf_cookie
 from micourses.forms import GenerateCourseAttemptForm
 import reversion
 
@@ -48,6 +49,7 @@ class AssessmentView(DetailView):
     # so can deal with possible transaction deadlock.
     # Instead, will create transaction save data
     @method_decorator(transaction.non_atomic_requests)
+    @method_decorator(ensure_csrf_cookie)
     def dispatch(self, *args, **kwargs):
         return super(AssessmentView, self).dispatch(*args, **kwargs)
 

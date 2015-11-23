@@ -1,6 +1,6 @@
 from midocs.models import NotationSystem, Author, Objective, Subject, Keyword, RelationshipType, Page, PageType, PageRelationship, Image, Applet, Video, IndexType, IndexEntry, NewsItem, return_default_page_type, AuxiliaryFile
 from django import http, forms
-from django.views.decorators.csrf import requires_csrf_token
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import last_modified
 from django.shortcuts import render_to_response, get_object_or_404, render
 from django.template import RequestContext, loader, TemplateDoesNotExist, Template, Context
@@ -79,6 +79,7 @@ def date_page(request, page_code, page_type_code=None):
 
 
 @last_modified(date_page)
+@ensure_csrf_cookie
 def pageview(request, page_code, page_type_code=None, overview=False):
     if page_type_code is None:
         page_type = return_default_page_type()
