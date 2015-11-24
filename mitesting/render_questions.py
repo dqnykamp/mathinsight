@@ -795,6 +795,23 @@ def render_question(question_dict, rng, solution=False,
                 + " due to failed condition.</p>"),
             'seed': seed,
         }
+        
+        # save new seed to question attempt so on next reload,
+        # a new seed will be tried.
+        if question_attempt and seed==question_attempt.seed:
+            question_attempt.seed = context_results["seed"]
+
+            # repeat so that can retry if get transaction deadlock
+            for trans_i in range(5):
+                try:
+                    with transaction.atomic(), reversion.create_revision():
+                        question_attempt.save()
+                except OperationalError:
+                    if trans_i==4:
+                        raise
+                else:
+                    break
+            
         return question_data
 
 
