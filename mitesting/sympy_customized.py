@@ -1072,9 +1072,16 @@ class MulUnsort(Mul):
         if isinstance(other, MulUnsort):
             if self.args == other.args:
                 if self.args[0]==-1:
-                    if self.display_initial_negative_one == \
-                       other.display_initial_negative_one:
-                        return True
+                    try:
+                        self_dino = self.display_initial_negative_one
+                    except AttributeError:
+                        self_dino = True
+                    try:
+                        other_dino = other.display_initial_negative_one
+                    except AttributeError:
+                        other_dino = True
+                    if self_dino == other_dino:
+                            return True
                     else:
                         return False
                 else:
