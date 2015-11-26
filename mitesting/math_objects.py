@@ -516,6 +516,12 @@ def try_normalize_expr(expr):
             w= w.expand()
         except (AttributeError, TypeError):
             pass
+        if w.has(sympy_log):
+            from sympy import logcombine
+            try:
+                w = logcombine(w)
+            except TypeError:
+                pass
         try:
             w=w.ratsimp().expand()
         except (AttributeError,PolynomialError,UnicodeEncodeError, TypeError):
@@ -563,7 +569,7 @@ def try_normalize_expr(expr):
     # transformations to try to normalize
     expr= bottom_up(expr, normalize_transformations)
     # remove any cofficients of 1.0
-    expr=bottom_up(expr, _remove_one_coefficient)
+    #expr=bottom_up(expr, _remove_one_coefficient)
     
     return(expr)
 

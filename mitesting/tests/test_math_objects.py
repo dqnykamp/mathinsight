@@ -621,6 +621,18 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
 
+        from mitesting.user_commands import log
+        expression = log(4)-log(6)
+        expression2 = log(2)-log(3)
+        mobject = math_object(expression)
+        self.assertEqual(mobject,expression)
+        self.assertNotEqual(mobject,expression2)
+        self.assertEqual(str(mobject), latex(expression))
+        self.assertEqual(mobject.compare_with_expression(expression)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal'],0)
+        self.assertEqual(mobject.compare_with_expression(expression2)['fraction_equal_on_normalize'],1)
+
+
     def test_split_symbols_on_compare(self):
         mobject = math_object("x")
         self.assertFalse(mobject.return_split_symbols_on_compare())
