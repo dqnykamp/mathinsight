@@ -17,7 +17,7 @@ from math import *
 from midocs.storage import OverwriteStorage
 import os
 from PIL import Image as PILImage
-from io import StringIO
+from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
 from mitesting.models import Question
@@ -961,7 +961,7 @@ class Image(models.Model):
             image.thumbnail(thumb_size, PILImage.ANTIALIAS)
         
             # save the thumbnail to memory
-            temp_handle = StringIO()
+            temp_handle = BytesIO()
             image.save(temp_handle, 'png')
             temp_handle.seek(0) # rewind the file
         
@@ -1367,7 +1367,7 @@ class Applet(models.Model):
             image.thumbnail(thumb_size, PILImage.ANTIALIAS)
         
             # save the thumbnail to memory
-            temp_handle = StringIO()
+            temp_handle = BytesIO()
             image.save(temp_handle, 'png')
             temp_handle.seek(0) # rewind the file
         
