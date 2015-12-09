@@ -241,12 +241,14 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         assume_real_variables=assume_real_variables,
                         parse_subscripts=True)
             except ValueError as e:
-                if "real intervals" in e.args[0]:
-                    feedback="Cannot evaluate answer; variables used in intervals must be real."
-                    break
-                else:
-                    feedback = "Sorry.  Unable to understand the answer."
-                    break
+                try:
+                    if "real intervals" in e.args[0]:
+                        feedback="Cannot evaluate answer; variables used in intervals must be real."
+                        break
+                except:
+                    pass
+                feedback = "Sorry.  Unable to understand the answer."
+                break
             except Exception as e:
                 feedback = "Sorry.  Unable to understand the answer."
                 break
