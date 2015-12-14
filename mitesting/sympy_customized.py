@@ -340,10 +340,19 @@ def parse_expr(s, global_dict=None, local_dict=None,
                                       global_dict=new_global_dict)
 
     # call sympify after parse_expr to convert tuples to Tuples
-    expr = sympify(sympy_parse_expr(
-            s, global_dict=new_global_dict, local_dict=new_local_dict, 
-            transformations=transformations, evaluate=evaluate))
-
+    for i in range(10):
+        try:
+            expr = sympify(sympy_parse_expr(
+                s, global_dict=new_global_dict, local_dict=new_local_dict, 
+                transformations=transformations, evaluate=evaluate))
+        except RuntimeError as e:
+            # Horrible hack since sometimes will get maximum recursion
+            # due to a loop in evalf when evaluate=False.
+            # Only occurs the first 4 or so times, then disappears.
+            pass
+        else:
+            break
+        
     # if expr is a Tuple, but s had implicit parentheses, 
     # then return TupleNoParen
     if isinstance(expr,Tuple):
