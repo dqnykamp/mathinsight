@@ -19,6 +19,9 @@ Ubuntu packages:
 elasticsearch (1.70)
 python3-scipy (0.13.3)
 ipython3
+libjpeg-dev
+zlib1g-dev
+libmysqlclient-dev
 
 Command to install timezone tables in MySQL.  Something like:
 

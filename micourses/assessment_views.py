@@ -259,8 +259,18 @@ class AssessmentView(DetailView):
         if user_can_administer_assessment(self.request.user, course=course):
             question_numbers=[]
             for q in rendered_list:
-                question_numbers.append(str(q['question'].id))
+                # if staff, add link to admin page for quesiton
+                if self.request.user.is_staff:
+                    question_numbers.append(
+                        "<a href='%s'>%s</a>" % (
+                            reverse('admin:mitesting_question_change',
+                                    args=(q['question'].id,)),
+                            q['question'].id)
+                    )
+                else:
+                    question_numbers.append(str(q['question'].id))
             question_numbers = ", ".join(question_numbers)
+            question_numbers = mark_safe(question_numbers)
         else:
             question_numbers=None
         context['question_numbers']=question_numbers

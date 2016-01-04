@@ -5,6 +5,7 @@ from django.template.defaultfilters import floatformat
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 from django.conf import settings
+from django.core import urlresolvers
 
 register=Library()
 
@@ -92,6 +93,7 @@ def thread_section_edit(context, section):
             'course': course,
             'thread_contents': thread_contents,
             'all_thread_contents': context['all_thread_contents'],
+            'courseuser': context.get('courseuser'),
     }
 
 @register.inclusion_tag('micourses/threads/thread_content.html', takes_context=True)
@@ -127,8 +129,18 @@ def thread_content_edit(context, content):
     if content.find_next(thread_contents=all_thread_contents) or content.section.find_next():
         move_down=True
 
+    app_label = content.content_object._meta.app_label
+    model_name =content.content_object._meta.object_name.lower()
+
+    admin_url = urlresolvers.reverse(
+        'admin:%s_%s_change' % (app_label,model_name),
+        args=(content.content_object.id,))
+
     return {'thread_content': content, 
             'id': content.id,
             'move_up': move_up,
             'move_down': move_down,
+            'admin_url': admin_url,
+            'model_name': model_name,
+            'courseuser': context.get('courseuser'),
     }

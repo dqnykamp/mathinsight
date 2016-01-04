@@ -380,6 +380,24 @@ class math_object(object):
 
         evaluate_level = self.return_evaluate_level()
 
+        if evaluate_level != EVALUATE_NONE:
+            comparison_evaluate = None
+        else:
+            comparison_evaluate = False
+
+        # replace Symbol('lamda') with Symbol('lambda')
+        def replace_lamda(w):
+            if w == Symbol('lamda'):
+                return Symbol('lambda')
+            elif w == Symbol('lamda', real=True):
+                return Symbol('lambda', real=True)
+            else:
+                return w
+
+        expression = bottom_up(expression, replace_lamda,
+                               evaluate=comparison_evaluate, atoms=True)
+        new_expr = bottom_up(new_expr, replace_lamda,
+                             evaluate=comparison_evaluate, atoms=True)
 
         # As long as evaluate is not False
         # convert customized ln command to customized log command
@@ -410,18 +428,12 @@ class math_object(object):
         # As long as evaluate is not False
         # evaluate both expressions to precision as specified by
         # round_on_compare and round_absolute (with additional rounding)
-        if evaluate_level != EVALUATE_NONE:
-            comparison_evaluate = None
-        else:
-            comparison_evaluate = False
-            
         new_expr = self.eval_to_comparison_precision(
             new_expr, additional_rounding=additional_rounding,
             evaluate=comparison_evaluate)
         expression = self.eval_to_comparison_precision(
             expression, additional_rounding=additional_rounding,
             evaluate=comparison_evaluate)
-
 
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         match_partial_on_compare = self._parameters.get(

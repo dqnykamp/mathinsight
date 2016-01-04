@@ -166,6 +166,20 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr("as^2+x+y", local_dict=sub_dict),
                          4*x**2*y**2+x+y)
 
+    def test_greek_unicode(self):
+        s1 = "alpha^2*beta/(gamma-epsilon^2)+ delta^2(zeta)eta^3/theta -(iota^2-kappa^2)^2/(lambda/mu-nu+xi)+ pi^2rho^3/(sigma+tau^2) + phi*psi^3/omega"
+        s2 = "α^2*β/(γ-ε^2)+δ^2(ζ)η^3/θ-(ι^2-κ^2)^2/(λ/μ-ν+ξ)+π^2ρ^3/(σ+τ^2) + φ*ψ^3/ω"
+        expr1 = parse_expr(s1, split_symbols=True)
+        expr2 = parse_expr(s2, split_symbols=True)
+        self.assertEqual(expr1,expr2)
+        
+        s1="ϵϕ"
+        s2='εφ'
+        expr1 = parse_expr(s1, split_symbols=True)
+        expr2 = parse_expr(s2, split_symbols=True)
+        self.assertEqual(expr1,expr2)
+        
+
     def test_if_symbol(self):
         if_symbol = Symbol('if')
         x = Symbol('x')

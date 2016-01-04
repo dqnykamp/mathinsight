@@ -266,9 +266,42 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=re.sub('\u212f', '__E__', s)
     new_local_dict['__E__'] = E
 
-    # replace unicode pi with __pi__, which is mapped to sympy pi
-    s=re.sub('\u03c0', '__pi__', s)
-    new_local_dict['__pi__'] = pi
+    # replace lower case unicode greek letters
+    greek_alphabet_with_spaces = {
+        '\u03B1': ' alpha ',
+        '\u03B2': ' beta ',
+        '\u03B3': ' gamma ',
+        '\u03B4': ' delta ',
+        '\u03B5': ' epsilon ',
+        '\u03B6': ' zeta ',
+        '\u03B7': ' eta ',
+        '\u03B8': ' theta ',
+        '\u03B9': ' iota ',
+        '\u03BA': ' kappa ',
+        '\u03BB': ' lambda ',
+        '\u03BC': ' mu ',
+        '\u03BD': ' nu ',
+        '\u03BE': ' xi ',
+        '\u03BF': ' omicron ',
+        '\u03C0': ' pi ',
+        '\u03C1': ' rho ',
+        '\u03C3': ' sigma ',
+        '\u03C4': ' tau ',
+        '\u03C5': ' upsilon ',
+        '\u03C6': ' phi ',
+        '\u03C7': ' chi ',
+        '\u03C8': ' psi ',
+        '\u03C9': ' omega ',
+        '\u03F5': ' epsilon ',
+        '\u03D5': ' phi ',
+    }    
+    
+    for grk in greek_alphabet_with_spaces:
+        s = re.sub(grk, greek_alphabet_with_spaces[grk], s)
+        
+    # map pi to sympy pi
+    new_local_dict['pi'] = pi
+
 
     if parse_subscripts:
         # replace a_b  with __subscriptsymbol__(a,b)
@@ -766,7 +799,30 @@ def split_symbols_custom(predicate):
 #: split Greek character names, so ``theta`` will *not* become
 #: ``t*h*e*t*a``. Generally this should be used with
 #: ``implicit_multiplication``.
-from sympy.parsing.sympy_parser import _token_splittable
+def _token_splittable(token):
+    """
+    Predicate for whether a token name can be split into multiple tokens.
+
+    A token is splittable if it does not contain an underscore character and
+    it is not the name of a Greek letter. This is used to implicitly convert
+    expressions like 'xyz' into 'x*y*z'.
+
+    """
+    import unicodedata
+
+    if '_' in token:
+        return False
+    if token == 'lambda':
+        return False
+    try:
+        return not unicodedata.lookup('GREEK SMALL LETTER ' + token)
+    except KeyError:
+        pass
+    if len(token) > 1:
+        return True
+    return False
+
+
 split_symbols_trans = split_symbols_custom(_token_splittable)
 
 

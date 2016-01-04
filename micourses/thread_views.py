@@ -91,8 +91,8 @@ class ThreadEditView(DetailView):
         # must be designer of course
         is_designer = False
         if request.user.is_authenticated():
-            courseuser = request.user.courseuser
-            role = courseuser.get_current_role(self.object) 
+            self.courseuser = request.user.courseuser
+            role = self.courseuser.get_current_role(self.object)
             if role==DESIGNER_ROLE:
                 is_designer=True
 
@@ -118,6 +118,7 @@ class ThreadEditView(DetailView):
 
         context['all_thread_contents'] = self.object.thread_contents.all()
 
+        context['courseuser'] = self.courseuser
 
         return context
 

@@ -269,7 +269,6 @@ class MathObjectTests(SimpleTestCase):
 
     def test_round_on_compare_evaluate_false(self):
         from mitesting.user_commands import log
-        from mitesting.sympy_customized import parse_expr
         from mitesting.sympy_customized import parse_expr, EVALUATE_NONE, \
             EVALUATE_PARTIAL, EVALUATE_FULL
  
@@ -1197,3 +1196,35 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal'],0)
         self.assertEqual(mobject.compare_with_expression(expr5)['fraction_equal_on_normalize'],1)
         self.assertEqual(mobject.compare_with_expression(expr6)['fraction_equal_on_normalize'],1)
+
+
+    def test_lamda_lambda(self):
+        from mitesting.sympy_customized import parse_expr, EVALUATE_NONE
+
+        expr1 = parse_expr("5*lambda-x")
+        expr2 = parse_expr("5*lamda-x")
+        expr3 = parse_expr("5\u03BB - x")
+        
+        mobject = math_object(expr1)
+
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+        
+        expr1 = parse_expr("5*lambda-x", evaluate=False)
+        expr2 = parse_expr("5*lamda-x", evaluate=False)
+        expr3 = parse_expr("5\u03BB - x", evaluate=False)
+        
+        mobject = math_object(expr1, evaluate_level=EVALUATE_NONE)
+
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+        
+        expr1 = parse_expr("5*lambda-x", assume_real_variables=True)
+        expr2 = parse_expr("5*lamda-x", assume_real_variables=True)
+        expr3 = parse_expr("5\u03BB - x", assume_real_variables=True)
+        
+        mobject = math_object(expr1)
+
+        self.assertEqual(mobject.compare_with_expression(expr2)['fraction_equal'],1)
+        self.assertEqual(mobject.compare_with_expression(expr3)['fraction_equal'],1)
+        
