@@ -793,6 +793,16 @@ class TestCompareResponse(TestCase):
         self.assertEqual(answer_results['percent_correct'],100)
         self.assertTrue("is correct" in answer_results["answer_feedback"])
     
+        answer_results=compare_response_with_answer_code\
+                        (user_response="a,b,c,d",
+                         the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue("is incorrect" in answer_results["answer_feedback"])
+    
         the_ans.match_partial_on_compare=True
         the_ans.save()
 

@@ -1303,11 +1303,14 @@ def evaluate_expression(the_expr, rng,
         # and convert column and row matrices to MatrixAsVector
         # which latexs as a vector
         if the_expr.expression_type == the_expr.VECTOR:
+            
             from mitesting.customized_commands import \
                 MatrixFromTuple, MatrixAsVector
             from sympy import Matrix
 
-            math_expr = math_expr.replace(Tuple,MatrixFromTuple)
+            if isinstance(math_expr, Tuple) and \
+               not isinstance(math_expr, TupleNoParen):
+                math_expr = MatrixFromTuple(*math_expr)
 
             def to_matrix_as_vector(w):
                 if isinstance(w,Matrix) and (w.cols==1 or w.rows==1):

@@ -879,6 +879,11 @@ class TestExpressions(TestCase):
         self.assertEqual(expr7_eval,two_A)
         self.assertEqual(str(expr7_eval),latex(two_A))
 
+        expr8 = self.new_expr(name="not_a_vec", expression="1,2,3",
+                              expression_type=Expression.VECTOR)
+        expr8_eval=expr8.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        self.assertEqual(expr8_eval, TupleNoParen(1,2,3))
+
 
     def test_evaluate_false(self):
         local_dict={}

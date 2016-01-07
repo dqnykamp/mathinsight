@@ -258,10 +258,13 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             if expression_type == Expression.VECTOR:
                 from mitesting.customized_commands import \
                     MatrixFromTuple
+                from mitesting.sympy_customized import TupleNoParen
                 from sympy import Tuple
 
-                user_response_parsed = user_response_parsed\
-                    .replace(Tuple,MatrixFromTuple)
+                if isinstance(user_response_parsed, Tuple) and \
+                   not isinstance(user_response_parsed, TupleNoParen):
+                    user_response_parsed = MatrixFromTuple(
+                        *user_response_parsed)
 
             user_response_parsed=math_object(
                 user_response_parsed,
