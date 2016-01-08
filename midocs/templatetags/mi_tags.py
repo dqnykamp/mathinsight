@@ -1926,6 +1926,7 @@ class AppletNode(template.Node):
         inputboxlist=''
         capture_javascript={}
         init_javascript = ""
+        applet_feedback=False
         
         # dictionary to check if have a kwarg of form answer_xxxxx
         # where xxxx is not an applet object that can be changed
@@ -2016,6 +2017,7 @@ class AppletNode(template.Node):
                     previous_category=the_category
                 inputboxlist += '<span id="%s__binary__feedback"></span>\n' % \
                                 answer_field_name
+                applet_feedback = True
 
             related_objects=[]
             if appletobject.related_objects:
@@ -2097,7 +2099,9 @@ class AppletNode(template.Node):
 
 
         if inputboxlist:
-            inputboxlist = '<div class="hidden_feedback applet_feedback_%s info"><b>Feedback from applet</b>%s</div>' % (answer_data['question_identifier'], inputboxlist)
+            if applet_feedback:
+                inputboxlist = '<b>Feedback from applet</b>%s' % inputboxlist
+            inputboxlist = '<div class="hidden_feedback applet_feedback_%s info">%s</div>' % (answer_data['question_identifier'], inputboxlist)
         applet_link += inputboxlist
 
 
