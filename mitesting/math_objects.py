@@ -61,7 +61,7 @@ class math_object(object):
         # overwrite all parameters from copy_parameters_from object
         # if it exists
         copy_parameters_from = self._parameters.get('copy_parameters_from')
-        if copy_parameters_from:
+        if copy_parameters_from is not None:
             try:
                 self._parameters = copy_parameters_from._parameters
             except:

@@ -669,7 +669,9 @@ class MathObjectTests(SimpleTestCase):
 
 
     def test_copy_parameters_from(self):
-        mobject = math_object("3*x", n_digits=5, round_decimals=0,
+        from mitesting.sympy_customized import parse_expr
+        expr = parse_expr("3x=5")
+        mobject = math_object(expr, n_digits=5, round_decimals=0,
                               normalize_on_compare=False,
                               split_symbols_on_compare=True,
                               tuple_is_unordered=True)
@@ -680,7 +682,7 @@ class MathObjectTests(SimpleTestCase):
         self.assertTrue(mobject._parameters['tuple_is_unordered'])
         self.assertTrue(mobject.return_if_unordered())
 
-        mobject2 = math_object("3*x", n_digits=4, round_decimals=3,
+        mobject2 = math_object(expr, n_digits=4, round_decimals=3,
                                normalize_on_compare=True,
                                split_symbols_on_compare=False,
                                tuple_is_unordered=False,
@@ -692,6 +694,8 @@ class MathObjectTests(SimpleTestCase):
         self.assertTrue(mobject2._parameters['tuple_is_unordered'])
         self.assertTrue(mobject2.return_if_unordered())
         self.assertTrue(mobject2.return_split_symbols_on_compare)
+
+
 
     def test_comparison_operators(self):
         mobject1 = math_object(1)
