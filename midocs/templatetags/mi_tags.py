@@ -1312,6 +1312,12 @@ def Geogebra_capture_object_javascript(appletobject, applet_variable,
         ycoord = '%s.getYcoord("%s")' % \
             (applet_variable, appletobject.name)
         return '%s="Point("+%s+","+%s+")"' % (varname, xcoord,ycoord)
+    elif object_type=='Vector':
+        xcoord = '%s.getXcoord("%s")' % \
+            (applet_variable, appletobject.name)
+        ycoord = '%s.getYcoord("%s")' % \
+            (applet_variable, appletobject.name)
+        return '%s="("+%s+","+%s+")"' % (varname, xcoord,ycoord)
     elif object_type=='Number' or object_type=='Boolean':
         return '%s=%s.getValue("%s")' % \
             (varname, applet_variable, appletobject.name)
