@@ -514,8 +514,31 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
 
     import re
     
+    # parse lines
     expr_matrix=re.sub(r" *\n *", "],[", expression.strip())
-    expr_matrix="Matrix([[" + re.sub(r" +", ",", expr_matrix)+"]])"
+
+    # remove spaces around operators: *,/,^,=,<,>
+    # (will also include operators **,,<=,>=,==)
+    expr_matrix = re.sub(r" *\* *", "*", expr_matrix)
+    expr_matrix = re.sub(r" *\/ *", "/", expr_matrix)
+    expr_matrix = re.sub(r" *\^ *", "^", expr_matrix)
+    expr_matrix = re.sub(r" *\= *", "=", expr_matrix)
+    expr_matrix = re.sub(r" *\< *", "<", expr_matrix)
+    expr_matrix = re.sub(r" *\> *", ">", expr_matrix)
+
+    # remove space in front of + and - only if also a space behind it
+    expr_matrix = re.sub(r" *\+ +", "+", expr_matrix)
+    expr_matrix = re.sub(r" *\- +", "-", expr_matrix)
+
+
+    # remove spaces inside (but not outside) parentheses
+    expr_matrix = re.sub(r"\( *", "(", expr_matrix)
+    expr_matrix = re.sub(r" *\)", ")", expr_matrix)
+
+    # replace remaining spaces with commas
+    expr_matrix = re.sub(r" +", ",", expr_matrix)
+
+    expr_matrix="Matrix([[" + expr_matrix +"]])"
     
     new_local_dict = {}
     if local_dict:

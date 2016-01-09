@@ -833,6 +833,44 @@ class TestExpressions(TestCase):
                                 expr6.evaluate, rng=self.rng, 
                                 local_dict=local_dict)
 
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        z=Symbol('z', real=True)
+
+        expr7=self.new_expr(name="B", expression="a *x - b ( x + 1/x) \n a * x *y* z z ^ 2 \n x **2 + y^ 3 (x - a* y) / 3",
+                            expression_type=Expression.MATRIX)
+        expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        B=Matrix([[a*x-b, x+1/x],[a*x*y*z,z**2],[x**2+y**3,(x-a*y)/3]])
+        self.assertEqual(expr7_eval, B)
+
+
+        expr8=self.new_expr(name="C", expression="\n a - b x\n a -b\n a- b x\na + b x\n a +b\n a+ b x",
+                            expression_type=Expression.MATRIX)
+        expr8_eval=expr8.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        C=Matrix([[a-b,x],[a,-b],[a-b, x],[a+b,x],[a,b], [a+b,x]])
+        self.assertEqual(expr8_eval, C)
+
+
+    def test_matrix_relations(self):
+        from sympy import Matrix, Eq, Gt, Lt, Ge, Le
+        a=Symbol('a', real=True)
+        b=Symbol('b', real=True)
+        x=Symbol('x', real=True)
+        y=Symbol('y', real=True)
+        local_dict={}
+
+        expr1=self.new_expr(name="Axb", expression="a*x + b*y =2\n3*x - 2*y = 5",
+                            expression_type=Expression.MATRIX)
+        expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        A=Matrix([[Eq(a*x+b*y,2)],[Eq(3*x-2*y,5)]])
+        self.assertEqual(expr1_eval, A)
+
+        expr2=self.new_expr(name="rels", expression="x=y x = y x= y x =y \n x==y x == y x== y x ==y \n x<y x < y x< y x <y \n x>y x > y x> y x >y \n x<=y x <= y x<= y x <=y \n x>=y x >= y x>= y x >=y",
+                            expression_type=Expression.MATRIX)
+        expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
+        
+        B=Matrix([ [Eq(x,y)]*4, [False]*4, [Lt(x,y)]*4, [Gt(x,y)]*4, [Le(x,y)]*4, [Ge(x,y)]*4])
+        self.assertEqual(expr2_eval,B)
 
     def test_vector(self):
         from sympy import Matrix
