@@ -517,10 +517,12 @@ class QuestionAnswerOption(models.Model):
     EXPRESSION = 0
     MULTIPLE_CHOICE = 1
     FUNCTION = 2
+    TEXT=3
     ANSWER_TYPE_CHOICES = (
         (EXPRESSION, "Expression"),
         (MULTIPLE_CHOICE, "Multiple Choice"),
         (FUNCTION, "Function"),
+        (TEXT, "Text"),
         )
     question = models.ForeignKey(Question)
     answer_type = models.IntegerField(choices = ANSWER_TYPE_CHOICES,

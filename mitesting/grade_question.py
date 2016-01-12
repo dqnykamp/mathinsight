@@ -112,6 +112,10 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         except:
             pass
 
+    elif answer_type == QuestionAnswerOption.TEXT:
+        percent_correct=0
+        feedback = "Answer to be manually graded."
+
     # if either EXPRESSION or FUNCTION, then use all options 
     # that are EXPRESSION or FUNCTION
     elif answer_type == QuestionAnswerOption.EXPRESSION or \

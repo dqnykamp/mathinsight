@@ -200,6 +200,25 @@ class TestQuestionView(TestCase):
         self.assertContains(response, "A partially correct answer: %s" % n)
 
 
+    def test_text_answer(self):
+        TEXT = QuestionAnswerOption.TEXT
+        self.q.questionansweroption_set.create(
+            answer_code="text_answer", answer_type=TEXT,
+            answer = "This answer doesn't do anything",
+            percent_correct = 100)
+
+
+        self.q.question_text="A text box answer: {% answer 'text_answer' rows=5 cols=80 %}"
+        self.q.save()
+
+        response = self.client.get("/question/%s" % self.q.id)
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        self.assertContains(response, '<textarea class="mi_answer" id="id_answer_%s" name="answer_%s"rows="5" cols="80"></textarea>' % (answer_identifier, answer_identifier), html=True)
+
+
 
     def test_permissions(self):
         qpks=[[],[],[]]
@@ -2238,6 +2257,41 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue(results["answers"][answer_identifier3]["answer_correct"])
 
 
+    def test_matrix_backets(self):
+        self.q.expression_set.create(name="A", expression="a b\nc d",
+                                     expression_type=Expression.MATRIX)
+
+        self.q.question_text="Type answers: {% answer 'ans1' rows=5 cols=5 %} {% answer 'ans2' brackets=1 rows=6 cols=6 %} {% answer 'ans3' brackets=0 rows=7 cols=7 %}"
+        
+        self.q.save()
+
+        self.new_answer(answer_code="ans1", answer="A")
+        self.new_answer(answer_code="ans2", answer="A")
+        self.new_answer(answer_code="ans3", answer="A")
+
+        response = self.client.get("/question/%s" % self.q.id)
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+
+        answer_identifier1 = computer_grade_data["answer_info"][0]['identifier']
+        answer_identifier2 = computer_grade_data["answer_info"][1]['identifier']
+        answer_identifier3 = computer_grade_data["answer_info"][2]['identifier']
+
+        self.assertContains(response,"Type answers: ")
+        matrix1_input_html='<textarea class="mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea>' % (answer_identifier1, answer_identifier1, 5, 5)
+        matrix2_input_html='<textarea class="mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea>' % (answer_identifier2, answer_identifier2, 6, 6)
+        matrix3_input_html='<textarea class="mi_answer" id="id_answer_%s" name="answer_%s" rows=%s cols=%s></textarea>' % (answer_identifier3, answer_identifier3, 7, 7)
+        matrix1_input_brackets = '<span class="matrix">%s</span>' % matrix1_input_html
+        matrix2_input_brackets = '<span class="matrix">%s</span>' % matrix2_input_html
+        matrix3_input_brackets = '<span class="matrix">%s</span>' % matrix3_input_html
+
+        self.assertContains(response, matrix1_input_html, html=True)
+        self.assertContains(response, matrix2_input_html, html=True)
+        self.assertContains(response, matrix3_input_html, html=True)
+        self.assertContains(response, matrix1_input_brackets, html=True)
+        self.assertContains(response, matrix2_input_brackets, html=True)
+        self.assertNotContains(response, matrix3_input_brackets, html=True)
 
     def test_user_function(self):
         self.q.expression_set.create(
@@ -2621,6 +2675,36 @@ class TestGradeQuestionView(TestCase):
                         results["answers"][answer_identifier]["answer_feedback"])
         self.assertTrue("partial (50%) credit" in
                         results["answers"][answer_identifier]["answer_feedback"])
+
+    def test_text_answer(self):
+        TEXT = QuestionAnswerOption.TEXT
+        a1 = self.q.questionansweroption_set.create(
+            answer_code="text_answer", answer_type=TEXT,
+            answer = "This doesn't matter",
+            percent_correct = 100)
+        self.q.question_text="Textbox: {% answer 'text_answer' %}"
+        self.q.save()
+
+        response = self.client.get("/question/%s" % self.q.id)
+        
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_identifier = computer_grade_data["answer_info"][0]['identifier']
+
+        answers = {"cgd": cgd,}
+
+        answers["answer_" + answer_identifier] = "An answer"
+        response=self.client.post(
+            "/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+        results = json.loads(response.content.decode())
+        self.assertFalse(results["correct"])
+        self.assertTrue("is incorrect" in results["feedback"])
+        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
+        self.assertTrue("manually graded" in
+                        results["answers"][answer_identifier]["answer_feedback"])
+        
 
 
     def test_function_answer(self):

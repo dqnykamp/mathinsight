@@ -566,9 +566,11 @@ class AnswerNode(template.Node):
             if expression_type == Expression.MATRIX:
                 if given_response is not None:
                     value_string = given_response                
-                input_html = '<span class="matrix"><textarea class="mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea></span>' %\
+                input_html = '<textarea class="mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea>' %\
                     (answer_field_name, answer_field_name,
                      rows, cols, value_string)
+                if kwargs.get("brackets", True):
+                    input_html = '<span class="matrix">%s</span>' % input_html
             else:
                 if given_response is not None:
                     value_string = ' value="%s"' %  given_response
@@ -649,6 +651,19 @@ class AnswerNode(template.Node):
             
             return mark_safe(html_string)
         
+        elif answer_type == QuestionAnswerOption.TEXT:
+            value_string = ''
+            if given_response is not None:
+                value_string = given_response
+            input_html = '<textarea class="mi_answer" id="id_%s" name="%s" rows=%s cols=%s>%s</textarea>' %\
+                (answer_field_name, answer_field_name,
+                 rows, cols, value_string)
+                
+            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
+                (input_html,
+                 question_identifier, answer_field_name)
+
+            
         # if not recognized type, return error
         else:
             return return_error("Unrecognized answer type")
