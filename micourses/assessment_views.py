@@ -256,8 +256,15 @@ class AssessmentView(DetailView):
 
         # get list of the question numbers in assessment
         # if instructor or designer in course
+        # if also staff, include links to admin pages
         if user_can_administer_assessment(self.request.user, course=course):
             question_numbers=[]
+            if self.request.user.is_staff:
+                context['assessment_admin_link'] = mark_safe(
+                    "<p><a href='%s'>%s</a></p>" % (
+                        reverse('admin:micourses_assessment_change',
+                                args=(self.assessment.id,)),
+                        'Admin link'))
             for q in rendered_list:
                 # if staff, add link to admin page for quesiton
                 if self.request.user.is_staff:

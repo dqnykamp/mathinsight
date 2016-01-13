@@ -121,6 +121,8 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 </ul>
 </section>
 {% endif %}
+
+{{assessment_admin_link}}
 {% if question_numbers %}<p>Question numbers: <span id="question_numbers">{{ question_numbers }}</span></p>{% endif %}
 <p>{% if generate_course_attempt_link %}<a href="{% url 'miassess:generate_course_attempt' content_id=thread_content.id %}" id="generate_course_attempt">Generate course-wide attempt</a><br/>
 <small>Current seed: <span id="current_seed">{{seed}}</span><br/>
