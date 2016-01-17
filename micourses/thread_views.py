@@ -390,7 +390,7 @@ class EditSectionView(View):
         
         for section in rerender_sections:
             template = Template("{% load thread_tags %}{% thread_section_edit section %}")
-            context = Context({'section': section, 'ltag': ltag})
+            context = Context({'section': section, 'ltag': ltag, 'courseuser': courseuser})
             
             # siblings of section are called child_sections in the context where
             # get thread_section_edit tag
@@ -421,6 +421,7 @@ class EditSectionView(View):
                 context = {'course': course, 'ltag': ltag,
                            'child_sections': course.thread_sections.all(),
                            'all_thread_contents': all_thread_contents,
+                           'courseuser': courseuser,
                        }
             )
         else:
@@ -649,7 +650,8 @@ class EditContentView(View):
             content_html = render_to_string(
                 template_name='micourses/threads/thread_content_edit_container.html',
                 context = {'thread_contents': thread_contents,
-                           'all_thread_contents': all_thread_contents,},
+                           'all_thread_contents': all_thread_contents,
+                           'courseuser': courseuser, },
             )
             
             section_contents[section.id] = content_html
