@@ -539,7 +539,8 @@ class Lts(BooleanFunction):
 
 class subscript_symbol(Expr):
     """
-    Returns a symbol of the form "a_b" where a and b are latexed arguments.
+    Returns a symbol of the form "a_b".
+    If b is not a symbol, then latex it.
 
     If third argument is True, then create real symbol
     
@@ -554,12 +555,14 @@ class subscript_symbol(Expr):
             if a is None:
                 symbol_name='_'
             else:
-                symbol_name='%s_' % latex(a)
+                symbol_name='%s_' % a
         else:
+            if not b.is_Symbol:
+                b=latex(b)
             if a is None:
-                symbol_name='_%s' % latex(b)
+                symbol_name='_%s' % b
             else:
-                symbol_name='%s_%s' % (latex(a),latex(b))
+                symbol_name='%s_%s' % (a,b)
 
         if real:
             return Symbol(symbol_name, real=True)

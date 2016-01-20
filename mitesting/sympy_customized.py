@@ -267,38 +267,47 @@ def parse_expr(s, global_dict=None, local_dict=None,
     new_local_dict['__E__'] = E
 
     # replace lower case unicode greek letters
-    greek_alphabet_with_spaces = {
-        '\u03B1': ' alpha ',
-        '\u03B2': ' beta ',
-        '\u03B3': ' gamma ',
-        '\u03B4': ' delta ',
-        '\u03B5': ' epsilon ',
-        '\u03B6': ' zeta ',
-        '\u03B7': ' eta ',
-        '\u03B8': ' theta ',
-        '\u03B9': ' iota ',
-        '\u03BA': ' kappa ',
-        '\u03BB': ' lambda ',
-        '\u03BC': ' mu ',
-        '\u03BD': ' nu ',
-        '\u03BE': ' xi ',
-        '\u03BF': ' omicron ',
-        '\u03C0': ' pi ',
-        '\u03C1': ' rho ',
-        '\u03C3': ' sigma ',
-        '\u03C4': ' tau ',
-        '\u03C5': ' upsilon ',
-        '\u03C6': ' phi ',
-        '\u03C7': ' chi ',
-        '\u03C8': ' psi ',
-        '\u03C9': ' omega ',
-        '\u03F5': ' epsilon ',
-        '\u03D5': ' phi ',
+    greek_alphabet = {
+        '\u03B1': 'alpha',
+        '\u03B2': 'beta',
+        '\u03B3': 'gamma',
+        '\u03B4': 'delta',
+        '\u03B5': 'epsilon',
+        '\u03B6': 'zeta',
+        '\u03B7': 'eta',
+        '\u03B8': 'theta',
+        '\u03B9': 'iota',
+        '\u03BA': 'kappa',
+        '\u03BB': 'lambda',
+        '\u03BC': 'mu',
+        '\u03BD': 'nu',
+        '\u03BE': 'xi',
+        '\u03BF': 'omicron',
+        '\u03C0': 'pi',
+        '\u03C1': 'rho',
+        '\u03C3': 'sigma',
+        '\u03C4': 'tau',
+        '\u03C5': 'upsilon',
+        '\u03C6': 'phi',
+        '\u03C7': 'chi',
+        '\u03C8': 'psi',
+        '\u03C9': 'omega',
+        '\u03F5': 'epsilon',
+        '\u03D5': 'phi',
     }    
     
-    for grk in greek_alphabet_with_spaces:
-        s = re.sub(grk, greek_alphabet_with_spaces[grk], s)
-        
+    # include spaces around greek letters unless have _ before or after
+    
+    for grk in greek_alphabet:
+        # _ before and after, no spaces
+        s = re.sub("_%s_" % grk, "_%s_" % greek_alphabet[grk], s)
+        # _ before, add space after
+        s = re.sub("_%s" % grk, "_%s " % greek_alphabet[grk], s)
+        # _ after, add space before
+        s = re.sub("%s_" % grk, " %s_" % greek_alphabet[grk], s)
+        # no _, add space before and after
+        s = re.sub(grk, " %s " % greek_alphabet[grk], s)
+
     # map pi to sympy pi
     new_local_dict['pi'] = pi
 

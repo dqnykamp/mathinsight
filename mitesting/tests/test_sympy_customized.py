@@ -1004,3 +1004,29 @@ class ParseExprTests(SimpleTestCase):
         expr=parse_expr("xS_1y", parse_subscripts=True, split_symbols=True,
                         local_dict={'S_1': S1})
         self.assertEqual(expr, x*S1*y)
+
+
+        expr1=parse_expr("lambda_delta", parse_subscripts=True, 
+                         split_symbols=True)
+        expr2=parse_expr("lambda_delta", parse_subscripts=False, 
+                         split_symbols=True)
+        expr3=parse_expr("lambda_delta", parse_subscripts=True, 
+                         split_symbols=False)
+        expr4=parse_expr("lambda_delta", parse_subscripts=False, 
+                         split_symbols=False)
+        expr5=parse_expr("λ_δ", parse_subscripts=True, 
+                         split_symbols=True)
+        expr6=parse_expr("λ_δ", parse_subscripts=False, 
+                         split_symbols=True)
+        expr7=parse_expr("λ_δ", parse_subscripts=True, 
+                         split_symbols=False)
+        expr8=parse_expr("λ_δ", parse_subscripts=False, 
+                         split_symbols=False)
+        
+        self.assertEqual(expr1,expr2)
+        self.assertEqual(expr1,expr3)
+        self.assertEqual(expr1,expr4)
+        self.assertEqual(expr1,expr5)
+        self.assertEqual(expr1,expr6)
+        self.assertEqual(expr1,expr7)
+        self.assertEqual(expr1,expr8)

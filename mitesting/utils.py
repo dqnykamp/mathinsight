@@ -1605,8 +1605,9 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
     """
     Replace any instances of x_y with __subscriptsymbol__(x,y) in string s.
 
-    If split symbols, x can be only one letter, or a combination of numbers or
-    letters, beginning with a letter, that is a key in local_dict.
+    If split symbols, x can be only one letter, a word for a greek symbol,
+    or a combination of numbers or letters, beginning with a letter, 
+    that is a key in local_dict
     Otherwise, x can be any combination of numbers or letters
     but must begin with a letter.
 
@@ -1625,6 +1626,12 @@ def replace_subscripts(s, split_symbols=False, assume_real_variables=False,
 
     unsplit_symbols = []
     if split_symbols and local_dict:
+        unsplit_symbols=[
+            'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta',
+            'theta', 'iota', 'kappa', 'lambda', 'lamda', 'mu', 'nu',
+            'xi', 'omicron', 'pi', 'rho', 'sigma', 'tau', 'upsilon',
+            'phi', 'chi', 'psi', 'omega', 'epsilon', 'phi']
+
         for sym in local_dict.keys():
             if not '_' in sym:
                 unsplit_symbols.append(sym)
