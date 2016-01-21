@@ -2516,10 +2516,17 @@ def render_applet_text(context, applet_text, applet, applet_id_user=None,
         hidden_section_identifier=""
     else:
         try:
-            hidden_info = context["_hidden_section_info"]
+            auxiliary_data = context['_auxiliary_data_']
+        except KeyError:
+            from midocs.functions import return_new_auxiliary_data
+            auxiliary_data = return_new_auxiliary_data()
+            context.dicts[0]['_auxiliary_data_'] = auxiliary_data
+            
+        try:
+            hidden_info = auxiliary_data['hidden_section']
         except KeyError:
             hidden_info={}
-            context.dicts[0]['_hidden_section_info']=hidden_info
+            auxiliary_data['hidden_section'] = hidden_info
 
         counter = hidden_info.get('counter',0)+1
         hidden_info['counter']=counter
