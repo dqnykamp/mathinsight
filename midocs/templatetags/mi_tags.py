@@ -3302,21 +3302,25 @@ def return_modify_applet_object_javascript(applet_data, capture_javascript,
 
 
             object_type = applet_object.object_type.object_type
+            if applet_object.name_for_changes:
+                object_name_for_changes=applet_object.name_for_changes
+            else:
+                object_name_for_changes=applet_object.name
             if object_type == 'Number' or object_type=='Boolean':
                 change_command = '%s.setValue("%s", the_value);' % \
-                                 (applet_variable,  applet_object.name)
+                                 (applet_variable,  object_name_for_changes)
             elif object_type == 'Function':
                 varname = applet_object.function_input_variable
                 if varname == "" or varname is None:
                     varname="x"
                 change_command = '%s.evalCommand(\'%s(%s) = \' + the_value );'%\
-                                 (applet_variable, applet_object.name, varname)
+                                 (applet_variable, object_name_for_changes, varname)
             elif object_type == "Text":
                 change_command = '%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
-                                 (applet_variable, applet_object.name)
+                                 (applet_variable, object_name_for_changes)
             else:
                 change_command = '%s.evalCommand(\'%s: \' + the_value );'%\
-                                 (applet_variable, applet_object.name)
+                                 (applet_variable, object_name_for_changes)
                 
 
             if capture_command:
@@ -3390,21 +3394,26 @@ def return_set_object_javascript_functions(applet_data):
            or applet.applet_type.code == "GeogebraWeb":
 
             object_type = applet_object.object_type.object_type
+            if applet_object.name_for_changes:
+                object_name_for_changes=applet_object.name_for_changes
+            else:
+                object_name_for_changes=applet_object.name
+
             if object_type == 'Number' or object_type=='Boolean':
                 change_command = '%s.setValue("%s", the_value);' % \
-                                 (applet_variable,  applet_object.name)
+                                 (applet_variable,  object_name_for_changes)
             elif object_type == 'Function':
                 varname = applet_object.function_input_variable
                 if varname == "" or varname is None:
                     varname="x"
                 change_command = '%s.evalCommand(\'%s(%s) = \' + the_value );'%\
-                                 (applet_variable, applet_object.name, varname)
+                                 (applet_variable, object_name_for_changes, varname)
             elif object_type == "Text":
                 change_command = '%s.evalCommand(\'%s: \"\' + the_value + \'\"\');'%\
-                                 (applet_variable, applet_object.name)
+                                 (applet_variable, object_name_for_changes)
             else:
                 change_command = '%s.evalCommand(\'%s: \' + the_value );'%\
-                                 (applet_variable, applet_object.name)
+                                 (applet_variable, object_name_for_changes)
                 
 
             set_object_javascript += 'function %s(the_value) {\n%s\n}\n' % \
