@@ -2548,9 +2548,10 @@ def render_applet_text(context, applet_text, applet, applet_id_user=None,
         return '<div class="info"><h4>%s</h4>%s</div>' % \
             (applet_text.title, rendered_text)
     else:
+        css = {"body": "applet_text", "container": "hidden_applet_text"}
         return hidden_text_html(
             content_html = rendered_text, 
-            title=applet_text.title, css="applet_text",
+            title=applet_text.title, css=css,
             section_identifier = hidden_section_identifier,
             start_revealed = not hidden)
 

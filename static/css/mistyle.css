@@ -2443,6 +2443,9 @@ a.assessment
 	display: none;
     }
 
+    .hidden_applet_text {
+	display: none;
+    }
 }
 
 
