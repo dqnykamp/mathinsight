@@ -238,3 +238,13 @@ def create_content_records(course):
     
     ContentRecord.objects.bulk_create(cr_list)
 
+
+def create_all_content_records(active=True):
+    from micourses.models import Course
+
+    courses = Course.objects.all()
+    if active:
+        courses = courses.filter(active=True)
+
+    for course in courses:
+        create_content_records(course)
