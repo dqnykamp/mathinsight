@@ -554,7 +554,13 @@ class Course(models.Model):
 
 
         records = ContentRecord.objects.filter(content__course=self) \
-            .exclude(content__points=None).exclude(content__points=0)
+            .exclude(content__points=None).exclude(content__points=0) \
+            .exclude(content__grade_category=None)
+
+        # in case data gets messed up and have content
+        # with grade category from other course,
+        # make sure have only grade categories from coursex
+        records = records.filter(content__grade_category__course = self)
 
         # since starting with ContentRecord, could have records
         # associated with content that was deleted
