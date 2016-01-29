@@ -250,3 +250,49 @@ class MedianTests(SimpleTestCase):
         self.assertEqual(median([1,10,2,7]), 9/2)
         
         
+
+class EigenTests(SimpleTestCase):
+    def test_evals(self):
+        from sympy import Matrix, S, sqrt, I
+        from mitesting.customized_commands import MatrixAsVector
+
+        A=Matrix([[1,-1],[2,4]])
+        eigs=eigenvals_tuple(A)
+        self.assertEqual(eigs, TupleNoParen(2,3))
+        eigs=eigenvects_tuple(A)
+        self.assertEqual(eigs, TupleNoParen(MatrixAsVector([[-1],[1]]),
+                                            MatrixAsVector([[S("-1/2")],[1]])))
+        
+        A=Matrix([[1,3],[2,1]])
+        eigs=eigenvals_tuple(A)
+        es = TupleNoParen(1-sqrt(6), 1+sqrt(6))
+        self.assertEqual(eigs, es)
+        eigs=eigenvects_tuple(A)
+        es = TupleNoParen(MatrixAsVector([[-sqrt(6)/2],[1]]),
+                          MatrixAsVector([[sqrt(6)/2],[1]]))
+        self.assertEqual(eigs,es)
+
+        A=Matrix([[1,3],[0,1]])
+        eigs=eigenvals_tuple(A)
+        es = TupleNoParen(1)
+        self.assertEqual(eigs, es)
+        eigs=eigenvects_tuple(A)
+        es = TupleNoParen(MatrixAsVector([[1],[0]]))
+        self.assertEqual(eigs,es)
+
+        A=Matrix([[3,0],[0,3]])
+        eigs=eigenvals_tuple(A)
+        es = TupleNoParen(3)
+        self.assertEqual(eigs, es)
+        eigs=eigenvects_tuple(A)
+        es = TupleNoParen(MatrixAsVector([[1],[0]]),MatrixAsVector([[0],[1]]))
+        self.assertEqual(eigs,es)
+
+                          
+        A=Matrix([[1,1],[-1,1]])
+        eigs=eigenvals_tuple(A)
+        es = TupleNoParen(1-I, 1+I)
+        self.assertEqual(eigs, es)
+        eigs=eigenvects_tuple(A)
+        es = TupleNoParen(MatrixAsVector([[I],[1]]),MatrixAsVector([[-I],[1]]))
+        self.assertEqual(eigs,es)
