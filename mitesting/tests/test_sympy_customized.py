@@ -352,8 +352,8 @@ class ParseExprTests(SimpleTestCase):
         # For some reason, it compares the Matrix to zero
 
         from mitesting.user_commands import scalar_multiple_deviation
-        from sympy import Matrix, Eq
-        A=Matrix([1,2])
+        from sympy import ImmutableMatrix, Eq
+        A=ImmutableMatrix([1,2])
         x=Symbol('x')
         expr = parse_expr('smd(A,x)=0', evaluate=False,
                           local_dict={'smd': scalar_multiple_deviation,

@@ -202,15 +202,15 @@ class ScalarMultipleTests(SimpleTestCase):
         v = Tuple(1,2,0)
         self.assertEqual(scalar_multiple_deviation(u,v),oo)
 
-        from sympy import Matrix
-        u = Matrix(((1,2,3), (4,5,6)))
+        from sympy import ImmutableMatrix
+        u = ImmutableMatrix(((1,2,3), (4,5,6)))
         v = 3*x*u
         self.assertEqual(scalar_multiple_deviation(u,v),0)
 
         v = u.transpose()
         self.assertEqual(scalar_multiple_deviation(u,v),oo)
         
-        v = Matrix(((1,2,3,4),(5,6,7,8)))
+        v = ImmutableMatrix(((1,2,3,4),(5,6,7,8)))
         self.assertEqual(scalar_multiple_deviation(u,v),oo)
 
     def test_no_evaluate(self):
@@ -253,17 +253,17 @@ class MedianTests(SimpleTestCase):
 
 class EigenTests(SimpleTestCase):
     def test_evals(self):
-        from sympy import Matrix, S, sqrt, I
+        from sympy import ImmutableMatrix, S, sqrt, I
         from mitesting.customized_commands import MatrixAsVector
 
-        A=Matrix([[1,-1],[2,4]])
+        A=ImmutableMatrix([[1,-1],[2,4]])
         eigs=eigenvals_tuple(A)
         self.assertEqual(eigs, TupleNoParen(2,3))
         eigs=eigenvects_tuple(A)
         self.assertEqual(eigs, TupleNoParen(MatrixAsVector([[-1],[1]]),
                                             MatrixAsVector([[S("-1/2")],[1]])))
         
-        A=Matrix([[1,3],[2,1]])
+        A=ImmutableMatrix([[1,3],[2,1]])
         eigs=eigenvals_tuple(A)
         es = TupleNoParen(1-sqrt(6), 1+sqrt(6))
         self.assertEqual(eigs, es)
@@ -272,7 +272,7 @@ class EigenTests(SimpleTestCase):
                           MatrixAsVector([[sqrt(6)/2],[1]]))
         self.assertEqual(eigs,es)
 
-        A=Matrix([[1,3],[0,1]])
+        A=ImmutableMatrix([[1,3],[0,1]])
         eigs=eigenvals_tuple(A)
         es = TupleNoParen(1)
         self.assertEqual(eigs, es)
@@ -280,7 +280,7 @@ class EigenTests(SimpleTestCase):
         es = TupleNoParen(MatrixAsVector([[1],[0]]))
         self.assertEqual(eigs,es)
 
-        A=Matrix([[3,0],[0,3]])
+        A=ImmutableMatrix([[3,0],[0,3]])
         eigs=eigenvals_tuple(A)
         es = TupleNoParen(3)
         self.assertEqual(eigs, es)
@@ -289,7 +289,7 @@ class EigenTests(SimpleTestCase):
         self.assertEqual(eigs,es)
 
                           
-        A=Matrix([[1,1],[-1,1]])
+        A=ImmutableMatrix([[1,1],[-1,1]])
         eigs=eigenvals_tuple(A)
         es = TupleNoParen(1-I, 1+I)
         self.assertEqual(eigs, es)

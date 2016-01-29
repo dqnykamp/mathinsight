@@ -766,7 +766,7 @@ class TestCompareResponse(TestCase):
         from mitesting.utils import return_matrix_expression
         from mitesting.customized_commands import \
             MatrixFromTuple, MatrixAsVector
-        from sympy import Tuple, Matrix
+        from sympy import Tuple, ImmutableMatrix
 
         local_dict={}
         expr_context=Context({})
@@ -775,7 +775,7 @@ class TestCompareResponse(TestCase):
                      'expression_type': Expression.VECTOR}
         tuple_expr=parse_expr("(a,b,c,d)")
         vector_expr=tuple_expr.replace(Tuple,MatrixFromTuple)
-        matrix_expr=Matrix(vector_expr)
+        matrix_expr=ImmutableMatrix(tuple_expr)
         
         expr_context["v_tuple"]=math_object(tuple_expr)
         expr_context["v_vector"]=math_object(vector_expr)

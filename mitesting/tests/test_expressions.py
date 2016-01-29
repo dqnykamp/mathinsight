@@ -792,7 +792,7 @@ class TestExpressions(TestCase):
         self.assertEqual(expr4a_eval, True)
         
     def test_matrix(self):
-        from sympy import Matrix
+        from sympy import ImmutableMatrix
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)
         local_dict={}
@@ -800,7 +800,7 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="A", expression="\n 1 2\na b\na-b 1 \na -b\n ",
                             expression_type=Expression.MATRIX)
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        A=Matrix([[1,2],[a,b],[a-b,1],[a,-b]])
+        A=ImmutableMatrix([[1,2],[a,b],[a-b,1],[a,-b]])
         self.assertEqual(expr1_eval, A)
 
 
@@ -812,7 +812,7 @@ class TestExpressions(TestCase):
         expr3=self.new_expr(name="v", expression="a\n5",
                             expression_type=Expression.MATRIX)
         expr3_eval=expr3.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        v = Matrix([a,5])
+        v = ImmutableMatrix([a,5])
         self.assertEqual(expr3_eval, v)
 
         expr4=self.new_expr(name="Av", expression="A*v")
@@ -840,19 +840,19 @@ class TestExpressions(TestCase):
         expr7=self.new_expr(name="B", expression="a *x - b ( x + 1/x) \n a * x *y* z z ^ 2 \n x **2 + y^ 3 (x - a* y) / 3",
                             expression_type=Expression.MATRIX)
         expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        B=Matrix([[a*x-b, x+1/x],[a*x*y*z,z**2],[x**2+y**3,(x-a*y)/3]])
+        B=ImmutableMatrix([[a*x-b, x+1/x],[a*x*y*z,z**2],[x**2+y**3,(x-a*y)/3]])
         self.assertEqual(expr7_eval, B)
 
 
         expr8=self.new_expr(name="C", expression="\n a - b x\n a -b\n a- b x\na + b x\n a +b\n a+ b x",
                             expression_type=Expression.MATRIX)
         expr8_eval=expr8.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        C=Matrix([[a-b,x],[a,-b],[a-b, x],[a+b,x],[a,b], [a+b,x]])
+        C=ImmutableMatrix([[a-b,x],[a,-b],[a-b, x],[a+b,x],[a,b], [a+b,x]])
         self.assertEqual(expr8_eval, C)
 
 
     def test_matrix_relations(self):
-        from sympy import Matrix, Eq, Gt, Lt, Ge, Le
+        from sympy import ImmutableMatrix, Eq, Gt, Lt, Ge, Le
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)
         x=Symbol('x', real=True)
@@ -862,19 +862,20 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="Axb", expression="a*x + b*y =2\n3*x - 2*y = 5",
                             expression_type=Expression.MATRIX)
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        A=Matrix([[Eq(a*x+b*y,2)],[Eq(3*x-2*y,5)]])
+        A=ImmutableMatrix([[Eq(a*x+b*y,2)],[Eq(3*x-2*y,5)]])
         self.assertEqual(expr1_eval, A)
 
         expr2=self.new_expr(name="rels", expression="x=y x = y x= y x =y \n x==y x == y x== y x ==y \n x<y x < y x< y x <y \n x>y x > y x> y x >y \n x<=y x <= y x<= y x <=y \n x>=y x >= y x>= y x >=y",
                             expression_type=Expression.MATRIX)
         expr2_eval=expr2.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         
-        B=Matrix([ [Eq(x,y)]*4, [False]*4, [Lt(x,y)]*4, [Gt(x,y)]*4, [Le(x,y)]*4, [Ge(x,y)]*4])
+        B=ImmutableMatrix([ [Eq(x,y)]*4, [False]*4, [Lt(x,y)]*4, [Gt(x,y)]*4, [Le(x,y)]*4, [Ge(x,y)]*4])
         self.assertEqual(expr2_eval,B)
 
     def test_vector(self):
-        from sympy import Matrix
+        from sympy import ImmutableMatrix
         from mitesting.sympy_customized import latex
+        from mitesting.customized_commands import MatrixAsVector
         a=Symbol('a', real=True)
         b=Symbol('b', real=True)
         local_dict={}
@@ -882,7 +883,7 @@ class TestExpressions(TestCase):
         expr1=self.new_expr(name="x", expression="(a,b,1,2) ",
                             expression_type=Expression.VECTOR)
         expr1_eval=expr1.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        x=Matrix([a,b,1,2])
+        x=MatrixAsVector([a,b,1,2])
         xvec = Tuple(a,b,1,2)
         self.assertEqual(expr1_eval, x)
         self.assertEqual(str(expr1_eval), latex(xvec))
@@ -907,13 +908,13 @@ class TestExpressions(TestCase):
         expr5_eval=expr5.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
         expr6=self.new_expr(name="Ax", expression="A*x")
         expr6_eval=expr6.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        Ax=Matrix([2*a+3,a])
+        Ax=MatrixAsVector([2*a+3,a])
         self.assertEqual(expr6_eval,Ax)
 
         expr7=self.new_expr(name="two_A_no_vec", expression="2*A",
                            expression_type=Expression.VECTOR)
         expr7_eval=expr7.evaluate(rng=self.rng, local_dict=local_dict)['expression_evaluated']
-        two_A=Matrix([[4,0,6,0],[0,0,2*a,0]])
+        two_A=ImmutableMatrix([[4,0,6,0],[0,0,2*a,0]])
         self.assertEqual(expr7_eval,two_A)
         self.assertEqual(str(expr7_eval),latex(two_A))
 

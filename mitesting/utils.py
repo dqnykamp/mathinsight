@@ -538,13 +538,13 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     # replace remaining spaces with commas
     expr_matrix = re.sub(r" +", ",", expr_matrix)
 
-    expr_matrix="Matrix([[" + expr_matrix +"]])"
+    expr_matrix="ImmutableMatrix([[" + expr_matrix +"]])"
     
     new_local_dict = {}
     if local_dict:
         new_local_dict.update(local_dict)
-    from sympy import Matrix
-    new_local_dict['Matrix'] = Matrix
+    from sympy import ImmutableMatrix
+    new_local_dict['ImmutableMatrix'] = ImmutableMatrix
 
     expr= parse_and_process(expr_matrix, local_dict=new_local_dict,
                             evaluate_level = evaluate_level,
@@ -556,7 +556,7 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     # whose only element is a matrix.
     # In that case, return just the inner matrix
     if expr.rows==1 and expr.cols==1:
-        if isinstance(expr[0,0], Matrix):
+        if isinstance(expr[0,0], ImmutableMatrix):
             expr=expr[0,0]
     
     return expr
@@ -1329,14 +1329,14 @@ def evaluate_expression(the_expr, rng,
             
             from mitesting.customized_commands import \
                 MatrixFromTuple, MatrixAsVector
-            from sympy import Matrix
+            from sympy import ImmutableMatrix
 
             if isinstance(math_expr, Tuple) and \
                not isinstance(math_expr, TupleNoParen):
                 math_expr = MatrixFromTuple(*math_expr)
 
             def to_matrix_as_vector(w):
-                if isinstance(w,Matrix) and (w.cols==1 or w.rows==1):
+                if isinstance(w,ImmutableMatrix) and (w.cols==1 or w.rows==1):
                     return MatrixAsVector(w)
                 return w
 

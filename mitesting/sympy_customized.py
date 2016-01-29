@@ -1,6 +1,6 @@
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP, NUMBER
-from sympy import Tuple, Float, Rational, Integer, Pow, factorial, Matrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy
+from sympy import Tuple, Float, Rational, Integer, Pow, factorial, ImmutableMatrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 from django.utils.safestring import mark_safe
@@ -41,7 +41,7 @@ def bottom_up(rv, F, atoms=False, nonbasic=False, evaluate=None):
             rv = rv.__class__(bottom_up(a, F, atoms, nonbasic) for a in rv)
         elif isinstance(rv, Tuple):
             rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic) for a in rv])
-        elif isinstance(rv,Matrix):
+        elif isinstance(rv,ImmutableMatrix):
             rv = rv.__class__([bottom_up(a, F, atoms, nonbasic) for a in rv.tolist()])
             if nonbasic:
                 rv=F(rv)
@@ -73,7 +73,7 @@ def bottom_up(rv, F, atoms=False, nonbasic=False, evaluate=None):
         rv = rv.__class__(bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv)
     elif isinstance(rv, Tuple):
         rv = rv.__class__(*[bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv])
-    elif isinstance(rv,Matrix):
+    elif isinstance(rv,ImmutableMatrix):
         rv = rv.__class__([bottom_up(a, F, atoms, nonbasic, evaluate=evaluate) for a in rv.tolist()])
         if nonbasic:
             try:
@@ -391,7 +391,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
             # Horrible hack since sometimes will get maximum recursion
             # due to a loop in evalf when evaluate=False.
             # Only occurs the first 4 or so times, then disappears.
-            pass
+            if i==9:
+                raise
+            else:
+                pass
         else:
             break
         

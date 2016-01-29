@@ -248,7 +248,7 @@ class scalar_multiple_deviation(Function):
 
     @classmethod
     def eval(cls, u,v):
-        from sympy import oo, Matrix
+        from sympy import oo, ImmutableMatrix
         from mitesting.customized_commands import MatrixAsVector
 
         # if u or v are MatrixAsVectors (row or column), convert to Tuples
@@ -265,9 +265,10 @@ class scalar_multiple_deviation(Function):
         #   (the case of both zero is accounted for above)
         # - otherwise, attempt to take ratio, 
         #   and consider u and v to be multiples if this ratio can be taken
-        if not (isinstance(u,Tuple) or isinstance(u,tuple) or isinstance(u,Matrix))\
+        if not (isinstance(u,Tuple) or isinstance(u,tuple) or \
+                isinstance(u,ImmutableMatrix))\
            and not (isinstance(v,Tuple) or isinstance(v,tuple) \
-                    or isinstance(v,Matrix)):
+                    or isinstance(v,ImmutableMatrix)):
             if u==0 or v==0:
                 return oo
             try:
@@ -285,7 +286,7 @@ class scalar_multiple_deviation(Function):
             return oo
 
         # if matrices, also demand the same shape
-        if isinstance(u,Matrix):
+        if isinstance(u,ImmutableMatrix):
             if u.shape != v.shape:
                 return oo
 

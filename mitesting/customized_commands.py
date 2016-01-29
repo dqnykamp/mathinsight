@@ -1,6 +1,6 @@
 # customized sympy commands
 
-from sympy import Tuple, sympify, S, Float, Matrix, Abs, Gt, Lt, Ge, Le, Function, Symbol, Expr
+from sympy import Tuple, sympify, S, Float, ImmutableMatrix, Abs, Gt, Lt, Ge, Le, Function, Symbol, Expr
 from mitesting.sympy_customized import bottom_up, customized_sort_key, TupleNoParen, And
 from sympy.logic.boolalg import BooleanFunction
 
@@ -211,7 +211,7 @@ def normalize_floats(expression, n_digits=14, evaluate=None):
     return expression
 
 
-class MatrixAsVector(Matrix):
+class MatrixAsVector(ImmutableMatrix):
     """
     Matrix that prints like a vector with latex.
     Simply outputs all elements, separated by commands and in parentheses.
@@ -220,6 +220,18 @@ class MatrixAsVector(Matrix):
     Compares as equal to Tuples or tuples.
     
     """
+
+    @classmethod
+    def _new(cls, *args, **kwargs):
+        # same as sympy version, only always creates new class
+        # even if passed in a matrix
+        from sympy.core import Basic, Integer
+        rows, cols, flat_list = cls._handle_creation_inputs(*args, **kwargs)
+        rows = Integer(rows)
+        cols = Integer(cols)
+        mat = Tuple(*flat_list)
+        return Basic.__new__(cls, rows, cols, mat)
+
     def _latex(self, prtr):
         # flattened list of elements
         elts = [item for sublist in self.tolist() for item in sublist] 
@@ -236,7 +248,8 @@ class MatrixAsVector(Matrix):
 
         return super(MatrixAsVector, self).__eq__(other)
 
-    __hash__ = Matrix.__hash__
+    __hash__ = ImmutableMatrix.__hash__
+    
 
 
 class MatrixFromTuple(object):

@@ -1,5 +1,5 @@
 
-from sympy import Tuple, sympify, Abs, Matrix, Derivative, Symbol
+from sympy import Tuple, sympify, Abs, ImmutableMatrix, Derivative, Symbol
 from sympy.core.relational import Relational, Equality, Unequality
 from mitesting.customized_commands import evalf_expression, round_expression, normalize_floats
 from mitesting.sympy_customized import bottom_up, latex
@@ -492,7 +492,7 @@ def try_normalize_expr(expr):
     """
     Attempt to normalize expression.
     If relational, subtract rhs from both sides.
-    Convert any subclass of Matrix to Matrix.
+    Convert any subclass of ImmutableMatrix to ImmutableMatrix.
     Convert any subclass of Derivative to Derivative
     Convert customized log commands to sympy log
     Use doit, expand, then ratsimp to simplify rationals, then expand again
@@ -541,7 +541,8 @@ def try_normalize_expr(expr):
         return w
 
     expr=bottom_up(expr, 
-        lambda w: w if not isinstance(w,Matrix) else Matrix(w),
+                   lambda w: w if not isinstance(w,ImmutableMatrix) \
+                   else ImmutableMatrix(*w.args),
                    nonbasic=True)
 
     from sympy import Derivative
@@ -620,7 +621,8 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
         return check_set_equality(expression1, expression2, 
                                   partial_matches=partial_matches)
 
-    if isinstance(expression1, Matrix) or isinstance(expression2, Matrix):
+    if isinstance(expression1, ImmutableMatrix) or \
+       isinstance(expression2, ImmutableMatrix):
         return check_matrix_equality(expression1, expression2, 
                                   partial_matches=partial_matches)
 
