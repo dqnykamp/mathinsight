@@ -31,7 +31,7 @@ def return_localized_commands():
          'sum': sum,
          'map': map,
          'if': iif,
-         'len': len,
+         'len': len_custom,
          'log': log, 'ln': ln, 'exp': exp, 
          'count': count,
          'Point': Point,
@@ -405,6 +405,14 @@ class is_number(BooleanFunction):
     def eval(cls, arg):
         return arg.is_number
 
+
+class len_custom(BooleanFunction):
+    @classmethod
+    def eval(cls, arg):
+        try:
+            return len(arg)
+        except TypeError:
+            return 0
 
 """
 Turn off automatic evaluation of floats in the following sympy functions.
