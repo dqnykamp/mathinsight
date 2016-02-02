@@ -107,7 +107,9 @@
       jQuery(".applet_feedback_{{question_data.identifier}}").removeClass('hidden_feedback');
 
       question_feedback.html(data['feedback']);
-      if(data['correct']) {
+      var explicitly_not_recorded=data['record_valid_response']==false;
+
+      if(data['correct'] & !explicitly_not_recorded) {
 	  question_feedback.removeClass('error').addClass('success');
       }
       else {
@@ -120,10 +122,15 @@
 	  answer_feedback.html(data['answers'][answer_identifier]['answer_feedback']);
 	  answer_feedback_binary.html(data['answers'][answer_identifier]['answer_feedback_binary']);
 	  if(data['answers'][answer_identifier]['answer_correct']) {
-	      answer_feedback.removeClass('error').addClass('success');
+	      if(!explicitly_not_recorded) {
+		  answer_feedback.removeClass('error').removeClass('info').addClass('success');
+	      }
+	      else {
+		  answer_feedback.removeClass('error').removeClass('success').addClass('info');
+	      }
 	  }
 	  else {
-	      answer_feedback.removeClass('success').addClass('error');
+	      answer_feedback.removeClass('success').removeClass('info').addClass('error');
 	  }
 	  answer_feedback.filter("span").css({ display: 'inline-block'})
       }
