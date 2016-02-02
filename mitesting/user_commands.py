@@ -92,15 +92,29 @@ class eigenvects_tuple(Function):
     @classmethod
     def eval(cls, A):
         from .customized_commands import MatrixAsVector
+        from numpy import array
+        from numpy.linalg import eig
+        from sympy.core import sympify
+        
+        # convert A to a numpy array of type float64
+        try:
+            A_array = array(A.tolist(), dtype='float64')
+        except (TypeError, AttributeError):
+            raise ValueError("Argument to eigenvects_tuple must be a matrix of numerical entries")
 
-        eigtuplelist=A.eigenvects()
+        [evals,evects] = eig(A_array)
+
+        eigtuplelist = []
+        for i in range(evals.size):
+            eigtuplelist.append([sympify(evals[i]),
+                                 sympify(evects[:,i].tolist())])
+
+
         eigtuplelist.sort(key=lambda w: customized_sort_key(w[0]))
 
         eiglist=[]
         for t in eigtuplelist:
-            mlist = t[2]
-            for m in mlist:
-                eiglist.append(MatrixAsVector(m))
+            eiglist.append(MatrixAsVector(t[1]))
         return TupleNoParen(*eiglist)
 
 
@@ -108,13 +122,27 @@ class eigenvals_tuple(Function):
     """
     Finds eigenvalues of a matrix
     Returns a TupleNoParen of the sorted eigenvalues (using customized_sort_key)
-    ignoring multiplicity
     
     """
 
     @classmethod
     def eval(cls, A):
-        eiglist=list(A.eigenvals())
+        from numpy import array
+        from numpy.linalg import eigvals
+        from sympy.core import sympify
+
+        # convert A to a numpy array of type float64
+        try:
+            A_array = array(A.tolist(), dtype='float64')
+        except (TypeError, AttributeError):
+            raise ValueError("Argument to eigenvals_tuple must be a matrix of numerical entries")
+
+        evals = eigvals(A_array)
+        
+        eiglist=[]
+        for i in range(evals.size):
+            eiglist.append(sympify(evals[i]))
+        
         eiglist.sort(key=customized_sort_key)
 
         return TupleNoParen(*eiglist)
