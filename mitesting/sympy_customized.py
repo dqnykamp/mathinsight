@@ -1175,10 +1175,19 @@ class MulUnsort(Mul):
             other_as_ordered_factors = cpart + ncpart
             
             self_as_ordered_factors = list(self.args)
-            if not self.display_initial_negative_one \
-               and self.args[0]==-1:
+
+            try:
+                display_initial_negative_one = self.display_initial_negative_one
+            except AttributeError:
+                # Sometimes get attribute error for
+                # display_initial_negative_one.
+                # Not sure what causes it, but count it as True
+                display_initial_negative_one  = True
+            
+            if not display_initial_negative_one and self.args[0]==-1:
                 self_as_ordered_factors[1]*=-1
                 self_as_ordered_factors=self_as_ordered_factors[1:]
+
             if self_as_ordered_factors == other_as_ordered_factors:
                 return True
             else:
@@ -1200,12 +1209,15 @@ class MulUnsort(Mul):
         # and should be displayed
         # or was just added to switch the sign, and should not be displayed
         try:
-            if not self.display_initial_negative_one and self.args[0]==-1:
-                return MulUnsort(*self.args[1:])
+            display_initial_negative_one = self.display_initial_negative_one
         except AttributeError:
             # Sometimes get attribute error for display_initial_negative_one.
-            # Not sure what causes it, but we'll ignore it
-            pass
+            # Not sure what causes it, but count it as True
+            display_initial_negative_one  = True
+
+        if not display_initial_negative_one and self.args[0]==-1:
+            return MulUnsort(*self.args[1:])
+
         arg0=_get_coeff(self)
         if arg0.is_Number and arg0.is_negative:
             return MulUnsort(-self.args[0], *self.args[1:])
@@ -1256,9 +1268,16 @@ class MulUnsort(Mul):
 
         tex = ""
 
+        try:
+            display_initial_negative_one = self.display_initial_negative_one
+        except AttributeError:
+            # Sometimes get attribute error for display_initial_negative_one.
+            # Not sure what causes it, but count it as True
+            display_initial_negative_one  = True
+
         # don't display the initial factor of negative one 
         # if just came from negation
-        if not self.display_initial_negative_one and self.args[0]==-1:
+        if not display_initial_negative_one and self.args[0]==-1:
             tex = "-"
             self = MulUnsort(*self.args[1:])
 
@@ -1339,12 +1358,21 @@ class MulUnsort(Mul):
         if not coeff.is_negative:
             sign = ""
         else:
+            try:
+                display_initial_negative_one = self.display_initial_negative_one
+            except AttributeError:
+                # Sometimes get attribute error for
+                # display_initial_negative_one.
+                # Not sure what causes it, but count it as True
+                display_initial_negative_one  = True
+
             # don't display the initial factor of negative one 
             # if just came from negation
-            if not self.display_initial_negative_one and coeff==-1:
+            if not display_initial_negative_one and coeff==-1:
                 new_args=[]
             else:
                 new_args=[-coeff]
+
             new_args.extend(self.args[1:])
             self = MulUnsort(*new_args)
             sign = "-"
