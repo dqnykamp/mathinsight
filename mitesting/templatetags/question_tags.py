@@ -387,6 +387,10 @@ def process_assign_to_applet_object(applet_object_name, answer_field_name,
                        (change_from_javascript=True, name=applet_object_name)
     except ObjectDoesNotExist:
         return ""
+    except MultipleObjectsReturned:
+        logger.warning("Received multiple applet objects with change_from_javascript=True, applet=%s, name=%s.  Choosing first" % (applet.code, applet_object_name))
+        applet_object=applet.appletobject_set.filter \
+            (change_from_javascript=True, name=applet_object_name).first()
         
     try:
         applet_data=context['_auxiliary_data_']['applet']
