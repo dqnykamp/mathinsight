@@ -29,7 +29,7 @@ def return_localized_commands():
          'evalf': evalf_expression,
          'index': index,
          'sum': sum,
-         'map': map,
+         'map': listmap,
          'if': iif,
          'len': len_custom,
          'log': log, 'ln': ln, 'exp': exp, 
@@ -48,6 +48,10 @@ def return_localized_commands():
         }
     
     return localized_commands
+
+
+def listmap(*args, **kwargs):
+    return list(map(*args,**kwargs))
 
 
 class roots_tuple(Function):
