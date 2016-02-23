@@ -1433,6 +1433,19 @@ class LatexPrinter(sympy_LatexPrinter):
         args = sorted(e.args, key=default_sort_key)
         return self._print_LogOp(args, r"~\text{or}~")
 
+
+    def _print_re(self, expr, exp=None):
+        # use \text{Re} and always use parentheses
+        tex = r"\text{Re} {\left (%s \right )}" % self._print(expr.args[0])
+
+        return self._do_exponent(tex, exp)
+
+    def _print_im(self, expr, exp=None):
+        # use \text{Im} and always use parentheses
+        tex = r"\text{Im} {\left ( %s \right )}" % self._print(expr.args[0])
+
+        return self._do_exponent(tex, exp)
+
     def doprint(self, expr):
         tex = self._str(self._print(expr))
 
