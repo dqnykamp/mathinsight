@@ -3195,7 +3195,7 @@ def return_applet_object_javascript(applet_data, capture_javascript):
 
     setup_variables_javascript = "var applet_object_content={};\nvar math_elements={};\n" + setup_variables_javascript
 
-    interval_javascript = 'for(var object_identifier in math_elements) {\n var content = applet_object_content[object_identifier];\n if(content.new !=content.old) {\n  MathJax.Hub.Queue(["Text", math_elements[object_identifier], content.new]);\n  content.old=content.new; \n}\n}\nMathJax.Hub.Config({ showProcessingMessages: false});'
+    interval_javascript = 'for(var object_identifier in math_elements) {\n var content = applet_object_content[object_identifier];\n if(content.new !=content.old) {\n  MathJax.Hub.Queue(["Text", math_elements[object_identifier], content.new]);\n  content.old=content.new; \n}\n}\nMathJax.Hub.Config({ showProcessingMessages: false, "fast-preview": {disabled: true}});MathJax.Hub.processSectionDelay = 0;'
 
     interval_javascript = 'window.setInterval(function() {\n%s}, 200);' % interval_javascript
 

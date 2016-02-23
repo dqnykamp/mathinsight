@@ -159,6 +159,9 @@
 	  jQuery('#overall_score').html(data['content_score']);
       }
 
+      MathJax.Hub.Config({ showProcessingMessages: false, "fast-preview": {disabled: true}});
+      MathJax.Hub.processSectionDelay = 0;
+
       MathJax.Hub.Queue(["Typeset",MathJax.Hub,"id_question_{{question_data.identifier}}"]);
 
       for (var i=0; i< data["dynamictext"].length; i++) {
