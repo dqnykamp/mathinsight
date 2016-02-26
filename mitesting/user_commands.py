@@ -47,6 +47,7 @@ def return_localized_commands():
          'scalar_multiple_deviation': scalar_multiple_deviation,
          'cumsum': cumsum,
          'median': median,
+         'prime_factors': prime_factors,
         }
     
     return localized_commands
@@ -193,6 +194,22 @@ class smallest_factor(Function):
             return factorlist[0]
         else:
             raise ValueError("Argument to smallest_factor must be an integer")
+
+
+class prime_factors(Function):
+    """
+    Find prime factors of expr up to 10000.
+    Returns a TupleNoParen of the factors in increasing order, 
+    ignoring multiplicity
+    """
+
+    @classmethod
+    def eval(cls, expr):
+        if expr.is_Integer:
+            from sympy import primefactors
+            return TupleNoParen(*primefactors(expr, limit=10000))
+        else:
+            raise ValueError("Argument to prime_factors must be an integer")
 
 
 class max_including_tuples(Function):
