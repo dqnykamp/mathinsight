@@ -314,7 +314,7 @@ class AssessmentView(DetailView):
 
         try:
             self.number_in_thread=int(request.GET.get('n',1))
-        except TypeError:
+        except ValueError:
             self.number_in_thread=1
 
         try:
@@ -697,7 +697,7 @@ class AssessmentOverview(DetailView):
         self.user = request.user
         try:
             self.number_in_thread=int(request.GET.get('n',1))
-        except TypeError:
+        except ValueError:
             self.number_in_thread=1
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -905,7 +905,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         self.get_object_thread_content()
         try:
             self.number_in_thread=int(request.GET.get('n',1))
-        except TypeError:
+        except ValueError:
             self.number_in_thread=1
 
         # determine if user has instructor or designer access
@@ -926,7 +926,7 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         self.get_object_thread_content()
         try:
             self.number_in_thread=int(request.GET.get('n',1))
-        except TypeError:
+        except ValueError:
             self.number_in_thread=1
 
         # determine if user has instructor or designer access
@@ -965,14 +965,22 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
         include_dict={}
         if include_list:
             for item in include_list.split(","):
-                ind = int(item)
-                include_dict[ind] = include_dict.get(ind,0)+1
+                try:
+                    ind = int(item)
+                except ValueError:
+                    pass
+                else:
+                    include_dict[ind] = include_dict.get(ind,0)+1
 
         avoid_dict={}
         if avoid_list:
             for item in avoid_list.split(","):
-                ind = int(item)
-                avoid_dict[ind] = avoid_dict.get(ind,0)+1
+                try:
+                    ind = int(item)
+                except ValueError:
+                    pass
+                else:
+                    avoid_dict[ind] = avoid_dict.get(ind,0)+1
 
         from micourses.models import ContentAttempt
                 
