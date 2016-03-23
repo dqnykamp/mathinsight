@@ -266,7 +266,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=re.sub('\u212f', '__E__', s)
     new_local_dict['__E__'] = E
 
-    # replace lower case unicode greek letters
+    # replace unicode greek letters
     greek_alphabet = {
         '\u03B1': 'alpha',
         '\u03B2': 'beta',
@@ -294,6 +294,17 @@ def parse_expr(s, global_dict=None, local_dict=None,
         '\u03C9': 'omega',
         '\u03F5': 'epsilon',
         '\u03D5': 'phi',
+        '\u0394': 'Delta',
+        '\u0393': 'Gamma',
+        '\u03A3': 'Sigma',
+        '\u0398': 'Theta',
+        '\u039B': 'Lambda',
+        '\u039E': 'Xi',
+        '\u03A0': 'Pi',
+        '\u03A5': 'Upsilon',
+        '\u03A6': 'Phi',
+        '\u03A8': 'Psi',
+        '\u03A9': 'Omega',
     }    
     
     # include spaces around greek letters unless have _ before or after
