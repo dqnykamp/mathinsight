@@ -79,11 +79,18 @@ class ExprNode(Node):
         local_dict = context["_sympy_local_dict_"]
 
         from mitesting.math_objects import math_object
-        from mitesting.sympy_customized import parse_and_process, EVALUATE_NONE
+        from mitesting.sympy_customized import parse_and_process, EVALUATE_NONE, EVALUATE_FULL
 
+        if kwargs.get('evaluate', False):
+            evaluate_level=EVALUATE_FULL
+        else:
+            evaluate_level=EVALUATE_NONE
+        
+        kwargs['evaluate_level'] = evaluate_level  # for math_object
+        
         expression = parse_and_process(expression,
                                        local_dict=local_dict,
-                                       evaluate_level=EVALUATE_NONE)
+                                       evaluate_level=evaluate_level)
 
         expression=math_object(expression, **kwargs)
 
