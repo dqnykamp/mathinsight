@@ -1430,6 +1430,61 @@ class MulUnsort(Mul):
             return (expr,)
 
 
+tex_greek_dictionary = {
+    'Alpha': 'A',
+    'Beta': 'B',
+    'Epsilon': 'E',
+    'Zeta': 'Z',
+    'Eta': 'H',
+    'Iota': 'I',
+    'Kappa': 'K',
+    'Mu': 'M',
+    'Nu': 'N',
+    'omicron': 'o',
+    'Omicron': 'O',
+    'Rho': 'P',
+    'Tau': 'T',
+    'Chi': 'X',
+    'lamda': r'\lambda',
+    'Lamda': r'\Lambda',
+    'khi': r'\chi',
+    'Khi': r'X',
+    'varepsilon': r'\varepsilon',
+    'varkappa': r'\varkappa',
+    'varphi': r'\varphi',
+    'varpi': r'\varpi',
+    'varrho': r'\varrho',
+    'varsigma': r'\varsigma',
+    'vartheta': r'\vartheta',
+}
+
+other_symbols = set(['aleph', 'beth', 'daleth', 'gimel', 'ell', 'eth', 'hbar',
+                     'hslash', 'mho', 'wp', ])
+
+from sympy.core.alphabets import greeks
+greek_letters_set = frozenset(greeks)
+
+
+def translate(s):
+    r'''
+    Modified from sympy's latex translate to remove processing of modifiers
+    
+    Given a description of a Greek letter or other special character,
+    return the appropriate latex.
+
+    Let everything else pass as given.
+
+    '''
+    # Process the rest
+    tex = tex_greek_dictionary.get(s)
+    if tex:
+        return tex
+    elif s.lower() in greek_letters_set or s in other_symbols:
+        return "\\" + s
+    else:
+        return s
+
+
 class LatexPrinter(sympy_LatexPrinter):
     emptyPrinter = str
     def __init__(self, settings=None):
@@ -1469,6 +1524,26 @@ class LatexPrinter(sympy_LatexPrinter):
         else:
             env_str = self._settings['mode']
             return r"\begin{%s}%s\end{%s}" % (env_str, tex, env_str)
+
+    def _deal_with_super_sub(self, string):
+        # identical to sympy version.  Just use customized translate
+
+        from sympy.printing.conventions import split_super_sub
+
+        name, supers, subs = split_super_sub(string)
+
+        name = translate(name)
+        supers = [translate(sup) for sup in supers]
+        subs = [translate(sub) for sub in subs]
+
+        # glue all items together:
+        if len(supers) > 0:
+            name += "^{%s}" % " ".join(supers)
+        if len(subs) > 0:
+            name += "_{%s}" % " ".join(subs)
+
+        return name
+
 
 def latex(expr, **settings):
     return LatexPrinter(settings).doprint(expr)

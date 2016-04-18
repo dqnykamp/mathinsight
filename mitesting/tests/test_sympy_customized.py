@@ -1030,3 +1030,10 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr1,expr6)
         self.assertEqual(expr1,expr7)
         self.assertEqual(expr1,expr8)
+
+
+    # should have separate latex tests?
+    def test_no_latex_modifiers(self):
+
+        self.assertEqual("theoretical", 
+                         latex(parse_expr("theoretical", split_symbols=False)))
