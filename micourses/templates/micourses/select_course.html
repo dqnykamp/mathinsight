@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% load mi_tags question_tags mi_tags course_tags %}
 {% block nolinksection %}{% endblock %}
-{% block title %}Select course for {{request.user.courseuser.get_full_name}}{%endblock%}
+{% block title %}{% if not_enrolled %}{{cuser.get_full_name }} not enrolled{%else%}Select course for {{cuser.get_full_name}}{%endif%}{%endblock%}
 
 {% block content %}
+{% if not_enrolled %}
+<p>{{cuser.get_full_name}} is not enrolled in the course {{not_enrolled_course}}.</p>
+{% endif %}
 {% if n_courses %}
 <p>Select course:</p>
 <ul>
@@ -12,6 +15,6 @@
 {% endfor %}
 </ul>
 {% else %}
-<p>{{cuser}} is not enrolled in any active courses on Math Insight.</p>
+<p>{{cuser.get_full_name}} is not enrolled in any active courses on Math Insight.</p>
 {% endif %}
 {% endblock %}

@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, Context, Template
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.generic import DetailView, View, ListView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.base import TemplateResponseMixin
@@ -27,6 +27,7 @@ import reversion
 class SelectCourseView(ListView):
     context_object_name = "course_list"
     template_name = 'micourses/select_course.html'
+    not_enrolled=False
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
@@ -44,12 +45,19 @@ class SelectCourseView(ListView):
         return self.render_to_response(context)
 
     def get_queryset(self):
-        return self.courseuser.course_set.filter(active=True)
+        return self.courseuser.course_set.all()
 
     def get_context_data(self):
         context = super(ListView,self).get_context_data()
         context["n_courses"]=self.n_courses
         context["cuser"]=self.courseuser
+        context['not_enrolled'] = self.not_enrolled
+        if self.not_enrolled:
+            try:
+                 context['not_enrolled_course'] = \
+                    Course.objects.get(code=self.kwargs['course_code'])
+            except:
+                pass
         return context
 
         

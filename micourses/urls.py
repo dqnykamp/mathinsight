@@ -50,9 +50,7 @@ attendance_patterns = [
 course_patterns = [
     url(r'^$', CourseView.as_view(), name='coursemain'),
     url(r'^/not_enrolled$', 
-        DetailView.as_view(model=Course, 
-                           slug_url_kwarg = 'course_code', slug_field = 'code',
-                           template_name="micourses/not_enrolled.html"), 
+        SelectCourseView.as_view(not_enrolled=True), 
         name='notenrolled'),
     url(r'^/record/(?P<content_id>\d+)', include(content_attempt_patterns)),
     url(r'^/contentlist$', ContentListView.as_view(),

@@ -82,12 +82,19 @@ class CourseUser(models.Model):
             return self.selected_course_enrollment.course
 
         # Try to find unique enrolled, active course.
-        # Will raise MultipleObjectReturned if multiple enrolled courses.
+        # If no active course, trying to find any course
+        # Will raise MultipleObjectReturned if multiple active courses
+        # or if no active courses but multiple other enrolled courses
         # Will raise ObjectDoesNotExist if no enrolled courses
-        course_enrollment = self.courseenrollment_set.get(
-            course__active=True)
+        try:
+            course_enrollment = self.courseenrollment_set.get(
+                course__active=True)
+        except ObjectDoesNotExist:
+            # No active courses.
+            # Will raise ObjectDoesNotExist again if  no enrolled courses
+            course_enrollment = self.courseenrollment_set.get()
         
-        # if found just one active course, make it be the selected course
+        # if found just one course, make it be the selected course
         self.selected_course_enrollment = course_enrollment
         self.save()
         return course_enrollment.course

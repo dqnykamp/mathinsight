@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% load  mi_tags course_tags %}
-{% block nolinksection %}{% endblock %}
-{% block title %}{{request.user.get_full_name}} not enrolled{%endblock%}
-
-{% block content %}
-<p>{{request.user.get_full_name}} is not enrolled in the course {{course}}.</p>
-{% endblock %}

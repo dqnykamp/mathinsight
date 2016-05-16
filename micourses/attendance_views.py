@@ -10,7 +10,7 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, Context, Template
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.views.generic import DetailView, View, ListView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.base import TemplateResponseMixin
