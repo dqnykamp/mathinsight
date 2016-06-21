@@ -20,6 +20,7 @@ from django import forms
 from django.views.decorators.csrf import ensure_csrf_cookie
 from micourses.forms import GenerateCourseAttemptForm
 import reversion
+from micourses.utils import http_response_simple_page_from_string
 
 
 class AssessmentView(DetailView):
@@ -312,10 +313,55 @@ class AssessmentView(DetailView):
         if not has_permission:
             return redirect("mi-forbidden")
 
+
+        # determine thread_content of assessment
         try:
             self.number_in_thread=int(request.GET.get('n',1))
         except ValueError:
             self.number_in_thread=1
+
+        # thread_content will be None
+        # if assessment is not in thread and number in thread is 1
+        try:
+            self.thread_content=self.assessment.determine_thread_content(
+                self.number_in_thread)
+        except ObjectDoesNotExist:
+            raise Http404("No assessment found") 
+
+
+        # if require secure browser and user is not exam administrator
+        # then check if request contains correct 
+        # Safe Exam Browser hash in the HTTP request
+
+        if self.assessment.assessment_type.require_secured_browser \
+           and not user_can_administer_assessment(request.user, 
+                                                  course=self.object.course):
+
+            safe_exam_browser_verified = False
+            request_hash = request.META.get("HTTP_X_SAFEEXAMBROWSER_REQUESTHASH")
+            if not request_hash:
+                error_message="This exam is viewable only through <a href='http://safeexambrowser.org'>Safe Exam Browser</a>.  Consult your instructor for proper configuration."
+                return http_response_simple_page_from_string(
+                    "<p>%s</p>" % error_message)
+
+            else:
+                import hashlib
+                sha256=hashlib.sha256()
+                sha256.update(request.build_absolute_uri().encode())
+
+                for exam_key in self.thread_content.browser_exam_keys.splitlines():
+                    s = sha256.copy()
+                    s.update(exam_key.encode())
+                    
+                    if s.hexdigest() == request_hash:
+                        safe_exam_browser_verified = True
+                        break
+
+                if not safe_exam_browser_verified:
+                    error_message = "Safe Exam Browser does not appear to be properly configured for this exam.  Consult your instructor for proper configuration."
+                    return http_response_simple_page_from_string(
+                        "<p>%s</p>" % error_message)
+
 
         try:
             self.determine_version_attempt(
@@ -324,12 +370,7 @@ class AssessmentView(DetailView):
                 question_attempt_ids = request.GET.get('question_attempts'),
             )
         except ValueError as e:
-            from django.template import Template, Context
-            template_string = "{% extends 'base.html' %}{% block content %}"
-            template_string += "<p>%s</p>" % e
-            template_string += "{% endblock %}"
-            context = Context({'STATIC_URL': settings.STATIC_URL})
-            return HttpResponse(Template(template_string).render(context))
+            return http_response_simple_page_from_string("<p>%s</p>" % e)
 
         # update selected course for course users
         # self.course_enrollment set by determine_version_attempt
@@ -360,7 +401,6 @@ class AssessmentView(DetailView):
         Set the following variables that give information about user
         and the assessment's role in course:
         self.course_enrollment
-        self.thread_content
         self.current_attempt
         
         Set the following variables that specify the version of assessment:
@@ -457,7 +497,6 @@ class AssessmentView(DetailView):
 
         # sets the following variables
         self.course_enrollment=None
-        self.thread_content=None
         self.assessment_seed= None
         self.version = ''
         self.current_attempt=None
@@ -488,18 +527,6 @@ class AssessmentView(DetailView):
                 pass
             else:
                 current_role = courseuser.get_current_role(course=self.assessment.course)
-
-        ###############################################
-        # first, determine thread_content of assessment
-        ###############################################
-
-        # thread_content will be None
-        # if assessment is not in thread and number in thread is 1
-        try:
-            self.thread_content=self.assessment.determine_thread_content(
-                self.number_in_thread)
-        except ObjectDoesNotExist:
-            raise Http404("No assessment found") 
 
         
         ########################################################

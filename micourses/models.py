@@ -1389,6 +1389,8 @@ class ThreadContent(models.Model):
     available_before_assigned = models.BooleanField(default=False)
     record_scores = models.BooleanField(default=True)
     
+    browser_exam_keys = models.CharField(max_length=200, blank=True, null=True)
+
     n_of_object=models.SmallIntegerField(default=1)
     
     sort_order = models.FloatField(blank=True)
@@ -2522,6 +2524,7 @@ class AssessmentType(models.Model):
                                              default=2)
     solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
                                                 default=2)
+    require_secured_browser=models.BooleanField(default=False)
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
     
     def __str__(self):
@@ -2538,7 +2541,8 @@ class Assessment(models.Model):
     thread_content_set = GenericRelation('micourses.ThreadContent')
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
-    questions = models.ManyToManyField('mitesting.Question', through='QuestionAssigned',
+    questions = models.ManyToManyField('mitesting.Question', 
+                                       through='QuestionAssigned',
                                        blank=True)
     instructions = models.TextField(blank=True, null=True)
     instructions2 = models.TextField(blank=True, null=True)
@@ -2553,7 +2557,6 @@ class Assessment(models.Model):
     fixed_order = models.BooleanField(default=False)
     single_version = models.BooleanField(default=False)
     resample_question_sets = models.BooleanField(default=False)
-
 
     class Meta:
         ordering = ["code",]

@@ -64,10 +64,15 @@ def thread_content_form_factory(course, the_content_type=None, update_options_co
             queryset = course.coursegradecategory_set.all(),
             required=False,
         )
+        browser_exam_keys = forms.CharField(
+            required=False,
+            widget=forms.Textarea(attrs={'rows':'1', 'cols': '65'})
+        )
+
 
         class Meta:
             model=ThreadContent
-            fields = ('content_type', 'object_id', 'substitute_title', 'comment', 'assigned', 'initial_due', 'final_due', 'grade_category', 'points', 'individualize_by_student', 'attempt_aggregation', 'optional', 'available_before_assigned', 'record_scores')
+            fields = ('content_type', 'object_id', 'substitute_title', 'comment', 'assigned', 'initial_due', 'final_due', 'grade_category', 'points', 'individualize_by_student', 'attempt_aggregation', 'optional', 'available_before_assigned', 'record_scores', 'browser_exam_keys')
 
 
     return ThreadContentForm

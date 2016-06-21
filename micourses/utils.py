@@ -248,3 +248,15 @@ def create_all_content_records(active=True):
 
     for course in courses:
         create_content_records(course)
+
+
+def http_response_simple_page_from_string(s):
+    from django.template import Template, Context
+    from django.http import HttpResponse
+    from django.conf import settings
+    template_string = "{% extends 'base.html' %}{% block content %}"
+    template_string += str(s)
+    template_string += "{% endblock %}"
+    context = Context({'STATIC_URL': settings.STATIC_URL})
+    return HttpResponse(Template(template_string).render(context))
+
