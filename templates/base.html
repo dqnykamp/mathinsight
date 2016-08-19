@@ -37,6 +37,7 @@
 	{% block nopagenavsl %}<li><a class="ym-skip" href="#pagenav">Skip to navigation (Press Enter)</a></li>{% endblock%}
 	<li><a class="ym-skip" href="#main">Skip to main content (Press Enter)</a></li>
 </ul>
+{% block nositenav %}
 <nav id="sitenav" role="navigation">
   <div class="ym-wrapper">
     <div class="ym-wbox">
@@ -56,7 +57,7 @@
     </div>
   </div>
 </nav>
-
+{% endblock %}
 
 <header>
   <div class="ym-wrapper">
@@ -80,24 +81,30 @@
       <input type="button" value="x" class="unstick" onclick="unstick(document.getElementById('pagenav'))"/>
 </nav>
 {% endblock %}
+{% block nobreadcrumbslogin %}
 <div id="breadcrumbs_login">
   <div class="ym-wrapper">
     <div class="ym-wbox" style="padding-top:0; padding-bottom: 0;">
       <div class="ym-grid linearize-level-1">
 	<div class="ym-g66 ym-gl">
 	  <div class="ym-gbox-left">
+	    {% block breadcrumbs %}
 	    {% if user.courseuser.return_selected_course_if_exists %}<a href="{% url 'micourses:coursemain' course_code=user.courseuser.return_selected_course_if_exists.code %}">{{user.courseuser.return_selected_course_if_exists}}</a> {% block coursebreadcrumb %}{%endblock%}{%endif%}
+	    {% endblock %}
 	  </div>
 	</div>
 	<div class="ym-g33 ym-gr"> 
 	  <div class="ym-gbox-left" style="text-align: right;">
-	    {% if user.is_authenticated %}logged in as {{ user}} {% if request.META.REMOTE_USER %}(<a id="logout_link" href="https://{{request.get_host}}/Shibboleth.sso/Logout?return=https%3a%2f%2fidp2.shib.umn.edu%2fidp%2fLogoutUMN">log out</a>){% else %}(<a id="logout_link" href="{% url 'mi-logout' %}">log out</a>){%endif%}{%else%}<a href="{% url 'mi-login'%}">log in</a>{%endif%}
+	    {% block login %}
+	    {% if user.is_authenticated %}logged in as {{ user}} {% if request.META.REMOTE_USER %}(<a id="logout_link" href="https://{{request.get_host}}/Shibboleth.sso/Logout?return=https%3a%2f%2fidp2.shib.umn.edu%2fidp%2fLogoutUMN">log out</a>){% else %}(<a id="logout_link" href="{% url 'mi-logout' %}">log out</a>){%endif%}{%else%}<a href="{% url 'mi-login'%}?next={{request.path}}">log in</a>{%endif%}
+	    {% endblock %}
 	  </div>
 	</div>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
 <div id="main">
   <div class="ym-wrapper">
     <div class="ym-wbox">

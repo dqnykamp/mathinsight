@@ -285,7 +285,7 @@ def get_question_list_from_attempt(assessment, content_attempt, question_attempt
             ca_qs_list.append(ca_question_set.question_set)
 
         # if question sets from latest question attempts don't match,
-        # then return empty quesiton list
+        # then return empty question list
         if sorted(ca_qs_list) != sorted(question_sets):
             return []
 
@@ -319,7 +319,12 @@ def get_question_list_from_attempt(assessment, content_attempt, question_attempt
 def render_question_list(assessment, question_list, assessment_seed, rng=None,
                          user=None, solution=False,
                          auxiliary_data=None,
-                         show_post_user_errors=False):
+                         show_post_user_errors=False,
+                         show_correctness=True,
+                         no_links=False,
+                         allow_solution_buttons=True
+                     ):
+
     """
     Generate list of rendered questions or solutions for assessment.
 
@@ -345,6 +350,11 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
       for information about applets and hidden sections embedded in text
     - show_post_user_errors: if true, show errors in expressions that are
       flagged as post user response
+    - show_correctness: if True, then should display correctness of response
+      upon its submission
+    - no_links: if True, then should suppress links in feedback to responses
+    - allow_solution_buttons: if True, allow a solution button to be displayed
+      on computer graded questions
 
     Outputs:
     - seed that used to generate assessment (the input seed unless it was None)
@@ -406,9 +416,11 @@ def render_question_list(assessment, question_list, assessment_seed, rng=None,
             assessment=assessment,
             assessment_seed=assessment_seed, 
             record_response=True,
-            allow_solution_buttons=assessment.allow_solution_buttons,
+            allow_solution_buttons=allow_solution_buttons,
             auxiliary_data=auxiliary_data,
-            show_post_user_errors=show_post_user_errors)
+            show_post_user_errors=show_post_user_errors,
+            show_correctness=show_correctness,
+            no_links=no_links)
         
         question_dict['question_data']=question_data
 

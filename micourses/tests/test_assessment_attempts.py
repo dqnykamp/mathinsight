@@ -195,13 +195,9 @@ def set_up_attempts(tcase):
     # create two valid content attempts
     from micourses.utils import create_new_assessment_attempt
     new_attempt_info = create_new_assessment_attempt(
-        assessment=tcase.assessment, thread_content=tcase.thread_content,
-        courseuser = tcase.student,
         student_record = tcase.record)
     tcase.content_attempt_1 = new_attempt_info['new_attempt']
     new_attempt_info = create_new_assessment_attempt(
-        assessment=tcase.assessment, thread_content=tcase.thread_content,
-        courseuser = tcase.student,
         student_record = tcase.record)
     tcase.content_attempt_2 = new_attempt_info['new_attempt']
 
@@ -1152,8 +1148,8 @@ class SeleniumTests(StaticLiveServerTestCase):
         self.assertEqual(
             float(re.sub("%","", response_credit.text)), 0)
 
-        feedback =  self.selenium.find_element_by_id('question_qrv_feedback')
-        self.assertTrue("Answer is incorrect" in feedback.text)
+        wait.until(EC.text_to_be_present_in_element(
+            (By.ID, 'question_qrv_feedback'), "Answer is incorrect"))
 
         answer1 = self.selenium.find_element_by_id("id_answer_1_qrv")
         self.assertEqual(answer1.get_attribute("value"),"y")

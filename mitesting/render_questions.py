@@ -423,7 +423,7 @@ def process_expressions_from_answers(question):
 
 
 
-def render_question_text(render_data, solution=False):
+def render_question_text(render_data, solution=False, no_links=False):
     """
     Render the question text and subparts as Django templates.
     Use context specified by expression context and load in custom tags
@@ -433,6 +433,9 @@ def render_question_text(render_data, solution=False):
     - question: the question to be rendered
     - expression_context: the template context used to render the text
     - show_help (optional): if true, render the "need help" information
+
+    If no_links, then remove linkes from text and hint text,
+    as well as don't show links to reference pages
     
     Return render_results dictionary with the following:
     - question: the question that was rendered
@@ -487,6 +490,11 @@ def render_question_text(render_data, solution=False):
                 render_results['render_error_messages'].append(
                     mark_safe("Error in question template: %s" % message))
             render_results['render_error'] = True
+        else:
+            if no_links:
+                remove_links_pattern =r'<(a|/a).*?>'
+                render_results['rendered_text'] = mark_safe(re.sub(
+                    remove_links_pattern, '', render_results['rendered_text']))
     else:
         render_results['rendered_text'] = ""
         
@@ -520,6 +528,13 @@ def render_question_text(render_data, solution=False):
                         mark_safe("Error in question subpart %s template: %s" 
                                   % (subpart_dict["letter"],e)))
                 render_results['render_error'] = True
+
+            else:
+                if no_links:
+                    remove_links_pattern =r'<(a|/a).*?>'
+                    subpart_dict['rendered_text'] = mark_safe(re.sub(
+                        remove_links_pattern, '', subpart_dict['rendered_text']))
+
         else:
             subpart_dict["rendered_text"] = ""
                 
@@ -528,12 +543,13 @@ def render_question_text(render_data, solution=False):
     # add help data to render_results
     # if show_help is set to true and not solution
     if render_data.get('show_help') and not solution:
-        add_help_data(render_data, render_results, subparts)
+        add_help_data(render_data, render_results, subparts, no_links=no_links)
 
     return render_results
 
 
-def add_help_data(render_data, render_results, subparts=None):
+def add_help_data(render_data, render_results, subparts=None,
+                  no_links=False):
     """
     Add hints and references pages to render_results
     
@@ -550,6 +566,9 @@ def add_help_data(render_data, render_results, subparts=None):
     question subparts (used to avoid repeating database query).
     Otherwise, a database query is made to determine question subparts
 
+    If no_links is True, does not add links to reference pages.
+    Also, removes any <a> or </a> tags in hints (leaving the link text in place)
+    
     Modifies render_results to add the following to the dictionary
     - reference_pages: a list of pages relevant to the question
     - hint_text: rendered hint text.
@@ -568,7 +587,6 @@ def add_help_data(render_data, render_results, subparts=None):
     template_string_base = "{% load question_tags mi_tags dynamictext humanize %}"
     expr_context = render_data['expression_context']
     hint_template_error=False
-   
 
     if subparts is None:
         subparts = question.questionsubpart_set.all()
@@ -581,11 +599,12 @@ def add_help_data(render_data, render_results, subparts=None):
 
         # reference page is considered for subpart if it matches 
         # the subpart letter
-        subpart_dict['reference_pages'] = \
-            [rpage.page for rpage in question.questionreferencepage_set\
-                 .filter(question_subpart=subpart_dict['letter'])]
-        if subpart_dict['reference_pages']:
-            help_available=True
+        if not no_links:
+            subpart_dict['reference_pages'] = \
+                [rpage.page for rpage in question.questionreferencepage_set\
+                     .filter(question_subpart=subpart_dict['letter'])]
+            if subpart_dict['reference_pages']:
+                help_available=True
 
         if subpart.hint_text:
             template_string = template_string_base + subpart.hint_text
@@ -597,6 +616,12 @@ def add_help_data(render_data, render_results, subparts=None):
                     'Error in hint text template: %s' % e
                 hint_template_error=True
             help_available=True
+
+            if no_links:
+                remove_links_pattern =r'<(a|/a).*?>'
+                subpart_dict['hint_text'] = mark_safe(re.sub(
+                    remove_links_pattern, '', subpart_dict['hint_text']))
+
         subpart_dict['help_available']=help_available
 
     help_available=False
@@ -604,18 +629,19 @@ def add_help_data(render_data, render_results, subparts=None):
     # If subparts are present, then only pages with no single character subpart
     # listed are added to main reference_pages list.
     # (References pages marked with non-existent subpart are not visible)
-    if subparts_present:
-        render_results['reference_pages'] = \
-            [rpage.page for rpage in question.questionreferencepage_set\
-                 .exclude(question_subpart__range=("a","z"))]
+    if not no_links:
+        if subparts_present:
+            render_results['reference_pages'] = \
+                [rpage.page for rpage in question.questionreferencepage_set\
+                     .exclude(question_subpart__range=("a","z"))]
 
-    # If question does not contain subparts, then show all reference_pages
-    # in the main list, regardless of any marking for a particular subpart
-    else:
-        render_results['reference_pages'] = \
-            [rpage.page for rpage in question.questionreferencepage_set.all()]
-    if render_results['reference_pages']:
-        help_available=True
+        # If question does not contain subparts, then show all reference_pages
+        # in the main list, regardless of any marking for a particular subpart
+        else:
+            render_results['reference_pages'] = \
+                [rpage.page for rpage in question.questionreferencepage_set.all()]
+        if render_results['reference_pages']:
+            help_available=True
 
     if question.hint_text:
         template_string = template_string_base + question.hint_text
@@ -627,6 +653,11 @@ def add_help_data(render_data, render_results, subparts=None):
                 'Error in hint text template: %s' % e
             hint_template_error=True
         help_available = True
+
+        if no_links:
+            remove_links_pattern =r'<(a|/a).*?>'
+            render_results['hint_text'] = mark_safe(re.sub(
+                remove_links_pattern, '', render_results['hint_text']))
 
     render_results['help_available'] = help_available
 
@@ -643,6 +674,8 @@ def render_question(question_dict, rng, solution=False,
                     allow_solution_buttons=False,
                     auxiliary_data=None,
                     show_post_user_errors=False,
+                    show_correctness=True,
+                    no_links=False,
                 ):
 
     """
@@ -689,9 +722,9 @@ def render_question(question_dict, rng, solution=False,
     - show_post_user_errors: if true, display errors when evaluating
       expressions flagged as being post user response.  Even if showing
       errors, such an error does not cause the rendering success to be False
-    - random_outcomes: dictionary keyed by expression id that specify
-      the random results should obtain.  If valid and no failed condition, 
-      then random number generator is not used.
+    - show_correctness: if True, then should display correctness of response
+      upon its submission
+    - no_links: if True, then should suppress links in feedback to responses
 
     The output is a question_data dictionary.  With the exception of
     question, success, rendered_text, and error_message, all entries
@@ -744,6 +777,8 @@ def render_question(question_dict, rng, solution=False,
         of the answers in question
       - applet_counter: number of applets encountered so far 
         (not sure if need this)
+      - show_correctness
+      - no_links
    """
 
 
@@ -760,6 +795,9 @@ def render_question(question_dict, rng, solution=False,
     rng.seed(seed)
 
 
+    # dictionary keyed by expression id that specify
+    # the random results should obtain.  If valid and no failed condition, 
+    # then random number generator is not used.
     random_outcomes={}
 
     # if have question attempt, load random outcomes and
@@ -897,7 +935,8 @@ def render_question(question_dict, rng, solution=False,
 
     render_data['expression_context']['_answer_data_']= answer_data
 
-    question_data = render_question_text(render_data, solution=solution)
+    question_data = render_question_text(render_data, solution=solution,
+                                        no_links=no_links)
 
     question_data.update({
         'identifier': question_identifier,
@@ -1046,7 +1085,9 @@ def render_question(question_dict, rng, solution=False,
 
     computer_grade_data = {'seed': seed, 'identifier': question_identifier, 
                            'record_response': record_response,
-                           'show_solution_button': show_solution_button}
+                           'show_solution_button': show_solution_button,
+                           'show_correctness': show_correctness,
+                           'no_links': no_links}
     if assessment:
         computer_grade_data['course_code'] = assessment.course.code
         computer_grade_data['assessment_code'] = assessment.code

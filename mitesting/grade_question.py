@@ -56,7 +56,8 @@ def check_function_answer(f,user_response_parsed):
 
 
 def compare_response_with_answer_code(user_response, the_answer_info, question,
-                                      expr_context, local_dict):
+                                      expr_context, local_dict,
+                                      show_correctness=True):
 
     answer_code = the_answer_info['code']
     answer_type = the_answer_info['type']
@@ -66,8 +67,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
     binary_feedback_incorrect = ' <img src="%sadmin/img/icon-no.gif" alt="incorrect" />'\
         % (settings.STATIC_URL)
 
-    answer_result = {'percent_correct': 0, 'answer_correct': False}
-
+    answer_result = {'percent_correct': 0, 'answer_correct': False,
+                     'received_response': False}
+    
     if answer_type == QuestionAnswerOption.MULTIPLE_CHOICE:
         try:
             the_answer = question.questionansweroption_set \
@@ -97,14 +99,19 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 return answer_result
 
             percent_correct = the_answer.percent_correct
-            if percent_correct == 100:
-                feedback = "Yes, you are correct."
-            elif percent_correct > 0:
-                feedback = 'Answer is not completely correct' \
-                    + ' but earns partial (%s%%) credit.' \
-                    % (the_answer.percent_correct)
+            if show_correctness:
+                if percent_correct == 100:
+                    feedback = "Yes, you are correct."
+                elif percent_correct > 0:
+                    feedback = 'Answer is not completely correct' \
+                        + ' but earns partial (%s%%) credit.' \
+                        % (the_answer.percent_correct)
+                else:
+                    feedback = "No, you are incorrect."
             else:
-                feedback = "No, you are incorrect."
+                feedback = "Answered"
+
+            answer_result['received_response']=True
 
         # record any feedback from answer option used
         try:
@@ -114,7 +121,11 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
     elif answer_type == QuestionAnswerOption.TEXT:
         percent_correct=0
-        feedback = "Answer to be manually graded."
+        if(user_response):
+            feedback = "Answer to be manually graded."
+            answer_result['received_response']=True
+        else:
+            feedback = "No response"
 
     # if either EXPRESSION or FUNCTION, then use all options 
     # that are EXPRESSION or FUNCTION
@@ -387,16 +398,19 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                  and answer_results['round_level_used'] < \
                  answer_results['round_level_required'])) \
                 and this_percent_correct  > percent_correct:
-                if this_percent_correct == 100:
-                    feedback = \
-                        'Yes, $%s$ is correct.' % \
-                        user_response_string
-                elif this_percent_correct > 0:
-                    feedback = '$%s$ is not completely correct but earns' \
-                        ' partial (%i%%) credit.' \
-                        % (user_response_string, 
-                           round(this_percent_correct))
-                        
+                if show_correctness:
+                    if this_percent_correct == 100:
+                        feedback = \
+                            'Yes, $%s$ is correct.' % \
+                            user_response_string
+                    elif this_percent_correct > 0:
+                        feedback = '$%s$ is not completely correct but earns' \
+                            ' partial (%i%%) credit.' \
+                            % (user_response_string, 
+                               round(this_percent_correct))
+                else:
+                    feedback = 'Answer understood as: $%s$.' % user_response_string
+
                 percent_correct = this_percent_correct
                 answer_option_used = answer_option
                 round_level_required = answer_results['round_level_required']
@@ -419,37 +433,47 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 near_match_feedback += "but "\
                     " you must write your answer in a different form.)</small>" 
             if not feedback:
-                feedback = 'No, $%s$ is incorrect.' \
-                    % user_response_string
+                if show_correctness:
+                    feedback = 'No, $%s$ is incorrect.' \
+                        % user_response_string
+                else:
+                    feedback = 'Answer understood as: $%s$.' \
+                               % user_response_string
+
+            answer_result['received_response']=True
 
         # since started with negative percent_correct
         # make it zero if no matches
         percent_correct = max(0, percent_correct)
 
-        # record any feedback from answer option used
-        try:
-            feedback += " " + \
-                        answer_option_used.render_feedback(expr_context)
-        except:
-            pass
+        # additional feedback if show_correctness is True
+        if show_correctness:
 
-        # record any feedback about rounding
-        if round_level_used is not None and round_level_required is not None \
-           and round_level_used < round_level_required:
-            if round_absolute:
-                round_place_used = pow(10,-round_level_used)
-                round_place_required = pow(10,-round_level_required)
-                if round_place_used >=1:
-                    round_place_used = int(round_place_used)
-                    if round_place_required >=1:
-                        round_place_required = int(round_place_required)
-                feedback += " Answer matched to the nearest %s's place but matching to the %s's place is required." % (round_place_used, round_place_required)
-            else:
-                feedback += " Answer matched to %s significant digits but %s significant digits are required." % (round_level_used, round_level_required)
+            # record any feedback from answer option used
+            try:
+                feedback += " " + \
+                            answer_option_used.render_feedback(expr_context)
+            except:
+                pass
 
-        if percent_correct < 100 and \
-           near_match_percent_correct > percent_correct:
-            feedback += near_match_feedback
+            # record any feedback about rounding
+            if round_level_used is not None \
+               and round_level_required is not None \
+               and round_level_used < round_level_required:
+                if round_absolute:
+                    round_place_used = pow(10,-round_level_used)
+                    round_place_required = pow(10,-round_level_required)
+                    if round_place_used >=1:
+                        round_place_used = int(round_place_used)
+                        if round_place_required >=1:
+                            round_place_required = int(round_place_required)
+                    feedback += " Answer matched to the nearest %s's place but matching to the %s's place is required." % (round_place_used, round_place_required)
+                else:
+                    feedback += " Answer matched to %s significant digits but %s significant digits are required." % (round_level_used, round_level_required)
+
+            if percent_correct < 100 and \
+               near_match_percent_correct > percent_correct:
+                feedback += near_match_feedback
 
 
 
@@ -465,15 +489,19 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
 
     answer_result['answer_feedback'] = feedback
 
-    if percent_correct == 100:
-        answer_result['answer_feedback_binary'] = binary_feedback_correct
-    elif percent_correct > 0:
-        answer_result['answer_feedback_binary']\
-            = ' <small>(%s%%)</small>' % int(round(percent_correct))
-    else:
-        answer_result['answer_feedback_binary']\
-            = binary_feedback_incorrect
 
+    if show_correctness:
+        if percent_correct == 100:
+            answer_result['answer_feedback_binary'] = binary_feedback_correct
+        elif percent_correct > 0:
+            answer_result['answer_feedback_binary']\
+                = ' <small>(%s%%)</small>' % int(round(percent_correct))
+        else:
+            answer_result['answer_feedback_binary']\
+                = binary_feedback_incorrect
+    else:
+        answer_result['answer_feedback_binary'] = ""
+        
     answer_result['answer_correct'] = (percent_correct == 100)
 
     return answer_result
@@ -614,7 +642,8 @@ def match_max_ones(A):
 
     
 def grade_question_group(group_list, user_responses, answer_info, question,
-                         expr_context, local_dict, answer_results):
+                         expr_context, local_dict, answer_results,
+                         show_correctness=True):
     """
     Grade a group of answers, where responses could match answers
     in any sequence.
@@ -633,8 +662,13 @@ def grade_question_group(group_list, user_responses, answer_info, question,
     - local_dict: global dictionary to be used to parse user's responses
     - answer_results: dictionary that records results of answers
       (not just the ones from this group).  
+    - show_correctness: True if feedback should reveal if response is correct
 
-    Return the points achieved for this group, multipled by 100
+    Return a dictionary containing:
+    - points_achieved_times_100: the points achieved for this group,
+      multipled by 100
+    - points_answered: total points of questions that have an answer
+      in this group
 
     """
 
@@ -655,7 +689,8 @@ def grade_question_group(group_list, user_responses, answer_info, question,
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 local_dict=local_dict)
+                 local_dict=local_dict,
+                 show_correctness=show_correctness)
             )
     
 
@@ -715,6 +750,7 @@ def grade_question_group(group_list, user_responses, answer_info, question,
 
     # record answers in answer_results
     points_achieved_times_100=0
+    points_answered=0;
     for match in answer_matches:
         answer_identifier = answer_info[group_list[match[0]]]['identifier']
         answer_results["answers"][answer_identifier] = \
@@ -723,13 +759,18 @@ def grade_question_group(group_list, user_responses, answer_info, question,
         answer_points = answer_info[group_list[match[0]]]['points']
         points_achieved_times_100 += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
+        if answer_results['answers'][answer_identifier]['received_response']:
+            points_answered += answer_points
 
-    return points_achieved_times_100
+    return {'points_achieved_times_100': points_achieved_times_100,
+            'points_answered': points_answered }
 
 
 def grade_question(question, question_identifier, answer_info, 
                    question_attempt,
-                   user_responses, seed):
+                   user_responses, seed,
+                   show_correctness=True,
+                   no_links=False):
 
     # use local random generator to make sure threadsafe
     import random
@@ -765,8 +806,9 @@ def grade_question(question, question_identifier, answer_info,
         
 
     points_achieved=0
+    points_answered=0
     total_points=0
-
+    
     answer_results={}
 
     answer_results['identifier']=question_identifier
@@ -799,10 +841,14 @@ def grade_question(question, question_identifier, answer_info,
                 compare_response_with_answer_code \
                 (user_response=user_response, the_answer_info=the_answer_info,
                  question=question, expr_context=expr_context,
-                 local_dict=user_dict)
+                 local_dict=user_dict,
+                 show_correctness=show_correctness)
 
             points_achieved += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
+            
+            if answer_results['answers'][answer_identifier]['received_response']:
+                points_answered += answer_points
 
         else:
             try:
@@ -814,36 +860,56 @@ def grade_question(question, question_identifier, answer_info,
 
 
     for group in question_groups.keys():
-        points_achieved += grade_question_group(
+        group_results = grade_question_group(
             group_list=question_groups[group], 
             user_responses=user_responses,
             answer_info=answer_info, question=question,
             expr_context=expr_context, local_dict=user_dict,
-            answer_results=answer_results)
+            answer_results=answer_results,
+            show_correctness=show_correctness)
 
+        points_achieved += group_results['points_achieved_times_100']
+        points_answered += group_results['points_answered']
         
     # record if exactly correct, then normalize points achieved
     if total_points:
         answer_correct = (points_achieved == total_points*100)
         points_achieved /= 100.0
         credit = points_achieved/total_points
+        fraction_answered = points_answered/total_points
     else:
         answer_correct = False
         points_achieved /= 100.0
         credit = 0
+        fraction_answered = 0
+
     answer_results['correct'] = answer_correct
-    if total_points == 0:
-        total_score_feedback = "<p>No points possible for question</p>"
-    elif answer_correct:
-        total_score_feedback = "<p>Answer is correct</p>"
-    elif points_achieved == 0:
-        total_score_feedback = "<p>Answer is incorrect</p>"
+    if show_correctness:
+        if total_points == 0:
+            total_score_feedback = "<p>No points possible for question</p>"
+        elif answer_correct:
+            total_score_feedback = "<p>Answer is correct</p>"
+        elif points_achieved == 0:
+            total_score_feedback = "<p>Answer is incorrect</p>"
+        else:
+            total_score_feedback = '<p>Answer is %s%% correct</p>'\
+                % int(round(credit*100))
     else:
-        total_score_feedback = '<p>Answer is %s%% correct'\
-            % int(round(credit*100))
+        if total_points == 0:
+            total_score_feedback = "<p>No points possible for question</p>"
+        elif int(round(fraction_answered*10000)) == 10000:
+            total_score_feedback = '<p>Received response for entire question.</p>'
+        elif points_answered == 0:
+            total_score_feedback = '<p>No response received for question.</p>'
+        else:
+            total_score_feedback = '<p>Received response for %s%% of question.</p>'\
+                % int(round(fraction_answered*100))
+
+
     answer_results['feedback'] = total_score_feedback + \
         answer_results['feedback']
 
     answer_results['credit']=credit
+    answer_results['fraction_answered']=fraction_answered
 
     return answer_results

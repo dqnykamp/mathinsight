@@ -180,8 +180,9 @@ invisible_one.is_safe = True
 
 @register.inclusion_tag('mitesting/question_body.html', takes_context=True)
 def question_body(context, question_data):
-    return {'question_data': question_data, 
-            '_auxiliary_data_': context['_auxiliary_data_']}
+    return {'question_data': question_data,
+            '_auxiliary_data_': context['_auxiliary_data_'],
+            'show_correctness': context.get('show_correctness',True)}
 
 @register.inclusion_tag('mitesting/question_solution_body.html', 
                         takes_context=True)
@@ -707,25 +708,6 @@ def answer(parser, token):
 
     return AnswerNode(answer_code, answer_code_string, kwargs)
 
-
-class AssessmentUserCanViewNode(Node):
-    def __init__(self, assessment, user, asvar):
-        self.assessment = assessment
-        self.user = user
-        self.asvar = asvar
-    def render(self, context):
-        assessment = self.assessment.resolve(context)
-        user = self.user.resolve(context)
-        try:
-            can_view=assessment.user_can_view(user)
-        except:
-            can_view= False
-
-        if self.asvar:
-            context[self.asvar]=can_view
-            return ""
-        else:
-            return can_view
 
 @register.filter(is_safe=False)
 def pluralize_float(value, arg='s'):

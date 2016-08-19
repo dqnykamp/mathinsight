@@ -111,8 +111,10 @@ def set_n_of_objects(course, content_object):
             super(ThreadContent,tc).save()
 
         
-def create_new_assessment_attempt(assessment, thread_content, courseuser,
-                                  student_record):
+def create_new_assessment_attempt(student_record, begin_attempt=True):
+
+    thread_content = student_record.content
+    assessment = thread_content.content_object
 
     from micourses.models import AVAILABLE, NOT_YET_AVAILABLE
     assessment_availability = thread_content.return_availability(student_record)
@@ -136,17 +138,27 @@ def create_new_assessment_attempt(assessment, thread_content, courseuser,
                                                     .count()+1
             version = "x%s" % attempt_number
 
+        total_number_of_attempts = student_record.attempts.count()+1
+
         if thread_content.individualize_by_student:
             version = "%s_%s" % \
-                        (courseuser.user.username, version)
-        seed = "sd%s_%s" % (thread_content.id, version)
+                    (student_record.enrollment.student.user.username, version)
+        
+        seed = "sd%s_%s_%s" % (thread_content.id, version, 
+                               total_number_of_attempts)
         version = re.sub("_", " ", version)
 
     # create the new attempt
     with transaction.atomic(), reversion.create_revision():
-        new_attempt = student_record.attempts.create(
-            seed=seed, valid=valid_attempt, version=version)
+        if begin_attempt:
+            new_attempt = student_record.attempts.create(
+                seed=seed, valid=valid_attempt, version=version)
+        else:
+            new_attempt = student_record.attempts.create(
+                seed=seed, valid=valid_attempt, version=version,
+                attempt_began=None)
 
+            
     from micourses.render_assessments import get_question_list
     question_list = get_question_list(assessment, seed=seed,
                                       thread_content=thread_content)
@@ -164,6 +176,77 @@ def create_new_assessment_attempt(assessment, thread_content, courseuser,
     return {'new_attempt': new_attempt, 'question_list': question_list,
             'version': version, 'assessment_seed': seed,}
             
+
+def ensure_open_assessment_attempt(student_record):
+    # check if there is an open, valid, unexpired assessment attempt for student
+    # if not, create and return a new attempt
+
+    thread_content = student_record.content
+
+    # find latest attempt, if any
+    latest_attempt = student_record.latest_attempt
+    
+    # if found latest attempt, discard if not open and valid
+    if latest_attempt:
+        
+        # if expired, close attempt
+        if thread_content.time_limit and latest_attempt.attempt_began:
+            if latest_attempt.attempt_began + thread_content.time_limit \
+               < timezone.now():
+                latest_attempt.closed = True
+                latest_attempt.save()
+
+        if latest_attempt.closed or not latest_attempt.valid:
+            latest_attempt = None
+
+    # if didn't find open, valid attempt, create new attempt
+    # with attempt_began=None so that doesn't start until student views
+    if not latest_attempt:
+        new_attempt_info = create_new_assessment_attempt(
+            student_record=student_record, begin_attempt=False)
+
+        return new_attempt_info['new_attempt']
+    else:
+        # if found an open, valid attempt, don't create anything
+        return None
+
+def ensure_open_assessment_attempt_all_students(thread_content):
+    # for each student, create an open, valid, unexpired attempt 
+    # if none exists
+
+    from micourses.models import STUDENT_ROLE
+
+    for student_record in thread_content.contentrecord_set.filter(
+            enrollment__role=STUDENT_ROLE):
+        ensure_open_assessment_attempt(student_record)
+    
+
+def close_latest_assessment_attempt(student_record):
+    
+    # find latest attempt, if any
+    latest_attempt = student_record.latest_attempt
+    
+    if latest_attempt:
+        # if attempt_began is None, it means student didn't start exam,
+        # so just mark as invalid
+        if not latest_attempt.attempt_began:
+            if latest_attempt.valid:
+                latest_attempt.valid=False
+                latest_attempt.save()
+        else:
+            if not latest_attempt.closed:
+                latest_attempt.closed=True
+                latest_attempt.save()
+
+
+def close_latest_assessment_attempt_all_students(thread_content):
+    
+    from micourses.models import STUDENT_ROLE
+
+    for student_record in thread_content.contentrecord_set.filter(
+            enrollment__role=STUDENT_ROLE):
+        close_latest_assessment_attempt(student_record)
+
 
 def json_dump_fields(model_instance):
     try:

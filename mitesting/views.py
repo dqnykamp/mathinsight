@@ -151,16 +151,21 @@ class GradeQuestionView(SingleObjectMixin, View):
     Returns a json objects with the following properties
     - identifier: the identifier for the questions
     - correct: true if all answer blanks were answer correctly
+    - credit: fraction question is correct on this attempt
     - feedback: message detailing the correctness of the answers
-    - answer_correct: an object keyed by answer identifiers,
-      where each property is true if the corresponding answer was correct
-    - answer_feedback: an object keyed by answer identifiers,
-      where each property gives a message about the correctness of the answer
-    - number_attempts: the number of attempts answering the question, 
-      including the current attempt
     - enable_solution_button: true if should enable the button to reveal
       the solution
-    - attempt_credit: fraction question is correct on this attempt
+    - number_attempts: the number of attempts answering the question, 
+      including the current attempt
+    - record_valid_response: True if responses were valid and recorded
+    - dynamictext: list of info for rendering dynamic text
+    - answer: dictionary keyed on answer idenfifier.  Each entry is a 
+      dictionary containing:    
+      - answer_correct: True if the corresponding answer was correct
+      - percent_correct
+      - answer_feedback: message about the correctness of the answer
+      - answer_feedback_binary: image links to indicate correctness of 
+        certain binary answers (used to summarize results from applets)
 
     If record_response is set to true and user is logged in, then record
     users answers, associating answer with a course if associated with a course
@@ -230,13 +235,18 @@ class GradeQuestionView(SingleObjectMixin, View):
             except QuestionAttempt.DoesNotExist:
                 pass
         
+        show_correctness = computer_grade_data.get('show_correctness', True)
+        no_links = computer_grade_data.get('no_links', False)
+                
         from .grade_question import grade_question
         answer_results=grade_question(
             question=question,
             question_identifier=question_identifier,
             question_attempt=question_attempt,
             answer_info=answer_info, 
-            user_responses=user_responses, seed=seed)
+            user_responses=user_responses, seed=seed,
+            show_correctness=show_correctness,
+            no_links=no_links)
         
         # increment number of attempts
         try:
@@ -258,6 +268,7 @@ class GradeQuestionView(SingleObjectMixin, View):
             enable_solution_button = True
 
         answer_results['enable_solution_button'] = enable_solution_button
+        answer_results['show_correctness'] = show_correctness
 
         record_response = computer_grade_data['record_response'] 
 
@@ -304,8 +315,11 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         record_valid_response = True
 
+        each_answer_feedback = ""
+
         if not content.record_scores:
             record_valid_response = False
+            each_answer_feedback = "Answer not recorded"
 
         from micourses.models import AVAILABLE,  NOT_YET_AVAILABLE, PAST_DUE
         
@@ -313,12 +327,44 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         if assessment_availability != AVAILABLE:
             record_valid_response = False
+            if assessment_availability == PAST_DUE:
+                each_answer_feedback = "Assessment past due."
+            else:
+                each_answer_feedback = "Assessment not available."
+
+        # if there is a time limit, check if time expired on assessment
+        # allow a buffer of two seconds
+        time_expired = False
+        if content.time_limit:
+            if not content_attempt.attempt_began:
+                record_valid_response=False
+                each_answer_feedback = "Assessment not marked as begun???"
+            elif content_attempt.time_expired():
+                time_expired = True
+                record_valid_response=False
+                each_answer_feedback = "Time has expired."
+
+            # if less than one minute left, will include warning
+            else:
+                time_left = content_attempt.attempt_began + content.time_limit \
+                            - timezone.now()
+                if time_left < timezone.timedelta(seconds=60):
+                    each_answer_feedback = "Less than a minute left."
+
+        # if can only view open attempts, check if assessment is closed
+        attempt_closed=False
+        if content.access_only_open_attempts:
+            if content_attempt.closed:
+                attempt_closed = True
+                record_valid_response = False
+                each_answer_feedback = "Assessment attempt closed."
 
         # check if student already viewed the solution
         # if so, mark as to not record response
         if question_attempt.solution_viewed:
             solution_viewed = True
             record_valid_response = False
+            each_answer_feedback = "Solution already viewed."
         else:
             solution_viewed = False
 
@@ -347,8 +393,16 @@ class GradeQuestionView(SingleObjectMixin, View):
         # response were marked as invalid, since it won't count.
         if not (content_attempt.valid and question_attempt.valid):
             record_valid_response = False
+            if not each_answer_feedback:
+                each_answer_feedback = "Answer not recorded."
 
         answer_results['record_valid_response'] = record_valid_response
+
+
+        if each_answer_feedback:
+            for answer_key in answer_results['answers']:
+                answer_dict = answer_results['answers'][answer_key]
+                answer_dict['answer_feedback'] += " (%s)" % each_answer_feedback
 
         if not content.record_scores:
             feedback_message = "Assessment not set up for recording answers.<br/>Answer not recorded."
@@ -360,6 +414,11 @@ class GradeQuestionView(SingleObjectMixin, View):
             from micourses.utils import format_datetime
             feedback_message = "Due date %s of %s is past.<br/>Answer not recorded." % (format_datetime(due), content.get_title())
 
+        elif time_expired:
+            feedback_message = "Time limit has expired.<br/>Answer not recorded."
+        elif attempt_closed:
+            feedback_message = "Assessment attempt has been closed.<br/>Answer not recorded."
+
         elif assessment_availability == NOT_YET_AVAILABLE:
             feedback_message = "Assessment is not yet available. <br/>Answer not recorded."
         elif solution_viewed:
@@ -370,16 +429,21 @@ class GradeQuestionView(SingleObjectMixin, View):
             feedback_message = ""
 
         if record_valid_response:
-            feedback_message += "Answer recorded for %s.<br/>Course: <a href=\"%s\">%s</a>" % (request.user,reverse('micourses:content_record', kwargs={'content_id': content.id, 'course_code': content.course.code} ), content.course)
+            if no_links:
+                course_name = content.course
+            else:
+                course_name =  "<a href=\"%s\">%s</a>" % \
+                    ( reverse('micourses:content_record', kwargs={'content_id': content.id, 'course_code': content.course.code} ), content.course)
+            feedback_message += "Answer recorded for %s.<br/>Course: %s" % (request.user, course_name)
 
         answer_results['feedback'] += "<p>%s</p>" % feedback_message
 
 
-        # if didn't record valid response, don't update scores,
+        # if didn't record valid response or won't show correctness,
+        # don't update scores,
         # so return without setting values
-        if not record_valid_response:
+        if not record_valid_response or not show_correctness:
             return JsonResponse(answer_results)
-            
 
         from mitesting.utils import round_and_int
         question_attempt.refresh_from_db()
@@ -402,6 +466,7 @@ class GradeQuestionView(SingleObjectMixin, View):
         else:
             answer_results['content_score']=round_and_int(
                 content_record.score,1)
+
 
         return JsonResponse(answer_results)
 

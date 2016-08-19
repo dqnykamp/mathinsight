@@ -21,7 +21,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from micourses.forms import GenerateCourseAttemptForm
 import reversion
 from micourses.utils import http_response_simple_page_from_string
-
+import re
 
 class AssessmentView(DetailView):
     """
@@ -95,6 +95,22 @@ class AssessmentView(DetailView):
         else:
             show_post_user_errors=False
 
+        show_response_correctness=True
+        if self.thread_content:
+            show_response_correctness=\
+                        self.thread_content.show_response_correctness
+        context['show_correctness'] = show_response_correctness
+
+        # if require secured browser, turn off links
+        no_links = False
+        if self.thread_content and self.thread_content.require_secured_browser:
+            no_links=True
+        context['no_links'] = no_links
+
+        allow_solution_buttons=True
+        if self.thread_content:
+            allow_solution_buttons = self.thread_content.allow_solution_buttons
+
         from micourses.render_assessments import render_question_list
         rendered_list=render_question_list(
             self.assessment, self.question_list, rng=rng, 
@@ -102,7 +118,11 @@ class AssessmentView(DetailView):
             user=self.request.user, 
             solution=self.solution,
             auxiliary_data = auxiliary_data,
-            show_post_user_errors=show_post_user_errors)
+            show_post_user_errors=show_post_user_errors,
+            show_correctness=show_response_correctness,
+            no_links=no_links,
+            allow_solution_buttons=allow_solution_buttons
+        )
 
         # if question_only is set, then view only that question
         if self.kwargs.get('question_only'):
@@ -127,6 +147,11 @@ class AssessmentView(DetailView):
 
         context['success'] = success
         
+        context['show_gnererate_attempt_button'] = True
+        if self.thread_content:
+            context['show_generate_attempt_button'] = \
+                    not self.thread_content.access_only_open_attempts
+
         context['generate_course_attempt_link'] = False
         context['show_solution_link'] = False
 
@@ -181,6 +206,51 @@ class AssessmentView(DetailView):
                 context['due'] = due
             else:
                 context['due'] = self.thread_content.get_adjusted_due()
+
+        # if time limit, set expire time as well as time limit
+        if self.course_enrollment and self.thread_content \
+           and self.thread_content.time_limit:
+            tl = self.thread_content.time_limit
+            time_limit_string = ""
+            if tl.days:
+                time_limit_string = "%s day" % tl.days
+                if tl.days > 1:
+                    time_limit_string += "s"
+            mins = int(tl.seconds/60)
+            secs = tl.seconds - mins*60
+            hrs = int(mins/60)
+            mins -= hrs*60
+            if hrs:
+                if time_limit_string:
+                    time_limit_string += ", " 
+                time_limit_string += "%s hour" % hrs
+                if hrs > 1:
+                    time_limit_string += "s"
+            if mins:
+                if time_limit_string:
+                    time_limit_string += ", " 
+                time_limit_string += "%s minute" % mins
+                if mins > 1:
+                    time_limit_string += "s"
+            if secs:
+                if time_limit_string:
+                    time_limit_string += ", " 
+                time_limit_string += "%s second" % secs
+                if secs > 1:
+                    time_limit_string += "s"
+
+
+            context['time_limit'] = time_limit_string
+            
+
+            if self.course_enrollment.role == STUDENT_ROLE \
+               and self.current_attempt:
+                if not self.current_attempt.attempt_began:
+                    context['expire_time'] = timezone.now()
+                else:
+                    context['expire_time'] = self.current_attempt.attempt_began\
+                                             + self.thread_content.time_limit
+
 
         context['thread_content'] = self.thread_content
         context['number_in_thread'] = self.number_in_thread
@@ -253,7 +323,6 @@ class AssessmentView(DetailView):
         else:
             context['content_score']=round_and_int(
                 self.current_attempt.record.score,1)
-
 
         # get list of the question numbers in assessment
         # if instructor or designer in course
@@ -333,14 +402,14 @@ class AssessmentView(DetailView):
         # then check if request contains correct 
         # Safe Exam Browser hash in the HTTP request
 
-        if self.assessment.assessment_type.require_secured_browser \
+        if self.thread_content and self.thread_content.require_secured_browser \
            and not user_can_administer_assessment(request.user, 
                                                   course=self.object.course):
 
             safe_exam_browser_verified = False
             request_hash = request.META.get("HTTP_X_SAFEEXAMBROWSER_REQUESTHASH")
             if not request_hash:
-                error_message="This exam is viewable only through <a href='http://safeexambrowser.org'>Safe Exam Browser</a>.  Consult your instructor for proper configuration."
+                error_message="Assessment is viewable only through <a href='http://safeexambrowser.org'>Safe Exam Browser</a>.  Consult your instructor for proper configuration."
                 return http_response_simple_page_from_string(
                     "<p>%s</p>" % error_message)
 
@@ -358,9 +427,46 @@ class AssessmentView(DetailView):
                         break
 
                 if not safe_exam_browser_verified:
-                    error_message = "Safe Exam Browser does not appear to be properly configured for this exam.  Consult your instructor for proper configuration."
+                    error_message = "Safe Exam Browser does not appear to be properly configured for this assessment.  Consult your instructor for proper configuration."
                     return http_response_simple_page_from_string(
                         "<p>%s</p>" % error_message)
+
+
+        # if restrict to ip address is not just white space
+        # and user is not exam administrator
+        # then parse ip addresses from restrict_to_ip_address
+        # and require that REMOTE_ADDR header be one of those ip addresses,
+        # where * in a ip address field matches any number
+        if self.thread_content and self.thread_content.restrict_to_ip_address\
+           and not user_can_administer_assessment(request.user, 
+                                                  course=self.object.course) \
+           and re.search(r'\S', self.thread_content.restrict_to_ip_address):
+
+            request_ip_address = request.META['REMOTE_ADDR']
+
+            valid_ip_re = re.compile(
+                r'(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*)$')
+
+            found_matching_ip = False
+
+            # parse allowed ip addresses
+            ip_list = self.thread_content.restrict_to_ip_address.split(",")
+            for ip_string in ip_list:
+                match = re.match(valid_ip_re, ip_string.strip())
+                
+                # if is a valid ip address string
+                if match:
+                    # convert to regular expression pattern where *
+                    # matches any sequence of up to 3 digits
+                    p=re.compile(re.sub(r'\*', r'\d{1,3}',match.group()) +'$')
+                    if re.match(p, request_ip_address):
+                        found_matching_ip = True
+                        break
+
+            if not found_matching_ip:
+                error_message="Assessment can not be accessed from this computer."
+                return http_response_simple_page_from_string(
+                    "<p>%s</p>" % error_message)
 
 
         try:
@@ -535,6 +641,12 @@ class AssessmentView(DetailView):
 
         
         if not (self.course_enrollment and self.thread_content):
+            
+            # if student cannot generate attempts, then can't show assessment
+            if self.thread_content \
+               and self.thread_content.access_only_open_attempts:
+                raise ValueError("Assessment not set up to allow non-students to view.")
+
             if self.assessment.single_version:
                 self.assessment_seed='1'
                 self.version = ''
@@ -641,11 +753,9 @@ class AssessmentView(DetailView):
         if not self.thread_content.record_scores:
             assessment_availability = NOT_YET_AVAILABLE
 
-        try:
-            latest_attempt = student_record.attempts.latest()
-        except ObjectDoesNotExist:
-            latest_attempt = None
-        else:
+        latest_attempt = student_record.latest_attempt
+
+        if latest_attempt:
             # will use the latest attempt in the following cases
             # 1. assessment is not yet available and attempt is not valid
             # 2. assessment is available and the attempt is valid
@@ -673,6 +783,17 @@ class AssessmentView(DetailView):
 
         self.current_attempt=None
         if latest_attempt:
+
+            # if allow access to only open attempts,
+            # display error message if a latest attempt is not valid and open,
+            # or the time has expired on the attempt
+            if self.thread_content.access_only_open_attempts:
+                if not latest_attempt.valid or latest_attempt.closed:
+                    raise ValueError("No open attempt of assessment is available.")
+                    
+                if latest_attempt.time_expired():
+                    raise ValueError("Time limit has expired for this attempt.")
+
             # Verify latest attempt has the right number of
             # of question sets with question attempts
             # If so, set as current attempt and populate
@@ -687,21 +808,31 @@ class AssessmentView(DetailView):
             if self.question_list:
                 self.current_attempt = latest_attempt
                 
+                # mark attempt as begun, if not already begun.
+                if not self.current_attempt.attempt_began:
+                    self.current_attempt.attempt_began = timezone.now()
+                    self.current_attempt.save()
+
                 # set assessment seed and version string
                 self.assessment_seed = latest_attempt.seed
                 self.version = latest_attempt.version
 
                 return
-                
+
+        # if allow access to only open attempts,
+        # display error message if a current attempt does not exist,
+        # the current attempt is not valid and open,
+        # or the time has expired on the attempt
+        if self.thread_content.access_only_open_attempts:
+            raise ValueError("No attempt of assessment is available.")
+
+
         # If didn't find a current attempt to use, generate new attempt
         if not self.current_attempt:
 
             from micourses.utils import create_new_assessment_attempt
             with transaction.atomic():
                 new_attempt_info = create_new_assessment_attempt(
-                    assessment=self.assessment,
-                    thread_content=self.thread_content,
-                    courseuser = courseuser,
                     student_record = student_record)
 
             self.current_attempt = new_attempt_info['new_attempt']
@@ -891,8 +1022,6 @@ class GenerateNewAttempt(SingleObjectMixin, View):
         from micourses.utils import create_new_assessment_attempt
         with transaction.atomic():
             create_new_assessment_attempt(
-                assessment=assessment, thread_content=thread_content,
-                courseuser = request.user.courseuser,
                 student_record = student_record)
 
         # redirect to assessment url
@@ -1148,3 +1277,41 @@ class GenerateCourseAttempt(SingleObjectMixin, FormView):
 
         return context
 
+
+
+
+class GenerateAssessmentAttempts(SingleObjectMixin, View):
+    model = ThreadContent
+    pk_url_kwarg = 'content_id'
+
+
+    def get_object_thread_content(self):
+
+        self.object = self.get_object()
+        self.thread_content = self.object
+
+        # if content object isn't an assessment, then return 404
+        assessment_content_type = ContentType.objects.get(app_label="micourses",
+                                                          model='assessment')
+        if self.thread_content.content_type != assessment_content_type:
+            raise Http404("No assessment found") 
+        
+        self.assessment=self.thread_content.content_object
+        self.course=self.thread_content.course
+
+
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        self.get_object_thread_content()
+        try:
+            self.number_in_thread=int(request.GET.get('n',1))
+        except ValueError:
+            self.number_in_thread=1
+
+        # determine if user has instructor or designer access
+        if not user_can_administer_assessment(request.user, course=self.course):
+            return JsonResponse({})
+
+        enrollment_id = request.POST.get("enrollment_id")
+        if enrollment_id:
+            pass

@@ -240,7 +240,7 @@ class AssessmentAdmin(reversion.VersionAdmin):
                 'fields': ('notes', )
                 }),
         ('Other configurations', {
-                'fields': (('allow_solution_buttons', 'fixed_order', 'single_version'),
+                'fields': (('fixed_order', 'single_version', 'handwritten'),
                            )
                 }),
         )

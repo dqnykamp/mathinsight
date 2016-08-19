@@ -397,6 +397,7 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results['enable_solution_button'])
         self.assertFalse(results.get('inject_solution_url',''),'')
         self.assertFalse(results['correct'])
+        self.assertEqual(results['fraction_answered'],0)
         self.assertEqual(results['answers'],{})
         
     def test_simple_grade(self):
@@ -432,6 +433,7 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content.decode())
         self.assertTrue(results["correct"])
+        self.assertEqual(results["fraction_answered"],1)
         self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is correct" in results["feedback"])
         self.assertTrue("is correct" in results["answers"][answer_identifier]["answer_feedback"])
@@ -447,6 +449,7 @@ class TestGradeQuestionView(TestCase):
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content.decode())
         self.assertFalse(results["correct"])
+        self.assertEqual(results["fraction_answered"],1)
         self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
         self.assertTrue("is incorrect" in results["feedback"])
         self.assertTrue("is incorrect" in results["answers"][answer_identifier]["answer_feedback"])

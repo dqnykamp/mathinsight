@@ -54,8 +54,14 @@
 
 <h4>Change scores for course-wide attempts: {{thread_content.get_title}}</h4>
 
+{% if message %}<div>{{message}}</div>{% endif %}
+
 <p>Total points: {{thread_content.points}}</p>
 
+{% if thread_content.access_only_open_attempts %}
+<div><form action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="open_all"><input type="submit" value="Open attempt for all students" /></form> 
+<form action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="close_all"><input type="submit" value="Close attempt for all students" /></form></div>
+{% endif %}
 
 <p><a href="{% url 'micourses:course_content_record' course_code=course.code content_id=thread_content.id %}">Edit course content attempts</a></p>
 
@@ -63,13 +69,17 @@
 {% comment %}<form id="edit_student_content_attempts_form" action=
 "url 'micourses:addnewassessmentattempt' content.id" method="post">{% csrf_token%}<input type="hidden" name="content_id" value="{{content.id}}">{%endcomment%}
 <table class="bordertable">
-<thead><tr><th>Name</th>
+<thead><tr><th>Name</th>{% if thread_content.access_only_open_attempts %}<th>Open attempt status</th>{% endif %}
 {% for cca in ccas %}<th><a href="{% url 'miassess:assessment' course_code=course.code assessment_code=thread_content.content_object.code%}?content_attempt={{cca.id}}">Version {{cca.version}}</a></th>{% endfor %}
 <th>Score</th>
 </tr></thead>
 <tbody>
   {% for enrollment_dict in enrollment_list %}{% with student=enrollment_dict.enrollment.student enrollment=enrollment_dict.enrollment %}
   <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}} (<a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">edit all attempts</a>)</td>
+{% if thread_content.access_only_open_attempts %}
+<td>{{enrollment_dict.latest_attempt_info_text}}  
+{% if enrollment_dict.open_attempt%}<form action="" method="post" style="display:inline">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="close_one"><input type="hidden" name="enrollment_id" value="{{enrollment_dict.enrollment.id}}" /><input type="submit" value="Close attempt"></form>
+{% else %}<form action="" method="post" style="display:inline">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="open_one"><input type="hidden" name="enrollment_id" value="{{enrollment_dict.enrollment.id}}" /><input type="submit" value="Open new attempt"></form>{% endif %}</td>{% endif %}
     {% for score_dict in enrollment_dict.attempts %}<td {% if score_dict.past_due %}class="past_due" {%endif%}><input type="text" id="score_{{enrollment.id}}_{{score_dict.base_attempt.id}}" value="{{score_dict.score}}" size=4>
 <div class="error" id="error_{{enrollment.id}}_{{score_dict.base_attempt.id}}"></div>
 <script>$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').change({enrollment_id: {{enrollment.id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, change_score);$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').keyup({next_enrollment_id: {{enrollment_dict.next_enrollment_id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, move_down_on_enter);

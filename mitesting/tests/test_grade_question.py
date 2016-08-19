@@ -41,6 +41,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
         self.assertTrue("error" in answer_results["answer_feedback"])
 
 
@@ -56,6 +57,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
         self.assertTrue("error" in answer_results["answer_feedback"])
 
 
@@ -68,6 +70,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("are correct" in answer_results["answer_feedback"])
         self.assertTrue("You got it!" in answer_results["answer_feedback"])
 
@@ -78,6 +81,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("incorrect" in answer_results["answer_feedback"])
         self.assertTrue("Guess again." in answer_results["answer_feedback"])
 
@@ -88,6 +92,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
         self.assertTrue("50%" in answer_results["answer_feedback"])
         self.assertTrue("You should be certain." in answer_results["answer_feedback"])
@@ -99,6 +104,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
         self.assertTrue("error" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
@@ -108,6 +114,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
         self.assertTrue("No response" in answer_results["answer_feedback"])
 
 
@@ -124,11 +131,22 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
         self.assertTrue("error" in answer_results["answer_feedback"])
 
         self.new_answer(answer_code="a", answer="ax")
         expr_context["ax"]=math_object(Symbol("a")*Symbol("x"))
         
+        answer_results=compare_response_with_answer_code\
+                        (user_response="", the_answer_info=answer_info,
+                         question=self.q, 
+                         expr_context=expr_context, local_dict=local_dict)
+
+        self.assertFalse(answer_results['answer_correct'])
+        self.assertEqual(answer_results['percent_correct'],0)
+        self.assertFalse(answer_results['received_response'])
+        self.assertTrue("No response" in answer_results["answer_feedback"])
+
         answer_results=compare_response_with_answer_code\
                         (user_response="ax", the_answer_info=answer_info,
                          question=self.q, 
@@ -136,6 +154,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("is correct" in answer_results["answer_feedback"])
 
         answer_results=compare_response_with_answer_code\
@@ -145,6 +164,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("is correct" in answer_results["answer_feedback"])
 
 
@@ -169,6 +189,7 @@ class TestCompareResponse(TestCase):
 
         self.assertTrue(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],100)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("is correct" in answer_results["answer_feedback"])
         self.assertTrue("You got it!" in answer_results["answer_feedback"])
 
@@ -179,6 +200,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],50)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("not completely correct" in answer_results["answer_feedback"])
         self.assertTrue("50%" in answer_results["answer_feedback"])
         self.assertTrue("Getting close." in answer_results["answer_feedback"])
@@ -190,6 +212,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
         self.assertTrue("Bad idea." in answer_results["answer_feedback"])
 
@@ -200,6 +223,7 @@ class TestCompareResponse(TestCase):
 
         self.assertFalse(answer_results['answer_correct'])
         self.assertEqual(answer_results['percent_correct'],0)
+        self.assertTrue(answer_results['received_response'])
         self.assertTrue("is incorrect" in answer_results["answer_feedback"])
         self.assertFalse("You got it!" in answer_results["answer_feedback"])
         self.assertFalse("Getting close." in answer_results["answer_feedback"])
@@ -1140,13 +1164,14 @@ class TestQuestionGroups(TestCase):
 
         group_list=[0,1]
         
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,200)
+        self.assertEqual(answer_dict['points_achieved_times_100'],200)
+        self.assertEqual(answer_dict['points_answered'],2)
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
@@ -1168,13 +1193,14 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
 
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,200)
+        self.assertEqual(answer_dict['points_achieved_times_100'],200)
+        self.assertEqual(answer_dict['points_answered'],2)
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
@@ -1196,13 +1222,14 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
 
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,100)
+        self.assertEqual(answer_dict['points_achieved_times_100'],100)
+        self.assertEqual(answer_dict['points_answered'],2)
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
@@ -1223,13 +1250,14 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
 
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,100)
+        self.assertEqual(answer_dict['points_achieved_times_100'],100)
+        self.assertEqual(answer_dict['points_answered'],2)
 
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
@@ -1250,13 +1278,14 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
 
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,100)
+        self.assertEqual(answer_dict['points_achieved_times_100'],100)
+        self.assertEqual(answer_dict['points_answered'],2)
 
         self.assertFalse(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],0)
@@ -1311,13 +1340,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict= grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,300)
+        self.assertEqual(answer_dict['points_achieved_times_100'],300)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1331,13 +1361,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "ay"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,200)
+        self.assertEqual(answer_dict['points_achieved_times_100'],200)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertFalse(answer_results['answers'][id2]['answer_correct'])
@@ -1351,13 +1382,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,300)
+        self.assertEqual(answer_dict['points_achieved_times_100'],300)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1411,13 +1443,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "ax"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,200)
+        self.assertEqual(answer_dict['points_achieved_times_100'],200)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1431,13 +1464,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "bx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,300)
+        self.assertEqual(answer_dict['points_achieved_times_100'],300)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1451,13 +1485,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "bx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,200)
+        self.assertEqual(answer_dict['points_achieved_times_100'],200)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertFalse(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],0)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1517,13 +1552,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "dx"})
         answer_results={'answers': {}}
         group_list=[0,1,2,3]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,400)
+        self.assertEqual(answer_dict['points_achieved_times_100'],400)
+        self.assertEqual(answer_dict['points_answered'],4)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1539,13 +1575,14 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
         group_list=[0,1,2,3]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,300)
+        self.assertEqual(answer_dict['points_achieved_times_100'],300)
+        self.assertEqual(answer_dict['points_answered'],4)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1599,13 +1636,14 @@ class TestQuestionGroups(TestCase):
         user_responses.append({'response': "cx"})
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
             answer_results=answer_results)
         
-        self.assertEqual(points_times_100,300)
+        self.assertEqual(answer_dict['points_achieved_times_100'],300)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertTrue(answer_results['answers'][id2]['answer_correct'])
@@ -1623,7 +1661,7 @@ class TestQuestionGroups(TestCase):
 
         answer_results={'answers': {}}
         group_list=[0,1,2]
-        points_times_100 = grade_question_group(
+        answer_dict = grade_question_group(
             group_list=group_list, user_responses=user_responses, 
             answer_info=answer_info, question=self.q,
             expr_context=expr_context, local_dict=local_dict, 
@@ -1632,7 +1670,8 @@ class TestQuestionGroups(TestCase):
 
         # doesn't give maximum possible points in this case, as will choose the
         # 50% credit over the 40% + the 30%
-        self.assertEqual(points_times_100,150)
+        self.assertEqual(answer_dict['points_achieved_times_100'],150)
+        self.assertEqual(answer_dict['points_answered'],3)
         self.assertTrue(answer_results['answers'][id1]['answer_correct'])
         self.assertEqual(answer_results['answers'][id1]['percent_correct'],100)
         self.assertFalse(answer_results['answers'][id2]['answer_correct'])

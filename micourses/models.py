@@ -1351,7 +1351,13 @@ class ThreadSection(models.Model):
 
 @reversion.register
 class ThreadContent(models.Model):
-    AGGREGATE_CHOICES = (
+    ASSESSMENT_AGGREGATE_CHOICES = (
+        ('Max', 'Maximum'),
+        ('Avg', 'Average'),
+        ('Las', 'Last'),
+    )
+    QUESTION_AGGREGATE_CHOICES = (
+        ('Sam', 'Same as Assessment'),
         ('Max', 'Maximum'),
         ('Avg', 'Average'),
         ('Las', 'Last'),
@@ -1375,21 +1381,31 @@ class ThreadContent(models.Model):
     assigned=models.DateTimeField(blank=True, null=True)
     initial_due=models.DateTimeField(blank=True, null=True)
     final_due=models.DateTimeField(blank=True, null=True)
+    time_limit=models.DurationField(blank=True, null=True)
 
     grade_category = models.ForeignKey(CourseGradeCategory, 
                                        blank=True, null=True)
     points = models.FloatField(blank=True, null=True)
-    attempt_aggregation = models.CharField(max_length=3,
-                                           choices = AGGREGATE_CHOICES,
-                                           default = 'Max')
+    assessment_attempt_aggregation = models.CharField(
+        max_length=3, choices = ASSESSMENT_AGGREGATE_CHOICES, default = 'Max')
+    question_attempt_aggregation = models.CharField(
+        max_length=3, choices = QUESTION_AGGREGATE_CHOICES, default = 'Sam')
 
 
     individualize_by_student = models.BooleanField(default=True)
     optional = models.BooleanField(default=False)
     available_before_assigned = models.BooleanField(default=False)
     record_scores = models.BooleanField(default=True)
-    
-    browser_exam_keys = models.CharField(max_length=200, blank=True, null=True)
+
+    allow_solution_buttons=models.BooleanField(default=True)
+    access_only_open_attempts = models.BooleanField(default=False)
+
+    show_response_correctness = models.BooleanField(default=True)
+    require_secured_browser=models.BooleanField(default=False)
+    browser_exam_keys = models.CharField(max_length=400, blank=True, null=True)
+    restrict_to_ip_address = models.CharField(max_length=200, blank=True, null=True)
+
+
 
     n_of_object=models.SmallIntegerField(default=1)
     
@@ -1524,7 +1540,7 @@ class ThreadContent(models.Model):
         - adjustments from attendance
         - adjustments in student content record
 
-        Availabilty does not take into account privacy settings.
+        Availability does not take into account privacy settings.
         
         """
 
@@ -1594,13 +1610,23 @@ class ThreadContent(models.Model):
             return None
 
 
-    def attempt_aggregation_string(self):
-        if self.attempt_aggregation=='Avg':
+    def attempt_aggregation_string(self, question=False):
+
+        attempt_aggregation = self.assessment_attempt_aggregation
+
+        if question and self.question_attempt_aggregation != 'Sam':
+            attempt_aggregation = self.question_attempt_aggregation
+                
+        if attempt_aggregation=='Avg':
             return "Average"
-        elif self.attempt_aggregation=='Las':
+        elif attempt_aggregation=='Las':
             return "Last"
         else:
             return "Maximum"
+
+    def question_attempt_aggregation_string(self):
+        # shortcut so can call in template
+        return self.attempt_aggregation_string(question=True)
 
 
     def get_assigned(self, allow_fallback=True):
@@ -1859,6 +1885,7 @@ class ContentRecord(models.Model):
     # null enrollment indicates record for coursewide attempts
     enrollment = models.ForeignKey(CourseEnrollment, null=True)
     content = models.ForeignKey(ThreadContent)
+    latest_attempt = models.ForeignKey('ContentAttempt', blank=True, null=True)
 
     complete = models.BooleanField(default=False)
     skip = models.BooleanField(default=False)
@@ -1948,7 +1975,7 @@ class ContentRecord(models.Model):
 
         Else score is aggregate of scores from each valid attempt 
         for student on this thread_content.
-        Aggregate based on attempt_aggregration of thread_content.
+        Aggregate based on assessment_attempt_aggregration of thread_content.
 
 
         
@@ -1991,12 +2018,12 @@ class ContentRecord(models.Model):
             self.save()
             return None
                 
-        if self.content.attempt_aggregation=='Avg':
+        if self.content.assessment_attempt_aggregation=='Avg':
             # calculate average score of attempts
            self.score = valid_attempts.aggregate(score = Avg('score'))['score']
-        elif self.content.attempt_aggregation=='Las':
+        elif self.content.assessment_attempt_aggregation=='Las':
             # calculate score of last attempt
-            self.score = valid_attempts.latest('datetime').score
+            self.score = valid_attempts.latest().score
         else:
             # calculate maximum score over all attempts
             self.score = valid_attempts.aggregate(score=Max('score'))['score']
@@ -2009,18 +2036,23 @@ class ContentRecord(models.Model):
 @reversion.register
 class ContentAttempt(models.Model):
     record = models.ForeignKey(ContentRecord, related_name="attempts")
-    attempt_began = models.DateTimeField(blank=True, default=timezone.now)
+    attempt_created = models.DateTimeField(auto_now_add=True)
+    attempt_began = models.DateTimeField(blank=True, null=True, default=timezone.now)
+    time_end_override=models.DateTimeField(blank=True, null=True)
     score_override = models.FloatField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
     seed = models.CharField(max_length=150, blank=True, null=True)
     valid = models.BooleanField(default=True, db_index=True)
     version = models.CharField(max_length=100, default="")
+    closed = models.BooleanField(default=False)
+
 
     # for showing that an attempt is derived off a coursewide attempt
     # (an attempt with record.enrollment=None)
     base_attempt = models.ForeignKey('self', null=True, related_name="derived_attempts")
 
-    fields_to_dump = ["score_override", "valid", "seed", "version"]
+    fields_to_dump = ["time_end_override", "score_override", "valid", "seed", 
+                      "version", "closed"]
 
 
     def __str__(self):
@@ -2031,8 +2063,8 @@ class ContentAttempt(models.Model):
             return "Course attempt on %s" % (self.record.content)
 
     class Meta:
-        ordering = ['attempt_began']
-        get_latest_by = "attempt_began"
+        ordering = ['attempt_created']
+        get_latest_by = "attempt_created"
         
 
 
@@ -2061,9 +2093,16 @@ class ContentAttempt(models.Model):
         with transaction.atomic(), reversion.create_revision():
             super(ContentAttempt, self).save(*args, **kwargs)
 
+            # if new attempt, change latest attempt of content record to point
+            # to this attempt
+            if new_attempt:
+                self.record.latest_attempt = self
+                self.record.save()
+
         if score_override_changed or valid_changed:
             self.recalculate_score()
             
+
         action=None
         if new_attempt:
             action="create"
@@ -2121,6 +2160,19 @@ class ContentAttempt(models.Model):
         if self.score is None or self.record.content.points is None:
             return None
         return self.score/self.record.content.points*100
+
+
+    def time_expired(self):
+        time_limit = self.record.content.time_limit
+        if time_limit:
+            if self.attempt_began:
+                time_buffer=timezone.timedelta(seconds=2)
+                return timezone.now() > self.attempt_began + time_limit \
+                    + time_buffer
+            else:
+                return None
+        else:
+            return False
 
 
     def recalculate_score(self, propagate=True, total_recalculation=False):
@@ -2197,9 +2249,17 @@ class ContentAttempt(models.Model):
 
         return self.score
 
+    # since attempt_began could be None, start with attempt_created
+    # and use attempt_began only if exists and is later
+    def get_attempt_created_or_began(self):
+        latest_time = self.attempt_created
+        if self.attempt_began and self.attempt_began > latest_time:
+            latest_time = self.attempt_began
+        return latest_time
+
 
     def get_latest_activity_time(self):
-        latest_time = self.attempt_began
+        latest_time = self.get_attempt_created_or_began()
 
         for question_set in self.question_sets.all()\
             .prefetch_related('question_attempts'):
@@ -2216,13 +2276,14 @@ class ContentAttempt(models.Model):
     def return_activity_interval(self):
         # return time attempt began and latest time of activity
         # if difference between is less than a minute, 
-        # then return None for second
+        # then return None for latest time
 
         latest_activity = self.get_latest_activity_time()
-        if latest_activity-self.attempt_began >= timezone.timedelta(minutes=1):
-            return (self.attempt_began, latest_activity)
+        attempt_created_began = self.get_attempt_created_or_began()
+        if latest_activity-attempt_created_began >= timezone.timedelta(minutes=1):
+            return (attempt_created_began, latest_activity)
         else:
-            return (self.attempt_began, None)
+            return (attempt_created_began, None)
 
 
     def create_derived_attempt(self, content_record, score=None, valid=True):
@@ -2311,7 +2372,8 @@ class ContentAttemptQuestionSet(models.Model):
         Get credit of question set for content attempt.
 
         The credit earned is aggregate over all question attempts,
-        where aggregate function is determined from thread_content.
+        where aggregate function is determined by
+        question_attempt_aggregation from thread_content.
 
         Return credit_override if set.
 
@@ -2329,11 +2391,15 @@ class ContentAttemptQuestionSet(models.Model):
 
         content = self.content_attempt.record.content
 
-        if content.attempt_aggregation=='Avg':
+        attempt_aggregation = content.question_attempt_aggregation
+        if attempt_aggregation=='Sam':
+            attempt_aggregation = content.assessment_attempt_aggregation
+
+        if attempt_aggregation=='Avg':
             credit = question_attempts.aggregate(credit=Avg('credit'))\
                      ['credit']
-        elif content.attempt_aggregation=='Las':
-            credit = question_attempts.latest('datetime').credit
+        elif attempt_aggregation=='Las':
+            credit = question_attempts.latest().credit
         else:
             credit = question_attempts.aggregate(credit=Max('credit'))\
                      ['credit']
@@ -2395,7 +2461,7 @@ class ContentAttemptQuestionSet(models.Model):
             attempt_began = self.question_attempts.filter(valid=True)\
                                                   .earliest().attempt_began
         except ObjectDoesNotExist:
-            return (self.content_attempt.attempt_began, None)
+            return (self.content_attempt.return_attempt_created_or_began(), None)
 
         if latest_activity-attempt_began >= timezone.timedelta(minutes=1):
             return (attempt_began, latest_activity)
@@ -2433,8 +2499,8 @@ class QuestionAttempt(models.Model):
 
     def recalculate_credit(self, propagate=True):
         """
-        Recalculate credit of question attempt according to attempt
-        aggregation of content
+        Recalculate credit of question attempt according to 
+        question_attempt_aggregation of content
 
         Credit is calculated from valid responses.
         If have no valid responses, then credit is None
@@ -2453,11 +2519,15 @@ class QuestionAttempt(models.Model):
         
             content = content_attempt.record.content
 
-            if content.attempt_aggregation=='Avg':
+            attempt_aggregation = content.question_attempt_aggregation
+            if attempt_aggregation=='Sam':
+                attempt_aggregation = content.assessment_attempt_aggregation
+
+            if attempt_aggregation=='Avg':
                 self.credit = responses.aggregate(credit=Avg('credit'))\
                          ['credit']
-            elif content.attempt_aggregation=='Las':
-                self.credit = responses.latest('datetime').credit
+            elif attempt_aggregation=='Las':
+                self.credit = responses.latest().credit
             else:
                 self.credit = responses.aggregate(credit=Max('credit'))\
                          ['credit']
@@ -2524,7 +2594,6 @@ class AssessmentType(models.Model):
                                              default=2)
     solution_privacy = models.SmallIntegerField(choices=PRIVACY_CHOICES,
                                                 default=2)
-    require_secured_browser=models.BooleanField(default=False)
     template_base_name = models.CharField(max_length=50, blank=True, null=True)
     
     def __str__(self):
@@ -2553,10 +2622,11 @@ class Assessment(models.Model):
                             related_name = "assessments_can_view_solution")
     background_pages = models.ManyToManyField('midocs.Page', 
                             through='AssessmentBackgroundPage', blank=True)
-    allow_solution_buttons = models.BooleanField(default=True)
     fixed_order = models.BooleanField(default=False)
     single_version = models.BooleanField(default=False)
     resample_question_sets = models.BooleanField(default=False)
+    handwritten = models.BooleanField(default=False)
+
 
     class Meta:
         ordering = ["code",]

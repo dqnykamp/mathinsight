@@ -1,0 +1,38 @@
+{% extends "micourses/assessments/assessment.html" %}
+{% load question_tags %}
+{% block nositenav %}{% endblock %}
+{% block nopagenav %}{% endblock %}
+{% block nopagenavsl %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block thread_navigation %}{% endblock %}
+
+{% block login %}
+{% if user.is_authenticated %}logged in as {{ user}}{%else%}<a href="{% url 'mi-login'%}?next={{request.path}}">log in</a>{%endif%}
+{% endblock %}
+
+
+{% block scoretotals %}
+<div id="assessment_points" style="margin-top: 1em;">
+{% if thread_content_points %}Total points: <span id="total_points">{{ thread_content_points}}</span>
+{% if users_attempt %}<div id="assessment_score_achieved">
+{% if multiple_attempts %}
+Score this attempt: {% if current_attempt.valid %}<span id="current_attempt_score">{{ attempt_score }}</span>{% else %}<span id="current_attempt_score">not recorded</span>{% endif %}<br/>Overall score:  <span id="overall_score">{{content_score}}</span>{% else %}
+Score: {% if current_attempt.valid %}<span id="overall_score">{{content_score}}</span>{% else %}<span id="overall_score">not recorded</span>{% endif %}
+{% endif %} 
+</div>
+{% endif %}{% endif %}
+</div>
+{% if due %}<div id="assessment_due_individual">Due: {{due}}</div>{% endif %}
+
+{% endblock %}
+
+
+{% block questions %}
+<ol class="assessment_questions"{% if question_only %} start="{{question_only}}"{%endif%}>
+{% for question in rendered_list %}
+<li class="question{%if question.question.spacing_css%} {{ question.question.spacing_css }}{%endif%}{%if question.question.css_class%} {{ question.question.css_class }}{%endif%}">
+{% question_body question.question_data True %}
+</li>
+{% endfor %}
+</ol>
+{% endblock %}

@@ -421,7 +421,7 @@ class ContentRecordView(CourseBaseView):
         attempt_list = []
         if self.instructor_view:
             attempts = self.content_record.attempts\
-                       .order_by('-valid', 'attempt_began')
+                       .order_by('-valid', 'attempt_created')
         else:
             attempts = self.content_record.attempts.filter(valid=True)
 
@@ -938,7 +938,7 @@ class ContentAttemptView(ContentRecordView):
             credit =  ca_question_set.get_credit()
             if credit is None:
                 credit=0
-            score = credit*q_dict['points']
+            score = credit*q_dict.get('points',0)
             percent_credit = credit*100
             q_dict['percent_credit'] = percent_credit
             q_dict['percent_credit_text'] = floatformat_or_dash(
@@ -1122,7 +1122,10 @@ class QuestionAttemptsView(ContentAttemptView):
                                  'response_number': response_number}
 
                 percent_credit = response.credit*100
-                score = response.credit * self.question_set_points
+                if self.question_set_points:
+                    score = response.credit * self.question_set_points
+                else:
+                    score = 0
                 score_text = floatformat_or_dash(score,1)
                 
                 response_dict['percent_credit']=percent_credit
@@ -1167,7 +1170,10 @@ class QuestionAttemptsView(ContentAttemptView):
             score = None
         else:
             percent_credit = credit*100
-            score = self.question_set_points*credit
+            if self.question_set_points:
+                score = self.question_set_points*credit
+            else:
+                score = 0
 
         score_text = floatformat_or_dash(score,1)
 
@@ -1476,7 +1482,7 @@ class EditCourseContentAttemptScores(CourseBaseView):
         record_dict = {
             record.enrollment.id: record for \
             record in self.thread_content.contentrecord_set.filter(enrollment__role=STUDENT_ROLE)\
-            .select_related('enrollment')
+            .select_related('enrollment', 'latest_attempt')
         }
 
         ces =  self.course.courseenrollment_set.filter(role=STUDENT_ROLE).select_related('student__user')
@@ -1493,11 +1499,35 @@ class EditCourseContentAttemptScores(CourseBaseView):
             else:
                 next_enrollment_id = 'null'
 
+            open_attempt=False
+            latest_attempt_info_text = "No open attempt"
+            if self.thread_content.access_only_open_attempts:
+                latest_attempt = content_record.latest_attempt
+
+                if latest_attempt:
+                    if not latest_attempt.closed and latest_attempt.valid:
+                        if latest_attempt.time_expired():
+                            latest_attempt_info_text = "Attempt expired"
+                        else:
+                            open_attempt=True
+                            if latest_attempt.attempt_began:
+                                from django.utils import dateformat
+                                began_string = dateformat.format(
+                                    timezone.localtime(
+                                        latest_attempt.attempt_began),
+                                    'F j, Y, P')
+                                latest_attempt_info_text = "Open attempt, begun at %s" % began_string
+                            else:
+                                latest_attempt_info_text = "Open attempt, not begun"
+
+                
             enrollment_list.append({
                 'enrollment': ce,
                 'content_record': content_record,
                 'attempts': [],
                 'next_enrollment_id': next_enrollment_id,
+                'open_attempt': open_attempt,
+                'latest_attempt_info_text': latest_attempt_info_text,
             })
 
 
@@ -1540,13 +1570,90 @@ class EditCourseContentAttemptScores(CourseBaseView):
 
         context['enrollment_list'] = enrollment_list
 
+        context['message'] = self.request.GET.get('message')
+
         return context
+
+
+    def post_open_close_attempts(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except NotEnrolled:
+            return redirect('micourses:notenrolled', 
+                            course_code=self.course.code)
+        except NotInstructor:
+            return redirect('micourses:coursemain', 
+                            course_code=self.course.code)
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        open_attempt_action = request.POST.get('open_attempt_action')
+
+        message = ""
+
+        if open_attempt_action == "open_all":
+            from .utils import ensure_open_assessment_attempt_all_students
+            ensure_open_assessment_attempt_all_students(self.thread_content)
+            message="Opened attempt for all students"
+        elif open_attempt_action == "close_all":
+            from .utils import close_latest_assessment_attempt_all_students
+            close_latest_assessment_attempt_all_students(self.thread_content)
+            message="Closed attempts for all students"
+        elif open_attempt_action == "open_one":
+            try:
+                enrollment_id= int(request.POST['enrollment_id'])
+            except (KeyError, ValueError):
+                message = "Invalid enrollment id: %s" % request.POST.get('enrollment_id')
+            else:
+                try:
+                    student_record = self.thread_content.contentrecord_set\
+                                    .get(enrollment__id=enrollment_id)
+                except ObjectDoesNotExist:
+                    message = "Cannot find student with id = %s" % enrollment_id
+                    pass
+                else:
+                    from .utils import ensure_open_assessment_attempt
+                    ensure_open_assessment_attempt(student_record)
+                    message = "Opened attempt for %s" % \
+                              student_record.enrollment.student
+        elif open_attempt_action == "close_one":
+            try:
+                enrollment_id= int(request.POST['enrollment_id'])
+            except (KeyError, ValueError):
+                message = "Invalid enrollment id: %s" % request.POST.get('enrollment_id')
+            else:
+                try:
+                    student_record = self.thread_content.contentrecord_set\
+                                    .get(enrollment__id=enrollment_id)
+                except ObjectDoesNotExist:
+                    message = "Cannot find student with id = %s" % enrollment_id
+                    pass
+                else:
+                    from .utils import close_latest_assessment_attempt
+                    close_latest_assessment_attempt(student_record)
+
+                    message = "Closed attempt for %s" % \
+                              student_record.enrollment.student
+        
+
+        return HttpResponseRedirect(reverse(
+            'micourses:edit_course_content_attempt_scores',
+            kwargs={'course_code': self.course.code,
+                    'content_id': self.thread_content.id})
+                                    +'?message=' + message)
+
 
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         """
-        Called when edit course wide attempts.
+        Called when edit course wide attempts (as AJAX)
+        or when click button to open/close attempts (as standard POST request)
         """
+
+        # if have open_attempt_action, then is request to open/close attempts
+        if request.POST.get('open_attempt_action'):
+            return self.post_open_close_attempts(request, *args, **kwargs)
+
 
         try:
             self.object = self.get_object()

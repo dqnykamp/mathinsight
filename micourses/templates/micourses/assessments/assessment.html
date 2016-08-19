@@ -1,5 +1,13 @@
-{% extends "base.html" %}{% load question_tags %}
+{% extends "base.html" %}{% load question_tags course_tags %}
+{% block nositenav %}{% if not no_links %}{{ block.super }}{% endif %}{% endblock %}
+{% block nopagenav %}{% if not no_links %}{{ block.super }}{% endif %}{% endblock %}
+{% block nopagenavsl %}{% if not no_links %}{{ block.super }}{% endif %}{% endblock %}
+{% block breadcrumbs %}{% if not no_links %}{{ block.super }}{% endif %}{% endblock %}
 
+{% block login %}
+{% if no_links %}{% if user.is_authenticated %}logged in as {{ user}}{%else%}<a href="{% url 'mi-login'%}?next={{request.path}}">log in</a>{%endif%}
+{% else %}{{ block.super }}{% endif %}
+{% endblock %}
 
 {% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'micourses:assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
 
@@ -45,17 +53,68 @@ MathJax.Hub.Config({
 {% block scoretotals %}
 <div id="assessment_points" style="margin-top: 1em;">
 {% if thread_content_points %}Total points: <span id="total_points">{{ thread_content_points}}</span>
-{% if users_attempt %}<div id="assessment_score_achieved">
+{% if show_correctness %}{% if users_attempt %}<div id="assessment_score_achieved">
 {% if multiple_attempts %}
-Score this attempt: {% if current_attempt.valid %}<a href="{{attempt_url}}" id="current_attempt_score">{{ attempt_score }}</a>{% else %}<span id="current_attempt_score">not recorded</span>{% endif %}<br/>Overall score:  <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
+Score this attempt: {% if current_attempt.valid %}{% linkorspan attempt_url id="current_attempt_score" no_links=no_links %}{{ attempt_score }}{% endlinkorspan %}{% else %}<span id="current_attempt_score">not recorded</span>{% endif %}<br/>Overall score:  {% linkorspan record_url id="overall_score" no_links=no_links %}{{content_score}}{% endlinkorspan %}
 {% else %}
-Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score">{{content_score}}</a>{% else %}<span id="overall_score">not recorded</span>{% endif %}
+Score: {% if current_attempt.valid %}{% linkorspan record_url id="overall_score" no_links=no_links %}{{content_score}}{% endlinkorspan %}{% else %}<span id="overall_score">not recorded</span>{% endif %}
 {% endif %} 
 </div>
 {% endif %}{% endif %}
+{% endif %}
 </div>
 {% if due %}<div id="assessment_due_individual">Due: {{due}}</div>{% endif %}
+{% if time_limit %}<div id="time_limit">Time limit: {{time_limit}}</div>{% endif %}
+{% if expire_time %}<div id="assessment_begun">Assessment begun: {{assessment_date}}</div>
+<div id="timeleft_outer">Time left: <span id="timeleft"></span></div>
+<script src="{{ STATIC_URL }}js/ServerDate.js"></script>
+<script>
+var expire_time = new Date("{{expire_time.isoformat}}");
 
+function updateTimeLeft() {
+    if(ServerDate < expire_time) {
+	var ms_left = expire_time - ServerDate;
+	var s_left = Math.floor(ms_left/1000);
+	var min_left = Math.floor(s_left/60);
+	s_left = s_left - min_left*60;
+	var hr_left = Math.floor(s_left/60);
+	min_left = min_left - hr_left*60;
+	var left_string = ""
+	if(hr_left) {
+	    left_string = String(hr_left) + " hour";
+	    if(hr_left > 1) {
+		left_string = left_string + "s";
+	    }
+	}
+	if(min_left) {
+	    if(left_string) {
+		left_string = left_string + ", ";
+	    }
+	    left_string = left_string + String(min_left) + " minute"
+	    if(min_left > 1) {
+		left_string = left_string + "s"
+	    }
+	}
+	if(s_left) {
+	    if(left_string) {
+		left_string = left_string + ", ";
+	    }
+	    left_string = left_string + String(s_left) + " second"
+	    if(s_left > 1) {
+		left_string = left_string + "s"
+	    }
+	}
+
+	$('#timeleft').html(String(left_string));
+    }
+    else {
+	$('#timeleft_outer').html("Time has expired.");
+    }
+}
+updateTimeLeft();
+setInterval(updateTimeLeft, 1000);
+</script>
+{% endif %}
 {% endblock %}
 
 
@@ -81,6 +140,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 {% endblock %}
 
 {% block newattempts %}
+{% if show_generate_attempt_button %}
 {% if not assessment.single_version %}
 <section id="more_questions_link">
   {% if current_attempt %}
@@ -96,12 +156,14 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
   {%endif%}
 </section>
 {% endif %}
+{% endif %}
 {% endblock %}
 
 {% endblock %}
 
 {% block rightcolumn %}
-{% if thread_content %}
+{% block thread_navigation %}
+{% if thread_content and not no_links %}
 <a id="threads" class="anchor"></a>
 <section class="box threadbox">
 <h4><a href="{% url 'mithreads:list' %}" class="normaltext">Thread navigation</a></h4>
@@ -121,6 +183,7 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 </ul>
 </section>
 {% endif %}
+{% endblock %}
 
 {{assessment_admin_link}}
 {% if question_numbers %}<p>Question numbers: <span id="question_numbers">{{ question_numbers }}</span></p>{% endif %}

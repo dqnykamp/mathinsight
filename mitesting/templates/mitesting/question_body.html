@@ -11,8 +11,10 @@
 
 <form action="" method="post" id="id_question_{{question_data.identifier}}" class="writein" >
 
-<span id="{{question_data.identifier}}_point_info">{% if question_data.points %}({{question_data.points|floatformat:"-2"}} point{{question_data.points|pluralize_float}}<span id="{{question_data.identifier}}_credit_info" {% if question_data.current_percent_credit == None %}class="hidden_feedback"{%endif%}>, achieved: {% if question_data.attempt_url %}<a href="{{question_data.attempt_url}}"><span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%</a>{%else%}<span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%{%endif%}<span id="{{question_data.identifier}}_complete_icon" {% if question_data.current_percent_credit != 100 %}class="hidden_feedback"{%endif%}> <img src="{% static 'admin/img/icon-yes.gif' %}" alt="Complete" /></span></span>){%endif%}
+{% if show_correctness %}
+<span id="{{question_data.identifier}}_point_info">{% if question_data.points %}({{question_data.points|floatformat:"-2"}} point{{question_data.points|pluralize_float}}<span id="{{question_data.identifier}}_credit_info" {% if question_data.current_percent_credit == None %}class="hidden_feedback"{%endif%}>, achieved: {% if question_data.attempt_url %}{% if not no_links %}<a href="{{question_data.attempt_url}}">{% endif %}<span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%{% if not no_links %}</a>{% endif %}{%else%}<span id="{{question_data.identifier}}_current_credit">{{question_data.current_percent_credit}}</span>%{%endif%}<span id="{{question_data.identifier}}_complete_icon" {% if question_data.current_percent_credit != 100 %}class="hidden_feedback"{%endif%}> <img src="{% static 'admin/img/icon-yes.gif' %}" alt="Complete" /></span></span>){%endif%}
 </span>
+{% endif %}
 
 {{ question_data.rendered_text }}
 
@@ -107,9 +109,12 @@
       jQuery(".applet_feedback_{{question_data.identifier}}").removeClass('hidden_feedback');
 
       question_feedback.html(data['feedback']);
-      var explicitly_not_recorded=data['record_valid_response']==false;
 
-      if(data['correct'] & !explicitly_not_recorded) {
+      var show_correctness = data['show_correctness'];
+      var show_incorrect_with_css = show_correctness
+      var show_correct_with_css = show_correctness && data['record_valid_response'];
+      
+      if(data['correct'] & show_correct_with_css) {
 	  question_feedback.removeClass('error').addClass('success');
       }
       else {
@@ -118,19 +123,30 @@
       
       for(var answer_identifier in data['answers']) {
 	  var answer_feedback = jQuery("#answer_"+answer_identifier+"_feedback");
-	  var answer_feedback_binary = jQuery("#answer_"+answer_identifier+"__binary__feedback");
 	  answer_feedback.html(data['answers'][answer_identifier]['answer_feedback']);
-	  answer_feedback_binary.html(data['answers'][answer_identifier]['answer_feedback_binary']);
+	  if(show_correctness) {
+	      var answer_feedback_binary = jQuery("#answer_"+answer_identifier+"__binary__feedback");
+	      answer_feedback_binary.html(data['answers'][answer_identifier]['answer_feedback_binary']);
+	  }
+
 	  if(data['answers'][answer_identifier]['answer_correct']) {
-	      if(!explicitly_not_recorded) {
+	      if(show_correct_with_css) {
 		  answer_feedback.removeClass('error').removeClass('info').addClass('success');
 	      }
 	      else {
 		  answer_feedback.removeClass('error').removeClass('success').addClass('info');
 	      }
 	  }
-	  else {
+	  else if(!data['answers'][answer_identifier]['received_response']) {
 	      answer_feedback.removeClass('success').removeClass('info').addClass('error');
+	  }
+	  else {
+	      if(show_incorrect_with_css) {
+		  answer_feedback.removeClass('success').removeClass('info').addClass('error');
+	      }
+	      else {
+		  answer_feedback.removeClass('error').removeClass('success').addClass('info');
+	      }
 	  }
 	  answer_feedback.filter("span").css({ display: 'inline-block'})
       }

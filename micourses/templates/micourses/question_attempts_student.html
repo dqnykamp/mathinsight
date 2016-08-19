@@ -17,7 +17,7 @@
 
 <table class="basic rowclick">
 <thead><tr>{% if multiple_question_attempts %}<th>Question version</th>{%endif%}<th>Date and time</th><th>Percent</th><th>Score</th></tr></thead>
-<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (based on {{thread_content.attempt_aggregation_string}})</b></td><td id="question_credit"><b>&nbsp;{{percent_credit|percent_checked_100 }}&nbsp;</b></td><td id="question_score"><b>&nbsp;{{ score_text }}&nbsp;</b></td></tr></tfoot>
+<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (based on {{thread_content.question_attempt_aggregation_string}})</b></td><td id="question_credit"><b>&nbsp;{{percent_credit|percent_checked_100 }}&nbsp;</b></td><td id="question_score"><b>&nbsp;{{ score_text }}&nbsp;</b></td></tr></tfoot>
 {% for attempt in question_attempt_list %}
 {% for response in attempt.responses %}
 <tr>{% if multiple_question_attempts %}<td>{{attempt.version_number}}</td>{%endif%}<td> <a href="{{response.response_url}}">&nbsp;{{response.submitted}}&nbsp;</a></td>

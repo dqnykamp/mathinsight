@@ -38,7 +38,7 @@
 
 <table class="basic rowclick">
 <thead><tr>{% if multiple_question_attempts %}<th>Question version</th>{%endif%}<th>Date and time</th><th class="righttext">Percent</th><th class="righttext">Score</th></tr></thead>
-<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (<span id="score_comment" {% if credit_overridden %}class="overridden" {%endif%}>based on {{thread_content.attempt_aggregation_string}} score</span><span id="score_overridden" {% if not credit_overridden %}hidden {%endif%}>, overridden</span>)</td>
+<tfoot><tr><td {% if multiple_question_attempts %}colspan=2{%endif%}><b>&nbsp;Question score</b> (<span id="score_comment" {% if credit_overridden %}class="overridden" {%endif%}>based on {{thread_content.question_attempt_aggregation_string}} score</span><span id="score_overridden" {% if not credit_overridden %}hidden {%endif%}>, overridden</span>)</td>
 
 
 <td class="righttext"><b><div id="question_credit"><span id="credit_question">{{ percent_credit|floatformat_or_dash:"1"}}</span>% <br/><input type="button" value="Edit" onclick="toggleEditForm('credit', true);"></div><div id="edit_question_credit" hidden><form id="edit_question_credit_form"><span id="edit_question_credit_form_inner">{{credit_form.as_p}}</span>
