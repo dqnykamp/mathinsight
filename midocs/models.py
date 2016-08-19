@@ -305,6 +305,7 @@ class Page(models.Model):
     code = models.SlugField(max_length=200, db_index=True)
     page_type = models.ForeignKey(PageType, default=return_default_page_type,
                                   db_index=True)
+    page_type_title_text = models.CharField(max_length=200, default="")
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=400,blank=True, null=True)
     text = models.TextField(blank=True, null=True)
@@ -345,10 +346,8 @@ class Page(models.Model):
         unique_together = ('code', 'page_type')
 
     def __str__(self):
-        if self.page_type.default:
-            return "%s (Page: %s)" % (self.code, self.title)
-        else:
-            return "%s (Page, %s: %s)" % (self.code, self.page_type, self.title)
+        return "%s (Page%s: %s)" % (self.code, self.page_type_title_text,
+                                    self.title)
 
     def get_title(self):
         return self.title
@@ -464,6 +463,15 @@ class Page(models.Model):
         # if publish_date is empty, set it to be today
         if self.publish_date is None:
             self.publish_date = datetime.date.today()
+
+        # set page_type_title_text if no default page type
+        # redundant data storage because can't figure out how to
+        # prevent django admin from repeating query thousands of time,
+        # i.e., for each page in drop down list
+        if not self.page_type.default:
+            self.page_type_title_text = ", %s" % self.page_type
+        else:
+            self.page_type_title_text = ""
 
         super(Page, self).save(*args, **kwargs) 
         self.update_links()
