@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
-import midocs.models
+from django.db import migrations, models
 import midocs.storage
+import midocs.models
 
 
 class Migration(migrations.Migration):
@@ -15,37 +15,36 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Applet',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('title', models.CharField(max_length=200)),
                 ('code', models.SlugField(unique=True, max_length=100)),
-                ('default_inline_caption', models.TextField(blank=True, null=True)),
-                ('description', models.CharField(blank=True, null=True, max_length=400)),
-                ('detailed_description', models.TextField(blank=True, null=True)),
-                ('applet_file', models.FileField(blank=True, max_length=150, verbose_name='file', storage=midocs.storage.OverwriteStorage(), upload_to=midocs.models.applet_path)),
-                ('applet_file2', models.FileField(blank=True, max_length=150, verbose_name='file2 (for double)', storage=midocs.storage.OverwriteStorage(), upload_to=midocs.models.applet_2_path)),
-                ('encoded_content', models.TextField(blank=True, null=True)),
+                ('default_inline_caption', models.TextField(null=True, blank=True)),
+                ('description', models.CharField(null=True, max_length=400, blank=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
+                ('applet_file', models.FileField(storage=midocs.storage.OverwriteStorage(), verbose_name='file', upload_to=midocs.models.applet_path, max_length=150, blank=True)),
+                ('applet_file2', models.FileField(storage=midocs.storage.OverwriteStorage(), verbose_name='file2 (for double)', upload_to=midocs.models.applet_2_path, max_length=150, blank=True)),
+                ('encoded_content', models.TextField(null=True, blank=True)),
                 ('notation_specific', models.BooleanField(default=False)),
                 ('highlight', models.BooleanField(db_index=True, default=False)),
-                ('javascript', models.TextField(blank=True, null=True)),
+                ('javascript', models.TextField(null=True, blank=True)),
                 ('child_applet_percent_width', models.IntegerField(default=50)),
-                ('child_applet_parameters', models.CharField(blank=True, null=True, max_length=400)),
+                ('child_applet_parameters', models.CharField(null=True, max_length=400, blank=True)),
                 ('overwrite_thumbnail', models.SmallIntegerField(choices=[(0, "don't overwrite"), (1, 'from image 1'), (2, 'from image 2')], default=1)),
-                ('thumbnail', models.ImageField(max_length=150, null=True, storage=midocs.storage.OverwriteStorage(), height_field='thumbnail_height', width_field='thumbnail_width', blank=True, upload_to=midocs.models.applet_thumbnail_path)),
-                ('thumbnail_width', models.IntegerField(blank=True, null=True)),
-                ('thumbnail_height', models.IntegerField(blank=True, null=True)),
-                ('image', models.ImageField(max_length=150, null=True, storage=midocs.storage.OverwriteStorage(), height_field='image_height', width_field='image_width', blank=True, upload_to=midocs.models.applet_image_path)),
-                ('image_width', models.IntegerField(blank=True, null=True)),
-                ('image_height', models.IntegerField(blank=True, null=True)),
-                ('image2', models.ImageField(max_length=150, null=True, storage=midocs.storage.OverwriteStorage(), height_field='image2_height', width_field='image2_width', blank=True, upload_to=midocs.models.applet_2_image_path)),
-                ('image2_width', models.IntegerField(blank=True, null=True)),
-                ('image2_height', models.IntegerField(blank=True, null=True)),
-                ('author_copyright', models.BooleanField(default=True)),
+                ('thumbnail', models.ImageField(upload_to=midocs.models.applet_thumbnail_path, storage=midocs.storage.OverwriteStorage(), blank=True, null=True, height_field='thumbnail_height', max_length=150, width_field='thumbnail_width')),
+                ('thumbnail_width', models.IntegerField(null=True, blank=True)),
+                ('thumbnail_height', models.IntegerField(null=True, blank=True)),
+                ('image', models.ImageField(upload_to=midocs.models.applet_image_path, storage=midocs.storage.OverwriteStorage(), blank=True, null=True, height_field='image_height', max_length=150, width_field='image_width')),
+                ('image_width', models.IntegerField(null=True, blank=True)),
+                ('image_height', models.IntegerField(null=True, blank=True)),
+                ('image2', models.ImageField(upload_to=midocs.models.applet_2_image_path, storage=midocs.storage.OverwriteStorage(), blank=True, null=True, height_field='image2_height', max_length=150, width_field='image2_width')),
+                ('image2_width', models.IntegerField(null=True, blank=True)),
+                ('image2_height', models.IntegerField(null=True, blank=True)),
                 ('hidden', models.BooleanField(db_index=True, default=False)),
                 ('iframe', models.BooleanField(default=False)),
-                ('additional_credits', models.TextField(blank=True, null=True)),
+                ('additional_credits', models.TextField(null=True, blank=True)),
                 ('date_created', models.DateField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('publish_date', models.DateField(blank=True, db_index=True)),
+                ('publish_date', models.DateField(db_index=True, blank=True)),
             ],
             options={
                 'ordering': ['code'],
@@ -54,7 +53,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AppletAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('copyright_only', models.BooleanField(default=False)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AppletChildObjectLink',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('object_name', models.CharField(max_length=100)),
                 ('child_object_name', models.CharField(max_length=100)),
                 ('applet_to_child_link', models.BooleanField(default=True)),
@@ -74,56 +74,56 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AppletFeature',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=20, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=20)),
                 ('description', models.CharField(max_length=400)),
             ],
         ),
         migrations.CreateModel(
             name='AppletNotationSystem',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('applet_file', models.FileField(blank=True, verbose_name='file', storage=midocs.storage.OverwriteStorage(), upload_to=midocs.models.applet_notation_path)),
-                ('applet_file2', models.FileField(blank=True, verbose_name='file2 (for double)', storage=midocs.storage.OverwriteStorage(), upload_to=midocs.models.applet_2_notation_path)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('applet_file', models.FileField(verbose_name='file', upload_to=midocs.models.applet_notation_path, storage=midocs.storage.OverwriteStorage(), blank=True)),
+                ('applet_file2', models.FileField(verbose_name='file2 (for double)', upload_to=midocs.models.applet_2_notation_path, storage=midocs.storage.OverwriteStorage(), blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='AppletObject',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('name', models.CharField(max_length=100)),
                 ('change_from_javascript', models.BooleanField(default=True)),
                 ('capture_changes', models.BooleanField(default=False)),
                 ('state_variable', models.BooleanField(default=False)),
-                ('related_objects', models.CharField(blank=True, null=True, max_length=200)),
-                ('name_for_changes', models.CharField(blank=True, null=True, max_length=100)),
-                ('category_for_capture', models.CharField(blank=True, null=True, max_length=100)),
-                ('function_input_variable', models.CharField(blank=True, null=True, max_length=1)),
-                ('default_value', models.CharField(blank=True, null=True, max_length=50)),
+                ('related_objects', models.CharField(null=True, max_length=200, blank=True)),
+                ('name_for_changes', models.CharField(null=True, max_length=100, blank=True)),
+                ('category_for_capture', models.CharField(null=True, max_length=100, blank=True)),
+                ('function_input_variable', models.CharField(null=True, max_length=1, blank=True)),
+                ('default_value', models.CharField(null=True, max_length=50, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='AppletObjectType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('object_type', models.CharField(unique=True, max_length=50)),
             ],
         ),
         migrations.CreateModel(
             name='AppletParameter',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('value', models.CharField(blank=True, max_length=1000)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('value', models.CharField(max_length=1000, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='AppletText',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(max_length=100)),
                 ('title', models.CharField(max_length=100)),
                 ('text', models.TextField()),
-                ('default_position', models.CharField(blank=True, null=True, choices=[('top', 'top'), ('bottom', 'bottom')], max_length=6)),
+                ('default_position', models.CharField(null=True, choices=[('top', 'top'), ('bottom', 'bottom')], max_length=6, blank=True)),
                 ('sort_order', models.FloatField(blank=True)),
             ],
             options={
@@ -133,8 +133,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AppletType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=20, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=20)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.CharField(max_length=400)),
                 ('help_text', models.TextField()),
@@ -144,26 +144,26 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AppletTypeParameter',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('parameter_name', models.CharField(max_length=50, db_index=True)),
-                ('default_value', models.CharField(blank=True, null=True, max_length=1000)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('parameter_name', models.CharField(db_index=True, max_length=50)),
+                ('default_value', models.CharField(null=True, max_length=1000, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='Author',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(unique=True)),
-                ('first_name', models.CharField(max_length=50, db_index=True)),
-                ('middle_name', models.CharField(blank=True, null=True, max_length=50)),
-                ('last_name', models.CharField(max_length=50, db_index=True)),
-                ('title', models.CharField(blank=True, null=True, max_length=200)),
-                ('institution', models.CharField(blank=True, null=True, max_length=200)),
-                ('web_address', models.URLField(blank=True, null=True)),
-                ('email_address', models.EmailField(blank=True, null=True, max_length=254)),
+                ('first_name', models.CharField(db_index=True, max_length=50)),
+                ('middle_name', models.CharField(null=True, max_length=50, blank=True)),
+                ('last_name', models.CharField(db_index=True, max_length=50)),
+                ('title', models.CharField(null=True, max_length=200, blank=True)),
+                ('institution', models.CharField(null=True, max_length=200, blank=True)),
+                ('web_address', models.URLField(null=True, blank=True)),
+                ('email_address', models.EmailField(null=True, max_length=254, blank=True)),
                 ('display_email', models.BooleanField(default=False)),
                 ('mi_contributor', models.SmallIntegerField(db_index=True, default=0)),
-                ('contribution_summary', models.TextField(blank=True, null=True)),
+                ('contribution_summary', models.TextField(null=True, blank=True)),
             ],
             options={
                 'ordering': ['last_name', 'first_name', 'middle_name'],
@@ -172,25 +172,35 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AuxiliaryFile',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.SlugField(unique=True)),
-                ('description', models.CharField(max_length=400)),
-                ('auxiliary_file', models.FileField(blank=True, max_length=150, verbose_name='file', storage=midocs.storage.OverwriteStorage(), upload_to=midocs.models.auxiliary_path)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.SlugField()),
+                ('description', models.CharField(null=True, max_length=400, blank=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
+                ('auxiliary_file', models.FileField(storage=midocs.storage.OverwriteStorage(), verbose_name='file', upload_to=midocs.models.auxiliary_path, max_length=150, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='AuxiliaryFileType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
                 ('description', models.CharField(max_length=400)),
                 ('heading', models.CharField(max_length=100)),
             ],
         ),
         migrations.CreateModel(
+            name='CopyrightType',
+            fields=[
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('name', models.CharField(max_length=200)),
+                ('url', models.URLField(null=True, blank=True)),
+                ('default', models.BooleanField(default=False)),
+            ],
+        ),
+        migrations.CreateModel(
             name='EquationTag',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField()),
                 ('tag', models.CharField(max_length=20)),
             ],
@@ -198,7 +208,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ExternalLink',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('external_url', models.URLField()),
                 ('link_text', models.CharField(max_length=200)),
             ],
@@ -206,25 +216,24 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Image',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('title', models.CharField(max_length=200)),
                 ('code', models.SlugField(unique=True, max_length=100)),
-                ('imagefile', models.ImageField(null=True, db_index=True, storage=midocs.storage.OverwriteStorage(), height_field='height', width_field='width', blank=True, upload_to=midocs.models.image_path)),
-                ('height', models.IntegerField(blank=True, null=True)),
-                ('width', models.IntegerField(blank=True, null=True)),
-                ('description', models.CharField(blank=True, null=True, max_length=400)),
-                ('detailed_description', models.TextField(blank=True, null=True)),
+                ('imagefile', models.ImageField(upload_to=midocs.models.image_path, blank=True, null=True, db_index=True, height_field='height', storage=midocs.storage.OverwriteStorage(), width_field='width')),
+                ('height', models.IntegerField(null=True, blank=True)),
+                ('width', models.IntegerField(null=True, blank=True)),
+                ('description', models.CharField(null=True, max_length=400, blank=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
                 ('notation_specific', models.BooleanField(default=False)),
-                ('thumbnail', models.ImageField(max_length=150, null=True, storage=midocs.storage.OverwriteStorage(), height_field='thumbnail_height', width_field='thumbnail_width', blank=True, upload_to=midocs.models.image_thumbnail_path)),
-                ('thumbnail_width', models.IntegerField(blank=True, null=True)),
-                ('thumbnail_height', models.IntegerField(blank=True, null=True)),
-                ('original_file', models.FileField(blank=True, null=True, storage=midocs.storage.OverwriteStorage(), max_length=150, upload_to=midocs.models.image_source_path)),
-                ('author_copyright', models.BooleanField(default=True)),
+                ('thumbnail', models.ImageField(upload_to=midocs.models.image_thumbnail_path, storage=midocs.storage.OverwriteStorage(), blank=True, null=True, height_field='thumbnail_height', max_length=150, width_field='thumbnail_width')),
+                ('thumbnail_width', models.IntegerField(null=True, blank=True)),
+                ('thumbnail_height', models.IntegerField(null=True, blank=True)),
+                ('original_file', models.FileField(upload_to=midocs.models.image_source_path, null=True, max_length=150, blank=True, storage=midocs.storage.OverwriteStorage())),
                 ('hidden', models.BooleanField(db_index=True, default=False)),
-                ('additional_credits', models.TextField(blank=True, null=True)),
+                ('additional_credits', models.TextField(null=True, blank=True)),
                 ('date_created', models.DateField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('publish_date', models.DateField(blank=True, db_index=True)),
+                ('publish_date', models.DateField(db_index=True, blank=True)),
             ],
             options={
                 'ordering': ['code'],
@@ -233,7 +242,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ImageAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('copyright_only', models.BooleanField(default=False)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -243,17 +253,17 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ImageNotationSystem',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('imagefile', models.ImageField(height_field='height', blank=True, width_field='width', db_index=True, upload_to=midocs.models.image_notation_path)),
-                ('height', models.IntegerField(blank=True, null=True)),
-                ('width', models.IntegerField(blank=True, null=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('imagefile', models.ImageField(upload_to=midocs.models.image_notation_path, db_index=True, height_field='height', blank=True, width_field='width')),
+                ('height', models.IntegerField(null=True, blank=True)),
+                ('width', models.IntegerField(null=True, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='ImageType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=20, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=20)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.CharField(max_length=400)),
             ],
@@ -261,20 +271,20 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IndexEntry',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('indexed_phrase', models.CharField(max_length=100, db_index=True)),
-                ('indexed_subphrase', models.CharField(blank=True, null=True, db_index=True, max_length=100)),
-                ('page_anchor', models.CharField(blank=True, null=True, max_length=100)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('indexed_phrase', models.CharField(db_index=True, max_length=100)),
+                ('indexed_subphrase', models.CharField(null=True, db_index=True, max_length=100, blank=True)),
+                ('page_anchor', models.CharField(null=True, max_length=100, blank=True)),
             ],
             options={
-                'verbose_name_plural': 'Index entries',
                 'ordering': ['indexed_phrase', 'indexed_subphrase'],
+                'verbose_name_plural': 'Index entries',
             },
         ),
         migrations.CreateModel(
             name='IndexType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(unique=True, max_length=20)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.CharField(max_length=400)),
@@ -283,8 +293,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Keyword',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
             ],
             options={
                 'ordering': ['code'],
@@ -293,7 +303,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NewsAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('copyright_only', models.BooleanField(default=False)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -303,7 +314,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NewsItem',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(unique=True, max_length=100)),
                 ('title', models.CharField(max_length=200)),
                 ('description', models.CharField(max_length=400)),
@@ -319,41 +330,40 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='NotationSystem',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(unique=True)),
                 ('name', models.CharField(unique=True, max_length=50)),
-                ('description', models.CharField(blank=True, max_length=400)),
+                ('description', models.CharField(max_length=400, blank=True)),
                 ('configfile', models.CharField(unique=True, max_length=20)),
-                ('detailed_description', models.TextField(blank=True, null=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='Objective',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
                 ('description', models.CharField(max_length=400)),
             ],
         ),
         migrations.CreateModel(
             name='Page',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField(max_length=200)),
                 ('title', models.CharField(max_length=200)),
-                ('description', models.CharField(blank=True, null=True, max_length=400)),
-                ('text', models.TextField(blank=True, null=True)),
+                ('description', models.CharField(null=True, max_length=400, blank=True)),
+                ('text', models.TextField(null=True, blank=True)),
                 ('date_created', models.DateField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('publish_date', models.DateField(blank=True, db_index=True)),
-                ('notes', models.TextField(blank=True, null=True)),
+                ('publish_date', models.DateField(db_index=True, blank=True)),
+                ('notes', models.TextField(null=True, blank=True)),
                 ('highlight', models.BooleanField(db_index=True, default=False)),
-                ('author_copyright', models.BooleanField(default=True)),
                 ('hidden', models.BooleanField(db_index=True, default=False)),
-                ('additional_credits', models.TextField(blank=True, null=True)),
-                ('detailed_description', models.TextField(blank=True, null=True)),
-                ('header', models.TextField(blank=True, null=True)),
-                ('javascript', models.TextField(blank=True, null=True)),
+                ('additional_credits', models.TextField(null=True, blank=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
+                ('header', models.TextField(null=True, blank=True)),
+                ('javascript', models.TextField(null=True, blank=True)),
             ],
             options={
                 'ordering': ['code', 'page_type'],
@@ -362,7 +372,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('copyright_only', models.BooleanField(default=False)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -372,9 +383,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageCitation',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField()),
-                ('footnote_text', models.TextField(blank=True, null=True)),
+                ('footnote_text', models.TextField(null=True, blank=True)),
                 ('reference_number', models.SmallIntegerField()),
             ],
             options={
@@ -384,7 +395,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageNavigation',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('navigation_phrase', models.CharField(max_length=100)),
                 ('page_anchor', models.CharField(max_length=100)),
             ],
@@ -395,7 +406,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageNavigationSub',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('navigation_subphrase', models.CharField(max_length=100)),
                 ('page_anchor', models.CharField(max_length=100)),
             ],
@@ -406,7 +417,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageRelationship',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -416,7 +427,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageSimilar',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('score', models.SmallIntegerField()),
                 ('background_page', models.BooleanField(default=False)),
             ],
@@ -427,8 +438,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PageType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
                 ('name', models.CharField(max_length=100)),
                 ('default', models.BooleanField(default=False)),
             ],
@@ -436,26 +447,26 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Reference',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('code', models.SlugField()),
-                ('title', models.CharField(blank=True, null=True, max_length=400)),
-                ('booktitle', models.CharField(blank=True, null=True, max_length=400)),
-                ('journal', models.CharField(blank=True, null=True, max_length=200)),
-                ('year', models.IntegerField(blank=True, null=True)),
-                ('volume', models.IntegerField(blank=True, null=True)),
-                ('number', models.IntegerField(blank=True, null=True)),
-                ('pages', models.CharField(blank=True, null=True, max_length=20)),
-                ('publisher', models.CharField(blank=True, null=True, max_length=100)),
-                ('address', models.CharField(blank=True, null=True, max_length=100)),
-                ('published_web_address', models.URLField(blank=True, null=True)),
-                ('preprint_web_address', models.URLField(blank=True, null=True)),
-                ('notes', models.CharField(blank=True, null=True, max_length=100)),
+                ('title', models.CharField(null=True, max_length=400, blank=True)),
+                ('booktitle', models.CharField(null=True, max_length=400, blank=True)),
+                ('journal', models.CharField(null=True, max_length=200, blank=True)),
+                ('year', models.IntegerField(null=True, blank=True)),
+                ('volume', models.IntegerField(null=True, blank=True)),
+                ('number', models.IntegerField(null=True, blank=True)),
+                ('pages', models.CharField(null=True, max_length=20, blank=True)),
+                ('publisher', models.CharField(null=True, max_length=100, blank=True)),
+                ('address', models.CharField(null=True, max_length=100, blank=True)),
+                ('published_web_address', models.URLField(null=True, blank=True)),
+                ('preprint_web_address', models.URLField(null=True, blank=True)),
+                ('notes', models.CharField(null=True, max_length=100, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='ReferenceAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -465,7 +476,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ReferenceEditor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -475,46 +486,45 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ReferenceType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=20, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=20)),
                 ('name', models.CharField(max_length=100)),
             ],
         ),
         migrations.CreateModel(
             name='RelationshipType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
                 ('description', models.CharField(max_length=400)),
             ],
         ),
         migrations.CreateModel(
             name='Subject',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=50, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=50)),
             ],
         ),
         migrations.CreateModel(
             name='Video',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('title', models.CharField(max_length=200)),
                 ('code', models.SlugField(unique=True, max_length=100)),
-                ('default_inline_caption', models.TextField(blank=True, null=True)),
-                ('description', models.CharField(blank=True, null=True, max_length=400)),
-                ('detailed_description', models.TextField(blank=True, null=True)),
-                ('transcript', models.TextField(blank=True, null=True)),
+                ('default_inline_caption', models.TextField(null=True, blank=True)),
+                ('description', models.CharField(null=True, max_length=400, blank=True)),
+                ('detailed_description', models.TextField(null=True, blank=True)),
+                ('transcript', models.TextField(null=True, blank=True)),
                 ('highlight', models.BooleanField(db_index=True, default=False)),
-                ('thumbnail', models.ImageField(max_length=150, null=True, storage=midocs.storage.OverwriteStorage(), height_field='thumbnail_height', width_field='thumbnail_width', blank=True, upload_to=midocs.models.video_thumbnail_path)),
-                ('thumbnail_width', models.IntegerField(blank=True, null=True)),
-                ('thumbnail_height', models.IntegerField(blank=True, null=True)),
-                ('author_copyright', models.BooleanField(default=True)),
+                ('thumbnail', models.ImageField(upload_to=midocs.models.video_thumbnail_path, storage=midocs.storage.OverwriteStorage(), blank=True, null=True, height_field='thumbnail_height', max_length=150, width_field='thumbnail_width')),
+                ('thumbnail_width', models.IntegerField(null=True, blank=True)),
+                ('thumbnail_height', models.IntegerField(null=True, blank=True)),
                 ('hidden', models.BooleanField(db_index=True, default=False)),
-                ('additional_credits', models.TextField(blank=True, null=True)),
+                ('additional_credits', models.TextField(null=True, blank=True)),
                 ('date_created', models.DateField(auto_now_add=True)),
                 ('date_modified', models.DateTimeField(auto_now=True)),
-                ('publish_date', models.DateField(blank=True, db_index=True)),
+                ('publish_date', models.DateField(db_index=True, blank=True)),
             ],
             options={
                 'ordering': ['code'],
@@ -523,7 +533,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='VideoAuthor',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('copyright_only', models.BooleanField(default=False)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -533,14 +544,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='VideoParameter',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('value', models.CharField(blank=True, max_length=1000)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('value', models.CharField(max_length=1000, blank=True)),
             ],
         ),
         migrations.CreateModel(
             name='VideoQuestion',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('sort_order', models.FloatField(default=0)),
             ],
             options={
@@ -550,8 +561,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='VideoType',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('code', models.CharField(unique=True, max_length=20, db_index=True)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('code', models.CharField(db_index=True, unique=True, max_length=20)),
                 ('name', models.CharField(max_length=100)),
                 ('description', models.CharField(max_length=400)),
             ],
@@ -559,9 +570,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='VideoTypeParameter',
             fields=[
-                ('id', models.AutoField(primary_key=True, auto_created=True, verbose_name='ID', serialize=False)),
-                ('parameter_name', models.CharField(max_length=50, db_index=True)),
-                ('default_value', models.CharField(blank=True, null=True, max_length=1000)),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('parameter_name', models.CharField(db_index=True, max_length=50)),
+                ('default_value', models.CharField(null=True, max_length=1000, blank=True)),
                 ('video_type', models.ForeignKey(related_name='valid_parameters', to='midocs.VideoType')),
             ],
         ),

@@ -20,7 +20,6 @@ from PIL import Image as PILImage
 from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from midocs.functions import author_list_abbreviated, author_list_full, return_extended_link
-from mitesting.models import Question
 
 
 # from django.contrib.comments.moderation import moderator
@@ -1588,8 +1587,8 @@ class Video(models.Model):
     description = models.CharField(max_length=400,blank=True, null=True)
     detailed_description = models.TextField(blank=True, null=True)
     transcript = models.TextField(blank=True, null=True)
-    slides = models.ForeignKey(Page, blank=True, null=True,
-                limit_choices_to={'page_type': PageType.return_slide_type()})
+    slides = models.ForeignKey(Page, blank=True, null=True)
+                               #limit_choices_to={'page_type': PageType.return_slide_type()})
     thread_content_set = GenericRelation('micourses.ThreadContent')
     parameters = models.ManyToManyField(VideoTypeParameter, 
                                         through='VideoParameter', blank=True)
@@ -1609,7 +1608,7 @@ class Video(models.Model):
     date_created = models.DateField(auto_now_add=True)
     date_modified = models.DateTimeField(auto_now=True)
     publish_date = models.DateField(blank=True, db_index=True)
-    questions = models.ManyToManyField(Question,
+    questions = models.ManyToManyField('mitesting.Question',
                                        through = 'VideoQuestion', blank=True)
 
     objects = models.Manager()
@@ -1757,7 +1756,7 @@ class VideoParameter(models.Model):
         
 class VideoQuestion(models.Model):
     video = models.ForeignKey(Video)
-    question = models.ForeignKey(Question)
+    question = models.ForeignKey('mitesting.Question')
     sort_order = models.FloatField(default=0)
     
     class Meta:

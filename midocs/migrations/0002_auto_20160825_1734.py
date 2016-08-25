@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import models, migrations
+from django.db import migrations, models
 import midocs.models
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('mitesting', '0001_initial'),
         ('midocs', '0001_initial'),
+        ('mitesting', '0001_initial'),
     ]
 
     operations = [
@@ -46,17 +46,22 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='video',
             name='associated_applet',
-            field=models.ForeignKey(to='midocs.Applet', null=True, blank=True),
+            field=models.ForeignKey(null=True, blank=True, to='midocs.Applet'),
         ),
         migrations.AddField(
             model_name='video',
             name='authors',
-            field=models.ManyToManyField(to='midocs.Author', blank=True, through='midocs.VideoAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', through='midocs.VideoAuthor', blank=True),
+        ),
+        migrations.AddField(
+            model_name='video',
+            name='copyright_type',
+            field=models.ForeignKey(default=midocs.models.return_default_copyright_type, to='midocs.CopyrightType', null=True, blank=True),
         ),
         migrations.AddField(
             model_name='video',
             name='in_pages',
-            field=models.ManyToManyField(related_name='embedded_videos', to='midocs.Page', blank=True),
+            field=models.ManyToManyField(to='midocs.Page', related_name='embedded_videos', blank=True),
         ),
         migrations.AddField(
             model_name='video',
@@ -66,12 +71,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='video',
             name='parameters',
-            field=models.ManyToManyField(to='midocs.VideoTypeParameter', blank=True, through='midocs.VideoParameter'),
+            field=models.ManyToManyField(to='midocs.VideoTypeParameter', through='midocs.VideoParameter', blank=True),
         ),
         migrations.AddField(
             model_name='video',
             name='questions',
-            field=models.ManyToManyField(to='mitesting.Question', blank=True, through='midocs.VideoQuestion'),
+            field=models.ManyToManyField(to='mitesting.Question', through='midocs.VideoQuestion', blank=True),
+        ),
+        migrations.AddField(
+            model_name='video',
+            name='slides',
+            field=models.ForeignKey(null=True, blank=True, to='midocs.Page'),
         ),
         migrations.AddField(
             model_name='video',
@@ -81,7 +91,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='video',
             name='video_type',
-            field=models.ForeignKey(to='midocs.VideoType', verbose_name='type'),
+            field=models.ForeignKey(verbose_name='type', to='midocs.VideoType'),
         ),
         migrations.AddField(
             model_name='referenceeditor',
@@ -106,17 +116,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reference',
             name='authors',
-            field=models.ManyToManyField(related_name='references_authored', to='midocs.Author', blank=True, through='midocs.ReferenceAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', related_name='references_authored', through='midocs.ReferenceAuthor', blank=True),
         ),
         migrations.AddField(
             model_name='reference',
             name='editors',
-            field=models.ManyToManyField(related_name='references_edited', to='midocs.Author', blank=True, through='midocs.ReferenceEditor'),
+            field=models.ManyToManyField(to='midocs.Author', related_name='references_edited', through='midocs.ReferenceEditor', blank=True),
         ),
         migrations.AddField(
             model_name='reference',
             name='reference_type',
-            field=models.ForeignKey(to='midocs.ReferenceType', verbose_name='type'),
+            field=models.ForeignKey(verbose_name='type', to='midocs.ReferenceType'),
         ),
         migrations.AddField(
             model_name='pagesimilar',
@@ -161,7 +171,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pagecitation',
             name='reference',
-            field=models.ForeignKey(to='midocs.Reference', null=True, blank=True),
+            field=models.ForeignKey(null=True, blank=True, to='midocs.Reference'),
         ),
         migrations.AddField(
             model_name='pageauthor',
@@ -176,7 +186,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='page',
             name='authors',
-            field=models.ManyToManyField(to='midocs.Author', blank=True, through='midocs.PageAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', through='midocs.PageAuthor', blank=True),
+        ),
+        migrations.AddField(
+            model_name='page',
+            name='copyright_type',
+            field=models.ForeignKey(default=midocs.models.return_default_copyright_type, to='midocs.CopyrightType', null=True, blank=True),
         ),
         migrations.AddField(
             model_name='page',
@@ -201,17 +216,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='page',
             name='related_pages',
-            field=models.ManyToManyField(related_name='pages_related_from', to='midocs.Page', blank=True, through='midocs.PageRelationship'),
+            field=models.ManyToManyField(to='midocs.Page', related_name='pages_related_from', through='midocs.PageRelationship', blank=True),
         ),
         migrations.AddField(
             model_name='page',
             name='related_videos',
-            field=models.ManyToManyField(related_name='related_pages', to='midocs.Video', blank=True),
+            field=models.ManyToManyField(to='midocs.Video', related_name='related_pages', blank=True),
         ),
         migrations.AddField(
             model_name='page',
             name='similar_pages',
-            field=models.ManyToManyField(related_name='pages_similar_from', to='midocs.Page', blank=True, through='midocs.PageSimilar'),
+            field=models.ManyToManyField(to='midocs.Page', related_name='pages_similar_from', through='midocs.PageSimilar', blank=True),
         ),
         migrations.AddField(
             model_name='page',
@@ -221,7 +236,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='newsitem',
             name='authors',
-            field=models.ManyToManyField(to='midocs.Author', blank=True, through='midocs.NewsAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', through='midocs.NewsAuthor', blank=True),
         ),
         migrations.AddField(
             model_name='newsauthor',
@@ -236,7 +251,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='indexentry',
             name='index_type',
-            field=models.ForeignKey(to='midocs.IndexType', related_name='entries', default=1),
+            field=models.ForeignKey(related_name='entries', default=1, to='midocs.IndexType'),
         ),
         migrations.AddField(
             model_name='indexentry',
@@ -266,7 +281,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='image',
             name='authors',
-            field=models.ManyToManyField(to='midocs.Author', blank=True, through='midocs.ImageAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', through='midocs.ImageAuthor', blank=True),
         ),
         migrations.AddField(
             model_name='image',
@@ -275,8 +290,13 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='image',
+            name='copyright_type',
+            field=models.ForeignKey(default=midocs.models.return_default_copyright_type, to='midocs.CopyrightType', null=True, blank=True),
+        ),
+        migrations.AddField(
+            model_name='image',
             name='in_pages',
-            field=models.ManyToManyField(related_name='embedded_images', to='midocs.Page', blank=True),
+            field=models.ManyToManyField(to='midocs.Page', related_name='embedded_images', blank=True),
         ),
         migrations.AddField(
             model_name='image',
@@ -286,12 +306,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='image',
             name='notation_systems',
-            field=models.ManyToManyField(to='midocs.NotationSystem', blank=True, through='midocs.ImageNotationSystem'),
+            field=models.ManyToManyField(to='midocs.NotationSystem', through='midocs.ImageNotationSystem', blank=True),
         ),
         migrations.AddField(
             model_name='image',
             name='original_file_type',
-            field=models.ForeignKey(to='midocs.ImageType', null=True, blank=True),
+            field=models.ForeignKey(null=True, blank=True, to='midocs.ImageType'),
         ),
         migrations.AddField(
             model_name='image',
@@ -301,7 +321,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='externallink',
             name='in_page',
-            field=models.ForeignKey(to='midocs.Page', null=True, blank=True),
+            field=models.ForeignKey(null=True, blank=True, to='midocs.Page'),
         ),
         migrations.AddField(
             model_name='equationtag',
@@ -371,22 +391,27 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applet',
             name='applet_objects',
-            field=models.ManyToManyField(to='midocs.AppletObjectType', blank=True, through='midocs.AppletObject'),
+            field=models.ManyToManyField(to='midocs.AppletObjectType', through='midocs.AppletObject', blank=True),
         ),
         migrations.AddField(
             model_name='applet',
             name='applet_type',
-            field=models.ForeignKey(to='midocs.AppletType', verbose_name='type'),
+            field=models.ForeignKey(verbose_name='type', to='midocs.AppletType'),
         ),
         migrations.AddField(
             model_name='applet',
             name='authors',
-            field=models.ManyToManyField(to='midocs.Author', blank=True, through='midocs.AppletAuthor'),
+            field=models.ManyToManyField(to='midocs.Author', through='midocs.AppletAuthor', blank=True),
         ),
         migrations.AddField(
             model_name='applet',
             name='child_applet',
-            field=models.ForeignKey(to='midocs.Applet', null=True, blank=True),
+            field=models.ForeignKey(null=True, blank=True, to='midocs.Applet'),
+        ),
+        migrations.AddField(
+            model_name='applet',
+            name='copyright_type',
+            field=models.ForeignKey(default=midocs.models.return_default_copyright_type, to='midocs.CopyrightType', null=True, blank=True),
         ),
         migrations.AddField(
             model_name='applet',
@@ -396,7 +421,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applet',
             name='in_pages',
-            field=models.ManyToManyField(related_name='embedded_applets', to='midocs.Page', blank=True),
+            field=models.ManyToManyField(to='midocs.Page', related_name='embedded_applets', blank=True),
         ),
         migrations.AddField(
             model_name='applet',
@@ -406,12 +431,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='applet',
             name='notation_systems',
-            field=models.ManyToManyField(to='midocs.NotationSystem', blank=True, through='midocs.AppletNotationSystem'),
+            field=models.ManyToManyField(to='midocs.NotationSystem', through='midocs.AppletNotationSystem', blank=True),
         ),
         migrations.AddField(
             model_name='applet',
             name='parameters',
-            field=models.ManyToManyField(to='midocs.AppletTypeParameter', blank=True, through='midocs.AppletParameter'),
+            field=models.ManyToManyField(to='midocs.AppletTypeParameter', through='midocs.AppletParameter', blank=True),
         ),
         migrations.AddField(
             model_name='applet',
@@ -518,6 +543,10 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name='imageauthor',
             unique_together=set([('image', 'author')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='auxiliaryfile',
+            unique_together=set([('code', 'file_type')]),
         ),
         migrations.AlterUniqueTogether(
             name='applettypeparameter',
