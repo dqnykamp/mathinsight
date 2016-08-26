@@ -1560,6 +1560,7 @@ class ThreadContent(models.Model):
 
         due = self.get_adjusted_due(content_record=content_record,
                                     skipdate_dict=skipdate_dict)
+
         if not due or now <= due:
             return AVAILABLE
 
@@ -1752,6 +1753,9 @@ class ThreadContent(models.Model):
         
         # if no content_record or student is specified, use initial due
 
+        # if course does not adjust due based on attendance,
+        # use initial due
+
         if not content_record:
             if student:
                 try: 
@@ -1772,7 +1776,7 @@ class ThreadContent(models.Model):
         elif not final_due:
             return due
         
-        if not content_record:
+        if not content_record or not self.course.adjust_due_attendance:
             return due
         
         final_due = max(due, final_due)

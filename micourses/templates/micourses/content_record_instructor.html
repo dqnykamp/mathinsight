@@ -27,7 +27,7 @@
 
 <p>Points: {{thread_content.points}}<br/>
 Score: <span id="assessment_score">{{score|floatformat_or_dash:"1"}}</span> <br/>
-Adjusted due date: <a href='{% url 'micourses:instructor_adjusted_due_calculation' student_id=student.id content_id=thread_content.id course_code=course.code %}'>{{adjusted_due}}</a></p>
+{% if course.adjust_due_attendance %}Adjusted due date: <a href='{% url 'micourses:instructor_adjusted_due_calculation' student_id=student.id content_id=thread_content.id course_code=course.code %}'>{{adjusted_due}}</a>{% else %}Due date: {{adjusted_due}}{% endif %}</p>
 
 <table id="attempt_table" class="basic">
 <thead><tr><th>Attempt</th><th>Date and time</th><th>Version</th><th>Score</th></tr></thead>
