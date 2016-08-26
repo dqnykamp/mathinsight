@@ -150,7 +150,9 @@ class AssessmentView(DetailView):
         context['show_gnererate_attempt_button'] = True
         if self.thread_content:
             context['show_generate_attempt_button'] = \
-                    not self.thread_content.access_only_open_attempts
+                    not self.thread_content.access_only_open_attempts or\
+                    self.current_role == INSTRUCTOR_ROLE or \
+                    self.current_role == DESIGNER_ROLE
 
         context['generate_course_attempt_link'] = False
         context['show_solution_link'] = False
@@ -607,6 +609,7 @@ class AssessmentView(DetailView):
         self.version = ''
         self.current_attempt=None
         self.question_list = []
+        self.current_role = None
 
         from micourses.render_assessments import get_question_list
         from micourses.models import AVAILABLE,  NOT_YET_AVAILABLE
@@ -624,7 +627,6 @@ class AssessmentView(DetailView):
             courseuser = None
 
         # check if enrolled in course
-        current_role=None
         if courseuser:
             try:
                 self.course_enrollment = self.assessment.course\
@@ -632,7 +634,8 @@ class AssessmentView(DetailView):
             except ObjectDoesNotExist:
                 pass
             else:
-                current_role = courseuser.get_current_role(course=self.assessment.course)
+                self.current_role = courseuser.get_current_role(
+                    course=self.assessment.course)
 
         
         ########################################################
@@ -668,7 +671,8 @@ class AssessmentView(DetailView):
         # instructor behavior with content attempt or seed specified
         #########################################
 
-        if current_role == INSTRUCTOR_ROLE or current_role == DESIGNER_ROLE:
+        if self.current_role == INSTRUCTOR_ROLE or \
+           self.current_role == DESIGNER_ROLE:
 
             content_attempt=None
             if content_attempt_id is not None:
@@ -787,7 +791,10 @@ class AssessmentView(DetailView):
             # if allow access to only open attempts,
             # display error message if a latest attempt is not valid and open,
             # or the time has expired on the attempt
-            if self.thread_content.access_only_open_attempts:
+            if self.thread_content.access_only_open_attempts and \
+               not (self.current_role == INSTRUCTOR_ROLE or \
+                    self.current_role == DESIGNER_ROLE):
+
                 if not latest_attempt.valid or latest_attempt.closed:
                     raise ValueError("No open attempt of assessment is available.")
                     
@@ -823,7 +830,9 @@ class AssessmentView(DetailView):
         # display error message if a current attempt does not exist,
         # the current attempt is not valid and open,
         # or the time has expired on the attempt
-        if self.thread_content.access_only_open_attempts:
+        if self.thread_content.access_only_open_attempts and \
+           not (self.current_role == INSTRUCTOR_ROLE or \
+                self.current_role == DESIGNER_ROLE):
             raise ValueError("No attempt of assessment is available.")
 
 
@@ -960,8 +969,8 @@ class AssessmentOverview(DetailView):
             
         return context
     
-class AssessmentInstructions(AssessmentOverview):
-    template_name='micourses/assessments/assessment_instructions.html'
+class AssessmentFrontMatter(AssessmentOverview):
+    template_name='micourses/assessments/assessment_front_matter.html'
 
 
 class GenerateNewAttempt(SingleObjectMixin, View):

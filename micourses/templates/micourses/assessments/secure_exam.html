@@ -61,8 +61,8 @@ Score: {% if current_attempt.valid %}<a href="{{record_url}}" id="overall_score"
 {% endblock %}
 
 
-{% block instructions %}
-{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+{% block front_matter %}
+{% if assessment.front_matter %}{{ assessment.render_front_matter }}{% endif %}
 {% endblock %}
 
 {% block assessment_main %}

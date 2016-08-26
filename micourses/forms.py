@@ -64,16 +64,19 @@ def thread_content_form_factory(course, the_content_type=None, update_options_co
             queryset = course.coursegradecategory_set.all(),
             required=False,
         )
-        browser_exam_keys = forms.CharField(
-            required=False,
-            widget=forms.Textarea(attrs={'rows':'1', 'cols': '65'})
-        )
-
 
         class Meta:
             model=ThreadContent
-            fields = ('content_type', 'object_id', 'substitute_title', 'comment', 'assigned', 'initial_due', 'final_due', 'time_limit', 'grade_category', 'points', 'individualize_by_student', 'assessment_attempt_aggregation', "question_attempt_aggregation", 'optional', 'available_before_assigned', 'record_scores', 'allow_solution_buttons', 'access_only_open_attempts', 'show_response_correctness', 'require_secured_browser', 'browser_exam_keys', 'restrict_to_ip_address')
+            fields = ('content_type', 'object_id', 'substitute_title', 'detailed_description', 'comment', 'assigned', 'initial_due', 'final_due', 'time_limit', 'grade_category', 'points', 'individualize_by_student', 'assessment_attempt_aggregation', "question_attempt_aggregation", 'optional', 'available_before_assigned', 'record_scores', 'allow_solution_buttons', 'access_only_open_attempts', 'show_response_correctness', 'require_secured_browser', 'browser_exam_keys', 'restrict_to_ip_address')
 
+            widgets = {
+                'substitute_title': forms.TextInput(attrs={'size': 60}),
+                'comment': forms.TextInput(attrs={'size': 60}),
+                'detailed_description': 
+                forms.Textarea(attrs={'rows':'10', 'cols': '80'}),
+                'browser_exam_keys': 
+                forms.Textarea(attrs={'rows':'1', 'cols': '65'}),
+            }
 
     return ThreadContentForm
 

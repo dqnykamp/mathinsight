@@ -9,7 +9,8 @@
 {% else %}{{ block.super }}{% endif %}
 {% endblock %}
 
-{% block coursebreadcrumb %}{% if course_thread_content %} ► <a href="{% url 'micourses:assessmentattempted' course_thread_content.id %}">{{ assessment_name }}</a> ► view{%endif%}{% endblock %}
+{% block coursebreadcrumb %}{% if thread_content %} ► <a href="{% url 'micourses:content_record' course_code=thread_content.course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a> ► view{% endif %}{% endblock %}
+
 
 {% block title %}{{ assessment_name }} - Math Insight{%endblock%}
 
@@ -118,8 +119,8 @@ setInterval(updateTimeLeft, 1000);
 {% endblock %}
 
 
-{% block instructions %}
-{% if assessment.instructions %}{{ assessment.render_instructions }}{% endif %}
+{% block front_matter %}
+{% if assessment.front_matter %}{{ assessment.render_front_matter }}{% endif %}
 {% endblock %}
 
 {% block assessment_main %}

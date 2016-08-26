@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% load mi_tags %}
 {% block nolinksection %}{% endblock %}
-{% block title %}Instructions of: {{assessment.name}} - Math Insight{%endblock%}
+{% block title %}Front matter of: {{assessment.name}} - Math Insight{%endblock%}
 
-{% block coursebreadcrumb %}{% if thread_content %} ► <a href="{% url 'micourses:content_record' course_code=thread_content.course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a> ► instructions{% endif %}{% endblock %}
+{% block coursebreadcrumb %}{% if thread_content %} ► <a href="{% url 'micourses:content_record' course_code=thread_content.course.code content_id=thread_content.id %}">{{thread_content.get_title}}</a> ► front matter{% endif %}{% endblock %}
 
 {% block content %}
 
-<h3>Instructions: {{assessment_name}}</h3>
+<h3>Front matter: {{assessment_name}}</h3>
 
 <div>
-{{ assessment.render_instructions }}
+{{ assessment.render_front_matter }}
 </div>
 
 <div>
-{{ assessment.render_instructions2 }}
+{{ assessment.render_front_matter2 }}
 </div>
 
 {% if assessment_link %}

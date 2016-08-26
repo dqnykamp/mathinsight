@@ -29,14 +29,14 @@
 {% block namesection %}{% endblock %}
 {% block scoretotals %}{% endblock %}
 
-{% block instructions %}
-<section class="exam_instructions">
-{{ assessment.render_instructions }}
+{% block front_matter %}
+<section class="exam_front_matter">
+{{ assessment.render_front_matter }}
 </section>
 <div class="yma-grid">
   <div class="yma-g50 yma-gl">
     <div class="yma-gbox-left">
-{{ assessment.render_instructions2 }}
+{{ assessment.render_front_matter2 }}
     </div>
   </div>
   <div class="yma-g50 yma-gr">

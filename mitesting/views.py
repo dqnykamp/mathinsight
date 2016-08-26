@@ -319,7 +319,6 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         if not content.record_scores:
             record_valid_response = False
-            each_answer_feedback = "Answer not recorded"
 
         from micourses.models import AVAILABLE,  NOT_YET_AVAILABLE, PAST_DUE
         
@@ -327,10 +326,6 @@ class GradeQuestionView(SingleObjectMixin, View):
 
         if assessment_availability != AVAILABLE:
             record_valid_response = False
-            if assessment_availability == PAST_DUE:
-                each_answer_feedback = "Assessment past due."
-            else:
-                each_answer_feedback = "Assessment not available."
 
         # if there is a time limit, check if time expired on assessment
         # allow a buffer of two seconds
@@ -364,7 +359,6 @@ class GradeQuestionView(SingleObjectMixin, View):
         if question_attempt.solution_viewed:
             solution_viewed = True
             record_valid_response = False
-            each_answer_feedback = "Solution already viewed."
         else:
             solution_viewed = False
 
@@ -393,8 +387,6 @@ class GradeQuestionView(SingleObjectMixin, View):
         # response were marked as invalid, since it won't count.
         if not (content_attempt.valid and question_attempt.valid):
             record_valid_response = False
-            if not each_answer_feedback:
-                each_answer_feedback = "Answer not recorded."
 
         answer_results['record_valid_response'] = record_valid_response
 

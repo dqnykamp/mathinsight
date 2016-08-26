@@ -229,11 +229,11 @@ class AssessmentAdmin(reversion.VersionAdmin):
                 }),
         ('Description', {
                 'classes': ('collapse',),
-                'fields': ('description', 'detailed_description', )
+                'fields': ('description', )
                 }),
-        ('Instructions', {
+        ('Front Matter', {
                 'classes': ('collapse',),
-                'fields': ('instructions', 'instructions2' )
+                'fields': ('front_matter', 'front_matter2' )
                 }),
         ('Notes', {
                 'classes': ('collapse',),

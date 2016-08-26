@@ -1376,12 +1376,12 @@ class ThreadContent(models.Model):
     substitute_title = models.CharField(max_length=200, blank=True, null=True)
 
     comment = models.CharField(max_length=200, blank=True, default="")
-    instructions = models.TextField(blank=True, null=True)
+    detailed_description = models.TextField(blank=True, null=True)
 
     assigned=models.DateTimeField(blank=True, null=True)
     initial_due=models.DateTimeField(blank=True, null=True)
     final_due=models.DateTimeField(blank=True, null=True)
-    time_limit=models.DurationField(blank=True, null=True)
+    time_limit=models.DurationField("time limit (hh:mm:ss)", blank=True, null=True)
 
     grade_category = models.ForeignKey(CourseGradeCategory, 
                                        blank=True, null=True)
@@ -2613,12 +2613,11 @@ class Assessment(models.Model):
     course = models.ForeignKey('micourses.Course')
     thread_content_set = GenericRelation('micourses.ThreadContent')
     description = models.CharField(max_length=400,blank=True, null=True)
-    detailed_description = models.TextField(blank=True, null=True)
     questions = models.ManyToManyField('mitesting.Question', 
                                        through='QuestionAssigned',
                                        blank=True)
-    instructions = models.TextField(blank=True, null=True)
-    instructions2 = models.TextField(blank=True, null=True)
+    front_matter = models.TextField(blank=True, null=True)
+    front_matter2 = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     groups_can_view = models.ManyToManyField(Group, blank=True, 
                             related_name = "assessments_can_view")
@@ -2668,8 +2667,8 @@ class Assessment(models.Model):
                     link_url += "&" + get_string
             elif get_string:
                 link_url += "?" + get_string
-        elif kwargs.get("instructions"):
-            link_url = self.get_instructions_url()
+        elif kwargs.get("front_matter"):
+            link_url = self.get_front_matter_url()
             if get_string:
                 link_url += "?" + get_string
         else:
@@ -2702,8 +2701,8 @@ class Assessment(models.Model):
         return('miassess:assessment_overview', (), {'course_code': self.course.code,
                                                     'assessment_code': self.code})
     @models.permalink
-    def get_instructions_url(self):
-        return('miassess:assessment_instructions', (), {'course_code': self.course.code,
+    def get_front_matter_url(self):
+        return('miassess:assessment_front_matter', (), {'course_code': self.course.code,
                                                     'assessment_code': self.code})
 
     @models.permalink
@@ -2873,27 +2872,27 @@ class Assessment(models.Model):
         return self.privacy_level_description(solution=True)
     privacy_level_solution_description.short_description = "Solution privacy"
 
-    def render_instructions(self):
-        if not self.instructions:
+    def render_front_matter(self):
+        if not self.front_matter:
             return ""
         template_string_base = "{% load question_tags mi_tags humanize %}"
-        template_string=template_string_base + self.instructions
+        template_string=template_string_base + self.front_matter
         try:
             t = Template(template_string)
             return mark_safe(t.render(Context({})))
         except TemplateSyntaxError as e:
-            return "Error in instructions template: %s" % e
+            return "Error in front_matter template: %s" % e
 
-    def render_instructions2(self):
-        if not self.instructions2:
+    def render_front_matter2(self):
+        if not self.front_matter2:
             return ""
         template_string_base = "{% load question_tags mi_tags humanize %}"
-        template_string=template_string_base + self.instructions2
+        template_string=template_string_base + self.front_matter2
         try:
             t = Template(template_string)
             return mark_safe(t.render(Context({})))
         except TemplateSyntaxError as e:
-            return "Error in instructions2 template: %s" % e
+            return "Error in front_matter2 template: %s" % e
 
 
     def question_sets(self):
