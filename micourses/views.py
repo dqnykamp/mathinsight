@@ -1284,14 +1284,13 @@ class QuestionResponseView(QuestionAttemptsView):
         import random
         rng=random.Random()
         from mitesting.render_questions import render_question
-        question_data = render_question(question_dict, 
-                                        rng=rng,
-                                        question_identifier=identifier,
-                                        user=self.request.user, show_help=False,
-                                        readonly=True, auto_submit=True, 
-                                        record_response=False,
-                                        allow_solution_buttons=False,
-                                        auxiliary_data=auxiliary_data)
+        question_data = render_question(
+            question_dict, rng=rng, question_identifier=identifier,
+            user=self.request.user, assessment=self.assessment,
+            show_help=False, readonly=True, auto_submit=True, 
+            record_response=False,
+            allow_solution_buttons=self.thread_content.allow_solution_buttons_in_gradebook,
+            auxiliary_data=auxiliary_data)
 
         context['question']=question
         context['question_data']= question_data

@@ -1398,6 +1398,7 @@ class ThreadContent(models.Model):
     record_scores = models.BooleanField(default=True)
 
     allow_solution_buttons=models.BooleanField(default=True)
+    allow_solution_buttons_in_gradebook=models.BooleanField(default=True)
     access_only_open_attempts = models.BooleanField(default=False)
 
     show_response_correctness = models.BooleanField(default=True)
