@@ -24,6 +24,7 @@ Score: <a href="{{record_url}}" id="overall_score">{{content_score}}</a>
 {% if assigned %}<div id="assessment_assigned">Assigned: {{assigned}}</div>{% endif %}
 {% if due %}<div id="assessment_due_individual">Due:  {{due}}</div>{% endif %}
 {% endif %}
+{% if time_limit %}<div id="time_limit">Time limit: {{time_limit}}</div>{% endif %}
 
 {% if assessment.assessmentbackgroundpage_set.all %}
 <h4>Background pages</h4>

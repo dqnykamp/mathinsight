@@ -333,13 +333,106 @@ def create_all_content_records(active=True):
         create_content_records(course)
 
 
-def http_response_simple_page_from_string(s):
+def http_response_simple_page_from_string(s, user=None, no_links=False):
     from django.template import Template, Context
     from django.http import HttpResponse
     from django.conf import settings
-    template_string = "{% extends 'base.html' %}{% block content %}"
+    template_string = "{% extends 'base.html' %}"
+    if no_links:
+        template_string += "{% block nositenav %}{% endblock %}{% block nopagenav %}{% endblock %}{% block nopagenavsl %}{% endblock %}{% block breadcrumbs %}{% endblock %}"
+        template_string += "{% block login %}{% if user.is_authenticated %}logged in as {{ user}}{%else%}<a href='{% url 'mi-login'%}?next={{request.path}}'>log in</a>{%endif%}{% endblock %}"
+
+    template_string += "{% block content %}"
     template_string += str(s)
     template_string += "{% endblock %}"
-    context = Context({'STATIC_URL': settings.STATIC_URL})
+    context = Context({'STATIC_URL': settings.STATIC_URL,
+                       'user': user, })
     return HttpResponse(Template(template_string).render(context))
+
+
+
+def duration_to_string(duration):
+    duration_string = ""
+    if duration.days:
+        duration_string = "%s day" % duration.days
+        if duration.days > 1:
+            duration_string += "s"
+    mins = int(duration.seconds/60)
+    secs = duration.seconds - mins*60
+    hrs = int(mins/60)
+    mins -= hrs*60
+    if hrs:
+        if duration_string:
+            duration_string += ", " 
+        duration_string += "%s hour" % hrs
+        if hrs > 1:
+            duration_string += "s"
+    if mins:
+        if duration_string:
+            duration_string += ", " 
+        duration_string += "%s minute" % mins
+        if mins > 1:
+            duration_string += "s"
+    if secs:
+        if duration_string:
+            duration_string += ", " 
+        duration_string += "%s second" % secs
+        if secs > 1:
+            duration_string += "s"
+
+    return duration_string
+
+
+def ip_address_matches_pattern(ip_address, pattern):
+    """"
+    Return true if ip_address matches one of the ip address patters in pattern.
+    Else return False
+    """
+
+    valid_ip_re = re.compile(
+        r'(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*)$')
+
+    # parse allowed ip addresses
+    ip_list = pattern.split(",")
+    for ip_string in ip_list:
+        match = re.match(valid_ip_re, ip_string.strip())
+
+        # if is a valid ip address string
+        if match:
+            # convert to regular expression pattern where *
+            # matches any sequence of up to 3 digits
+            p=re.compile(re.sub(r'\*', r'\d{1,3}',match.group()) +'$')
+            if re.match(p, ip_address):
+                return True
+
+    return False
+
+
+def verify_secure_browser(thread_content, request):
+
+    safe_exam_browser_verified = False
+
+    request_hash = request.META.get("HTTP_X_SAFEEXAMBROWSER_REQUESTHASH")
+    if not request_hash:
+        error_message="Assessment is viewable only through Safe Exam Browser.  Consult your instructor for proper configuration."
+        return {'verified': False, 'error_message': error_message}
+
+    else:
+        import hashlib
+        sha256=hashlib.sha256()
+        sha256.update(request.build_absolute_uri().encode())
+
+        for exam_key in thread_content.browser_exam_keys.splitlines():
+            s = sha256.copy()
+            s.update(exam_key.encode())
+
+            if s.hexdigest() == request_hash:
+                return {'verified': True}
+
+
+        error_message = "Safe Exam Browser does not appear to be properly configured for this assessment.  Consult your instructor for proper configuration."
+
+        return {'verified': False, 'error_message': error_message}
+
+
 

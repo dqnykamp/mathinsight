@@ -17,7 +17,7 @@ Group: {{enrollment.group}}</p>
 <tbody>{% for category in category_scores.categories %}
 <tr class="subheading"><th colspan=4 scope="row">{{category.category}}</th></tr>
 {% for assessment in category.scores %}
-<tr><td>{{ assessment.assessment.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'micourses:content_record' course_code=course.code content_id=assessment.content.id %}">{{assessment.score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
+<tr><td>{{ assessment.content.return_link}}</td><td class="righttext">{{assessment.points}}</td><td class="righttext"><a href="{% url 'micourses:content_record' course_code=course.code content_id=assessment.content.id %}">{{assessment.score|floatformat_or_dash:"1"}}</a></td><td class="righttext">{{assessment.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}
 <tr class="subtotal"><td>Subtotal for {{category.category}} {{ category.score_comment}}</td><td class="righttext">{{category.points|floatformat:"1"}}</td><td class="righttext">{{category.student_score|floatformat:"1"}}</td><td class="righttext">{{category.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}

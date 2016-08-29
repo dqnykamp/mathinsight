@@ -737,6 +737,17 @@ def login(request, *args, **kwargs):
         if not request.POST.get('remember_me', None):
             request.session.set_expiry(0)
     
+    # if next is the logout page, don't redirect
+    cancel_redirect=False
+    try:
+        next = request.POST["next"]
+    except KeyError:
+        pass
+    else:
+        if next == reverse('mi-logout'):
+            # set redirect_field_name to blank so next will be ignored
+            kwargs['redirect_field_name']=''
+
     return django.contrib.auth.views.login(request, *args, **kwargs)
 
 

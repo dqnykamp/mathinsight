@@ -102,10 +102,7 @@ class AssessmentView(DetailView):
         context['show_correctness'] = show_response_correctness
 
         # if require secured browser, turn off links
-        no_links = False
-        if self.thread_content and self.thread_content.require_secured_browser:
-            no_links=True
-        context['no_links'] = no_links
+        context['no_links'] = self.no_links
 
         allow_solution_buttons=True
         if self.thread_content:
@@ -120,7 +117,7 @@ class AssessmentView(DetailView):
             auxiliary_data = auxiliary_data,
             show_post_user_errors=show_post_user_errors,
             show_correctness=show_response_correctness,
-            no_links=no_links,
+            no_links=self.no_links,
             allow_solution_buttons=allow_solution_buttons
         )
 
@@ -189,11 +186,13 @@ class AssessmentView(DetailView):
                 = context['assessment_short_name']
 
         if self.course_enrollment and self.thread_content:
-            if self.course_enrollment.role == STUDENT_ROLE and self.current_attempt:
+            if self.course_enrollment and \
+               self.course_enrollment.role == STUDENT_ROLE and \
+               self.current_attempt:
                 due = self.thread_content.get_adjusted_due(
                     self.current_attempt.record)
 
-                if course.adjust_due_attendance and due:
+                if course.adjust_due_attendance and due and not self.no_links:
                     due_date_url = reverse(
                         'micourses:adjusted_due_calculation',
                         kwargs={'course_code': course.code,
@@ -210,42 +209,13 @@ class AssessmentView(DetailView):
                 context['due'] = self.thread_content.get_adjusted_due()
 
         # if time limit, set expire time as well as time limit
-        if self.course_enrollment and self.thread_content \
-           and self.thread_content.time_limit:
-            tl = self.thread_content.time_limit
-            time_limit_string = ""
-            if tl.days:
-                time_limit_string = "%s day" % tl.days
-                if tl.days > 1:
-                    time_limit_string += "s"
-            mins = int(tl.seconds/60)
-            secs = tl.seconds - mins*60
-            hrs = int(mins/60)
-            mins -= hrs*60
-            if hrs:
-                if time_limit_string:
-                    time_limit_string += ", " 
-                time_limit_string += "%s hour" % hrs
-                if hrs > 1:
-                    time_limit_string += "s"
-            if mins:
-                if time_limit_string:
-                    time_limit_string += ", " 
-                time_limit_string += "%s minute" % mins
-                if mins > 1:
-                    time_limit_string += "s"
-            if secs:
-                if time_limit_string:
-                    time_limit_string += ", " 
-                time_limit_string += "%s second" % secs
-                if secs > 1:
-                    time_limit_string += "s"
+        if self.thread_content and self.thread_content.time_limit:
+            from .utils import duration_to_string
+            context['time_limit'] = duration_to_string(
+                self.thread_content.time_limit)
 
-
-            context['time_limit'] = time_limit_string
-            
-
-            if self.course_enrollment.role == STUDENT_ROLE \
+            if self.course_enrollment and \
+               self.course_enrollment.role == STUDENT_ROLE \
                and self.current_attempt:
                 if not self.current_attempt.attempt_began:
                     context['expire_time'] = timezone.now()
@@ -404,34 +374,22 @@ class AssessmentView(DetailView):
         # then check if request contains correct 
         # Safe Exam Browser hash in the HTTP request
 
+        self.no_links=False
         if self.thread_content and self.thread_content.require_secured_browser \
            and not user_can_administer_assessment(request.user, 
                                                   course=self.object.course):
 
-            safe_exam_browser_verified = False
-            request_hash = request.META.get("HTTP_X_SAFEEXAMBROWSER_REQUESTHASH")
-            if not request_hash:
-                error_message="Assessment is viewable only through <a href='http://safeexambrowser.org'>Safe Exam Browser</a>.  Consult your instructor for proper configuration."
+            self.no_links=True
+
+            from .utils import verify_secure_browser
+            verify_results = verify_secure_browser(
+                thread_content=self.thread_content,
+                request=request)
+
+            if not verify_results['verified']:
                 return http_response_simple_page_from_string(
-                    "<p>%s</p>" % error_message)
-
-            else:
-                import hashlib
-                sha256=hashlib.sha256()
-                sha256.update(request.build_absolute_uri().encode())
-
-                for exam_key in self.thread_content.browser_exam_keys.splitlines():
-                    s = sha256.copy()
-                    s.update(exam_key.encode())
-                    
-                    if s.hexdigest() == request_hash:
-                        safe_exam_browser_verified = True
-                        break
-
-                if not safe_exam_browser_verified:
-                    error_message = "Safe Exam Browser does not appear to be properly configured for this assessment.  Consult your instructor for proper configuration."
-                    return http_response_simple_page_from_string(
-                        "<p>%s</p>" % error_message)
+                    "<p>%s</p>" % verify_results['error_message'],
+                    user=request.user, no_links=self.no_links)
 
 
         # if restrict to ip address is not just white space
@@ -446,29 +404,15 @@ class AssessmentView(DetailView):
 
             request_ip_address = request.META['REMOTE_ADDR']
 
-            valid_ip_re = re.compile(
-                r'(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*).(\d{1,3}|\*)$')
+            from .utils import ip_address_matches_pattern
+            if not ip_address_matches_pattern(
+                    ip_address = request_ip_address,
+                    pattern = self.thread_content.restrict_to_ip_address):
 
-            found_matching_ip = False
-
-            # parse allowed ip addresses
-            ip_list = self.thread_content.restrict_to_ip_address.split(",")
-            for ip_string in ip_list:
-                match = re.match(valid_ip_re, ip_string.strip())
-                
-                # if is a valid ip address string
-                if match:
-                    # convert to regular expression pattern where *
-                    # matches any sequence of up to 3 digits
-                    p=re.compile(re.sub(r'\*', r'\d{1,3}',match.group()) +'$')
-                    if re.match(p, request_ip_address):
-                        found_matching_ip = True
-                        break
-
-            if not found_matching_ip:
-                error_message="Assessment can not be accessed from this computer."
+                error_message="Assessment cannot be accessed from this computer."
                 return http_response_simple_page_from_string(
-                    "<p>%s</p>" % error_message)
+                    "<p>%s</p>" % error_message,
+                    user=request.user, no_links=self.no_links)
 
 
         try:
@@ -478,7 +422,9 @@ class AssessmentView(DetailView):
                 question_attempt_ids = request.GET.get('question_attempts'),
             )
         except ValueError as e:
-            return http_response_simple_page_from_string("<p>%s</p>" % e)
+            return http_response_simple_page_from_string(
+                "<p>%s</p>" % e,
+                user=request.user, no_links=self.no_links)
 
         # update selected course for course users
         # self.course_enrollment set by determine_version_attempt
@@ -939,8 +885,45 @@ class AssessmentOverview(DetailView):
                                 (due_date_url, due_string))
             context['due']=due
 
-        # user has permission to view the assessment, given privacy level
+
+            if thread_content.time_limit:
+                from .utils import duration_to_string
+                context['time_limit'] = duration_to_string(
+                    thread_content.time_limit)
+
+        show_assessment_link=False
         if self.assessment.user_can_view(self.user, solution=False):
+
+            show_assessment_link=True
+
+            if thread_content \
+               and not user_can_administer_assessment(
+                   self.user, course=self.object.course):
+
+
+                if thread_content.require_secured_browser:
+                    from .utils import verify_secure_browser
+                    verify_results = verify_secure_browser(
+                        thread_content=thread_content,
+                        request=self.request)
+
+                    if not verify_results['verified']:
+                        show_assessment_link=False
+                
+                if show_assessment_link and \
+                   thread_content.restrict_to_ip_address and \
+                   re.search(r'\S', thread_content.restrict_to_ip_address):
+
+                    request_ip_address = self.request.META['REMOTE_ADDR']
+
+                    from .utils import ip_address_matches_pattern
+                    if not ip_address_matches_pattern(
+                        ip_address = request_ip_address,
+                        pattern = thread_content.restrict_to_ip_address):
+
+                        show_assessment_link=False
+
+        if show_assessment_link:
             if self.number_in_thread > 1:
                 get_string = "n=%s" % self.number_in_thread
             else:
