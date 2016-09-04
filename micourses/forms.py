@@ -73,7 +73,7 @@ def thread_content_form_factory(course, the_content_type=None, update_options_co
                 'substitute_title': forms.TextInput(attrs={'size': 60}),
                 'comment': forms.TextInput(attrs={'size': 60}),
                 'detailed_description': 
-                forms.Textarea(attrs={'rows':'10', 'cols': '80'}),
+                forms.Textarea(attrs={'rows':'4', 'cols': '80'}),
                 'browser_exam_keys': 
                 forms.Textarea(attrs={'rows':'1', 'cols': '65'}),
             }

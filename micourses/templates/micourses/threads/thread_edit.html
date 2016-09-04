@@ -197,13 +197,15 @@
   }
 
 
-  function remove_content_form(form_type,id) {
+  function remove_content_form(form_type,id,scrollto) {
       var form_selector_inner = "#content_form_inner_" + form_type + "_" + id;
       $(form_selector_inner).html("");
 
       toggle_content_form(form_type, id);
       enable_commands(true);
-      
+      if(scrollto !== undefined) {
+	  $(scrollto).get(0).scrollIntoView();
+      }
   }
 
   function update_content_options(form_identifier, option, course_code) {
