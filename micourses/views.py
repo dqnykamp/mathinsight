@@ -1841,6 +1841,20 @@ class GradebookCSV(CourseBaseMixin, View):
         student_scores = self.course.student_scores_by_grade_category(
             section=section)
 
+        # if no student scores, 
+        # then test to see if section is an integer and 
+        # query with a zero-padded string
+        if not student_scores:
+            try:
+                section_int = int(section)
+            except ValueError:
+                pass
+            else:
+                # if it is an integer, try a padded section
+                section_padded = '0'+ str(section)
+                student_scores = self.course.student_scores_by_grade_category(
+                    section=section_padded)
+
         for score_dict in student_scores:
             ce = score_dict['enrollment']
             student_section = ce.section
