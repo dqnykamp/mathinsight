@@ -24,11 +24,8 @@
 {% endfor %}
 </ul>
 
-<h4>Due dates in the coming weeks</h4>
-<p>From {{begin_date}} through {{end_date}}
-(<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{previous_period_parameters}}">previous week</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{next_period_parameters}}">next week</a>) (<a href="{% url 'micourses:contentlist' course_code=course.code %}?exclude_completed">all</a>)
-</p>
-<p>Excluding items marked as completed (<a href="{% url 'micourses:contentlist' course_code=course.code %}?{{include_completed_parameters}}">include</a>)</p>
+<h4>Due dates this week</h4>
+<p>From {{begin_date}} through {{end_date}}, excluding items marked as completed <a href="{% url 'micourses:contentlist' course_code=course.code %}?{{this_week_parameters}}">(more options)</a></p>
 
 <table class="basic">
 <tr><th>Material</th><th>Comment</th><th>Assigned</th><th>Due</th><th>Score</th></tr>

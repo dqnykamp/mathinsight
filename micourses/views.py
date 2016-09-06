@@ -208,7 +208,7 @@ class CourseView(CourseBaseView):
 
 
         begin_date=self.beginning_of_week
-        end_date=self.end_of_week+timezone.timedelta(days=7)
+        end_date=self.end_of_week
         context['begin_date']=begin_date
         context['end_date']=end_date
 
@@ -217,30 +217,13 @@ class CourseView(CourseBaseView):
             (enrollment=self.enrollment, begin_date=begin_date, \
                  end_date=end_date)
 
-        date_parameters = "begin_date=%s&end_date=%s" %\
-                          (begin_date.strftime(self.datetime_format),
-                           end_date.strftime(self.datetime_format))
+        this_week_parameters = "begin_date=%s&end_date=%s" %\
+                               (begin_date.strftime(self.datetime_format),
+                                end_date.strftime(self.datetime_format))
 
-        context['include_completed_parameters'] = date_parameters
-
-        next_begin_date = end_date + timezone.timedelta(microseconds=1)
-        next_end_date = next_begin_date+timezone.timedelta(days=7) \
-                        - timezone.timedelta(microseconds=1)
-        next_period_parameters = "begin_date=%s&end_date=%s" \
-            % (next_begin_date.strftime(self.datetime_format),
-               next_end_date.strftime(self.datetime_format))
-
-        previous_end_date = begin_date - timezone.timedelta(microseconds=1)
-        previous_begin_date = previous_end_date-timezone.timedelta(days=7)\
-                              + timezone.timedelta(microseconds=1)
-        previous_period_parameters = "begin_date=%s&end_date=%s" \
-            % (previous_begin_date.strftime(self.datetime_format),
-               previous_end_date.strftime(self.datetime_format))
-        previous_period_parameters += "&exclude_completed"
-        next_period_parameters += "&exclude_completed"
-
-        context['previous_period_parameters']=previous_period_parameters
-        context['next_period_parameters']=next_period_parameters
+        this_week_parameters += "&exclude_completed"
+        context['this_week_parameters'] = this_week_parameters
+        
 
         context['next_items'] = self.course.next_items(self.courseuser, number=5)
 

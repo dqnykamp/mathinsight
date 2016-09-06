@@ -2466,7 +2466,7 @@ class ContentAttemptQuestionSet(models.Model):
             attempt_began = self.question_attempts.filter(valid=True)\
                                                   .earliest().attempt_began
         except ObjectDoesNotExist:
-            return (self.content_attempt.return_attempt_created_or_began(), None)
+            return (self.content_attempt.get_attempt_created_or_began(), None)
 
         if latest_activity-attempt_began >= timezone.timedelta(minutes=1):
             return (attempt_began, latest_activity)
