@@ -279,6 +279,7 @@ def parse_expr(s, global_dict=None, local_dict=None,
         '\u03B9': 'iota',
         '\u03BA': 'kappa',
         '\u03BB': 'lambda',
+        '\u00B5': 'mu', # unicode micro sign
         '\u03BC': 'mu',
         '\u03BD': 'nu',
         '\u03BE': 'xi',
@@ -308,7 +309,6 @@ def parse_expr(s, global_dict=None, local_dict=None,
     }    
     
     # include spaces around greek letters unless have _ before or after
-    
     for grk in greek_alphabet:
         # _ before and after, no spaces
         s = re.sub("_%s_" % grk, "_%s_" % greek_alphabet[grk], s)
