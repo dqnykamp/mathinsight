@@ -1586,6 +1586,9 @@ class ThreadContent(models.Model):
         new_content.section = section
         new_content.course = section.get_course()
         
+        if self.grade_category:
+            new_content.grade_category = new_content.course.coursegradecategory_set.get(grade_category=self.grade_category.grade_category)
+
         assessment_ct = ContentType.objects.get_for_model(Assessment)
         if self.content_type == assessment_ct:
             old_assessment = self.content_object
