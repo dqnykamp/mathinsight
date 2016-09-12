@@ -174,7 +174,9 @@ def create_new_assessment_attempt(student_record, begin_attempt=True):
             q_dict["question_attempt"] = qa
 
     return {'new_attempt': new_attempt, 'question_list': question_list,
-            'version': version, 'assessment_seed': seed,}
+            'version': version, 'assessment_seed': seed,
+            'valid_attempt': valid_attempt, 
+            'assessment_availability': assessment_availability }
             
 
 def ensure_open_assessment_attempt(student_record):
@@ -182,6 +184,21 @@ def ensure_open_assessment_attempt(student_record):
     # if not, create and return a new attempt
 
     thread_content = student_record.content
+
+    # check if the assessment is even available
+    assessment = thread_content.content_object
+
+    from micourses.models import AVAILABLE
+    assessment_available = \
+            thread_content.return_availability(student_record) == AVAILABLE
+
+    # treat assessment not set up for recording as not available
+    if not thread_content.record_scores:
+        assessment_available = False
+
+    result = {'closed_expired': False, 'found_valid': False, 
+                   'created_new': False, 'new_attempt_info': None,
+                   'assessment_available': assessment_available }
 
     # find latest attempt, if any
     latest_attempt = student_record.latest_attempt
@@ -195,20 +212,26 @@ def ensure_open_assessment_attempt(student_record):
                < timezone.now():
                 latest_attempt.closed = True
                 latest_attempt.save()
+            result['closed_expired'] = True
 
-        if latest_attempt.closed or not latest_attempt.valid:
-            latest_attempt = None
+        # if have a valid and open attempt, don't create anything
+        if latest_attempt.valid and not latest_attempt.closed:
+            result['found_valid'] = True
+            return result
 
-    # if didn't find open, valid attempt, create new attempt
+    # if assessment isn't available, don't bother trying to create attempt
+    if not assessment_available:
+        return result
+
+    # create new attempt
     # with attempt_began=None so that doesn't start until student views
-    if not latest_attempt:
-        new_attempt_info = create_new_assessment_attempt(
-            student_record=student_record, begin_attempt=False)
+    new_attempt_info = create_new_assessment_attempt(
+        student_record=student_record, begin_attempt=False)
+    
+    result['created_new'] = True
+    result['new_attempt_info'] = new_attempt_info
+    return result
 
-        return new_attempt_info['new_attempt']
-    else:
-        # if found an open, valid attempt, don't create anything
-        return None
 
 def ensure_open_assessment_attempt_all_students(thread_content):
     # for each student, create an open, valid, unexpired attempt 
@@ -216,10 +239,27 @@ def ensure_open_assessment_attempt_all_students(thread_content):
 
     from micourses.models import STUDENT_ROLE
 
+    n_created = 0
+    n_students = 0
+    result = {}
+    
+    
     for student_record in thread_content.contentrecord_set.filter(
             enrollment__role=STUDENT_ROLE):
-        ensure_open_assessment_attempt(student_record)
-    
+        result= ensure_open_assessment_attempt(student_record)
+        if result['created_new']:
+            n_created += 1
+        n_students +=1
+
+
+    if n_students:
+        assessment_available = result['assessment_available']
+    else:
+        assessmnet_available = None
+
+    return {'n_created': n_created, 'n_students': n_students,
+            'assessment_available': assessment_available}
+
 
 def close_latest_assessment_attempt(student_record):
     
@@ -246,6 +286,33 @@ def close_latest_assessment_attempt_all_students(thread_content):
     for student_record in thread_content.contentrecord_set.filter(
             enrollment__role=STUDENT_ROLE):
         close_latest_assessment_attempt(student_record)
+
+
+def get_open_attempt_info(content_record):
+    thread_content = content_record.content
+
+    open_attempt=False
+    latest_attempt_info_text = "No open attempt"
+    if thread_content.access_only_open_attempts:
+        latest_attempt = content_record.latest_attempt
+
+        if latest_attempt:
+            if not latest_attempt.closed and latest_attempt.valid:
+                if latest_attempt.time_expired():
+                    latest_attempt_info_text = "Attempt expired"
+                else:
+                    open_attempt=True
+                    if latest_attempt.attempt_began:
+                        from django.utils import dateformat
+                        began_string = dateformat.format(
+                            timezone.localtime(
+                                latest_attempt.attempt_began),
+                            'F j, Y, P')
+                        latest_attempt_info_text = "Open attempt, begun at %s" % began_string
+                    else:
+                        latest_attempt_info_text = "Open attempt, not begun"
+    return {'open_attempt': open_attempt,
+            'latest_attempt_info_text': latest_attempt_info_text }
 
 
 def json_dump_fields(model_instance):

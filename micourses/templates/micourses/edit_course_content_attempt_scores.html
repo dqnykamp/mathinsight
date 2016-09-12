@@ -45,6 +45,48 @@
       
   }
 
+
+  function open_attempt(enrollment_id) {
+      var action='open';
+      update_attempt(enrollment_id, action);
+  }
+  function close_attempt(enrollment_id) {
+      var action='close';
+      update_attempt(enrollment_id, action);
+  }
+  function update_attempt_score(enrollment_id) {
+      var action='update_score';
+      update_attempt(enrollment_id, action);
+  }
+
+  function update_attempt(enrollment_id, action) {
+      
+      var data = "action="+action+"&enrollment_id=" + enrollment_id
+
+      var thepost = jQuery.post("{% url 'micourses:open_close_attempt' course_code=course.code content_id=thread_content.id%}", data);
+      
+      thepost.done(process_update_attempt);
+  }
+  function process_update_attempt(data) {
+      var enrollment_id = data['enrollment_id'];
+      var overall_score = data['score'];
+      var latest_attempt_info_text = data['latest_attempt_info_text'];
+      var open_attempt = data['open_attempt'];
+      
+      $('#' + enrollment_id + '_overall_score').html(overall_score);
+      $('#open_attempt_status_' + enrollment_id).html(latest_attempt_info_text);
+      
+      if(open_attempt) {
+	  $('#open_button_' + enrollment_id).hide();
+	  $('#close_button_' + enrollment_id).show();
+      }
+      else {
+	  $('#open_button_' + enrollment_id).show();
+	  $('#close_button_' + enrollment_id).hide();
+
+      }
+      console.log(data);
+  }
 </script>
 
 {% endblock %}
@@ -54,13 +96,14 @@
 
 <h4>Change scores for course-wide attempts: {{thread_content.get_title}}</h4>
 
-{% if message %}<div>{{message}}</div>{% endif %}
+{% if message %}<div style="margin-top:20px"><span class="info">{{message}}</span></div>{% endif %}
 
 <p>Total points: {{thread_content.points}}</p>
 
 {% if thread_content.access_only_open_attempts %}
-<div><form action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="open_all"><input type="submit" value="Open attempt for all students" /></form> 
-<form action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="close_all"><input type="submit" value="Close attempt for all students" /></form></div>
+<div style="margin-top:10px"><form style="display: inline" action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="open"><input type="submit" value="Open attempt for all students" /></form> 
+<form style="display: inline" action="" method="post">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="close"><input type="submit" value="Close attempt for all students" /></form>
+</div>
 {% endif %}
 
 <p><a href="{% url 'micourses:course_content_record' course_code=course.code content_id=thread_content.id %}">Edit course content attempts</a></p>
@@ -77,9 +120,11 @@
   {% for enrollment_dict in enrollment_list %}{% with student=enrollment_dict.enrollment.student enrollment=enrollment_dict.enrollment %}
   <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}} (<a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">edit all attempts</a>)</td>
 {% if thread_content.access_only_open_attempts %}
-<td>{{enrollment_dict.latest_attempt_info_text}}  
-{% if enrollment_dict.open_attempt%}<form action="" method="post" style="display:inline">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="close_one"><input type="hidden" name="enrollment_id" value="{{enrollment_dict.enrollment.id}}" /><input type="submit" value="Close attempt"></form>
-{% else %}<form action="" method="post" style="display:inline">{% csrf_token %}<input type="hidden" name="open_attempt_action" value="open_one"><input type="hidden" name="enrollment_id" value="{{enrollment_dict.enrollment.id}}" /><input type="submit" value="Open new attempt"></form>{% endif %}</td>{% endif %}
+<td><span id="open_attempt_status_{{enrollment.id}}">{{enrollment_dict.latest_attempt_info_text}}</span>
+<input id="close_button_{{enrollment.id}}" type="button" value="Close Attempt" onclick="close_attempt({{enrollment.id}})"{% if not enrollment_dict.open_attempt%} style="display: none"{% endif %}>
+<input id="open_button_{{enrollment.id}}" type="button" value="Open Attempt" onclick="open_attempt({{enrollment.id}})"{% if enrollment_dict.open_attempt%} style="display: none"{% endif %}>
+<input type="button" value="Update" onclick="update_attempt_score({{enrollment.id}})">
+</td>{% endif %}
     {% for score_dict in enrollment_dict.attempts %}<td {% if score_dict.past_due %}class="past_due" {%endif%}><input type="text" id="score_{{enrollment.id}}_{{score_dict.base_attempt.id}}" value="{{score_dict.score}}" size=4>
 <div class="error" id="error_{{enrollment.id}}_{{score_dict.base_attempt.id}}"></div>
 <script>$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').change({enrollment_id: {{enrollment.id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, change_score);$('#score_{{enrollment.id}}_{{score_dict.base_attempt.id}}').keyup({next_enrollment_id: {{enrollment_dict.next_enrollment_id}}, base_attempt_id: {{score_dict.base_attempt.id}} }, move_down_on_enter);
