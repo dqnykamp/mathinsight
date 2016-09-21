@@ -180,6 +180,24 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr1,expr2)
         
 
+    def test_unicode_inf(self):
+        from sympy import oo
+        x=Symbol('x')
+        self.assertEqual(parse_expr('∞'), oo)
+        self.assertEqual(parse_expr('x∞'), x*oo)
+        
+    def test_micro_mu_unicode_equivalence(self):
+        micro='µ'
+        micro2='\u00B5'
+        mu='μ'
+        mu2='\u03BC'
+        self.assertEqual(micro,micro2)
+        self.assertEqual(mu,mu2)
+        self.assertEqual(parse_expr(micro), parse_expr(mu))
+        self.assertEqual(parse_expr(micro2), parse_expr(mu))
+        self.assertEqual(parse_expr(micro), parse_expr(mu2))
+
+
     def test_if_symbol(self):
         if_symbol = Symbol('if')
         x = Symbol('x')

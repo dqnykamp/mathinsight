@@ -1,6 +1,6 @@
 from sympy import sympify, default_sort_key
 from sympy.parsing.sympy_tokenize import NAME, OP, NUMBER
-from sympy import Tuple, Float, Rational, Integer, Pow, factorial, ImmutableMatrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy
+from sympy import Tuple, Float, Rational, Integer, Pow, factorial, ImmutableMatrix, Derivative, Expr, Add, Mul, S, E, pi, Symbol, Dummy, oo
 from sympy.core.function import UndefinedFunction
 from sympy.printing.latex import LatexPrinter as sympy_LatexPrinter
 from django.utils.safestring import mark_safe
@@ -265,6 +265,11 @@ def parse_expr(s, global_dict=None, local_dict=None,
     # replace unicode e with __E__, which is mapped to sympy E
     s=re.sub('\u212f', '__E__', s)
     new_local_dict['__E__'] = E
+
+    # replace unicode infinty with __oo__, which is mapped to sympy oo
+    # pad with spaces to make sure gets picked up by local_dict
+    s=re.sub('\u221e', ' __oo__ ', s)
+    new_local_dict['__oo__'] = oo
 
     # replace unicode greek letters
     greek_alphabet = {
