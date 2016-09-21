@@ -685,14 +685,23 @@ def grade_question_group(group_list, user_responses, answer_info, question,
         for answer_num in group_list:
             the_answer_info = answer_info[answer_num]
 
-            answer_array[i].append(\
-                compare_response_with_answer_code \
-                (user_response=user_response, the_answer_info=the_answer_info,
-                 question=question, expr_context=expr_context,
-                 local_dict=local_dict,
-                 show_correctness=show_correctness)
-            )
-    
+            try:
+                answer_array[i].append(\
+                    compare_response_with_answer_code \
+                    (user_response=user_response, 
+                     the_answer_info=the_answer_info,
+                     question=question, expr_context=expr_context,
+                     local_dict=local_dict,
+                     show_correctness=show_correctness)
+                )
+            except Exception as e:
+                logger.error("Unexpected error when comparing answer:\n%s: %s" \
+                             % (e.__class__.__name__, e))
+                answer_array[i].append({
+                    'percent_correct': 0, 'answer_correct': False,
+                    'received_response': False,
+                    'answer_feedback': 'Sorry.  Unable to understand the answer.  Possibly, a server error occured.'})
+
 
     correct_matrix = zeros(n_answers, n_answers)
     for response_num in range(n_answers):
@@ -837,13 +846,23 @@ def grade_question(question, question_identifier, answer_info,
         total_points += answer_points
         
         if answer_group is None:
-            answer_results['answers'][answer_identifier] = \
-                compare_response_with_answer_code \
-                (user_response=user_response, the_answer_info=the_answer_info,
-                 question=question, expr_context=expr_context,
-                 local_dict=user_dict,
-                 show_correctness=show_correctness)
+            try:
+                answer_results['answers'][answer_identifier] = \
+                    compare_response_with_answer_code \
+                    (user_response=user_response,
+                     the_answer_info=the_answer_info,
+                     question=question, expr_context=expr_context,
+                     local_dict=user_dict,
+                     show_correctness=show_correctness)
 
+            except Exception as e:
+                logger.error("Unexpected error when comparing answer:\n%s: %s" \
+                             % (e.__class__.__name__, e))
+                answer_results['answers'][answer_identifier] = {
+                    'percent_correct': 0, 'answer_correct': False,
+                    'received_response': False,
+                    'answer_feedback': 'Sorry.  Unable to understand the answer.  Possibly, a server error occured.'}
+                
             points_achieved += answer_points*\
                 answer_results['answers'][answer_identifier]['percent_correct']
             
