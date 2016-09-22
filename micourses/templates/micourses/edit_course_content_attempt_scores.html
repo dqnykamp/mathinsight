@@ -13,6 +13,13 @@
   tr:hover td.past_due {
       background: red;
   }
+  .withdrawn {
+      text-decoration: line-through;
+      color: gray;
+  }
+  .withdrawn2 {
+      text-decoration: line-through;
+  }
 </style>
 
 <script>
@@ -118,7 +125,7 @@
 </tr></thead>
 <tbody>
   {% for enrollment_dict in enrollment_list %}{% with student=enrollment_dict.enrollment.student enrollment=enrollment_dict.enrollment %}
-  <tr><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}} (<a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">edit all attempts</a>)</td>
+  <tr{% if enrollment.withdrew %} class="withdrawn"{% endif %}><td style="white-space: nowrap; padding-right: 1em;">{{student.get_full_name}} (<a href="{% url 'micourses:content_record_instructor' course_code=course.code content_id=thread_content.id student_id=student.id %}">edit all attempts</a>)</td>
 {% if thread_content.access_only_open_attempts %}
 <td><span id="open_attempt_status_{{enrollment.id}}">{{enrollment_dict.latest_attempt_info_text}}</span>
 <input id="close_button_{{enrollment.id}}" type="button" value="Close Attempt" onclick="close_attempt({{enrollment.id}})"{% if not enrollment_dict.open_attempt%} style="display: none"{% endif %}>
