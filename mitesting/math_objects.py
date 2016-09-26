@@ -445,6 +445,15 @@ class math_object(object):
                 (expression_normalize, new_expr_normalize, \
                  tuple_is_unordered=tuple_is_unordered, \
                  partial_matches = match_partial_on_compare)
+            # if not exactly equal, check without normalizing
+            # just in case normalizing made answers diverge
+            if not expressions_equal==1:
+                equal_if_not_normalize = check_equality \
+                    (expression, new_expr, \
+                     tuple_is_unordered=tuple_is_unordered, \
+                     partial_matches = match_partial_on_compare)
+                expressions_equal = max(expressions_equal,
+                                        equal_if_not_normalize)
         else:
             expressions_equal = check_equality \
                 (expression, new_expr, \
