@@ -198,6 +198,16 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(parse_expr(micro), parse_expr(mu2))
 
 
+    def test_symbol_mapping(self):
+        heart = '♡'
+        self.assertEqual(parse_expr(heart), parse_expr("heart"))
+        self.assertEqual(parse_expr(heart, split_symbols=True),
+                         parse_expr("heart"))
+        self.assertNotEqual(parse_expr(heart, split_symbols=True),
+                            parse_expr("heart",split_symbols=True))
+        self.assertEqual(parse_expr(heart, assume_real_variables=True),
+                         parse_expr("heart", assume_real_variables=True))
+
     def test_if_symbol(self):
         if_symbol = Symbol('if')
         x = Symbol('x')

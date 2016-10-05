@@ -271,6 +271,40 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=re.sub('\u221e', ' __oo__ ', s)
     new_local_dict['__oo__'] = oo
 
+
+    # replace unicode suits, triangles, circles with names surrounded by spaces
+    # sympy latex printer will print them as latex symbols
+    symbol_mapping = {
+        '\u2660': 'spade',
+        '\u2661': 'heart',
+        '\u2662': 'diamond',
+        '\u2663': 'club',
+        '\u2605': 'bigstar',
+        '\u25ef': 'bigcirc',
+        '\u25ca': 'lozenge',
+        '\u25b3': 'bigtriangleup',
+        '\u25bd': 'bigtriangledown',
+        '\u29eb': 'blacklozenge',
+        '\u25a0': 'blacksquare',
+        '\u25b2': 'blacktriangle',
+        '\u25bc': 'blacktriangledown',
+        '\u25c0': 'blacktriangleleft',
+        '\u25b6': 'blacktriangleright',
+        '\u25a1': 'Box',
+        '\u2218': 'circ',
+        '\u22c6': 'star',
+    }
+
+    # include spaces around symbols
+    for sym in symbol_mapping:
+        sym_text = symbol_mapping[sym]
+        s = re.sub(sym, " __%s__ " % sym_text, s)
+        if assume_real_variables:
+            new_local_dict['__%s__' % sym_text] = Symbol(sym_text, real=True)
+        else:
+            new_local_dict['__%s__' % sym_text] = Symbol(sym_text)
+
+
     # replace unicode greek letters
     greek_alphabet = {
         '\u03B1': 'alpha',
