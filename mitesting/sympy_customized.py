@@ -395,13 +395,14 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=replace_bar_boolean_equals_in(s, evaluate=evaluate)
 
     # map those replace booleans and equals to sympy functions
-    from sympy import Eq, Ne, Abs
+    from sympy import Eq, Ne, Abs, Not
     new_global_dict['__Eq__'] = Eq
     new_global_dict['__Ne__'] = Ne
     new_global_dict['__And__'] = And
     new_global_dict['__Or__'] = Or
     new_global_dict['__Interval__'] = Interval
     new_global_dict['__Abs__'] = Abs
+    new_global_dict['__Not__'] = Not
 
     from mitesting.customized_commands import Gts, Lts, \
         conditional_probability_expression

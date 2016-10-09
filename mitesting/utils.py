@@ -665,12 +665,15 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
     7. If evaluate=False, replace == with __python_Eq__(lhs,rhs)
     and !== with __python__Ne__(lhs,rhs)
     
-    8. Replace expressions such as a <= b < c < d
+    8. Replace not with __Not__(rhs)
+    If evaluate=FAlse, add evaluate=False
+
+    9. Replace expressions such as a <= b < c < d
     with __Lts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
 
-    9. Replace expressions such as a >= b > c > d
+    10. Replace expressions such as a >= b > c > d
     with __Gts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
@@ -685,7 +688,7 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
     mapped to python_equal_uneval and python_not_equal_uneval when parsing
     
     To find lhs and rhs, looks for unmatched parentheses 
-    or the presence of certain characters no in parentheses
+    or the presence of certain characters not in parentheses
 
     Repeats the procedure until can't find more =, !=, &, |, or in
     or until lhs or rhs is blank
@@ -693,7 +696,9 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
     Step 1 is a separate loop, as it is in different form.
     Call replace_absolute_value
 
-    Step 9 is a separate loop, as it involves multiple arguments.
+    Step 8 is a spearate loop, as has only one argument
+
+    Step 9-10 are separate loops, as they involve multiple arguments.
 
 
     """
@@ -871,6 +876,53 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
 
 
 
+    ##################################
+    # replace not -- just one argument
+    ##################################
+
+    pattern = re.compile(r'\bnot\b')
+
+    len_op=3
+    if evaluate:
+        new_op='__Not__(%s)'
+    else:
+        new_op='__Not__(%s, evaluate===False)'
+
+    # characters that signal end of expression if not in ()
+    break_chars=",&|" 
+
+
+    while True:
+        mo= pattern.search(s)
+        if not mo:
+            break
+        ind = mo.start(0)
+
+        n_openpar=0
+        end_pos=len(s)
+        for (j,c) in enumerate(s[ind+len_op:]):
+            if c=="(" or c=="{" or c=="[":
+                n_openpar+= 1
+            elif c==")" or c=="}" or c=="]":
+                n_openpar-=1
+                if n_openpar==-1:
+                    end_pos=ind+j+len_op
+                    break
+            elif c in break_chars and n_openpar==0:
+                end_pos=ind+j+len_op
+                break
+
+        rhs = s[ind+len_op:end_pos]
+        rhs = rhs.strip()
+
+        # stop if rhs is just spaces
+        if rhs=="":
+            break
+        else:
+            new_command_string = new_op % (rhs)
+            s = s[:ind] + new_command_string + s[end_pos:]
+
+
     #####################
     # replace Gts and Lts
     #####################
@@ -955,7 +1007,6 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
 
                 ind = end_pos
                 
-
 
             # stop if an argument is just spaces
             if "" in args:

@@ -413,6 +413,17 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(latex(parse_expr("a and b")), r'a ~\text{and}~ b')
         self.assertEqual(latex(parse_expr("a or b")), r'a ~\text{or}~ b')
 
+
+        from mitesting.sympy_customized import And
+        from sympy import Not
+        x=Symbol('x')
+        
+        self.assertEqual(parse_expr("x < 0 and not x < -1"),
+                         And(x<0, Not(x<-1)))
+        self.assertEqual(parse_expr("not x > 2"), x <= 2)
+        self.assertEqual(parse_expr("not x > 2", evaluate=False),
+                         Not(x > 2, evaluate=False))
+
     def test_parse_and_process(self):
         x=Symbol('x')
         y=Symbol('y')
