@@ -2539,9 +2539,12 @@ def render_applet_text(context, applet_text, applet, applet_id_user=None,
     context['_the_applet_identifier'] = applet_identifier
     context['_the_hidden_section_identifier']=hidden_section_identifier
 
-    rendered_text = template.Template(
-        "{% load mi_tags question_tags %}"+applet_text.text)\
-                                   .render(context)
+    try:
+        rendered_text = template.Template(
+            "{% load mi_tags question_tags %}"+applet_text.text)\
+                                .render(context)
+    except template.TemplateSyntaxError as e:
+        rendered_text = "<p>Error in applet text template: %s</p>" % e
     context.pop()
 
     if hidden is None:
