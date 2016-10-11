@@ -19,6 +19,7 @@ def return_localized_commands():
          'eigenvects_tuple': eigenvects_tuple,
          'round': round_expression,
          'smallest_factor': smallest_factor,
+         'find_all_roots_numerically': find_all_roots_numerically,
          'e': E,
          'i': I,
          'Re': re,
@@ -464,6 +465,66 @@ class len_custom(BooleanFunction):
             return len(arg)
         except TypeError:
             return 0
+
+
+class find_all_roots_numerically(Function):
+    """
+    Attempt to find all roots of a function f between a and b
+    by marching along at intervals of width 0.1, 
+    looking for a change in sign.
+
+    Given this crude stepping algorithm 
+    and the large overhead of a parsed_function, 
+    the algorithm will be slow if eps is too small compared to b-a.
+
+    """
+    @classmethod
+    def eval(cls, f, a, b, eps=0.1):
+        from scipy.optimize import brentq
+        
+        def rootsearch(f,a,b,dx):
+            x1 = a
+            try:
+                f1 = f(a).evalf()
+            except:
+                return None, None
+            x2_raw = a + dx
+            x2 = min(x2_raw,b)
+            try:
+                f2 = f(x2).evalf()
+            except:
+                return None, None
+            while f1*f2 > 0.0:
+                if x2_raw >= b:
+                    return None,None
+                x1 = x2; f1 = f2
+                x2_raw = x1 + dx
+                x2 = min(x2_raw, b)
+                try:
+                    f2 = f(x2).evalf()
+                except:
+                    return None, None
+            return x1,x2
+
+
+        a=a.evalf()
+        b=b.evalf()
+
+        if a >= b:
+            raise ValueError("Endpoints must be increasing. [%s, %s]" % (a,b))
+        if eps <= 0:
+            raise ValueError("Step size must be positive.  %s" % eps)
+
+        roots=[]
+        for i in range(1000):
+            x1, x2 = rootsearch(f,a,b,eps)
+            if x1 is None:
+                break
+            a=x2
+            roots.append(brentq(f,x1,x2))
+        
+        return TupleNoParen(*roots)
+
 
 """
 Turn off automatic evaluation of floats in the following sympy functions.
