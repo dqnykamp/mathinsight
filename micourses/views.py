@@ -1821,7 +1821,7 @@ class GradebookCSV(CourseBaseMixin, View):
         writer = csv.writer(response)
 
         # write first header row with assessment categories
-        row=["","",""]
+        row=["","","",""]
         for cgc in included_categories:
             row.append(cgc.grade_category.name)
             row.extend([""]*(len(assessment_names_in_category[cgc.id])-1))
@@ -1832,7 +1832,7 @@ class GradebookCSV(CourseBaseMixin, View):
         writer.writerow(row)
 
 
-        row=["Student", "ID", "Section"]
+        row=["Student", "ID", "Section", "Group"]
         for cgc in included_categories:
             row.extend(assessment_names_in_category[cgc.id])
             row.append(cgc.grade_category.name)
@@ -1863,7 +1863,7 @@ class GradebookCSV(CourseBaseMixin, View):
             ce = score_dict['enrollment']
             student_section = ce.section
             student = ce.student
-            row=[str(student), student.userid, student_section]
+            row=[str(student), student.userid, student_section, ce.group]
             for student_category in score_dict['categories']:
                 if student_category['cgc'] not in included_categories:
                     continue
@@ -1887,7 +1887,7 @@ class GradebookCSV(CourseBaseMixin, View):
 
         comments=[]
 
-        row=["Possible points","",""]
+        row=["Possible points","","",""]
         for cgc in included_categories:
             cgc_dict = grade_category_dicts[cgc.id]
             row.extend(assessment_points_in_category[cgc.id])
