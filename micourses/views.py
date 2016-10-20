@@ -463,8 +463,10 @@ class ContentRecordView(CourseBaseView):
                                 'attempt_number': attempt_number,
                                 'student_id': self.student.id})
                     attempt_dict['formatted_attempt_number'] = mark_safe \
-                    ('<a href="%s" id="attempt_%s_link">%s (details)</a>' % \
+                    ('<a href="%s" id="attempt_%s_link">%s (details)</a><br/><a href="%s?latest_attempts" id="attempt_%s_link2">(with latest attempts)</a>' % \
                          (attempt_url, attempt_number,
+                          attempt_dict['formatted_attempt_number'],
+                          attempt_url, 
                           attempt_dict['formatted_attempt_number']))
                     
                 else:
@@ -876,6 +878,8 @@ class ContentAttemptView(ContentRecordView):
 
         self.assessment = self.thread_content.content_object
 
+        self.show_latest_question_attempts = "latest_attempts" in request.GET
+
 
     def get_context_data(self, **kwargs):
         context = super(ContentAttemptView, self).get_context_data(**kwargs)
@@ -913,6 +917,13 @@ class ContentAttemptView(ContentRecordView):
         question_list = get_question_list_from_attempt(
             self.assessment, self.content_attempt)
 
+        context['show_latest_question_attempts']= \
+                    self.show_latest_question_attempts
+
+        from midocs.functions import return_new_auxiliary_data
+        auxiliary_data =  return_new_auxiliary_data()
+        context['_auxiliary_data_'] = auxiliary_data
+        
         for q_dict in question_list:
             ca_question_set=q_dict['ca_question_set']
             question_number =ca_question_set.question_number
@@ -955,6 +966,14 @@ class ContentAttemptView(ContentRecordView):
                                 'student_id': self.student.id,
                                 'question_number': ca_question_set\
                                 .question_number})
+
+                    if self.show_latest_question_attempts:
+                        from .utils import get_latest_question_data
+                        q_dict['latest_question_data'] = \
+                            get_latest_question_data(
+                                ca_question_set=ca_question_set,
+                                auxiliary_data=auxiliary_data)
+                    
 
                 else:
                     q_dict['attempt_url'] = reverse(
@@ -1008,7 +1027,11 @@ class ContentAttemptView(ContentRecordView):
 
     def get_template_names(self):
         if self.instructor_view:
-            return ['micourses/content_attempt_instructor.html',]
+            if self.show_latest_question_attempts:
+                return ['micourses/content_attempt_instructor_with_latest_attempts.html',]
+            else:
+                return ['micourses/content_attempt_instructor.html',]
+                
         else:
             return ['micourses/content_attempt_student.html',]
 
@@ -1446,7 +1469,6 @@ class OpenCloseAttempt(CourseBaseMixin, View):
             return JsonResponse({})
 
         self.get_additional_objects(request, *args, **kwargs)
-        print(request.POST)
 
         try:
             action = request.POST['action']

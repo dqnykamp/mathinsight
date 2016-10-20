@@ -503,3 +503,47 @@ def verify_secure_browser(thread_content, request):
 
 
 
+def get_latest_question_data(ca_question_set, auxiliary_data):
+
+    content_record = ca_question_set.content_attempt.record
+    
+    # find latest valid question attempt
+    question_attempt = ca_question_set.question_attempts.filter(valid=True)\
+                                                       .latest()
+    if not question_attempt:
+        return {}
+
+    question = question_attempt.question
+    
+    # find latest valid response
+    response = question_attempt.responses.filter(valid=True).latest()
+
+    if not response:
+        return {}
+    
+    # use lq in identifier since coming from
+    # latest question
+    # add ca_question_set number
+    identifier = "lq%s" % ca_question_set.question_set
+
+    question_dict = {
+        'question': question,
+        'question_set': ca_question_set.question_set,
+        'seed': question_attempt.seed,
+        'question_attempt':question_attempt,
+        'response': response
+    }
+
+    import random
+    rng=random.Random()
+    from mitesting.render_questions import render_question
+    question_data = render_question(
+        question_dict, rng=rng, question_identifier=identifier,
+        user=content_record.enrollment.student.user,
+        assessment=content_record.content.content_object,
+        show_help=False, readonly=True, auto_submit=True, 
+        record_response=False,
+        allow_solution_buttons=content_record.content.allow_solution_buttons_in_gradebook,
+        auxiliary_data=auxiliary_data)
+
+    return question_data
