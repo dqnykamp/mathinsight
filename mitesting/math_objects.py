@@ -670,7 +670,8 @@ def try_normalize_expr(expr):
             except TypeError:
                 pass
         try:
-            w=w.ratsimp().expand()
+            if w.is_commutative and not w.is_Relational:
+                w=w.ratsimp().expand()
         except (AttributeError,PolynomialError,UnicodeEncodeError, TypeError):
             pass
         return w

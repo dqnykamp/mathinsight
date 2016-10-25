@@ -1230,6 +1230,14 @@ class MathObjectTests(SimpleTestCase):
         expr = iif(x>1,1,0)
         self.assertEqual(expr,try_normalize_expr(expr))
 
+    def test_normalize_dont_ratsimp_relationals(self):
+        x = Symbol('x')
+        from sympy import Eq
+        expr = Eq(x+1,0)
+        #self.assertEqual(expr,try_normalize_expr(expr))
+        expr = x*expr
+        self.assertEqual(expr,try_normalize_expr(expr))
+
 
     def test_derivative_notations(self):
         from sympy import Derivative, Function
