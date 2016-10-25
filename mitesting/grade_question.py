@@ -153,6 +153,7 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         round_level_required = None
         round_level_used = None
         round_absolute = None
+        n_sign_flips = 0
         near_match_percent_correct = 0
         near_match_feedback=""
         answer_option_used = None
@@ -211,6 +212,13 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
             if answer_option.round_partial_credit_percent:
                 round_partial_credit_percent = \
                         answer_option.round_partial_credit_percent
+
+            # determine if have partial credit for sign flips
+            sign_flip_partial_credit = answer_option.sign_flip_partial_credit
+            sign_flip_partial_credit_percent=0
+            if answer_option.sign_flip_partial_credit_percent:
+                sign_flip_partial_credit_percent = \
+                        answer_option.sign_flip_partial_credit_percent
 
             user_response_parsed=None
             
@@ -288,6 +296,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 round_absolute=answer_option.round_absolute,
                 round_partial_credit_digits=round_partial_credit_digits,
                 round_partial_credit_percent=round_partial_credit_percent,
+                sign_flip_partial_credit=sign_flip_partial_credit,
+                sign_flip_partial_credit_percent=
+                sign_flip_partial_credit_percent,
                 normalize_on_compare=answer_option.normalize_on_compare,
                 match_partial_on_compare= 
                 answer_option.match_partial_on_compare,
@@ -367,7 +378,8 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                                   'fraction_equal_on_normalize': 0,
                                   'round_level_used': 0,
                                   'round_level_required': 0,
-                                  'round_absolute': False }
+                                  'round_absolute': False,
+                                  'n_sign_flips': 0,}
             else:
                 answer_options=[valid_answer,]
                 answer_options.extend(valid_alternates)
@@ -416,9 +428,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 round_level_required = answer_results['round_level_required']
                 round_level_used = answer_results['round_level_used']
                 round_absolute = answer_results['round_absolute']
-
-            elif answer_results['fraction_equal_on_normalize'] > 0 \
-                 and this_near_match_percent_correct  > \
+                n_sign_flips = answer_results['n_sign_flips']
+                
+            if this_near_match_percent_correct  > \
                  max(near_match_percent_correct,percent_correct):
                 near_match_percent_correct =\
                     this_near_match_percent_correct
@@ -471,6 +483,20 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 else:
                     feedback += " Answer matched to %s significant digits but %s significant digits are required." % (round_level_used, round_level_required)
 
+
+            # record any feedback about sign flips
+
+            if near_match_percent_correct != 100:
+                # However, don't show sign_flip message if the answer
+                # is mathematically equivalent to a 100% correct answer.
+                # (In this case, there are probably an even number of
+                # sign flips recorded, which effectively normalized the answer)
+                if n_sign_flips == 1:
+                    feedback += " Answer appears to have a sign error."
+                elif n_sign_flips > 1:
+                    feedback += " Answer appears to have around %s sign errors." % n_sign_flips
+
+                    
             if percent_correct < 100 and \
                near_match_percent_correct > percent_correct:
                 feedback += near_match_feedback

@@ -1,6 +1,7 @@
 
 from mitesting.sympy_customized import parse_and_process, bottom_up, customized_sort_key, SymbolCallable, TupleNoParen
-from sympy import Tuple, Function, sympify, Symbol
+from sympy import Tuple, Function, sympify, Symbol, ImmutableMatrix
+
 from sympy.parsing.sympy_tokenize import TokenError
 import six
 import re
@@ -543,7 +544,6 @@ def return_matrix_expression(expression, local_dict=None, evaluate_level=None,
     new_local_dict = {}
     if local_dict:
         new_local_dict.update(local_dict)
-    from sympy import ImmutableMatrix
     new_local_dict['ImmutableMatrix'] = ImmutableMatrix
 
     expr= parse_and_process(expr_matrix, local_dict=new_local_dict,
@@ -1380,7 +1380,6 @@ def evaluate_expression(the_expr, rng,
             
             from mitesting.customized_commands import \
                 MatrixFromTuple, MatrixAsVector
-            from sympy import ImmutableMatrix
 
             if isinstance(math_expr, Tuple) and \
                not isinstance(math_expr, TupleNoParen):
@@ -1815,4 +1814,175 @@ def round_and_int(number, ndigits=0):
         number=int(number)
 
     return number
+
+
+def find_equality_with_sign_errors(expr_ref, expr):
+    return find_equality_with_manipulations(expr_ref, expr, flip_sign)
+
+
+def flip_sign(x):
+    return -x
+
+def find_equality_with_manipulations(expr_ref, expr, F):
+
+    """
+    Attempts to determine that expr would be equal to expr_ref
+    after applications of the function F on parts of the
+    expression tree of expr.
+
+    The algorithm starts at the top of the expression tree and 
+    recursively works its way down.
+
+    If a particular branch of an expression tree of expr cannot be
+    matched to a corresponding branch of expr_ref after application
+    of F to the branch or recursively applying this alogrithm to each leaf,
+    then the attempt to find equality is deemed to have failed.
+
+    The total number of applications of F to achieve equality is tracked.
+    
+    returns:
+    - success: if found altered version of expr that matches expr_ref
+    - num_applications: number of application of F applied
+    """
+
+    # straight equality
+    if expr==expr_ref:
+        return {'success': True, 'num_applications': 0}
+
+    # check for equality after single application of F
+    try:
+        F_expr=F(expr)
+    except:
+        F_expr=expr
+        pass
+    else:
+        if F_expr==expr_ref:
+            return {'success': True, 'num_applications': 1}
+
+    # if classes of expressions don't match, report failure unless
+    # application of caused the classes to match, in which case
+    # we continue with the expression with F applied
+    num_applications=0
+    if expr.__class__ != expr_ref.__class__:
+        if F_expr.__class__ == expr_ref.__class__:
+            expr=F_expr
+            num_applications=1
+        else:
+            return {'success': False, 'num_applications': 0}
+
+    # for lists or tuples, number of elements must agree
+    # and elements must be made to match in order
+    # (Any logic for partial matches or unordered matches must
+    # be implemented outside this function.)
+    if isinstance(expr, list) or isinstance(expr,tuple) \
+       or isinstance(expr, Tuple):
+
+        if len(expr) != len(expr_ref):
+            return {'success': False, 'num_applications': num_applications}
+        
+        for i in range(len(expr)):
+            results=find_equality_with_manipulations(expr_ref[i], expr[i], F)
+            num_applications += results["num_applications"]
+            if not results["success"]:
+                return {'success': False, 'num_applications': num_applications }
+        return {'success': True, 'num_applications': num_applications }
+
+    # for matrices, shape must agree and all components must be made to match
+    if isinstance(expr,ImmutableMatrix):
+
+        if expr.rows != expr_ref.rows or expr.cols != expr_ref.cols:
+            return {'success': False, 'num_applications': num_applications}
+        
+        for i in range(len(expr)):
+            results=find_equality_with_manipulations(expr_ref[i], expr[i], F)
+            num_applications += results["num_applications"]
+            if not results["success"]:
+                return {'success': False, 'num_applications': num_applications }
+        return {'success': True, 'num_applications': num_applications }
+
+
+    # Any further manipulations are applied only if expressions
+    # are in standard sympy for with an args attribute.
+    # Since to make it this far, the classes must match
+    # (meaning the func attribute must match)
+    # finding equality is just finding equality for the arguments
+    try:
+        expr_args = expr.args
+        expr_ref_args = expr_ref.args
+    except AttributeError:
+        return {'success': False, 'num_applications': num_applications}
+
+    # if no arguments or we just have a property,
+    # there are no more manipulations possible, so equality cannot be found
+    if not expr_args or isinstance(expr_args, property):
+        return {'success': False, 'num_applications': num_applications}
+
+
+    # If the number of arguments does not agree, then equality cannot be found.
+    # In this case, check if equality might be possible if using
+    # the transformed expression after application of F
+    if len(expr_args) != len(expr_ref_args):
+
+        # using transformed expression not possible if class doesn't match
+        if F_expr.__class__ != expr_ref.__class__:
+            return {'success': False, 'num_applications': num_applications}
+
+        # try replacing arguments of expression with those from the
+        # tranformed expression
+        try:
+            expr_args = F_expr.args
+        except AttributeError:
+            return {'success': False, 'num_applications': num_applications}
+
+        # the transformed expression might be a possibility
+        # if number of arguments matches
+        if len(expr_args) == len(expr_ref_args):
+            num_applications += 1
+        else:
+            return {'success': False, 'num_applications': num_applications}
+
+
+    # If expression is an Add or Mul, then will accept equality in any order.
+    # (Don't check if commutative, so this algorithm would break any
+    # non-commutative structure.)
+    order_matters=True
+    try:
+        if expr_ref.is_Add or expr_ref.is_Mul:
+            order_matters = False
+    except:
+        pass
+
+
+    # if arguments are ordered, then must find equality for arguments in order
+    if order_matters:
+        for i in range(len(expr_args)):
+            results=find_equality_with_manipulations(expr_ref_args[i],
+                                                      expr_args[i], F)
+            num_applications += results["num_applications"]
+            if not results["success"]:
+                return {'success': False, 'num_applications': num_applications }
+        return {'success': True, 'num_applications': num_applications }
+
+    # if arguments are not order, look for equality in argument with any order
+    else:
+        # loop through all elements of expr_ref_args
+        # for each element, look for a matching element of expr_args
+        # that has not been used yet.
+        indices_used=[]
+        n_matches=0
+        for expr1 in expr_ref_args:
+            for (i, expr2) in enumerate(expr_args):
+                if i not in indices_used:
+                    results=find_equality_with_manipulations(expr1, expr2, F)
+                    if results["success"]:
+                        indices_used.append(i)
+                        n_matches +=1
+                        num_applications+=results["num_applications"]
+                        break
+
+        if len(expr_args)==n_matches:
+            return {'success': True, 'num_applications': num_applications }
+        else:
+            return {'success': False, 'num_applications': num_applications }
+
 

@@ -22,6 +22,10 @@ class math_object(object):
             less than round_on_compare will partial credit be given.
         round_partial_credit_percent: by what percent the credit will be
             multiplied by for each digit of accuracy less than round_on_compare
+        sign_flip_partial_credit: give partial credit for answers that
+            are correct except for sign flips
+        sign_flip_partial_credit_percent: by what percent the credit will be
+            multiplied by for sign flip
         normalize_on_compare: if True, then check for equality based
             on normalized versions of expressions.  Currently,
             normalizations involves trying to expand and call
@@ -159,6 +163,10 @@ class math_object(object):
         return self._parameters.get('round_partial_credit_digits')
     def return_round_partial_credit_percent(self):
         return self._parameters.get('round_partial_credit_percent')
+    def return_sign_flip_partial_credit(self):
+        return self._parameters.get('sign_flip_partial_credit')
+    def return_sign_flip_partial_credit_percent(self):
+        return self._parameters.get('sign_flip_partial_credit_percent')
     def return_evaluate_level(self):
         from mitesting.sympy_customized import EVALUATE_FULL
         return self._parameters.get('evaluate_level', EVALUATE_FULL)
@@ -278,6 +286,8 @@ class math_object(object):
           for full credit
         - round_absolute: if True, rounding based on number of decimals kept.
           Otherwise, rounding based on number of significant digits.
+        - n_sign_flips: number of sign flips found
+
         """
         round_level_required=self._parameters.get('round_on_compare')
         round_level_used=round_level_required
@@ -286,89 +296,167 @@ class math_object(object):
         results = {'fraction_equal': 0, 'fraction_equal_on_normalize': 0,
                    'round_level_used': round_level_used,
                    'round_level_required': round_level_required,
-                   'round_absolute': round_absolute }
+                   'round_absolute': round_absolute,
+                   'n_sign_flips': 0}
 
-        equality=self.compare_with_expression_sub(new_expr)
+        sub_results=self.compare_with_expression_sub(new_expr)
+
+        results["fraction_equal"] = sub_results["fraction_equal"]
+        results["fraction_equal_on_normalize"] = \
+                        sub_results["fraction_equal_on_normalize"]
+
+        # if completely correct, return results
+        if results["fraction_equal"] == 1:
+            return results
+
+        round_partial_credit_digits = 0
+        if round_level_required is not None:
+            try:
+                round_partial_credit_digits=int(self._parameters.get(
+                    "round_partial_credit_digits", 0))
+            except TypeError:
+                pass
+            
+        check_sign_flips=self._parameters.get(
+            "sign_flip_partial_credit", False)
         
-        if equality > 0:
-            results['fraction_equal']=equality
-        else:
-            results['fraction_equal_on_normalize']=abs(equality)
-
-        round_partial_credit_digits=self._parameters.get(\
-                                            "round_partial_credit_digits")
-
-        if equality==1 or not round_partial_credit_digits:
+        # if there is no possibility
+        # of partial credit from extra rounding or sign flips
+        # then we're done
+        if not round_partial_credit_digits and not check_sign_flips:
             return results
 
-        # round off at most 10 more digits for partial credit
-        try:
-            round_partial_credit_digits=min(10,int(round_partial_credit_digits))
-        except ValueError:
-            return results
+        round_partial_credit_fraction = 0.0
+        sign_flip_partial_credit_fraction = 0.0
+        
+        if round_partial_credit_digits:
+            
+            # round off at most 10 more digits for partial credit
+            round_partial_credit_digits=min(10,round_partial_credit_digits)
+            
+            # don't go below 1 significant digit
+            if not round_absolute:
+                round_partial_credit_digits = min(round_level_required-1,
+                                                  round_partial_credit_digits)
 
-        # don't go below 1 significant digit
-        if not round_absolute:
-            round_partial_credit_digits = min(round_level_required-1,
-                                              round_partial_credit_digits)
+            # multiply credit by round_partial_credit_fraction
+            # for each extra digit of rounding
+            try:
+                round_partial_credit_fraction = \
+                    min(1.0, max(0.0, self._parameters.get(
+                        "round_partial_credit_percent")/100.0))
+            except TypeError:
+                pass
 
-        round_partial_credit_percent=self._parameters.get(\
-                                            "round_partial_credit_percent")
-
-        # multiply credit by round_partial_credit_fraction
-        # for each extra digit of rounding
-        try:
-            round_partial_credit_fraction = \
-                min(1.0, max(0.0, round_partial_credit_percent/100.0))
-        except TypeError:
-            round_partial_credit_fraction = 0.0
+        if check_sign_flips:
+            try:
+                sign_flip_partial_credit_fraction = \
+                    min(1.0, max(0.0, self._parameters.get(
+                        "sign_flip_partial_credit_percent")/100.0))
+            except TypeError:
+                pass
+            
 
         max_credit=1.0
-        credit_so_far = max(0,equality)
+        credit_so_far = results["fraction_equal"]
+        n_flips_so_far = 0
         correct_with_rounding = False
-
+        
+        if check_sign_flips:
+            sub_results=self.compare_with_expression_sub(
+                new_expr, check_sign_flips=check_sign_flips)
+            n_flips = sub_results["n_flips"]
+            credit_with_flips = sub_results["fraction_equal_flips"] \
+                        * sign_flip_partial_credit_fraction**n_flips
+            if credit_with_flips > credit_so_far:
+                credit_so_far = credit_with_flips
+                n_flips_so_far = n_flips
+                
         for i in range(round_partial_credit_digits):
             additional_rounding = i+1
             max_credit *= round_partial_credit_fraction
             
-            equality=self.compare_with_expression_sub(new_expr, \
-                                        additional_rounding=additional_rounding)
-            credit = equality*max_credit
+            sub_results=self.compare_with_expression_sub(
+                new_expr, additional_rounding=additional_rounding,
+                check_sign_flips=check_sign_flips)
+            credit = sub_results["fraction_equal"]
+            
+            credit_with_flips = 0
+            n_flips=0
+            if check_sign_flips:
+                n_flips = sub_results["n_flips"]
+                credit_with_flips = sub_results["fraction_equal_flips"] \
+                            * sign_flip_partial_credit_fraction**n_flips
+
+            used_flips = False
+            if credit_with_flips > credit:
+                credit = credit_with_flips
+                user_flips = True
+                
+            credit *= max_credit
             
             if credit > credit_so_far:
-                results['fraction_equal'] = credit
                 results['round_level_used'] = round_level_required \
                                               - additional_rounding
+                if used_flips:
+                    n_flips_so_far = n_flips
+                else:
+                    n_flips_so_far = 0
                 credit_so_far = credit
 
             # even if no credit for additional rounding
             # record fact that found a match with additional rounding
-            elif credit_so_far==0 and equality==1 and not correct_with_rounding:
+            elif credit_so_far==0 and sub_results["fraction_equal"]==1 and not correct_with_rounding:
                 correct_with_rounding=True
                 results['round_level_used'] = round_level_required \
                                               - additional_rounding
 
+        results['fraction_equal'] = credit_so_far
+        results["n_sign_flips"] = n_flips_so_far
+        
         return results
 
 
-    def compare_with_expression_sub(self, new_expr, additional_rounding=None):
+    def compare_with_expression_sub(self, new_expr, additional_rounding=None,
+                                    check_sign_flips=False):
         """
         Compare expression of object with new_expression.
-        Returns:
-        1  if expressions are considered equal.
-           If normalize_on_compare is set, then expressions are considered
-           equal if their normalized expressions to the same.
-           Otherwise, expressions themselves must be the same.
-        -1 if normalize_on compare is not set, the expressions themselves
-           are not the same, but their normalized expressions are the same.
-        0  if the expressions not the same and the normalized expressions
-           are not the same
-        p  number p, 0 < p < 1, if expressions are partially equal,
-           where p indicates the fraction of expressions that are equal
-        -p number p, 0 < p < 1, if normalize_on compare is not set,
-           the expressions themselves are not the same,
-           but their normalized expressions are partially equal, then
-           p indicates the fraction of normalized expressions that are equal
+        Returns a dictionary with items:
+        -fraction_equal
+          1  if expressions are considered equal.
+             If normalize_on_compare is set, then expressions are considered
+             equal if their normalized expressions to the same.
+             Otherwise, expressions themselves must be the same.
+          0  if the expressions are not the same
+          p  number p, 0 < p < 1, if expressions are partially equal,
+             where p indicates the fraction of expressions that are equal
+        -fraction_equal_on_normalize
+         (set if larger than fraction_equal)
+          1  the normalized expressions are the same.
+          p  number p, 0 < p < 1, if the normalized expressions are
+             partially equal, then
+             p indicates the fraction of normalized expressions that are equal
+          0  the normalized expressions are not equal
+        - fraction_equal_flips
+          (set if check_sign_flips and if larger than fraction_equal)
+          1  if expressions are considered equal after sign flips
+             If normalize_on_compare is set, then expressions are considered
+             equal if their normalized expressions (after flips) to the same.
+             Otherwise, expressions themselves (after flips) must be the same.
+          0  if the expressions are not the same
+          p  number p, 0 < p < 1, if expressions are partially equal,
+             where p indicates the fraction of expressions that are equal
+        - n_flips: number of sign flips required to get fraction correct
+        - fraction_equal_on_normalize_flips
+          (set if check_sign_flips and if larger than fraction_equal_flips)
+          1  the normalized expressions (after flips) are the same.
+          0  if the expressions are not the same
+          p  number p, 0 < p < 1, if the normalized expressions are
+             partially equal, then
+             p indicates the fraction of normalized expressions that are equal
+        - n_flips_on_normalize: number of sign flips required to get
+             fraction correct on nomralize
+
         In all determinations of equality, expressions are rounded to
         the precision determined by round_on_compare and round_absolute, if set,
         minus any additional rounding specified.
@@ -438,38 +526,76 @@ class math_object(object):
         tuple_is_unordered = self._parameters.get('tuple_is_unordered',False)
         match_partial_on_compare = self._parameters.get(
             'match_partial_on_compare',False)
-        expressions_equal=0
-        equal_if_normalize=0
+        
+        results = {'fraction_equal': 0, 'fraction_equal_on_normalize': 0,
+                   'fraction_equal_flips': 0, 'n_flips': 0,
+                   'fraction_equal_on_normalize_flips': 0,
+                   'n_flips_on_normalize': 0 }
+
         if self._parameters.get('normalize_on_compare'):
-            expressions_equal = check_equality \
+            sub_results = check_equality \
                 (expression_normalize, new_expr_normalize, \
                  tuple_is_unordered=tuple_is_unordered, \
-                 partial_matches = match_partial_on_compare)
+                 partial_matches = match_partial_on_compare,
+                 check_sign_flips=check_sign_flips)
+            results["fraction_equal"] = sub_results["fraction_equal"]
+            if check_sign_flips:
+                results["fraction_equal_flips"] = \
+                                sub_results["fraction_equal_flips"]
+                results["n_flips"] = sub_results["n_flips"]
+            
             # if not exactly equal, check without normalizing
             # just in case normalizing made answers diverge
-            if not expressions_equal==1:
-                equal_if_not_normalize = check_equality \
+            if results["fraction_equal"] != 1:
+                sub_results = check_equality \
                     (expression, new_expr, \
                      tuple_is_unordered=tuple_is_unordered, \
-                     partial_matches = match_partial_on_compare)
-                expressions_equal = max(expressions_equal,
-                                        equal_if_not_normalize)
+                     partial_matches = match_partial_on_compare,
+                     check_sign_flips=check_sign_flips)
+                results["fraction_equal"] = max(results["fraction_equal"],
+                                                sub_results["fraction_equal"])
+
+                # if check sign flips, then check if get fewer flips or
+                # better result without normalizing
+                if check_sign_flips:
+                    if sub_results["fraction_equal_flips"] \
+                       > results["fraction_equal_flips"]:
+                        results["fraction_equal_flips"] = \
+                                        sub_results["fraction_equal_flips"]
+                        results["n_flips"] = sub_results["n_flips"]
+                    elif sub_results["fraction_equal_flips"] \
+                         == results["fraction_equal_flips"]:
+                        results["n_flips"] = min(results["n_flips"],
+                                                 sub_results["n_flips"])
+                        
+                    
         else:
-            expressions_equal = check_equality \
+            sub_results = check_equality \
                 (expression, new_expr, \
                  tuple_is_unordered=tuple_is_unordered, \
-                 partial_matches = match_partial_on_compare)
-            if expressions_equal==0:
-                equal_if_normalize = check_equality \
+                 partial_matches = match_partial_on_compare,
+                 check_sign_flips = check_sign_flips)
+            results["fraction_equal"] = sub_results["fraction_equal"]
+            if check_sign_flips:
+                results["fraction_equal_flips"] = \
+                                sub_results["fraction_equal_flips"]
+                results["n_flips"] = sub_results["n_flips"]
+
+            if results["fraction_equal"] != 1:
+                sub_results = check_equality \
                     (expression_normalize, new_expr_normalize, \
                      tuple_is_unordered=tuple_is_unordered, \
-                     partial_matches = match_partial_on_compare)
+                     partial_matches = match_partial_on_compare,
+                     check_sign_flips=check_sign_flips)
+                results["fraction_equal_on_normalize"] = \
+                                        sub_results["fraction_equal"]
+                if check_sign_flips:
+                    results["fraction_equal_on_normalize_flips"] = \
+                                    sub_results["fraction_equal_flips"]
+                    results["n_flips_on_normalize"] = sub_results["n_flips"]
 
-        if expressions_equal:
-            return expressions_equal
-        if equal_if_normalize:
-            return -1*equal_if_normalize
-        return 0
+
+        return results
 
         
 
@@ -596,15 +722,23 @@ def try_normalize_expr(expr):
     return(expr)
 
 def check_equality(expression1, expression2, tuple_is_unordered=False, \
-                   partial_matches=False):
+                   partial_matches=False, check_sign_flips=False):
     """ 
     Determine if expression1 and expression2 are equal.
     If tuple_is_unordered is set, then tuples are compared regardless of order.
-    Returns:
-    1   if correct
-    0   if completely incorrect
-    p   number p, 0 < p < 1 indicating fraction correct 
-        in case is partially correct
+
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if correct
+      0   if completely incorrect
+      p   number p, 0 < p < 1 indicating fraction correct 
+          in case is partially correct
+    - fraction_equal_flips
+      1   if correct
+      0   if completely incorrect
+      p   number p, 0 < p < 1 indicating fraction correct 
+          in case is partially correct
+    - n_flips: number of sign flips required to get fraction correct
 
     In general, if two objects latex the same, they should compare 
     as being equal.
@@ -624,44 +758,84 @@ def check_equality(expression1, expression2, tuple_is_unordered=False, \
        or isinstance(expression1, list) or isinstance(expression2, list):
         return check_tuple_equality(expression1, expression2, 
                                     tuple_is_unordered=tuple_is_unordered,
-                                    partial_matches=partial_matches)
+                                    partial_matches=partial_matches,
+                                    check_sign_flips=check_sign_flips)
 
     if isinstance(expression1, set) or isinstance(expression2, set):
         return check_set_equality(expression1, expression2, 
-                                  partial_matches=partial_matches)
+                                  partial_matches=partial_matches,
+                                  check_sign_flips=check_sign_flips)
 
     if isinstance(expression1, ImmutableMatrix) or \
        isinstance(expression2, ImmutableMatrix):
         return check_matrix_equality(expression1, expression2, 
-                                  partial_matches=partial_matches)
+                                     partial_matches=partial_matches,
+                                     check_sign_flips=check_sign_flips)
 
     try:
         if expression1.is_Relational or expression2.is_Relational:
-            return 1*check_relational_equality(expression1, expression2)
+            return check_relational_equality(expression1, expression2,
+                                             check_sign_flips=check_sign_flips)
     except AttributeError:
         pass
 
     if isinstance(expression1, LinearEntity) or \
          isinstance(expression2, LinearEntity):
+        results = {'fraction_equal': 0, 'fraction_equal_flips': 0, 'n_flips': 0}
         try:
-            return 1*expression1.is_similar(expression2)
+            if expression1.is_similar(expression2):
+                results["fraction_equal"] = 1
         except AttributeError:
-            return 0
+            pass
+        return results
+        
 
     from sympy.core.function import Application
     
     if isinstance(expression1, Application) and \
        isinstance(expression2, Application):
         return check_function_equality(expression1, expression2, 
-                                       partial_matches=partial_matches)
+                                       partial_matches=partial_matches,
+                                       check_sign_flips=check_sign_flips)
+
+    return check_equality_direct(expression1, expression2,
+                                 check_sign_flips=check_sign_flips)
+
+
+def check_equality_direct(expression1, expression2, check_sign_flips=False):
+    """ 
+    Determine if expression1 and expression2 are equal with no manipulations
+    other than checking for sign flips
+
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if correct
+      0   otherwise
+    - fraction_equal_flips
+      1   if correct with sign flips
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
+    """
+
+    results = {'fraction_equal': 0, 'fraction_equal_flips': 0, 'n_flips': 0}
 
     if expression1 == expression2:
-        return 1
-    else:
-        return 0
+        results["fraction_equal"] = 1
+        return results
 
+    if check_sign_flips:
+        from .utils import find_equality_with_sign_errors
+        sub_results = find_equality_with_sign_errors(expression1, expression2)
+        if sub_results["success"]:
+            results["fraction_equal_flips"] = 1
+            results["n_flips"] = sub_results["num_applications"]
+
+    return results
+
+    
 def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
-                         partial_matches=False):
+                         partial_matches=False, check_sign_flips=False):
     """
     Check if two Tuples or lists are equal, 
     converting vectors and open intervals to Tuples,
@@ -676,17 +850,28 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
 
     If one tuple is a Tuple and the other is a TupleNoParen, regard as unequal
 
-    Return 
-    1   if exact match
-    p   number p, 0 < p < 1, if partial_matches is set and fracction
-        p of elements match.  Denominator of fraction is max length of 
-        both tuples
-    0   otherwise
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both tuples
+      0   otherwise
+    - fraction_equal_flips
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both tuples
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
     """
 
     from .sympy_customized import TupleNoParen, Interval
     from .customized_commands import MatrixAsVector
 
+    results = {'fraction_equal': 0, 'fraction_equal_flips': 0, 'n_flips': 0}
+    
     # convert vectors, open intervals, and tuples to Tuples
     # closed intervals to lists,
     # and other non-Tuples/lists to length 1 TupleNoParens.
@@ -699,10 +884,10 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
                 if the_tuple1.right_open:
                     the_tuple1 = Tuple(the_tuple1.left,the_tuple1.right)
                 else:
-                    return 0
+                    return results
             else:
                 if the_tuple1.right_open:
-                    return 0
+                    return results
                 else:
                     the_tuple1 = [the_tuple1.left,the_tuple1.right]
         else:
@@ -717,10 +902,10 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
                 if the_tuple2.right_open:
                     the_tuple2 = Tuple(the_tuple2.left,the_tuple2.right)
                 else:
-                    return 0
+                    return results
             else:
                 if the_tuple2.right_open:
-                    return 0
+                    return results
                 else:
                     the_tuple2 = [the_tuple2.left,the_tuple2.right]
         else:
@@ -730,7 +915,7 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     # if not same class, then not considered equal.
     # Tuples and TupleNoParens are considered different
     if the_tuple1.__class__ != the_tuple2.__class__:
-        return 0
+        return results
 
     nelts1=len(the_tuple1)
     nelts2=len(the_tuple2)
@@ -738,33 +923,109 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
 
     # if tuple_is_unordered isn't set, demand exact equality
     if not tuple_is_unordered:
-
+        
         # check how many elements match in order from the beginning
         n_matches=0
+        n_matches_flip=0
+        n_flips=0
         for i in range(min(nelts1, nelts2)):
-            n_matches+=check_equality(the_tuple1[i], the_tuple2[i])
+            sub_results = check_equality(the_tuple1[i], the_tuple2[i],
+                                         check_sign_flips=check_sign_flips)
+
+            n_matches += sub_results["fraction_equal"]
+
+            if check_sign_flips:
+                n_matches_flip += sub_results["fraction_equal_flip"]
+                n_flips += sub_results["n_flips"]
 
         # if tuple lengths are equal and all match, then exact equality
         if nelts1==nelts2 and nelts1==n_matches:
-            return 1
+            results["fraction_equal"] = 1
+            return results
+
+        if check_sign_flips:
+            if nelts1==nelts2 and nelts1==n_matches_flip:
+                results["fraction_equal_flip"] = 1
+                results["n_flips"] = n_flips
 
         if not partial_matches:
-            return 0
+            return results
 
-        # find length of largest common subsequence
+
+        # if partial matches, find length of largest common subsequence
 
         from sympy import zeros
         C = zeros(nelts1+1,nelts2+1)
+        C_sign_flips = zeros(nelts1+1,nelts2+1)
+        C_n_flips = zeros(nelts1+1,nelts2+1)
         for i in range(nelts1):
             for j in range(nelts2):
-                if check_equality(the_tuple1[i], the_tuple2[j])==1:
-                    C[i+1,j+1] = C[i,j] +1
-                else:
-                    C[i+1,j+1] = max(C[i+1,j],C[i,j+1])
+                sub_results = check_equality(the_tuple1[i], the_tuple2[j],
+                                             check_sign_flips=check_sign_flips)
+                C[i+1,j+1] = max(C[i,j]+sub_results['fraction_equal'],
+                                 C[i+1,j],C[i,j+1])
+                
+                if check_sign_flips:
+                    # For sign flips, it is more complicated,
+                    # as have to keep track of minimum number of sign flips
+                    # to get the maximum match.
+                    # This algorithm does not find the best possible score
+                    # (as we don't have access to penalty for sign flips).
+                    # Instead, if finds the best possible match, giving
+                    # the minimum number of flips for that match
+                    
+                    C1 = C_sign_flips[i,j] + \
+                         sub_results['fraction_equal_flips']
+                    N1 = C_n_flips[i,j] + sub_results['n_flips']
+                    C2 = C_sign_flips[i+1,j]
+                    N2 = C_n_flips[i+1,j]
+                    C3 = C_sign_flips[i,j+1]
+                    N3 = C_n_flsip[i,j+1]
+                    
+                    if C1 > C2:
+                        if C1 > C3:
+                            C_sign_flips[i+1,j+1] = C1
+                            C_n_flips[i+1,j+1] = N1
+                        elif C1 == C3:
+                            C_sign_flips[i+1,j+1] = C1
+                            C_n_flips[i+1,j+1] = min(N1,N3)
+                        else:
+                            C_sign_flips[i+1,j+1] = C3
+                            C_n_flips[i+1,j+1] = N3
+                    elif C1==C2:
+                        if C1 > C3:
+                            C_sign_flips[i+1,j+1] = C1
+                            C_n_flips[i+1,j+1] = min(N1,N2)
+                        elif C1==C3:
+                            C_sign_flips[i+1,j+1] = C1
+                            C_n_flips[i+1,j+1] = min(N1,N2,N3)
+                        else:
+                            C_sign_flips[i+1,j+1] = C3
+                            C_n_flips[i+1,j+1] = N3
+                    else:
+                        if C2 > C3:
+                            C_sign_flips[i+1,j+1] = C2
+                            C_n_flips[i+1,j+1] = N2
+                        elif C2 == C3:
+                            C_sign_flips[i+1,j+1] = C2
+                            C_n_flips[i+1,j+1] = min(N2,N3)
+                        else:
+                            C_sign_flips[i+1,j+1] = C3
+                            C_n_flips[i+1,j+1] = N3
+
+                    
         
         max_matched = float(C[nelts1,nelts2])  # float so don't get sympy rational
-        return max_matched/max(nelts1,nelts2)
 
+        results["fraction_equal"] = max_matched/max(nelts1,nelts2)
+
+        if check_sign_flips:
+            max_matched_sign_flips = float(C_sign_flips[nelts1,nelts2]) 
+            results["fraction_equal_flips"] = \
+                max_matched_sign_flips/max(nelts1,nelts2)
+            results["n_flips"] = C_n_flips[nelts1,nelts2]
+            
+        return results
 
     # if not ordered, check if match with any order
     
@@ -773,36 +1034,91 @@ def check_tuple_equality(the_tuple1, the_tuple2, tuple_is_unordered=False, \
     # that has not been used yet.
     tuple2_indices_used=[]
     n_matches=0
+    tuple2_indices_used_flip=[]
+    n_flip_matches=0
+    n_flips=0
     for expr1 in the_tuple1:
+        best_match_ind=-1
+        best_match=0
+        best_flip_match_ind=-1
+        best_flip_match=0
+        best_n_flips=0
         for (i, expr2) in enumerate(the_tuple2):
-            if check_equality(expr1,expr2)==1 and i not in tuple2_indices_used:
-                tuple2_indices_used.append(i)
-                n_matches +=1
-                break
-
+            if i in tuple2_indices_used and i in tuple2_indices_used_flip:
+                continue
+            
+            sub_results = check_equality(expr1,expr2,
+                                         check_sign_flips=check_sign_flips)
+            
+            if i not in tuple2_indices_used and \
+               sub_results["fraction_equal"] > best_match:
+                best_match = sub_results["fraction_equal"]
+                best_match_ind = i
+                
+            if check_sign_flips and i not in tuple2_indices_used_flip and \
+               (sub_results["fraction_equal_flips"] > best_flip_match or
+                (sub_results["fraction_equal_flips"] == best_flip_match
+                 and sub_results["n_flips"] < best_n_flips)):
+                
+                best_flip_match= sub_results["fraction_equal_flips"]
+                best_flip_match_ind = i
+                best_n_flips = sub_results["n_flips"]
+                
+                
+        if best_match_ind != -1:
+            n_matches += best_match
+            tuple2_indices_used.append(best_match_ind)
+        if best_flip_match_ind != -1:
+            n_flip_matches += best_flip_match
+            tuple2_indices_used_flip.append(best_flip_match_ind)
+            n_flips += best_n_flips
+            
     if nelts1==nelts2 and nelts1==n_matches:
-        return 1
+        results["fraction_equal"] = 1
 
+    if check_sign_flips and nelts1==nelts2 and nelts1==n_flip_matches:
+        results["fraction_equal_flips"] = 1
+        results["n_flips"] = n_flips
+        
     if not partial_matches:
-        return 0
-    else:
-        return n_matches/max(nelts1,nelts2)
+        return results
+
+    results["fraction_equal"] = float(n_matches)/max(nelts1,nelts2)
+    if check_sign_flips:
+        results["fraction_equal_flips"] =\
+                                    float(n_flip_matches)/max(nelts1,nelts2)
+        results["n_flips"] = n_flips
+
+    return results
+            
 
 
-def check_set_equality(the_set1, the_set2, partial_matches=False):
+def check_set_equality(the_set1, the_set2, partial_matches=False,
+                       check_sign_flips=False):
     """
     Check if two sets are equal, converting non-sets to length 1 Set
 
     If partial_matches is set, then check if just some elements
     match and return the fraction that match. 
 
-    Return 
-    1   if exact match
-    p   number p, 0 < p < 1, if partial_matches is set and fracction
-        p of elements match.  Denominator of fraction is max length of 
-        both sets
-    0   otherwise
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both sets
+      0   otherwise
+    - fraction_equal_flips
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both sets
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
     """
+
+    results = {'fraction_equal': 0, 'fraction_equal_flips': 0, 'n_flips': 0}
 
     # if either isn't a set, replace with a set of length 1
     if not isinstance(the_set1, set):
@@ -810,16 +1126,30 @@ def check_set_equality(the_set1, the_set2, partial_matches=False):
     if not isinstance(the_set2, set):
         the_set2 = {the_set2}
 
-    if the_set1 == the_set2:
-        return 1
+    results = check_equality_direct(the_set1, the_set2,
+                                    check_sign_flips=check_sign_flips)
 
-    if not partial_matches:
-        return 0
-    
-    return len(the_set1.intersection(the_set2))/max(len(the_set1),len(the_set2))
+    if results["fraction_equal"] == 1 or not partial_matches:
+        return results
 
+    results["fraction_equal"] = len(the_set1.intersection(the_set2)) \
+                                  /max(len(the_set1),len(the_set2))
+
+    if check_sign_flips:
+        # to check for sign flips, just turn to unordered tuples logic
+        sub_results = check_tuple_equality(
+            tuple(the_set1), tuple(the_set2),
+            tuple_is_unordered=True, 
+            partial_matches=partial_matches, check_sign_flips=True)
+        
+        results["fraction_equal_flips"]=sub_results["fraction_equal_flips"]
+        results["n_flips"] = sub_results["n_flips"]
+
+    return results
     
-def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
+    
+def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False,
+                          check_sign_flips=False):
     """
     Check if two matrices are equal
 
@@ -827,33 +1157,62 @@ def check_matrix_equality(the_matrix1, the_matrix2, partial_matches=False):
     then check if just some elements match 
     and return the fraction that match. 
 
-    Return 
-    1   if exact match
-    p   number p, 0 < p < 1, if partial_matches is set and fraction
-        p of elements match.  Denominator of fraction is max rows*cols
-        of both matrices
-    0   otherwise
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both matrices
+      0   otherwise
+    - fraction_equal_flips
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set and fracction
+          p of elements match.  Denominator of fraction is max length of 
+          both matrices
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
     """
+
+    results = {'fraction_equal': 0, 'fraction_equal_flips': 0, 'n_flips': 0}
 
     # if not the same class, then not equal.
     # This means MatrixAsVector and Matrix are not equal
     if the_matrix1.__class__ != the_matrix2.__class__:
-        return 0
+        return results
     
-    if the_matrix1 == the_matrix2:
-        return 1
+    results = check_equality_direct(the_matrix1, the_matrix2,
+                                    check_sign_flips=check_sign_flips)
 
-    if not partial_matches or the_matrix1.shape != the_matrix2.shape:
-        return 0
+    if results["fraction_equal"] == 1 or not partial_matches:
+        return results
+
+    if the_matrix1.shape != the_matrix2.shape:
+        return results
         
     n_matches=0
+    n_flip_matches=0
+    n_flips=0
     for row in range(the_matrix1.rows):
-        for col in range(the_matrix2.cols):
-            if the_matrix1[row,col] == the_matrix2[row,col]:
-                n_matches +=1
+        for col in range(the_matrix1.cols):
+            sub_results= check_equality(
+                the_matrix1[row,col],the_matrix2[row,col],
+                check_sign_flips=check_sign_flips)
+            n_matches += sub_results["fraction_equal"]
+            if check_sign_flips:
+                n_flip_matches += sub_results["fraction_equal_flips"]
+                n_flips += sub_results["n_flips"]
 
-    return n_matches/(the_matrix1.rows*the_matrix1.cols)
     
+    results["fraction_equal"] = n_matches/(the_matrix1.rows*the_matrix1.cols)
+
+    if check_sign_flips:
+        results["fraction_equal_flips"] = \
+                    n_flip_matches/(the_matrix1.rows*the_matrix1.cols)
+        results["n_flips"] = n_flips
+
+    return results
+
 
 # given inheritance structure of sympy
 # have to separate check for greater and less than
@@ -874,15 +1233,30 @@ def is_nonstrict_inequality(the_relational):
 
 
 
-def check_relational_equality(the_relational1, the_relational2):
+def check_relational_equality(the_relational1, the_relational2,
+                              check_sign_flips=False):
     """ 
     Check if two relations are equivalent.
+
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if equivalent
+      0   otherwise
+    - fraction_equal_flips
+      1   if equivalent after sign flips
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
     """
 
     # if relations are exactly the same, we're done
-    if the_relational1==the_relational2:
-        return True
+    results = check_equality_direct(the_relational1, the_relational2,
+                                    check_sign_flips=check_sign_flips)
 
+    if results["fraction_equal"] == 1:
+        return results
+
+    
     # if relations aren't the same, they could be inequalities
     # with the sides reversed.
     # Check if both strict or both not strict
@@ -891,11 +1265,29 @@ def check_relational_equality(the_relational1, the_relational2):
             is_strict_inequality(the_relational2)) or \
             (is_nonstrict_inequality(the_relational1) and \
                  is_nonstrict_inequality(the_relational2)):
-        if the_relational1.lts ==  the_relational2.lts and \
-                the_relational1.gts ==  the_relational2.gts:
-            return True
-        else:
-            return False
+        sub_results1 = check_equality_direct(
+            the_relational1.lts, the_relational2.lts,
+            check_sign_flips=check_sign_flips)
+        sub_results2 = check_equality_direct(
+            the_relational1.gts, the_relational2.gts,
+            check_sign_flips=check_sign_flips)
+        if sub_results1["fraction_equal"] == 1 and \
+           sub_results2["fraction_equal"] == 1 :
+            results["fraction_equal"] = 1
+            return results
+        
+        if check_sign_flips:
+            if sub_results1["fraction_equal_flips"] == 1 and \
+               sub_results2["fraction_equal_flips"] == 1:
+                n_flips_tot = sub_results1["n_flips"] + \
+                              sub_results2["n_flips"]
+                if results["fraction_equal_flips"] ==1:
+                    results["n_flips"] = min(result["n_flips"], n_flips_tot)
+                else:
+                    results["n_flips"] = n_flips_tot
+                    
+        return results
+
     
     # if both equalities or inequalities, they could be the same
     # except with sides reversed
@@ -906,18 +1298,36 @@ def check_relational_equality(the_relational1, the_relational2):
         # just need to check if the sides are reversed.
         # (If the sides were the same, initial check would have shown
         # them to be equal.)
-        if the_relational1.lhs == the_relational2.rhs and \
-                the_relational1.rhs == the_relational2.lhs:
-            return True
-        else:
-            return False
+        sub_results1 = check_equality_direct(
+            the_relational1.lhs, the_relational2.rhs,
+            check_sign_flips=check_sign_flips)
+        sub_results2 = check_equality_direct(
+            the_relational1.rhs, the_relational2.lhs,
+            check_sign_flips=check_sign_flips)
+        if sub_results1["fraction_equal"] == 1 and \
+           sub_results2["fraction_equal"] == 1 :
+            results["fraction_equal"] = 1
+            return results
+
+        if check_sign_flips:
+            if sub_results1["fraction_equal_flips"] == 1 and \
+               sub_results2["fraction_equal_flips"] == 1:
+                n_flips_tot = sub_results1["n_flips"] + \
+                              sub_results2["n_flips"]
+                if results["fraction_equal_flips"] ==1:
+                    results["n_flips"] = min(result["n_flips"], n_flips_tot)
+                else:
+                    results["n_flips"] = n_flips_tot
+                    
+        return results
 
     # if have different types of relations, they must be unequal
-    return False
+    return results
 
 
 def check_function_equality(the_function1, the_function2,
-                            partial_matches=False):
+                            partial_matches=False,
+                            check_sign_flips=False):
     """ 
     Check if two functions are equal.
 
@@ -925,12 +1335,21 @@ def check_function_equality(the_function1, the_function2,
     1. func attribute is identical
     2. the arguments compare equal as tuples
 
-    Return 
-    1   if exact match
-    p   number p, 0 < p < 1, if partial_matches is set, the func attributes
-        match and and fraction p of arguments match.  
-        Denominator of fraction is max length of both argument tuples
-    0   otherwise
+    Returns dictionary with items:
+    - fraction_equal:
+      1   if exact match
+      p   number p, 0 < p < 1, if partial_matches is set, the func attributes
+          match and and fraction p of arguments match.  
+          Denominator of fraction is max length of both argument tuples
+      0   otherwise
+    - fraction_equal_flips
+      1   if exact match after sign flips
+      p   number p, 0 < p < 1, if partial_matches is set, the func attributes
+          match and and fraction p of arguments match.  
+          Denominator of fraction is max length of both argument tuples
+      0   otherwise
+    - n_flips: number of sign flips required to get fraction correct
+
 
     We cannot rely on canonical sorting of arguments
     since we may consider some expressions
@@ -943,13 +1362,16 @@ def check_function_equality(the_function1, the_function2,
     
     """
 
-    # if functions are exactly the same, we're done
-    if the_function1==the_function2:
-        return 1
+    # if relations are exactly the same, we're done
+    results = check_equality_direct(the_function1, the_function2,
+                                    check_sign_flips=check_sign_flips)
+
+    if results["fraction_equal"] == 1:
+        return results
 
     # if different func attribute, then they are different
     if the_function1.func != the_function2.func:
-        return 0
+        return results
 
     from mitesting.sympy_customized import And, Or
 
@@ -962,5 +1384,6 @@ def check_function_equality(the_function1, the_function2,
 
     return check_tuple_equality(the_function1.args, the_function2.args, \
                                 tuple_is_unordered=unordered_arguments, \
-                                partial_matches=partial_matches)
+                                partial_matches=partial_matches,
+                                check_sign_flips=check_sign_flips)
 

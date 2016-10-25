@@ -2043,6 +2043,138 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("partial (75%) credit" in
                         results["answers"][answer_identifier]["answer_feedback"])
 
+    def test_normalized_correct_overrides_sign_flip(self):
+        scs_explog = SympyCommandSet.objects.create(
+                name = 'explog', commands='exp,ln,log,e')
+        self.q.allowed_sympy_commands.add(scs_explog)
+
+        self.q.question_text="Type answers: {% answer 'expr' %} {% answer 'expr2' %} {% answer 'expr3' %} {% answer 'expr4' %}"
+        self.q.save()
+
+        expr=self.q.expression_set.create(
+            name="expr", expression="exp(-4z -3)/log(3) - (z+1)*(z-y)")
+        
+        the_ans=self.new_answer(answer_code="expr", answer="expr")
+        the_ans_flip=self.new_answer(answer_code="expr2", answer="expr",
+                                     sign_flip_partial_credit=True,
+                                     sign_flip_partial_credit_percent=80)
+        the_ans_norm=self.new_answer(answer_code="expr3", answer="expr",
+                                     normalize_on_compare=True)
+        the_ans_flip_norm=self.new_answer(answer_code="expr4", answer="expr",
+                                     sign_flip_partial_credit=True,
+                                     sign_flip_partial_credit_percent=80,
+                                     normalize_on_compare=True)
+        
+        response = self.client.get("/question/%s" % self.q.id)
+        self.assertContains(response,"Type answers: ")
+
+        cgd = response.context["question_data"]["computer_grade_data"]
+        computer_grade_data = pickle.loads(base64.b64decode(cgd))
+        answer_id = computer_grade_data["answer_info"][0]['identifier']
+        answer_id_f = computer_grade_data["answer_info"][1]['identifier']
+        answer_id_n = computer_grade_data["answer_info"][2]['identifier']
+        answer_id_fn = computer_grade_data["answer_info"][3]['identifier']
+
+        answers = {"cgd": cgd,}
+        answer_string = "-(z+1)*(z-y) + exp(-4z -3)/log(3)"
+        answers["answer_" + answer_id] = answer_string
+        answers["answer_" + answer_id_f] = answer_string
+        answers["answer_" + answer_id_n] = answer_string
+        answers["answer_" + answer_id_fn] = answer_string
+                                
+        response=self.client.post(
+            "/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content.decode())
+
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 66% correct" in results["feedback"])
+
+        # although don't necessarily want this to be true,
+        # answer is not correct without normalization
+        self.assertFalse(results["answers"][answer_id]["answer_correct"])
+        self.assertTrue("is incorrect" in
+                        results["answers"][answer_id]["answer_feedback"])
+        self.assertTrue("mathematically equivalent to the correct" in
+                        results["answers"][answer_id]["answer_feedback"])
+
+        # it's correct with normalize on compare
+        self.assertTrue(results["answers"][answer_id_n]["answer_correct"])
+        self.assertTrue("is correct" in
+                        results["answers"][answer_id_n]["answer_feedback"])
+
+        # with sign flip partial credit, matches after two sign flips
+        # as that effectively normalizes.
+        # Want to make sure that feedback does not indicate sign flips
+        self.assertFalse(results["answers"][answer_id_f]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_id_f]["answer_feedback"])
+        self.assertTrue("partial (64%) credit" in
+                        results["answers"][answer_id_f]["answer_feedback"])
+        self.assertTrue("sign errors" not in
+                        results["answers"][answer_id_f]["answer_feedback"])
+
+        # correct with normalize and sign flip partial credit,
+        # Want to make sure that feedback does not indicate sign flips
+        self.assertTrue(results["answers"][answer_id_fn]["answer_correct"])
+        self.assertTrue("is correct" in
+                        results["answers"][answer_id_fn]["answer_feedback"])
+        self.assertTrue("sign errors" not in
+                        results["answers"][answer_id_fn]["answer_feedback"])
+
+
+        # now give answer with three sign errors
+        answer_string = "(z+1)*(z+y) + exp(4z -3)/log(3)"
+        answers["answer_" + answer_id] = answer_string
+        answers["answer_" + answer_id_f] = answer_string
+        answers["answer_" + answer_id_n] = answer_string
+        answers["answer_" + answer_id_fn] = answer_string
+                                
+        response=self.client.post(
+            "/question/%s/grade_question" % self.q.id,
+            convert_answer_data(answers),
+            content_type='application/x-www-form-urlencoded')
+
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content.decode())
+
+        self.assertFalse(results["correct"])
+        self.assertTrue("is 26% correct" in results["feedback"])
+
+        # answer is not correct without flips
+        self.assertFalse(results["answers"][answer_id]["answer_correct"])
+        self.assertTrue("is incorrect" in
+                        results["answers"][answer_id]["answer_feedback"])
+
+        # still incorrect if normalize
+        self.assertFalse(results["answers"][answer_id_n]["answer_correct"])
+        self.assertTrue("is incorrect" in
+                        results["answers"][answer_id_n]["answer_feedback"])
+
+        # with sign flip partial credit, matches after three sign flips
+        self.assertFalse(results["answers"][answer_id_f]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_id_f]["answer_feedback"])
+        self.assertTrue("partial (51%) credit" in
+                        results["answers"][answer_id_f]["answer_feedback"])
+        self.assertTrue("3 sign errors" in
+                        results["answers"][answer_id_f]["answer_feedback"])
+
+        # with sign flip partial credit and normalize,
+        # still matches after three sign flips
+        self.assertFalse(results["answers"][answer_id_fn]["answer_correct"])
+        self.assertTrue("is not completely correct" in
+                        results["answers"][answer_id_fn]["answer_feedback"])
+        self.assertTrue("partial (51%) credit" in
+                        results["answers"][answer_id_fn]["answer_feedback"])
+        self.assertTrue("3 sign errors" in
+                        results["answers"][answer_id_fn]["answer_feedback"])
+
+
+        
     def test_sets(self):
         expr=self.q.expression_set.create(
             name="set", expression="a,b,c,d,a,c,a,a", 

@@ -568,6 +568,79 @@ class MathObjectTests(SimpleTestCase):
 
 
 
+    def test_sign_flip_partial_credit(self):
+        from mitesting.sympy_customized import parse_expr
+        from sympy import exp, log
+        local_dict={'exp': exp, 'log': log}
+        expression = parse_expr("exp((3x-1)*(3y-2x))log(1/(z-1))-log(3x)+1",
+                                local_dict=local_dict)
+        expression_1f = parse_expr("-exp((3x-1)*(3y-2x))log(1/(z-1))-log(3x)+1",
+                                local_dict=local_dict)
+        expression_2f = parse_expr("-exp((3x-1)*(3y-2x))log(1/(z+1))-log(3x)+1",
+                                local_dict=local_dict)
+        expression_3f = parse_expr("-exp((3x+1)*(3y-2x))log(1/(z+1))-log(3x)+1",
+                                local_dict=local_dict)
+        expression_4f = parse_expr("-exp((3x+1)*(3y-2x))log(1/(z+1))-log(-3x)+1",
+                                local_dict=local_dict)
+        expression_5f = parse_expr("-exp((3x+1)*(-3y-2x))log(1/(z+1))-log(-3x)+1",
+                                local_dict=local_dict)
+
+        mobject = math_object(expression)
+
+        compare=mobject.compare_with_expression(expression_1f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_2f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_3f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_4f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_5f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+
+        mobject = math_object(expression, sign_flip_partial_credit=True)
+
+        compare=mobject.compare_with_expression(expression_1f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_2f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_3f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_4f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression_5f)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+
+        mobject = math_object(expression, sign_flip_partial_credit=True,
+                              sign_flip_partial_credit_percent=90)
+        
+        compare=mobject.compare_with_expression(expression_1f)
+        self.assertEqual(compare['fraction_equal'],0.9)
+        self.assertEqual(compare['n_sign_flips'],1)
+        compare=mobject.compare_with_expression(expression_2f)
+        self.assertEqual(compare['fraction_equal'],0.9**2)
+        self.assertEqual(compare['n_sign_flips'],2)
+        compare=mobject.compare_with_expression(expression_3f)
+        self.assertEqual(compare['fraction_equal'],0.9**3)
+        self.assertEqual(compare['n_sign_flips'],3)
+        compare=mobject.compare_with_expression(expression_4f)
+        self.assertEqual(compare['fraction_equal'],0.9**4)
+        self.assertEqual(compare['n_sign_flips'],4)
+        compare=mobject.compare_with_expression(expression_5f)
+        self.assertEqual(compare['fraction_equal'],0.9**5)
+        self.assertEqual(compare['n_sign_flips'],5)
+        
+        
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
         expression = 1/x + 1/y
