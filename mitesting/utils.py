@@ -1817,13 +1817,17 @@ def round_and_int(number, ndigits=0):
 
 
 def find_equality_with_sign_errors(expr_ref, expr):
-    return find_equality_with_manipulations(expr_ref, expr, flip_sign)
+    from sympy import Pow
+    arg_exclusions = [(Pow, 1)]
+    return find_equality_with_manipulations(expr_ref, expr, flip_sign,
+                                            arg_exclusions=arg_exclusions)
 
 
 def flip_sign(x):
     return -x
 
-def find_equality_with_manipulations(expr_ref, expr, F):
+def find_equality_with_manipulations(expr_ref, expr, F,
+                                     arg_exclusions=[]):
 
     """
     Attempts to determine that expr would be equal to expr_ref
@@ -1839,6 +1843,12 @@ def find_equality_with_manipulations(expr_ref, expr, F):
     then the attempt to find equality is deemed to have failed.
 
     The total number of applications of F to achieve equality is tracked.
+    
+    arg_exclusions is a list of tuples, 
+    where the first component is a class and the remaining are indices
+    If an expression is an instace of that class, then the arguments 
+    listed by the indices will not be manipulated.  
+    Those arguments must match exactly for equality to be reached.
     
     returns:
     - success: if found altered version of expr that matches expr_ref
@@ -1881,7 +1891,9 @@ def find_equality_with_manipulations(expr_ref, expr, F):
             return {'success': False, 'num_applications': num_applications}
         
         for i in range(len(expr)):
-            results=find_equality_with_manipulations(expr_ref[i], expr[i], F)
+            results=find_equality_with_manipulations(
+                expr_ref[i], expr[i], F,
+                arg_exclusions=arg_exclusions)
             num_applications += results["num_applications"]
             if not results["success"]:
                 return {'success': False, 'num_applications': num_applications }
@@ -1894,7 +1906,9 @@ def find_equality_with_manipulations(expr_ref, expr, F):
             return {'success': False, 'num_applications': num_applications}
         
         for i in range(len(expr)):
-            results=find_equality_with_manipulations(expr_ref[i], expr[i], F)
+            results=find_equality_with_manipulations(
+                expr_ref[i], expr[i], F,
+                arg_exclusions=arg_exclusions)
             num_applications += results["num_applications"]
             if not results["success"]:
                 return {'success': False, 'num_applications': num_applications }
@@ -1942,6 +1956,15 @@ def find_equality_with_manipulations(expr_ref, expr, F):
             return {'success': False, 'num_applications': num_applications}
 
 
+    # check if any arguments are excluded from manipulation
+    # If so, then these arguments must match exactly
+    for exclusion in arg_exclusions:
+        if isinstance(expr_ref, exclusion[0]):
+            for ind in exclusion[1:]:
+                if expr_ref_args[ind] != expr_args[ind]:
+                    return {'success': False,
+                            'num_applications': num_applications}
+        
     # If expression is an Add or Mul, then will accept equality in any order.
     # (Don't check if commutative, so this algorithm would break any
     # non-commutative structure.)
@@ -1952,12 +1975,12 @@ def find_equality_with_manipulations(expr_ref, expr, F):
     except:
         pass
 
-
     # if arguments are ordered, then must find equality for arguments in order
     if order_matters:
         for i in range(len(expr_args)):
-            results=find_equality_with_manipulations(expr_ref_args[i],
-                                                      expr_args[i], F)
+            results=find_equality_with_manipulations(
+                expr_ref_args[i], expr_args[i], F,
+                arg_exclusions=arg_exclusions)
             num_applications += results["num_applications"]
             if not results["success"]:
                 return {'success': False, 'num_applications': num_applications }
@@ -1973,7 +1996,9 @@ def find_equality_with_manipulations(expr_ref, expr, F):
         for expr1 in expr_ref_args:
             for (i, expr2) in enumerate(expr_args):
                 if i not in indices_used:
-                    results=find_equality_with_manipulations(expr1, expr2, F)
+                    results=find_equality_with_manipulations(
+                        expr1, expr2, F,
+                        arg_exclusions=arg_exclusions)
                     if results["success"]:
                         indices_used.append(i)
                         n_matches +=1

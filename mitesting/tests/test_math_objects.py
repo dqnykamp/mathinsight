@@ -641,6 +641,47 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(compare['n_sign_flips'],5)
         
         
+    def test_sign_flip_partial_credit_no_power(self):
+        from mitesting.sympy_customized import parse_expr
+        expression = parse_expr("50/(3z+7)^2")
+        expression2 = parse_expr("50/(3z-7)^2")
+        expression3 = parse_expr("50/(3z+7)^(-2)")
+        expression4 = parse_expr("50/(3z-7)^(-2)")
+        expression5 = parse_expr("-50/(3z-7)^2")
+
+        mobject = math_object(expression, normalize_on_compare=True)
+
+        compare=mobject.compare_with_expression(expression2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression3)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression4)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression5)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+
+        mobject = math_object(expression, sign_flip_partial_credit=True,
+                              sign_flip_partial_credit_percent=80,
+                              normalize_on_compare=True)
+
+        compare=mobject.compare_with_expression(expression2)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['n_sign_flips'],1)
+        compare=mobject.compare_with_expression(expression3)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression4)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_flips'],0)
+        compare=mobject.compare_with_expression(expression5)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_flips'],2)
+
+        
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
         expression = 1/x + 1/y
