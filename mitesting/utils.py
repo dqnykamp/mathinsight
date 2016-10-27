@@ -1822,8 +1822,7 @@ def find_equality_with_sign_errors(expr_ref, expr):
     return find_equality_with_manipulations(expr_ref, expr, flip_sign,
                                             arg_exclusions=arg_exclusions)
 
-
-def flip_sign(x):
+def flip_sign(x,y):
     minus_x = -x
     
     # for some reason, if x is a product starting with -1,
@@ -1833,7 +1832,40 @@ def flip_sign(x):
         minus_x = Mul(*minus_x.args[1:])
     return minus_x
 
-def find_equality_with_manipulations(expr_ref, expr, F,
+
+def find_equality_with_constant_factor_term_errors(expr_ref, expr):
+    from sympy import Pow
+    arg_exclusions = [(Pow, 1)]
+    return find_equality_with_manipulations(expr_ref, expr,
+                                            constant_factor_term_errors,
+                                            arg_exclusions=arg_exclusions)
+
+def constant_factor_term_errors(expr_ref, expr):
+
+    if (expr_ref - expr).is_number:
+        return {'success': True, 'constant_term_errors': 1}
+
+    ratio = expr/expr_ref
+
+    try:
+        raio= ratio.expand()
+    except (AttributeError, TypeError):
+        pass
+    try:
+        if ratio.is_commutative and not ratio.is_Relational:
+            ratio=ratio.ratsimp().expand()
+    except (AttributeError,PolynomialError,UnicodeEncodeError, TypeError):
+        pass
+
+    if ratio != 0 and ratio.is_finite and ratio.is_number:
+        if ratio==-1:
+            return {'success': True, 'sign_errors': 1}
+        return {'success': True, 'constant_factor_errors': 1}
+
+    return {'success': False}
+
+
+def find_equality_with_manipulations(expr_ref, expr, F, 
                                      arg_exclusions=[]):
 
     """
@@ -1868,7 +1900,7 @@ def find_equality_with_manipulations(expr_ref, expr, F,
 
     # check for equality after single application of F
     try:
-        F_expr=F(expr)
+        F_expr=F(expr, expr_ref)
     except:
         F_expr=expr
         pass
