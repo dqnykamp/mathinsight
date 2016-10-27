@@ -682,6 +682,27 @@ class MathObjectTests(SimpleTestCase):
         self.assertEqual(compare['n_sign_flips'],2)
 
         
+    def test_sign_flip_partial_credit_minus_one(self):
+        t = Symbol('t')
+        from mitesting.user_commands import exp
+        e1=t**6.0*exp(-1.0*t)
+        e2=-1.0*t**6.0*exp(-1.0*t)
+        
+        mobject = math_object(e1, sign_flip_partial_credit=True,
+                              sign_flip_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['n_sign_flips'],1)
+
+        mobject = math_object(e2, sign_flip_partial_credit=True,
+                              sign_flip_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e1)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['n_sign_flips'],1)
+        
+        
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
         expression = 1/x + 1/y

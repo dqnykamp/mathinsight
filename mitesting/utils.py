@@ -1824,7 +1824,14 @@ def find_equality_with_sign_errors(expr_ref, expr):
 
 
 def flip_sign(x):
-    return -x
+    minus_x = -x
+    
+    # for some reason, if x is a product starting with -1,
+    # -x keeps the factor 1 at the beginning
+    from sympy import Mul
+    if minus_x.is_Mul and minus_x.args[0]==1:
+        minus_x = Mul(*minus_x.args[1:])
+    return minus_x
 
 def find_equality_with_manipulations(expr_ref, expr, F,
                                      arg_exclusions=[]):
