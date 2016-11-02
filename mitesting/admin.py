@@ -64,7 +64,13 @@ class QuestionAnswerInline(admin.TabularInline):
         if db_field.name == 'round_partial_credit_percent':
             field.widget.attrs['size'] = 3
             del field.widget.attrs['class']
-        if db_field.name == 'sign_flip_partial_credit_percent':
+        if db_field.name == 'sign_error_partial_credit_percent':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
+        if db_field.name == 'constant_term_error_partial_credit_percent':
+            field.widget.attrs['size'] = 3
+            del field.widget.attrs['class']
+        if db_field.name == 'constant_factor_error_partial_credit_percent':
             field.widget.attrs['size'] = 3
             del field.widget.attrs['class']
         return field

@@ -568,7 +568,7 @@ class MathObjectTests(SimpleTestCase):
 
 
 
-    def test_sign_flip_partial_credit(self):
+    def test_sign_error_partial_credit(self):
         from mitesting.sympy_customized import parse_expr
         from sympy import exp, log
         local_dict={'exp': exp, 'log': log}
@@ -589,59 +589,59 @@ class MathObjectTests(SimpleTestCase):
 
         compare=mobject.compare_with_expression(expression_1f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression_2f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression_3f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression_4f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression_5f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
 
-        mobject = math_object(expression, sign_flip_partial_credit=True)
+        mobject = math_object(expression, sign_error_partial_credit=True)
 
         compare=mobject.compare_with_expression(expression_1f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],1)
         compare=mobject.compare_with_expression(expression_2f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],2)
         compare=mobject.compare_with_expression(expression_3f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],3)
         compare=mobject.compare_with_expression(expression_4f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],4)
         compare=mobject.compare_with_expression(expression_5f)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],5)
 
-        mobject = math_object(expression, sign_flip_partial_credit=True,
-                              sign_flip_partial_credit_percent=90)
+        mobject = math_object(expression, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=90)
         
         compare=mobject.compare_with_expression(expression_1f)
         self.assertEqual(compare['fraction_equal'],0.9)
-        self.assertEqual(compare['n_sign_flips'],1)
+        self.assertEqual(compare['n_sign_errors'],1)
         compare=mobject.compare_with_expression(expression_2f)
         self.assertEqual(compare['fraction_equal'],0.9**2)
-        self.assertEqual(compare['n_sign_flips'],2)
+        self.assertEqual(compare['n_sign_errors'],2)
         compare=mobject.compare_with_expression(expression_3f)
         self.assertEqual(compare['fraction_equal'],0.9**3)
-        self.assertEqual(compare['n_sign_flips'],3)
+        self.assertEqual(compare['n_sign_errors'],3)
         compare=mobject.compare_with_expression(expression_4f)
         self.assertEqual(compare['fraction_equal'],0.9**4)
-        self.assertEqual(compare['n_sign_flips'],4)
+        self.assertEqual(compare['n_sign_errors'],4)
         compare=mobject.compare_with_expression(expression_5f)
         self.assertEqual(compare['fraction_equal'],0.9**5)
-        self.assertEqual(compare['n_sign_flips'],5)
+        self.assertEqual(compare['n_sign_errors'],5)
         
         
-    def test_sign_flip_partial_credit_no_power(self):
+    def test_sign_error_partial_credit_no_power(self):
         from mitesting.sympy_customized import parse_expr
         expression = parse_expr("50/(3z+7)^2")
         expression2 = parse_expr("50/(3z-7)^2")
@@ -653,56 +653,409 @@ class MathObjectTests(SimpleTestCase):
 
         compare=mobject.compare_with_expression(expression2)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression3)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression4)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression5)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
 
-        mobject = math_object(expression, sign_flip_partial_credit=True,
-                              sign_flip_partial_credit_percent=80,
+        mobject = math_object(expression, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
                               normalize_on_compare=True)
 
         compare=mobject.compare_with_expression(expression2)
         self.assertEqual(compare['fraction_equal'],0.8)
-        self.assertEqual(compare['n_sign_flips'],1)
+        self.assertEqual(compare['n_sign_errors'],1)
         compare=mobject.compare_with_expression(expression3)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression4)
         self.assertEqual(compare['fraction_equal'],0)
-        self.assertEqual(compare['n_sign_flips'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
         compare=mobject.compare_with_expression(expression5)
         self.assertEqual(compare['fraction_equal'],0.8**2)
-        self.assertEqual(compare['n_sign_flips'],2)
+        self.assertEqual(compare['n_sign_errors'],2)
 
         
-    def test_sign_flip_partial_credit_minus_one(self):
+    def test_sign_error_partial_credit_minus_one(self):
         t = Symbol('t')
         from mitesting.user_commands import exp
         e1=t**6.0*exp(-1.0*t)
         e2=-1.0*t**6.0*exp(-1.0*t)
         
-        mobject = math_object(e1, sign_flip_partial_credit=True,
-                              sign_flip_partial_credit_percent=80,
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
                               normalize_on_compare=True)
         compare=mobject.compare_with_expression(e2)
         self.assertEqual(compare['fraction_equal'],0.8)
-        self.assertEqual(compare['n_sign_flips'],1)
+        self.assertEqual(compare['n_sign_errors'],1)
 
-        mobject = math_object(e2, sign_flip_partial_credit=True,
-                              sign_flip_partial_credit_percent=80,
+        mobject = math_object(e2, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
                               normalize_on_compare=True)
         compare=mobject.compare_with_expression(e1)
         self.assertEqual(compare['fraction_equal'],0.8)
-        self.assertEqual(compare['n_sign_flips'],1)
+        self.assertEqual(compare['n_sign_errors'],1)
+
+        
+    def test_sign_error_partial_credit_fix_bug(self):
+        from mitesting.sympy_customized import parse_expr
+        e1 = parse_expr("a*x+b*y")
+        e2 = parse_expr("a*x+b*y/2")
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+
+        
+    def test_sign_error_partial_credit_not_sure_how_to_fix(self):
+        from mitesting.sympy_customized import parse_expr
+        
+        e1 = parse_expr("5 - (x+1)*(x-y)")
+        # gets two sign errors rather than one, due to
+        # sign getting absorbed into first factor in this case
+        e2 = parse_expr("- (x+1)*(x+y)+ 5")
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+
+        # due to this "bug", this passes the test
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+
+        # should really be this:
+        #self.assertEqual(compare['fraction_equal'],0.8)
+        #self.assertEqual(compare['n_sign_errors'],1)
+
+        
+    def test_sign_error_partial_credit_group_terms(self):
+        t = Symbol('t')
+        from mitesting.user_commands import exp
+        e1=exp(-7.0*t) + 3*t**2 - 2*t + 5
+        e2=-exp(-7.0*t) - 3*t**2 + 2*t - 5
+        e3=-exp(-7.0*t) - 3*t**2 + 2*t + 5
+        e4=-exp(7.0*t) - 3*t**2 + 2*t - 5
+        
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8)
+        self.assertEqual(compare['n_sign_errors'],1)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+
+
+    def test_sign_error_partial_credit_tuples(self):
+
+        t = Symbol('t')
+        x = Symbol('x')
+        
+        from mitesting.user_commands import exp, log
+
+        e1= Tuple(exp(-7.0*t), 3*t**2/log(x+t), 2*t + 5/(x-1))
+        e2= Tuple(exp(7.0*t), 3*t**2/log(x+t), 2*t + 5/(x+1))
+        e3= Tuple(0, 3*t**2/log(x+t), 2*t + 5/(x-1))
+        e4= Tuple(0, -3*t**2/log(x-t), 2*t - 5/(x-1))
+        e5= Tuple(3*t**2/log(x+t), 2*t + 5/(x-1), exp(-7.0*t))
+        e6= Tuple(-3*t**2/log(-x-t), -2*t + 5/(x-1), exp(-7.0*t))
+        e7= Tuple(3*t**2/log(x+t), 2*t + 5/(x-1), 0)
+        e8= Tuple(-3*t**2/log(-x-t), -2*t + 5/(x-1), 0)
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e5)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e6)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e7)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e8)
+        self.assertEqual(compare['fraction_equal'],0)
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True,
+                              match_partial_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],2/3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],2/3*0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e5)
+        self.assertEqual(compare['fraction_equal'],2/3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e6)
+        self.assertEqual(compare['fraction_equal'],2/3*0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e7)
+        self.assertEqual(compare['fraction_equal'],2/3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e8)
+        self.assertEqual(compare['fraction_equal'],2/3*0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True,
+                              tuple_is_unordered=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e5)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e6)
+        self.assertEqual(compare['fraction_equal'],0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e7)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e8)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True,
+                              match_partial_on_compare=True,
+                              tuple_is_unordered=True)
+
+
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],2/3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],2/3*0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e5)
+        self.assertEqual(compare['fraction_equal'],1)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e6)
+        self.assertEqual(compare['fraction_equal'],0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e7)
+        self.assertEqual(compare['fraction_equal'],2/3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e8)
+        self.assertEqual(compare['fraction_equal'],2/3*0.8**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        
+
+        e1=Tuple(t**2/(x+t), 2*x, 3*t*x, 4*x-t, 5*t-x, 6*x**2, 7*x/t)
+        # two possible 4 element subsequences that match: either 4/7 correct
+        e2=Tuple(4*x-t, 5*t-x, t**2/(x+t), 2*x, 6*x**2, 7*x/t, 3*t*x)
+        # one subsequence has 3 sign errors, the other 2 -- should find 2 errors
+        e3=Tuple(4*x-t, 5*t+x, t**2/(x+t), 2*x, -6*x**2, -7*x/t, 3*t*x)
+        # one subsequence has 3 sign errors, the other 4 -- should find 3 errors
+        e4=Tuple(4*x-t, 5*t+x, -t**2/(x-t), 2*x, -6*x**2, -7*x/t, 3*t*x)
+        # add different error to one with 3 sign errors -- should find 4 errors
+        e5=Tuple(4*x-t, 5*t+x**2, -t**2/(x-t), 2*x, -6*x**2, -7*x/t, 3*t*x)
+
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=90,
+                              normalize_on_compare=True,
+                              match_partial_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],4/7)
+        self.assertEqual(compare['n_sign_errors'],0)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],4/7*0.9**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],4/7*0.9**3)
+        self.assertEqual(compare['n_sign_errors'],3)
+        compare=mobject.compare_with_expression(e5)
+        self.assertEqual(compare['fraction_equal'],4/7*0.9**4)
+        self.assertEqual(compare['n_sign_errors'],4)
+
+
+        # for comparing e1 to e3, if increase penalty to 20%
+        # then should instead find the subsequence with only three terms
+        # but no sign errors (since 3/7 > 4/7*0.8**2).
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True,
+                              match_partial_on_compare=True)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],3/7)
+        self.assertEqual(compare['n_sign_errors'],0)
+
+        
+    def test_sign_error_partial_credit_matrix(self):
+        from sympy import ImmutableMatrix
+        
+        t = Symbol('t')
+        from mitesting.user_commands import exp
+        e1=ImmutableMatrix([[t**2, exp(t)],[1/(t-1), (t**2-3*t)/(2*t-t**5)]])
+        e2=ImmutableMatrix([[t**2, exp(-t)],[1/(t+1), (t**2-3*t)/(2*t-t**5)]])
+        e3=ImmutableMatrix([[t**2, exp(-t)],[1/(t**2+1), (t**2-3*t)/(2*t-t**5)]])
+
+        
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0)
+        self.assertEqual(compare['n_sign_errors'],0)
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=80,
+                              normalize_on_compare=True,
+                              match_partial_on_compare=True)
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8**2)
+        self.assertEqual(compare['n_sign_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0.75*0.8)
+        self.assertEqual(compare['n_sign_errors'],1)
+
         
         
+    def test_constant_term_factor_error_partial_credit(self):
+        from mitesting.sympy_customized import parse_expr
+        from sympy import exp, log
+        local_dict={'exp': exp, 'log': log}
+        e1 = parse_expr("exp((3x-1)*(3y-2x))log(1/(z-1))-log(3x)+1",
+                        local_dict=local_dict)
+        # 1 each of sign error, constant term error, constant factor error
+        e2 = parse_expr("-5*exp((3x-1)*(3y-2x-1))log(1/(z-1))-log(-3x)+1",
+                        local_dict=local_dict)
+        # 1 sign error, 2 constant term errors, 3 constant factor errors
+        e3 = parse_expr("exp((3x-1)*(30y-20x))log(1/(z/7+1))-log(2x-5)-2",
+                                local_dict=local_dict)
+        # 1 sign error, 2 constant term errors, 3 constant factor errors
+        # but where constant term errors could be constant factor errors
+        e4 = parse_expr("-exp((3x-1)*(30y-20x))log(1/(z/7-4))-log(2x)-2",
+                                local_dict=local_dict)
+
+
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=90,
+                              constant_term_error_partial_credit=True,
+                              constant_term_error_partial_credit_percent=80,
+                              constant_factor_error_partial_credit=True,
+                              constant_factor_error_partial_credit_percent=70
+        )
+
+        
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.9*0.8*0.7)
+        self.assertEqual(compare['n_sign_errors'],1)
+        self.assertEqual(compare['n_constant_term_errors'],1)
+        self.assertEqual(compare['n_constant_factor_errors'],1)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0.9*0.8**2*0.7**3)
+        self.assertEqual(compare['n_sign_errors'],1)
+        self.assertEqual(compare['n_constant_term_errors'],2)
+        self.assertEqual(compare['n_constant_factor_errors'],3)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0.9*0.8**2*0.7**3)
+        self.assertEqual(compare['n_sign_errors'],1)
+        self.assertEqual(compare['n_constant_term_errors'],2)
+        self.assertEqual(compare['n_constant_factor_errors'],3)
+
+        # without catching sign errors,
+        # sign errors become constant term or factor errors
+        mobject = math_object(e1,
+                              constant_term_error_partial_credit=True,
+                              constant_term_error_partial_credit_percent=80,
+                              constant_factor_error_partial_credit=True,
+                              constant_factor_error_partial_credit_percent=70
+        )
+
+        
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.8*0.7**2)
+        self.assertEqual(compare['n_sign_errors'],0)
+        self.assertEqual(compare['n_constant_term_errors'],1)
+        self.assertEqual(compare['n_constant_factor_errors'],2)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0.8**3*0.7**3)
+        self.assertEqual(compare['n_sign_errors'],0)
+        self.assertEqual(compare['n_constant_term_errors'],3)
+        self.assertEqual(compare['n_constant_factor_errors'],3)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0.8**2*0.7**4)
+        self.assertEqual(compare['n_sign_errors'],0)
+        self.assertEqual(compare['n_constant_term_errors'],2)
+        self.assertEqual(compare['n_constant_factor_errors'],4)
+
+        # when don't catch constant term errors, some becomes
+        # constant factor errors
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=90,
+                              constant_factor_error_partial_credit=True,
+                              constant_factor_error_partial_credit_percent=70
+        )
+
+        
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e3)
+        self.assertEqual(compare['fraction_equal'],0)
+        compare=mobject.compare_with_expression(e4)
+        self.assertEqual(compare['fraction_equal'],0.9*0.7**5)
+        self.assertEqual(compare['n_sign_errors'],1)
+        self.assertEqual(compare['n_constant_term_errors'],0)
+        self.assertEqual(compare['n_constant_factor_errors'],5)
+
+
+        e1=parse_expr("a*x+b*y")
+        e2=parse_expr("-a*x+b(y/2-1)+1")
+        mobject = math_object(e1, sign_error_partial_credit=True,
+                              sign_error_partial_credit_percent=90,
+                              constant_term_error_partial_credit=True,
+                              constant_term_error_partial_credit_percent=80,
+                              constant_factor_error_partial_credit=True,
+                              constant_factor_error_partial_credit_percent=70,
+                              normalize_on_compare=True
+        )
+        
+        compare=mobject.compare_with_expression(e2)
+        self.assertEqual(compare['fraction_equal'],0.9*0.8**2*0.7)
+        self.assertEqual(compare['n_sign_errors'],1)
+        self.assertEqual(compare['n_constant_term_errors'],2)
+        self.assertEqual(compare['n_constant_factor_errors'],1)
+        
+
     def test_normalize_on_compare(self):
         from sympy.abc import x,y
         expression = 1/x + 1/y

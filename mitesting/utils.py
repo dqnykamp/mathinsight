@@ -1816,57 +1816,277 @@ def round_and_int(number, ndigits=0):
     return number
 
 
-def find_equality_with_sign_errors(expr_ref, expr):
+def find_equality_with_sign_errors(expr1, expr2):
     from sympy import Pow
     arg_exclusions = [(Pow, 1)]
-    return find_equality_with_manipulations(expr_ref, expr, flip_sign,
-                                            arg_exclusions=arg_exclusions)
+    return find_equality_with_manipulations(
+        expr1, expr2,  constant_factor_term_errors,
+        arg_exclusions=arg_exclusions,
+        catch_constant_term_errors=False, catch_constant_factor_errors=False)
 
-def flip_sign(x,y):
-    minus_x = -x
+
+def find_equality_with_errors(
+        expr1, expr2,
+        check_sign_errors=True,
+        check_constant_term_errors=True,
+        check_constant_factor_errors=True):
     
-    # for some reason, if x is a product starting with -1,
-    # -x keeps the factor 1 at the beginning
-    from sympy import Mul
-    if minus_x.is_Mul and minus_x.args[0]==1:
-        minus_x = Mul(*minus_x.args[1:])
-    return minus_x
-
-
-def find_equality_with_constant_factor_term_errors(expr_ref, expr):
     from sympy import Pow
     arg_exclusions = [(Pow, 1)]
-    return find_equality_with_manipulations(expr_ref, expr,
-                                            constant_factor_term_errors,
-                                            arg_exclusions=arg_exclusions)
+    return find_equality_with_manipulations(
+        expr1, expr2,
+        constant_factor_term_errors,
+        arg_exclusions=arg_exclusions,
+        catch_sign_errors=check_sign_errors,
+        catch_constant_term_errors=check_constant_term_errors,
+        catch_constant_factor_errors=check_constant_factor_errors,
+    )
 
-def constant_factor_term_errors(expr_ref, expr):
+def constant_factor_term_errors(expr1, expr2, catch_sign_errors=True,
+                                catch_constant_term_errors=True,
+                                catch_constant_factor_errors=True):
 
-    if (expr_ref - expr).is_number:
-        return {'success': True, 'constant_term_errors': 1}
+    def remove_constant_args(expr):
+        """
+        If any arguments of expr are numbers, remove them.
+        Or, if expr is a number, remove that number, leaving zero
+        
+        Return dictionary with items
+        - removed_constant: True if found constant arguments to remove
+        If removed constant, the dictionary also contains items:
+        - expr_removed: expression with any constant argument
+        - expr_remaining: expression after constant arguments were removed
+        """
 
-    ratio = expr/expr_ref
+        try:
+            if expr.is_number:
+                from sympy import S
+                return {'removed_constant': True,
+                        'expr_removed': expr,
+                        'expr_remaining': S.Zero }
+        except AttributeError:
+            pass
+            
+        constant_indices = []
+        for (i, term) in enumerate(expr.args):
+            try:
+                if term.is_number:
+                    constant_indices.append(i)
+            except AttributeError:
+                pass
 
-    try:
-        raio= ratio.expand()
-    except (AttributeError, TypeError):
-        pass
-    try:
-        if ratio.is_commutative and not ratio.is_Relational:
-            ratio=ratio.ratsimp().expand()
-    except (AttributeError,PolynomialError,UnicodeEncodeError, TypeError):
-        pass
+        if constant_indices:
+            removed_args = []
+            remaining_args = []
+            for i in range(len(expr.args)):
+                if i in constant_indices:
+                    removed_args.append(expr.args[i])
+                else:
+                    remaining_args.append(expr.args[i])
 
-    if ratio != 0 and ratio.is_finite and ratio.is_number:
-        if ratio==-1:
-            return {'success': True, 'sign_errors': 1}
-        return {'success': True, 'constant_factor_errors': 1}
+            expr_removed = expr.__class__(*removed_args)
+            expr_remaining = expr.__class__(*remaining_args)
 
-    return {'success': False}
+            return {'removed_constant': True,
+                    'expr_removed': expr_removed,
+                    'expr_remaining': expr_remaining }
+
+        return {'removed_constant': False }
+
+    constant_term_errors = 0
+    constant_factor_errors = 0
+    sign_errors = 0
+
+    if expr1.is_number and expr2.is_number:
+        if expr1==-expr2 and catch_sign_errors:
+            return {'success': True,
+                    'sign_errors': 1,
+                    'expr1': expr1, 'expr2': -expr2}
+        elif catch_constant_term_errors:
+            return {'success': True, 'constant_term_errors': 1,
+                    'expr1': 0, 'expr2': 0 }
+        elif catch_constant_factor_errors:
+            return {'success': True, 'constant_factor_errors': 1,
+                    'expr1': 0, 'expr2': 0 }
+        else:
+            return {'success': False, 'expr1': expr1, 'expr2': expr2}
 
 
-def find_equality_with_manipulations(expr_ref, expr, F, 
-                                     arg_exclusions=[]):
+    # If multiple terms, try to see if different by only a constant factor.
+    # After taking off the constants from each term, sort terms
+    # based on the remaining expressions.  Then, check if the ratio
+    # between matching terms is constant across terms.
+    # (If skip this step, constant factors would eventually be found
+    # using the logic for factors, but would counted as multiple errors.)
+    from sympy import oo, Abs
+    
+    if expr1.is_Add and expr2.is_Add and len(expr1.args)==len(expr2.args) \
+       and (catch_sign_errors or catch_constant_factor_errors):
+        separated_terms1 = []
+        for arg in expr1.args:
+            if arg.is_number:
+                separated_terms1.append((1,arg))
+            elif arg.is_Mul:
+                results = remove_constant_args(arg)
+                if results["removed_constant"]:
+                    separated_terms1.append((results["expr_remaining"],
+                                             results["expr_removed"]))
+                else:
+                    separated_terms1.append((arg,1))
+            else:
+                separated_terms1.append((arg,1))
+
+        separated_terms2 = []
+        for arg in expr2.args:
+            if arg.is_number:
+                separated_terms2.append((1,arg))
+            elif arg.is_Mul:
+                results = remove_constant_args(arg)
+                if results["removed_constant"]:
+                    separated_terms2.append((results["expr_remaining"],
+                                             results["expr_removed"]))
+                else:
+                    separated_terms2.append((arg, 1))
+            else:
+                separated_terms2.append((arg, 1))
+
+        # sort terms based on the remaining expression
+        from sympy.core.compatibility import default_sort_key
+        separated_terms1.sort(key=default_sort_key)
+        separated_terms2.sort(key=default_sort_key)
+        
+        # check if factors are the same multiple of each other
+        n_terms = len(separated_terms1)
+        factors1 = [a[1] for a in separated_terms1]
+        factors2 = [a[1] for a in separated_terms2]
+        
+        ratio = factors1[0]/factors2[0]
+        same_ratio = True
+
+        for i in range(1,n_terms):
+            if factors1[i]/factors2[i] != ratio:
+                same_ratio = False
+                break
+
+        if same_ratio:
+
+            # error only if the factors removed are not equal
+            if ratio != 1:
+                
+                # check for sign error
+                if ratio == -1 and catch_sign_errors:
+                    sign_errors += 1
+                else:
+                    constant_factor_errors += 1
+                    
+                # if caught a constant factor error that weren't supposed to
+                # then don't apply modification and undo count
+                if catch_constant_factor_errors or constant_factor_errors==0:
+                    expr2 = expr2*ratio
+                else:
+                    constant_factor_errors=0
+
+                success = expr1==expr2
+
+                if success:
+                    return {'success': True,
+                            'constant_term_errors': constant_term_errors,
+                            'constant_factor_errors': constant_factor_errors,
+                            'sign_errors': sign_errors,
+                            'expr1': expr1,
+                            'expr2': expr2}
+                
+
+    if catch_constant_term_errors:
+        # Remove any constant term in order to see if the expressions
+        # different only by a constant terms
+        removed_constant_term1 = False
+        term1_removed = 0
+        if expr1.is_Add:
+            results = remove_constant_args(expr1)
+            if results["removed_constant"]:
+                removed_constant_term1 = True
+                term1_removed = results['expr_removed']
+                expr1=results['expr_remaining']
+
+        removed_constant_term2 = False
+        term2_removed = 0
+        if expr2.is_Add:
+            results = remove_constant_args(expr2)
+            if results["removed_constant"]:
+                removed_constant_term2 = True
+                term2_removed = results['expr_removed']
+                expr2=results['expr_remaining']
+
+        # error only if the terms removed are not equal
+        if term1_removed != term2_removed:
+            if term1_removed == -term2_removed and catch_sign_errors:
+                sign_errors += 1
+            else:
+                constant_term_errors += 1
+
+        if expr1==expr2:
+            success = True
+            return {'success': success, 'sign_errors': sign_errors,
+                    'constant_term_errors': constant_term_errors,
+                    'expr1': expr1, 'expr2': expr2}
+    
+
+    if catch_constant_factor_errors or catch_sign_errors:
+        expr1new = expr1
+        expr2new = expr2
+        
+        # Remove any constant factor in order to see if the expressions
+        # different only by a constant factor or a sign
+        removed_constant_factor1 = False
+        factor1_removed = 1
+        if expr1.is_Mul:
+            results = remove_constant_args(expr1)
+            if results["removed_constant"]:
+                removed_constant_factor1 = True
+                factor1_removed = results['expr_removed']
+                expr1new=results['expr_remaining']
+
+        removed_constant_factor2 = False
+        factor2_removed = 1
+        if expr2.is_Mul:
+            results = remove_constant_args(expr2)
+            if results["removed_constant"]:
+                removed_constant_factor2 = True
+                factor2_removed = results['expr_removed']
+                expr2new=results['expr_remaining']
+
+        # error only if the factors removed are not equal
+        if factor1_removed != factor2_removed:
+            # check for sign error
+            if factor1_removed == -factor2_removed and catch_sign_errors:
+                sign_errors += 1
+            else:
+                constant_factor_errors += 1
+
+        if catch_constant_factor_errors or constant_factor_errors==0:
+            expr1=expr1new
+            expr2=expr2new
+        else:
+            constant_factor_errors=0
+            
+        success = expr1==expr2
+
+        return {'success': success,
+                'constant_term_errors': constant_term_errors,
+                'constant_factor_errors': constant_factor_errors,
+                'sign_errors': sign_errors,
+                'expr1': expr1,
+                'expr2': expr2}
+    
+    return {'success': False, 'sign_errors': sign_errors,
+            'constant_term_errors': constant_term_errors,
+            'constant_factor_errors': constant_factor_errors,
+            'expr1': expr1, 'expr2': expr2}
+
+
+def find_equality_with_manipulations(expr1, expr2, F, 
+                                     arg_exclusions=[], **kwargs):
 
     """
     Attempts to determine that expr would be equal to expr_ref
@@ -1895,64 +2115,73 @@ def find_equality_with_manipulations(expr_ref, expr, F,
     """
 
     # straight equality
-    if expr==expr_ref:
-        return {'success': True, 'num_applications': 0}
+    if expr1==expr2:
+        return {'success': True,}
 
     # check for equality after single application of F
     try:
-        F_expr=F(expr, expr_ref)
-    except:
-        F_expr=expr
-        pass
-    else:
-        if F_expr==expr_ref:
-            return {'success': True, 'num_applications': 1}
+        results=F(expr1, expr2, **kwargs)
 
-    # if classes of expressions don't match, report failure unless
-    # application of caused the classes to match, in which case
-    # we continue with the expression with F applied
-    num_applications=0
-    if expr.__class__ != expr_ref.__class__:
-        if F_expr.__class__ == expr_ref.__class__:
-            expr=F_expr
-            num_applications=1
-        else:
-            return {'success': False, 'num_applications': 0}
+    except:
+        raise
+        results = {'success': False}
+    else:
+        try:
+            expr1 = results.pop("expr1")
+        except KeyError:
+            pass
+        try:
+            expr2 = results.pop("expr2")
+        except KeyError:
+            pass
+        if results["success"] == True:
+            return results
+
+    # if classes of expressions don't match, report failure
+    if expr1.__class__ != expr2.__class__:
+        return results
 
     # for lists or tuples, number of elements must agree
     # and elements must be made to match in order
     # (Any logic for partial matches or unordered matches must
     # be implemented outside this function.)
-    if isinstance(expr, list) or isinstance(expr,tuple) \
-       or isinstance(expr, Tuple):
+    if isinstance(expr1, list) or isinstance(expr1,tuple) \
+       or isinstance(expr1, Tuple):
 
-        if len(expr) != len(expr_ref):
-            return {'success': False, 'num_applications': num_applications}
+        if len(expr1) != len(expr2):
+            return results
         
         for i in range(len(expr)):
-            results=find_equality_with_manipulations(
-                expr_ref[i], expr[i], F,
-                arg_exclusions=arg_exclusions)
-            num_applications += results["num_applications"]
-            if not results["success"]:
-                return {'success': False, 'num_applications': num_applications }
-        return {'success': True, 'num_applications': num_applications }
+            results_sub=find_equality_with_manipulations(
+                expr1[i], expr2[i], F,
+                arg_exclusions=arg_exclusions, **kwargs)
+            if not results_sub.pop("success"):
+                return results
+            for key in results_sub:
+                results[key] = results.get(key, 0) + results_sub[key]
+
+        results["success"] = True
+        return results
 
     # for matrices, shape must agree and all components must be made to match
-    if isinstance(expr,ImmutableMatrix):
+    if isinstance(expr1,ImmutableMatrix):
 
-        if expr.rows != expr_ref.rows or expr.cols != expr_ref.cols:
-            return {'success': False, 'num_applications': num_applications}
+        if expr1.rows != expr2.rows or expr1.cols != expr2.cols:
+            return results
         
-        for i in range(len(expr)):
-            results=find_equality_with_manipulations(
-                expr_ref[i], expr[i], F,
-                arg_exclusions=arg_exclusions)
-            num_applications += results["num_applications"]
-            if not results["success"]:
-                return {'success': False, 'num_applications': num_applications }
-        return {'success': True, 'num_applications': num_applications }
+        for i in range(len(expr1)):
+            results_sub=find_equality_with_manipulations(
+                expr1[i], expr2[i], F,
+                arg_exclusions=arg_exclusions, **kwargs)
+            if not results_sub.pop("success"):
+                return results
+            for key in results_sub:
+                results[key] = results.get(key, 0) + results_sub[key]
+        
+        results["success"] = True
+        return results
 
+    
 
     # Any further manipulations are applied only if expressions
     # are in standard sympy for with an args attribute.
@@ -1960,93 +2189,80 @@ def find_equality_with_manipulations(expr_ref, expr, F,
     # (meaning the func attribute must match)
     # finding equality is just finding equality for the arguments
     try:
-        expr_args = expr.args
-        expr_ref_args = expr_ref.args
+        expr1_args = expr1.args
+        expr2_args = expr2.args
     except AttributeError:
-        return {'success': False, 'num_applications': num_applications}
+        return results
 
     # if no arguments or we just have a property,
     # there are no more manipulations possible, so equality cannot be found
-    if not expr_args or isinstance(expr_args, property):
-        return {'success': False, 'num_applications': num_applications}
+    if not expr1_args or isinstance(expr1_args, property):
+        return results
 
 
     # If the number of arguments does not agree, then equality cannot be found.
-    # In this case, check if equality might be possible if using
-    # the transformed expression after application of F
-    if len(expr_args) != len(expr_ref_args):
-
-        # using transformed expression not possible if class doesn't match
-        if F_expr.__class__ != expr_ref.__class__:
-            return {'success': False, 'num_applications': num_applications}
-
-        # try replacing arguments of expression with those from the
-        # tranformed expression
-        try:
-            expr_args = F_expr.args
-        except AttributeError:
-            return {'success': False, 'num_applications': num_applications}
-
-        # the transformed expression might be a possibility
-        # if number of arguments matches
-        if len(expr_args) == len(expr_ref_args):
-            num_applications += 1
-        else:
-            return {'success': False, 'num_applications': num_applications}
-
+    if len(expr1_args) != len(expr2_args):
+        return results
 
     # check if any arguments are excluded from manipulation
     # If so, then these arguments must match exactly
+    inds_to_exclude = set()
     for exclusion in arg_exclusions:
-        if isinstance(expr_ref, exclusion[0]):
+        if isinstance(expr1, exclusion[0]):
             for ind in exclusion[1:]:
-                if expr_ref_args[ind] != expr_args[ind]:
-                    return {'success': False,
-                            'num_applications': num_applications}
+                if expr1_args[ind] != expr2_args[ind]:
+                    return results
+                else:
+                    inds_to_exclude.add(ind)
+                    
         
     # If expression is an Add or Mul, then will accept equality in any order.
     # (Don't check if commutative, so this algorithm would break any
     # non-commutative structure.)
     order_matters=True
     try:
-        if expr_ref.is_Add or expr_ref.is_Mul:
+        if expr1.is_Add or expr1.is_Mul:
             order_matters = False
     except:
         pass
 
     # if arguments are ordered, then must find equality for arguments in order
     if order_matters:
-        for i in range(len(expr_args)):
-            results=find_equality_with_manipulations(
-                expr_ref_args[i], expr_args[i], F,
-                arg_exclusions=arg_exclusions)
-            num_applications += results["num_applications"]
-            if not results["success"]:
-                return {'success': False, 'num_applications': num_applications }
-        return {'success': True, 'num_applications': num_applications }
+        for i in range(len(expr1_args)):
+            if i not in inds_to_exclude:
+                results_sub=find_equality_with_manipulations(
+                    expr1_args[i], expr2_args[i], F,
+                    arg_exclusions=arg_exclusions, **kwargs)
+                if not results_sub.pop("success"):
+                    return results
+                for key in results_sub:
+                    results[key] = results.get(key, 0) + results_sub[key]
 
+        results["success"] = True
+        return results
+                
     # if arguments are not order, look for equality in argument with any order
     else:
-        # loop through all elements of expr_ref_args
-        # for each element, look for a matching element of expr_args
+        # loop through all elements of expr2_args
+        # for each element, look for a matching element of expr1_args
         # that has not been used yet.
-        indices_used=[]
+        indices_used=inds_to_exclude.copy()
         n_matches=0
-        for expr1 in expr_ref_args:
-            for (i, expr2) in enumerate(expr_args):
-                if i not in indices_used:
-                    results=find_equality_with_manipulations(
-                        expr1, expr2, F,
-                        arg_exclusions=arg_exclusions)
-                    if results["success"]:
-                        indices_used.append(i)
+        for (i1,e1) in enumerate(expr1_args):
+            if i1 in inds_to_exclude:
+                continue
+            for (i2, e2) in enumerate(expr2_args):
+                if i2 not in indices_used:
+                    results_sub=find_equality_with_manipulations(
+                        e1, e2, F,
+                        arg_exclusions=arg_exclusions, **kwargs)
+                    if results_sub.pop("success"):
+                        indices_used.add(i2)
                         n_matches +=1
-                        num_applications+=results["num_applications"]
+                        for key in results_sub:
+                            results[key] = results.get(key, 0)+results_sub[key]
                         break
 
-        if len(expr_args)==n_matches:
-            return {'success': True, 'num_applications': num_applications }
-        else:
-            return {'success': False, 'num_applications': num_applications }
-
-
+        if len(expr1_args)-len(inds_to_exclude)==n_matches:
+            results["success"] = True
+        return results

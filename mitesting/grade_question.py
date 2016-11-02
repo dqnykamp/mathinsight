@@ -153,7 +153,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
         round_level_required = None
         round_level_used = None
         round_absolute = None
-        n_sign_flips = 0
+        n_sign_errors = 0
+        n_constant_factor_errors = 0
+        n_constant_term_errors = 0
         near_match_percent_correct = 0
         near_match_feedback=""
         answer_option_used = None
@@ -213,12 +215,28 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 round_partial_credit_percent = \
                         answer_option.round_partial_credit_percent
 
-            # determine if have partial credit for sign flips
-            sign_flip_partial_credit = answer_option.sign_flip_partial_credit
-            sign_flip_partial_credit_percent=0
-            if answer_option.sign_flip_partial_credit_percent:
-                sign_flip_partial_credit_percent = \
-                        answer_option.sign_flip_partial_credit_percent
+            # determine if have partial credit for sign errors
+            sign_error_partial_credit = answer_option.sign_error_partial_credit
+            sign_error_partial_credit_percent=0
+            if answer_option.sign_error_partial_credit_percent:
+                sign_error_partial_credit_percent = \
+                        answer_option.sign_error_partial_credit_percent
+
+            # determine if have partial credit for constant term errors
+            constant_term_error_partial_credit = \
+                    answer_option.constant_term_error_partial_credit
+            constant_term_error_partial_credit_percent=0
+            if answer_option.constant_term_error_partial_credit_percent:
+                constant_term_error_partial_credit_percent = \
+                    answer_option.constant_term_error_partial_credit_percent
+
+            # determine if have partial credit for constant factor errors
+            constant_factor_error_partial_credit = \
+                    answer_option.constant_factor_error_partial_credit
+            constant_factor_error_partial_credit_percent=0
+            if answer_option.constant_factor_error_partial_credit_percent:
+                constant_factor_error_partial_credit_percent = \
+                    answer_option.constant_factor_error_partial_credit_percent
 
             user_response_parsed=None
             
@@ -296,9 +314,17 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 round_absolute=answer_option.round_absolute,
                 round_partial_credit_digits=round_partial_credit_digits,
                 round_partial_credit_percent=round_partial_credit_percent,
-                sign_flip_partial_credit=sign_flip_partial_credit,
-                sign_flip_partial_credit_percent=
-                sign_flip_partial_credit_percent,
+                sign_error_partial_credit=sign_error_partial_credit,
+                sign_error_partial_credit_percent=
+                sign_error_partial_credit_percent,
+                constant_term_error_partial_credit=
+                constant_term_error_partial_credit,
+                constant_term_error_partial_credit_percent=
+                constant_term_error_partial_credit_percent,
+                constant_factor_error_partial_credit=
+                constant_factor_error_partial_credit,
+                constant_factor_error_partial_credit_percent=
+                constant_factor_error_partial_credit_percent,
                 normalize_on_compare=answer_option.normalize_on_compare,
                 match_partial_on_compare= 
                 answer_option.match_partial_on_compare,
@@ -379,7 +405,9 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                                   'round_level_used': 0,
                                   'round_level_required': 0,
                                   'round_absolute': False,
-                                  'n_sign_flips': 0,}
+                                  'n_sign_errors': 0,
+                                  'n_constant_term_errors': 0,
+                                  'n_constant_factor_errors': 0}
             else:
                 answer_options=[valid_answer,]
                 answer_options.extend(valid_alternates)
@@ -404,11 +432,34 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                         answer_option.percent_correct\
                         *answer_results['fraction_equal_on_normalize']
 
+            # Use feedback from this answer option if
+            # (1) percent correct increases
+            #     (it starts negative so zero increases it the first time,
+            #     allowing the possibility for feedback even if
+            #     no credit is assigned, as outlined next)
+            #     and
+            # (2) either
+            #     (a) the response was marked as at least partially equal
+            #         (which occurrs even if the answer option is
+            #         listed as 0% correct, so that can give feedback for
+            #         matching wrong answers)
+            #     (b) answer matched at a lower numerical precision
+            #         than required (so that can give feedback that the answer
+            #         is close to a the required precision even if giving
+            #         no credit for being close)
+            #         or
+            #     (c) the answer matched after taking into account certain
+            #         errors (so that can give feedback about sign errors
+            #         or constant term/factor errors even if not giving credit
+            #         for matching after accounting for these errors)
             if (answer_results['fraction_equal'] > 0 or \
                 (answer_results['round_level_used'] is not None
                  and answer_results['round_level_required'] is not None
                  and answer_results['round_level_used'] < \
-                 answer_results['round_level_required'])) \
+                 answer_results['round_level_required']) or \
+                answer_results['n_sign_errors'] > 0 or \
+                answer_results['n_constant_term_errors'] > 0 or \
+                answer_results['n_constant_factor_errors'] > 0) \
                 and this_percent_correct  > percent_correct:
                 if show_correctness:
                     if this_percent_correct == 100:
@@ -428,7 +479,11 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                 round_level_required = answer_results['round_level_required']
                 round_level_used = answer_results['round_level_used']
                 round_absolute = answer_results['round_absolute']
-                n_sign_flips = answer_results['n_sign_flips']
+                n_sign_errors = answer_results['n_sign_errors']
+                n_constant_term_errors = \
+                            answer_results['n_constant_term_errors']
+                n_constant_factor_errors = \
+                            answer_results['n_constant_factor_errors']
                 
             if this_near_match_percent_correct  > \
                  max(near_match_percent_correct,percent_correct):
@@ -484,17 +539,25 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                     feedback += " Answer matched to %s significant digits but %s significant digits are required." % (round_level_used, round_level_required)
 
 
-            # record any feedback about sign flips
+            # record any feedback about sign errors or constant term/factor errors
 
             if near_match_percent_correct != 100:
-                # However, don't show sign_flip message if the answer
+                # However, don't show feedback message if the answer
                 # is mathematically equivalent to a 100% correct answer.
-                # (In this case, there are probably an even number of
-                # sign flips recorded, which effectively normalized the answer)
-                if n_sign_flips == 1:
+                # (In this case, the calculation error calculation probably
+                # just effectively normalized the answer)
+                if n_sign_errors == 1:
                     feedback += " Answer appears to have a sign error."
-                elif n_sign_flips > 1:
-                    feedback += " Answer appears to have around %s sign errors." % n_sign_flips
+                elif n_sign_errors > 1:
+                    feedback += " Answer appears to have around %s sign errors." % n_sign_errors
+                if n_constant_term_errors == 1:
+                    feedback += " Answer appears to have a place where you added or subtracted by the wrong number."
+                elif n_constant_term_errors > 1:
+                    feedback += " Answer appears to have around %s places where you added or subtracted by the wrong number." % n_constant_term_errors
+                if n_constant_factor_errors == 1:
+                    feedback += " Answer appears to have a place where you multiplied or divided by the wrong number."
+                elif n_constant_factor_errors > 1:
+                    feedback += " Answer appears to have around %s places where you multiplied or divided by the wrong number." % n_constant_factor_errors
 
                     
             if percent_correct < 100 and \

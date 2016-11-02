@@ -2043,7 +2043,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("partial (75%) credit" in
                         results["answers"][answer_identifier]["answer_feedback"])
 
-    def test_normalized_correct_overrides_sign_flip(self):
+    def test_normalized_correct_overrides_sign_error(self):
         scs_explog = SympyCommandSet.objects.create(
                 name = 'explog', commands='exp,ln,log,e')
         self.q.allowed_sympy_commands.add(scs_explog)
@@ -2055,14 +2055,14 @@ class TestGradeQuestionView(TestCase):
             name="expr", expression="exp(-4z -3)/log(3) - (z+1)*(z-y)")
         
         the_ans=self.new_answer(answer_code="expr", answer="expr")
-        the_ans_flip=self.new_answer(answer_code="expr2", answer="expr",
-                                     sign_flip_partial_credit=True,
-                                     sign_flip_partial_credit_percent=80)
+        the_ans_error=self.new_answer(answer_code="expr2", answer="expr",
+                                     sign_error_partial_credit=True,
+                                     sign_error_partial_credit_percent=80)
         the_ans_norm=self.new_answer(answer_code="expr3", answer="expr",
                                      normalize_on_compare=True)
-        the_ans_flip_norm=self.new_answer(answer_code="expr4", answer="expr",
-                                     sign_flip_partial_credit=True,
-                                     sign_flip_partial_credit_percent=80,
+        the_ans_error_norm=self.new_answer(answer_code="expr4", answer="expr",
+                                     sign_error_partial_credit=True,
+                                     sign_error_partial_credit_percent=80,
                                      normalize_on_compare=True)
         
         response = self.client.get("/question/%s" % self.q.id)
@@ -2106,9 +2106,9 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is correct" in
                         results["answers"][answer_id_n]["answer_feedback"])
 
-        # with sign flip partial credit, matches after two sign flips
+        # with sign error partial credit, matches after two sign errors
         # as that effectively normalizes.
-        # Want to make sure that feedback does not indicate sign flips
+        # Want to make sure that feedback does not indicate sign errors
         self.assertFalse(results["answers"][answer_id_f]["answer_correct"])
         self.assertTrue("is not completely correct" in
                         results["answers"][answer_id_f]["answer_feedback"])
@@ -2117,8 +2117,8 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("sign errors" not in
                         results["answers"][answer_id_f]["answer_feedback"])
 
-        # correct with normalize and sign flip partial credit,
-        # Want to make sure that feedback does not indicate sign flips
+        # correct with normalize and sign error partial credit,
+        # Want to make sure that feedback does not indicate sign errors
         self.assertTrue(results["answers"][answer_id_fn]["answer_correct"])
         self.assertTrue("is correct" in
                         results["answers"][answer_id_fn]["answer_feedback"])
@@ -2144,7 +2144,7 @@ class TestGradeQuestionView(TestCase):
         self.assertFalse(results["correct"])
         self.assertTrue("is 26% correct" in results["feedback"])
 
-        # answer is not correct without flips
+        # answer is not correct without errors
         self.assertFalse(results["answers"][answer_id]["answer_correct"])
         self.assertTrue("is incorrect" in
                         results["answers"][answer_id]["answer_feedback"])
@@ -2154,7 +2154,7 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("is incorrect" in
                         results["answers"][answer_id_n]["answer_feedback"])
 
-        # with sign flip partial credit, matches after three sign flips
+        # with sign error partial credit, matches after three sign errors
         self.assertFalse(results["answers"][answer_id_f]["answer_correct"])
         self.assertTrue("is not completely correct" in
                         results["answers"][answer_id_f]["answer_feedback"])
@@ -2163,8 +2163,8 @@ class TestGradeQuestionView(TestCase):
         self.assertTrue("3 sign errors" in
                         results["answers"][answer_id_f]["answer_feedback"])
 
-        # with sign flip partial credit and normalize,
-        # still matches after three sign flips
+        # with sign error partial credit and normalize,
+        # still matches after three sign errors
         self.assertFalse(results["answers"][answer_id_fn]["answer_correct"])
         self.assertTrue("is not completely correct" in
                         results["answers"][answer_id_fn]["answer_feedback"])

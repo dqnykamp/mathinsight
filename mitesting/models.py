@@ -537,8 +537,12 @@ class QuestionAnswerOption(models.Model):
     round_partial_credit_digits = models.IntegerField(blank=True,null=True)
     round_partial_credit_percent = models.IntegerField(blank=True,null=True)
 
-    sign_flip_partial_credit = models.BooleanField(default=False)
-    sign_flip_partial_credit_percent = models.IntegerField(blank=True,null=True)
+    sign_error_partial_credit = models.BooleanField(default=False)
+    sign_error_partial_credit_percent = models.IntegerField(blank=True,null=True)
+    constant_term_error_partial_credit = models.BooleanField(default=False)
+    constant_term_error_partial_credit_percent = models.IntegerField(blank=True,null=True)
+    constant_factor_error_partial_credit = models.BooleanField(default=False)
+    constant_factor_error_partial_credit_percent = models.IntegerField(blank=True,null=True)
     
     normalize_on_compare = models.BooleanField(default=False)
     split_symbols_on_compare = models.BooleanField(default=True)
