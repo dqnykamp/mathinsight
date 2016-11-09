@@ -212,8 +212,8 @@
       question_{{question_data.identifier}}_processing=true;
       jQuery("#question_{{question_data.identifier}}_submit").prop("disabled",true);
 
-      /* Just in case, clear processing state if nothing happens for 20 seconds */
-      processing_timeoutID_{{question_data.identifier}}=window.setTimeout(clear_processing_state_{{question_data.identifier}}, 20000);
+      /* Just in case, clear processing state if nothing happens for 60 seconds */
+      processing_timeoutID_{{question_data.identifier}}=window.setTimeout(clear_processing_state_{{question_data.identifier}}, 60000);
   }      
 
   function clear_processing_state_{{question_data.identifier}}() {
