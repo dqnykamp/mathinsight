@@ -1471,10 +1471,24 @@ class AppletObject(models.Model):
     category_for_capture = models.CharField(max_length=100, blank=True, null=True)
     function_input_variable= models.CharField(max_length=1, blank=True, null=True)
     default_value = models.CharField(max_length=50, blank=True, null=True)
+    sort_order = models.FloatField(blank=True)
+
+    class Meta:
+        ordering = ['sort_order','id']
 
     def __str__(self):
         return "%s: %s" % (self.object_type, self.name)
 
+    def save(self, *args, **kwargs):
+        # if sort_order is null, make it one more than the max
+        if self.sort_order is None:
+            max_sort_order = self.applet.appletobject_set\
+                .aggregate(Max('sort_order'))['sort_order__max']
+            if max_sort_order:
+                self.sort_order = ceil(max_sort_order+1)
+            else:
+                self.sort_order = 1
+        super(AppletObject, self).save(*args, **kwargs)
 
 class AppletChildObjectLink(models.Model):
     applet = models.ForeignKey(Applet)

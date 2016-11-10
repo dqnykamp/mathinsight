@@ -67,6 +67,8 @@ class AppletObjectInline(admin.TabularInline):
         if db_field.name == 'default_value':
             field.widget.attrs['size'] = 5
             del field.widget.attrs['class']
+        if db_field.name == 'sort_order':
+            field.widget.attrs['size'] = 3
         return field
 
 class AppletChildObjectLinkInline(admin.TabularInline):
