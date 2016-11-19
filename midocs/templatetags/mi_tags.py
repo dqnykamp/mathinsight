@@ -1226,9 +1226,10 @@ def Geogebra_change_object_javascript(context, appletobject,applet_variable,
             except:
                 return ""
         elif object_type=='Boolean':
-            javascript = '%s.setValue("%s", %s);\n' % \
-                (applet_variable, object_name,
-                 value)
+            if value != "":
+                javascript = '%s.setValue("%s", %s);\n' % \
+                             (applet_variable, object_name,
+                              value)
         elif object_type=='Text':
             # don't use value, use objectvalue, so math_objects
             # return latex expression
