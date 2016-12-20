@@ -1471,13 +1471,27 @@ class ThreadContent(models.Model):
 
 
     def get_title(self):
-        if(self.substitute_title):
+        if self.substitute_title:
             return self.substitute_title
         else:
             try:
                 return self.content_object.get_title()
             except:
                 return str(self.content_object)
+
+    def get_short_title(self):
+        if self.substitute_title:
+            return self.substitute_title
+        else:
+            try:
+                return self.content_object.get_short_title()
+            except:
+                pass
+            try:
+                return self.content_object.get_title()
+            except:
+                pass
+            return str(self.content_object)
 
 
     def return_link(self):
@@ -2651,6 +2665,9 @@ class Assessment(models.Model):
 
     def get_title(self):
         return self.name
+
+    def get_short_title(self):
+        return self.return_short_name()
 
     def annotated_title(self):
         return "%s: %s" % (self.assessment_type.name,self.name)

@@ -1609,13 +1609,18 @@ class EditCourseContentAttemptScores(CourseBaseView):
                     attempt = None
                     score = ""
 
+                try:
+                    past_due = self.thread_content.get_adjusted_due(
+                        content_record, skipdate_dict=skipdate_dict) \
+                        < cca.attempt_began
+                except TypeError:
+                    past_due = False
+                
                 enrollment_dict['attempts'].append({
                     'base_attempt': cca,
                     'attempt': attempt,
                     'score': floatformat(score,1),
-                    'past_due': self.thread_content.get_adjusted_due(content_record,
-                                                                     skipdate_dict=skipdate_dict)
-                    < cca.attempt_began,
+                    'past_due': past_due,
                 })
                 
                 
