@@ -258,6 +258,8 @@ class Course(models.Model):
     attendance_time_zone = models.CharField(max_length=50, choices = [(x,x) for x in pytz.common_timezones], default=settings.TIME_ZONE)
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
 
+    calculate_course_total = models.BooleanField(default=True)
+    
     numbered = models.BooleanField(default=True)
     active = models.BooleanField(default=True, db_index=True)
     sort_order = models.FloatField(blank=True)

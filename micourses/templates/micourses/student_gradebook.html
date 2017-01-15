@@ -21,7 +21,9 @@ Group: {{enrollment.group}}</p>
 {% endfor %}
 <tr class="subtotal"><td>Subtotal for {{category.category}} {{ category.score_comment}}</td><td class="righttext">{{category.points|floatformat:"1"}}</td><td class="righttext">{{category.student_score|floatformat:"1"}}</td><td class="righttext">{{category.percent|floatformat:"1"}}%</td></tr>
 {% endfor %}
+{% if course.calculate_course_total %}
 <tr><td><b>Course Total</b></td><td class="righttext"><b>{{category_scores.total_points|floatformat:"1"}}</b></td><td class="righttext"><b>{{category_scores.total_score|floatformat:"1"}}</b></td><td class="righttext"><b>{{category_scores.total_percent|floatformat:"1"}}%</b></td></tr>
+{% endif %}
 </tbody>
 </table>
 
