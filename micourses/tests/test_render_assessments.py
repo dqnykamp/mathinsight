@@ -156,6 +156,24 @@ class TestGetQuestionList(TestCase):
 
         self.assertTrue(False not in options_used)
 
+    def test_with_zero_weight(self):
+        
+        self.qsa1.question_set=3
+        self.qsa1.save()
+        self.qsa4.question_set=2
+        self.qsa4.save()
+
+        self.asmt.questionsetdetail_set.create(question_set=3,
+                                               weight = 0)
+        self.asmt.questionsetdetail_set.create(question_set=2,
+                                               weight = 0)
+
+        question_list = get_question_list(self.asmt, rng=self.rng,
+                                          seed=get_new_seed(self.rng))
+
+        for ql in question_list:
+            self.assertEqual(ql['relative_weight'], 0)
+
 
 class TestRenderQuestionList(TestCase):
     

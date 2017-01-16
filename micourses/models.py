@@ -2261,7 +2261,8 @@ class ContentAttempt(models.Model):
                             found_non_blank_credit = True
                         self.score += qs_credit*weight
                         total_weight += weight
-                    self.score *= self.record.content.points/total_weight
+                    if total_weight:
+                        self.score *= self.record.content.points/total_weight
                     
                 if not found_non_blank_credit:
                     self.score = None
@@ -2469,7 +2470,8 @@ class ContentAttemptQuestionSet(models.Model):
             if question_set == self:
                 this_weight = weight
 
-        points = this_weight/total_weight*total_points
+        if total_weight:
+            points = this_weight/total_weight*total_points
 
         return points
 

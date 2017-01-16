@@ -89,10 +89,12 @@ def get_question_list(assessment, seed, rng=None, thread_content=None,
     # make weight be relative weight
     # if have thread_content, then multiply by assessment points to
     # get question_points
-    for q_dict in question_list:
-        q_dict['relative_weight'] /= total_weight
-        if thread_content and thread_content.points is not None:
-            q_dict['points'] = q_dict["relative_weight"]*thread_content.points
+    if total_weight:
+        for q_dict in question_list:
+            q_dict['relative_weight'] /= total_weight
+            if thread_content and thread_content.points is not None:
+                q_dict['points'] = q_dict["relative_weight"]\
+                                   *thread_content.points
 
     if assessment.fixed_order:
         for i in range(1, len(question_list)):
@@ -297,10 +299,11 @@ def get_question_list_from_attempt(assessment, content_attempt, question_attempt
     # multiply by assessment points to
     # get question_points
     assessment_points = content_attempt.record.content.points
-    for q_dict in question_list:
-        q_dict['relative_weight'] /= total_weight
-        if assessment_points is not None:
-            q_dict['points'] = q_dict["relative_weight"]*assessment_points
+    if total_weight:
+        for q_dict in question_list:
+            q_dict['relative_weight'] /= total_weight
+            if assessment_points is not None:
+                q_dict['points'] = q_dict["relative_weight"]*assessment_points
 
 
     # treat just like fixed order
