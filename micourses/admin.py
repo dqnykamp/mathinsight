@@ -233,7 +233,7 @@ class AssessmentAdmin(reversion.VersionAdmin):
                 }),
         ('Front Matter', {
                 'classes': ('collapse',),
-                'fields': ('front_matter', 'front_matter2' )
+                'fields': ('name_section_override', 'front_matter', 'front_matter2' )
                 }),
         ('Notes', {
                 'classes': ('collapse',),

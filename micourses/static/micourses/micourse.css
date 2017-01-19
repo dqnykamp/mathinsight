@@ -76,6 +76,25 @@ table.question_scores td.blank {
     padding-right: 80px;
 }
 
+table.rubric {
+    border: 1px solid black;
+    border-collapse: collapse;
+    margin-top: 1em;
+    margin-right: 2em;
+}
+table.rubric td {
+    border: 1px solid black;
+    padding: 4px 10px;
+}
+table.rubric th {
+    border: 1px solid black;
+    padding: 4px 10px;
+}
+
+table.rubric td.blank {
+    padding-right: 80px;
+}
+
 #more_questions_link {
     margin-top: 2em;
 }

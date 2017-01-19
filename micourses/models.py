@@ -2640,6 +2640,7 @@ class Assessment(models.Model):
                                        blank=True)
     front_matter = models.TextField(blank=True, null=True)
     front_matter2 = models.TextField(blank=True, null=True)
+    name_section_override = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     groups_can_view = models.ManyToManyField(Group, blank=True, 
                             related_name = "assessments_can_view")
@@ -2907,6 +2908,17 @@ class Assessment(models.Model):
             return mark_safe(t.render(Context({})))
         except TemplateSyntaxError as e:
             return "Error in front_matter template: %s" % e
+
+    def render_name_section_override(self):
+        if not self.name_section_override:
+            return ""
+        template_string_base = "{% load question_tags mi_tags humanize %}"
+        template_string=template_string_base + self.name_section_override
+        try:
+            t = Template(template_string)
+            return mark_safe(t.render(Context({})))
+        except TemplateSyntaxError as e:
+            return "Error in name_section_override template: %s" % e
 
     def render_front_matter2(self):
         if not self.front_matter2:

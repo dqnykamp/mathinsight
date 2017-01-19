@@ -48,7 +48,7 @@ MathJax.Hub.Config({
 {% endblock %}
 
 {% block namesection %}
-<section class="namesection"><div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div></section>
+<section class="namesection">{% if assessment.name_section_override %}{{ assessment.render_name_section_override }}{% else %}<div class="nameblank">Name:<br/>Group members:</div><div class="sectionblank">Section:</div>{% endif %}</section>
 {% endblock %}
 
 {% block scoretotals %}
