@@ -626,7 +626,8 @@ class AnswerNode(template.Node):
                 expressionfromanswer.answer_data=base64.b64encode(pickle.dumps(mc_answer_dict)).decode();
                 expressionfromanswer.save()
 
-            answer_data['rng'].shuffle(rendered_answer_list)
+            if not kwargs.get("fixed_order"):
+                answer_data['rng'].shuffle(rendered_answer_list)
         
             html_string = ""
             if kwargs.get("select"):
