@@ -1750,6 +1750,110 @@ class EditCourseContentAttemptScores(CourseBaseView):
 
 
 
+class LatestContentAttemptsCSV(CourseBaseMixin, View):
+    instructor_view=True
+    
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
+
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except NotEnrolled:
+            return redirect('micourses:notenrolled', 
+                            course_code=self.course.code)
+        except NotInstructor:
+            return redirect('micourses:coursemain', 
+                            course_code=self.course.code)
+
+        try:
+            self.thread_content = self.course.thread_contents.get(
+                id=kwargs["content_id"])
+        except ObjectDoesNotExist:
+            raise Http404("Thread content not found with course %s and id=%s"\
+                          % (self.course, kwargs["content_id"]))
+
+
+        content_records = self.thread_content.contentrecord_set.filter(enrollment__role=STUDENT_ROLE)
+
+        # Create the HttpResponse object with the appropriate CSV header.
+        hresponse = HttpResponse(content_type='text/csv; charset=utf-8')
+        hresponse['Content-Disposition'] = 'attachment; filename="gradebook.csv"'
+
+        import csv, json 
+        writer = csv.writer(hresponse)
+
+        student_names = []
+        question_rows = []
+        fields_per_question = []
+        
+        for cr in content_records:
+            try:
+                ca = cr.attempts.latest()
+            except ObjectDoesNotExist:
+                continue
+
+
+            student_names.append(cr.enrollment.student.get_full_name())
+            
+            
+            for (i,qs) in enumerate(ca.question_sets.all()):
+                try:
+                    qr = question_rows[i]
+                except IndexError:
+                    question_rows.append([])
+                    qr = question_rows[i]
+                try:
+                    fpq = fields_per_question[i]
+                except IndexError:
+                    fields_per_question.append(0)
+                    fpq = 0
+
+                try:
+                    responses = json.loads(qs.question_attempts.latest().responses.latest().response)
+                except ObjectDoesNotExist:
+                    continue
+
+                num_fields = len(responses)
+                if num_fields > fpq:
+                    fields_per_question[i] = num_fields
+
+                resplist = []
+                for r in responses:
+                    resplist.append(r['response'])
+                qr.append(resplist)
+
+                print(question_rows)   
+                print(fields_per_question)
+
+        n_questions = len(fields_per_question)
+        print(fields_per_question)
+        print(n_questions)
+        print(question_rows[0])
+        for (i,sn) in enumerate(student_names):
+            row = [sn,]
+            for j in range(n_questions):
+                print(i,j)
+                try:
+                    qr= question_rows[j][i]
+                except IndexError:
+                    qr = []
+                print(qr)
+                row.extend(qr)
+                fpq = fields_per_question[j]
+                if len(qr) < fpq:
+                    row.extend(['']*(fpq-len(qr)))
+            print(row)
+            writer.writerow(row)
+        
+        return hresponse
+
+
+    
+
 class ExportGradebook(CourseBaseView):
     instructor_view=True
     template_name = 'micourses/export_gradebook.html'
