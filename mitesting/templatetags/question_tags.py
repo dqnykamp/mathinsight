@@ -590,7 +590,7 @@ class AnswerNode(template.Node):
                     (answer_field_name, answer_field_name,
                      size, readonly_string, value_string, onchange_string, )
                 
-            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
+            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="answerfeedback_%s" id="%s_feedback"></span></span>' % \
                 (input_html,
                  question_identifier, answer_field_name)
 
@@ -643,7 +643,7 @@ class AnswerNode(template.Node):
                          ans_id, selected_string, answer['rendered_answer'] )
                 html_string = '<select id="id_%s" name="%s" class="mi_select">%s</select>' % \
                               (answer_field_name, answer_field_name, html_string)
-                html_string = '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>'  %\
+                html_string = '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="answerfeedback_%s" id="%s_feedback"></span></span>'  %\
                               (html_string, question_identifier, answer_field_name)
             else:
                 for answer in rendered_answer_list:
@@ -659,7 +659,7 @@ class AnswerNode(template.Node):
                          answer['rendered_answer'] )
 
                 html_string = '<ul class="answerlist">%s</ul>' % html_string
-                html_string += '<div class="info answerfeedback_%s" id="%s_feedback" ></div>' % \
+                html_string += '<div class="answerfeedback_%s" id="%s_feedback" ></div>' % \
                                (question_identifier, answer_field_name)
             
             return mark_safe(html_string)
@@ -672,7 +672,7 @@ class AnswerNode(template.Node):
                 (answer_field_name, answer_field_name,
                  rows, cols, value_string)
                 
-            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="info answerfeedback_%s" id="%s_feedback"></span></span>' % \
+            return '<span style="vertical-align: middle; display: inline-block;">%s<br/><span class="answerfeedback_%s" id="%s_feedback"></span></span>' % \
                 (input_html,
                  question_identifier, answer_field_name)
 

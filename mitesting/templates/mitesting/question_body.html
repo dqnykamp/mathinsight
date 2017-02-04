@@ -131,21 +131,21 @@
 
 	  if(data['answers'][answer_identifier]['answer_correct']) {
 	      if(show_correct_with_css) {
-		  answer_feedback.removeClass('error').removeClass('info').addClass('success');
+		  answer_feedback.removeClass('incorrect_answer').removeClass('unfilled_answer').removeClass('filled_answer').addClass('correct_answer');
 	      }
 	      else {
-		  answer_feedback.removeClass('error').removeClass('success').addClass('info');
+		  answer_feedback.removeClass('incorrect_answer').removeClass('unfilled_answer').removeClass('correct_answer').addClass('filled_answer');
 	      }
 	  }
 	  else if(!data['answers'][answer_identifier]['received_response']) {
-	      answer_feedback.removeClass('success').removeClass('info').addClass('error');
+		  answer_feedback.removeClass('incorrect_answer').removeClass('filled_answer').removeClass('correct_answer').addClass('unfilled_answer');
 	  }
 	  else {
 	      if(show_incorrect_with_css) {
-		  answer_feedback.removeClass('success').removeClass('info').addClass('error');
+		  answer_feedback.removeClass('correct_answer').removeClass('unfilled_answer').removeClass('filled_answer').addClass('incorrect_answer');
 	      }
 	      else {
-		  answer_feedback.removeClass('error').removeClass('success').addClass('info');
+		  answer_feedback.removeClass('incorrect_answer').removeClass('unfilled_answer').removeClass('correct_answer').addClass('filled_answer');
 	      }
 	  }
 	  answer_feedback.filter("span").css({ display: 'inline-block'})

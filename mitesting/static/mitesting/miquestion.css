@@ -65,6 +65,20 @@ form.writein {
 
 }
 
+.correct_answer {
+    background:#8c8;
+}
+.incorrect_answer {
+    background:#c88;
+}
+.unfilled_answer { 
+    color: #66000F;
+    background:#fff8f8;
+}
+.filled_answer {
+    background:#eee;
+}
+
 @media screen {
 
     li.question {
