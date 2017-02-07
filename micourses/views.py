@@ -1792,7 +1792,7 @@ class LatestContentAttemptsCSV(CourseBaseMixin, View):
         
         for cr in content_records:
             try:
-                ca = cr.attempts.latest()
+                ca = cr.attempts.filter(valid=True).latest()
             except ObjectDoesNotExist:
                 continue
 
@@ -1813,8 +1813,9 @@ class LatestContentAttemptsCSV(CourseBaseMixin, View):
                     fpq = 0
 
                 try:
-                    responses = json.loads(qs.question_attempts.latest().responses.latest().response)
+                    responses = json.loads(qs.question_attempts.filter(valid=True).latest().responses.filter(valid=True).latest().response)
                 except ObjectDoesNotExist:
+                    qr.append([])
                     continue
 
                 num_fields = len(responses)

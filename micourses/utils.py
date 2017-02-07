@@ -508,18 +508,20 @@ def get_latest_question_data(ca_question_set, auxiliary_data):
     content_record = ca_question_set.content_attempt.record
     
     # find latest valid question attempt
-    question_attempt = ca_question_set.question_attempts.filter(valid=True)\
-                                                       .latest()
-    if not question_attempt:
+    try:
+        question_attempt = ca_question_set.question_attempts.filter(valid=True)\
+                                                            .latest()
+    except ObjectDoesNotExist:
         return {}
 
     question = question_attempt.question
     
     # find latest valid response
-    response = question_attempt.responses.filter(valid=True).latest()
-
-    if not response:
+    try:
+        response = question_attempt.responses.filter(valid=True).latest()
+    except ObjectDoesNotExist:
         return {}
+    
     
     # use lq in identifier since coming from
     # latest question
