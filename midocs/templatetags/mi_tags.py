@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.encoding import smart_text
 from django.template.base import kwarg_re
 import re
+import math
 from django.contrib.sites.models import Site
 from django.db.models import  Max
 from sympy.printing import StrPrinter
@@ -1220,9 +1221,13 @@ def Geogebra_change_object_javascript(context, appletobject,applet_variable,
                 return ""
         elif object_type=='Number':
             try:
-                javascript = '%s.setValue("%s", %E);\n' % \
-                    (applet_variable, object_name,
-                     float(value))
+                the_number = float(value)
+                if math.isnan(the_number):
+                    return ""
+                else:
+                    javascript = '%s.setValue("%s", %E);\n' % \
+                                 (applet_variable, object_name,
+                                 float(value))
             except:
                 return ""
         elif object_type=='Boolean':
