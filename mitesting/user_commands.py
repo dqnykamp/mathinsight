@@ -49,6 +49,7 @@ def return_localized_commands():
          'cumsum': cumsum,
          'median': median,
          'prime_factors': prime_factors,
+         'safe_getitem': safe_getitem,
         }
     
     return localized_commands
@@ -257,6 +258,19 @@ def count(thelist, item):
     """
     return thelist.count(item)
 
+
+def safe_getitem(thetuple, n):
+    """
+    Safe version of thetuple[n] that returns Symbol('???')
+    on TypeError or IndexError
+    """
+    
+    try:
+        return thetuple[n]
+    except (TypeError, IndexError):
+        from sympy import Symbol
+        return Symbol('???')
+    
 
 class scalar_multiple_deviation(Function):
     """
