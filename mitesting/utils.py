@@ -666,7 +666,7 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
     and !== with __python__Ne__(lhs,rhs)
     
     8. Replace not with __Not__(rhs)
-    If evaluate=FAlse, add evaluate=False
+    If evaluate=False, add evaluate=False
 
     9. Replace expressions such as a <= b < c < d
     with __Lts__((a,b,c,d), (False, True, True))
@@ -677,6 +677,9 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
     with __Gts__((a,b,c,d), (False, True, True))
     If evaluate=False, add evaluate=False.
     Second argument is a tuple specifying which inequalities are strict.
+
+    11. Replace any leftover in placeholder with in
+
 
     __Eq__, __Ne__, __And__, __Or___ must then be mapped to sympy 
     Eq, Ne, And, and Or when parsing.  (Actually use customized And, Or.)
@@ -1020,7 +1023,11 @@ def replace_bar_boolean_equals_in(s, evaluate=True):
                                          % (new_op, ",".join(args), tuple(strict))
 
                 s = s[:begin_pos] + new_command_string + s[end_pos:]
-            
+
+                
+    # replace in with __in_op_pl__
+    s=re.sub(r'___in_op_pl___', r"Symbol('in')",s)
+                
     return s
 
 

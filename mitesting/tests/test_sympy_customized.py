@@ -909,6 +909,14 @@ class ParseExprTests(SimpleTestCase):
         self.assertEqual(expr,1)
         
 
+        expr=parse_expr("in")
+        self.assertEqual(expr,Symbol('in'))
+        
+        expr=parse_expr("in, out, in")
+        from mitesting.sympy_customized import TupleNoParen
+        self.assertEqual(expr, TupleNoParen(Symbol("in"), Symbol("out"), Symbol("in")))
+
+        
     def test_intervals(self):
         from mitesting.sympy_customized import Interval
         a=Symbol('a')
