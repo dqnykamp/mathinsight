@@ -306,7 +306,15 @@ def compare_response_with_answer_code(user_response, the_answer_info, question,
                    not isinstance(user_response_parsed, TupleNoParen):
                     user_response_parsed = MatrixFromTuple(
                         *user_response_parsed)
-
+                    
+            # If a set and didn't include braces, will be a TupleNoParen.
+            # In that case, convert to set and back to remove duplicates
+            elif expression_type == Expression.SET:
+                from mitesting.sympy_customized import TupleNoParen
+                if isinstance(user_response_parsed, TupleNoParen):
+                    user_response_parsed = TupleNoParen(*set(user_response_parsed))
+                
+            
             user_response_parsed=math_object(
                 user_response_parsed,
                 tuple_is_unordered=valid_answer.return_if_unordered(),
