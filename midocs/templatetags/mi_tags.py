@@ -1933,7 +1933,7 @@ class AppletNode(template.Node):
         if answer_data:
             appletobjects=applet.appletobject_set.filter \
                            (capture_changes=True).order_by(
-                               "category_for_capture")
+                               "category_for_capture", "sort_order")
 
         inputboxlist=''
         capture_javascript={}
@@ -2064,7 +2064,7 @@ class AppletNode(template.Node):
         if kwargs.get("call_parent_capture"):
             appletobjects=applet.appletobject_set.filter \
                            (capture_changes=True).order_by(
-                               "category_for_capture")
+                               "category_for_capture", "sort_order")
 
             for appletobject in appletobjects:
                 this_capture= capture_javascript.get(appletobject.name,"")
