@@ -795,3 +795,16 @@ def evalf(value, n_digits=15):
     return math_object(evalf_expression(expression,n_digits),
                        copy_parameters_from=copy_from)
 
+
+@register.filter
+def as_string(value):
+
+    if isinstance(value, str):
+        return value
+    
+    from mitesting.math_objects import math_object
+
+    if isinstance(value,math_object):
+        value=value.return_expression()
+
+    return str(value)
