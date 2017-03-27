@@ -271,6 +271,10 @@ def parse_expr(s, global_dict=None, local_dict=None,
     s=re.sub('\u221e', ' __oo__ ', s)
     new_local_dict['__oo__'] = oo
 
+    # replace unicode ≤ with <= and  ≥ with >=
+    s=re.sub('\u2264', '<=', s)
+    s=re.sub('\u2265', '>=', s)
+    
 
     # replace unicode suits, triangles, circles with names surrounded by spaces
     # sympy latex printer will print them as latex symbols

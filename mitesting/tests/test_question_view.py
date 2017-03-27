@@ -2215,11 +2215,8 @@ class TestGradeQuestionView(TestCase):
 
         self.assertEqual(response.status_code, 200)
         results = json.loads(response.content.decode())
-        self.assertFalse(results["correct"])
-        self.assertTrue("is incorrect" in results["feedback"])
-        self.assertFalse(results["answers"][answer_identifier]["answer_correct"])
-        self.assertTrue("is incorrect" in
-                    results["answers"][answer_identifier]["answer_feedback"])
+        self.assertTrue(results["correct"])
+        self.assertTrue(results["answers"][answer_identifier]["answer_correct"])
 
         
 
