@@ -40,6 +40,7 @@ def return_localized_commands():
          'Point': Point,
          'DiffSubs': DiffSubs,
          'is_number': is_number,
+         'fraction_integers': fraction_integers,
          'acosh': acosh, 'acos': acos, 'acosh': acosh, 
          'acot': acot, 'acoth': acoth, 'asin': asin, 'asinh': asinh, 
          'atan': atan, 'atan2': atan2, 'atanh': atanh, 
@@ -471,8 +472,25 @@ class is_number(BooleanFunction):
     def eval(cls, arg):
         return arg.is_number
 
+class fraction_integers(Function):
+    @classmethod
+    def eval(cls, arg):
+        ntot=0
+        nint=0
+        try:
+            for item in arg:
+                ntot += 1
+                if item.is_integer:
+                    nint +=1
+            return nint/ntot
+        except TypeError:
+            if arg.is_integer:
+                return 1
+            else:
+                return 0
 
-class len_custom(BooleanFunction):
+        
+class len_custom(Function):
     @classmethod
     def eval(cls, arg):
         try:
