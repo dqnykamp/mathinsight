@@ -92,6 +92,21 @@ class ExprNode(Node):
                                        local_dict=local_dict,
                                        evaluate_level=evaluate_level)
 
+
+        try:
+            n = kwargs['evalf']
+            from mitesting.customized_commands import evalf_expression
+            expression = evalf_expression(expression,n)
+        except KeyError:
+            pass
+
+        try:
+            n = kwargs['round']
+            from mitesting.customized_commands import round_expression
+            expression = round_expression(expression,n)
+        except KeyError:
+            pass
+            
         expression=math_object(expression, **kwargs)
 
         if self.asvar:
