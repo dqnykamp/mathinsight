@@ -259,6 +259,7 @@ class Course(models.Model):
     attendance_threshold_percent = models.SmallIntegerField(default = 75)
 
     calculate_course_total = models.BooleanField(default=True)
+    skip_assessment_overview = models.BooleanField(default=False)
     
     numbered = models.BooleanField(default=True)
     active = models.BooleanField(default=True, db_index=True)
@@ -2683,7 +2684,12 @@ class Assessment(models.Model):
         link_class=kwargs.get("link_class", "assessment")
         get_string=kwargs.get("get_string", "")
 
-        if kwargs.get("direct"):
+        if kwargs.get("front_matter"):
+            link_url = self.get_front_matter_url()
+            if get_string:
+                link_url += "?" + get_string
+                
+        elif kwargs.get("direct") or self.course.skip_assessment_overview:
             link_url = self.get_absolute_url()
         
             seed = kwargs.get("seed")
@@ -2692,10 +2698,6 @@ class Assessment(models.Model):
                 if get_string:
                     link_url += "&" + get_string
             elif get_string:
-                link_url += "?" + get_string
-        elif kwargs.get("front_matter"):
-            link_url = self.get_front_matter_url()
-            if get_string:
                 link_url += "?" + get_string
         else:
             link_url = self.get_overview_url()
