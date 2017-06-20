@@ -112,7 +112,7 @@
 
       var show_correctness = data['show_correctness'];
       var show_incorrect_with_css = show_correctness
-      var show_correct_with_css = show_correctness && data['record_valid_response'];
+      var show_correct_with_css = show_correctness;// && data['record_valid_response'];
       
       if(data['correct'] & show_correct_with_css) {
 	  question_feedback.removeClass('error').addClass('success');
