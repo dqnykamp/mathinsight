@@ -16,6 +16,12 @@ function keyHandle(event) {
     var isNumberKey = event.which >= 48 && event.which <= 57;
     var isDashKey = event.which === 45;
 
+    var activeElementIsInput = document.activeElement && document.activeElement.tagName && /input|textarea/i.test( document.activeElement.tagName );
+	    
+    // don't jump if in input box
+    if( activeElementIsInput) return;
+
+    
     if (isNumberKey || isDashKey && !isSpecialKey) {
 	jumpToSlide += String.fromCharCode(event.charCode);
     } else {
