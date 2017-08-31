@@ -566,7 +566,7 @@ def import_class_roster(f, course):
     
     import csv
     from django.contrib.auth.models import User
-
+    from .models import INSTRUCTOR_ROLE, DESIGNER_ROLE
         
     reader = csv.reader(f)
 
@@ -606,11 +606,26 @@ def import_class_roster(f, course):
         except IndexError:
             pass
 
+        role = None
+        try:
+            role = row[7]
+        except IndexError:
+            pass
+        else:
+            if role == "Instructor":
+                role = INSTRUCTOR_ROLE
+            elif role == "Designer":
+                role = DESIGNER_ROLE
+            else:
+                role = None
+
         defaults = {}
         if section is not None:
             defaults['section'] = section
         if group is not None:
             defaults['group'] = group
+        if role is not None:
+            defaults['role'] = role
         ce, created = course.courseenrollment_set.get_or_create(
             student=u.courseuser,
             defaults=defaults
@@ -620,4 +635,6 @@ def import_class_roster(f, course):
                 ce.section=section
             if group is not None:
                 ce.group=group
+            if role is not None:
+                ce.role = role
             ce.save()
