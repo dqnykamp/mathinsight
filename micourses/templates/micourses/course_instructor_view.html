@@ -6,6 +6,8 @@
 {% block content %}
 <h3>{{course}}</h3>
 
+{% if message %}<p class="info">{{message}}</p>{% endif%}
+
 {% if multiple_courses %}<p><a href= "{% url 'micourses:selectcourse' %}">Select other course</a></p>{% endif %}
 
 {% if course.update_attendance %}

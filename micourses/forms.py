@@ -126,3 +126,8 @@ class AttemptScoresForm(forms.Form):
             self.fields['score_%s' % attempt.id] = \
                     forms.FloatField(widget=forms.TextInput(attrs={'size': 4}),
                                      required=False)
+
+
+class ImportClassRosterForm(forms.Form):
+    file = forms.FileField()
+

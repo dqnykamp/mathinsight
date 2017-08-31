@@ -1,0 +1,18 @@
+{% extends "micourses/course_base.html" %}
+{% load  mi_tags course_tags %}
+{% block nolinksection %}{% endblock %}
+{% block title %}Import class roster for {{course}}{%endblock%}
+
+{% block content %}
+{% if message %}
+<p class="info">{{ message}}</p>
+{%endif %}
+<p>Import class roster for {{course}}.</p>
+
+<form action="{% url 'micourses:importclassroster' course_code=course.code %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+{{form.as_p}}
+<input style="margin-top: 20px" type="submit" value="Import roster" />
+
+</form>
+
+{% endblock %}

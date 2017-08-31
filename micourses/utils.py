@@ -549,3 +549,75 @@ def get_latest_question_data(ca_question_set, auxiliary_data):
         auxiliary_data=auxiliary_data)
 
     return question_data
+
+
+def import_class_roster(f, course):
+    """
+    Import student data from csv file into course
+    - a new record for student is created if username is not found
+    - if username is found, the data is replaced with new values from file
+    
+    filename must be a CSV file with one header row followed by data rows
+    with the following columns
+    userid (Employee ID), last name, first name, username, e-mail address, 
+    section (optional), group (optional)
+    
+    """
+    
+    import csv
+    from django.contrib.auth.models import User
+
+        
+    reader = csv.reader(f)
+
+    # skip first line
+    next(reader)
+
+    for row in reader:
+        u, created =User.objects.get_or_create(
+            username=row[3].lower(), 
+            defaults = {'email': row[4], 'first_name': row[2], 
+                        'last_name': row[1]})
+        if not created:
+            u.email=row[4]
+            u.first_name=row[2]
+            u.last_name=row[1]
+            u.save()
+
+        u.courseuser.userid=row[0]
+        u.courseuser.save()
+
+        section = None
+        try:
+            section = row[5]
+        except IndexError:
+            pass
+        else:
+            try:
+                # try converting to integer to remove leading 0
+                section = int(section)
+            except (ValueError, TypeError):
+                pass
+
+
+        group = None
+        try:
+            group = row[6]
+        except IndexError:
+            pass
+
+        defaults = {}
+        if section is not None:
+            defaults['section'] = section
+        if group is not None:
+            defaults['group'] = group
+        ce, created = course.courseenrollment_set.get_or_create(
+            student=u.courseuser,
+            defaults=defaults
+        )
+        if not created and defaults:
+            if section is not None:
+                ce.section=section
+            if group is not None:
+                ce.group=group
+            ce.save()

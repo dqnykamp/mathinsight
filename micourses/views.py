@@ -227,6 +227,8 @@ class CourseView(CourseBaseView):
 
         context['next_items'] = self.course.next_items(self.courseuser, number=5)
 
+        context['message'] = self.request.GET.get("message","")
+
         return context
         
 
@@ -2090,3 +2092,54 @@ class RecordContentCompletion(CourseBaseMixin, View):
                              'complete': complete,
                              })
 
+    
+class ImportClassRosterView(CourseBaseView):
+    instructor_view=True
+    template_name="micourses/import_class_roster.html"
+    
+    
+    # no student for this view
+    def get_student(self):
+        return self.courseuser
+
+
+    def get_additional_objects(self, request, *args, **kwargs):
+        from .forms import ImportClassRosterForm
+        if request.method == "POST":
+            self.form = ImportClassRosterForm(request.POST, request.FILES)
+        else:
+            self.form = ImportClassRosterForm()
+    
+    def get_context_data(self, **kwargs):
+        context = super(ImportClassRosterView, self).get_context_data(**kwargs)
+        context['form'] = self.form
+        return context
+
+    
+    @method_decorator(login_required)
+    def post(self, request, *args, **kwargs):
+        """
+        Called when edit course wide attempts (as AJAX)
+        or when click button to open/close attempts (as standard POST request)
+        """
+
+        try:
+            self.object = self.get_object()
+        except (NotEnrolled, NotInstructor):
+            return JsonResponse({})
+
+        self.get_additional_objects(request, *args, **kwargs)
+
+        if self.form.is_valid():
+
+            from .utils import import_class_roster
+            csvfile = request.FILES['file'].read().decode("utf-8").splitlines()
+            import_class_roster(csvfile, self.course)
+
+            return HttpResponseRedirect(reverse(
+                'micourses:coursemain',
+                kwargs={'course_code': self.course.code})
+            +'?message=class roster imported')
+        else:
+            return self.render_to_response(self.get_context_data())
+        

@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 from django.contrib.auth.decorators import permission_required
 from django.views.generic import TemplateView, ListView, DetailView
-from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditCourseContentAttemptScores, OpenCloseAttempt, RecordContentCompletion, ContentListView, InstructorGradebook, StudentGradebook, ExportGradebook, GradebookCSV, LatestContentAttemptsCSV
+from micourses.views import SelectCourseView, CourseView, CourseContentRecordView, EditCourseContentAttempts, ContentRecordView, ChangeScore, ContentAttemptView, QuestionAttemptsView, QuestionResponseView, EditCourseContentAttemptScores, OpenCloseAttempt, RecordContentCompletion, ContentListView, InstructorGradebook, StudentGradebook, ExportGradebook, GradebookCSV, LatestContentAttemptsCSV, ImportClassRosterView
 from micourses.attendance_views import AdjustedDueCalculation, AttendanceDisplay, UpdateAttendance, UpdateIndividualAttendance
 from micourses import views
 from micourses.models import Course
@@ -79,6 +79,8 @@ course_patterns = [
     url(r'^/gradebook/export$', ExportGradebook.as_view(), 
         name='exportgradebook'),
     url(r'^/gradebook/exportcsv$',GradebookCSV.as_view(), name='gradebookcsv'),
+    url(r'^/import_class_roster$', ImportClassRosterView.as_view(),
+        name='importclassroster'),
 
 ]
 
