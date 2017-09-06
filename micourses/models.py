@@ -340,8 +340,10 @@ class Course(models.Model):
         timeshift = timezone.timedelta(days=n_days)
 
         with transaction.atomic(), reversion.create_revision():
-            self.start_date += timeshift
-            self.end_date += timeshift
+            if self.start_date:
+                self.start_date += timeshift
+            if self.end_date:
+                self.end_date += timeshift
             self.save()
 
             for tc in self.thread_contents.all():
