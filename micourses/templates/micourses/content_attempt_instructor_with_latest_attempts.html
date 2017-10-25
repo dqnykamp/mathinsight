@@ -4,12 +4,21 @@
 {% block title %}Attempt {{attempt_number}}  of {{ student.get_full_name }} on {{thread_content.get_title}}{%endblock%}
 
 {% block extrastyle2 %}
+<link href="{{ STATIC_URL }}mitesting/miquestion.css" rel="stylesheet" type="text/css"/>
 <style>
   .invalid {
       text-decoration: line-through;
       color: gray;
   }
 </style>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  "HTML-CSS": { linebreaks: { automatic: false } },
+         SVG: { linebreaks: { automatic: false } }
+});
+</script>
+
 {% endblock %}
 
 
