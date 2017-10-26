@@ -21,6 +21,7 @@ MathJax.Hub.Config({
 	pdiffn: ['\\frac{\\partial^{#3} #1}{\\partial #2^{#3}}',3],
 	vc: ['\\mathbf{#1}',1],
 	R: '\\mathbf{R}',
+	tr: '\\mathop{\\rm tr}',
 	blue: '\\color{blue}{\\textbf{blue}}',
 	red: '\\color{red}{\\textbf{red}}',
 	green: '\\color{green}{\\textbf{green}}',
