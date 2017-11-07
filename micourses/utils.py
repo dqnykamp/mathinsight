@@ -638,3 +638,30 @@ def import_class_roster(f, course):
             if role is not None:
                 ce.role = role
             ce.save()
+
+
+def extend_due_date(course, content, student, due):
+
+    if isinstance(course, str):
+        from micourses.models import Course
+        course = Course.objects.get(code=course)
+
+    if isinstance(content, int):
+        content = course.thread_contents.get(id=content)
+
+    if isinstance(student, str):
+        student_enrollment = course.courseenrollment_set.get(
+            student__user__username=student)
+    else:
+        student_enrollment = course.courseenrollment_set.get(
+            student=student)
+        
+    content_record = content.contentrecord_set.get(
+        enrollment=student_enrollment)
+
+    content_record.initial_due_adjustment = due;
+    content_record.save()
+
+    print("Extended due date of %s" % content_record)
+    print("New due date: %s" % due)
+    
