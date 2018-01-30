@@ -2179,12 +2179,12 @@ class ContentAttempt(models.Model):
             return self.get_title()
 
     def get_fraction_credit(self):
-        if self.score is None or self.record.content.points is None:
+        if self.score is None or not self.record.content.points:
             return None
         return self.score/self.record.content.points
 
     def get_percent_credit(self):
-        if self.score is None or self.record.content.points is None:
+        if self.score is None or not self.record.content.points:
             return None
         return self.score/self.record.content.points*100
 
