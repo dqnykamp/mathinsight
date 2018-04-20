@@ -5,7 +5,7 @@ import datetime
 from mathinsight.urls import paginate_by
 from midocs import views
 
-new_days_past=365
+new_days_past=365*3
 
 
 class ContactView(TemplateView):

@@ -10,7 +10,6 @@
 {% block pagenav %}
 <li><a href="#sitenav">Top</a></li>
 <li><a href="#highlighted_pages">Highlighted pages</a></li>
-<li><a href="#recent_news">Recent news</a></li>
 <li><a href="#recent_pages">Recent pages</a></li>
 <li><a href="#highlighted_applets">Highlighted applets</a></li>
 <li><a href="#welcome">Welcome</a></li>
@@ -32,18 +31,6 @@
       </div>
       <div class="ym-g50 ym-gl">
         <div class="ym-gbox-right">
-	  <a id="recent_news" class="anchor"></a>
-	  <h3>Recent news</h3>
-	  <ul class="linklistspace">
-	    {% for other_news in news_list %}
-	    <li><p><a href="{% url 'mi-news' other_news.code %}">{{other_news}}</a><br/>
-		{% if other_news.author_list_full%}by {{ other_news.author_list_full_link|safe }} on{%endif%}  {{ other_news.publish_date }}</p>
-	      <p><a href="{% url 'mi-news' other_news.code %}" class="normaltext">{{other_news.description }}</a></p>
-      </li>
-	    {% endfor %}
-	    <li><a href="{% url 'mi-recentnews'%}">More recent news</a></li>
-	    
-	  </ul>
 
 	  <a id="recent_pages" class="anchor"></a>
     <h3>Recent pages</h3>
